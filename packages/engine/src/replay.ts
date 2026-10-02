@@ -57,7 +57,7 @@ export function replayFor(ctx: GameContext, before: GameState, result: TurnResul
       case "built":
       case "completed":
       case "invested":
-      case "leaderRaised":
+      case "leaderReturned":
         return e.player === player || sees(e.territory) ? [e] : [];
     }
   });

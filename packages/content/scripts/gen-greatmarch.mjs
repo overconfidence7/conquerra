@@ -57,6 +57,6 @@ for (let r = 0; r < ROWS; r++)
 
 const capitalSlots = [id(0, 0), id(0, 4), id(0, 9), id(2, 2), id(2, 7), id(5, 2), id(5, 7), id(7, 0), id(7, 5), id(7, 9), id(3, 5), id(4, 0)];
 
-const map = { id: "greatmarch", name: "Greatmarch (test map, up to 10 players)", minPlayers: 2, maxPlayers: 10, territories, provinces, borders, capitalSlots };
+const map = { id: "greatmarch", name: "Greatmarch (test map, up to 10 players)", minPlayers: 2, maxPlayers: 10, recommendedPlayers: { min: 8, max: 10 }, territories, provinces, borders, capitalSlots };
 writeFileSync(new URL("../data/maps/greatmarch.json", import.meta.url), JSON.stringify(map, null, 1) + "\n");
 console.log(`greatmarch: ${territories.length} territories, ${borders.length} borders, ${provinces.length} provinces`);

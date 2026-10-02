@@ -8,6 +8,7 @@ export const lineMap: MapDef = MapDef.parse({
   name: "Line",
   minPlayers: 2,
   maxPlayers: 2,
+  recommendedPlayers: { min: 2, max: 2 },
   territories: ["a", "b", "c", "d", "e"].map((id, i) => ({
     id,
     name: id.toUpperCase(),

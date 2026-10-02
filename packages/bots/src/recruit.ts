@@ -23,7 +23,7 @@ type Seen = TerritoryDetail & { detail: "full" };
 /**
  * "Recruit" tier bot. Plays only from its own fog-limited view, with the same rules as people.
  * Strategy, in plain terms:
- *  1. Spend: raise a fallen leader, put a barracks near the front once the realm grows, hire a specialist
+ *  1. Spend: put a barracks near the front once the realm grows, hire a specialist
  *     when it clearly helps (siege next to enemy forts, cavalry for reach, healers once unlocked),
  *     a little culture in safe interior land when rich, and everything else on troops at the front.
  *  2. Attack the most valuable neighbours it can probably take, with the "Only if still stronger" preset,
@@ -63,11 +63,6 @@ export const recruitBot: Bot = {
 
     // ---------- 1. Spending ----------
     let gold = me.gold;
-    const capitalHeld = owned(me.capital);
-    if (!me.leader.alive && capitalHeld && gold >= rules.leader.raiseCost + rules.troops.cost * 3) {
-      orders.push({ id: id(), kind: "raiseLeader" });
-      gold -= rules.leader.raiseCost;
-    }
 
     const frontier = mine.filter(isFrontier);
     const recruitSites = mine.filter((t) => t === me.capital || seen(t)?.building === "barracks");

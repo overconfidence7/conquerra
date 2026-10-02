@@ -3,6 +3,7 @@
  "name": "Greatmarch (test map, up to 10 players)",
  "minPlayers": 2,
  "maxPlayers": 10,
+ "recommendedPlayers": { "min": 8, "max": 10 },
  "territories": [
   {
    "id": "g00",

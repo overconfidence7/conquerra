@@ -68,6 +68,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
       name: p.name,
       gold: rules.economy.startGold,
       eliminatedTurn: null,
+      eliminatedBy: null,
       capital: cap,
       leader: { alive: true, territory: cap },
       cooldowns: { seize: 0, lie: 0 },

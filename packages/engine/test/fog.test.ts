@@ -74,6 +74,18 @@ describe("fog-filtered replay", () => {
     expect(incomes[0]).toMatchObject({ player: "p1" });
   });
 
+  it("a returning leader shows to its owner, but not to a rival who can't see where it came back", () => {
+    const ctx = ctxWith();
+    const s = lineGame(ctx);
+    board(s, { a: ["p1", 40], b: ["p2", 2], e: ["p2", 3] });
+    s.players.find((p) => p.id === "p2")!.leader = { alive: true, territory: "b" };
+    const result = resolveTurn(ctx, s, { p1: [mv("a", "b", "all")] });
+    expect(replayFor(ctx, s, result, "p2").some((e) => e.type === "leaderReturned")).toBe(true);
+    const p1 = replayFor(ctx, s, result, "p1");
+    expect(p1.some((e) => e.type === "leaderKilled")).toBe(true);
+    expect(p1.some((e) => e.type === "leaderReturned")).toBe(false);
+  });
+
   it("every step is either kept, turned into a surface detail, or dropped — never invented", () => {
     const ctx = embervaleCtx();
     let s = createGame(ctx, { gameId: "r", seed: "replay", players: [1, 2, 3].map((i) => ({ id: `p${i}`, name: `P${i}` })), settings: { fog: true } });

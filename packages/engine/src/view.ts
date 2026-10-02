@@ -27,7 +27,7 @@ export interface PlayerView {
   turn: number;
   me: PlayerState;
   /** Public facts about every player (no gold, no capital location). */
-  players: { id: PlayerId; name: string; eliminatedTurn: number | null }[];
+  players: { id: PlayerId; name: string; eliminatedTurn: number | null; eliminatedBy: PlayerId | null }[];
   territories: Record<TerritoryId, TerritoryView>;
   settings: GameSettings;
   seedCommitment: string;
@@ -64,7 +64,7 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
     mapId: state.mapId,
     turn: state.turn,
     me: JSON.parse(JSON.stringify(me)) as PlayerState,
-    players: state.players.map((p) => ({ id: p.id, name: p.name, eliminatedTurn: p.eliminatedTurn })),
+    players: state.players.map((p) => ({ id: p.id, name: p.name, eliminatedTurn: p.eliminatedTurn, eliminatedBy: p.eliminatedBy })),
     territories,
     settings: { ...state.settings },
     seedCommitment: state.seedCommitment,

@@ -46,3 +46,18 @@ Measured on Nate's laptop, per turn, 200 games each. "Bots planning" is every AI
 - A typical turn takes well under 1 ms of CPU, so the engine itself is cheap.
 - The "worst" numbers are one-off slow turns (the JavaScript engine warming up or cleaning memory), and they reach 3–6 ms. The Free plan's limit is 10 ms per request, and on the server a turn also has to load and save the game, and build a view and replay for every player.
 - So 2–10 player games would *probably* fit on the Free plan, but with little room to spare, and the 50-player mode certainly won't. **The plan to switch to Workers Paid ($5/month) at the start of M4 still stands**; nothing needs to change before then.
+
+## Re-check after session 2's engine changes (Oct 2)
+
+Leaders now come back for free (no more 15-gold "Raise Leader"). Same commands, same seeds:
+
+| Players | Avg length (was) | Median | In 15–25 turns | Seats |
+|---|---|---|---|---|
+| 2 | 23.7 (23.4) | 23 | 65% | 50.9 / 49.1% |
+| 4 | 23.9 (23.3) | 23 | 66% | 24.4–26.1% |
+| 6 | 25.6 (25.4) | 24 | 60% | 15.9–17.7% |
+| 10, Conquest (200 games) | 20.0 (ends at the turn limit) | 20 | 100% | 6.5–12.5% |
+
+- **No meaningful change.** Free Leaders mean more Leaders on the board, so more of them fall (4 players: about 14 per game), but game length and fairness hold.
+- **10 players in Conquest mode** ends on turn 20 as designed, which is why the lobby will suggest Conquest from 8 players up.
+- CPU is unchanged (under 1 ms per turn on average).

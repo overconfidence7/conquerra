@@ -125,7 +125,6 @@
   },
   "leader": {
     "strengthBonus": 0.2,
-    "raiseCost": 15,
     "seizeInitiativeCooldown": 3,
     "lieInWaitCooldown": 2
   },
@@ -137,6 +136,7 @@
     "turnTimerSecondsMin": 60,
     "turnTimerSecondsMax": 604800,
     "maxTurnsHard": 60,
-    "conquestTurnLimitDefault": 20
+    "conquestTurnLimitDefault": 20,
+    "conquestSuggestedFromPlayers": 8
   }
 }

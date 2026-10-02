@@ -271,15 +271,6 @@ class Turn {
         this.emit({ type: "invested", player: pid, orderId: o.id, territory: o.territory, culture: t.culture, cost });
         return null;
       }
-      case "raiseLeader": {
-        if (p.leader.alive) return "leader is already alive";
-        if (this.terr(p.capital)?.owner !== pid) return "you need to hold your capital";
-        if (p.gold < rules.leader.raiseCost) return "not enough gold";
-        p.gold -= rules.leader.raiseCost;
-        p.leader = { alive: true, territory: p.capital };
-        this.emit({ type: "leaderRaised", player: pid, orderId: o.id, territory: p.capital });
-        return null;
-      }
       case "move":
         return this.move(pid, o, o.id, false);
       case "retreat":
@@ -475,8 +466,9 @@ class Turn {
     if (p.eliminatedTurn !== null) return;
     if (this.idx.ids.some((id) => this.s.territories[id]!.owner === pid)) return;
     p.eliminatedTurn = this.s.turn;
+    p.eliminatedBy = this.lastCapturer.get(pid) ?? null;
     p.leader = { alive: false, territory: null };
-    this.emit({ type: "eliminated", player: pid, by: this.lastCapturer.get(pid) ?? null });
+    this.emit({ type: "eliminated", player: pid, by: p.eliminatedBy });
   }
 }
 
@@ -557,6 +549,21 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
       t.construction = null;
       if (t.owner) T.emit({ type: "completed", player: t.owner, territory: id, building: t.building });
     }
+  }
+
+  // ----- Fallen Leaders come back for free: at the capital, or the strongest territory if it's lost -----
+  for (const pid of seats) {
+    const p = T.player(pid);
+    if (p.eliminatedTurn !== null || p.leader.alive) continue;
+    let home: TerritoryId | null = s.territories[p.capital]?.owner === pid ? p.capital : null;
+    if (!home)
+      for (const id of T.idx.ids) {
+        const t = s.territories[id]!;
+        if (t.owner === pid && (!home || t.troops > s.territories[home]!.troops)) home = id;
+      }
+    if (!home) continue;
+    p.leader = { alive: true, territory: home };
+    T.emit({ type: "leaderReturned", player: pid, territory: home });
   }
 
   // ----- Economy: income, upkeep, unrest -----

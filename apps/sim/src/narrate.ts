@@ -27,8 +27,8 @@ export function narrate(e: StepEvent, name: (id: string | null) => string, place
       return `${name(e.player)} attacks ${place(e.to)} (${name(e.defender)}) from ${place(e.from)}: ${army(e.attackers)} vs ${army(e.defenders)} → loses ${e.result.attackerLosses}, kills ${e.result.defenderLosses}${e.captured ? " — CAPTURED" : " — held"}${e.specialistsLost.length ? ` (lost: ${e.specialistsLost.join(", ")})` : ""}`;
     case "leaderKilled":
       return `${name(e.player)}'s leader falls at ${place(e.territory)}`;
-    case "leaderRaised":
-      return `${name(e.player)} raises a new leader`;
+    case "leaderReturned":
+      return `${name(e.player)}'s leader returns at ${place(e.territory)}`;
     case "eliminated":
       return `☠ ${name(e.player)} is eliminated${e.by ? ` by ${name(e.by)}` : ""}`;
     case "income":

@@ -3,6 +3,7 @@
  "name": "Embervale (test map)",
  "minPlayers": 2,
  "maxPlayers": 6,
+ "recommendedPlayers": { "min": 4, "max": 6 },
  "territories": [
   {
    "id": "t00",

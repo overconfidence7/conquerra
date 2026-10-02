@@ -21,6 +21,8 @@ export interface PlayerState {
   gold: number;
   /** Turn on which the player was eliminated, or null if still alive. */
   eliminatedTurn: number | null;
+  /** Who took this player's last territory (null if still alive, or nobody did, e.g. unrest). M3 hands them this player's Leader as a general. */
+  eliminatedBy: PlayerId | null;
   capital: TerritoryId;
   leader: { alive: boolean; territory: TerritoryId | null };
   /** Turns remaining before each leader ability can be used again (0 = ready). */
@@ -121,8 +123,7 @@ export type OrderBody =
   /** Pull the army back to the safest neighbouring territory you hold. */
   | { kind: "retreat"; from: TerritoryId }
   /** Attack the weakest neighbour of `from` that the army can likely take (used by followThrough). */
-  | { kind: "advance"; from: TerritoryId }
-  | { kind: "raiseLeader" };
+  | { kind: "advance"; from: TerritoryId };
 
 export type Order = OrderBody & {
   id: string;
@@ -181,7 +182,8 @@ export type GameEvent =
       specialistsLost: SpecialistType[];
     }
   | { type: "leaderKilled"; player: PlayerId; territory: TerritoryId }
-  | { type: "leaderRaised"; player: PlayerId; orderId: string; territory: TerritoryId }
+  /** A fallen Leader comes back for free at the end of the turn: at the capital, or the strongest territory if the capital is lost. */
+  | { type: "leaderReturned"; player: PlayerId; territory: TerritoryId }
   | { type: "eliminated"; player: PlayerId; by: PlayerId | null }
   | { type: "income"; player: PlayerId; income: number; upkeep: number; goldAfter: number; deserted: number }
   | { type: "gameOver"; winner: PlayerId | "draw"; reason: NonNullable<GameState["endReason"]>; scores: Record<PlayerId, number> };

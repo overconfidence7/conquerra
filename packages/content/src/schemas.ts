@@ -30,6 +30,8 @@ export const MapDef = z
     name: z.string(),
     minPlayers: z.number().int().min(2),
     maxPlayers: z.number().int(),
+    /** The player counts this map plays best at (about 6–7 territories each at the top end). The lobby suggests these. */
+    recommendedPlayers: z.object({ min: z.number().int(), max: z.number().int() }),
     territories: z.array(TerritoryDef).min(2),
     provinces: z.array(z.object({ id: z.string(), name: z.string(), bonus: z.number().int().min(0) })),
     borders: z.array(z.object({ a: z.string(), b: z.string(), type: BorderType.default("normal") })),
@@ -46,6 +48,9 @@ export const MapDef = z
         ctx.addIssue({ code: "custom", message: `bad border ${b.a}-${b.b}` });
     for (const c of m.capitalSlots)
       if (!ids.has(c)) ctx.addIssue({ code: "custom", message: `bad capital slot ${c}` });
+    const r = m.recommendedPlayers;
+    if (r.min > r.max || r.min < m.minPlayers || r.max > m.maxPlayers)
+      ctx.addIssue({ code: "custom", message: "recommendedPlayers must sit inside minPlayers..maxPlayers" });
     if (m.capitalSlots.length < m.maxPlayers)
       ctx.addIssue({ code: "custom", message: "not enough capital slots for maxPlayers" });
   });
@@ -126,7 +131,6 @@ export const Rules = z.object({
   }),
   leader: z.object({
     strengthBonus: z.number(),
-    raiseCost: z.number().int(),
     seizeInitiativeCooldown: z.number().int().min(1),
     lieInWaitCooldown: z.number().int().min(1),
   }),
@@ -140,6 +144,8 @@ export const Rules = z.object({
     maxTurnsHard: z.number().int(),
     /** Turn limit used by conquest mode when the host doesn't pick one. */
     conquestTurnLimitDefault: z.number().int().min(1),
+    /** The lobby suggests conquest mode (a turn limit) from this many players up; classic below. */
+    conquestSuggestedFromPlayers: z.number().int().min(2),
   }),
 }).superRefine((r, ctx) => {
   if (r.culture.investCost.length < r.culture.max)

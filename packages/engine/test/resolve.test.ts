@@ -148,23 +148,51 @@ describe("turn resolution", () => {
     board(s, { a: ["p1", 1], b: ["p1", 1], c: ["p1", 1], d: ["p1", 30], e: ["p2", 1] });
     const { state, events } = resolveTurn(ctx, s, { p1: [mv("d", "e", "all")] });
     expect(player(state, "p2").eliminatedTurn).toBe(1);
+    expect(player(state, "p2").eliminatedBy).toBe("p1");
+    expect(player(state, "p1").eliminatedBy).toBeNull();
     expect(find(events, "eliminated")).toMatchObject({ player: "p2", by: "p1" });
     expect(state.winner).toBe("p1");
     expect(state.endReason).toBe("lastStanding");
     expect(() => resolveTurn(ctx, state, {})).toThrow();
   });
 
-  it("killing a leader in battle removes it; it can be raised again at the capital", () => {
+  it("a fallen leader comes back for free at the capital, ready for the next turn", () => {
     const ctx = ctxWith();
     const s = lineGame(ctx);
     board(s, { a: ["p1", 40], b: ["p2", 2], e: ["p2", 3] });
     const p2 = player(s, "p2");
     p2.leader = { alive: true, territory: "b" };
-    p2.gold = 100;
+    p2.gold = 0;
+    p2.cooldowns = { seize: 2, lie: 1 };
     const t1 = resolveTurn(ctx, s, { p1: [mv("a", "b", "all")] });
-    expect(t1.events.some((e) => e.type === "leaderKilled" && e.player === "p2")).toBe(true);
-    const t2 = resolveTurn(ctx, t1.state, { p2: [{ id: "raise", kind: "raiseLeader" }] });
-    expect(player(t2.state, "p2").leader).toEqual({ alive: true, territory: "e" });
+    const killed = t1.events.findIndex((e) => e.type === "leaderKilled" && e.player === "p2");
+    const back = t1.events.findIndex((e) => e.type === "leaderReturned" && e.player === "p2");
+    expect(killed).toBeGreaterThanOrEqual(0);
+    expect(back).toBeGreaterThan(killed);
+    expect(find(t1.events, "leaderReturned")).toMatchObject({ player: "p2", territory: "e" });
+    expect(player(t1.state, "p2").leader).toEqual({ alive: true, territory: "e" });
+    // Free, and the leader's cooldowns just tick down as usual.
+    expect(player(t1.state, "p2").cooldowns).toEqual({ seize: 1, lie: 0 });
+    expect(t1.state.players.find((p) => p.id === "p2")!.gold).toBeGreaterThanOrEqual(0);
+  });
+
+  it("if the capital is lost, the leader comes back at the player's strongest territory", () => {
+    const ctx = ctxWith();
+    const s = lineGame(ctx);
+    board(s, { a: ["p1", 40], b: ["p2", 1], c: ["p2", 7], d: ["p2", 4], e: ["p1", 5] });
+    const p2 = player(s, "p2");
+    p2.leader = { alive: true, territory: "b" };
+    const { state, events } = resolveTurn(ctx, s, { p1: [mv("a", "b", "all")] });
+    expect(find(events, "leaderReturned")).toMatchObject({ player: "p2", territory: "c" });
+    expect(player(state, "p2").leader).toEqual({ alive: true, territory: "c" });
+  });
+
+  it("living leaders and eliminated players don't get a return event", () => {
+    const ctx = ctxWith();
+    const s = lineGame(ctx);
+    board(s, { a: ["p1", 1], b: ["p1", 1], c: ["p1", 1], d: ["p1", 30], e: ["p2", 1] });
+    const { events } = resolveTurn(ctx, s, { p1: [mv("d", "e", "all")] });
+    expect(events.some((e) => e.type === "leaderReturned")).toBe(false);
   });
 
   it("collects income and charges upkeep that grows with empire size", () => {
