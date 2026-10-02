@@ -11,6 +11,7 @@ function inProcessHost(seed: string): GameHost {
     lockIn: async (orders) => game!.lockIn(orders),
     watchNext: async () => game!.watchNext(),
     finish: async () => game!.finish(),
+    suggest: async () => game!.suggest(),
     dispose: () => {},
   };
 }

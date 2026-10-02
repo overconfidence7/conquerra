@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "assets": {
+    "terrain-farmland": {
+      "file": "terrain-farmland.webp",
+      "width": 512,
+      "height": 512
+    },
+    "terrain-forest": {
+      "file": "terrain-forest.webp",
+      "width": 512,
+      "height": 512
+    },
+    "terrain-grass": {
+      "file": "terrain-grass.webp",
+      "width": 512,
+      "height": 512
+    },
+    "terrain-hills": {
+      "file": "terrain-hills.webp",
+      "width": 512,
+      "height": 512
+    }
+  }
+}

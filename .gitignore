@@ -5,3 +5,7 @@ dist/
 .env*
 sim-results/
 dist-types/
+
+# Raw art from Nate stays on his machine (large PNGs); the processed WebP files in apps/web/public/art are committed.
+art/incoming/*
+!art/incoming/README.md

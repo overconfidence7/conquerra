@@ -86,6 +86,12 @@ export class LocalGame {
     return this.update(this.play(null));
   }
 
+  /** The Recruit bot's orders for you this turn, planned from your own view only. */
+  suggest(): Order[] {
+    if (this.state.winner || this.knockedOut) return [];
+    return recruitBot.plan(this.ctx, viewFor(this.ctx, this.state, HUMAN_ID));
+  }
+
   /** Knocked out: the bots play on to the end (the engine's turn cap guarantees one). */
   finish(): HostUpdate {
     if (!this.knockedOut && !this.state.winner) throw new Error("You're still in the game");

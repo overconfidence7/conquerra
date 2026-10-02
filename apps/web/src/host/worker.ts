@@ -13,6 +13,10 @@ scope.onmessage = (e) => {
       scope.postMessage({ id: req.id, ok: true, update: game.start() });
     } else {
       if (!game) throw new Error("No game running");
+      if (req.type === "suggest") {
+        scope.postMessage({ id: req.id, ok: true, orders: game.suggest() });
+        return;
+      }
       const update = req.type === "lockIn" ? game.lockIn(req.orders) : req.type === "watchNext" ? game.watchNext() : game.finish();
       scope.postMessage({ id: req.id, ok: true, update });
     }

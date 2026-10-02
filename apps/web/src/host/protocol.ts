@@ -49,6 +49,8 @@ export interface GameHost {
   watchNext(): Promise<HostUpdate>;
   /** Once you're knocked out: the bots play on to the end. */
   finish(): Promise<HostUpdate>;
+  /** What the Recruit bot would order for you this turn (for testing; maybe an "auto-orders" button later). */
+  suggest(): Promise<Order[]>;
   dispose(): void;
 }
 
@@ -57,6 +59,10 @@ export type HostRequest =
   | { id: number; type: "start"; settings: LobbySettings; seed: string }
   | { id: number; type: "lockIn"; orders: Order[] }
   | { id: number; type: "watchNext" }
-  | { id: number; type: "finish" };
+  | { id: number; type: "finish" }
+  | { id: number; type: "suggest" };
 
-export type HostResponse = { id: number; ok: true; update: HostUpdate | HostStart } | { id: number; ok: false; error: string };
+export type HostResponse =
+  | { id: number; ok: true; update: HostUpdate | HostStart }
+  | { id: number; ok: true; orders: Order[] }
+  | { id: number; ok: false; error: string };

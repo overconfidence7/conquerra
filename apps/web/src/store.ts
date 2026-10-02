@@ -46,6 +46,8 @@ interface GameStore {
   /** Knocked out: skip ahead to the end and see the result. */
   seeResult(): Promise<void>;
   playAgain(): void;
+  /** Replace your orders with the Recruit bot's plan (testing; the perf script plays whole games with it). */
+  autoPlan(): Promise<void>;
 }
 
 /** Where games run. A Web Worker in the browser; tests swap in an in-process host. */
@@ -215,6 +217,13 @@ export const useGame = create<GameStore>((set, get) => ({
     } finally {
       set({ busy: false });
     }
+  },
+
+  async autoPlan() {
+    const { host } = get();
+    if (!host) return;
+    const orders = await host.suggest();
+    set({ queue: orders.map((o) => ({ ...o, id: nextOrderId() })), draft: null });
   },
 
   playAgain() {

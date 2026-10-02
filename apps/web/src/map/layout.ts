@@ -1,0 +1,162 @@
+import type { DetailMix, ZoomDetail } from "./zoom";
+
+/**
+ * Army markers: how big they are on screen, and where they go so they never overlap.
+ * Pure (no drawing), so it's tested without WebGL. Sizes are screen pixels.
+ */
+
+/** The troop pill is never smaller than this on screen, at any zoom. */
+export const MIN_PILL_HEIGHT = 18;
+export const MAX_PILL_HEIGHT = 30;
+
+/** What a marker shows, so its size can be worked out. */
+export interface MarkerContent {
+  /** The troop number as shown ("12", or "12?" for last-seen intel). */
+  label: string;
+  /** Owned by a House (banner and pill colours); false for neutral land. */
+  owned: boolean;
+  crown: boolean;
+  building: boolean;
+  specialists: number;
+  culture: number;
+  /** Territory name (shown at Near). */
+  name: string;
+  /** Two-line capital label under the marker. */
+  capital: boolean;
+}
+
+export interface MarkerMetrics {
+  pillH: number;
+  pillW: number;
+  font: number;
+  /** Small icons (crown, building, specialists). */
+  icon: number;
+  /** Width and height of the whole marker, for collision. The pill's centre is the marker's anchor. */
+  w: number;
+  h: number;
+  /** How far the box's centre sits below the anchor (the box isn't symmetric when there's a name or capital label). */
+  dy: number;
+}
+
+const DIGIT_W = 0.62;
+
+/** Pill height for a zoom: grows a little as you zoom in, never below the minimum. */
+export function pillHeight(z: Pick<ZoomDetail, "territoryPx">): number {
+  return Math.max(MIN_PILL_HEIGHT, Math.min(MAX_PILL_HEIGHT, 15 + z.territoryPx * 0.05));
+}
+
+export function markerMetrics(c: MarkerContent, z: Pick<ZoomDetail, "territoryPx">, mix: DetailMix): MarkerMetrics {
+  const pillH = pillHeight(z);
+  const font = Math.round(pillH * 0.66);
+  const icon = Math.round(pillH * 0.78);
+  const shield = mix.icons > 0.5 && c.owned ? pillH * 0.62 : 0;
+  const pillW = Math.max(pillH * 1.25, c.label.length * font * DIGIT_W + pillH * 0.7 + shield);
+  let w = pillW, top = pillH / 2, bottom = pillH / 2;
+  if (mix.icons > 0.5) {
+    if (c.owned) w += pillH * 0.9; // banner on the left
+    if (c.building) w += icon + 2; // building icon on the right
+    if (c.crown) top = Math.max(top, pillH / 2 + icon * 0.7);
+  }
+  if (mix.nearDetail > 0.5) {
+    if (c.specialists) {
+      bottom += icon + 3;
+      w = Math.max(w, c.specialists * (icon + 2));
+    }
+    if (c.culture) bottom += 7;
+  }
+  // The name sits above the pill at Near, except on capitals, whose plaque already names them.
+  if (mix.names > 0.5 && c.name && !(c.capital && mix.icons > 0.5)) {
+    top += font * 0.95 + 3;
+    w = Math.max(w, c.name.length * font * 0.58);
+  }
+  if (c.capital && mix.icons > 0.5) {
+    bottom += font * 1.9 + 2;
+    w = Math.max(w, Math.max(c.name.length, 7) * font * 0.6);
+  }
+  return { pillH, pillW, font, icon, w: Math.ceil(w), h: Math.ceil(top + bottom), dy: (bottom - top) / 2 };
+}
+
+// ---------- Collision ----------
+
+export interface MarkerBox {
+  id: string;
+  /** Where the marker wants to be (its territory's label point, on screen). */
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** Vertical offset of the box centre from (x, y). */
+  dy?: number;
+  /** Higher wins the spot when two collide (your own land, then visible armies, then last-seen intel). */
+  priority: number;
+}
+
+export interface MarkerPlacement {
+  /** Where the marker's anchor ends up (shifted away from (x, y) if it had to move). */
+  x: number;
+  y: number;
+  shifted: boolean;
+  /** Set when there was no room: this marker is hidden and counted on the named one instead ("+1"). */
+  mergedInto: string | null;
+  /** Markers folded into this one. */
+  merged: string[];
+}
+
+const overlaps = (ax: number, ay: number, a: MarkerBox, bx: number, by: number, b: MarkerBox, gap: number) =>
+  Math.abs(ax - bx) * 2 < a.w + b.w + gap * 2 && Math.abs(ay + (a.dy ?? 0) - by - (b.dy ?? 0)) * 2 < a.h + b.h + gap * 2;
+
+/**
+ * Place every marker so none overlap. Highest priority first; each takes its own spot if it's free, otherwise the
+ * nearest free spot within `maxShift` px, otherwise it merges into the marker in its way.
+ */
+export function layoutMarkers(boxes: readonly MarkerBox[], opts: { gap?: number; maxShift?: number } = {}): Map<string, MarkerPlacement> {
+  const gap = opts.gap ?? 2;
+  const order = [...boxes].sort((a, b) => b.priority - a.priority || a.y - b.y || a.x - b.x || (a.id < b.id ? -1 : 1));
+  const placed: { box: MarkerBox; x: number; y: number }[] = [];
+  const out = new Map<string, MarkerPlacement>();
+  // Simple grid so each check only looks at nearby markers.
+  const cell = 64;
+  const grid = new Map<string, number[]>();
+  const keyOf = (cx: number, cy: number) => `${cx},${cy}`;
+  const near = (x: number, y: number, b: MarkerBox) => {
+    const r = Math.ceil((Math.max(b.w, b.h) + 200) / cell / 2);
+    const cx = Math.floor(x / cell), cy = Math.floor(y / cell);
+    const found: number[] = [];
+    for (let i = cx - r; i <= cx + r; i++) for (let j = cy - r; j <= cy + r; j++) found.push(...(grid.get(keyOf(i, j)) ?? []));
+    return found;
+  };
+  const free = (x: number, y: number, b: MarkerBox) => near(x, y, b).every((k) => !overlaps(x, y, b, placed[k]!.x, placed[k]!.y, placed[k]!.box, gap));
+
+  for (const b of order) {
+    const maxShift = opts.maxShift ?? Math.max(b.w, b.h) * 0.9;
+    const step = Math.max(4, Math.min(b.w, b.h) / 3);
+    let spot: [number, number] | null = free(b.x, b.y, b) ? [b.x, b.y] : null;
+    for (let d = step; !spot && d <= maxShift + 0.01; d += step) {
+      const n = Math.max(8, Math.round((2 * Math.PI * d) / step));
+      for (let k = 0; k < n && !spot; k++) {
+        const a = (k / n) * Math.PI * 2;
+        // Prefer moving sideways (markers are wider than tall).
+        const x = b.x + Math.cos(a) * d * 1.3, y = b.y + Math.sin(a) * d * 0.8;
+        if (free(x, y, b)) spot = [x, y];
+      }
+    }
+    if (spot) {
+      const idx = placed.push({ box: b, x: spot[0], y: spot[1] }) - 1;
+      const gk = keyOf(Math.floor(spot[0] / cell), Math.floor(spot[1] / cell));
+      grid.set(gk, [...(grid.get(gk) ?? []), idx]);
+      out.set(b.id, { x: spot[0], y: spot[1], shifted: spot[0] !== b.x || spot[1] !== b.y, mergedInto: null, merged: [] });
+      continue;
+    }
+    // No room: fold into whichever placed marker overlaps our own spot the most.
+    let host = placed[0]!;
+    let best = -Infinity;
+    for (const k of near(b.x, b.y, b).length ? near(b.x, b.y, b) : placed.map((_, i) => i)) {
+      const p = placed[k]!;
+      const score = -Math.hypot(p.x - b.x, p.y - b.y);
+      if (score > best) (best = score), (host = p);
+    }
+    out.get(host.box.id)!.merged.push(b.id);
+    out.set(b.id, { x: host.x, y: host.y, shifted: true, mergedInto: host.box.id, merged: [] });
+  }
+  return out;
+}

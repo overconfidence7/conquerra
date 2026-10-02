@@ -97,7 +97,7 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 .dot.out { opacity: 0.25; }
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 12px; padding: 12px; align-items: start; }
-.map-wrap { background: var(--sea); border-radius: 10px; overflow: hidden; position: sticky; top: 60px; }
+.map-wrap { border-radius: 10px; overflow: hidden; position: sticky; top: 60px; }
 .side { display: flex; flex-direction: column; gap: 10px; }
 @media (max-width: 860px) {
   .layout { grid-template-columns: minmax(0, 1fr); padding: 8px; }
@@ -105,44 +105,35 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 }
 
 /* ---------- Map ---------- */
-.map { display: block; width: 100%; height: auto; user-select: none; }
-.cell { stroke: rgba(0, 0, 0, 0.35); stroke-width: 1; cursor: pointer; transition: filter 0.1s; }
-.cell:hover { filter: brightness(1.08); }
-.cell.target { stroke: #fff; stroke-width: 3; stroke-dasharray: 6 4; }
-.selected-outline { fill: none; stroke: #facc15; stroke-width: 5; pointer-events: none; }
-.province-edge { fill: none; stroke: rgba(20, 15, 10, 0.75); stroke-width: 3.5; pointer-events: none; }
-.water { fill: var(--sea); stroke: var(--coast); stroke-width: 1.5; pointer-events: none; }
-.mountains { fill: var(--rock); stroke: rgba(40, 30, 20, 0.6); stroke-width: 1.5; }
-.river { fill: none; stroke: #1d6fd8; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
-.sea-lane { fill: none; stroke: var(--lane); stroke-dasharray: 10 7; stroke-linecap: round; }
-.pass circle { fill: #fde68a; stroke: #7c4a1e; stroke-width: 2; }
-.pass path { fill: none; stroke: #7c4a1e; stroke-width: 2.5; stroke-linejoin: round; }
-.province-label {
-  text-anchor: middle; font-size: 15px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
-  fill: rgba(0, 0, 0, 0.18); pointer-events: none;
+.map-host {
+  position: relative; width: 100%; height: calc(100vh - 84px); min-height: 360px;
+  overflow: hidden; border-radius: 10px; background: #173a5c; user-select: none; -webkit-user-select: none;
 }
-.label text { text-anchor: middle; }
-.tname { font-size: 10.5px; font-weight: 600; fill: #1c1917; paint-order: stroke; stroke: rgba(255, 255, 255, 0.7); stroke-width: 3px; }
-.troop-bg { fill: #fff; stroke-width: 3; }
-.troops { font-size: 15px; font-weight: 700; fill: #111; }
-.badge { font-size: 12px; }
-.terrain-small { font-size: 10px; opacity: 0.8; }
-.terrain-big { font-size: 18px; opacity: 0.7; }
-.value { font-size: 12px; font-weight: 700; fill: #3f3a33; }
-.arrow polyline { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
-.arrow.move polyline { stroke: var(--move); }
-.arrow.attack polyline { stroke: var(--attack); }
-.arrow.draft polyline { stroke-dasharray: 8 6; opacity: 0.85; }
-.arrow-label { text-anchor: middle; font-size: 12px; font-weight: 700; fill: #fff; paint-order: stroke; stroke: #111; stroke-width: 3px; pointer-events: none; }
-@media (max-width: 600px) {
-  /* Map text is in map units, so it shrinks with the map: bump it up on phones. */
-  .tname, .terrain-small, .province-label { display: none; }
-  .troop-bg { r: 22px; }
-  .troops { font-size: 24px; transform: translateY(3px); transform-box: fill-box; }
-  .badge { font-size: 17px; }
-  .value { font-size: 18px; }
-  .terrain-big { font-size: 24px; }
+.over-map .map-host { height: 62vh; }
+@media (max-width: 860px) {
+  .map-host { height: 62vh; height: 62svh; }
 }
+.map-loading { position: absolute; inset: 0; display: grid; place-items: center; color: #e3c77e; font: 600 1rem Cinzel, serif; letter-spacing: 0.05em; }
+.map-tools { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 6px; z-index: 2; }
+.map-tools button {
+  min-width: 40px; min-height: 40px; padding: 4px 8px; border-radius: 8px; font-weight: 700; font-size: 1.05rem;
+  background: rgba(15, 22, 32, 0.88); color: #ede6d6; border: 1px solid #c9a45c;
+}
+.map-tools button.on { background: #c9a45c; color: #0f1620; }
+.tcard {
+  position: absolute; z-index: 3; width: 224px; pointer-events: none;
+  background: rgba(15, 22, 32, 0.95); color: #ede6d6; border: 1px solid #c9a45c; border-radius: 8px;
+  padding: 9px 11px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); font-size: 0.86rem;
+}
+.tcard-title { font: 700 1rem Cinzel, serif; color: #e3c77e; }
+.tcard-sub { color: #9aa3ae; font-size: 0.78rem; margin-bottom: 4px; }
+.tcard-intel { color: #e39a4e; font-weight: 700; font-size: 0.8rem; margin-bottom: 2px; }
+.tcard dl { margin: 4px 0 0; display: grid; gap: 2px; }
+.tcard dl div { display: flex; justify-content: space-between; gap: 8px; }
+.tcard dt { color: #9aa3ae; }
+.tcard dd { margin: 0; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tcard.uncertain dd { color: #c9c2b2; font-style: italic; }
+.swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: middle; border: 1px solid rgba(255, 255, 255, 0.4); }
 
 /* ---------- Panels ---------- */
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }

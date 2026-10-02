@@ -1,6 +1,36 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "web", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "web", "exec", "vite", "--port", "5173", "--strictPort", "--open", "false"], "port": 5173 }
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "web",
+        "exec",
+        "vite",
+        "--port",
+        "5173",
+        "--strictPort",
+        "--open",
+        "false"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "web-preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "web",
+        "exec",
+        "vite",
+        "preview",
+        "--port",
+        "4173",
+        "--strictPort"
+      ],
+      "port": 4173
+    }
   ]
 }

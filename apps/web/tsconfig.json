@@ -8,5 +8,5 @@
     "types": ["vite/client"]
   },
   "include": ["src", "test"],
-  "references": [{ "path": "../../packages/content" }, { "path": "../../packages/engine" }, { "path": "../../packages/bots" }]
+  "references": [{ "path": "../../packages/content" }, { "path": "../../packages/engine" }, { "path": "../../packages/bots" }, { "path": "../../packages/art" }]
 }

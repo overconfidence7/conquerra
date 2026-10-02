@@ -1,3 +1,4 @@
+import type { Order } from "@conquerra/engine";
 import type { GameHost, HostRequest, HostResponse, HostStart, HostUpdate, LobbySettings } from "./protocol";
 
 /** A fresh secret seed for the game's dice (the engine itself never makes randomness). */
@@ -12,26 +13,27 @@ type Body = HostRequest extends infer R ? (R extends { id: number } ? Omit<R, "i
 export function createLocalHost(): GameHost {
   const worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
   let nextId = 1;
-  const pending = new Map<number, { resolve: (u: HostUpdate | HostStart) => void; reject: (e: Error) => void }>();
+  const pending = new Map<number, { resolve: (u: unknown) => void; reject: (e: Error) => void }>();
   worker.onmessage = (e: MessageEvent<HostResponse>) => {
     const res = e.data;
     const p = pending.get(res.id);
     if (!p) return;
     pending.delete(res.id);
-    if (res.ok) p.resolve(res.update);
-    else p.reject(new Error(res.error));
+    if (!res.ok) p.reject(new Error(res.error));
+    else p.resolve("orders" in res ? res.orders : res.update);
   };
-  const send = (body: Body) =>
-    new Promise<HostUpdate | HostStart>((resolve, reject) => {
+  const send = <T = HostUpdate>(body: Body) =>
+    new Promise<T>((resolve, reject) => {
       const id = nextId++;
-      pending.set(id, { resolve, reject });
+      pending.set(id, { resolve: resolve as (u: unknown) => void, reject });
       worker.postMessage({ ...body, id } as HostRequest);
     });
   return {
-    start: (settings: LobbySettings) => send({ type: "start", settings, seed: newSeed() }) as Promise<HostStart>,
+    start: (settings: LobbySettings) => send<HostStart>({ type: "start", settings, seed: newSeed() }),
     lockIn: (orders) => send({ type: "lockIn", orders }),
     watchNext: () => send({ type: "watchNext" }),
     finish: () => send({ type: "finish" }),
+    suggest: () => send<Order[]>({ type: "suggest" }),
     dispose: () => worker.terminate(),
   };
 }
