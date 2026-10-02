@@ -78,9 +78,11 @@ Research, outline v0.1, v0.2 additions, and decisions.
 - Map, plus a fast order builder with presets (goal: a basic turn in about 60 seconds, a deep turn within 5 minutes).
 - 5-minute timer, odds preview, and the shared replay showing your visible area.
 - A private preview at `conquerra.overconfidenceonline.com` behind Cloudflare Access (Google login already set up), so Nate can test on his phone. See `docs/infra-cloudflare.md`. (Decided Oct 2.)
-- Split into two Claude Code sessions:
-  - **Session 2:** small engine updates (Leader auto-return, map player ranges, Conquest suggestion for 8+ players), then the browser app: map, order builder with presets and odds, local game vs bots, a simple text log of each turn.
-  - **Session 3:** the animated fog-aware replay, the turn timer, phone layout and installable app, polish toward the 60-second basic turn, and the private preview.
+- Split into four Claude Code sessions:
+  - **Session 2 ✅:** small engine updates, then the browser app: map, order builder with presets and odds, local game vs bots, a simple text log.
+  - **Session 3:** the seeded map maker and real geography (`04-design-additions.md` §9): seas, lakes, mountain ranges, passes, rivers, sea lanes, choke points, plus the biome and decoration data the painted map needs. Rebuild both test maps.
+  - **Session 4:** the painted map renderer (WebGL/PixiJS) in the "Gilded Atlas" style (`docs/06-art-direction.md`): terrain from the biome data, sprites, the info layer (borders, banners, icons), zoom levels, Tactical view, fog mist, the art import script and placeholders.
+  - **Session 5:** the gilded menus (territory card, army panel, Leader portrait, turn report, minimap), the animated replay, the turn timer, phone layout, installable app, and the private preview.
 - Exit: Nate plays full games against bots on phone and laptop.
 
 ### M3: Depth + balance
@@ -104,6 +106,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
 ### M5: Public 1.0
 - Public Google sign-in, matchmaking and ratings.
 - 50-player battle royale, asymmetric factions, secret objectives, team games.
+- Random maps generated on the spot, and the "blackout" fog option (`04-design-additions.md` §9).
 - Anti-collusion, tutorial, one-time purchase.
 
 ### M6: Native apps + later

@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M2 (playable browser game vs bots): session 2 done; session 3 (replay, timer, phone layout, private preview) next.**
+**Phase: M2 (playable browser game vs bots): session 3 (the map maker) ready to start. Nate is generating art in parallel.**
 
 Claude Code sessions completed: **2** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
@@ -106,3 +106,18 @@ Claude Code sessions completed: **2** (a new orchestrator prompt is due after se
 - **A typical early turn takes 10 taps** (recruit, two attacks with presets, lock in).
 - How to play it: see "How to play it locally" in the README (`pnpm dev`).
 - 93 automated tests pass (18 new for the web app), and GitHub's checks now build the web game too.
+
+### Oct 2: Orchestrator review of session 2
+- Checked the work: it matches the plan, the screen only ever sees your own fogged view, and GitHub's checks pass.
+- New direction from Nate: **maps should look and play like War.app or a good Risk map.** That means organic borders, seas and lakes, mountain ranges, rivers, and real choke points. Written up in `docs/04-design-additions.md` §9.
+- Nate's calls:
+  - The map rebuild comes **next** (session 3), before the phone work, since tap sizes and zoom depend on the map. M2 is now three sessions.
+  - **Random maps** and **"blackout" fog** (you see nothing past your borders until you explore) come later with the big game modes. We build so they're easy to add.
+  - Attacks start with **"Only if still stronger"** switched on.
+  - When you're knocked out, choose **"Watch to the end"** or **"See the result."**
+- Saved for session 4 (phone polish): Claude Code's ideas to tuck two presets behind "More" and merge hire and build into one "Spend" button, plus odds that account for your earlier queued orders.
+- Next prompt: `docs/prompts/claude-code-session-03.md`.
+- **Art direction, take two ("Gilded Atlas"):** Nate found the first style too simple and shared a mockup of the look he wants: a richly painted world with navy-and-gold menus. The new direction (`docs/06-art-direction.md`) keeps that look but fits it to our game (gold only, no research, troops + specialists).
+  - **Readability:** a clean info layer always sits on top of the painting (House borders, troop banners, building and specialist icons). Zooming out flattens the map toward plain colors, and a one-tap "Tactical view" removes the painting entirely.
+  - **Art:** AI-generated. Nate makes it with the prompt pack in `docs/art/asset-list-and-prompts.md` and drops it into `art/incoming/`. The game uses placeholders until it arrives.
+  - **M2 is now four sessions:** 3 map maker, 4 painted map, 5 menus, replay, timer, phone and private preview.

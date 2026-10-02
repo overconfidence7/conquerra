@@ -146,3 +146,15 @@ It matches "simple at first, deep later" and the 5-minute turn, and it plugs nea
 - **Spies do not affect combat.** Forts are Siege's job; spies are purely about information.
 - **Design note:** this gives holding whole countries a second payoff (spy defense), and makes the 3-defender deception a real mind game. Because the fake intel is generated from the true state with the seeded RNG, it stays deterministic and replayable.
 - **Open for the M3 build (orchestrator/Claude Code proposes, Nate approves):** spy movement speed, cost and the exact cap; whether "recall" is instant; and whether the defender learns that a spy was blocked or killed (planner suggests: yes for blocked and killed, no for fooled).
+
+## 9. Maps: real geography (from Nate, Oct 2)
+- **Look and feel:** like War.app and the better Risk variants. Territories have organic, irregular borders, not hexes or straight-edged cells.
+- **Obstacles shape the fighting:**
+  - **Seas and lakes:** not territories. Crossing water uses a **sea lane** drawn on the map, and only where one exists.
+  - **Mountain ranges:** impassable, except through a **pass**.
+  - **Rivers:** drawn along borders; attacking across one is harder (already in the rules).
+- **Choke points on purpose:** every map should have a few places (passes, narrow land bridges, sea lanes) where a small army can hold off a big one. That gives forts, siege and positioning real meaning.
+- **Map maker:** maps come from a seeded map maker (same seed, same map), then get hand-tuned names and touches. Because it's seeded, **random maps on the spot** become a lobby option later.
+- **Later, with the big game modes (M5):**
+  - **Random maps** generated when the game starts.
+  - **Blackout fog** (a lobby option, likely for massive games): anything not next to your land is completely hidden, including the map itself, until you explore it. Standard fog, which shows the geography but not who holds it, stays the default. (Look: standard fog is desaturated land with drifting mist; blackout fog is thick painted clouds. See `docs/06-art-direction.md`.)
