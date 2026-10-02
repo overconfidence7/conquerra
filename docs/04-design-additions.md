@@ -14,7 +14,7 @@
 - Implications:
   - A 20-turn game is about 2 hours, plus replay time. The early prototype's 80–110-turn games would be 7–9 hours, so the balance target is now **about 15–25 turns**.
   - The hosting choice still fits: Cloudflare Durable Objects run the 5-minute timers with alarms and push live updates over WebSockets.
-- **DECIDE:** Keep slower multi-day turns as a lobby option (e.g., for friends who can't play live), or drop it entirely?
+- **DECIDED (Oct 2):** 5 minutes is the default. The host can set longer turn timers for extended campaigns.
 
 ## 2. Diplomacy: menu of preset deals
 - Deal types are pre-built cards you click through:
@@ -60,6 +60,7 @@
 - Going all-military is faster but leaves you exposed.
 - Culture you build up can be captured. Someone who invested in culture risks a military player taking over and reaping the benefit.
 - **Planner's take:** this creates a real strategic choice ("tall vs. wide") and gives the Fallen system a counterweight. Keep it to **one culture number per territory**, not a separate tech tree, or it bloats.
+- **DECIDED (Oct 2): military and conquest first, with a cultural flair.** Culture must stay light; this is not Civilization. No culture victory, no culture tech tree.
 
 ## 6. Cards: three systems, consolidation suggested
 Nate's three ideas:
@@ -102,4 +103,4 @@ Nate's three ideas:
 - ➕ Simplest of all.
 - ➖ Too close to Risk, which works against the "less predictable" goal.
 
-**Planner's recommendation: Option C.** It matches "simple at first, deep later" and the 5-minute turn, and it plugs neatly into generals, cards ("Spoils: a free Siege specialist") and factions.
+**DECIDED (Oct 2): Option C, troops + specialists.** How players get specialists is still open (see below). It matches "simple at first, deep later" and the 5-minute turn, and it plugs neatly into generals, cards ("Spoils: a free Siege specialist") and factions.

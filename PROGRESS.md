@@ -37,3 +37,10 @@
 - **Correction from Nate:** turns are **5 minutes** to set orders, followed by a shared "what happened" replay where each player sees the results in their own visible area. (v0.1 assumed multi-day turns.)
 - Nate shared a big batch of new ideas: easy-click diplomacy with counteroffers, contingency presets, generals you give instructions to, military vs. culture, three kinds of cards, and an event/mission deck. These are captured in `docs/04-design-additions.md`, with open decisions.
 - Waiting on: Nate connecting GitHub, then a round of questions, then the kickoff prompts.
+
+### Oct 2 (later): Decisions
+- Turn timer: 5 minutes by default; longer timers available for extended campaigns.
+- Troops: **troops + specialists**. How players get specialists is still open.
+- Culture stays light. The game is military and conquest first, with cultural flair; it is not Civilization.
+- Claude Code will review the early prototype and decide whether to keep it, change it, or start over.
+- GitHub is connected, but the `conquerra` repo still needs to be created.

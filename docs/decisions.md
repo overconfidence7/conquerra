@@ -26,3 +26,8 @@
 - 2026-10-02: M1 rules: one-unit garrison; units act once per turn (recruits can act immediately); failed attackers retreat; cavalry can move 2 through owned land; luck = ±L spread around the expected result.
 - 2026-10-02: The server is authoritative; clients replay the event log rather than recomputing turns.
 - 2026-10-02: Sim finding: games run 80–110 turns. M3 balance target is 15–30.
+- 2026-10-02: Turn timer defaults to 5 minutes to set orders, then a shared replay; the host can choose longer timers for extended campaigns.
+- 2026-10-02: Troops + specialists (one troop number per army plus 1–2 specialist attachments).
+- 2026-10-02: Military/conquest first with a light cultural flair; not Civ-like. No culture victory or culture tech tree.
+- 2026-10-02: Claude Code evaluates the planner-built M1 prototype up front and decides whether to keep it, change it, or start fresh.
+- 2026-10-02: Planner/orchestrator does not write code; Claude Code builds. A new orchestrator prompt comes every 3 Claude Code sessions.
