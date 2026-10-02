@@ -52,7 +52,9 @@
   - It reuses the same bot AI that plays opponents and takes over for quitters, so we build one brain and use it three ways.
   - Risk 1: if generals make bad calls, players will feel cheated. They need to be good, and their instructions must be clear.
   - Risk 2: power creep. More generals means more free actions, so cap them or give them upkeep.
-- **DECIDE:** Is your Leader also a general, or a separate hero who leads armies personally while generals manage regions? Planner recommends **separate**: one Leader you control directly, plus generals for regions.
+- **DECIDED (Oct 2): your Leader is a general.**
+  - You can order your Leader's army directly, or hand it a standing instruction and let it command itself.
+  - Capturing other players (or their capitals) adds their leaders to your roster as generals.
 
 ## 5. Military vs. culture
 - Income can go to **military** (troops, forts) or **culture**.
@@ -72,7 +74,13 @@ Nate's three ideas:
 - **Holding bonuses** are shown on the map, not as cards, so there's nothing to manage.
 - **Spoils** (earned).
 - **Fate** (drawn): events and missions. The **Fallen** can influence Fate draws, which links the revenge system to the deck instead of a separate menu.
-- **DECIDE:** Agree with consolidating, or keep three separate systems?
+- **DECIDED (Oct 2): two decks plus map bonuses.**
+  - Holding bonuses (territory, province, culture) show on the map.
+  - **Spoils** cards are earned by conquest and turned in for a windfall.
+  - **Fate** cards are drawn each turn.
+- **Fate draw (DECIDED):** every player draws one card per turn.
+  - **Events** land on a completely random spot on the board, not necessarily near the player who drew them. Most are mildly good or bad; a few are very good or very bad. Players under fog see only surface details.
+  - **Missions** go to the player who drew them.
 
 ## 7. Troop types: the analysis Nate asked for (DECIDE)
 
@@ -103,4 +111,7 @@ Nate's three ideas:
 - ➕ Simplest of all.
 - ➖ Too close to Risk, which works against the "less predictable" goal.
 
-**DECIDED (Oct 2): Option C, troops + specialists.** How players get specialists is still open (see below). It matches "simple at first, deep later" and the 5-minute turn, and it plugs neatly into generals, cards ("Spoils: a free Siege specialist") and factions.
+**DECIDED (Oct 2): Option C, troops + specialists.** Players get specialists three ways:
+- buy them with gold at a barracks
+- a little culture in a province unlocks the fancier types
+- Spoils cards sometimes give one free It matches "simple at first, deep later" and the 5-minute turn, and it plugs neatly into generals, cards ("Spoils: a free Siege specialist") and factions.

@@ -16,7 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: design update (v0.2) before the real build kicks off.**
+**Phase: M1 (engine core v0.2): ready to kick off with Claude Code.**
+
+Claude Code sessions completed: **0** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
 ---
 
@@ -44,3 +46,10 @@
 - Culture stays light. The game is military and conquest first, with cultural flair; it is not Civilization.
 - Claude Code will review the early prototype and decide whether to keep it, change it, or start over.
 - GitHub is connected, but the `conquerra` repo still needs to be created.
+- More decisions:
+  - Specialists come from gold at a barracks, with light culture unlocks and occasional free Spoils cards.
+  - Your Leader is a general: you can control it directly or give it standing instructions. Captured leaders become your generals.
+  - Cards: map bonuses, plus a Spoils deck and a Fate deck.
+  - Fate: everyone draws one card per turn. Events land anywhere on the board, mostly mild with a few extreme ones; missions go to whoever drew them.
+- Build plan milestones revised for v0.2.
+- Kickoff prompts written: `docs/prompts/claude-code-session-01.md` and `docs/prompts/orchestrator-01.md`.

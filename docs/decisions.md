@@ -31,3 +31,7 @@
 - 2026-10-02: Military/conquest first with a light cultural flair; not Civ-like. No culture victory or culture tech tree.
 - 2026-10-02: Claude Code evaluates the planner-built M1 prototype up front and decides whether to keep it, change it, or start fresh.
 - 2026-10-02: Planner/orchestrator does not write code; Claude Code builds. A new orchestrator prompt comes every 3 Claude Code sessions.
+- 2026-10-02: Specialists come from gold at a barracks, are unlocked by light culture, and are sometimes free from Spoils cards.
+- 2026-10-02: The Leader is a general (direct control, or standing instructions); captured players' leaders become your generals.
+- 2026-10-02: Cards: holding bonuses on the map, plus a Spoils deck (earned) and a Fate deck (drawn each turn).
+- 2026-10-02: Fate: every player draws 1 per turn. Events hit random spots anywhere on the board (mostly mild, a few extreme, good and bad); missions go to the drawer.

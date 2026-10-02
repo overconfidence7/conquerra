@@ -50,84 +50,56 @@ conquerra/
 
 ---
 
-## Milestones
+## Milestones (revised Oct 2 for design v0.2)
 
-### M0: Design sign-off ✅ Done
-- Market research (`01`), design outline (`02`), this plan (`03`).
-- **Exit:** Nate approves the outline and the open questions are answered.
+The design is now `02-game-design-outline.md` (v0.1 base) **plus** `04-design-additions.md` (v0.2). Where they disagree, **04 wins**.
 
-### M1: Engine core + headless sim ✅ Done (Oct 2): see `sim-results-m1.md`
-Goal: two bots can play a full game in the terminal.
-1. Repo scaffold: pnpm workspace, TS strict, ESLint/Prettier, Vitest, GitHub Actions running tests.
-2. `content`: map schema (territories, adjacency, provinces, terrain, special borders) + one hand-made test map (~40 territories, 2–6 players).
-3. `engine` state model: players, territories, armies (by unit type), gold, buildings, leaders.
-4. Order types: `recruit`, `build`, `move`, `attack`, `useAbility`, with `conditions[]` and `fallback`.
-5. Resolution loop: seeded seat shuffle → round-robin → condition check → execute or fallback or fizzle. Initiative hooks (`first`, `last`).
-6. Combat: expected-value model + luck blend (default 0.3), terrain/fort/unit modifiers, `previewCombat()` for the odds UI.
-7. Economy: income, province bonuses, upkeep curve.
-8. Fog: `viewFor(state, player)`.
-9. Victory checks: classic, conquest (turn limit + score).
-10. `bots`: "Recruit" tier, a rule-based utility AI (score candidate orders, pick the best plan).
-11. `apps/sim`: `pnpm sim --map test --players 4 --games 500` → win rates, average game length, first-player advantage, snowball metrics.
-- **Tests:** determinism (same seed → same result), no negative troops, conservation checks, property tests on random order queues.
-- **Exit:** 1,000 bot games run without errors; the stats look sane.
-- **Built as specified, with these M1 rule choices:**
-  - A one-unit garrison must stay behind on every move.
-  - Units that moved or fought can't act again that turn; freshly recruited units can.
-  - Failed attacks fall back to their starting territory.
-  - Cavalry-only armies can move two territories through land you hold.
-  - Combat luck is a ±luck% spread around the expected result (0 = fully deterministic).
-- **Note:** the server is the single source of truth for results. JavaScript engines can differ in the last decimal of `Math.pow`, so clients replay the server's event log rather than re-computing turns.
+### M0: Design ✅ Done
+Research, outline v0.1, v0.2 additions, and decisions.
 
-### M2: Playable local alpha (browser, single player vs bots)
-1. `web` app shell, a home screen and a new-game screen (map, bots, luck %, fog, mode).
-2. SVG map renderer: territories colored by owner, troop badges, fog shading, zoom/pan, mobile touch.
-3. **Order builder UI.** This is the hardest UX piece:
-   - Tap a territory, then pick an action, then pick a target. The order appears in a queue panel.
-   - Drag to reorder the queue.
-   - "Add condition" / "Add fallback" with a few simple templates first (still own X, at least N troops, target owner is Y).
-   - Live odds preview on attacks.
-4. Bots run in a Web Worker.
-5. Turn replay: step-by-step animation + log; skip/scrub.
-6. Save/load local games (IndexedDB).
-7. Fair-seed display: fingerprint at start, revealed seed and a verify button at the end.
-- **Exit:** Nate plays full games against bots on his phone and laptop and has opinions.
+### M1: Engine core v0.2 + headless sim
+- Claude Code first reviews the planner-built prototype (`packages/`, `apps/sim`) and decides whether to keep it, change it, or start fresh. The decision is written up in `docs/05-prototype-review.md`.
+- Engine scope:
+  - **troops + specialists** (replaces the three unit types)
+  - order queues with **contingency presets**
+  - round-robin resolution with initiative
+  - 70/30 combat with an odds preview
+  - gold economy with upkeep
+  - **light culture** (one number per territory)
+  - fog, with per-player replay filtering ("surface details" for fogged events)
+  - Leader
+  - classic and conquest victory
+- Turn timer settings in the game config: 5-minute default, longer allowed. The engine doesn't keep time; it only stores the setting.
+- Bots: "Recruit" tier, updated for specialists and presets.
+- Sim reports game length. **Target: about 15–25 turns.**
+- Exit: tests green, 1,000+ bot games with no crashes, a plain-language rules reference (`docs/rules-reference.md`) for Nate to read.
+
+### M2: Playable local alpha (browser, vs bots)
+- Map, plus a fast order builder with presets (goal: a basic turn in about 60 seconds, a deep turn within 5 minutes).
+- 5-minute timer, odds preview, and the shared replay showing your visible area.
+- Exit: Nate plays full games against bots on phone and laptop.
 
 ### M3: Depth + balance
-1. Unit types (cavalry movement, siege vs forts) and the leader hero with 3–4 starter abilities, including initiative abilities.
-2. All four buildings.
-3. Diplomacy engine: handshake and binding deals, expiry, scaled break penalties, the Oathbreaker mark. Bot diplomacy logic.
-4. The Fallen: Influence, world events, pooling, caps.
-5. A second and third map (a 6–10 player map).
-6. Balance pass using the sim: tune the upkeep curve, combat numbers and event caps from data.
-- **Exit:** a 6-player game against bots feels tense through the end, and the sim shows no dominant strategy.
+- Leader-as-general (standing instructions) and captured generals.
+- Spoils and Fate decks (events and missions).
+- Preset-based diplomacy with counteroffers and the re-confirm rule.
+- The Fallen.
+- Specialist unlocks via culture.
+- Balance pass using the sim.
 
 ### M4: Online with friends (Cloudflare)
-1. `server` Worker + `GameRoom` Durable Object: create, join, submit orders, lock in, resolve on alarm or all-locked, broadcast per-player views over WebSocket.
-2. D1 schema: users, games, game_players, results. R2: replays.
-3. Auth via Cloudflare Access (Google) on `game.<domain>`.
-4. Lobby: create a private game, share an invite link, choose a turn timer (5 min–24 hr).
-5. Notifications: Web Push + email when a turn resolves or a deadline is near.
-6. Bot takeover after N missed turns; vacation mode.
-7. In-game chat (per game, plus private 1:1).
-8. Staging + production environments; deploy from CI.
-- **Exit:** Nate and friends finish real async games from their phones.
+- Live 5-minute turns, plus a longer-timer option.
+- Durable Object per game, WebSockets for the live replay.
+- Google sign-in via Cloudflare Access, invite links.
+- Bot takeover for quitters; notifications.
 
 ### M5: Public 1.0
-1. Public Google sign-in (replacing Access), profiles, guest-to-account upgrade.
-2. Matchmaking (quick match), ratings (Glicko-2), reliability score.
-3. Battle royale (50 players): large map, performance pass (Canvas/Pixi if needed), lobby fill with bots.
-4. Asymmetric factions (3–4), secret objectives, team games.
-5. Collusion and multi-account signals (shared device/IP patterns, suspicious pact patterns) feeding a review queue.
-6. Interactive tutorial.
-7. One-time purchase (Stripe) + entitlements.
-8. Landing page, privacy policy and terms.
+- Public Google sign-in, matchmaking and ratings.
+- 50-player battle royale, asymmetric factions, secret objectives, team games.
+- Anti-collusion, tutorial, one-time purchase.
 
 ### M6: Native apps + later
-- Capacitor builds for iOS/Android, store in-app purchases, native push.
-- Tech tree, map editor, random map generator, cosmetics store, seasons.
-
----
+- iOS and Android apps, map editor, cosmetics.
 
 ## Working conventions for Claude Code
 - Start each session by reading `CLAUDE.md`, `docs/02-game-design-outline.md` and the current milestone in this file.
