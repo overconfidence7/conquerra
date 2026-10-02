@@ -1,0 +1,28 @@
+# Decisions Log
+
+- 2026-10-01: Fresh fantasy design, inspired by Risk/War.app, not a clone.
+- 2026-10-01: Start private (friends), design to go public later.
+- 2026-10-01: Async simultaneous turns with timers; unlimited queued orders resolved round-robin, one action per player, seeded random seat order; initiative effects can claim first or last.
+- 2026-10-01: Conditional orders with fallbacks; with no valid fallback, the order fails and is skipped.
+- 2026-10-01: Combat is about 70% deterministic, 30% luck (lobby-adjustable); provably fair seeds.
+- 2026-10-01: Depth layers: unit types, economy + buildings, fog + tech, formal diplomacy.
+- 2026-10-01: 2–10 players standard; 50-player battle royale mode.
+- 2026-10-01: Diplomacy: binding pacts (cost more, engine-enforced) and handshake deals (cheap, breakable, penalty scales with scope). All deals expire; no shared wins except team modes set up at the start.
+- 2026-10-01: Our own bot AI; bots take over quitters; full single player vs bots.
+- 2026-10-01: Eliminated players become "the Fallen" and influence world events; power grows as more players fall.
+- 2026-10-01: Leader heroes; asymmetric factions as an option.
+- 2026-10-01: Host picks the victory mode; classic = last one standing.
+- 2026-10-01: Territory-graph map; original fantasy setting.
+- 2026-10-01: Web/PWA first, native apps later.
+- 2026-10-01: Host on Nate's existing Cloudflare account (Workers, Durable Objects, D1, R2).
+- 2026-10-01: Google sign-in; Cloudflare Access for the friends beta.
+- 2026-10-01: One-time purchase for all maps and features; cosmetics store later; never sell power.
+- 2026-10-01: Order of work: design outline → local engine + bots → cloud with friends → public → app stores.
+- 2026-10-01: Code repo on Nate's GitHub account.
+- 2026-10-01: Subdomain = game name on Nate's existing domain (e.g., <name>.<domain>).
+- 2026-10-01: Orders are unlimited for now; cap later only if needed.
+- 2026-10-02: Game name: Conquerra (pending USPTO trademark search and domain check). Hosted at conquerra.<domain>.
+- 2026-10-02: Domain: conquerra.overconfidenceonline.com. GitHub: overconfidence7/conquerra.
+- 2026-10-02: M1 rules: one-unit garrison; units act once per turn (recruits can act immediately); failed attackers retreat; cavalry can move 2 through owned land; luck = ±L spread around the expected result.
+- 2026-10-02: The server is authoritative; clients replay the event log rather than recomputing turns.
+- 2026-10-02: Sim finding: games run 80–110 turns. M3 balance target is 15–30.

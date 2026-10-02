@@ -1,0 +1,52 @@
+{
+  "version": "0.1.0",
+  "units": {
+    "infantry": { "cost": 3, "attack": 1.0, "defense": 1.0, "attackTerrain": {}, "fortBreak": 0, "move": 1 },
+    "cavalry": { "cost": 5, "attack": 1.4, "defense": 0.8, "attackTerrain": { "forest": 0.6, "hills": 0.7, "mountains": 0.5, "swamp": 0.5 }, "fortBreak": 0, "move": 2 },
+    "siege": { "cost": 6, "attack": 0.6, "defense": 0.4, "attackTerrain": {}, "fortBreak": 0.15, "move": 1 }
+  },
+  "buildings": {
+    "fort": { "cost": 8, "defenseMult": 1.6 },
+    "market": { "cost": 6, "income": 2 },
+    "barracks": { "cost": 6, "allowsRecruit": true },
+    "watchtower": { "cost": 4, "vision": 1 }
+  },
+  "terrain": {
+    "plains": { "defenseMult": 1.0, "income": 2 },
+    "forest": { "defenseMult": 1.2, "income": 1 },
+    "hills": { "defenseMult": 1.3, "income": 1 },
+    "mountains": { "defenseMult": 1.6, "income": 1 },
+    "swamp": { "defenseMult": 1.1, "income": 0 }
+  },
+  "borders": {
+    "normal": { "attackMult": 1.0 },
+    "river": { "attackMult": 0.8 },
+    "pass": { "attackMult": 0.85 }
+  },
+  "combat": {
+    "luck": 0.3,
+    "attackKillRate": 0.6,
+    "defenseKillRate": 0.7,
+    "casualtyOrder": ["infantry", "siege", "cavalry"]
+  },
+  "economy": {
+    "startGold": 10,
+    "capitalIncome": 4,
+    "upkeepFreeTerritories": 6,
+    "upkeepRate": 0.5,
+    "upkeepExponent": 1.25
+  },
+  "setup": {
+    "startUnits": { "infantry": 6, "cavalry": 1, "siege": 0 },
+    "neutralUnits": 2,
+    "minGarrison": 1
+  },
+  "leader": {
+    "strengthBonus": 0.2,
+    "raiseCost": 15,
+    "seizeInitiativeCooldown": 3,
+    "lieInWaitCooldown": 2
+  },
+  "vision": { "base": 1 },
+  "limits": { "maxTurnsHard": 150 }
+}

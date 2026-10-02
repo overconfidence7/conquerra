@@ -1,0 +1,855 @@
+{
+ "id": "embervale",
+ "name": "Embervale (test map)",
+ "minPlayers": 2,
+ "maxPlayers": 6,
+ "territories": [
+  {
+   "id": "t00",
+   "name": "Ashford",
+   "province": "vale",
+   "terrain": "forest",
+   "x": 60,
+   "y": 60
+  },
+  {
+   "id": "t01",
+   "name": "Brindlemoor",
+   "province": "vale",
+   "terrain": "plains",
+   "x": 160,
+   "y": 60
+  },
+  {
+   "id": "t02",
+   "name": "Cairnwatch",
+   "province": "fens",
+   "terrain": "plains",
+   "x": 260,
+   "y": 60
+  },
+  {
+   "id": "t03",
+   "name": "Dunmere",
+   "province": "fens",
+   "terrain": "plains",
+   "x": 360,
+   "y": 60
+  },
+  {
+   "id": "t04",
+   "name": "Eldholt",
+   "province": "spine",
+   "terrain": "plains",
+   "x": 460,
+   "y": 60
+  },
+  {
+   "id": "t05",
+   "name": "Fenwick",
+   "province": "spine",
+   "terrain": "forest",
+   "x": 560,
+   "y": 60
+  },
+  {
+   "id": "t06",
+   "name": "Galeport",
+   "province": "coast",
+   "terrain": "plains",
+   "x": 660,
+   "y": 60
+  },
+  {
+   "id": "t07",
+   "name": "Harrowdeep",
+   "province": "coast",
+   "terrain": "hills",
+   "x": 760,
+   "y": 60
+  },
+  {
+   "id": "t08",
+   "name": "Ironvale",
+   "province": "vale",
+   "terrain": "plains",
+   "x": 110,
+   "y": 150
+  },
+  {
+   "id": "t09",
+   "name": "Juniper Reach",
+   "province": "vale",
+   "terrain": "plains",
+   "x": 210,
+   "y": 150
+  },
+  {
+   "id": "t10",
+   "name": "Kestrel Fen",
+   "province": "fens",
+   "terrain": "hills",
+   "x": 310,
+   "y": 150
+  },
+  {
+   "id": "t11",
+   "name": "Lowmarch",
+   "province": "fens",
+   "terrain": "mountains",
+   "x": 410,
+   "y": 150
+  },
+  {
+   "id": "t12",
+   "name": "Mirewood",
+   "province": "spine",
+   "terrain": "forest",
+   "x": 510,
+   "y": 150
+  },
+  {
+   "id": "t13",
+   "name": "Northcairn",
+   "province": "spine",
+   "terrain": "plains",
+   "x": 610,
+   "y": 150
+  },
+  {
+   "id": "t14",
+   "name": "Oakhallow",
+   "province": "coast",
+   "terrain": "swamp",
+   "x": 710,
+   "y": 150
+  },
+  {
+   "id": "t15",
+   "name": "Pinecrest",
+   "province": "coast",
+   "terrain": "plains",
+   "x": 810,
+   "y": 150
+  },
+  {
+   "id": "t16",
+   "name": "Quarrystone",
+   "province": "vale",
+   "terrain": "plains",
+   "x": 60,
+   "y": 240
+  },
+  {
+   "id": "t17",
+   "name": "Ravensgate",
+   "province": "north",
+   "terrain": "plains",
+   "x": 160,
+   "y": 240
+  },
+  {
+   "id": "t18",
+   "name": "Saltmere",
+   "province": "fens",
+   "terrain": "plains",
+   "x": 260,
+   "y": 240
+  },
+  {
+   "id": "t19",
+   "name": "Thornbury",
+   "province": "crown",
+   "terrain": "forest",
+   "x": 360,
+   "y": 240
+  },
+  {
+   "id": "t20",
+   "name": "Umberfield",
+   "province": "spine",
+   "terrain": "hills",
+   "x": 460,
+   "y": 240
+  },
+  {
+   "id": "t21",
+   "name": "Vesper Hollow",
+   "province": "wilds",
+   "terrain": "plains",
+   "x": 560,
+   "y": 240
+  },
+  {
+   "id": "t22",
+   "name": "Wyrmrest",
+   "province": "coast",
+   "terrain": "plains",
+   "x": 660,
+   "y": 240
+  },
+  {
+   "id": "t23",
+   "name": "Yewstead",
+   "province": "barrows",
+   "terrain": "plains",
+   "x": 760,
+   "y": 240
+  },
+  {
+   "id": "t24",
+   "name": "Amberglen",
+   "province": "north",
+   "terrain": "plains",
+   "x": 110,
+   "y": 330
+  },
+  {
+   "id": "t25",
+   "name": "Blackwater",
+   "province": "north",
+   "terrain": "swamp",
+   "x": 210,
+   "y": 330
+  },
+  {
+   "id": "t26",
+   "name": "Coldspire",
+   "province": "crown",
+   "terrain": "forest",
+   "x": 310,
+   "y": 330
+  },
+  {
+   "id": "t27",
+   "name": "Duskmoor",
+   "province": "crown",
+   "terrain": "mountains",
+   "x": 410,
+   "y": 330
+  },
+  {
+   "id": "t28",
+   "name": "Emberhold",
+   "province": "wilds",
+   "terrain": "mountains",
+   "x": 510,
+   "y": 330
+  },
+  {
+   "id": "t29",
+   "name": "Frosthaven",
+   "province": "wilds",
+   "terrain": "plains",
+   "x": 610,
+   "y": 330
+  },
+  {
+   "id": "t30",
+   "name": "Greyfold",
+   "province": "barrows",
+   "terrain": "hills",
+   "x": 710,
+   "y": 330
+  },
+  {
+   "id": "t31",
+   "name": "Highbarrow",
+   "province": "barrows",
+   "terrain": "forest",
+   "x": 810,
+   "y": 330
+  },
+  {
+   "id": "t32",
+   "name": "Ivywatch",
+   "province": "north",
+   "terrain": "plains",
+   "x": 60,
+   "y": 420
+  },
+  {
+   "id": "t33",
+   "name": "Jadecross",
+   "province": "north",
+   "terrain": "forest",
+   "x": 160,
+   "y": 420
+  },
+  {
+   "id": "t34",
+   "name": "Kingsford",
+   "province": "crown",
+   "terrain": "plains",
+   "x": 260,
+   "y": 420
+  },
+  {
+   "id": "t35",
+   "name": "Larkspur",
+   "province": "crown",
+   "terrain": "plains",
+   "x": 360,
+   "y": 420
+  },
+  {
+   "id": "t36",
+   "name": "Moonfall",
+   "province": "wilds",
+   "terrain": "plains",
+   "x": 460,
+   "y": 420
+  },
+  {
+   "id": "t37",
+   "name": "Nettlebrook",
+   "province": "wilds",
+   "terrain": "plains",
+   "x": 560,
+   "y": 420
+  },
+  {
+   "id": "t38",
+   "name": "Oldwick",
+   "province": "barrows",
+   "terrain": "forest",
+   "x": 660,
+   "y": 420
+  },
+  {
+   "id": "t39",
+   "name": "Petrel Bay",
+   "province": "barrows",
+   "terrain": "plains",
+   "x": 760,
+   "y": 420
+  }
+ ],
+ "provinces": [
+  {
+   "id": "vale",
+   "name": "The Vale",
+   "bonus": 3
+  },
+  {
+   "id": "north",
+   "name": "Northreach",
+   "bonus": 2
+  },
+  {
+   "id": "fens",
+   "name": "The Fens",
+   "bonus": 2
+  },
+  {
+   "id": "crown",
+   "name": "Crownlands",
+   "bonus": 3
+  },
+  {
+   "id": "spine",
+   "name": "Dragonspine",
+   "bonus": 2
+  },
+  {
+   "id": "wilds",
+   "name": "Westwilds",
+   "bonus": 2
+  },
+  {
+   "id": "coast",
+   "name": "Saltcoast",
+   "bonus": 3
+  },
+  {
+   "id": "barrows",
+   "name": "The Barrows",
+   "bonus": 2
+  }
+ ],
+ "borders": [
+  {
+   "a": "t00",
+   "b": "t01",
+   "type": "normal"
+  },
+  {
+   "a": "t00",
+   "b": "t08",
+   "type": "normal"
+  },
+  {
+   "a": "t01",
+   "b": "t02",
+   "type": "normal"
+  },
+  {
+   "a": "t01",
+   "b": "t08",
+   "type": "normal"
+  },
+  {
+   "a": "t01",
+   "b": "t09",
+   "type": "normal"
+  },
+  {
+   "a": "t02",
+   "b": "t03",
+   "type": "normal"
+  },
+  {
+   "a": "t02",
+   "b": "t09",
+   "type": "normal"
+  },
+  {
+   "a": "t02",
+   "b": "t10",
+   "type": "normal"
+  },
+  {
+   "a": "t03",
+   "b": "t04",
+   "type": "normal"
+  },
+  {
+   "a": "t03",
+   "b": "t10",
+   "type": "normal"
+  },
+  {
+   "a": "t03",
+   "b": "t11",
+   "type": "pass"
+  },
+  {
+   "a": "t04",
+   "b": "t05",
+   "type": "normal"
+  },
+  {
+   "a": "t04",
+   "b": "t11",
+   "type": "pass"
+  },
+  {
+   "a": "t04",
+   "b": "t12",
+   "type": "normal"
+  },
+  {
+   "a": "t05",
+   "b": "t06",
+   "type": "normal"
+  },
+  {
+   "a": "t05",
+   "b": "t12",
+   "type": "normal"
+  },
+  {
+   "a": "t05",
+   "b": "t13",
+   "type": "normal"
+  },
+  {
+   "a": "t06",
+   "b": "t07",
+   "type": "normal"
+  },
+  {
+   "a": "t06",
+   "b": "t13",
+   "type": "normal"
+  },
+  {
+   "a": "t06",
+   "b": "t14",
+   "type": "normal"
+  },
+  {
+   "a": "t07",
+   "b": "t14",
+   "type": "normal"
+  },
+  {
+   "a": "t07",
+   "b": "t15",
+   "type": "normal"
+  },
+  {
+   "a": "t08",
+   "b": "t09",
+   "type": "normal"
+  },
+  {
+   "a": "t08",
+   "b": "t16",
+   "type": "normal"
+  },
+  {
+   "a": "t08",
+   "b": "t17",
+   "type": "normal"
+  },
+  {
+   "a": "t09",
+   "b": "t10",
+   "type": "normal"
+  },
+  {
+   "a": "t09",
+   "b": "t17",
+   "type": "normal"
+  },
+  {
+   "a": "t09",
+   "b": "t18",
+   "type": "normal"
+  },
+  {
+   "a": "t10",
+   "b": "t11",
+   "type": "pass"
+  },
+  {
+   "a": "t10",
+   "b": "t18",
+   "type": "normal"
+  },
+  {
+   "a": "t10",
+   "b": "t19",
+   "type": "normal"
+  },
+  {
+   "a": "t11",
+   "b": "t12",
+   "type": "river"
+  },
+  {
+   "a": "t11",
+   "b": "t19",
+   "type": "pass"
+  },
+  {
+   "a": "t11",
+   "b": "t20",
+   "type": "river"
+  },
+  {
+   "a": "t12",
+   "b": "t13",
+   "type": "normal"
+  },
+  {
+   "a": "t12",
+   "b": "t20",
+   "type": "normal"
+  },
+  {
+   "a": "t12",
+   "b": "t21",
+   "type": "normal"
+  },
+  {
+   "a": "t13",
+   "b": "t14",
+   "type": "normal"
+  },
+  {
+   "a": "t13",
+   "b": "t21",
+   "type": "normal"
+  },
+  {
+   "a": "t13",
+   "b": "t22",
+   "type": "normal"
+  },
+  {
+   "a": "t14",
+   "b": "t15",
+   "type": "normal"
+  },
+  {
+   "a": "t14",
+   "b": "t22",
+   "type": "normal"
+  },
+  {
+   "a": "t14",
+   "b": "t23",
+   "type": "normal"
+  },
+  {
+   "a": "t15",
+   "b": "t23",
+   "type": "normal"
+  },
+  {
+   "a": "t16",
+   "b": "t17",
+   "type": "normal"
+  },
+  {
+   "a": "t16",
+   "b": "t24",
+   "type": "normal"
+  },
+  {
+   "a": "t17",
+   "b": "t18",
+   "type": "normal"
+  },
+  {
+   "a": "t17",
+   "b": "t24",
+   "type": "normal"
+  },
+  {
+   "a": "t17",
+   "b": "t25",
+   "type": "normal"
+  },
+  {
+   "a": "t18",
+   "b": "t19",
+   "type": "normal"
+  },
+  {
+   "a": "t18",
+   "b": "t25",
+   "type": "normal"
+  },
+  {
+   "a": "t18",
+   "b": "t26",
+   "type": "normal"
+  },
+  {
+   "a": "t19",
+   "b": "t20",
+   "type": "river"
+  },
+  {
+   "a": "t19",
+   "b": "t26",
+   "type": "normal"
+  },
+  {
+   "a": "t19",
+   "b": "t27",
+   "type": "pass"
+  },
+  {
+   "a": "t20",
+   "b": "t21",
+   "type": "normal"
+  },
+  {
+   "a": "t20",
+   "b": "t27",
+   "type": "river"
+  },
+  {
+   "a": "t20",
+   "b": "t28",
+   "type": "pass"
+  },
+  {
+   "a": "t21",
+   "b": "t22",
+   "type": "normal"
+  },
+  {
+   "a": "t21",
+   "b": "t28",
+   "type": "pass"
+  },
+  {
+   "a": "t21",
+   "b": "t29",
+   "type": "normal"
+  },
+  {
+   "a": "t22",
+   "b": "t23",
+   "type": "normal"
+  },
+  {
+   "a": "t22",
+   "b": "t29",
+   "type": "normal"
+  },
+  {
+   "a": "t22",
+   "b": "t30",
+   "type": "normal"
+  },
+  {
+   "a": "t23",
+   "b": "t30",
+   "type": "normal"
+  },
+  {
+   "a": "t23",
+   "b": "t31",
+   "type": "normal"
+  },
+  {
+   "a": "t24",
+   "b": "t25",
+   "type": "normal"
+  },
+  {
+   "a": "t24",
+   "b": "t32",
+   "type": "normal"
+  },
+  {
+   "a": "t24",
+   "b": "t33",
+   "type": "normal"
+  },
+  {
+   "a": "t25",
+   "b": "t26",
+   "type": "normal"
+  },
+  {
+   "a": "t25",
+   "b": "t33",
+   "type": "normal"
+  },
+  {
+   "a": "t25",
+   "b": "t34",
+   "type": "normal"
+  },
+  {
+   "a": "t26",
+   "b": "t27",
+   "type": "pass"
+  },
+  {
+   "a": "t26",
+   "b": "t34",
+   "type": "normal"
+  },
+  {
+   "a": "t26",
+   "b": "t35",
+   "type": "normal"
+  },
+  {
+   "a": "t27",
+   "b": "t28",
+   "type": "river"
+  },
+  {
+   "a": "t27",
+   "b": "t35",
+   "type": "pass"
+  },
+  {
+   "a": "t27",
+   "b": "t36",
+   "type": "pass"
+  },
+  {
+   "a": "t28",
+   "b": "t29",
+   "type": "pass"
+  },
+  {
+   "a": "t28",
+   "b": "t36",
+   "type": "pass"
+  },
+  {
+   "a": "t28",
+   "b": "t37",
+   "type": "pass"
+  },
+  {
+   "a": "t29",
+   "b": "t30",
+   "type": "normal"
+  },
+  {
+   "a": "t29",
+   "b": "t37",
+   "type": "normal"
+  },
+  {
+   "a": "t29",
+   "b": "t38",
+   "type": "normal"
+  },
+  {
+   "a": "t30",
+   "b": "t31",
+   "type": "normal"
+  },
+  {
+   "a": "t30",
+   "b": "t38",
+   "type": "normal"
+  },
+  {
+   "a": "t30",
+   "b": "t39",
+   "type": "normal"
+  },
+  {
+   "a": "t31",
+   "b": "t39",
+   "type": "normal"
+  },
+  {
+   "a": "t32",
+   "b": "t33",
+   "type": "normal"
+  },
+  {
+   "a": "t33",
+   "b": "t34",
+   "type": "normal"
+  },
+  {
+   "a": "t34",
+   "b": "t35",
+   "type": "normal"
+  },
+  {
+   "a": "t35",
+   "b": "t36",
+   "type": "normal"
+  },
+  {
+   "a": "t36",
+   "b": "t37",
+   "type": "normal"
+  },
+  {
+   "a": "t37",
+   "b": "t38",
+   "type": "normal"
+  },
+  {
+   "a": "t38",
+   "b": "t39",
+   "type": "normal"
+  }
+ ],
+ "capitalSlots": [
+  "t00",
+  "t39",
+  "t07",
+  "t32",
+  "t04",
+  "t35"
+ ]
+}
