@@ -15,5 +15,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
+      - name: Build the web game
+        run: pnpm --filter web build
       - name: Smoke-test the simulator (200 bot games)
         run: pnpm sim --games 200 --players 4 --seed ci

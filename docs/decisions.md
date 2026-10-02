@@ -66,3 +66,10 @@
 - 2026-10-02: M2 ends with a private preview at conquerra.overconfidenceonline.com behind Cloudflare Access (existing Google login, $0).
 - 2026-10-02: M2 is split across two Claude Code sessions: session 2 builds the playable game loop; session 3 adds the replay, timer, phone layout and private preview.
 - 2026-10-02: The repo stores text files with Linux-style line endings (.gitattributes) to stop Windows line-ending noise in git.
+- 2026-10-02: A fallen Leader returns at the end of the turn it fell (not the start of the next one), so it's on the map while you plan. Capital first; otherwise the territory with the most troops (ties: map order). The Raise Leader order and its 15-gold cost are gone.
+- 2026-10-02: Players store `eliminatedBy` (who took their last territory; null if nobody did). M3 uses it to hand over the Leader as a general.
+- 2026-10-02: Map player ranges: Embervale suits 4–6 players, Greatmarch 8–10. The "Conquest from 8 players" threshold lives in rules.json (`game.conquestSuggestedFromPlayers`).
+- 2026-10-02: Web client: React + Vite + Zustand, SVG map. Territory shapes are Voronoi cells from each territory's point (d3-delaunay); on both test maps the cells touch exactly where the real borders are. Borders that don't touch would be drawn as dotted lines.
+- 2026-10-02: The engine and bots run in a Web Worker ("local game host"). The page only receives the player's view and fog-trimmed replay, through a small interface M4 will point at the server instead.
+- 2026-10-02: Order builder defaults: a move or attack starts at "all but 1" troops, with one-tap "Just enough / Half / All" amounts. "Just enough" is the smallest army likely to win plus a margin (the same rule as the bots). Presets are off until tapped.
+- 2026-10-02: If you're knocked out in single player, the bots finish the game on their own and you go straight to the Game Over screen.

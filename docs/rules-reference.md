@@ -1,4 +1,4 @@
-# Conquerra Rules Reference (Milestone 1)
+# Conquerra Rules Reference (Milestone 2, session 2)
 
 *A 10-minute read. This is how the engine actually plays today. Numbers are the current balance settings from `packages/content/data/rules.json`; they will change as we tune.*
 
@@ -7,6 +7,7 @@
 ## 1. The goal
 - **Classic** (default): be the last kingdom standing. A player is out when they hold no territory.
 - **Conquest**: the game ends after a set number of turns (20 unless the host picks another), and the highest score wins. Score = territories + 3 per full province + 1 per 10 gold.
+- The lobby suggests **Conquest for 8 or more players** (big tables would otherwise run long) and Classic below that. The host can change it.
 - Classic games also stop at turn 60 as a safety net (highest score wins). In testing, fewer than 1 in 100 games got there.
 
 ## 2. Setting up
@@ -19,7 +20,7 @@
 1. **Orders (the timer runs).** Everyone writes as many orders as they like, in secret.
 2. **Resolution.** The game shuffles the seat order, then plays orders **one per player at a time, round-robin**: everyone's 1st order, then everyone's 2nd, and so on.
 3. **Replay.** Everyone watches what happened, trimmed to what they could see (see §9).
-4. **End of turn.** Buildings finish, gold comes in, upkeep is paid.
+4. **End of turn.** Buildings finish, fallen Leaders come back (see §9), gold comes in, upkeep is paid.
 
 **Leader timing tricks** (only while your Leader is alive):
 - **Seize the Initiative**: one order goes before everyone else's. Then it rests for 3 turns.
@@ -34,7 +35,6 @@
 | **Build** | Put a building on a territory you hold (one per territory). |
 | **Raise culture** | Spend gold to raise a territory's culture by 1 (see §7). |
 | **Retreat** | Pull an army back to the safest neighbouring territory you hold. |
-| **Raise Leader** | Bring back a fallen Leader at your capital (15 gold). |
 
 **Rules of movement**
 - Every territory you hold keeps **at least 1 troop** behind; you can't empty it.
@@ -102,7 +102,9 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
 - On average, each point of attack strength kills **1.0** defender, and each point of defense strength kills **0.6** attackers. Healers reduce their own side's losses.
 - **Luck** spreads each side's actual losses up to 30% either way around that average (most results land near the middle). The host can set luck from 0% to 100%.
 - The attacker **captures** the territory if every defender dies and at least one attacker survives. Survivors move in; buildings and culture stay with the land.
-- A Leader in a captured territory, or in an attacking army that's wiped out, **falls**. Raise a new one at your capital for 15 gold.
+- A Leader in a captured territory, or in an attacking army that's wiped out, **falls**.
+- **Leaders come back for free.** At the end of the turn it fell, your Leader returns at your capital, or at your strongest territory (most troops) if you've lost the capital. So it's waiting for you when you plan your next turn. Seize the Initiative and Lie in Wait cooldowns carry on as before.
+- When a player is knocked out, the game records **who knocked them out**. (In Milestone 3 that player gets the loser's Leader as a general.)
 - **Odds preview:** before you commit, the game shows "guaranteed / likely / possible / impossible" from the same math the engine uses.
 - **Provably fair:** the game's secret random seed is fingerprinted when the game starts and revealed when it ends, so anyone can re-run the game and check every roll.
 
@@ -123,6 +125,7 @@ Engineers make any of these ready immediately. A building under construction giv
 - **The replay follows the same rule:**
   - You always see your own actions and every battle you were part of.
   - Anything touching a territory you could see (at the start or end of the turn) shows in full.
+  - A Leader coming back shows to its owner, and to anyone who can see where it reappears.
   - A battle in the fog shows only as a **surface detail**: "a battle in Northreach." No names, no numbers. The same goes for a Leader falling in the fog.
   - Quiet things in the fog (moves, recruiting, building, culture) don't show at all.
   - Eliminations and the end of the game are announced to everyone.

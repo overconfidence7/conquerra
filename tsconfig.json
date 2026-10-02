@@ -4,6 +4,7 @@
     { "path": "packages/content" },
     { "path": "packages/engine" },
     { "path": "packages/bots" },
-    { "path": "apps/sim" }
+    { "path": "apps/sim" },
+    { "path": "apps/web" }
   ]
 }

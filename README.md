@@ -8,7 +8,27 @@ A fantasy, military-first strategy game of rival kingdoms. Everyone sets their o
 - Decisions: [`docs/decisions.md`](docs/decisions.md)
 - Will live at **conquerra.overconfidenceonline.com**
 
-## What's here (Milestone 1)
+## How to play it locally (Windows)
+
+You only need to do steps 1–2 once.
+
+1. Install **Node.js 22 or newer** from [nodejs.org](https://nodejs.org) (the "LTS" button; accept the defaults).
+2. Open **PowerShell**, then copy and paste these lines one at a time:
+   ```
+   npm install -g pnpm
+   cd "C:\Users\nkurt\Claude\Projects\Strategy Game"
+   pnpm install
+   ```
+3. Every time you want to play, open PowerShell and paste:
+   ```
+   cd "C:\Users\nkurt\Claude\Projects\Strategy Game"
+   pnpm dev
+   ```
+   Your browser opens the game (if it doesn't, go to http://localhost:5173). Leave the PowerShell window open while you play; press `Ctrl+C` in it to stop.
+
+**How a turn works:** tap one of your territories (blue), then tap a neighbour to move or attack. Pick how many troops ("Just enough" is a good default), tap a preset if you like, then "Add attack". Recruit, hire, build and raise culture from the panel. When you're done, press **Lock in**: the bots plan their orders, everything plays out at once, and you get a report of what you could see.
+
+## What's here
 
 | Folder | What it is |
 |---|---|
@@ -16,6 +36,7 @@ A fantasy, military-first strategy game of rival kingdoms. Everyone sets their o
 | `packages/engine` | The rules of the game. Pure, deterministic TypeScript: same seed + same orders = same result, every time |
 | `packages/bots` | AI players. "Recruit" is the first, simplest tier |
 | `apps/sim` | Runs bot-vs-bot games and reports balance stats and CPU time |
+| `apps/web` | The browser game (React + Vite). The engine and bots run in a background "local game host", and the screen only ever sees what your kingdom can see, just as it will when there's a real server |
 
 ## Running it
 
@@ -23,6 +44,8 @@ You need [Node.js 22+](https://nodejs.org) and pnpm (`npm install -g pnpm`). The
 
 ```
 pnpm install                          # one time
+pnpm dev                              # play in the browser
+pnpm build                            # build the web game (what CI checks)
 pnpm test                             # run all the tests
 pnpm typecheck                        # check the code for type mistakes
 pnpm sim                              # 500 bot games, 4 players, prints stats

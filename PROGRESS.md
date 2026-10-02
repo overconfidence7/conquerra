@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M2 (playable browser game vs bots): session 2 ready to start.**
+**Phase: M2 (playable browser game vs bots): session 2 done; session 3 (replay, timer, phone layout, private preview) next.**
 
-Claude Code sessions completed: **1** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
+Claude Code sessions completed: **2** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
 ---
 
@@ -89,3 +89,20 @@ Claude Code sessions completed: **1** (a new orchestrator prompt is due after se
   - At the end of M2, put the game online privately at conquerra.overconfidenceonline.com so Nate can play on his phone.
 - M2 is split in two: session 2 builds a playable game in the browser; session 3 adds the replay, timer, phone layout and the private preview.
 - Next prompt: `docs/prompts/claude-code-session-02.md`.
+
+### Oct 2: Claude Code session 2 (M2, part 1: the game is playable in a browser)
+- Housekeeping: committed the orchestrator's docs and added a line-endings setting (`.gitattributes`). The repo was already clean, so nothing else changed.
+- Engine updates:
+  - Fallen **Leaders come back for free** at the end of the turn they fell: at the capital, or the strongest territory if the capital is gone. The 15-gold "Raise Leader" order is gone.
+  - The game records **who knocked each player out**, ready for M3's generals.
+  - Each map lists the **player counts it suits** (Embervale 4–6), and the lobby suggests **Conquest for 8+ players**.
+  - Re-ran the simulator: games still last about 24 turns, seats are still fair, and 10-player Conquest ends on turn 20.
+- **The browser game** (`apps/web`): a lobby, the game screen and a game-over screen. You play against 1–5 bots on Embervale.
+  - Tap your territory, tap a neighbour, and you have an attack, with the odds shown before you add it. "Just enough" picks a sensible troop count, and presets are one tap each.
+  - One-tap recruit (defaults to all your gold), hire, build, raise culture and retreat. Leader controls: lead an army (+20%), Seize the Initiative, Lie in Wait.
+  - The order list shows the order things will happen, lets you delete or reorder, and shows the gold left.
+  - **Lock in** plays the turn and shows a plain-text report of what you could see. Fighting in the fog is summed up in one line.
+  - The game runs in a background "host" inside the browser, and the screen only ever gets your fogged view. In M4 we swap that host for the real server.
+- **A typical early turn takes 10 taps** (recruit, two attacks with presets, lock in).
+- How to play it: see "How to play it locally" in the README (`pnpm dev`).
+- 93 automated tests pass (18 new for the web app), and GitHub's checks now build the web game too.
