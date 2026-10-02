@@ -42,3 +42,20 @@
 - 2026-10-02: Spies: a capped specialist that travels independently. Lifts fog 2 territories while traveling; infiltrating a country keeps its fog lifted while the spy stays. Only whole-country holders can defend (spies at the capital).
 - 2026-10-02: Spy vs spy: max 3 per side; each attacker beyond the first cancels a defender. Defense left 0 = infiltrate, 1 = blocked, 2 = attackers killed, 3 = fooled (fake but plausible info, attacker not told).
 - 2026-10-02: Spies don't affect combat (forts are Siege's job).
+- 2026-10-02: Prototype review (Claude Code): keep the foundation (seeded luck, fair seed, round-robin turns, backups), rebuild the v0.2 parts (army model, fog view, replay filter, bot). See `docs/05-prototype-review.md`.
+- 2026-10-02: An army is the stack in one territory: one troop number plus up to 2 specialists. Specialists travel with the army by default and need at least 1 troop with them.
+- 2026-10-02: Specialists are hired at your capital or a barracks. Cavalry and scouts are always available; siege, engineers and healers need some culture in the province (M1 placeholder for culture unlocks).
+- 2026-10-02: Specialists are lost when their army is destroyed (attacking or defending). They are never captured. Survivors of a failed attack bring them home. (Proposed; Nate to confirm.)
+- 2026-10-02: Engineers make any building instant. Without them a fort takes until the end of next turn; other buildings finish at the end of the turn.
+- 2026-10-02: Specialists cost a little upkeep each turn (scouts free).
+- 2026-10-02: Culture: 0–5 per territory, raised one level at a time with rising gold costs. It adds income, boosts full-province bonuses, protects against unrest now (and events/uprisings in M3), and passes to the conqueror.
+- 2026-10-02: Unpaid upkeep causes unrest: one troop deserts per gold short, lowest-culture land first; culture forgives part of it.
+- 2026-10-02: Five contingency presets (Only if still stronger, Hold if threatened, Retreat if outnumbered, Follow through, Reinforce if hit). The engine expands them, so clients send just the preset name. "Follow through" runs in the player's next round-robin slot, keeping turn order fair.
+- 2026-10-02: Order conditions can't see through fog: a condition about a territory you can't see counts as false.
+- 2026-10-02: Fog view sends nothing for fogged territories (map geography and bonus values are public map data). Vision is a list of sources so spies plug in later.
+- 2026-10-02: Fogged replay: battles and fallen leaders become "surface details" (province only); quiet fogged actions are dropped; your own battles always show.
+- 2026-10-02: Recruiting more troops than you can afford buys as many as you can pay for.
+- 2026-10-02: Game settings store the turn timer (300 s default, 60 s to 7 days) and turn limit; the engine never keeps time. Conquest defaults to 20 turns; classic has a 60-turn safety cap.
+- 2026-10-02: M1 balance: troops 2 gold, start with 12 troops and 20 gold, neutrals hold 1, capital +8, attack kill rate 1.0 vs defense 0.6, upkeep starts after 10 territories. Typical game: 22–24 turns for 2–6 players.
+- 2026-10-02: CPU check: turn resolution averages under 1 ms (worst ~3–6 ms) up to 10 players. Plan unchanged: Workers Paid at M4.
+- 2026-10-02: Added test map Greatmarch (80 territories, up to 10 players) for large-game testing.

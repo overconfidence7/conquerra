@@ -57,7 +57,7 @@ The design is now `02-game-design-outline.md` (v0.1 base) **plus** `04-design-ad
 ### M0: Design ✅ Done
 Research, outline v0.1, v0.2 additions, and decisions.
 
-### M1: Engine core v0.2 + headless sim
+### M1: Engine core v0.2 + headless sim ✅ Done (Oct 2)
 - Claude Code first reviews the planner-built prototype (`packages/`, `apps/sim`) and decides whether to keep it, change it, or start fresh. The decision is written up in `docs/05-prototype-review.md`.
 - Engine scope:
   - **troops + specialists** (replaces the three unit types)

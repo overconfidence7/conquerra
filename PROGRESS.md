@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M1 (engine core v0.2): ready to kick off with Claude Code.**
+**Phase: M1 (engine core v0.2): done, waiting on Nate's review. Next up: M2 (playable browser alpha vs bots).**
 
-Claude Code sessions completed: **0** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
+Claude Code sessions completed: **1** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
 ---
 
@@ -63,3 +63,18 @@ Claude Code sessions completed: **0** (a new orchestrator prompt is due after se
   - With fog on (the default), you only see details on your own and neighboring land; the rest of the map shows just outlines and bonuses.
   - Spies can sneak into whole countries to see inside. Whoever holds an entire country can station up to 3 spies at its capital to block, kill or fool incoming spies.
   - Spies are planned for M3.
+
+### Oct 2: Claude Code session 1 (Milestone 1 done)
+- Connected this folder to GitHub without losing anything. Restored the CI check and the newer `CLAUDE.md` from the repo.
+- Reviewed the planner's prototype: kept the solid foundation (fair luck, turn order, backups) and rebuilt the parts the v0.2 design changed. Write-up: `docs/05-prototype-review.md`.
+- The engine now has:
+  - **troops + specialists** (cavalry, siege, scouts, engineers, healers; up to 2 per army)
+  - **light culture** (one number per territory: income, protection, specialist unlocks; the conqueror keeps it)
+  - **five one-tap presets** for backups
+  - the **v0.2 fog rule** and a **fog-trimmed replay** with "surface details"
+  - the **turn timer** and turn limit settings
+- The Recruit bot uses all of it.
+- **Games now last about 22–24 turns** (target 15–25; the prototype ran 80–110). 3,000 bot games, no crashes, fair seats.
+- **Speed:** a turn takes under 1 ms of computer time on average. The plan to move to the $5/month Cloudflare plan at M4 stands.
+- Plain-language rules: `docs/rules-reference.md`. Numbers: `docs/sim-results-m1.md`.
+- 70 automated tests, all passing.
