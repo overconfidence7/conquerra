@@ -55,6 +55,7 @@
 - **DECIDED (Oct 2): your Leader is a general.**
   - You can order your Leader's army directly, or hand it a standing instruction and let it command itself.
   - Capturing other players (or their capitals) adds their leaders to your roster as generals.
+- **DECIDED (Oct 2): Leaders don't stay dead.** A fallen Leader comes back for free at the start of its owner's next turn, at the capital (or the strongest territory if the capital is lost). Eliminating a player adds their Leader to your pool as a general.
 
 ## 5. Military vs. culture
 - Income can go to **military** (troops, forts) or **culture**.
@@ -114,7 +115,10 @@ Nate's three ideas:
 **DECIDED (Oct 2): Option C, troops + specialists.** Players get specialists three ways:
 - buy them with gold at a barracks
 - a little culture in a province unlocks the fancier types
-- Spoils cards sometimes give one free It matches "simple at first, deep later" and the 5-minute turn, and it plugs neatly into generals, cards ("Spoils: a free Siege specialist") and factions.
+- Spoils cards sometimes give one free
+
+It matches "simple at first, deep later" and the 5-minute turn, and it plugs neatly into generals, cards ("Spoils: a free Siege specialist") and factions.
+- **DECIDED (Oct 2):** specialists are **lost** when their army is destroyed. They are never captured.
 
 ## 8. Fog of war and spies (DECIDED, Oct 2)
 

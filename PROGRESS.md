@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M1 (engine core v0.2): done, waiting on Nate's review. Next up: M2 (playable browser alpha vs bots).**
+**Phase: M2 (playable browser game vs bots): session 2 ready to start.**
 
 Claude Code sessions completed: **1** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
@@ -78,3 +78,14 @@ Claude Code sessions completed: **1** (a new orchestrator prompt is due after se
 - **Speed:** a turn takes under 1 ms of computer time on average. The plan to move to the $5/month Cloudflare plan at M4 stands.
 - Plain-language rules: `docs/rules-reference.md`. Numbers: `docs/sim-results-m1.md`.
 - 70 automated tests, all passing.
+
+### Oct 2: Orchestrator review of session 1
+- Checked the work: it matches the design and stays inside M1. GitHub's automatic checks pass.
+- Nate's calls:
+  - Specialists are **lost** when their army dies.
+  - A fallen **Leader comes back for free** on its owner's next turn. Knock a player out and you get their Leader as a general (built in M3).
+  - **Big games:** maps list the player counts they suit, and the lobby suggests Conquest mode for 8+ players.
+  - Engineers finish any building instantly; recruiting more than you can afford buys what you can pay for.
+  - At the end of M2, put the game online privately at conquerra.overconfidenceonline.com so Nate can play on his phone.
+- M2 is split in two: session 2 builds a playable game in the browser; session 3 adds the replay, timer, phone layout and the private preview.
+- Next prompt: `docs/prompts/claude-code-session-02.md`.

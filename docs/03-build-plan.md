@@ -77,7 +77,10 @@ Research, outline v0.1, v0.2 additions, and decisions.
 ### M2: Playable local alpha (browser, vs bots)
 - Map, plus a fast order builder with presets (goal: a basic turn in about 60 seconds, a deep turn within 5 minutes).
 - 5-minute timer, odds preview, and the shared replay showing your visible area.
-- Optional: a private preview at `conquerra.overconfidenceonline.com` behind Cloudflare Access (Google login already set up), so Nate can test on his phone. See `docs/infra-cloudflare.md`.
+- A private preview at `conquerra.overconfidenceonline.com` behind Cloudflare Access (Google login already set up), so Nate can test on his phone. See `docs/infra-cloudflare.md`. (Decided Oct 2.)
+- Split into two Claude Code sessions:
+  - **Session 2:** small engine updates (Leader auto-return, map player ranges, Conquest suggestion for 8+ players), then the browser app: map, order builder with presets and odds, local game vs bots, a simple text log of each turn.
+  - **Session 3:** the animated fog-aware replay, the turn timer, phone layout and installable app, polish toward the 60-second basic turn, and the private preview.
 - Exit: Nate plays full games against bots on phone and laptop.
 
 ### M3: Depth + balance

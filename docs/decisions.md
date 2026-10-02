@@ -45,7 +45,7 @@
 - 2026-10-02: Prototype review (Claude Code): keep the foundation (seeded luck, fair seed, round-robin turns, backups), rebuild the v0.2 parts (army model, fog view, replay filter, bot). See `docs/05-prototype-review.md`.
 - 2026-10-02: An army is the stack in one territory: one troop number plus up to 2 specialists. Specialists travel with the army by default and need at least 1 troop with them.
 - 2026-10-02: Specialists are hired at your capital or a barracks. Cavalry and scouts are always available; siege, engineers and healers need some culture in the province (M1 placeholder for culture unlocks).
-- 2026-10-02: Specialists are lost when their army is destroyed (attacking or defending). They are never captured. Survivors of a failed attack bring them home. (Proposed; Nate to confirm.)
+- 2026-10-02: Specialists are lost when their army is destroyed (attacking or defending). They are never captured. Survivors of a failed attack bring them home. (Confirmed by Nate.)
 - 2026-10-02: Engineers make any building instant. Without them a fort takes until the end of next turn; other buildings finish at the end of the turn.
 - 2026-10-02: Specialists cost a little upkeep each turn (scouts free).
 - 2026-10-02: Culture: 0–5 per territory, raised one level at a time with rising gold costs. It adds income, boosts full-province bonuses, protects against unrest now (and events/uprisings in M3), and passes to the conqueror.
@@ -59,3 +59,10 @@
 - 2026-10-02: M1 balance: troops 2 gold, start with 12 troops and 20 gold, neutrals hold 1, capital +8, attack kill rate 1.0 vs defense 0.6, upkeep starts after 10 territories. Typical game: 22–24 turns for 2–6 players.
 - 2026-10-02: CPU check: turn resolution averages under 1 ms (worst ~3–6 ms) up to 10 players. Plan unchanged: Workers Paid at M4.
 - 2026-10-02: Added test map Greatmarch (80 territories, up to 10 players) for large-game testing.
+- 2026-10-02: Engineers finish any building instantly, and recruiting beyond your gold buys as many troops as you can afford (both confirmed by Nate).
+- 2026-10-02: A fallen Leader comes back automatically and for free at the start of its owner's next turn: at the capital, or at the player's strongest territory if the capital is lost. This replaces the 15-gold "Raise Leader" order. (Orchestrator's reading of Nate's call.)
+- 2026-10-02: When a player is eliminated, whoever eliminated them adds that player's Leader to their own pool as a general (built with generals in M3).
+- 2026-10-02: Big games: each map lists the player counts it suits (about 6–7 territories per player), and the lobby suggests Conquest mode for 8+ players. Classic stays the default.
+- 2026-10-02: M2 ends with a private preview at conquerra.overconfidenceonline.com behind Cloudflare Access (existing Google login, $0).
+- 2026-10-02: M2 is split across two Claude Code sessions: session 2 builds the playable game loop; session 3 adds the replay, timer, phone layout and private preview.
+- 2026-10-02: The repo stores text files with Linux-style line endings (.gitattributes) to stop Windows line-ending noise in git.
