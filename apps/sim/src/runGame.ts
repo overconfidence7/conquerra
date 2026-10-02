@@ -20,6 +20,8 @@ export interface GameSummary {
   turns: number;
   battles: number;
   captures: number;
+  /** Battles and captures by the kind of border the attack crossed (two-step cavalry moves count as normal). */
+  byBorder: Record<string, { battles: number; captures: number }>;
   orders: number;
   fizzles: number;
   initiatives: number;
@@ -42,7 +44,7 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
   let s = createGame(ctx, { gameId: `sim-${seed}`, seed, players, settings });
   const idx = indexMap(ctx.map);
   const sum: GameSummary = {
-    seed, winner: "draw", winnerSeat: null, endReason: null, turns: 0, battles: 0, captures: 0, orders: 0, fizzles: 0,
+    seed, winner: "draw", winnerSeat: null, endReason: null, turns: 0, battles: 0, captures: 0, byBorder: {}, orders: 0, fizzles: 0,
     initiatives: 0, leadersKilled: 0, hires: 0, invests: 0, presets: 0, decidedTurn: null, leadChanges: 0, resolveMs: [], planMs: [],
   };
   const leaders: (string | null)[] = [];
@@ -65,7 +67,14 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
     s = r.state;
     if (keepLog) log.push(r.events);
     for (const e of r.events) {
-      if (e.type === "battle") (sum.battles++, e.captured && sum.captures++);
+      if (e.type === "battle") {
+        sum.battles++;
+        if (e.captured) sum.captures++;
+        const kind = idx.border(e.from, e.to) ?? "normal";
+        const b = (sum.byBorder[kind] ??= { battles: 0, captures: 0 });
+        b.battles++;
+        if (e.captured) b.captures++;
+      }
       if (e.type === "fizzled") sum.fizzles++;
       if (e.type === "initiative") sum.initiatives++;
       if (e.type === "leaderKilled") sum.leadersKilled++;
