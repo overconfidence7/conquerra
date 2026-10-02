@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M2 (playable browser game vs bots): session 3 (the map maker) done; session 4 (the illustrated map) next. Nate is generating art in parallel.**
+**Phase: M2 (playable browser game vs bots): session 4 (the illustrated map) ready to start. Nate is generating art in parallel.**
 
 Claude Code sessions completed: **3** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
@@ -138,3 +138,12 @@ Claude Code sessions completed: **3** (a new orchestrator prompt is due after se
 - **Nate's two changes:** attacks start with "Only if still stronger" on (a typical turn is now **8 taps**, was 10), and when you're knocked out you choose **Watch to the end** or **See the result**.
 - Plain-language rules for water, mountains, passes, sea lanes and choke points: `docs/rules-reference.md` §12. Map data notes for session 4: `docs/map-data.md`.
 - 127 automated tests pass (34 new).
+
+### Oct 2: Orchestrator review of session 3
+- Checked the work: both maps look like real geography, the scope held, and GitHub's checks pass.
+- Nate's calls:
+  - Games at 4–6 players run about a turn long. We'll fix that with **smarter bots in M3**, not rule changes.
+  - **Generated place names stay**; Nate can rename any of them.
+  - **"Last seen" intel:** fog shows what you last saw there, marked "?" with its age. Built in session 4.
+  - The players panel **won't show territory counts**; you scout to learn how big rivals are.
+- Next prompt: `docs/prompts/claude-code-session-04.md`. Three Claude Code sessions are done, so there's also a fresh orchestrator prompt: `docs/prompts/orchestrator-02.md`.

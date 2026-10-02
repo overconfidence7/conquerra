@@ -94,3 +94,7 @@
 - 2026-10-02: Embervale and Greatmarch were rebuilt with the map maker (40 and 80 territories, 8 and 20 provinces, as before). Games run about 1–2 turns longer at 4–6 players (avg 25.8 and 26.3, medians 24 and 25). Four rules.json tweaks each moved length by under half a turn, so rules are unchanged; the extra turns come from bots being cautious at choke points, a bot fix for the M3 balance pass.
 - 2026-10-02: New attacks start with "Only if still stronger" on. A typical early turn is now 8 taps (was 10).
 - 2026-10-02: When you're knocked out the game no longer fast-forwards on its own: you choose "Watch to the end" (the bots play one turn per tap, you see the whole map and each report, and can skip ahead) or "See the result".
+- 2026-10-02: Game length at 4–6 players (average ~26, median 24–25) is fixed in M3 with smarter bots (push through passes, use sea lanes), not by changing the rules now.
+- 2026-10-02: Place names stay generated. Nate can override any name in a small per-map names file; random maps always use generated names.
+- 2026-10-02: "Last seen" intel: fogged land shows the last owner, troops and building you saw there, marked "?" with its age ("seen 2 turns ago"). It's stored per player in the game state, so it's deterministic and fog-safe. Built in session 4.
+- 2026-10-02: The players panel does not show territory counts (or troops or gold). It shows House, name, Leader portrait and whether they're still in. You learn empire sizes by scouting.

@@ -44,7 +44,7 @@ Both were made without knowing our rules, so they show things we don't have. The
    - **Capitals:** a castle sprite and a two-line label (name, then "Capital").
    - **Province names:** large, curved across the land, fading out when you zoom in.
    - **Selection:** a gold glow. **Orders:** gold-trimmed arrows. **Odds:** the four-pip badge.
-   - **Hover/tap card:** owner, troops, building, culture, gold value and specialists. When the info isn't certain (spy intel, or "last seen" if we add it), the number shows with "?".
+   - **Hover/tap card:** owner, troops, building, culture, gold value and specialists. When the info isn't certain (spy intel, or "last seen" intel for land you can't see right now, with its age), the number shows with "?".
 
 ### Zoom levels
 | Zoom | What you see |
@@ -74,7 +74,7 @@ Both were made without knowing our rules, so they show things we don't have. The
 |---|---|
 | **Top bar** | Logo · gold (+N per turn) · Turn N and the timer · settings |
 | **Left rail** | Map, Turn report, Settings (more only as M3 features arrive) |
-| **Right column** | Players panel (House, Leader portrait, rank, territory count), event pop-ups, then the territory card |
+| **Right column** | Players panel (House, name, Leader portrait, still in or out; no territory counts), event pop-ups, then the territory card |
 | **Bottom** | The action bar of big round icon buttons (Move/Attack, Recruit, Hire, Build, Culture, Retreat), the army panel, the order queue, the Lock in seal and the minimap |
 
 ### Phone layout

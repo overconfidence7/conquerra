@@ -126,6 +126,8 @@ It matches "simple at first, deep later" and the 5-minute turn, and it plugs nea
 - **You see full details** on your own territories and the territories bordering them: owner, troops, specialists, culture, buildings, leaders.
 - **Everywhere else you see only the map:** territory and province outlines, terrain, and the holding bonuses each territory and province is worth. You do **not** see who owns it, troops, culture or anything else.
 - The replay follows the same rule: full detail where you can see, surface details elsewhere ("a battle in the north").
+- **Last seen (DECIDED Oct 2):** land you saw before but can't see now shows what you last saw there (owner, troops, building), marked "?" with its age ("seen 2 turns ago"). Each player's memory is kept in the game state. A fooled spy (M3) writes false intel into this memory.
+- **Players panel:** shows each House, its name, Leader portrait and whether it's still in. No territory counts, troops or gold.
 - Scouts (the specialist) extend what an army can see. Spies, below, are the way to see deep behind the lines.
 
 ### Spies
