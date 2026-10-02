@@ -21,6 +21,7 @@ export { DECORATION_BIOMES, LABEL_CLEAR } from "./places";
 export { insideRings } from "./util";
 export { mapPreviewSvg } from "./preview";
 export { MAP_CONFIGS } from "./configs";
+export { applyRenames, type NameFile } from "./renames";
 
 /** Bump when a change to the map maker would change its output. */
 export const MAPGEN_VERSION = 1;

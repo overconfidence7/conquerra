@@ -91,9 +91,15 @@ async function screens() {
   const page = await browser.newPage();
   await page.setViewport(DESKTOP);
   page.on("pageerror", (e) => console.log("page error:", e.message));
-  console.log("Embervale: playing 7 turns with the bot planning your orders...");
+  console.log("Embervale: playing 7+ turns with the bot planning your orders...");
   await startGame(page, { mapId: "embervale", bots: 3 });
   await playTurns(page, 7);
+  // Keep going until some land you saw has slipped into the fog (for the last-seen shots).
+  for (let i = 0; i < 7; i++) {
+    const n = await page.evaluate(() => Object.values(window.__conquerraStore.getState().view.territories).filter((t) => t.detail === "fogged" && t.lastSeen?.owner).length);
+    if (n >= 3) break;
+    await playTurns(page, 1);
+  }
   const info = await page.evaluate(() => {
     const g = window.__conquerraStore.getState();
     const v = g.view;
@@ -180,7 +186,7 @@ async function perf() {
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
     const t = await startGame(page, { mapId });
     const stats = await page.evaluate(() => window.__conquerraMap.stats());
-    const row = { map: mapId, firstMapMs: Math.round(t.firstMap), allPaintedMs: Math.round(t.allPainted), paintMs: stats.bakeMs, textureMB: stats.textureMB, ppu: stats.ppu, pan: {} };
+    const row = { map: mapId, firstMapMs: Math.round(t.firstMap), allPaintedMs: Math.round(t.allPainted), paintMs: stats.bakeMs, steps: stats.steps, textureMB: stats.textureMB, ppu: stats.ppu, pan: {} };
     for (const level of ["far", "mid", "near"]) {
       await zoomTo(page, ZOOM_PX[level]);
       await panFps(page, 600); // warm up

@@ -50,7 +50,19 @@ class SvgMapRenderer implements MapRenderer {
     for (const p of g.passes) el("circle", { cx: p.x, cy: p.y, r: 6, fill: "#e8d39a", stroke: "#1b1206", "stroke-width": 1.5 }, geo);
     opts.host.appendChild(this.svg);
     this.cam = new CameraController({ width: g.width, height: g.height }, typicalTerritorySize(opts.ctx.map));
-    this.cam.onChange((c) => this.root.setAttribute("transform", `translate(${c.x},${c.y}) scale(${c.scale})`));
+    let drawnScale = 0, pending = false;
+    this.cam.onChange((c) => {
+      this.root.setAttribute("transform", `translate(${c.x},${c.y}) scale(${c.scale})`);
+      // Redraw (so pills and lines keep their size on screen) once the zoom has changed noticeably.
+      if (this.scene && !pending && Math.abs(Math.log(c.scale / (drawnScale || c.scale * 2))) > 0.12) {
+        pending = true;
+        requestAnimationFrame(() => {
+          pending = false;
+          drawnScale = this.cam.cam.scale;
+          if (this.scene) this.setScene(this.scene);
+        });
+      }
+    });
     this.resize();
     const hit = hitTester(g);
     this.detach = attachInput(this.svg as unknown as HTMLElement, this.cam, {
@@ -107,7 +119,6 @@ class SvgMapRenderer implements MapRenderer {
 
   zoomBy(f: number) {
     this.cam.zoomAt(f, this.cam.vp.width / 2, this.cam.vp.height / 2, 200);
-    if (this.scene) setTimeout(() => this.scene && this.setScene(this.scene), 220);
   }
 
   resize() {

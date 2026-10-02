@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M2 (playable browser game vs bots): session 4 (the illustrated map) ready to start. Nate is generating art in parallel.**
+**Phase: M2 (playable browser game vs bots): session 4 (the illustrated map) done; session 5 (menus, replay, timer, phone, preview) next. Nate is generating art in parallel.**
 
-Claude Code sessions completed: **3** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
+Claude Code sessions completed: **4** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
 ---
 
@@ -147,3 +147,18 @@ Claude Code sessions completed: **3** (a new orchestrator prompt is due after se
   - **"Last seen" intel:** fog shows what you last saw there, marked "?" with its age. Built in session 4.
   - The players panel **won't show territory counts**; you scout to learn how big rivals are.
 - Next prompt: `docs/prompts/claude-code-session-04.md`. Three Claude Code sessions are done, so there's also a fresh orchestrator prompt: `docs/prompts/orchestrator-02.md`.
+
+### Oct 2: Claude Code session 4 (M2, part 3: the illustrated map)
+- Housekeeping: committed the orchestrator's docs and the session 4 prompt.
+- **"Last seen" intel** (engine): each player remembers what they last saw on every territory (owner, troops, building, and when). Fogged land now shows that memory marked "?", and the tap card says how old it is ("Seen 2 turns ago") or "Unexplored". It never holds anything you couldn't have seen, and a fooled spy (M3) can write into it later. Rules: `docs/rules-reference.md` §11.
+- **The illustrated map** replaces the plain one (the panels are unchanged):
+  - the painted world: blended ground, hill and mountain shading lit from the upper left, darker impassable ranges with peaks, shallows fading to deep water, rivers that widen toward the sea, passes with a road, curved sea lanes with a ship, and trees, peaks, hills, villages, towns and castles where the map maker put them
+  - the info layer on top: glowing House borders, troop pills with banners, crowns, buildings, specialists, culture dots, capital plaques, gold selection glow, gold-trimmed order arrows and the four-pip odds badge
+  - fog: greyed, darkened land with drifting mist, showing only last-seen markers
+  - Far / Mid / Near zoom with smooth fades, wheel, drag, pinch, double tap, and the hover / tap-and-hold card
+  - **Tactical view** (one tap): flat House colours with every detail. Browsers without WebGL get a plain version automatically.
+- **Art:** Nate's first four textures (grass, farmland, forest, hills) are already in the game. Everything else uses placeholders painted in code. `pnpm art:import` brings in new art by file name and reports what's missing.
+- **Names:** any place can be renamed in `packages/mapgen/names/<map>.json` (then `pnpm build-maps`).
+- **Speed** (phone emulation with the processor slowed 4x): 60 frames a second while panning at every zoom on both maps; the map appears about 2.2–2.4 seconds after pressing Start.
+- Full games played to the end on a laptop and in phone emulation (with Tactical view on).
+- Screenshots: `docs/art/screens/`. 159 automated tests pass (32 new).

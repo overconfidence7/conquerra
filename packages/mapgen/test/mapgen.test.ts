@@ -2,7 +2,9 @@ import { BIOME_CODES, defaultRules, type Biome, type MapDef } from "@conquerra/c
 import { maps } from "@conquerra/content/maps";
 import { indexMap } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
-import { checkMap, DECORATION_BIOMES, fromBase64, generateMap, insideRings, LABEL_CLEAR, MAP_CONFIGS, TERRAIN_BIOMES } from "../src";
+import embervaleNames from "../names/embervale.json";
+import greatmarchNames from "../names/greatmarch.json";
+import { applyRenames, checkMap, DECORATION_BIOMES, fromBase64, generateMap, insideRings, LABEL_CLEAR, MAP_CONFIGS, TERRAIN_BIOMES } from "../src";
 
 const byCode = new Map(Object.entries(BIOME_CODES).map(([b, c]) => [c, b as Biome]));
 const biomeAt = (m: MapDef, x: number, y: number): Biome => {
@@ -14,13 +16,26 @@ const config = (id: string) => MAP_CONFIGS.find((m) => m.id === id)!;
 const testMaps = [maps.embervale!, maps.greatmarch!];
 
 describe("map maker", () => {
-  it("the same seed gives byte-identical output, and the committed maps are exactly what it makes", () => {
+  it("the same seed gives byte-identical output, and the committed maps are exactly what it makes (plus Nate's renames)", () => {
     const a = JSON.stringify(generateMap(config("embervale"), defaultRules).map);
     const b = JSON.stringify(generateMap(config("embervale"), defaultRules).map);
     expect(a).toBe(b);
-    expect(a).toBe(JSON.stringify(maps.embervale));
-    expect(JSON.stringify(generateMap(config("greatmarch"), defaultRules).map)).toBe(JSON.stringify(maps.greatmarch));
+    const built = (id: string, names: { renames: Record<string, string> }) => JSON.stringify(applyRenames(generateMap(config(id), defaultRules).map, names.renames).map);
+    expect(built("embervale", embervaleNames)).toBe(JSON.stringify(maps.embervale));
+    expect(built("greatmarch", greatmarchNames)).toBe(JSON.stringify(maps.greatmarch));
   }, 60_000);
+
+  it("renames places from the names file, and flags names that aren't on the map", () => {
+    const m = maps.embervale!;
+    const t = m.territories[0]!.name, p = m.provinces[0]!.name, w = m.geometry!.water[0]!.name;
+    const { map, unknown } = applyRenames(m, { [t]: "Kingsbridge", [p]: "The Crownlands", [w]: "The Glass Sea", Nowhereville: "X" });
+    expect(map.territories[0]!.name).toBe("Kingsbridge");
+    expect(map.provinces[0]!.name).toBe("The Crownlands");
+    expect(map.geometry!.water[0]!.name).toBe("The Glass Sea");
+    expect(unknown).toEqual(["Nowhereville"]);
+    expect(m.territories[0]!.name).toBe(t); // the original is untouched
+    expect(() => applyRenames(m, { [t]: m.territories[1]!.name })).toThrow(/Two places/);
+  });
 
   it("never uses Math.random (only the seeded generator)", () => {
     const real = Math.random;

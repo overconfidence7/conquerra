@@ -61,11 +61,10 @@ vec3 slotTex(float i, vec2 p) {
   vec2 px = slot * uSlot + 1.0 + f * (uSlot - 2.0);
   return texture(uAtlas, px / uAtlasPx).rgb;
 }
-// Two reads at different scales, mixed by slow noise, so repeats don't show.
+// Two reads at different scales, mixed by slow noise (worked out once per pixel), so repeats don't show.
+float gTileMix;
 vec3 terr(float i, vec2 p) {
-  vec3 a = slotTex(i, p);
-  vec3 b = slotTex(i, p * 0.71 + vec2(91.3, 47.1));
-  return mix(a, b, smoothstep(0.3, 0.7, vnoise(p * 0.011 + i * 7.0)));
+  return mix(slotTex(i, p), slotTex(i, p * 0.71 + vec2(91.3, 47.1)), gTileMix);
 }
 float heightAt(vec2 p) { return texture(uAux1, p / uMap).b; }
 
@@ -77,10 +76,13 @@ void main() {
   vec3 b0 = texture(uB0, bu).rgb, b1 = texture(uB1, bu).rgb, b2 = texture(uB2, bu).rgb;
   float w[8];
   w[0] = b0.r; w[1] = b0.g; w[2] = b0.b; w[3] = b1.r; w[4] = b1.g; w[5] = b1.b; w[6] = b2.r; w[7] = b2.g;
+  gTileMix = smoothstep(0.3, 0.7, vnoise(p * 0.011));
+  // Wobble each ground type's edge with one of two noises, so neighbouring types interlock instead of fading.
+  float na = vnoise(p * 0.06) - 0.5, nb = vnoise(p * 0.06 + 31.7) - 0.5;
   float total = 0.0;
   for (int i = 0; i < 8; i++) {
-    float n = vnoise(p * 0.06 + float(i) * 13.1) - 0.5;
-    w[i] = smoothstep(0.18, 0.82, w[i] + n * 0.32);
+    float n = mod(float(i), 2.0) < 0.5 ? na : nb;
+    w[i] = smoothstep(0.18, 0.82, w[i] + n * (0.26 + 0.04 * float(i)));
     total += w[i];
   }
   vec3 land = vec3(0.0);

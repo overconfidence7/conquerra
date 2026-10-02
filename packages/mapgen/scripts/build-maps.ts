@@ -2,21 +2,27 @@
  * Builds the test maps with the map maker and writes them into the game's content, plus a debug preview of each
  * into docs/maps/. Run from the repo root:  pnpm build-maps
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Resvg } from "@resvg/resvg-js";
 import { defaultRules } from "@conquerra/content";
-import { generateMap, MAP_CONFIGS, mapPreviewSvg } from "../src/index";
+import { applyRenames, generateMap, MAP_CONFIGS, mapPreviewSvg, type NameFile } from "../src/index";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
-
 
 const only = process.argv[2];
 const catalog: object[] = [];
 for (const opts of MAP_CONFIGS) {
   if (only && opts.id !== only) continue;
-  const { map, attempt, check, rejected } = generateMap(opts, defaultRules);
+  const made = generateMap(opts, defaultRules);
+  const { attempt, check, rejected } = made;
+  // Nate's renames (packages/mapgen/names/<map>.json).
+  const namesFile = join(root, "packages/mapgen/names", `${opts.id}.json`);
+  const names: NameFile = existsSync(namesFile) ? JSON.parse(readFileSync(namesFile, "utf8")) : { renames: {} };
+  const { map, unknown } = applyRenames(made.map, names.renames);
+  for (const u of unknown) console.log(`  ! names/${opts.id}.json: there's no place called "${u}" on ${opts.name} (check the spelling)`);
+  catalog.push({ id: map.id, name: map.name, territories: map.territories.length, minPlayers: map.minPlayers, maxPlayers: map.maxPlayers, recommendedPlayers: map.recommendedPlayers });
   writeFileSync(join(root, "packages/content/data/maps", `${map.id}.json`), JSON.stringify(map) + "\n");
   mkdirSync(join(root, "docs/maps"), { recursive: true });
   const png = new Resvg(mapPreviewSvg(map), { fitTo: { mode: "width", value: 1600 }, font: { loadSystemFonts: true } }).render().asPng();

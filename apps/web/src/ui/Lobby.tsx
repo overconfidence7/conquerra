@@ -1,6 +1,7 @@
 import { mapCatalog, suggestedMode } from "@conquerra/content";
 import { BOT_NAMES } from "../host/names";
-import { useGame } from "../store";
+import { useEffect } from "react";
+import { prewarmHost, useGame } from "../store";
 
 const LUCK = [
   { value: 0, label: "None" },
@@ -11,6 +12,11 @@ const LUCK = [
 
 export function Lobby() {
   const { lobby, setLobby, start, busy, error } = useGame();
+  // Load the game engine, the maps and the map painter while the player picks settings.
+  useEffect(() => {
+    prewarmHost();
+    void import("../render/pixi/PixiMapRenderer");
+  }, []);
   const map = mapCatalog.find((m) => m.id === lobby.mapId) ?? mapCatalog[0]!;
   const players = lobby.bots + 1;
   const rec = map.recommendedPlayers;

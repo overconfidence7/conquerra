@@ -18,8 +18,11 @@ async function loadImage(url: string) {
   return createImageBitmap(await res.blob());
 }
 
+/** Placeholders are the same every game, so they're painted once per page load. */
+const placeholderCache = new Map<string, Art | null>();
+
 export class ArtBook {
-  private cache = new Map<string, Art | null>();
+  private cache = placeholderCache;
   private constructor(
     private manifest: ArtManifest,
     private loaded: Map<string, Art>,

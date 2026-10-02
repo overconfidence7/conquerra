@@ -148,9 +148,9 @@ function pack(w: number, h: number, r: Float32Array, g: Float32Array, b: Float32
 export function auxCanvases(g: MapGeometry, ppu = 1): AuxData {
   const w = Math.ceil(g.width * ppu), h = Math.ceil(g.height * ppu);
   const land = rasterize([...g.territories.map((t) => t.rings), ...g.mountains.map((m) => m.rings)], w, h, ppu);
-  const landBlur = boxBlur(land, w, h, Math.round(7 * ppu), 3);
+  const landBlur = boxBlur(land, w, h, Math.round(8 * ppu), 2);
   const range = rasterize(g.mountains.map((m) => m.rings), w, h, ppu);
-  const rangeBlur = boxBlur(range, w, h, Math.round(5 * ppu), 3);
+  const rangeBlur = boxBlur(range, w, h, Math.round(6 * ppu), 2);
 
   // Height: bilinear from the grid, then smoothed so the lighting has no square facets.
   const hm = g.heightMap;
@@ -167,6 +167,6 @@ export function auxCanvases(g: MapGeometry, ppu = 1): AuxData {
       height[y * w + x] = (a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy) / 255;
     }
   }
-  const smooth = boxBlur(height, w, h, Math.round(4 * ppu), 3);
+  const smooth = boxBlur(height, w, h, Math.max(1, Math.round(5 * ppu)), 2);
   return { ppu, width: w, height: h, aux1: pack(w, h, land, landBlur, smooth), aux2: pack(w, h, range, rangeBlur, null) };
 }

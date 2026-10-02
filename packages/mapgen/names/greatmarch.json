@@ -1,0 +1,4 @@
+{
+  "about": "Rename any place on this map: add a line like \"Ravengate\": \"Kingsbridge\" inside renames (old name on the left), then run pnpm build-maps.",
+  "renames": {}
+}

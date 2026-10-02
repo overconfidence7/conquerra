@@ -108,5 +108,8 @@ describe("last seen intel (v0.2 §8)", () => {
     expect(v.territories.a).toMatchObject({ capitalOf: "p1" });
     expect(v.territories.e).toMatchObject({ capitalOf: "p2" });
     expect(v.territories.b).toMatchObject({ capitalOf: null });
+    // A captured capital isn't labelled as one while someone else holds it.
+    s.territories.e!.owner = "p1";
+    expect(viewFor(ctx, s, "p1").territories.e).toMatchObject({ capitalOf: null });
   });
 });

@@ -79,7 +79,9 @@ export function MapView({ ctx, view, queue, selected, draft, showTargets, onTap,
     (async () => {
       const { webglAvailable, createIllustratedRenderer } = await import("../render/pixi/PixiMapRenderer");
       let r: MapRenderer;
-      if (webglAvailable()) {
+      // "?plainmap" in the address forces the plain map (what browsers without WebGL get), for testing.
+      const plain = new URLSearchParams(location.search).has("plainmap");
+      if (webglAvailable() && !plain) {
         try {
           r = await createIllustratedRenderer(opts);
         } catch (e) {
@@ -145,9 +147,10 @@ export function MapView({ ctx, view, queue, selected, draft, showTargets, onTap,
       </div>
       {info && card && (
         <div
-          className={`tcard ${info.uncertain ? "uncertain" : ""}`}
+          className={`tcard ${info.uncertain ? "uncertain" : ""} ${card.how === "hold" && card.y > 300 ? "above" : ""}`}
           role="tooltip"
-          style={{ left: Math.min(card.x + 14, hostW - 236), top: Math.max(8, card.y - (card.how === "hold" ? 150 : -14)) }}
+          // Beside the mouse; above the finger on a phone (below it near the top), so it never hides the territory.
+          style={{ left: Math.max(4, Math.min(card.x + (card.how === "hold" ? -112 : 14), hostW - 228)), top: card.how === "hold" ? (card.y > 300 ? card.y - 28 : card.y + 36) : card.y + 14 }}
         >
           <div className="tcard-title">{info.title}</div>
           <div className="tcard-sub">{info.subtitle}</div>

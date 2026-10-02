@@ -36,8 +36,9 @@ export function scaleLimits(map: MapSize, vp: Viewport, maxScale: number): { min
 /** Keep at least part of the map on screen, and centre it when it's smaller than the screen. */
 export function clampCamera(c: Camera, map: MapSize, vp: Viewport): Camera {
   const w = map.width * c.scale, h = map.height * c.scale;
-  // A little room past the edge, so the coast never sits right against the screen edge.
-  const slackX = Math.min(vp.width * 0.12, w * 0.5), slackY = Math.min(vp.height * 0.12, h * 0.5);
+  // A little room past the edge, so the coast needn't sit right against the screen edge. Less when the map is
+  // only just bigger than the screen, so you don't see a strip of empty sea.
+  const slackX = Math.min(vp.width * 0.12, Math.max(0, w - vp.width) * 0.5), slackY = Math.min(vp.height * 0.12, Math.max(0, h - vp.height) * 0.5);
   const x = w <= vp.width ? (vp.width - w) / 2 : Math.min(slackX, Math.max(vp.width - w - slackX, c.x));
   const y = h <= vp.height ? (vp.height - h) / 2 : Math.min(slackY, Math.max(vp.height - h - slackY, c.y));
   return { scale: c.scale, x, y };

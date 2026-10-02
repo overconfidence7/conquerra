@@ -170,7 +170,7 @@ export function attachInput(el: HTMLElement, cam: CameraController, h: InputHand
       clearHold();
       const p = local(e);
       const quick = !start.moved && !held;
-      if (held) h.hold(null);
+      // After tap-and-hold the card stays up so it can be read; the next tap closes it.
       if (quick && e.type === "pointerup") {
         const now = performance.now();
         if (now - lastTap.t < 320 && Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < 24) {

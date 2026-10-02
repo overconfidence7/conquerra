@@ -14,7 +14,7 @@ export interface TerritoryDetail {
   culture: number;
   /** Leaders standing here. */
   leaders: PlayerId[];
-  /** Whose capital this is, if anyone's. You learn a rival's capital by seeing it. */
+  /** Whose capital this is, while its own House holds it. You learn a rival's capital by seeing it. */
   capitalOf: PlayerId | null;
 }
 
@@ -49,7 +49,7 @@ function trueDetail(state: GameState, id: TerritoryId): TerritoryDetail {
     construction: t.construction ? { ...t.construction } : null,
     culture: t.culture,
     leaders: state.players.filter((p) => p.leader.alive && p.leader.territory === id).map((p) => p.id),
-    capitalOf: state.players.find((p) => p.eliminatedTurn === null && p.capital === id)?.id ?? null,
+    capitalOf: state.players.find((p) => p.eliminatedTurn === null && p.capital === id && t.owner === p.id)?.id ?? null,
   };
 }
 

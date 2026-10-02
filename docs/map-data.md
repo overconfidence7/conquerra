@@ -5,6 +5,8 @@
 ## Where it comes from
 - `pnpm build-maps` regenerates `packages/content/data/maps/*.json` and the debug previews in `docs/maps/`. The recipes (seed, sizes, style knobs) are in `packages/mapgen/src/configs.ts`.
 - A test checks the committed files are exactly what the generator makes, so if the generator changes, rerun `pnpm build-maps` and commit the maps.
+- **Renaming places:** open `packages/mapgen/names/<map>.json` and add `"Old name": "New name"` lines inside `renames` (any territory, province, sea, lake, range or river).
+  Then run `pnpm build-maps`; it warns about any old name it can't find.
 - The page gets the map from the game host when a game starts (`HostStart.map`), never by importing it. Blackout fog (M5) can then send a trimmed copy.
 
 ## Coordinates

@@ -37,7 +37,8 @@ You only need to do steps 1–2 once.
 | `packages/engine` | The rules of the game. Pure, deterministic TypeScript: same seed + same orders = same result, every time |
 | `packages/bots` | AI players. "Recruit" is the first, simplest tier |
 | `apps/sim` | Runs bot-vs-bot games and reports balance stats and CPU time |
-| `apps/web` | The browser game (React + Vite). The engine and bots run in a background "local game host", and the screen only ever sees what your kingdom can see, just as it will when there's a real server |
+| `packages/art` | The art list (every file name the game knows) and the art import (`pnpm art:import`) |
+| `apps/web` | The browser game (React + Vite, with a PixiJS map). The engine and bots run in a background "local game host", and the screen only ever sees what your kingdom can see, just as it will when there's a real server |
 
 ## Running it
 
@@ -55,7 +56,17 @@ pnpm sim --games 200 --players 10     # 10 players (uses the Greatmarch map)
 pnpm sim --watch --seed demo          # play-by-play of one game in plain English
 pnpm sim --luck 0                     # no luck at all; try 0.5 for more chaos
 pnpm sim --mode conquest --turn-limit 20
+pnpm art:import                       # bring Nate's art in from art/incoming/ (says what's still missing)
+pnpm build-maps                       # rebuild the maps (after renaming places in packages/mapgen/names/)
+pnpm map-check screens                # map screenshots into docs/art/screens/ (needs the built game running)
+pnpm map-check perf                   # map speed in phone emulation (needs the built game running)
 ```
+
+**The map:** an illustrated WebGL map (PixiJS). Mouse wheel or pinch to zoom, drag to pan, double-tap to fit; hover (or tap and hold on a phone) for a territory's card. "Tactical" switches to flat colours. Add `?plainmap` to the address to see the simple map that browsers without WebGL get.
+
+**Adding art:** save Nate's images into `art/incoming/` with the names in `docs/art/asset-list-and-prompts.md`, then run `pnpm art:import`. The game picks them up on its next load; anything missing keeps its placeholder.
+
+For `pnpm map-check`, first run `pnpm build`, then `pnpm --filter web preview` in a second window.
 
 ## Tuning balance
 

@@ -54,7 +54,20 @@ interface GameStore {
 let makeHost: () => GameHost = createLocalHost;
 export function setHostFactory(f: () => GameHost) {
   makeHost = f;
+  warm?.dispose();
+  warm = null;
 }
+
+/** A host started ahead of time (in the lobby), so the game engine and maps are loaded before you press Start. */
+let warm: GameHost | null = null;
+export function prewarmHost() {
+  warm ??= makeHost();
+}
+const takeHost = () => {
+  const h = warm ?? makeHost();
+  warm = null;
+  return h;
+};
 
 /** Are you out of the game while it goes on? */
 export const knockedOut = (view: PlayerView) => view.winner === null && view.players.find((p) => p.id === view.me.id)?.eliminatedTurn != null;
@@ -100,7 +113,7 @@ export const useGame = create<GameStore>((set, get) => ({
   async start() {
     const { lobby } = get();
     get().host?.dispose();
-    const host = makeHost();
+    const host = takeHost();
     set({ busy: true, error: null, host });
     try {
       const u = await host.start(lobby);

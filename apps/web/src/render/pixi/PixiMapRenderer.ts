@@ -46,6 +46,7 @@ export interface MapStats {
   markers: number;
   realArt: string[];
   ppu: number;
+  steps: Record<string, number>;
 }
 
 class PixiMapRenderer implements MapRenderer {
@@ -72,6 +73,7 @@ class PixiMapRenderer implements MapRenderer {
   private firstMapMs = 0;
   private destroyed = false;
   private hovering: string | null = null;
+  private steps: Record<string, number> = {};
 
   constructor(
     private opts: RendererOptions,
@@ -88,6 +90,11 @@ class PixiMapRenderer implements MapRenderer {
   async init() {
     const { host, ctx } = this.opts;
     const g = ctx.map.geometry!;
+    let t = performance.now();
+    const mark = (name: string) => {
+      this.steps[name] = Math.round(performance.now() - t);
+      t = performance.now();
+    };
     await this.app.init({
       resizeTo: host,
       background: "#173a5c",
@@ -105,19 +112,24 @@ class PixiMapRenderer implements MapRenderer {
     this.app.stage.eventMode = "none";
     this.app.stage.interactiveChildren = false;
 
+    mark("webgl");
     [this.art] = await Promise.all([ArtBook.load(), fontsReady()]);
     if (this.destroyed) return;
+    mark("artAndFonts");
     this.bank = new TextureBank(this.art);
     // Painted detail: 2.5 pixels per map unit, less on phones and big maps to keep memory sensible.
     const phone = Math.min(screen.width, screen.height) < 700;
     const budget = phone ? 8e6 : 14e6;
     const ppu = Math.min(2.5, Math.sqrt(budget / (g.width * g.height)));
     this.world = new WorldLayer(this.app.renderer, g, this.art, { ppu });
+    mark("world");
     this.info = new InfoLayer(ctx.map, this.bank);
+    mark("labels");
     this.markers = new MarkerLayer(ctx.map, this.bank, this.app.renderer.resolution);
     this.mapLayer.addChild(this.world.view, this.info.tactical, this.info.tint, this.info.lines, this.info.glow, this.info.sites, this.info.figures, this.info.names, this.info.arrows);
     this.app.stage.addChild(this.mapLayer, this.markers.root);
     this.world.bakeFar();
+    mark("far");
 
     this.cam.onChange(() => (this.dirtyCam = true));
     this.cam.setViewport({ width: host.clientWidth, height: host.clientHeight });
@@ -259,6 +271,7 @@ class PixiMapRenderer implements MapRenderer {
       markers: this.markers.count,
       realArt: this.art.realNames,
       ppu: Math.round(this.world.opts.ppu * 100) / 100,
+      steps: { ...this.steps, ...s.steps },
     };
   }
 

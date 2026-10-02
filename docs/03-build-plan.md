@@ -81,7 +81,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
 - Split into four Claude Code sessions:
   - **Session 2 ✅:** small engine updates, then the browser app: map, order builder with presets and odds, local game vs bots, a simple text log.
   - **Session 3:** the seeded map maker and real geography (`04-design-additions.md` §9): seas, lakes, mountain ranges, passes, rivers, sea lanes, choke points, plus the height map, biome and decoration data the illustrated map needs. Rebuild both test maps.
-  - **Session 4:** the illustrated map renderer (WebGL/PixiJS) in the "Gilded Atlas" style (`docs/06-art-direction.md`): terrain from the biome data, relief lighting from the height map, sprites and specialist figures, the info layer (borders, banners, icons), zoom levels, Tactical view, fog mist, "last seen" intel, the hover/tap card, the art import script and placeholders.
+  - **Session 4 ✅:** the illustrated map renderer (WebGL/PixiJS) in the "Gilded Atlas" style (`docs/06-art-direction.md`): terrain from the biome data, relief lighting from the height map, sprites and specialist figures, the info layer (borders, banners, icons), zoom levels, Tactical view, fog mist, "last seen" intel, the hover/tap card, the art import script and placeholders.
   - **Session 5:** the gilded menus (territory card, army panel, Leader portrait, turn report, minimap), the animated replay, the turn timer, phone layout, installable app, and the private preview.
 - Exit: Nate plays full games against bots on phone and laptop.
 

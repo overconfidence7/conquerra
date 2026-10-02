@@ -57,7 +57,11 @@ export class WorldLayer {
   private auxTex: Texture;
   private disposables: { destroy(): void }[] = [];
   private tilesLayer = new Container();
-  readonly stats = { bakeMs: 0, tilesBaked: 0, tileCount: 0, textureBytes: 0 };
+  readonly stats = { bakeMs: 0, tilesBaked: 0, tileCount: 0, textureBytes: 0, steps: {} as Record<string, number> };
+  private step(name: string, t0: number) {
+    this.stats.steps[name] = Math.round(performance.now() - t0);
+    return performance.now();
+  }
 
   constructor(
     private renderer: Renderer,
@@ -66,7 +70,9 @@ export class WorldLayer {
     readonly opts: WorldOptions,
   ) {
     const t0 = performance.now();
-    this.aux = auxCanvases(g, 1);
+    // The masks are soft anyway: about a million pixels is plenty, so big maps use a little less than 1 per unit.
+    this.aux = auxCanvases(g, Math.min(1, Math.sqrt(1.1e6 / (g.width * g.height))));
+    let t = this.step("masks", t0);
     this.auxTex = Texture.from(this.aux.aux1);
     this.display = new UniformGroup({
       uMap: { value: new Float32Array([g.width, g.height]), type: "vec2<f32>" },
@@ -77,7 +83,9 @@ export class WorldLayer {
     // Fog mask: half a pixel per map unit is plenty (it's soft anyway).
     [this.fogCanvas] = canvas(Math.ceil(g.width * 0.5), Math.ceil(g.height * 0.5));
     this.fogTex = Texture.from(this.fogCanvas);
+    t = this.step("textures", t);
     this.buildBakeScene();
+    this.step("scene", t);
     // Tiles cover the map; each is painted later, the ones on screen first.
     const tileUnits = TILE / opts.ppu;
     for (let y = 0; y < g.height; y += tileUnits)
@@ -233,6 +241,8 @@ export class WorldLayer {
     const rt = RenderTexture.create({ width: w, height: h, antialias: false, autoGenerateMipmaps: true });
     this.renderer.render({ container: this.bakeScene, target: rt, clear: true, transform: new Matrix().scale(ppu, ppu) });
     rt.source.updateMipmaps();
+    (this.renderer as unknown as { gl?: WebGLRenderingContext }).gl?.finish();
+    this.step("farPaint", t0);
     const mesh = new Mesh({ geometry: quad(0, 0, this.g.width, this.g.height), shader: this.displayShader(rt) });
     this.far = { rt, mesh, ppu };
     this.view.addChildAt(mesh, 0);
