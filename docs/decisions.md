@@ -82,3 +82,5 @@
 - 2026-10-02: Art comes from AI image generation throughout. Nate generates it with `docs/art/asset-list-and-prompts.md` and drops files into `art/incoming/`; an import script processes them, and placeholders fill any gaps. Confirm the tool's commercial-use terms before shipping.
 - 2026-10-02: Graphics: WebGL (PixiJS) map renderer, built in session 4 before the art is finished.
 - 2026-10-02: M2 grows to four Claude Code sessions: 2 ✅ playable game; 3 map maker and map data; 4 painted renderer, zoom and info layer; 5 menus, replay, timer, phone, installable app and private preview.
+- 2026-10-02: Art style settled (art direction v0.3): **illustrated, with relief lighting** instead of fully realistic painting. It handles random maps, consistent AI art and phone readability better, and the map maker's height map adds depth. References: `docs/art/reference-illustrated.jpg` (map) and `docs/art/reference-mockup.png` (menus).
+- 2026-10-02: Taken from the illustrated reference: glowing House borders, troop pills, a hover/tap territory card, specialist figures on the map, two-line capital labels, event pop-ups, a players panel and curved province names.

@@ -4,7 +4,7 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 
 Session 2 made the game playable in the browser. Nate's direction since then:
 - **Maps should play like War.app or a good Risk map:** organic borders, seas and lakes, mountain ranges, rivers, and real choke points (`docs/04-design-additions.md` §9).
-- **The look is a richly painted world under a gilded interface** ("Gilded Atlas", `docs/06-art-direction.md`; the target mockup is `docs/art/reference-mockup.png`).
+- **The look is an illustrated fantasy atlas with relief lighting, under a gilded interface** ("Gilded Atlas", `docs/06-art-direction.md`). The references are `docs/art/reference-illustrated.jpg` for the map and `docs/art/reference-mockup.png` for the menus and depth.
   - The painted graphics engine is **session 4**; the menus, replay, timer and phone work are **session 5**.
   - **This session builds the map maker and the map data that the painted world will need.**
 
@@ -12,7 +12,7 @@ Session 2 made the game playable in the browser. Nate's direction since then:
 1. `CLAUDE.md` (hard rules)
 2. `PROGRESS.md` (including the orchestrator's notes after session 2)
 3. `docs/04-design-additions.md` §9 (maps), §8 (fog) and §0 (simple to play)
-4. `docs/06-art-direction.md` (so the data you produce fits the painted renderer and the info layer) and `docs/art/reference-mockup.png`
+4. `docs/06-art-direction.md` (so the data you produce fits the illustrated renderer and the info layer) and the two reference images in `docs/art/`
 5. `docs/rules-reference.md`
 6. `docs/03-build-plan.md` (the M2 section)
 7. `docs/decisions.md` (newest lines at the bottom)
@@ -32,6 +32,7 @@ Build it as its own small package (`packages/mapgen`), or as a clearly separated
   - **Sea lanes:** a few drawn crossings over water. Add a `sea` border type, with its attack penalty in `rules.json`.
   - **Choke points by design:** passes, narrow land bridges or single sea lanes where a small army can hold off a big one.
   - **Capital slots** spread fairly for the player range.
+  - **A height map:** a low-resolution elevation grid (seeded, matching the coast, mountains, hills and rivers) that the session 4 renderer will use for relief lighting: hill shading, mountain shadows and coastal depth. Rivers should run downhill.
   - **Biomes for the painting:** a fine-grained terrain field (grass, farmland, forest, hills, rock/snow, swamp, sand, shallow/deep water) that agrees with each territory's game terrain type. The painted renderer will blend textures from this.
   - **Decoration placements:** where trees, peaks, hills, villages and towns go, plus the capital castle site and where a building sprite sits in each territory. Placements are seeded, avoid label points and water, and stay within their biome.
   - **A label point** inside each territory, with enough clear space for a banner.
@@ -41,12 +42,12 @@ Build it as its own small package (`packages/mapgen`), or as a clearly separated
   - each province has a sensible size
   - capital slots are fair (similar distance to neighbours and similar nearby income)
   - the map has a minimum number of choke points
-- **Map data:** extend the map schema (Zod) with territory outlines, water and mountain shapes, river lines, sea lanes, label points, the biome field (compact: a low-resolution grid or polygons, your call) and the decoration placements. **The engine still only uses the territory graph**; the rest is for drawing.
+- **Map data:** extend the map schema (Zod) with territory outlines, water and mountain shapes, river lines, sea lanes, label points, the height map and biome field (compact: low-resolution grids or polygons, your call) and the decoration placements. **The engine still only uses the territory graph**; the rest is for drawing.
 
 ## Part B: rebuild the two test maps
 - **Embervale** (about 40 territories, suits 4–6 players) and **Greatmarch** (about 80, suits 8–10), made with the map maker and given fantasy place names.
 - Keep the territory counts close to today's, so balance stays comparable.
-- Export a quick **preview image** of each to `docs/maps/` (flat biome colors, borders, rivers, passes, sea lanes and capital slots; a debug view, not the final art).
+- Export a quick **preview image** of each to `docs/maps/` (flat biome colors with simple hill shading from the height map, borders, rivers, passes, sea lanes and capital slots; a debug view, not the final art).
 - Re-run the sim: 1,000 games at 2, 4 and 6 players on Embervale, and 200 at 10 players in Conquest mode on Greatmarch. Report game length, seat fairness, and what the choke points changed. If length drifts outside 15–25 turns, tune `rules.json` (not code) and say what changed.
 
 ## Part C: keep the game playable on the new maps
@@ -58,10 +59,10 @@ Build it as its own small package (`packages/mapgen`), or as a clearly separated
 2. When you're knocked out: two buttons, **"Watch to the end"** (bots keep playing; you see the full map and each turn's report, with a skip-ahead) and **"See the result"** (today's behavior).
 
 ## Out of scope (don't build)
-The painted renderer, WebGL, art processing, pan and zoom (session 4); the menu redesign, animated replay, timer, phone layout, installable app and deployment (session 5); random maps in the lobby; blackout fog; anything from M3.
+The illustrated renderer, relief lighting, WebGL, art processing, pan and zoom (session 4); the menu redesign, animated replay, timer, phone layout, installable app and deployment (session 5); random maps in the lobby; blackout fog; anything from M3.
 
 ## Tests
-- Map maker: the same seed gives byte-identical output; the map checks pass on both test maps; sea lanes and passes come through as the right border types in the engine's graph; decorations never sit in water or on label points.
+- Map maker: the same seed gives byte-identical output; the map checks pass on both test maps; sea lanes and passes come through as the right border types in the engine's graph; decorations never sit in water or on label points; rivers only flow downhill.
 - Engine: the `sea` border penalty works in combat and in the odds preview.
 - Web: the default preset and the knocked-out choice.
 - The determinism test still passes.
@@ -79,4 +80,4 @@ The painted renderer, WebGL, art processing, pan and zoom (session 4); the menu 
 - the paths to the map previews
 - for each map: territories, provinces, choke points, sea lanes, and the sim results
 - the new tap count for a typical turn
-- anything about the map data the painted renderer (session 4) will need that you weren't sure about
+- anything about the map data the illustrated renderer (session 4) will need that you weren't sure about

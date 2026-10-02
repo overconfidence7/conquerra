@@ -13,7 +13,9 @@
 6. Generate 2–4 options for each item and keep the best one. Consistency beats perfection: if one image looks off-style, redo it.
 
 ### Style line (paste first in every prompt)
-> Painted fantasy strategy-game art, top-down bird's-eye view with a slight three-quarter angle for objects, rich but natural colors, soft daylight from the upper left, fine painterly detail, crisp edges, consistent scale, no text.
+> Hand-illustrated fantasy strategy-game map art, storybook painterly style with clean outlines, bright warm natural colors, top-down bird's-eye view with a slight three-quarter angle for objects, soft daylight from the upper left, crisp readable shapes, consistent scale, no text.
+
+The target look is `docs/art/reference-illustrated.jpg`. If your tool accepts a reference image, give it that one.
 
 ---
 
@@ -47,12 +49,19 @@
 | `building-market.png` | A cluster of colorful market stalls and a trading hall, isolated on a transparent background. |
 | `building-barracks.png` | A wooden-and-stone military barracks with a training yard, isolated on a transparent background. |
 | `building-watchtower.png` | A tall stone watchtower, isolated on a transparent background. |
+| `figure-army.png` | A small group of 5–7 medieval foot soldiers with spears and shields standing in formation, plain white/grey tabards (the game tints them), isolated on a transparent background. |
+| `figure-cavalry.png` | A single mounted knight on a horse, plain white/grey tabard, isolated on a transparent background. |
+| `figure-siege.png` | A wooden catapult with two small crew, isolated on a transparent background. |
+| `figure-scouts.png` | A lone hooded scout with a spyglass, isolated on a transparent background. |
+| `figure-engineers.png` | Two workers with hammers beside a pile of timber and stone, isolated on a transparent background. |
+| `figure-healers.png` | A robed healer with a satchel and a small medical tent, isolated on a transparent background. |
+| `banner-flag.png` | A tall plain white flag on a pole planted in the ground, waving, isolated on a transparent background. (The game tints it to the House color.) |
 | `ship.png` | A small medieval sailing ship seen from above at an angle, white sails, isolated on a transparent background. |
 | `bridge.png` | A short arched stone bridge seen from above, isolated on a transparent background. |
 | `cloud-1.png` … `-3.png` | A soft, wispy white cloud seen from above, semi-transparent edges, isolated on a transparent background. (Make 3.) |
 
 ## Tier 2: the info layer and menus (needed for session 5)
-Make these as **icons**: bold, simple silhouettes that read at 24 pixels, transparent background, painted style with a light gold rim.
+Make these as **icons**: bold, simple shapes that read at 24 pixels, in the same illustrated style, transparent background, with a light gold rim.
 
 | File | Prompt (after the style line) |
 |---|---|
@@ -70,12 +79,12 @@ Make these as **icons**: bold, simple silhouettes that read at 24 pixels, transp
 
 ### Leader portraits: square, 512×512, chest-up, dark simple background
 Make 10, with a mix of men and women, ages and looks:
-> Portrait of a fantasy kingdom's military leader, chest-up, armor and cloak, determined expression, painted, dark navy background, no text.
+> Illustrated portrait of a fantasy kingdom's military leader, chest-up, armor and cloak, determined expression, storybook painterly style with clean outlines, dark navy background, no text.
 
 File names: `leader-01.png` … `leader-10.png`.
 
 ### Territory card art: wide, 1200×600
-> A painted vista of a fantasy [castle city / farming valley / forest town / mountain fortress / harbor town], wide landscape, no text.
+> An illustrated vista, in the same storybook painterly style, of a fantasy [castle city / farming valley / forest town / mountain fortress / harbor town], wide landscape, no text.
 
 File names: `vista-city.png`, `vista-valley.png`, `vista-forest.png`, `vista-mountain.png`, `vista-harbor.png`.
 
