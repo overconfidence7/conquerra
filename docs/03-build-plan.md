@@ -86,6 +86,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
 - Preset-based diplomacy with counteroffers and the re-confirm rule.
 - The Fallen.
 - Specialist unlocks via culture.
+- Spies: independent travel, country infiltration, spy-vs-spy defense with deception (`04-design-additions.md` §8).
 - Balance pass using the sim.
 
 ### M4: Online with friends (Cloudflare)

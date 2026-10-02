@@ -35,12 +35,13 @@ Follow the M1 scope in `docs/03-build-plan.md`. Key points:
   - It reduces the effect of bad events and uprisings, and boosts holding bonuses.
   - Captured culture passes to the conqueror.
   - No culture victory, no culture tree. **Military first.**
+- **Fog rule (v0.2, §8):** details only on your own and bordering territories. Everywhere else, the view shows only map geography and bonus values (no owner, troops or culture). Make sure the view and data model can later support spies (§8) without a rewrite, but don't build spies yet.
 - **Fog-filtered replay:** each player gets the turn's events trimmed to what they could see. Events in fogged areas come through as "surface details" only (e.g. "a battle in the north").
 - **Game config:** turn timer (default 300 seconds; longer allowed) and turn limit. The engine only stores these; it doesn't keep time.
 - **Balance:** use the sim to get typical game length to **about 15–25 turns**. Tune numbers in `packages/content` only.
 - Update the "Recruit" bot to work with all of the above.
 - **Measure turn-resolution CPU time** in the sim (average and worst case, at 2, 6 and 10 players, with bots planning). We need this to size Cloudflare hosting; see `docs/infra-cloudflare.md`.
-- **Out of scope for M1 (later milestones):** Spoils and Fate decks, diplomacy, generals and standing instructions, the Fallen, any UI or server.
+- **Out of scope for M1 (later milestones):** spies, Spoils and Fate decks, diplomacy, generals and standing instructions, the Fallen, any UI or server.
 
 ## Exit criteria
 - `pnpm test` and `pnpm typecheck` are green. The determinism test passes.

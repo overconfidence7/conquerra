@@ -59,3 +59,7 @@ Claude Code sessions completed: **0** (a new orchestrator prompt is due after se
   - Nothing to set up until M2 (an optional private preview) or M4 (the real backend).
   - Plan to switch to the $5/month Workers plan at M4.
   - Details in `docs/infra-cloudflare.md`.
+- New design: fog of war and spies (`docs/04-design-additions.md` §8).
+  - With fog on (the default), you only see details on your own and neighboring land; the rest of the map shows just outlines and bonuses.
+  - Spies can sneak into whole countries to see inside. Whoever holds an entire country can station up to 3 spies at its capital to block, kill or fool incoming spies.
+  - Spies are planned for M3.

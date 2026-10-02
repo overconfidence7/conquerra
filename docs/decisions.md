@@ -38,3 +38,7 @@
 - 2026-10-02: Cloudflare check: reuse the existing account, domain, and Zero Trust team (Google login already configured) for the friends beta.
 - 2026-10-02: Stay on the Workers Free plan through M3; upgrade to Paid ($5/mo) at the start of M4. Measure turn-resolution CPU time in the sim first.
 - 2026-10-02: Deploy via Cloudflare's GitHub integration (Workers Builds) rather than API tokens.
+- 2026-10-02: Fog (on by default): full details only on your own and bordering territories; elsewhere you see only outlines, terrain and bonus values (no owner, troops or culture).
+- 2026-10-02: Spies: a capped specialist that travels independently. Lifts fog 2 territories while traveling; infiltrating a country keeps its fog lifted while the spy stays. Only whole-country holders can defend (spies at the capital).
+- 2026-10-02: Spy vs spy: max 3 per side; each attacker beyond the first cancels a defender. Defense left 0 = infiltrate, 1 = blocked, 2 = attackers killed, 3 = fooled (fake but plausible info, attacker not told).
+- 2026-10-02: Spies don't affect combat (forts are Siege's job).

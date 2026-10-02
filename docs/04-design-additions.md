@@ -115,3 +115,30 @@ Nate's three ideas:
 - buy them with gold at a barracks
 - a little culture in a province unlocks the fancier types
 - Spoils cards sometimes give one free It matches "simple at first, deep later" and the 5-minute turn, and it plugs neatly into generals, cards ("Spoils: a free Siege specialist") and factions.
+
+## 8. Fog of war and spies (DECIDED, Oct 2)
+
+### Fog (lobby setting; on by default)
+- **You see full details** on your own territories and the territories bordering them: owner, troops, specialists, culture, buildings, leaders.
+- **Everywhere else you see only the map:** territory and province outlines, terrain, and the holding bonuses each territory and province is worth. You do **not** see who owns it, troops, culture or anything else.
+- The replay follows the same rule: full detail where you can see, surface details elsewhere ("a battle in the north").
+- Scouts (the specialist) extend what an army can see. Spies, below, are the way to see deep behind the lines.
+
+### Spies
+- **What a spy is:** a specialist that can travel on its own (not attached to an army). Bought with gold. **Each player can have only a few** (start at 5, tunable).
+- **Traveling:** while moving through land that no single player fully holds, a spy lifts the fog **2 territories** around itself.
+- **Infiltrating a country (province):** a spy can enter a country to spy on it. While it stays there, the fog stays lifted for that whole country **every turn**, until the spy is killed or recalled, or the defense changes.
+- **Defending:** only a player who holds an **entire country** can defend it, by stationing spies at its capital. Defenders hold the position and also block other spies.
+- **Spy vs spy (max 3 spies per side per country):** compare defenders to attackers. Each attacking spy beyond the first cancels one defender. What's left decides the outcome:
+
+| Defense left | What happens to the incoming spy |
+|---|---|
+| 0 (no defenders, or cancelled) | **Infiltrates:** the attacker sees the true state of the whole country |
+| 1 | **Blocked:** the attempt fails and the spy returns |
+| 2 | **Killed:** all attacking spies in that attempt die |
+| 3 (only 3 defenders vs 1 spy) | **Fooled:** the attacker *thinks* they got in, but sees false information that's close to the truth. The owner is correct, but troop counts, culture, leaders and positions are wrong or moved. The attacker isn't told. |
+
+  - Examples: 2 defenders vs 1 spy = killed. 2 defenders vs 3 spies = 0 left = infiltrates. 3 defenders vs 2 spies = 2 left = killed. 1 defender vs 2 spies = infiltrates.
+- **Spies do not affect combat.** Forts are Siege's job; spies are purely about information.
+- **Design note:** this gives holding whole countries a second payoff (spy defense), and makes the 3-defender deception a real mind game. Because the fake intel is generated from the true state with the seeded RNG, it stays deterministic and replayable.
+- **Open for the M3 build (orchestrator/Claude Code proposes, Nate approves):** spy movement speed, cost and the exact cap; whether "recall" is instant; and whether the defender learns that a spy was blocked or killed (planner suggests: yes for blocked and killed, no for fooled).
