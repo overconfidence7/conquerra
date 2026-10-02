@@ -3,7 +3,6 @@ import { seedCommitment } from "./fairness";
 import { distancesFrom, indexMap } from "./mapIndex";
 import { Rng, seedRng } from "./rng";
 import type { GameContext, GameSettings, GameState, PlayerState, TerritoryState } from "./types";
-import { emptyUnits } from "./units";
 
 export interface NewGameOptions {
   gameId: string;
@@ -38,14 +37,20 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
     throw new Error(`Map ${map.id} supports ${map.minPlayers}-${map.maxPlayers} players, got ${n}`);
   if (new Set(opts.players.map((p) => p.id)).size !== n) throw new Error("Duplicate player id");
 
+  const mode = opts.settings?.mode ?? "classic";
   const settings: GameSettings = {
-    mode: opts.settings?.mode ?? "classic",
-    turnLimit: opts.settings?.turnLimit ?? null,
+    mode,
+    turnLimit: opts.settings?.turnLimit ?? (mode === "conquest" ? rules.game.conquestTurnLimitDefault : null),
     luck: opts.settings?.luck ?? rules.combat.luck,
     fog: opts.settings?.fog ?? true,
+    turnTimerSeconds: opts.settings?.turnTimerSeconds ?? rules.game.turnTimerSecondsDefault,
   };
-  if (settings.mode === "conquest" && !settings.turnLimit) throw new Error("Conquest mode needs a turnLimit");
+  if (settings.turnLimit !== null && !(Number.isInteger(settings.turnLimit) && settings.turnLimit >= 1))
+    throw new Error("turnLimit must be a whole number of turns, at least 1");
   if (settings.luck < 0 || settings.luck > 1) throw new Error("luck must be between 0 and 1");
+  const g = rules.game;
+  if (!Number.isInteger(settings.turnTimerSeconds) || settings.turnTimerSeconds < g.turnTimerSecondsMin || settings.turnTimerSeconds > g.turnTimerSecondsMax)
+    throw new Error(`turnTimerSeconds must be between ${g.turnTimerSecondsMin} and ${g.turnTimerSecondsMax}`);
 
   const rng = new Rng(seedRng(opts.seed));
   const seats = rng.shuffle(opts.players);
@@ -53,11 +58,11 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
 
   const territories: Record<string, TerritoryState> = {};
   for (const t of map.territories)
-    territories[t.id] = { owner: null, units: { ...emptyUnits(), infantry: rules.setup.neutralUnits }, building: null };
+    territories[t.id] = { owner: null, troops: rules.setup.neutralTroops, specialists: [], building: null, construction: null, culture: 0 };
 
   const players: PlayerState[] = seats.map((p, i) => {
     const cap = capitals[i]!;
-    territories[cap] = { owner: p.id, units: { ...rules.setup.startUnits }, building: null };
+    territories[cap] = { owner: p.id, troops: rules.setup.startTroops, specialists: [], building: null, construction: null, culture: 0 };
     return {
       id: p.id,
       name: p.name,
@@ -72,13 +77,14 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   players.sort((a, b) => opts.players.findIndex((p) => p.id === a.id) - opts.players.findIndex((p) => p.id === b.id));
 
   return {
-    version: 1,
+    version: 2,
     gameId: opts.gameId,
     mapId: map.id,
     turn: 1,
     players,
     territories,
     rng: rng.state,
+    nextId: 1,
     seedCommitment: seedCommitment(opts.seed),
     settings,
     winner: null,

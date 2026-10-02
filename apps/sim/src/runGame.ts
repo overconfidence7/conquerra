@@ -1,3 +1,4 @@
+import { performance } from "node:perf_hooks";
 import { recruitBot, type Bot } from "@conquerra/bots";
 import {
   createGame,
@@ -23,10 +24,16 @@ export interface GameSummary {
   fizzles: number;
   initiatives: number;
   leadersKilled: number;
+  hires: number;
+  invests: number;
+  presets: number;
   /** First turn after which the eventual winner led in territory count for the rest of the game. */
   decidedTurn: number | null;
   /** How many times the territory leader changed hands. */
   leadChanges: number;
+  /** CPU time per turn in milliseconds: the engine resolving, and the bots planning (all seats). */
+  resolveMs: number[];
+  planMs: number[];
   log?: StepEvent[][];
 }
 
@@ -35,19 +42,26 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
   let s = createGame(ctx, { gameId: `sim-${seed}`, seed, players, settings });
   const idx = indexMap(ctx.map);
   const sum: GameSummary = {
-    seed, winner: "draw", winnerSeat: null, endReason: null, turns: 0, battles: 0, captures: 0,
-    orders: 0, fizzles: 0, initiatives: 0, leadersKilled: 0, decidedTurn: null, leadChanges: 0,
+    seed, winner: "draw", winnerSeat: null, endReason: null, turns: 0, battles: 0, captures: 0, orders: 0, fizzles: 0,
+    initiatives: 0, leadersKilled: 0, hires: 0, invests: 0, presets: 0, decidedTurn: null, leadChanges: 0, resolveMs: [], planMs: [],
   };
   const leaders: (string | null)[] = [];
   const log: StepEvent[][] = [];
   while (!s.winner) {
     const orders: OrdersByPlayer = {};
-    for (const p of s.players) if (p.eliminatedTurn === null) {
-      const o = bot.plan(ctx, viewFor(ctx, s, p.id));
-      orders[p.id] = o;
-      sum.orders += o.length;
-    }
+    const p0 = performance.now();
+    for (const p of s.players)
+      if (p.eliminatedTurn === null) {
+        const o = bot.plan(ctx, viewFor(ctx, s, p.id));
+        orders[p.id] = o;
+        sum.orders += o.length;
+        sum.presets += o.filter((x) => x.preset).length;
+      }
+    const p1 = performance.now();
     const r = resolveTurn(ctx, s, orders);
+    const p2 = performance.now();
+    sum.planMs.push(p1 - p0);
+    sum.resolveMs.push(p2 - p1);
     s = r.state;
     if (keepLog) log.push(r.events);
     for (const e of r.events) {
@@ -55,6 +69,8 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
       if (e.type === "fizzled") sum.fizzles++;
       if (e.type === "initiative") sum.initiatives++;
       if (e.type === "leaderKilled") sum.leadersKilled++;
+      if (e.type === "hired") sum.hires++;
+      if (e.type === "invested") sum.invests++;
     }
     const counts = new Map<string, number>();
     for (const id of idx.ids) {

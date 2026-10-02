@@ -1,8 +1,9 @@
 import { z } from "zod";
 
-export const UnitType = z.enum(["infantry", "cavalry", "siege"]);
-export type UnitType = z.infer<typeof UnitType>;
-export const UNIT_TYPES: readonly UnitType[] = ["infantry", "cavalry", "siege"] as const;
+/** Specialists: one-off attachments an army can carry (max 2 per army). */
+export const SpecialistType = z.enum(["cavalry", "siege", "scouts", "engineers", "healers"]);
+export type SpecialistType = z.infer<typeof SpecialistType>;
+export const SPECIALIST_TYPES: readonly SpecialistType[] = ["cavalry", "siege", "scouts", "engineers", "healers"] as const;
 
 export const BuildingType = z.enum(["fort", "market", "barracks", "watchtower"]);
 export type BuildingType = z.infer<typeof BuildingType>;
@@ -50,36 +51,43 @@ export const MapDef = z
   });
 export type MapDef = z.infer<typeof MapDef>;
 
-const UnitStats = z.object({
-  cost: z.number().int().min(1),
-  attack: z.number().min(0),
-  defense: z.number().min(0),
-  /** Multiplier applied to this unit's attack when attacking into these terrains. */
-  attackTerrain: z.record(Terrain, z.number()).default({}) as z.ZodType<Partial<Record<Terrain, number>>>,
-  /** How much each unit of this type reduces an enemy fort's multiplier. */
-  fortBreak: z.number().min(0).default(0),
-  /** Max territories moved per order (cavalry = 2). */
-  move: z.number().int().min(1).default(1),
-});
-
-const perUnit = <T extends z.ZodTypeAny>(v: T) => z.object({ infantry: v, cavalry: v, siege: v });
-const perBuilding = <T extends z.ZodTypeAny>(v: T) => z.object({ fort: v, market: v, barracks: v, watchtower: v });
 const perTerrain = <T extends z.ZodTypeAny>(v: T) =>
   z.object({ plains: v, forest: v, hills: v, mountains: v, swamp: v });
 const perBorder = <T extends z.ZodTypeAny>(v: T) => z.object({ normal: v, river: v, pass: v });
 
+/** Fields every specialist has. */
+const specialistBase = {
+  /** Gold to hire one at your capital or a barracks. */
+  cost: z.number().int().min(0),
+  /** Gold per turn to keep it. */
+  upkeep: z.number().int().min(0),
+  /** Culture needed in the hiring province (sum over your territories there). 0 = always available. */
+  cultureRequired: z.number().int().min(0),
+};
+
 export const Rules = z.object({
   version: z.string(),
-  units: perUnit(UnitStats),
-  buildings: perBuilding(
-    z.object({
-      cost: z.number().int().min(0),
-      defenseMult: z.number().default(1),
-      income: z.number().default(0),
-      vision: z.number().int().default(0),
-      allowsRecruit: z.boolean().default(false),
-    }),
-  ),
+  troops: z.object({
+    cost: z.number().int().min(1),
+    /** Strength of each troop when attacking / defending. */
+    attack: z.number().min(0),
+    defense: z.number().min(0),
+  }),
+  specialists: z.object({
+    /** Most specialists one army (one territory's stack) can carry. */
+    maxPerArmy: z.number().int().min(0),
+    cavalry: z.object({ ...specialistBase, /** Territories the army can move per order. */ move: z.number().int().min(1) }),
+    siege: z.object({ ...specialistBase, /** How much of a fort's bonus each siege cancels (1 = all of it). */ fortBreak: z.number().min(0) }),
+    scouts: z.object({ ...specialistBase, /** Extra vision radius around the army. */ vision: z.number().int().min(0) }),
+    engineers: z.object({ ...specialistBase }),
+    healers: z.object({ ...specialistBase, /** Share of the army's losses prevented (each healer; capped by maxLossReduction). */ lossReduction: z.number().min(0).max(1), maxLossReduction: z.number().min(0).max(1) }),
+  }),
+  buildings: z.object({
+    fort: z.object({ cost: z.number().int(), buildTurns: z.number().int().min(0), defenseMult: z.number() }),
+    market: z.object({ cost: z.number().int(), buildTurns: z.number().int().min(0), income: z.number() }),
+    barracks: z.object({ cost: z.number().int(), buildTurns: z.number().int().min(0) }),
+    watchtower: z.object({ cost: z.number().int(), buildTurns: z.number().int().min(0), vision: z.number().int() }),
+  }),
   terrain: perTerrain(z.object({ defenseMult: z.number(), income: z.number().int() })),
   borders: perBorder(z.object({ attackMult: z.number() })),
   combat: z.object({
@@ -89,8 +97,19 @@ export const Rules = z.object({
     attackKillRate: z.number(),
     /** Each point of defense strength kills this many attackers on average. */
     defenseKillRate: z.number(),
-    /** Order units are lost in, cheapest first. */
-    casualtyOrder: z.array(UnitType),
+  }),
+  culture: z.object({
+    /** Highest culture a territory can reach. */
+    max: z.number().int().min(0),
+    /** Gold to raise culture from level i to i+1 (index i). Length must be >= max. */
+    investCost: z.array(z.number().int().min(0)),
+    /** Extra gold per turn per culture level on a territory you hold. */
+    incomePerLevel: z.number().min(0),
+    /** Extra province bonus per point of average culture across a fully held province. */
+    provinceBonusPerLevel: z.number().min(0),
+    /** Share of a bad effect blocked per culture level (unrest now; events and uprisings later). */
+    protectionPerLevel: z.number().min(0).max(1),
+    maxProtection: z.number().min(0).max(1),
   }),
   economy: z.object({
     startGold: z.number().int(),
@@ -101,8 +120,8 @@ export const Rules = z.object({
     upkeepExponent: z.number(),
   }),
   setup: z.object({
-    startUnits: perUnit(z.number().int().min(0)),
-    neutralUnits: z.number().int(),
+    startTroops: z.number().int().min(1),
+    neutralTroops: z.number().int().min(0),
     minGarrison: z.number().int().min(0),
   }),
   leader: z.object({
@@ -112,6 +131,20 @@ export const Rules = z.object({
     lieInWaitCooldown: z.number().int().min(1),
   }),
   vision: z.object({ base: z.number().int().min(0) }),
-  limits: z.object({ maxTurnsHard: z.number().int() }),
+  game: z.object({
+    /** Order-phase timer. The engine only stores it; the server runs the clock. */
+    turnTimerSecondsDefault: z.number().int().min(1),
+    turnTimerSecondsMin: z.number().int().min(1),
+    turnTimerSecondsMax: z.number().int().min(1),
+    /** Classic games stop here no matter what (highest score wins). */
+    maxTurnsHard: z.number().int(),
+    /** Turn limit used by conquest mode when the host doesn't pick one. */
+    conquestTurnLimitDefault: z.number().int().min(1),
+  }),
+}).superRefine((r, ctx) => {
+  if (r.culture.investCost.length < r.culture.max)
+    ctx.addIssue({ code: "custom", message: "culture.investCost needs one entry per level up to culture.max" });
+  if (r.game.turnTimerSecondsDefault < r.game.turnTimerSecondsMin || r.game.turnTimerSecondsDefault > r.game.turnTimerSecondsMax)
+    ctx.addIssue({ code: "custom", message: "turn timer default must sit between min and max" });
 });
 export type Rules = z.infer<typeof Rules>;

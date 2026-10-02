@@ -1,0 +1,1791 @@
+{
+ "id": "greatmarch",
+ "name": "Greatmarch (test map, up to 10 players)",
+ "minPlayers": 2,
+ "maxPlayers": 10,
+ "territories": [
+  {
+   "id": "g00",
+   "name": "Ashbarrow",
+   "province": "p0",
+   "terrain": "plains",
+   "x": 60,
+   "y": 60
+  },
+  {
+   "id": "g01",
+   "name": "Pinegate",
+   "province": "p0",
+   "terrain": "forest",
+   "x": 160,
+   "y": 60
+  },
+  {
+   "id": "g02",
+   "name": "Ironford",
+   "province": "p1",
+   "terrain": "mountains",
+   "x": 260,
+   "y": 60
+  },
+  {
+   "id": "g03",
+   "name": "Dunholt",
+   "province": "p1",
+   "terrain": "plains",
+   "x": 360,
+   "y": 60
+  },
+  {
+   "id": "g04",
+   "name": "Goldford",
+   "province": "p2",
+   "terrain": "plains",
+   "x": 460,
+   "y": 60
+  },
+  {
+   "id": "g05",
+   "name": "Thornvale",
+   "province": "p2",
+   "terrain": "plains",
+   "x": 560,
+   "y": 60
+  },
+  {
+   "id": "g06",
+   "name": "Goldmarch",
+   "province": "p3",
+   "terrain": "forest",
+   "x": 660,
+   "y": 60
+  },
+  {
+   "id": "g07",
+   "name": "Dunford",
+   "province": "p3",
+   "terrain": "plains",
+   "x": 760,
+   "y": 60
+  },
+  {
+   "id": "g08",
+   "name": "Northvale",
+   "province": "p4",
+   "terrain": "forest",
+   "x": 860,
+   "y": 60
+  },
+  {
+   "id": "g09",
+   "name": "Kingsmarch",
+   "province": "p4",
+   "terrain": "plains",
+   "x": 960,
+   "y": 60
+  },
+  {
+   "id": "g10",
+   "name": "Dunvale",
+   "province": "p0",
+   "terrain": "mountains",
+   "x": 110,
+   "y": 150
+  },
+  {
+   "id": "g11",
+   "name": "Stonefell",
+   "province": "p0",
+   "terrain": "hills",
+   "x": 210,
+   "y": 150
+  },
+  {
+   "id": "g12",
+   "name": "Mireport",
+   "province": "p1",
+   "terrain": "swamp",
+   "x": 310,
+   "y": 150
+  },
+  {
+   "id": "g13",
+   "name": "Northholt",
+   "province": "p1",
+   "terrain": "forest",
+   "x": 410,
+   "y": 150
+  },
+  {
+   "id": "g14",
+   "name": "Hollowbarrow",
+   "province": "p2",
+   "terrain": "plains",
+   "x": 510,
+   "y": 150
+  },
+  {
+   "id": "g15",
+   "name": "Goldhearth",
+   "province": "p2",
+   "terrain": "plains",
+   "x": 610,
+   "y": 150
+  },
+  {
+   "id": "g16",
+   "name": "Stonebarrow",
+   "province": "p3",
+   "terrain": "plains",
+   "x": 710,
+   "y": 150
+  },
+  {
+   "id": "g17",
+   "name": "Longmere",
+   "province": "p3",
+   "terrain": "plains",
+   "x": 810,
+   "y": 150
+  },
+  {
+   "id": "g18",
+   "name": "Yewhearth",
+   "province": "p4",
+   "terrain": "plains",
+   "x": 910,
+   "y": 150
+  },
+  {
+   "id": "g19",
+   "name": "Kingsmoor",
+   "province": "p4",
+   "terrain": "plains",
+   "x": 1010,
+   "y": 150
+  },
+  {
+   "id": "g20",
+   "name": "Frosthearth",
+   "province": "p5",
+   "terrain": "forest",
+   "x": 60,
+   "y": 240
+  },
+  {
+   "id": "g21",
+   "name": "Frostwatch",
+   "province": "p5",
+   "terrain": "plains",
+   "x": 160,
+   "y": 240
+  },
+  {
+   "id": "g22",
+   "name": "Elmwick",
+   "province": "p6",
+   "terrain": "forest",
+   "x": 260,
+   "y": 240
+  },
+  {
+   "id": "g23",
+   "name": "Hollowford",
+   "province": "p6",
+   "terrain": "plains",
+   "x": 360,
+   "y": 240
+  },
+  {
+   "id": "g24",
+   "name": "Coldgate",
+   "province": "p7",
+   "terrain": "hills",
+   "x": 460,
+   "y": 240
+  },
+  {
+   "id": "g25",
+   "name": "Stonewatch",
+   "province": "p7",
+   "terrain": "plains",
+   "x": 560,
+   "y": 240
+  },
+  {
+   "id": "g26",
+   "name": "Elmvale",
+   "province": "p8",
+   "terrain": "mountains",
+   "x": 660,
+   "y": 240
+  },
+  {
+   "id": "g27",
+   "name": "Kingsport",
+   "province": "p8",
+   "terrain": "plains",
+   "x": 760,
+   "y": 240
+  },
+  {
+   "id": "g28",
+   "name": "Frostfell",
+   "province": "p9",
+   "terrain": "plains",
+   "x": 860,
+   "y": 240
+  },
+  {
+   "id": "g29",
+   "name": "Kingsbarrow",
+   "province": "p9",
+   "terrain": "forest",
+   "x": 960,
+   "y": 240
+  },
+  {
+   "id": "g30",
+   "name": "Hollowholt",
+   "province": "p5",
+   "terrain": "plains",
+   "x": 110,
+   "y": 330
+  },
+  {
+   "id": "g31",
+   "name": "Ravenwick",
+   "province": "p5",
+   "terrain": "plains",
+   "x": 210,
+   "y": 330
+  },
+  {
+   "id": "g32",
+   "name": "Pineport",
+   "province": "p6",
+   "terrain": "plains",
+   "x": 310,
+   "y": 330
+  },
+  {
+   "id": "g33",
+   "name": "Ironholt",
+   "province": "p6",
+   "terrain": "plains",
+   "x": 410,
+   "y": 330
+  },
+  {
+   "id": "g34",
+   "name": "Northmere",
+   "province": "p7",
+   "terrain": "plains",
+   "x": 510,
+   "y": 330
+  },
+  {
+   "id": "g35",
+   "name": "Pinefell",
+   "province": "p7",
+   "terrain": "swamp",
+   "x": 610,
+   "y": 330
+  },
+  {
+   "id": "g36",
+   "name": "Kingsreach",
+   "province": "p8",
+   "terrain": "swamp",
+   "x": 710,
+   "y": 330
+  },
+  {
+   "id": "g37",
+   "name": "Wolfmere",
+   "province": "p8",
+   "terrain": "forest",
+   "x": 810,
+   "y": 330
+  },
+  {
+   "id": "g38",
+   "name": "Ironwick",
+   "province": "p9",
+   "terrain": "plains",
+   "x": 910,
+   "y": 330
+  },
+  {
+   "id": "g39",
+   "name": "Coldreach",
+   "province": "p9",
+   "terrain": "forest",
+   "x": 1010,
+   "y": 330
+  },
+  {
+   "id": "g40",
+   "name": "Wolfvale",
+   "province": "p10",
+   "terrain": "plains",
+   "x": 60,
+   "y": 420
+  },
+  {
+   "id": "g41",
+   "name": "Bramport",
+   "province": "p10",
+   "terrain": "plains",
+   "x": 160,
+   "y": 420
+  },
+  {
+   "id": "g42",
+   "name": "Brammoor",
+   "province": "p11",
+   "terrain": "plains",
+   "x": 260,
+   "y": 420
+  },
+  {
+   "id": "g43",
+   "name": "Yewmarch",
+   "province": "p11",
+   "terrain": "mountains",
+   "x": 360,
+   "y": 420
+  },
+  {
+   "id": "g44",
+   "name": "Kingsgate",
+   "province": "p12",
+   "terrain": "forest",
+   "x": 460,
+   "y": 420
+  },
+  {
+   "id": "g45",
+   "name": "Oakholt",
+   "province": "p12",
+   "terrain": "hills",
+   "x": 560,
+   "y": 420
+  },
+  {
+   "id": "g46",
+   "name": "Stonereach",
+   "province": "p13",
+   "terrain": "plains",
+   "x": 660,
+   "y": 420
+  },
+  {
+   "id": "g47",
+   "name": "Kingsford",
+   "province": "p13",
+   "terrain": "plains",
+   "x": 760,
+   "y": 420
+  },
+  {
+   "id": "g48",
+   "name": "Stonegate",
+   "province": "p14",
+   "terrain": "forest",
+   "x": 860,
+   "y": 420
+  },
+  {
+   "id": "g49",
+   "name": "Goldwatch",
+   "province": "p14",
+   "terrain": "plains",
+   "x": 960,
+   "y": 420
+  },
+  {
+   "id": "g50",
+   "name": "Pinewatch",
+   "province": "p10",
+   "terrain": "plains",
+   "x": 110,
+   "y": 510
+  },
+  {
+   "id": "g51",
+   "name": "Frostwick",
+   "province": "p10",
+   "terrain": "plains",
+   "x": 210,
+   "y": 510
+  },
+  {
+   "id": "g52",
+   "name": "Kingswick",
+   "province": "p11",
+   "terrain": "forest",
+   "x": 310,
+   "y": 510
+  },
+  {
+   "id": "g53",
+   "name": "Hollowgate",
+   "province": "p11",
+   "terrain": "plains",
+   "x": 410,
+   "y": 510
+  },
+  {
+   "id": "g54",
+   "name": "Thornmere",
+   "province": "p12",
+   "terrain": "swamp",
+   "x": 510,
+   "y": 510
+  },
+  {
+   "id": "g55",
+   "name": "Stonewick",
+   "province": "p12",
+   "terrain": "plains",
+   "x": 610,
+   "y": 510
+  },
+  {
+   "id": "g56",
+   "name": "Mirewatch",
+   "province": "p13",
+   "terrain": "mountains",
+   "x": 710,
+   "y": 510
+  },
+  {
+   "id": "g57",
+   "name": "Oakreach",
+   "province": "p13",
+   "terrain": "hills",
+   "x": 810,
+   "y": 510
+  },
+  {
+   "id": "g58",
+   "name": "Stoneford",
+   "province": "p14",
+   "terrain": "plains",
+   "x": 910,
+   "y": 510
+  },
+  {
+   "id": "g59",
+   "name": "Mirereach",
+   "province": "p14",
+   "terrain": "hills",
+   "x": 1010,
+   "y": 510
+  },
+  {
+   "id": "g60",
+   "name": "Northwick",
+   "province": "p15",
+   "terrain": "plains",
+   "x": 60,
+   "y": 600
+  },
+  {
+   "id": "g61",
+   "name": "Ashholt",
+   "province": "p15",
+   "terrain": "forest",
+   "x": 160,
+   "y": 600
+  },
+  {
+   "id": "g62",
+   "name": "Oakmoor",
+   "province": "p16",
+   "terrain": "plains",
+   "x": 260,
+   "y": 600
+  },
+  {
+   "id": "g63",
+   "name": "Stonemere",
+   "province": "p16",
+   "terrain": "swamp",
+   "x": 360,
+   "y": 600
+  },
+  {
+   "id": "g64",
+   "name": "Irongate",
+   "province": "p17",
+   "terrain": "plains",
+   "x": 460,
+   "y": 600
+  },
+  {
+   "id": "g65",
+   "name": "Elmfell",
+   "province": "p17",
+   "terrain": "plains",
+   "x": 560,
+   "y": 600
+  },
+  {
+   "id": "g66",
+   "name": "Goldholt",
+   "province": "p18",
+   "terrain": "hills",
+   "x": 660,
+   "y": 600
+  },
+  {
+   "id": "g67",
+   "name": "Mireholt",
+   "province": "p18",
+   "terrain": "plains",
+   "x": 760,
+   "y": 600
+  },
+  {
+   "id": "g68",
+   "name": "Elmwatch",
+   "province": "p19",
+   "terrain": "mountains",
+   "x": 860,
+   "y": 600
+  },
+  {
+   "id": "g69",
+   "name": "Ashfell",
+   "province": "p19",
+   "terrain": "hills",
+   "x": 960,
+   "y": 600
+  },
+  {
+   "id": "g70",
+   "name": "Miremoor",
+   "province": "p15",
+   "terrain": "plains",
+   "x": 110,
+   "y": 690
+  },
+  {
+   "id": "g71",
+   "name": "Yewfell",
+   "province": "p15",
+   "terrain": "plains",
+   "x": 210,
+   "y": 690
+  },
+  {
+   "id": "g72",
+   "name": "Wolfhearth",
+   "province": "p16",
+   "terrain": "plains",
+   "x": 310,
+   "y": 690
+  },
+  {
+   "id": "g73",
+   "name": "Frostgate",
+   "province": "p16",
+   "terrain": "swamp",
+   "x": 410,
+   "y": 690
+  },
+  {
+   "id": "g74",
+   "name": "Elmbarrow",
+   "province": "p17",
+   "terrain": "mountains",
+   "x": 510,
+   "y": 690
+  },
+  {
+   "id": "g75",
+   "name": "Goldwick",
+   "province": "p17",
+   "terrain": "plains",
+   "x": 610,
+   "y": 690
+  },
+  {
+   "id": "g76",
+   "name": "Bramvale",
+   "province": "p18",
+   "terrain": "hills",
+   "x": 710,
+   "y": 690
+  },
+  {
+   "id": "g77",
+   "name": "Wolfford",
+   "province": "p18",
+   "terrain": "swamp",
+   "x": 810,
+   "y": 690
+  },
+  {
+   "id": "g78",
+   "name": "Elmford",
+   "province": "p19",
+   "terrain": "plains",
+   "x": 910,
+   "y": 690
+  },
+  {
+   "id": "g79",
+   "name": "Ravenford",
+   "province": "p19",
+   "terrain": "plains",
+   "x": 1010,
+   "y": 690
+  }
+ ],
+ "provinces": [
+  {
+   "id": "p0",
+   "name": "Amberfold",
+   "bonus": 2
+  },
+  {
+   "id": "p1",
+   "name": "Brightwater",
+   "bonus": 3
+  },
+  {
+   "id": "p2",
+   "name": "Cinderhold",
+   "bonus": 3
+  },
+  {
+   "id": "p3",
+   "name": "Dawnmere",
+   "bonus": 3
+  },
+  {
+   "id": "p4",
+   "name": "Emberlands",
+   "bonus": 3
+  },
+  {
+   "id": "p5",
+   "name": "Farrow",
+   "bonus": 2
+  },
+  {
+   "id": "p6",
+   "name": "Greywood",
+   "bonus": 2
+  },
+  {
+   "id": "p7",
+   "name": "Highcrown",
+   "bonus": 3
+  },
+  {
+   "id": "p8",
+   "name": "Ivoryshore",
+   "bonus": 3
+  },
+  {
+   "id": "p9",
+   "name": "Jadefen",
+   "bonus": 3
+  },
+  {
+   "id": "p10",
+   "name": "Kestrel Downs",
+   "bonus": 2
+  },
+  {
+   "id": "p11",
+   "name": "Lowmarch",
+   "bonus": 3
+  },
+  {
+   "id": "p12",
+   "name": "Mistvale",
+   "bonus": 2
+  },
+  {
+   "id": "p13",
+   "name": "Nettlebrook",
+   "bonus": 3
+  },
+  {
+   "id": "p14",
+   "name": "Oldkeep",
+   "bonus": 3
+  },
+  {
+   "id": "p15",
+   "name": "Pale Steppe",
+   "bonus": 3
+  },
+  {
+   "id": "p16",
+   "name": "Queensreach",
+   "bonus": 3
+  },
+  {
+   "id": "p17",
+   "name": "Redcliff",
+   "bonus": 2
+  },
+  {
+   "id": "p18",
+   "name": "Silverrun",
+   "bonus": 3
+  },
+  {
+   "id": "p19",
+   "name": "Thornwall",
+   "bonus": 3
+  }
+ ],
+ "borders": [
+  {
+   "a": "g00",
+   "b": "g01",
+   "type": "normal"
+  },
+  {
+   "a": "g00",
+   "b": "g10",
+   "type": "normal"
+  },
+  {
+   "a": "g01",
+   "b": "g02",
+   "type": "normal"
+  },
+  {
+   "a": "g01",
+   "b": "g11",
+   "type": "normal"
+  },
+  {
+   "a": "g01",
+   "b": "g10",
+   "type": "pass"
+  },
+  {
+   "a": "g02",
+   "b": "g03",
+   "type": "normal"
+  },
+  {
+   "a": "g02",
+   "b": "g12",
+   "type": "normal"
+  },
+  {
+   "a": "g02",
+   "b": "g11",
+   "type": "normal"
+  },
+  {
+   "a": "g03",
+   "b": "g04",
+   "type": "normal"
+  },
+  {
+   "a": "g03",
+   "b": "g13",
+   "type": "river"
+  },
+  {
+   "a": "g03",
+   "b": "g12",
+   "type": "normal"
+  },
+  {
+   "a": "g04",
+   "b": "g05",
+   "type": "normal"
+  },
+  {
+   "a": "g04",
+   "b": "g14",
+   "type": "normal"
+  },
+  {
+   "a": "g04",
+   "b": "g13",
+   "type": "normal"
+  },
+  {
+   "a": "g05",
+   "b": "g06",
+   "type": "normal"
+  },
+  {
+   "a": "g05",
+   "b": "g15",
+   "type": "normal"
+  },
+  {
+   "a": "g05",
+   "b": "g14",
+   "type": "normal"
+  },
+  {
+   "a": "g06",
+   "b": "g07",
+   "type": "normal"
+  },
+  {
+   "a": "g06",
+   "b": "g16",
+   "type": "normal"
+  },
+  {
+   "a": "g06",
+   "b": "g15",
+   "type": "normal"
+  },
+  {
+   "a": "g07",
+   "b": "g08",
+   "type": "normal"
+  },
+  {
+   "a": "g07",
+   "b": "g17",
+   "type": "normal"
+  },
+  {
+   "a": "g07",
+   "b": "g16",
+   "type": "normal"
+  },
+  {
+   "a": "g08",
+   "b": "g09",
+   "type": "normal"
+  },
+  {
+   "a": "g08",
+   "b": "g18",
+   "type": "normal"
+  },
+  {
+   "a": "g08",
+   "b": "g17",
+   "type": "normal"
+  },
+  {
+   "a": "g09",
+   "b": "g19",
+   "type": "normal"
+  },
+  {
+   "a": "g09",
+   "b": "g18",
+   "type": "normal"
+  },
+  {
+   "a": "g10",
+   "b": "g11",
+   "type": "pass"
+  },
+  {
+   "a": "g10",
+   "b": "g20",
+   "type": "normal"
+  },
+  {
+   "a": "g10",
+   "b": "g21",
+   "type": "pass"
+  },
+  {
+   "a": "g11",
+   "b": "g12",
+   "type": "pass"
+  },
+  {
+   "a": "g11",
+   "b": "g21",
+   "type": "normal"
+  },
+  {
+   "a": "g11",
+   "b": "g22",
+   "type": "pass"
+  },
+  {
+   "a": "g12",
+   "b": "g13",
+   "type": "normal"
+  },
+  {
+   "a": "g12",
+   "b": "g22",
+   "type": "normal"
+  },
+  {
+   "a": "g12",
+   "b": "g23",
+   "type": "normal"
+  },
+  {
+   "a": "g13",
+   "b": "g14",
+   "type": "normal"
+  },
+  {
+   "a": "g13",
+   "b": "g23",
+   "type": "normal"
+  },
+  {
+   "a": "g13",
+   "b": "g24",
+   "type": "pass"
+  },
+  {
+   "a": "g14",
+   "b": "g15",
+   "type": "normal"
+  },
+  {
+   "a": "g14",
+   "b": "g24",
+   "type": "pass"
+  },
+  {
+   "a": "g14",
+   "b": "g25",
+   "type": "normal"
+  },
+  {
+   "a": "g15",
+   "b": "g16",
+   "type": "normal"
+  },
+  {
+   "a": "g15",
+   "b": "g25",
+   "type": "normal"
+  },
+  {
+   "a": "g15",
+   "b": "g26",
+   "type": "pass"
+  },
+  {
+   "a": "g16",
+   "b": "g17",
+   "type": "normal"
+  },
+  {
+   "a": "g16",
+   "b": "g26",
+   "type": "normal"
+  },
+  {
+   "a": "g16",
+   "b": "g27",
+   "type": "river"
+  },
+  {
+   "a": "g17",
+   "b": "g18",
+   "type": "normal"
+  },
+  {
+   "a": "g17",
+   "b": "g27",
+   "type": "normal"
+  },
+  {
+   "a": "g17",
+   "b": "g28",
+   "type": "normal"
+  },
+  {
+   "a": "g18",
+   "b": "g19",
+   "type": "normal"
+  },
+  {
+   "a": "g18",
+   "b": "g28",
+   "type": "normal"
+  },
+  {
+   "a": "g18",
+   "b": "g29",
+   "type": "normal"
+  },
+  {
+   "a": "g19",
+   "b": "g29",
+   "type": "normal"
+  },
+  {
+   "a": "g20",
+   "b": "g21",
+   "type": "normal"
+  },
+  {
+   "a": "g20",
+   "b": "g30",
+   "type": "normal"
+  },
+  {
+   "a": "g21",
+   "b": "g22",
+   "type": "normal"
+  },
+  {
+   "a": "g21",
+   "b": "g31",
+   "type": "normal"
+  },
+  {
+   "a": "g21",
+   "b": "g30",
+   "type": "normal"
+  },
+  {
+   "a": "g22",
+   "b": "g23",
+   "type": "normal"
+  },
+  {
+   "a": "g22",
+   "b": "g32",
+   "type": "normal"
+  },
+  {
+   "a": "g22",
+   "b": "g31",
+   "type": "normal"
+  },
+  {
+   "a": "g23",
+   "b": "g24",
+   "type": "pass"
+  },
+  {
+   "a": "g23",
+   "b": "g33",
+   "type": "normal"
+  },
+  {
+   "a": "g23",
+   "b": "g32",
+   "type": "normal"
+  },
+  {
+   "a": "g24",
+   "b": "g25",
+   "type": "pass"
+  },
+  {
+   "a": "g24",
+   "b": "g34",
+   "type": "normal"
+  },
+  {
+   "a": "g24",
+   "b": "g33",
+   "type": "normal"
+  },
+  {
+   "a": "g25",
+   "b": "g26",
+   "type": "normal"
+  },
+  {
+   "a": "g25",
+   "b": "g35",
+   "type": "normal"
+  },
+  {
+   "a": "g25",
+   "b": "g34",
+   "type": "normal"
+  },
+  {
+   "a": "g26",
+   "b": "g27",
+   "type": "pass"
+  },
+  {
+   "a": "g26",
+   "b": "g36",
+   "type": "pass"
+  },
+  {
+   "a": "g26",
+   "b": "g35",
+   "type": "pass"
+  },
+  {
+   "a": "g27",
+   "b": "g28",
+   "type": "normal"
+  },
+  {
+   "a": "g27",
+   "b": "g37",
+   "type": "normal"
+  },
+  {
+   "a": "g27",
+   "b": "g36",
+   "type": "normal"
+  },
+  {
+   "a": "g28",
+   "b": "g29",
+   "type": "normal"
+  },
+  {
+   "a": "g28",
+   "b": "g38",
+   "type": "normal"
+  },
+  {
+   "a": "g28",
+   "b": "g37",
+   "type": "normal"
+  },
+  {
+   "a": "g29",
+   "b": "g39",
+   "type": "river"
+  },
+  {
+   "a": "g29",
+   "b": "g38",
+   "type": "normal"
+  },
+  {
+   "a": "g30",
+   "b": "g31",
+   "type": "normal"
+  },
+  {
+   "a": "g30",
+   "b": "g40",
+   "type": "normal"
+  },
+  {
+   "a": "g30",
+   "b": "g41",
+   "type": "normal"
+  },
+  {
+   "a": "g31",
+   "b": "g32",
+   "type": "normal"
+  },
+  {
+   "a": "g31",
+   "b": "g41",
+   "type": "normal"
+  },
+  {
+   "a": "g31",
+   "b": "g42",
+   "type": "normal"
+  },
+  {
+   "a": "g32",
+   "b": "g33",
+   "type": "normal"
+  },
+  {
+   "a": "g32",
+   "b": "g42",
+   "type": "normal"
+  },
+  {
+   "a": "g32",
+   "b": "g43",
+   "type": "pass"
+  },
+  {
+   "a": "g33",
+   "b": "g34",
+   "type": "normal"
+  },
+  {
+   "a": "g33",
+   "b": "g43",
+   "type": "normal"
+  },
+  {
+   "a": "g33",
+   "b": "g44",
+   "type": "normal"
+  },
+  {
+   "a": "g34",
+   "b": "g35",
+   "type": "normal"
+  },
+  {
+   "a": "g34",
+   "b": "g44",
+   "type": "normal"
+  },
+  {
+   "a": "g34",
+   "b": "g45",
+   "type": "pass"
+  },
+  {
+   "a": "g35",
+   "b": "g36",
+   "type": "normal"
+  },
+  {
+   "a": "g35",
+   "b": "g45",
+   "type": "normal"
+  },
+  {
+   "a": "g35",
+   "b": "g46",
+   "type": "river"
+  },
+  {
+   "a": "g36",
+   "b": "g37",
+   "type": "normal"
+  },
+  {
+   "a": "g36",
+   "b": "g46",
+   "type": "normal"
+  },
+  {
+   "a": "g36",
+   "b": "g47",
+   "type": "normal"
+  },
+  {
+   "a": "g37",
+   "b": "g38",
+   "type": "normal"
+  },
+  {
+   "a": "g37",
+   "b": "g47",
+   "type": "normal"
+  },
+  {
+   "a": "g37",
+   "b": "g48",
+   "type": "normal"
+  },
+  {
+   "a": "g38",
+   "b": "g39",
+   "type": "normal"
+  },
+  {
+   "a": "g38",
+   "b": "g48",
+   "type": "normal"
+  },
+  {
+   "a": "g38",
+   "b": "g49",
+   "type": "normal"
+  },
+  {
+   "a": "g39",
+   "b": "g49",
+   "type": "normal"
+  },
+  {
+   "a": "g40",
+   "b": "g41",
+   "type": "normal"
+  },
+  {
+   "a": "g40",
+   "b": "g50",
+   "type": "normal"
+  },
+  {
+   "a": "g41",
+   "b": "g42",
+   "type": "river"
+  },
+  {
+   "a": "g41",
+   "b": "g51",
+   "type": "normal"
+  },
+  {
+   "a": "g41",
+   "b": "g50",
+   "type": "normal"
+  },
+  {
+   "a": "g42",
+   "b": "g43",
+   "type": "normal"
+  },
+  {
+   "a": "g42",
+   "b": "g52",
+   "type": "normal"
+  },
+  {
+   "a": "g42",
+   "b": "g51",
+   "type": "river"
+  },
+  {
+   "a": "g43",
+   "b": "g44",
+   "type": "normal"
+  },
+  {
+   "a": "g43",
+   "b": "g53",
+   "type": "normal"
+  },
+  {
+   "a": "g43",
+   "b": "g52",
+   "type": "normal"
+  },
+  {
+   "a": "g44",
+   "b": "g45",
+   "type": "normal"
+  },
+  {
+   "a": "g44",
+   "b": "g54",
+   "type": "normal"
+  },
+  {
+   "a": "g44",
+   "b": "g53",
+   "type": "normal"
+  },
+  {
+   "a": "g45",
+   "b": "g46",
+   "type": "pass"
+  },
+  {
+   "a": "g45",
+   "b": "g55",
+   "type": "normal"
+  },
+  {
+   "a": "g45",
+   "b": "g54",
+   "type": "normal"
+  },
+  {
+   "a": "g46",
+   "b": "g47",
+   "type": "normal"
+  },
+  {
+   "a": "g46",
+   "b": "g56",
+   "type": "normal"
+  },
+  {
+   "a": "g46",
+   "b": "g55",
+   "type": "normal"
+  },
+  {
+   "a": "g47",
+   "b": "g48",
+   "type": "normal"
+  },
+  {
+   "a": "g47",
+   "b": "g57",
+   "type": "pass"
+  },
+  {
+   "a": "g47",
+   "b": "g56",
+   "type": "normal"
+  },
+  {
+   "a": "g48",
+   "b": "g49",
+   "type": "normal"
+  },
+  {
+   "a": "g48",
+   "b": "g58",
+   "type": "normal"
+  },
+  {
+   "a": "g48",
+   "b": "g57",
+   "type": "normal"
+  },
+  {
+   "a": "g49",
+   "b": "g59",
+   "type": "normal"
+  },
+  {
+   "a": "g49",
+   "b": "g58",
+   "type": "normal"
+  },
+  {
+   "a": "g50",
+   "b": "g51",
+   "type": "normal"
+  },
+  {
+   "a": "g50",
+   "b": "g60",
+   "type": "normal"
+  },
+  {
+   "a": "g50",
+   "b": "g61",
+   "type": "normal"
+  },
+  {
+   "a": "g51",
+   "b": "g52",
+   "type": "normal"
+  },
+  {
+   "a": "g51",
+   "b": "g61",
+   "type": "normal"
+  },
+  {
+   "a": "g51",
+   "b": "g62",
+   "type": "normal"
+  },
+  {
+   "a": "g52",
+   "b": "g53",
+   "type": "river"
+  },
+  {
+   "a": "g52",
+   "b": "g62",
+   "type": "normal"
+  },
+  {
+   "a": "g52",
+   "b": "g63",
+   "type": "normal"
+  },
+  {
+   "a": "g53",
+   "b": "g54",
+   "type": "normal"
+  },
+  {
+   "a": "g53",
+   "b": "g63",
+   "type": "normal"
+  },
+  {
+   "a": "g53",
+   "b": "g64",
+   "type": "normal"
+  },
+  {
+   "a": "g54",
+   "b": "g55",
+   "type": "normal"
+  },
+  {
+   "a": "g54",
+   "b": "g64",
+   "type": "normal"
+  },
+  {
+   "a": "g54",
+   "b": "g65",
+   "type": "normal"
+  },
+  {
+   "a": "g55",
+   "b": "g56",
+   "type": "pass"
+  },
+  {
+   "a": "g55",
+   "b": "g65",
+   "type": "normal"
+  },
+  {
+   "a": "g55",
+   "b": "g66",
+   "type": "pass"
+  },
+  {
+   "a": "g56",
+   "b": "g57",
+   "type": "pass"
+  },
+  {
+   "a": "g56",
+   "b": "g66",
+   "type": "normal"
+  },
+  {
+   "a": "g56",
+   "b": "g67",
+   "type": "normal"
+  },
+  {
+   "a": "g57",
+   "b": "g58",
+   "type": "normal"
+  },
+  {
+   "a": "g57",
+   "b": "g67",
+   "type": "pass"
+  },
+  {
+   "a": "g57",
+   "b": "g68",
+   "type": "normal"
+  },
+  {
+   "a": "g58",
+   "b": "g59",
+   "type": "pass"
+  },
+  {
+   "a": "g58",
+   "b": "g68",
+   "type": "pass"
+  },
+  {
+   "a": "g58",
+   "b": "g69",
+   "type": "normal"
+  },
+  {
+   "a": "g59",
+   "b": "g69",
+   "type": "normal"
+  },
+  {
+   "a": "g60",
+   "b": "g61",
+   "type": "normal"
+  },
+  {
+   "a": "g60",
+   "b": "g70",
+   "type": "normal"
+  },
+  {
+   "a": "g61",
+   "b": "g62",
+   "type": "normal"
+  },
+  {
+   "a": "g61",
+   "b": "g71",
+   "type": "river"
+  },
+  {
+   "a": "g61",
+   "b": "g70",
+   "type": "normal"
+  },
+  {
+   "a": "g62",
+   "b": "g63",
+   "type": "river"
+  },
+  {
+   "a": "g62",
+   "b": "g72",
+   "type": "normal"
+  },
+  {
+   "a": "g62",
+   "b": "g71",
+   "type": "normal"
+  },
+  {
+   "a": "g63",
+   "b": "g64",
+   "type": "river"
+  },
+  {
+   "a": "g63",
+   "b": "g73",
+   "type": "normal"
+  },
+  {
+   "a": "g63",
+   "b": "g72",
+   "type": "normal"
+  },
+  {
+   "a": "g64",
+   "b": "g65",
+   "type": "normal"
+  },
+  {
+   "a": "g64",
+   "b": "g74",
+   "type": "normal"
+  },
+  {
+   "a": "g64",
+   "b": "g73",
+   "type": "normal"
+  },
+  {
+   "a": "g65",
+   "b": "g66",
+   "type": "normal"
+  },
+  {
+   "a": "g65",
+   "b": "g75",
+   "type": "normal"
+  },
+  {
+   "a": "g65",
+   "b": "g74",
+   "type": "pass"
+  },
+  {
+   "a": "g66",
+   "b": "g67",
+   "type": "pass"
+  },
+  {
+   "a": "g66",
+   "b": "g76",
+   "type": "normal"
+  },
+  {
+   "a": "g66",
+   "b": "g75",
+   "type": "normal"
+  },
+  {
+   "a": "g67",
+   "b": "g68",
+   "type": "normal"
+  },
+  {
+   "a": "g67",
+   "b": "g77",
+   "type": "normal"
+  },
+  {
+   "a": "g67",
+   "b": "g76",
+   "type": "normal"
+  },
+  {
+   "a": "g68",
+   "b": "g69",
+   "type": "pass"
+  },
+  {
+   "a": "g68",
+   "b": "g78",
+   "type": "normal"
+  },
+  {
+   "a": "g68",
+   "b": "g77",
+   "type": "pass"
+  },
+  {
+   "a": "g69",
+   "b": "g79",
+   "type": "pass"
+  },
+  {
+   "a": "g69",
+   "b": "g78",
+   "type": "pass"
+  },
+  {
+   "a": "g70",
+   "b": "g71",
+   "type": "normal"
+  },
+  {
+   "a": "g71",
+   "b": "g72",
+   "type": "normal"
+  },
+  {
+   "a": "g72",
+   "b": "g73",
+   "type": "normal"
+  },
+  {
+   "a": "g73",
+   "b": "g74",
+   "type": "normal"
+  },
+  {
+   "a": "g74",
+   "b": "g75",
+   "type": "pass"
+  },
+  {
+   "a": "g75",
+   "b": "g76",
+   "type": "normal"
+  },
+  {
+   "a": "g76",
+   "b": "g77",
+   "type": "pass"
+  },
+  {
+   "a": "g77",
+   "b": "g78",
+   "type": "normal"
+  },
+  {
+   "a": "g78",
+   "b": "g79",
+   "type": "normal"
+  }
+ ],
+ "capitalSlots": [
+  "g00",
+  "g04",
+  "g09",
+  "g22",
+  "g27",
+  "g52",
+  "g57",
+  "g70",
+  "g75",
+  "g79",
+  "g35",
+  "g40"
+ ]
+}

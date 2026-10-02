@@ -1,14 +1,15 @@
-import type { BorderType, BuildingType, Rules, Terrain } from "@conquerra/content";
+import type { BorderType, BuildingType, Rules, SpecialistType, Terrain } from "@conquerra/content";
 import type { Rng } from "./rng";
-import type { Units } from "./types";
-import { total } from "./units";
 
 export interface BattleInput {
-  attackers: Units;
+  attackers: number;
+  attackerSpecialists: readonly SpecialistType[];
   attackerLeader: boolean;
-  defenders: Units;
+  defenders: number;
+  defenderSpecialists: readonly SpecialistType[];
   defenderLeader: boolean;
   terrain: Terrain;
+  /** Only a finished building counts (a fort under construction gives no bonus). */
   building: BuildingType | null;
   border: BorderType;
   luck: number;
@@ -30,36 +31,35 @@ export interface BattleExpectation {
   captureImpossible: boolean;
 }
 
-/** Pure math: what should happen on average. Used for previews, bots and resolution. */
+const count = (list: readonly SpecialistType[], t: SpecialistType) => list.filter((s) => s === t).length;
+
+/** Share of losses healers prevent for one side. */
+export function healerReduction(rules: Rules, specialists: readonly SpecialistType[]): number {
+  const h = rules.specialists.healers;
+  return Math.min(h.maxLossReduction, count(specialists, "healers") * h.lossReduction);
+}
+
+/** Pure math: what should happen on average. Used for previews, bots, presets and resolution. */
 export function expectBattle(rules: Rules, b: BattleInput): BattleExpectation {
   const borderMult = rules.borders[b.border].attackMult;
   const leaderA = b.attackerLeader ? 1 + rules.leader.strengthBonus : 1;
   const leaderD = b.defenderLeader ? 1 + rules.leader.strengthBonus : 1;
+  const attackStrength = b.attackers * rules.troops.attack * borderMult * leaderA;
 
-  let attackStrength = 0;
-  for (const u of ["infantry", "cavalry", "siege"] as const) {
-    const s = rules.units[u];
-    attackStrength += b.attackers[u] * s.attack * (s.attackTerrain[b.terrain] ?? 1);
-  }
-  attackStrength *= borderMult * leaderA;
-
+  // Forts multiply defense; each siege specialist cancels part of the fort's bonus.
   let fortMult = 1;
-  if (b.building) {
-    const base = rules.buildings[b.building].defenseMult;
-    const breakBy = b.attackers.siege * rules.units.siege.fortBreak;
-    fortMult = Math.max(1, base - breakBy);
+  if (b.building === "fort") {
+    const bonus = rules.buildings.fort.defenseMult - 1;
+    const broken = count(b.attackerSpecialists, "siege") * rules.specialists.siege.fortBreak;
+    fortMult = 1 + Math.max(0, bonus * (1 - broken));
   }
-  let defenseStrength = 0;
-  for (const u of ["infantry", "cavalry", "siege"] as const) defenseStrength += b.defenders[u] * rules.units[u].defense;
-  defenseStrength *= rules.terrain[b.terrain].defenseMult * fortMult * leaderD;
+  const defenseStrength = b.defenders * rules.troops.defense * rules.terrain[b.terrain].defenseMult * fortMult * leaderD;
 
-  const eDef = attackStrength * rules.combat.attackKillRate;
-  const eAtk = defenseStrength * rules.combat.defenseKillRate;
+  const eDef = attackStrength * rules.combat.attackKillRate * (1 - healerReduction(rules, b.defenderSpecialists));
+  const eAtk = defenseStrength * rules.combat.defenseKillRate * (1 - healerReduction(rules, b.attackerSpecialists));
   const L = b.luck;
-  const dTot = total(b.defenders);
-  const aTot = total(b.attackers);
-  const clampD = (x: number) => Math.min(dTot, Math.max(0, x));
-  const clampA = (x: number) => Math.min(aTot, Math.max(0, x));
+  const clampD = (x: number) => Math.min(b.defenders, Math.max(0, x));
+  const clampA = (x: number) => Math.min(b.attackers, Math.max(0, x));
   const defenderLossRange: [number, number] = [clampD(Math.floor(eDef * (1 - L))), clampD(Math.ceil(eDef * (1 + L)))];
   const attackerLossRange: [number, number] = [clampA(Math.floor(eAtk * (1 - L))), clampA(Math.ceil(eAtk * (1 + L)))];
   return {
@@ -69,9 +69,9 @@ export function expectBattle(rules: Rules, b: BattleInput): BattleExpectation {
     expectedAttackerLosses: clampA(eAtk),
     defenderLossRange,
     attackerLossRange,
-    captureGuaranteed: defenderLossRange[0] >= dTot && attackerLossRange[1] < aTot,
-    captureLikely: eDef >= dTot && eAtk < aTot,
-    captureImpossible: defenderLossRange[1] < dTot || attackerLossRange[0] >= aTot,
+    captureGuaranteed: defenderLossRange[0] >= b.defenders && attackerLossRange[1] < b.attackers,
+    captureLikely: eDef >= b.defenders && eAtk < b.attackers,
+    captureImpossible: defenderLossRange[1] < b.defenders || attackerLossRange[0] >= b.attackers,
   };
 }
 

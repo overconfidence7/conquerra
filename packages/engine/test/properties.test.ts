@@ -1,58 +1,77 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { createGame, indexMap, resolveTurn, type GameState, type Order, type OrdersByPlayer } from "../src";
+import { SPECIALIST_TYPES } from "@conquerra/content";
+import { createGame, indexMap, replayFor, resolveTurn, viewFor, type GameState, type Order, type OrdersByPlayer, type PresetId } from "../src";
 import { embervaleCtx } from "./helpers";
 
 const ctx = embervaleCtx();
 const idx = indexMap(ctx.map);
 const ids = idx.ids;
+const presetIds: PresetId[] = ["onlyIfStronger", "holdIfThreatened", "retreatIfOutnumbered", "followThrough", "reinforceIfHit"];
+const terr = fc.constantFrom(...ids);
+const spec = fc.constantFrom(...SPECIALIST_TYPES);
+const preset = fc.option(fc.record({ id: fc.constantFrom(...presetIds), next: fc.option(terr, { nil: undefined }) }), { nil: undefined });
 
 /** Random (often nonsensical) orders: the engine must survive anything a client could send. */
 const orderArb: fc.Arbitrary<Order> = fc.oneof(
   fc.record({
     id: fc.string({ maxLength: 4 }),
     kind: fc.constant("move" as const),
-    from: fc.constantFrom(...ids),
-    to: fc.constantFrom(...ids),
-    units: fc.oneof(
-      fc.constant("all" as const),
-      fc.record({ infantry: fc.integer({ min: -5, max: 50 }), cavalry: fc.integer({ min: 0, max: 10 }) }),
-    ),
+    from: terr,
+    to: terr,
+    via: fc.option(terr, { nil: undefined }),
+    troops: fc.oneof(fc.constant("all" as const), fc.integer({ min: -5, max: 50 })),
+    specialists: fc.option(fc.oneof(fc.constant("all" as const), fc.array(spec, { maxLength: 3 })), { nil: undefined }),
     withLeader: fc.boolean(),
+    preset,
   }),
-  fc.record({
-    id: fc.string({ maxLength: 4 }),
-    kind: fc.constant("recruit" as const),
-    territory: fc.constantFrom(...ids),
-    unit: fc.constantFrom("infantry" as const, "cavalry" as const, "siege" as const),
-    count: fc.integer({ min: -2, max: 8 }),
-  }),
+  fc.record({ id: fc.string({ maxLength: 4 }), kind: fc.constant("recruit" as const), territory: terr, count: fc.integer({ min: -2, max: 8 }) }),
+  fc.record({ id: fc.string({ maxLength: 4 }), kind: fc.constant("hire" as const), territory: terr, specialist: spec }),
+  fc.record({ id: fc.string({ maxLength: 4 }), kind: fc.constant("invest" as const), territory: terr }),
+  fc.record({ id: fc.string({ maxLength: 4 }), kind: fc.constant("retreat" as const), from: terr, preset }),
+  fc.record({ id: fc.string({ maxLength: 4 }), kind: fc.constant("advance" as const), from: terr }),
   fc.record({
     id: fc.string({ maxLength: 4 }),
     kind: fc.constant("build" as const),
-    territory: fc.constantFrom(...ids),
+    territory: terr,
     building: fc.constantFrom("fort" as const, "market" as const, "barracks" as const, "watchtower" as const),
   }),
 );
 
-/** Smarter random orders: moves from territories the player actually holds to neighbors. */
+/** Smarter random orders: moves from territories the player actually holds to neighbors, plus spending. */
 function plausibleOrders(s: GameState, pid: string, picks: number[]): Order[] {
   const mine = ids.filter((id) => s.territories[id]!.owner === pid);
-  return picks.map((n, i) => {
+  return picks.map((n, i): Order => {
     const from = mine[n % Math.max(1, mine.length)] ?? ids[0]!;
     const nbrs = idx.neighbors.get(from)!;
-    return { id: `${pid}-${i}`, kind: "move", from, to: nbrs[n % nbrs.length]!, units: "all", withLeader: n % 3 === 0 } as Order;
+    const id = `${pid}-${i}`;
+    switch (n % 6) {
+      case 0:
+        return { id, kind: "hire", territory: from, specialist: SPECIALIST_TYPES[n % SPECIALIST_TYPES.length]! };
+      case 1:
+        return { id, kind: "invest", territory: from };
+      default:
+        return { id, kind: "move", from, to: nbrs[n % nbrs.length]!, troops: "all", withLeader: n % 3 === 0, ...(n % 4 === 0 ? { preset: { id: presetIds[n % presetIds.length]! } } : {}) };
+    }
   });
 }
 
 function checkInvariants(s: GameState) {
+  const seenSpecs = new Set<string>();
   for (const id of ids) {
     const t = s.territories[id]!;
-    for (const v of Object.values(t.units)) {
-      expect(Number.isInteger(v)).toBe(true);
-      expect(v).toBeGreaterThanOrEqual(0);
+    expect(Number.isInteger(t.troops)).toBe(true);
+    expect(t.troops).toBeGreaterThanOrEqual(0);
+    expect(t.specialists.length).toBeLessThanOrEqual(ctx.rules.specialists.maxPerArmy);
+    if (t.specialists.length) expect(t.troops).toBeGreaterThan(0);
+    for (const sp of t.specialists) {
+      expect(seenSpecs.has(sp.id)).toBe(false);
+      seenSpecs.add(sp.id);
     }
+    expect(t.culture).toBeGreaterThanOrEqual(0);
+    expect(t.culture).toBeLessThanOrEqual(ctx.rules.culture.max);
     if (t.owner) expect(s.players.some((p) => p.id === t.owner)).toBe(true);
+    expect(t.building !== null && t.construction !== null).toBe(false);
   }
   for (const p of s.players) {
     expect(p.gold).toBeGreaterThanOrEqual(0);
@@ -70,7 +89,7 @@ describe("engine properties", () => {
     fc.assert(
       fc.property(
         fc.string(),
-        fc.array(fc.tuple(fc.array(orderArb, { maxLength: 6 }), fc.array(fc.nat(), { maxLength: 6 })), { minLength: 1, maxLength: 8 }),
+        fc.array(fc.tuple(fc.array(orderArb, { maxLength: 8 }), fc.array(fc.nat(), { maxLength: 8 })), { minLength: 1, maxLength: 8 }),
         (seed, turns) => {
           let s = createGame(ctx, {
             gameId: "prop",
@@ -81,6 +100,7 @@ describe("engine properties", () => {
               { id: "p3", name: "C" },
             ],
           });
+          for (const p of s.players) p.gold = 200;
           for (const [junk, picks] of turns) {
             if (s.winner) break;
             const orders: OrdersByPlayer = {
@@ -88,8 +108,14 @@ describe("engine properties", () => {
               p2: plausibleOrders(s, "p2", picks),
               p3: [...plausibleOrders(s, "p3", picks.slice().reverse()), ...junk],
             };
-            s = resolveTurn(ctx, s, orders).state;
+            const before = s;
+            const r = resolveTurn(ctx, s, orders);
+            s = r.state;
             checkInvariants(s);
+            for (const p of s.players) {
+              viewFor(ctx, s, p.id);
+              replayFor(ctx, before, r, p.id);
+            }
           }
         },
       ),
@@ -99,9 +125,10 @@ describe("engine properties", () => {
 
   it("is deterministic: same seed and orders give byte-identical results", () => {
     fc.assert(
-      fc.property(fc.string(), fc.array(fc.array(fc.nat(), { maxLength: 6 }), { minLength: 1, maxLength: 6 }), (seed, turns) => {
+      fc.property(fc.string(), fc.array(fc.array(fc.nat(), { maxLength: 8 }), { minLength: 1, maxLength: 6 }), (seed, turns) => {
         const run = () => {
           let s = createGame(ctx, { gameId: "det", seed, players: [{ id: "p1", name: "A" }, { id: "p2", name: "B" }] });
+          for (const p of s.players) p.gold = 100;
           const log: string[] = [];
           for (const picks of turns) {
             if (s.winner) break;

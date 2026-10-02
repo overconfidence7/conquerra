@@ -1,6 +1,6 @@
-import { defaultRules, MapDef, maps, type Rules } from "@conquerra/content";
+import { defaultRules, MapDef, maps, type Rules, type SpecialistType } from "@conquerra/content";
 import { createGame } from "../src";
-import type { GameContext, GameState, Order, Units } from "../src";
+import type { GameContext, GameState, Order, StepEvent } from "../src";
 
 /** A five-territory line map: a - b - c - d - e. Capitals at a and e. */
 export const lineMap: MapDef = MapDef.parse({
@@ -37,6 +37,7 @@ export function ctxWith(overrides?: (r: Rules) => void, map: MapDef = lineMap): 
 }
 
 export const embervaleCtx = (): GameContext => ({ map: maps.embervale!, rules: defaultRules });
+export const greatmarchCtx = (): GameContext => ({ map: maps.greatmarch!, rules: defaultRules });
 
 export function lineGame(ctx: GameContext, settings: Partial<GameState["settings"]> = {}, seed = "test-seed"): GameState {
   return createGame(ctx, {
@@ -50,25 +51,26 @@ export function lineGame(ctx: GameContext, settings: Partial<GameState["settings
   });
 }
 
-/** Put specific units/owner on a territory (test setup only). */
-export function place(s: GameState, t: string, owner: string | null, units: Partial<Units>) {
-  s.territories[t] = { owner, units: { infantry: 0, cavalry: 0, siege: 0, ...units }, building: null };
-}
-
-export const capOf = (s: GameState, pid: string) => s.players.find((p) => p.id === pid)!.capital;
-
-let n = 0;
-export const mv = (from: string, to: string, units: Order extends infer _ ? Partial<Units> | "all" : never, extra: Partial<Order> = {}): Order =>
-  ({ id: `o${++n}`, kind: "move", from, to, units, ...extra }) as Order;
+type Spot = [owner: string | null, troops: number, specialists?: SpecialistType[], extra?: { culture?: number; building?: "fort" | "market" | "barracks" | "watchtower" }];
 
 /**
  * Reset the line map to an exact layout for a test.
- * layout: territory -> [owner, infantry]. Unlisted territories become empty neutral land.
+ * layout: territory -> [owner, troops, specialists?, extra?]. Unlisted territories become empty neutral land.
  * Capitals: p1 at "a", p2 at "e"; leaders at their capitals.
  */
-export function board(s: GameState, layout: Record<string, [string | null, number] | [string | null, Partial<Units>]>) {
-  for (const t of Object.keys(s.territories)) place(s, t, null, {});
-  for (const [t, [owner, u]] of Object.entries(layout)) place(s, t, owner, typeof u === "number" ? { infantry: u } : u);
+export function board(s: GameState, layout: Record<string, Spot>) {
+  let n = 1000;
+  for (const t of Object.keys(s.territories))
+    s.territories[t] = { owner: null, troops: 0, specialists: [], building: null, construction: null, culture: 0 };
+  for (const [t, [owner, troops, specs = [], extra = {}]] of Object.entries(layout))
+    s.territories[t] = {
+      owner,
+      troops,
+      specialists: specs.map((type) => ({ id: `s${n++}`, type })),
+      building: extra.building ?? null,
+      construction: null,
+      culture: extra.culture ?? 0,
+    };
   const p1 = s.players.find((p) => p.id === "p1")!;
   const p2 = s.players.find((p) => p.id === "p2")!;
   p1.capital = "a";
@@ -76,3 +78,14 @@ export function board(s: GameState, layout: Record<string, [string | null, numbe
   p1.leader = { alive: true, territory: "a" };
   p2.leader = { alive: true, territory: "e" };
 }
+
+export const capOf = (s: GameState, pid: string) => s.players.find((p) => p.id === pid)!.capital;
+export const player = (s: GameState, pid: string) => s.players.find((p) => p.id === pid)!;
+
+let n = 0;
+export const mv = (from: string, to: string, troops: number | "all", extra: Partial<Order> = {}): Order =>
+  ({ id: `o${++n}`, kind: "move", from, to, troops, ...extra }) as Order;
+
+export const types = (ev: StepEvent[]) => ev.map((e) => e.type);
+export const find = <T extends StepEvent["type"]>(ev: StepEvent[], type: T) =>
+  ev.find((e) => e.type === type) as Extract<StepEvent, { type: T }> | undefined;

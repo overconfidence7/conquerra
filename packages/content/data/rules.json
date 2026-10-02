@@ -1,44 +1,126 @@
 {
-  "version": "0.1.0",
-  "units": {
-    "infantry": { "cost": 3, "attack": 1.0, "defense": 1.0, "attackTerrain": {}, "fortBreak": 0, "move": 1 },
-    "cavalry": { "cost": 5, "attack": 1.4, "defense": 0.8, "attackTerrain": { "forest": 0.6, "hills": 0.7, "mountains": 0.5, "swamp": 0.5 }, "fortBreak": 0, "move": 2 },
-    "siege": { "cost": 6, "attack": 0.6, "defense": 0.4, "attackTerrain": {}, "fortBreak": 0.15, "move": 1 }
+  "version": "0.2.0",
+  "troops": {
+    "cost": 2,
+    "attack": 1,
+    "defense": 1
+  },
+  "specialists": {
+    "maxPerArmy": 2,
+    "cavalry": {
+      "cost": 8,
+      "upkeep": 1,
+      "cultureRequired": 0,
+      "move": 2
+    },
+    "scouts": {
+      "cost": 5,
+      "upkeep": 0,
+      "cultureRequired": 0,
+      "vision": 1
+    },
+    "siege": {
+      "cost": 10,
+      "upkeep": 1,
+      "cultureRequired": 2,
+      "fortBreak": 1
+    },
+    "engineers": {
+      "cost": 8,
+      "upkeep": 1,
+      "cultureRequired": 2
+    },
+    "healers": {
+      "cost": 10,
+      "upkeep": 1,
+      "cultureRequired": 3,
+      "lossReduction": 0.25,
+      "maxLossReduction": 0.4
+    }
   },
   "buildings": {
-    "fort": { "cost": 8, "defenseMult": 1.6 },
-    "market": { "cost": 6, "income": 2 },
-    "barracks": { "cost": 6, "allowsRecruit": true },
-    "watchtower": { "cost": 4, "vision": 1 }
+    "fort": {
+      "cost": 8,
+      "buildTurns": 2,
+      "defenseMult": 1.6
+    },
+    "market": {
+      "cost": 6,
+      "buildTurns": 1,
+      "income": 2
+    },
+    "barracks": {
+      "cost": 6,
+      "buildTurns": 1
+    },
+    "watchtower": {
+      "cost": 4,
+      "buildTurns": 1,
+      "vision": 1
+    }
   },
   "terrain": {
-    "plains": { "defenseMult": 1.0, "income": 2 },
-    "forest": { "defenseMult": 1.2, "income": 1 },
-    "hills": { "defenseMult": 1.3, "income": 1 },
-    "mountains": { "defenseMult": 1.6, "income": 1 },
-    "swamp": { "defenseMult": 1.1, "income": 0 }
+    "plains": {
+      "defenseMult": 1,
+      "income": 2
+    },
+    "forest": {
+      "defenseMult": 1.2,
+      "income": 1
+    },
+    "hills": {
+      "defenseMult": 1.3,
+      "income": 1
+    },
+    "mountains": {
+      "defenseMult": 1.6,
+      "income": 1
+    },
+    "swamp": {
+      "defenseMult": 1.1,
+      "income": 0
+    }
   },
   "borders": {
-    "normal": { "attackMult": 1.0 },
-    "river": { "attackMult": 0.8 },
-    "pass": { "attackMult": 0.85 }
+    "normal": {
+      "attackMult": 1
+    },
+    "river": {
+      "attackMult": 0.8
+    },
+    "pass": {
+      "attackMult": 0.85
+    }
   },
   "combat": {
     "luck": 0.3,
-    "attackKillRate": 0.6,
-    "defenseKillRate": 0.7,
-    "casualtyOrder": ["infantry", "siege", "cavalry"]
+    "attackKillRate": 1,
+    "defenseKillRate": 0.6
+  },
+  "culture": {
+    "max": 5,
+    "investCost": [
+      4,
+      6,
+      8,
+      10,
+      12
+    ],
+    "incomePerLevel": 0.5,
+    "provinceBonusPerLevel": 0.5,
+    "protectionPerLevel": 0.15,
+    "maxProtection": 0.75
   },
   "economy": {
-    "startGold": 10,
-    "capitalIncome": 4,
-    "upkeepFreeTerritories": 6,
-    "upkeepRate": 0.5,
+    "startGold": 20,
+    "capitalIncome": 8,
+    "upkeepFreeTerritories": 10,
+    "upkeepRate": 0.35,
     "upkeepExponent": 1.25
   },
   "setup": {
-    "startUnits": { "infantry": 6, "cavalry": 1, "siege": 0 },
-    "neutralUnits": 2,
+    "startTroops": 12,
+    "neutralTroops": 1,
     "minGarrison": 1
   },
   "leader": {
@@ -47,6 +129,14 @@
     "seizeInitiativeCooldown": 3,
     "lieInWaitCooldown": 2
   },
-  "vision": { "base": 1 },
-  "limits": { "maxTurnsHard": 150 }
+  "vision": {
+    "base": 1
+  },
+  "game": {
+    "turnTimerSecondsDefault": 300,
+    "turnTimerSecondsMin": 60,
+    "turnTimerSecondsMax": 604800,
+    "maxTurnsHard": 60,
+    "conquestTurnLimitDefault": 20
+  }
 }
