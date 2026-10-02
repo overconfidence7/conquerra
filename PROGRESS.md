@@ -53,3 +53,9 @@ Claude Code sessions completed: **0** (a new orchestrator prompt is due after se
   - Fate: everyone draws one card per turn. Events land anywhere on the board, mostly mild with a few extreme ones; missions go to whoever drew them.
 - Build plan milestones revised for v0.2.
 - Kickoff prompts written: `docs/prompts/claude-code-session-01.md` and `docs/prompts/orchestrator-01.md`.
+- GitHub repo is live: `overconfidence7/conquerra` (code, docs and prompts pushed).
+- Checked Nate's Cloudflare account (no changes made):
+  - The domain, Google login (via Cloudflare Access) and the pieces we need are already familiar territory from Keel and Curse of Stats.
+  - Nothing to set up until M2 (an optional private preview) or M4 (the real backend).
+  - Plan to switch to the $5/month Workers plan at M4.
+  - Details in `docs/infra-cloudflare.md`.

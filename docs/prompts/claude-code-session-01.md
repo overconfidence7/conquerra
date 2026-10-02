@@ -39,6 +39,7 @@ Follow the M1 scope in `docs/03-build-plan.md`. Key points:
 - **Game config:** turn timer (default 300 seconds; longer allowed) and turn limit. The engine only stores these; it doesn't keep time.
 - **Balance:** use the sim to get typical game length to **about 15–25 turns**. Tune numbers in `packages/content` only.
 - Update the "Recruit" bot to work with all of the above.
+- **Measure turn-resolution CPU time** in the sim (average and worst case, at 2, 6 and 10 players, with bots planning). We need this to size Cloudflare hosting; see `docs/infra-cloudflare.md`.
 - **Out of scope for M1 (later milestones):** Spoils and Fate decks, diplomacy, generals and standing instructions, the Fallen, any UI or server.
 
 ## Exit criteria

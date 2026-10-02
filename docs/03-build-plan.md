@@ -77,6 +77,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
 ### M2: Playable local alpha (browser, vs bots)
 - Map, plus a fast order builder with presets (goal: a basic turn in about 60 seconds, a deep turn within 5 minutes).
 - 5-minute timer, odds preview, and the shared replay showing your visible area.
+- Optional: a private preview at `conquerra.overconfidenceonline.com` behind Cloudflare Access (Google login already set up), so Nate can test on his phone. See `docs/infra-cloudflare.md`.
 - Exit: Nate plays full games against bots on phone and laptop.
 
 ### M3: Depth + balance
@@ -90,7 +91,10 @@ Research, outline v0.1, v0.2 additions, and decisions.
 ### M4: Online with friends (Cloudflare)
 - Live 5-minute turns, plus a longer-timer option.
 - Durable Object per game, WebSockets for the live replay.
-- Google sign-in via Cloudflare Access, invite links.
+- Google sign-in via the existing Cloudflare Access setup (Google login already configured), invite links.
+- Upgrade to Workers Paid ($5/month) at the start of M4, because turn resolution likely exceeds the Free plan's 10 ms of CPU per request.
+- Deploy from GitHub with Cloudflare's built-in Git integration.
+- Resources to create: Worker `conquerra`, Durable Object `GameRoom`, D1 `conquerra_db`, R2 `conquerra-replays`, Access app "Conquerra". Full details in `docs/infra-cloudflare.md`.
 - Bot takeover for quitters; notifications.
 
 ### M5: Public 1.0

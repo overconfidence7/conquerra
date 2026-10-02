@@ -18,7 +18,8 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first strate
 4. `docs/02-game-design-outline.md`
 5. `docs/03-build-plan.md`
 6. `docs/decisions.md`
-7. `docs/prompts/` (past prompts)
+7. `docs/infra-cloudflare.md` (Nate's Cloudflare account: what exists and what we need)
+8. `docs/prompts/` (past prompts)
 
 ## Your loop
 1. **Nate pastes Claude Code's end-of-session summary** (Done / Next / Questions / Risks).

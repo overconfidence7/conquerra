@@ -35,3 +35,6 @@
 - 2026-10-02: The Leader is a general (direct control, or standing instructions); captured players' leaders become your generals.
 - 2026-10-02: Cards: holding bonuses on the map, plus a Spoils deck (earned) and a Fate deck (drawn each turn).
 - 2026-10-02: Fate: every player draws 1 per turn. Events hit random spots anywhere on the board (mostly mild, a few extreme, good and bad); missions go to the drawer.
+- 2026-10-02: Cloudflare check: reuse the existing account, domain, and Zero Trust team (Google login already configured) for the friends beta.
+- 2026-10-02: Stay on the Workers Free plan through M3; upgrade to Paid ($5/mo) at the start of M4. Measure turn-resolution CPU time in the sim first.
+- 2026-10-02: Deploy via Cloudflare's GitHub integration (Workers Builds) rather than API tokens.
