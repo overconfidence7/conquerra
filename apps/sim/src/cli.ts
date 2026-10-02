@@ -1,4 +1,5 @@
-import { defaultRules, maps } from "@conquerra/content";
+import { defaultRules } from "@conquerra/content";
+import { maps } from "@conquerra/content/maps";
 import { indexMap, type GameContext, type GameMode } from "@conquerra/engine";
 import { narrate } from "./narrate";
 import { runGame, type GameSummary } from "./runGame";

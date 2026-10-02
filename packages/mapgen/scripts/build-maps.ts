@@ -13,6 +13,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
 
 const only = process.argv[2];
+const catalog: object[] = [];
 for (const opts of MAP_CONFIGS) {
   if (only && opts.id !== only) continue;
   const { map, attempt, check, rejected } = generateMap(opts, defaultRules);
@@ -28,3 +29,4 @@ for (const opts of MAP_CONFIGS) {
   );
   for (const r of rejected) console.log(`  rejected ${r}`);
 }
+if (!only) writeFileSync(join(root, "packages/content/data/maps/catalog.json"), `${JSON.stringify(catalog, null, 2)}\n`);

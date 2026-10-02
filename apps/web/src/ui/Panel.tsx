@@ -23,6 +23,8 @@ import { BUILDING_HELP, BUILDING_ICON, BUILDING_NAME, SPECIALIST_HELP, SPECIALIS
 import { useGame } from "../store";
 import { colorOf } from "./colors";
 
+const CROSSING = { river: "🌊 Across a river", pass: "⛰ Through a mountain pass", sea: "⛵ Over a sea lane" } as const;
+
 interface Props {
   ctx: GameContext;
   view: PlayerView;
@@ -66,6 +68,7 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
   const odds = attack ? oddsFor(ctx, view, draft) : null;
   const target = seen(view, draft.to);
   const enough = attack ? justEnough(ctx, view, plan, draft) : null;
+  const crossing = indexMap(ctx.map).border(draft.via ?? draft.from, draft.to) ?? "normal";
   const quick = [
     ...(enough !== null ? [{ label: "Just enough", value: enough }] : []),
     { label: "Half", value: Math.max(1, Math.ceil(max / 2)) },
@@ -109,6 +112,11 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
         </div>
       )}
       {odds && <div className={`odds odds-${odds}`}>Odds: {ODDS_LABEL[odds]}</div>}
+      {attack && crossing !== "normal" && (
+        <p className="muted small">
+          {CROSSING[crossing]}: attack ×{ctx.rules.borders[crossing].attackMult}
+        </p>
+      )}
       {max === 0 && <p className="warn">No troops left to send from here this turn.</p>}
 
       <div className="chips">

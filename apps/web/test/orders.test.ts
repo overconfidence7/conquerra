@@ -3,6 +3,7 @@ import { createGame, viewFor, type GameContext, type GameState, type Order, type
 import { describe, expect, it } from "vitest";
 import {
   affordableTroops,
+  defaultPreset,
   draftToOrder,
   justEnough,
   moveTargets,
@@ -13,6 +14,7 @@ import {
   shiftOrder,
   tapTerritory,
   timingAvailable,
+  type MoveDraft,
 } from "../src/logic/orders";
 import { namer, narrateTurn } from "../src/logic/text";
 
@@ -90,9 +92,9 @@ describe("gold left after queued orders", () => {
 describe("default troop counts", () => {
   it("a new move sends all but the 1-troop garrison, including troops recruited earlier in the queue", () => {
     const view = viewOf(game({ a: ["you", 12], e: ["bot", 10] }, 20));
-    expect(newDraft(planQueue(ctx, view, []), { from: "a", to: "b" }).troops).toBe(11);
+    expect(newDraft(view, planQueue(ctx, view, []), { from: "a", to: "b" }).troops).toBe(11);
     const plan = planQueue(ctx, view, [o({ kind: "recruit", territory: "a", count: 10 })]);
-    expect(newDraft(plan, { from: "a", to: "b" }).troops).toBe(21);
+    expect(newDraft(view, plan, { from: "a", to: "b" }).troops).toBe(21);
   });
 
   it("troops already sent by earlier orders aren't offered again", () => {
@@ -113,7 +115,18 @@ describe("tapping the map", () => {
   it("tap your territory to select it, then a neighbour to draft a move or attack", () => {
     expect(tapTerritory(ctx, view, plan, null, "a")).toEqual({ kind: "select", territory: "a" });
     const t = tapTerritory(ctx, view, plan, "a", "b");
-    expect(t).toMatchObject({ kind: "draft", draft: { from: "a", to: "b", troops: 11, preset: null, withLeader: false, timing: null } });
+    expect(t).toMatchObject({ kind: "draft", draft: { from: "a", to: "b", troops: 11, preset: "onlyIfStronger", withLeader: false, timing: null } });
+  });
+  it("attacks start with 'Only if still stronger' switched on; moves into your own land start with no preset", () => {
+    const own = game({ a: ["you", 12], b: ["you", 2], e: ["bot", 10] });
+    const t = tapTerritory(ctx, viewOf(own), planQueue(ctx, viewOf(own), []), "a", "b");
+    expect(t).toMatchObject({ kind: "draft", draft: { to: "b", preset: null } });
+    expect(defaultPreset(view, "b")).toBe("onlyIfStronger");
+    expect(defaultPreset(viewOf(own), "b")).toBeNull();
+    // One tap on the chip turns it off: the order then goes in with no preset at all.
+    const d = (tapTerritory(ctx, view, plan, "a", "b") as { draft: MoveDraft }).draft;
+    expect(draftToOrder({ ...d, preset: null }, "x").preset).toBeUndefined();
+    expect(draftToOrder(d, "y").preset).toEqual({ id: "onlyIfStronger" });
   });
   it("tapping the selection again clears it; tapping something out of reach just selects it", () => {
     expect(tapTerritory(ctx, view, plan, "a", "a")).toEqual({ kind: "deselect" });
@@ -151,7 +164,7 @@ describe("odds badge", () => {
   const s = game({ a: ["you", 30], b: ["bot", 10], e: ["bot", 10] });
   const view = viewOf(s);
   const plan = planQueue(ctx, view, []);
-  const d = newDraft(plan, { from: "a", to: "b" });
+  const d = newDraft(view, plan, { from: "a", to: "b" });
   it("matches the engine's preview", () => {
     expect(oddsFor(ctx, view, d)).toBe("guaranteed");
     expect(oddsFor(ctx, view, { ...d, troops: 2 })).toBe("impossible");

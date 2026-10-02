@@ -1,4 +1,5 @@
-import { defaultRules, maps, Rules } from "@conquerra/content";
+import { defaultRules, Rules } from "@conquerra/content";
+import { maps } from "@conquerra/content/maps";
 import { runGame } from "./runGame";
 
 /**

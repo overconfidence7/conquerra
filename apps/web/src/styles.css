@@ -9,6 +9,9 @@
   --sea: #a9c4cf;
   --fog: #b9b5ad;
   --fog-line: #a8a39a;
+  --coast: #6f93a3;
+  --rock: #8a8178;
+  --lane: #f8fafc;
   --move: #1d4ed8;
   --attack: #b91c1c;
   --good: #15803d;
@@ -27,6 +30,9 @@
     --sea: #1e3a4a;
     --fog: #57534e;
     --fog-line: #4a4642;
+    --coast: #0f2430;
+    --rock: #5b544c;
+    --lane: #cbd5e1;
     --move: #93c5fd;
     --attack: #fca5a5;
     --good: #4ade80;
@@ -105,9 +111,12 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .cell.target { stroke: #fff; stroke-width: 3; stroke-dasharray: 6 4; }
 .selected-outline { fill: none; stroke: #facc15; stroke-width: 5; pointer-events: none; }
 .province-edge { fill: none; stroke: rgba(20, 15, 10, 0.75); stroke-width: 3.5; pointer-events: none; }
-.river { fill: none; stroke: #1d6fd8; stroke-width: 6; stroke-linecap: round; pointer-events: none; }
-.pass { fill: none; stroke: #7c4a1e; stroke-width: 5; stroke-dasharray: 4 5; pointer-events: none; }
-.connector { stroke: rgba(20, 15, 10, 0.6); stroke-width: 2; stroke-dasharray: 3 4; pointer-events: none; }
+.water { fill: var(--sea); stroke: var(--coast); stroke-width: 1.5; pointer-events: none; }
+.mountains { fill: var(--rock); stroke: rgba(40, 30, 20, 0.6); stroke-width: 1.5; }
+.river { fill: none; stroke: #1d6fd8; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.sea-lane { fill: none; stroke: var(--lane); stroke-dasharray: 10 7; stroke-linecap: round; }
+.pass circle { fill: #fde68a; stroke: #7c4a1e; stroke-width: 2; }
+.pass path { fill: none; stroke: #7c4a1e; stroke-width: 2.5; stroke-linejoin: round; }
 .province-label {
   text-anchor: middle; font-size: 15px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
   fill: rgba(0, 0, 0, 0.18); pointer-events: none;
@@ -178,3 +187,8 @@ details.action summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
 .tone-bad { border-left-color: var(--bad) !important; }
 .tone-info { border-left-color: var(--accent) !important; }
 .tone-quiet { color: var(--muted); }
+
+/* ---------- Knocked out ---------- */
+.choice { display: flex; flex-direction: column; gap: 8px; }
+.watch-report { max-height: 50vh; overflow: auto; }
+.watch-report h3 { margin: 8px 0 4px; font-size: 0.95rem; }

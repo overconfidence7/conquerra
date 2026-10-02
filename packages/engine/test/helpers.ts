@@ -1,4 +1,5 @@
-import { defaultRules, MapDef, maps, type Rules, type SpecialistType } from "@conquerra/content";
+import { defaultRules, MapDef, type Rules, type SpecialistType } from "@conquerra/content";
+import { maps } from "@conquerra/content/maps";
 import { createGame } from "../src";
 import type { GameContext, GameState, Order, StepEvent } from "../src";
 

@@ -1,7 +1,6 @@
 import rulesJson from "../data/rules.json";
-import embervaleJson from "../data/maps/embervale.json";
-import greatmarchJson from "../data/maps/greatmarch.json";
-import { MapDef, Rules } from "./schemas";
+import catalogJson from "../data/maps/catalog.json";
+import { Rules } from "./schemas";
 
 export * from "./schemas";
 
@@ -14,7 +13,14 @@ export function suggestedMode(playerCount: number, rules: Rules = defaultRules):
 }
 
 export const defaultRules: Rules = Rules.parse(rulesJson);
-export const maps: Record<string, MapDef> = {
-  embervale: MapDef.parse(embervaleJson),
-  greatmarch: MapDef.parse(greatmarchJson),
-};
+
+/** What the lobby needs to list the built-in maps, without loading them. (`pnpm build-maps` writes it.) */
+export interface MapListing {
+  id: string;
+  name: string;
+  territories: number;
+  minPlayers: number;
+  maxPlayers: number;
+  recommendedPlayers: { min: number; max: number };
+}
+export const mapCatalog: MapListing[] = catalogJson;

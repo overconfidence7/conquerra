@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { defaultRules, maps, suggestedMode } from "../src";
+import { defaultRules, mapCatalog, suggestedMode } from "../src";
+import { maps } from "../src/maps";
 
 describe("content", () => {
   it("rules parse", () => {
@@ -33,5 +34,15 @@ describe("content", () => {
     const q = [m.territories[0]!.id];
     while (q.length) for (const n of adj.get(q.shift()!) ?? []) if (!seen.has(n)) (seen.add(n), q.push(n));
     expect(seen.size).toBe(m.territories.length);
+  });
+});
+
+describe("map catalog", () => {
+  it("lists every built-in map exactly as the full map files describe them", () => {
+    expect(mapCatalog.map((m) => m.id).sort()).toEqual(Object.keys(maps).sort());
+    for (const c of mapCatalog) {
+      const m = maps[c.id]!;
+      expect(c).toEqual({ id: m.id, name: m.name, territories: m.territories.length, minPlayers: m.minPlayers, maxPlayers: m.maxPlayers, recommendedPlayers: m.recommendedPlayers });
+    }
   });
 });

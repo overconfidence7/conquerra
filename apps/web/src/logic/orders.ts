@@ -149,14 +149,17 @@ export interface MoveDraft {
   timing: "first" | "last" | null;
 }
 
-/** A new move or attack with the defaults: all free troops but the garrison, no preset. */
-export function newDraft(plan: QueuePlan, target: MoveTarget & { from: TerritoryId }): MoveDraft {
+/** The preset a new order starts with: attacks start with "Only if still stronger" switched on (one tap turns it off). */
+export const defaultPreset = (view: PlayerView, to: TerritoryId): PresetId | null => (isAttack(view, { to }) ? "onlyIfStronger" : null);
+
+/** A new move or attack with the defaults: all free troops but the garrison; attacks start with "Only if still stronger". */
+export function newDraft(view: PlayerView, plan: QueuePlan, target: MoveTarget & { from: TerritoryId }): MoveDraft {
   return {
     from: target.from,
     to: target.to,
     ...(target.via ? { via: target.via } : {}),
     troops: plan.free.get(target.from) ?? 0,
-    preset: null,
+    preset: defaultPreset(view, target.to),
     withLeader: false,
     timing: null,
   };
@@ -261,7 +264,7 @@ export function tapTerritory(
   if (selected === tapped) return { kind: "deselect" };
   if (selected && isMine(view, selected) && (plan.free.get(selected) ?? 0) > 0) {
     const target = moveTargets(ctx, view, selected).find((t) => t.to === tapped);
-    if (target) return { kind: "draft", draft: newDraft(plan, { ...target, from: selected }) };
+    if (target) return { kind: "draft", draft: newDraft(view, plan, { ...target, from: selected }) };
   }
   return { kind: "select", territory: tapped };
 }

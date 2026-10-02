@@ -1,5 +1,6 @@
 import { recruitBot } from "@conquerra/bots";
-import { defaultRules, maps } from "@conquerra/content";
+import { defaultRules } from "@conquerra/content";
+import { maps } from "@conquerra/content/maps";
 import {
   createGame,
   replayFor,
@@ -10,10 +11,12 @@ import {
   type Order,
   type OrdersByPlayer,
 } from "@conquerra/engine";
-import type { HostUpdate, LobbySettings } from "./protocol";
+import { BOT_NAMES } from "./names";
+import type { HostStart, HostUpdate, LobbySettings } from "./protocol";
+
+export { BOT_NAMES };
 
 export const HUMAN_ID = "you";
-export const BOT_NAMES = ["Lady Morwen", "Baron Krell", "Queen Isolde", "Warlord Rusk", "Duke Varric"];
 
 /**
  * A whole single-player game: the full state, the bots and turn resolution.
@@ -28,7 +31,7 @@ export class LocalGame {
     const map = maps[settings.mapId];
     if (!map) throw new Error(`Unknown map ${settings.mapId}`);
     this.ctx = { map, rules: defaultRules };
-    const bots = Math.max(1, Math.min(map.maxPlayers - 1, Math.floor(settings.bots)));
+    const bots = Math.max(1, Math.min(map.maxPlayers - 1, BOT_NAMES.length, Math.floor(settings.bots)));
     const players = [
       { id: HUMAN_ID, name: "You" },
       ...BOT_NAMES.slice(0, bots).map((name, i) => ({ id: `bot${i + 1}`, name })),
@@ -41,8 +44,17 @@ export class LocalGame {
     });
   }
 
+  /** The first message: the map and rules, plus your opening view. */
+  start(): HostStart {
+    return { ...this.update(), map: this.ctx.map, rules: this.ctx.rules };
+  }
+
   update(report: HostUpdate["report"] = null, fastForwarded = 0): HostUpdate {
     return { playerId: HUMAN_ID, view: viewFor(this.ctx, this.state, HUMAN_ID), report, fastForwarded };
+  }
+
+  private get knockedOut(): boolean {
+    return this.state.players.find((p) => p.id === HUMAN_ID)!.eliminatedTurn !== null;
   }
 
   private botOrders(): OrdersByPlayer {
@@ -52,19 +64,37 @@ export class LocalGame {
     return orders;
   }
 
+  /** Resolve one turn and return your report of it. */
+  private play(humanOrders: Order[] | null): HostUpdate["report"] {
+    const before = this.state;
+    const orders = humanOrders ? { ...this.botOrders(), [HUMAN_ID]: humanOrders } : this.botOrders();
+    const result = resolveTurn(this.ctx, before, orders);
+    this.state = result.state;
+    return { turn: before.turn, events: replayFor(this.ctx, before, result, HUMAN_ID) };
+  }
+
   lockIn(humanOrders: Order[]): HostUpdate {
     if (this.state.winner) throw new Error("The game is over");
-    const before = this.state;
-    const result = resolveTurn(this.ctx, before, { ...this.botOrders(), [HUMAN_ID]: humanOrders });
-    this.state = result.state;
-    const report = { turn: before.turn, events: replayFor(this.ctx, before, result, HUMAN_ID) };
+    if (this.knockedOut) throw new Error("You've been knocked out");
+    return this.update(this.play(humanOrders));
+  }
 
-    // Knocked out? The bots play on by themselves to find the winner (the engine's turn cap guarantees an end).
-    let fastForwarded = 0;
-    while (!this.state.winner && this.state.players.find((p) => p.id === HUMAN_ID)!.eliminatedTurn !== null) {
-      this.state = resolveTurn(this.ctx, this.state, this.botOrders()).state;
-      fastForwarded++;
+  /** Knocked out and watching: the bots play one turn. You see the whole board (the engine's spectator view). */
+  watchNext(): HostUpdate {
+    if (this.state.winner) throw new Error("The game is over");
+    if (!this.knockedOut) throw new Error("You're still in the game");
+    return this.update(this.play(null));
+  }
+
+  /** Knocked out: the bots play on to the end (the engine's turn cap guarantees one). */
+  finish(): HostUpdate {
+    if (!this.knockedOut && !this.state.winner) throw new Error("You're still in the game");
+    let report: HostUpdate["report"] = null;
+    let turns = 0;
+    while (!this.state.winner) {
+      report = this.play(null);
+      turns++;
     }
-    return this.update(report, fastForwarded);
+    return this.update(report, turns);
   }
 }

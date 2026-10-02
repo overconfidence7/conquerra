@@ -1,4 +1,5 @@
-import { defaultRules, maps } from "@conquerra/content";
+import { defaultRules } from "@conquerra/content";
+import { maps } from "@conquerra/content/maps";
 import { recruitBot } from "@conquerra/bots";
 import { createGame, incomeFor, resolveTurn, viewFor } from "@conquerra/engine";
 // Dev helper: one game, a line per turn with each player's land / troops / gold / income.

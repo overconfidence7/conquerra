@@ -2,11 +2,11 @@ import type { GameContext, PlayerView } from "@conquerra/engine";
 import { useMemo } from "react";
 import { isMine, planQueue } from "../logic/orders";
 import { describeOrder, namer, orderTags } from "../logic/text";
-import { useGame } from "../store";
+import { knockedOut, useGame } from "../store";
 import { colorOf } from "./colors";
 import { MapView } from "./MapView";
 import { Panel } from "./Panel";
-import { TurnLog } from "./TurnLog";
+import { TurnLog, TurnLogLines } from "./TurnLog";
 
 function LeaderStatus({ view }: { view: PlayerView }) {
   const { leader, cooldowns } = view.me;
@@ -19,11 +19,63 @@ function LeaderStatus({ view }: { view: PlayerView }) {
   );
 }
 
+/** Shown once when you're knocked out while the game goes on. */
+function KnockedOutChoice({ view }: { view: PlayerView }) {
+  const { watch, seeResult, busy } = useGame();
+  const me = view.players.find((p) => p.id === view.me.id)!;
+  const by = me.eliminatedBy ? view.players.find((p) => p.id === me.eliminatedBy)?.name : null;
+  return (
+    <div className="overlay">
+      <div className="dialog" role="dialog" aria-label="You have been knocked out">
+        <h2>You've been knocked out</h2>
+        <p>
+          {by ? `${by} took your last territory` : "You lost your last territory"} on turn {me.eliminatedTurn}. The others fight on.
+        </p>
+        <div className="choice">
+          <button className="primary wide" onClick={watch} disabled={busy} autoFocus>
+            Watch to the end
+          </button>
+          <p className="muted small">See the whole map and each turn's report. You can skip ahead any time.</p>
+          <button className="wide" onClick={seeResult} disabled={busy}>
+            {busy ? "The bots are finishing the game…" : "See the result"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** While watching after being knocked out: next turn, skip ahead, and the last turn's report. */
+function WatchPanel({ ctx, view }: { ctx: GameContext; view: PlayerView }) {
+  const { report, watchNext, seeResult, busy } = useGame();
+  return (
+    <div className="panel">
+      <div className="panel-head">
+        <h2>Watching · turn {view.turn}</h2>
+      </div>
+      <p className="muted small">You're out, so you see the whole map. The bots play on.</p>
+      <button className="primary wide" onClick={watchNext} disabled={busy}>
+        {busy ? "Playing…" : "Next turn ▶"}
+      </button>
+      <button className="wide" onClick={seeResult} disabled={busy}>
+        Skip to the end ⏭
+      </button>
+      {report && (
+        <div className="watch-report">
+          <h3>Turn {report.turn}</h3>
+          <TurnLogLines ctx={ctx} view={view} report={report} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function GameScreen() {
-  const { ctx, view, queue, selected, draft, report, showReport, busy, error, tap, clearSelection, remove, shift, lockIn, setShowReport } = useGame();
+  const { ctx, view, queue, selected, draft, report, showReport, watching, busy, error, tap, clearSelection, remove, shift, lockIn, setShowReport } = useGame();
   const plan = useMemo(() => (ctx && view ? planQueue(ctx, view, queue) : null), [ctx, view, queue]);
   if (!ctx || !view || !plan) return null;
   const n = namer(ctx, view);
+  const out = knockedOut(view);
   const territories = Object.values(view.territories).filter((t) => t.detail === "full" && t.owner === view.me.id).length;
 
   return (
@@ -51,10 +103,27 @@ export function GameScreen() {
 
       <main className="layout">
         <section className="map-wrap">
-          <MapView ctx={ctx} view={view} queue={queue} selected={selected} draft={draft} showTargets={(plan.free.get(selected ?? "") ?? 0) > 0} onTap={tap} onBackground={clearSelection} />
+          <MapView
+            ctx={ctx}
+            view={view}
+            queue={out ? [] : queue}
+            selected={out ? null : selected}
+            draft={out ? null : draft}
+            showTargets={!out && (plan.free.get(selected ?? "") ?? 0) > 0}
+            onTap={out ? () => {} : tap}
+            onBackground={clearSelection}
+          />
         </section>
 
         <aside className="side">
+          {out ? (
+            watching ? (
+              <WatchPanel ctx={ctx} view={view} />
+            ) : (
+              <p className="muted">You're out of the game.</p>
+            )
+          ) : (
+          <>
           <Panel ctx={ctx} view={view} plan={plan} queue={queue} selected={selected} draft={draft} />
 
           <div className="panel queue">
@@ -98,10 +167,14 @@ export function GameScreen() {
           <button className="primary wide lock" disabled={busy} onClick={lockIn}>
             {busy ? "Resolving…" : queue.length ? `Lock in ${queue.length} order${queue.length === 1 ? "" : "s"}` : "Lock in (no orders)"}
           </button>
+          </>
+          )}
+          {out && error && <p className="warn">{error}</p>}
         </aside>
       </main>
 
       {showReport && report && <TurnLog ctx={ctx as GameContext} view={view} report={report} onClose={() => setShowReport(false)} />}
+      {out && !watching && <KnockedOutChoice view={view} />}
     </div>
   );
 }

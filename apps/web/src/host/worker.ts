@@ -10,10 +10,11 @@ scope.onmessage = (e) => {
   try {
     if (req.type === "start") {
       game = new LocalGame(req.settings, req.seed);
-      scope.postMessage({ id: req.id, ok: true, update: game.update() });
+      scope.postMessage({ id: req.id, ok: true, update: game.start() });
     } else {
       if (!game) throw new Error("No game running");
-      scope.postMessage({ id: req.id, ok: true, update: game.lockIn(req.orders) });
+      const update = req.type === "lockIn" ? game.lockIn(req.orders) : req.type === "watchNext" ? game.watchNext() : game.finish();
+      scope.postMessage({ id: req.id, ok: true, update });
     }
   } catch (err) {
     scope.postMessage({ id: req.id, ok: false, error: err instanceof Error ? err.message : String(err) });

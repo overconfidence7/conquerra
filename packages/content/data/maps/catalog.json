@@ -1,0 +1,24 @@
+[
+  {
+    "id": "embervale",
+    "name": "Embervale",
+    "territories": 40,
+    "minPlayers": 2,
+    "maxPlayers": 6,
+    "recommendedPlayers": {
+      "min": 4,
+      "max": 6
+    }
+  },
+  {
+    "id": "greatmarch",
+    "name": "Greatmarch",
+    "territories": 80,
+    "minPlayers": 2,
+    "maxPlayers": 10,
+    "recommendedPlayers": {
+      "min": 8,
+      "max": 10
+    }
+  }
+]

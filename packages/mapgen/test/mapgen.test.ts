@@ -1,4 +1,5 @@
-import { BIOME_CODES, defaultRules, maps, type Biome, type MapDef } from "@conquerra/content";
+import { BIOME_CODES, defaultRules, type Biome, type MapDef } from "@conquerra/content";
+import { maps } from "@conquerra/content/maps";
 import { indexMap } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { checkMap, DECORATION_BIOMES, fromBase64, generateMap, insideRings, LABEL_CLEAR, MAP_CONFIGS, TERRAIN_BIOMES } from "../src";

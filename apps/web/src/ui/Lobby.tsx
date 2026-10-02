@@ -1,4 +1,5 @@
-import { maps, suggestedMode } from "@conquerra/content";
+import { mapCatalog, suggestedMode } from "@conquerra/content";
+import { BOT_NAMES } from "../host/names";
 import { useGame } from "../store";
 
 const LUCK = [
@@ -10,7 +11,7 @@ const LUCK = [
 
 export function Lobby() {
   const { lobby, setLobby, start, busy, error } = useGame();
-  const map = maps[lobby.mapId]!;
+  const map = mapCatalog.find((m) => m.id === lobby.mapId) ?? mapCatalog[0]!;
   const players = lobby.bots + 1;
   const rec = map.recommendedPlayers;
   return (
@@ -21,14 +22,18 @@ export function Lobby() {
       <div className="field">
         <span className="field-name">Map</span>
         <select value={lobby.mapId} onChange={(e) => setLobby({ mapId: e.target.value })}>
-          <option value="embervale">{maps.embervale!.name.replace(" (test map)", "")} · {maps.embervale!.territories.length} territories</option>
+          {mapCatalog.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name} · {m.territories} territories · suits {m.recommendedPlayers.min}–{m.recommendedPlayers.max} players
+            </option>
+          ))}
         </select>
       </div>
 
       <div className="field">
         <span className="field-name">Opponents (Recruit bots)</span>
         <span className="seg">
-          {Array.from({ length: map.maxPlayers - 1 }, (_, i) => i + 1).map((b) => (
+          {Array.from({ length: Math.min(map.maxPlayers - 1, BOT_NAMES.length) }, (_, i) => i + 1).map((b) => (
             <button key={b} className={lobby.bots === b ? "on" : ""} onClick={() => setLobby({ bots: b })}>
               {b}
             </button>

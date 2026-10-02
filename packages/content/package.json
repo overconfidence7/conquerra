@@ -5,5 +5,11 @@
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
-  "dependencies": { "zod": "^3.24.0" }
+  "dependencies": {
+    "zod": "^3.24.0"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./maps": "./src/maps.ts"
+  }
 }

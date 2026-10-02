@@ -1,4 +1,5 @@
-import { defaultRules, maps, suggestedMode } from "@conquerra/content";
+import { defaultRules, mapCatalog, suggestedMode } from "@conquerra/content";
+import { BOT_NAMES } from "./host/names";
 import type { GameContext, Order, PlayerView, TerritoryId } from "@conquerra/engine";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
@@ -21,6 +22,8 @@ interface GameStore {
   report: TurnReport | null;
   showReport: boolean;
   fastForwarded: number;
+  /** Knocked out and chose "Watch to the end". */
+  watching: boolean;
   busy: boolean;
   error: string | null;
 
@@ -36,8 +39,23 @@ interface GameStore {
   shift(id: string, dir: -1 | 1): void;
   lockIn(): Promise<void>;
   setShowReport(v: boolean): void;
+  /** Knocked out: switch to watching (the full map and each turn's report). */
+  watch(): void;
+  /** While watching: the bots play the next turn. */
+  watchNext(): Promise<void>;
+  /** Knocked out: skip ahead to the end and see the result. */
+  seeResult(): Promise<void>;
   playAgain(): void;
 }
+
+/** Where games run. A Web Worker in the browser; tests swap in an in-process host. */
+let makeHost: () => GameHost = createLocalHost;
+export function setHostFactory(f: () => GameHost) {
+  makeHost = f;
+}
+
+/** Are you out of the game while it goes on? */
+export const knockedOut = (view: PlayerView) => view.winner === null && view.players.find((p) => p.id === view.me.id)?.eliminatedTurn != null;
 
 let orderCounter = 0;
 const nextOrderId = () => `o${++orderCounter}`;
@@ -60,12 +78,17 @@ export const useGame = create<GameStore>((set, get) => ({
   report: null,
   showReport: false,
   fastForwarded: 0,
+  watching: false,
   busy: false,
   error: null,
 
   setLobby(patch) {
     const { lobby, modeTouched } = get();
     const next = { ...lobby, ...patch };
+    const map = mapCatalog.find((m) => m.id === next.mapId);
+    // A new map starts at the smallest table it suits; the bot count always fits the map.
+    if (map && patch.mapId && patch.mapId !== lobby.mapId && patch.bots === undefined) next.bots = map.recommendedPlayers.min - 1;
+    if (map) next.bots = Math.max(1, Math.min(next.bots, map.maxPlayers - 1, BOT_NAMES.length));
     const touched = modeTouched || patch.mode !== undefined;
     // Until the host picks a mode, follow the suggestion for the table size.
     if (!touched) next.mode = suggestedMode(next.bots + 1);
@@ -75,13 +98,14 @@ export const useGame = create<GameStore>((set, get) => ({
   async start() {
     const { lobby } = get();
     get().host?.dispose();
-    const host = createLocalHost();
+    const host = makeHost();
     set({ busy: true, error: null, host });
     try {
       const u = await host.start(lobby);
       set({
         screen: "game",
-        ctx: { map: maps[lobby.mapId]!, rules: defaultRules },
+        // The map's geometry comes from the host, never from an import here.
+        ctx: { map: u.map, rules: u.rules },
         view: u.view,
         queue: [],
         selected: u.view.me.capital,
@@ -89,6 +113,7 @@ export const useGame = create<GameStore>((set, get) => ({
         report: null,
         showReport: false,
         fastForwarded: 0,
+        watching: false,
       });
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
@@ -141,14 +166,16 @@ export const useGame = create<GameStore>((set, get) => ({
     try {
       const u = await host.lockIn(queue);
       const over = u.view.winner !== null;
+      const out = knockedOut(u.view);
       set({
         view: u.view,
         report: u.report,
         fastForwarded: u.fastForwarded,
         queue: [],
         draft: null,
-        selected: over ? null : u.view.me.capital,
-        showReport: !over,
+        selected: over || out ? null : u.view.me.capital,
+        // Knocked out: the "Watch to the end / See the result" choice shows instead of the report pop-up.
+        showReport: !over && !out,
         screen: over ? "over" : "game",
       });
     } catch (e) {
@@ -160,8 +187,38 @@ export const useGame = create<GameStore>((set, get) => ({
 
   setShowReport: (v) => set({ showReport: v }),
 
+  watch: () => set({ watching: true, showReport: false }),
+
+  async watchNext() {
+    const { host, busy } = get();
+    if (!host || busy) return;
+    set({ busy: true, error: null });
+    try {
+      const u = await host.watchNext();
+      set({ view: u.view, report: u.report, screen: u.view.winner ? "over" : "game" });
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    } finally {
+      set({ busy: false });
+    }
+  },
+
+  async seeResult() {
+    const { host, busy } = get();
+    if (!host || busy) return;
+    set({ busy: true, error: null });
+    try {
+      const u = await host.finish();
+      set({ view: u.view, report: u.report ?? get().report, fastForwarded: u.fastForwarded, screen: "over", watching: false });
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    } finally {
+      set({ busy: false });
+    }
+  },
+
   playAgain() {
     get().host?.dispose();
-    set({ screen: "lobby", host: null, view: null, ctx: null, queue: [], selected: null, draft: null, report: null, showReport: false });
+    set({ screen: "lobby", host: null, view: null, ctx: null, queue: [], selected: null, draft: null, report: null, showReport: false, watching: false });
   },
 }));

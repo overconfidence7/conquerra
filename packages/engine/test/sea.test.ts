@@ -71,7 +71,7 @@ describe("fair capital layouts", () => {
   });
 
   it("the built-in maps have a fair layout for every player count they allow", async () => {
-    const { maps } = await import("@conquerra/content");
+    const { maps } = await import("@conquerra/content/maps");
     for (const m of [maps.embervale!, maps.greatmarch!])
       for (let n = m.minPlayers; n <= m.maxPlayers; n++) expect(m.capitalLayouts?.find((l) => l.players === n)?.slots.length).toBe(n);
   });

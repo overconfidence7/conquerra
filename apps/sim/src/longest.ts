@@ -1,4 +1,5 @@
-import { defaultRules, maps } from "@conquerra/content";
+import { defaultRules } from "@conquerra/content";
+import { maps } from "@conquerra/content/maps";
 import { runGame } from "./runGame";
 // Dev helper: find the longest of N games so we can study it with trace.ts.
 const n = Number(process.argv[2] ?? 6), games = Number(process.argv[3] ?? 100);
