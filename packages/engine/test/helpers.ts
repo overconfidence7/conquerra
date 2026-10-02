@@ -79,6 +79,8 @@ export function board(s: GameState, layout: Record<string, Spot>) {
   p2.capital = "e";
   p1.leader = { alive: true, territory: "a" };
   p2.leader = { alive: true, territory: "e" };
+  // The layout is brand new, so nobody remembers anything from before it.
+  s.intel = Object.fromEntries(s.players.map((p) => [p.id, {}]));
 }
 
 export const capOf = (s: GameState, pid: string) => s.players.find((p) => p.id === pid)!.capital;

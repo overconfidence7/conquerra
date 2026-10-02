@@ -2,6 +2,7 @@ export * from "./types";
 export { createGame, type NewGameOptions } from "./setup";
 export { resolveTurn } from "./resolve";
 export { viewFor, type PlayerView, type TerritoryView, type TerritoryDetail } from "./view";
+export { recordSighting, updateIntel, type Intel, type LastSeen } from "./intel";
 export { visionFor, visibleTerritories, type Vision, type VisionSource } from "./vision";
 export { replayFor, type ReplayEvent, type SurfaceEvent } from "./replay";
 export { PRESETS, expandPreset, type PresetInfo } from "./presets";

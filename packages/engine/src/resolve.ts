@@ -1,6 +1,7 @@
 import type { BorderType, SpecialistType } from "@conquerra/content";
 import { expectBattle, rollLosses, type BattleExpectation } from "./combat";
 import { cultureProtection, incomeFor, investCost, scoreFor, specialistUnlocked } from "./economy";
+import { updateIntel } from "./intel";
 import { indexMap, type MapIndex } from "./mapIndex";
 import { expandPreset } from "./presets";
 import { Rng } from "./rng";
@@ -620,5 +621,7 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
 
   s.rng = T.rng.state;
   if (!s.winner) s.turn += 1;
+  // Everyone remembers what they can see now; land that slips into the fog keeps its last-seen entry.
+  updateIntel(ctx, s);
   return { state: s, events: T.events };
 }

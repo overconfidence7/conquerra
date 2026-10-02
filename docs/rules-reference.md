@@ -1,4 +1,4 @@
-# Conquerra Rules Reference (Milestone 2, session 3)
+# Conquerra Rules Reference (Milestone 2, session 4)
 
 *A 10-minute read. This is how the engine actually plays today. Numbers are the current balance settings from `packages/content/data/rules.json`; they will change as we tune.*
 
@@ -122,6 +122,11 @@ Engineers make any of these ready immediately. A building under construction giv
 - With fog on, you see **full detail** (owner, troops, specialists, buildings, culture, Leaders) on **your own territories and the ones bordering them**. Watchtowers and scouts see 1 territory further.
 - **Everywhere else** you see only the map itself: outlines, terrain, provinces and what each territory and province is worth. Not who owns it, not troops, not culture.
 - Other players' gold is always hidden.
+- **You can see a capital when you can see its land:** the map labels it "Capital".
+- **Last seen:** land you saw before but can't see now shows what you **last saw** there: the owner, troops and building, marked **"?"** with its age ("seen 2 turns ago"). Land you've never seen says "Unexplored".
+  - Your memory updates at the end of every turn from what you can see then (and when the game starts).
+  - It only ever holds what you really saw, so it goes **stale**: the enemy may have moved on since.
+  - Each player's memory is kept in the game itself, so it's the same on every device. In M3, a spy who is **fooled** brings back false intel that goes into this same memory, and looks just like the real thing.
 - **The replay follows the same rule:**
   - You always see your own actions and every battle you were part of.
   - Anything touching a territory you could see (at the start or end of the turn) shows in full.

@@ -1,4 +1,5 @@
 import type { BuildingType, MapDef, Rules, SpecialistType } from "@conquerra/content";
+import type { Intel } from "./intel";
 import type { RngState } from "./rng";
 
 export type PlayerId = string;
@@ -55,7 +56,7 @@ export interface GameSettings {
 }
 
 export interface GameState {
-  version: 2;
+  version: 3;
   gameId: string;
   mapId: string;
   turn: number;
@@ -67,6 +68,8 @@ export interface GameState {
   seedCommitment: string;
   settings: GameSettings;
   winner: PlayerId | "draw" | null;
+  /** Each player's "last seen" memory of land they can't see right now (see intel.ts). Never sent whole to a client. */
+  intel: Intel;
   endReason: "lastStanding" | "turnLimit" | "turnCap" | null;
 }
 

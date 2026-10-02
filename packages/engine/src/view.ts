@@ -1,4 +1,5 @@
 import type { BuildingType } from "@conquerra/content";
+import type { LastSeen } from "./intel";
 import { indexMap } from "./mapIndex";
 import type { GameContext, GameSettings, GameState, PlayerId, PlayerState, Specialist, TerritoryId, TerritoryState } from "./types";
 import { visionFor, type VisionSource } from "./vision";
@@ -13,13 +14,16 @@ export interface TerritoryDetail {
   culture: number;
   /** Leaders standing here. */
   leaders: PlayerId[];
+  /** Whose capital this is, if anyone's. You learn a rival's capital by seeing it. */
+  capitalOf: PlayerId | null;
 }
 
 /**
- * A fogged territory carries nothing: its outline, terrain, province and holding bonuses are all public
+ * A fogged territory carries nothing current: its outline, terrain, province and holding bonuses are all public
  * map data (MapDef + Rules), which every client already has. Owner, troops and culture stay hidden.
+ * `lastSeen` is the player's own memory of it (owner, troops, building and when), if they ever saw it.
  */
-export type TerritoryView = ({ detail: "full"; seenBy: VisionSource[] } & TerritoryDetail) | { detail: "fogged" };
+export type TerritoryView = ({ detail: "full"; seenBy: VisionSource[] } & TerritoryDetail) | { detail: "fogged"; lastSeen?: LastSeen };
 
 export interface PlayerView {
   gameId: string;
@@ -45,6 +49,7 @@ function trueDetail(state: GameState, id: TerritoryId): TerritoryDetail {
     construction: t.construction ? { ...t.construction } : null,
     culture: t.culture,
     leaders: state.players.filter((p) => p.leader.alive && p.leader.territory === id).map((p) => p.id),
+    capitalOf: state.players.find((p) => p.eliminatedTurn === null && p.capital === id)?.id ?? null,
   };
 }
 
@@ -54,10 +59,16 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
   const me = state.players.find((p) => p.id === player);
   if (!me) throw new Error(`Unknown player ${player}`);
   const vision = visionFor(ctx, state, player);
+  const memory = state.intel[player] ?? {};
   const territories: Record<TerritoryId, TerritoryView> = {};
   for (const id of idx.ids) {
     const seenBy = vision.get(id);
-    territories[id] = seenBy ? { detail: "full", seenBy: [...seenBy], ...trueDetail(state, id) } : { detail: "fogged" };
+    const last = memory[id];
+    territories[id] = seenBy
+      ? { detail: "full", seenBy: [...seenBy], ...trueDetail(state, id) }
+      : last
+        ? { detail: "fogged", lastSeen: { ...last } }
+        : { detail: "fogged" };
   }
   return {
     gameId: state.gameId,

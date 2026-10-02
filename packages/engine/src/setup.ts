@@ -1,5 +1,6 @@
 import type { MapDef } from "@conquerra/content";
 import { seedCommitment } from "./fairness";
+import { updateIntel } from "./intel";
 import { distancesFrom, indexMap } from "./mapIndex";
 import { Rng, seedRng } from "./rng";
 import type { GameContext, GameSettings, GameState, PlayerState, TerritoryState } from "./types";
@@ -82,8 +83,8 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   // Keep the player list in the caller's order; seats are reshuffled every turn anyway.
   players.sort((a, b) => opts.players.findIndex((p) => p.id === a.id) - opts.players.findIndex((p) => p.id === b.id));
 
-  return {
-    version: 2,
+  const state: GameState = {
+    version: 3,
     gameId: opts.gameId,
     mapId: map.id,
     turn: 1,
@@ -94,6 +95,9 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
     seedCommitment: seedCommitment(opts.seed),
     settings,
     winner: null,
+    intel: Object.fromEntries(players.map((p) => [p.id, {}])),
     endReason: null,
   };
+  updateIntel(ctx, state);
+  return state;
 }
