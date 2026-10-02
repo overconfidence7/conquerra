@@ -11,7 +11,8 @@ export type BuildingType = z.infer<typeof BuildingType>;
 export const Terrain = z.enum(["plains", "forest", "hills", "mountains", "swamp"]);
 export type Terrain = z.infer<typeof Terrain>;
 
-export const BorderType = z.enum(["normal", "river", "pass"]);
+/** normal; river (drawn along the border); pass (through a mountain range); sea (a sea lane drawn over water). */
+export const BorderType = z.enum(["normal", "river", "pass", "sea"]);
 export type BorderType = z.infer<typeof BorderType>;
 
 export const TerritoryDef = z.object({
@@ -19,10 +20,84 @@ export const TerritoryDef = z.object({
   name: z.string(),
   province: z.string(),
   terrain: Terrain,
+  /** The territory's map point (its label point on generated maps). */
   x: z.number(),
   y: z.number(),
 });
 export type TerritoryDef = z.infer<typeof TerritoryDef>;
+
+// ---------- Drawing data (the painted map and the info layer use it; the engine never does) ----------
+
+/** A closed outline or an open line as a flat list of numbers: x0, y0, x1, y1, ... (map units, 0.1 precision). */
+export const Line = z.array(z.number());
+export type Line = z.infer<typeof Line>;
+const Point = z.object({ x: z.number(), y: z.number() });
+
+/** Ground types for painting. The info layer never reads these. */
+export const Biome = z.enum(["grass", "farmland", "forest", "hills", "rock", "snow", "swamp", "sand", "shallow", "deep"]);
+export type Biome = z.infer<typeof Biome>;
+/** One character per biome in the biome grid. */
+export const BIOME_CODES: Record<Biome, string> = {
+  grass: "g",
+  farmland: "a",
+  forest: "f",
+  hills: "h",
+  rock: "r",
+  snow: "s",
+  swamp: "w",
+  sand: "d",
+  shallow: "o",
+  deep: "O",
+};
+
+export const DecorationKind = z.enum(["tree-conifer", "tree-broadleaf", "peak", "hill", "village", "town"]);
+export type DecorationKind = z.infer<typeof DecorationKind>;
+
+export const MapGeometry = z.object({
+  width: z.number(),
+  height: z.number(),
+  /**
+   * Fine-grained ground for the painted map: a grid of `cols` x `rows` squares, each `cellSize` map units wide,
+   * stored row by row as one character per square (see BIOME_CODES). Square (c, r) covers x from c*cellSize, y from r*cellSize.
+   */
+  biome: z.object({ cellSize: z.number(), cols: z.number().int(), rows: z.number().int(), data: z.string() }),
+  /**
+   * Height map for relief lighting (hill shading, mountain shadows, coastal depth), on the same grid as `biome`.
+   * `data` is base64 of one byte (0–255) per square, row by row. Squares at or below `seaLevel` are water;
+   * lower means deeper. Rivers are carved in, so they run downhill.
+   */
+  heightMap: z.object({ cellSize: z.number(), cols: z.number().int(), rows: z.number().int(), seaLevel: z.number().int(), data: z.string() }),
+  /** Where each province's name goes: a gentle line through the province's long axis, to curve the name along. */
+  provinceLabels: z.array(z.object({ id: z.string(), path: Line })),
+  territories: z.array(
+    z.object({
+      id: z.string(),
+      /** Outline rings. Draw with the even-odd rule (a ring inside another is a hole, such as a lake). */
+      rings: z.array(Line),
+      /** Where the banner goes, and how much clear room it has around it (radius, map units). */
+      label: z.object({ x: z.number(), y: z.number(), r: z.number() }),
+      /** Where a building sprite sits. */
+      site: Point,
+      /** Where the castle sits, on territories that can be a capital. */
+      castle: Point.optional(),
+    }),
+  ),
+  /** Seas and lakes. Water is never a territory. */
+  water: z.array(z.object({ id: z.string(), name: z.string(), kind: z.enum(["sea", "lake"]), rings: z.array(Line), label: Point })),
+  /** Impassable mountain ranges. Each is crossed by one or more passes. */
+  mountains: z.array(z.object({ id: z.string(), name: z.string(), rings: z.array(Line), label: Point })),
+  /** Where each pass crosses its range (the gap where the two territories touch). */
+  passes: z.array(z.object({ a: z.string(), b: z.string(), range: z.string(), x: z.number(), y: z.number() })),
+  /** Rivers run along territory borders, from high ground down to a sea or lake. */
+  rivers: z.array(z.object({ id: z.string(), name: z.string(), path: Line })),
+  /** Drawn crossings over water (the `sea` borders). */
+  seaLanes: z.array(z.object({ a: z.string(), b: z.string(), path: Line })),
+  /** The shared border line(s) between two territories that touch, for border glows and province edges. */
+  borderLines: z.array(z.object({ a: z.string(), b: z.string(), lines: z.array(Line) })),
+  /** Sprites for the painting: kind, position and which variant (1..n). Sorted top to bottom. */
+  decorations: z.array(z.object({ kind: DecorationKind, x: z.number(), y: z.number(), v: z.number().int().min(1) })),
+});
+export type MapGeometry = z.infer<typeof MapGeometry>;
 
 export const MapDef = z
   .object({
@@ -36,6 +111,15 @@ export const MapDef = z
     provinces: z.array(z.object({ id: z.string(), name: z.string(), bonus: z.number().int().min(0) })),
     borders: z.array(z.object({ a: z.string(), b: z.string(), type: BorderType.default("normal") })),
     capitalSlots: z.array(z.string()),
+    /**
+     * Fair capital layouts, one per player count. When there's a layout for the table size the game uses it;
+     * otherwise it spreads capitals out over capitalSlots.
+     */
+    capitalLayouts: z.array(z.object({ players: z.number().int().min(2), slots: z.array(z.string()) })).optional(),
+    /** How the map maker made this map, so it can be made again. */
+    generator: z.object({ version: z.number().int(), seed: z.string(), attempt: z.number().int() }).optional(),
+    /** Drawing data. Optional: tiny test maps have none. */
+    geometry: MapGeometry.optional(),
   })
   .superRefine((m, ctx) => {
     const ids = new Set(m.territories.map((t) => t.id));
@@ -53,12 +137,15 @@ export const MapDef = z
       ctx.addIssue({ code: "custom", message: "recommendedPlayers must sit inside minPlayers..maxPlayers" });
     if (m.capitalSlots.length < m.maxPlayers)
       ctx.addIssue({ code: "custom", message: "not enough capital slots for maxPlayers" });
+    for (const l of m.capitalLayouts ?? [])
+      if (l.slots.length !== l.players || new Set(l.slots).size !== l.players || l.slots.some((s) => !ids.has(s)))
+        ctx.addIssue({ code: "custom", message: `bad capital layout for ${l.players} players` });
   });
 export type MapDef = z.infer<typeof MapDef>;
 
 const perTerrain = <T extends z.ZodTypeAny>(v: T) =>
   z.object({ plains: v, forest: v, hills: v, mountains: v, swamp: v });
-const perBorder = <T extends z.ZodTypeAny>(v: T) => z.object({ normal: v, river: v, pass: v });
+const perBorder = <T extends z.ZodTypeAny>(v: T) => z.object({ normal: v, river: v, pass: v, sea: v });
 
 /** Fields every specialist has. */
 const specialistBase = {

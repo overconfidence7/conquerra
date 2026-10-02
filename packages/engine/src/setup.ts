@@ -12,8 +12,13 @@ export interface NewGameOptions {
   settings?: Partial<GameSettings>;
 }
 
-/** Pick capitals spread out as far as possible from each other. */
+/**
+ * Pick capitals. If the map has a fair layout for this many players, use it (seats are shuffled, so who gets
+ * which slot is random). Otherwise spread capitals out as far as possible from each other.
+ */
 function pickCapitals(map: MapDef, count: number, rng: Rng): string[] {
+  const layout = map.capitalLayouts?.find((l) => l.players === count);
+  if (layout) return [...layout.slots];
   const idx = indexMap(map);
   const slots = [...map.capitalSlots];
   const chosen = [slots[rng.int(slots.length)]!];

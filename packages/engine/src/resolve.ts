@@ -1,4 +1,4 @@
-import type { SpecialistType } from "@conquerra/content";
+import type { BorderType, SpecialistType } from "@conquerra/content";
 import { expectBattle, rollLosses, type BattleExpectation } from "./combat";
 import { cultureProtection, incomeFor, investCost, scoreFor, specialistUnlocked } from "./economy";
 import { indexMap, type MapIndex } from "./mapIndex";
@@ -34,7 +34,7 @@ interface MovePlan {
   specialists: Specialist[];
   leaderGoes: boolean;
   /** Border actually crossed into the destination (the second step for two-territory moves). */
-  border: "normal" | "river" | "pass";
+  border: BorderType;
 }
 
 /** A queued order, plus where a follow-through is pushing on from (those troops may act again). */

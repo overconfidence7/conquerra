@@ -90,6 +90,9 @@
     },
     "pass": {
       "attackMult": 0.85
+    },
+    "sea": {
+      "attackMult": 0.75
     }
   },
   "combat": {
