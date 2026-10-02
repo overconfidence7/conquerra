@@ -75,13 +75,15 @@ describe.each(testMaps.map((m) => [m.id, m] as const))("map %s", (id, map) => {
 
   it("decorations never sit in water or on a banner, and stay on their own kind of ground", () => {
     expect(geo.decorations.length).toBeGreaterThan(map.territories.length * 10);
+    const problems: string[] = [];
     for (const d of geo.decorations) {
       const b = biomeAt(map, d.x, d.y);
-      expect(b).not.toBe("shallow");
-      expect(b).not.toBe("deep");
-      expect(DECORATION_BIOMES[d.kind]).toContain(b);
-      for (const t of geo.territories) expect(Math.hypot(t.label.x - d.x, t.label.y - d.y)).toBeGreaterThanOrEqual(LABEL_CLEAR);
+      if (b === "shallow" || b === "deep") problems.push(`${d.kind} in water at ${d.x},${d.y}`);
+      if (!DECORATION_BIOMES[d.kind].includes(b)) problems.push(`${d.kind} on ${b} at ${d.x},${d.y}`);
+      for (const t of geo.territories)
+        if (Math.hypot(t.label.x - d.x, t.label.y - d.y) < LABEL_CLEAR) problems.push(`${d.kind} on ${t.id}'s banner`);
     }
+    expect(problems).toEqual([]);
   });
 
   it("every label point is inside its territory with room for a banner", () => {
@@ -129,9 +131,13 @@ describe.each(testMaps.map((m) => [m.id, m] as const))("map %s", (id, map) => {
     const { cols, rows, cellSize } = geo.biome;
     for (const t of geo.territories) {
       const def = map.territories.find((x) => x.id === t.id)!;
+      // Only look at squares inside the territory's bounding box.
+      const xs = t.rings.flatMap((r) => r.filter((_, i) => i % 2 === 0)), ys = t.rings.flatMap((r) => r.filter((_, i) => i % 2 === 1));
+      const c0 = Math.max(0, Math.floor(Math.min(...xs) / cellSize)), c1 = Math.min(cols - 1, Math.floor(Math.max(...xs) / cellSize));
+      const r0 = Math.max(0, Math.floor(Math.min(...ys) / cellSize)), r1 = Math.min(rows - 1, Math.floor(Math.max(...ys) / cellSize));
       let match = 0, total = 0;
-      for (let r = 0; r < rows; r++)
-        for (let c = 0; c < cols; c++) {
+      for (let r = r0; r <= r1; r++)
+        for (let c = c0; c <= c1; c++) {
           const x = (c + 0.5) * cellSize, y = (r + 0.5) * cellSize;
           if (!insideRings(t.rings, x, y)) continue;
           total++;
