@@ -1,4 +1,4 @@
-# Conquerra Rules Reference (Milestone 2, session 2)
+# Conquerra Rules Reference (Milestone 2, session 3)
 
 *A 10-minute read. This is how the engine actually plays today. Numbers are the current balance settings from `packages/content/data/rules.json`; they will change as we tune.*
 
@@ -12,7 +12,7 @@
 
 ## 2. Setting up
 - Each player starts with a **capital**, **12 troops** there, **20 gold**, and their **Leader**.
-- Capitals are spread as far apart as the map allows.
+- Capitals come from the map's **fair layout** for that many players: every capital is about as far from its nearest rival as the others, has land around it worth about the same, and stands on plains (see §12).
 - Every other territory starts neutral with **1 troop**.
 - The host also sets: the **turn timer** (5 minutes by default; anything from 1 minute up to a week), an optional **turn limit**, the **luck level** (30% by default), and **fog** (on by default).
 
@@ -48,7 +48,7 @@ To keep turns fast, you normally pick a **one-tap preset** instead of building c
 
 | Preset | What it means |
 |---|---|
-| **Only if still stronger** | Attack only if the odds are still at least "likely" when the order comes up. |
+| **Only if still stronger** | Attack only if the odds are still at least "likely" when the order comes up. **New attacks start with this switched on**; one tap turns it off. |
 | **Hold if threatened** | Cancel the move if enemy armies next to the launch point grew this turn. |
 | **Retreat if outnumbered** | If a bigger enemy army is next door, pull back to the safest territory you hold instead. |
 | **Follow through** | If the attack captures its target, push on to the next one in your next slot. You pick where, or the army picks the weakest neighbour it can likely take. |
@@ -97,7 +97,7 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
 **Unrest:** if you can't pay, one troop deserts for every gold you're short, starting with your lowest-culture land. Culture talks some of them out of it (its protection share is forgiven). Every territory still keeps its 1-troop garrison.
 
 ## 9. Combat (about 70% skill, 30% luck)
-- **Attack strength** = attacking troops × border (river crossing ×0.8, mountain pass ×0.85) × Leader bonus (+20% if your Leader goes along).
+- **Attack strength** = attacking troops × border (river crossing ×0.8, mountain pass ×0.85, sea lane ×0.75) × Leader bonus (+20% if your Leader goes along). See §12.
 - **Defense strength** = defending troops × terrain (plains ×1.0, forest ×1.2, hills ×1.3, mountains ×1.6, swamp ×1.1) × finished fort (×1.6, unless siege cancels it) × Leader bonus (+20% if their Leader is there).
 - On average, each point of attack strength kills **1.0** defender, and each point of defense strength kills **0.6** attackers. Healers reduce their own side's losses.
 - **Luck** spreads each side's actual losses up to 30% either way around that average (most results land near the middle). The host can set luck from 0% to 100%.
@@ -129,7 +129,23 @@ Engineers make any of these ready immediately. A building under construction giv
   - A battle in the fog shows only as a **surface detail**: "a battle in Northreach." No names, no numbers. The same goes for a Leader falling in the fog.
   - Quiet things in the fog (moves, recruiting, building, culture) don't show at all.
   - Eliminations and the end of the game are announced to everyone.
-- Eliminated players see the whole board.
+- Eliminated players see the whole board. When you're knocked out you choose **Watch to the end** (the bots play on; you see every turn's report and can skip ahead) or **See the result**.
+
+## 12. The map: water, mountains, passes, sea lanes and choke points
+Maps are made by the **map maker** (same seed, same map) and look like a real place, not a grid.
+
+- **Territories** have natural, irregular shapes of about the same size. Two territories border each other only where they actually touch (or where a sea lane joins them).
+- **Seas and lakes** are never territories. You can't stand on water, and you can only cross it by a **sea lane**.
+- **Sea lanes** are the dashed lines drawn across water. They join two coastal territories as if they bordered each other, but attacking across one is hard: attack strength ×0.75 (an army landing from boats). Every island has at least one.
+- **Mountain ranges** (grey bands) are impassable. The only way through is a **pass**, marked on the map. Attacking through a pass: ×0.85.
+- **Mountains territories** are different: they're ordinary land you can hold, just very easy to defend (defense ×1.6).
+- **Rivers** run from high ground down to a sea or lake, along the borders between territories. Attacking across a river: ×0.8.
+- The attack panel tells you when an attack crosses a river, a pass or a sea lane, and the odds already include it.
+- **Choke points:** every map has a few places where a small army can hold off a big one: passes, sea lanes, and narrow land bridges. A fort on a pass or a sea-lane landing (defense ×1.6, and the attacker pays the crossing penalty too) is very hard to break without siege.
+- **Provinces** don't straddle mountain ranges or seas, so a range is often a province's natural wall.
+- **Our test maps** (both made by the map maker):
+  - **Embervale**: 40 territories, 8 provinces, suits 4–6 players. 2 passes, 3 sea lanes.
+  - **Greatmarch**: 80 territories, 20 provinces, suits 8–10 players. 7 passes, 3 sea lanes.
 
 ## Not in yet (later milestones)
 Spies, generals and standing instructions, Spoils and Fate decks, diplomacy, the Fallen, factions.

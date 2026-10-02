@@ -33,6 +33,7 @@ You only need to do steps 1–2 once.
 | Folder | What it is |
 |---|---|
 | `packages/content` | Game data: the test maps (Embervale, 40 territories, up to 6 players; Greatmarch, 80 territories, up to 10) and every balance number (`data/rules.json`) |
+| `packages/mapgen` | The map maker: seeded maps with coasts, seas, lakes, mountain ranges and passes, rivers, sea lanes, provinces, fair capitals, and the drawing data (biomes, height map, decorations). `pnpm build-maps` rebuilds the test maps and their previews in `docs/maps/` |
 | `packages/engine` | The rules of the game. Pure, deterministic TypeScript: same seed + same orders = same result, every time |
 | `packages/bots` | AI players. "Recruit" is the first, simplest tier |
 | `apps/sim` | Runs bot-vs-bot games and reports balance stats and CPU time |

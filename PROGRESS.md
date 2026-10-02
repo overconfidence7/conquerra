@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M2 (playable browser game vs bots): session 3 (the map maker) ready to start. Nate is generating art in parallel.**
+**Phase: M2 (playable browser game vs bots): session 3 (the map maker) done; session 4 (the illustrated map) next. Nate is generating art in parallel.**
 
-Claude Code sessions completed: **2** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
+Claude Code sessions completed: **3** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
 ---
 
@@ -122,3 +122,19 @@ Claude Code sessions completed: **2** (a new orchestrator prompt is due after se
   - **Art:** AI-generated. Nate makes it with the prompt pack in `docs/art/asset-list-and-prompts.md` and drops it into `art/incoming/`. The game uses placeholders until it arrives.
   - **M2 is now four sessions:** 3 map maker, 4 painted map, 5 menus, replay, timer, phone and private preview.
 - **Art style settled:** Nate compared his realistic mockup with two Gemini versions and chose **illustrated, with relief lighting**. It's a storybook-painted map, made deeper with hill and mountain shading from a height map, under the gilded navy-and-gold menus. It suits random maps, keeps AI art consistent and reads well on phones. From the Gemini version we take the glowing House borders, troop pills, tap cards, specialist figures on the map, event pop-ups and a players panel. The art prompt pack now uses the illustrated style.
+
+### Oct 2: Claude Code session 3 (M2, part 2: the map maker and real geography)
+- Housekeeping: committed the orchestrator's docs (twice, as the art direction moved to v0.3 "illustrated" mid-session) and added `art/incoming/` for Nate's art.
+- **The map maker** (`packages/mapgen`): give it a seed and some sizes, and it makes a whole map. The same seed always gives the same map.
+  - natural coastlines with bays and peninsulas, a sea, lakes and islands
+  - impassable mountain ranges with passes, and rivers running downhill to the sea
+  - sea lanes over water, with a new `sea` border (attacks across one are weaker)
+  - territories of about even size grouped into provinces, and fair capital spots for every table size
+  - everything the illustrated map will need: outlines, a ground-type grid, a height map for hill shading, label points, and where trees, peaks, villages, towns, castles and buildings go
+  - every map is checked (connected, no slivers, sensible provinces, fair capitals, enough choke points), and a failing map is thrown away for the next seed
+- **Embervale and Greatmarch were rebuilt** with it (same sizes as before). Previews: `docs/maps/embervale.png` and `docs/maps/greatmarch.png`.
+- **Simulator** (`docs/sim-results-m2-maps.md`): no crashes, seats still fair. Games run 1–2 turns longer at 4–6 players (typical game 24–25 turns), because bots are cautious around passes and sea lanes. Changing the rules didn't help, so the rules are unchanged; teaching the bots to fight for choke points belongs in M3.
+- **The browser game** draws the new maps simply (outlines, water, mountains, rivers, passes, sea lanes) and offers both maps. The game screen now gets the map from the game host, not from the code.
+- **Nate's two changes:** attacks start with "Only if still stronger" on (a typical turn is now **8 taps**, was 10), and when you're knocked out you choose **Watch to the end** or **See the result**.
+- Plain-language rules for water, mountains, passes, sea lanes and choke points: `docs/rules-reference.md` §12. Map data notes for session 4: `docs/map-data.md`.
+- 127 automated tests pass (34 new).
