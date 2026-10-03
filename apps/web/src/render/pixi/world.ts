@@ -1,6 +1,6 @@
 import type { MapGeometry } from "@conquerra/content";
 import { TERRAIN_TEXTURES, WATER_TEXTURES } from "@conquerra/art";
-import { Container, Graphics, Matrix, Mesh, MeshGeometry, RenderTexture, Shader, Sprite, Texture, UniformGroup, type Renderer } from "pixi.js";
+import { Container, Graphics, Matrix, Mesh, MeshGeometry, RenderTexture, Shader, Sprite, Texture, TilingSprite, UniformGroup, type Renderer } from "pixi.js";
 import type { ArtBook } from "../../art/book";
 import { canvas } from "../../art/paint";
 import type { Camera, Viewport } from "../../map/camera";
@@ -57,6 +57,8 @@ export class WorldLayer {
   private auxTex: Texture;
   private disposables: { destroy(): void }[] = [];
   private tilesLayer = new Container();
+  /** Open sea beyond the map's edges, so zooming out or panning never shows a flat background. */
+  private sea: TilingSprite;
   readonly stats = { bakeMs: 0, tilesBaked: 0, tileCount: 0, textureBytes: 0, steps: {} as Record<string, number> };
   private step(name: string, t0: number) {
     this.stats.steps[name] = Math.round(performance.now() - t0);
@@ -92,7 +94,16 @@ export class WorldLayer {
       for (let x = 0; x < g.width; x += tileUnits)
         this.tiles.push({ x, y, w: Math.min(tileUnits, g.width - x), h: Math.min(tileUnits, g.height - y), rt: null, mesh: null });
     this.stats.tileCount = this.tiles.length;
-    this.view.addChild(this.tilesLayer);
+    const deep = art.get("water-deep")!;
+    const seaTex = Texture.from(deep.image);
+    this.disposables.push(seaTex);
+    const M = 3; // map sizes of sea on every side
+    this.sea = new TilingSprite({ texture: seaTex, width: g.width * (2 * M + 1), height: g.height * (2 * M + 1) });
+    this.sea.position.set(-g.width * M, -g.height * M);
+    this.sea.tileScale.set(REPEAT_UNITS / deep.image.width);
+    // Line the repeats up with the painted deep water at the map's edge.
+    this.sea.tilePosition.set((g.width * M) % REPEAT_UNITS, (g.height * M) % REPEAT_UNITS);
+    this.view.addChild(this.sea, this.tilesLayer);
     this.stats.bakeMs += performance.now() - t0;
   }
 
@@ -245,7 +256,7 @@ export class WorldLayer {
     this.step("farPaint", t0);
     const mesh = new Mesh({ geometry: quad(0, 0, this.g.width, this.g.height), shader: this.displayShader(rt) });
     this.far = { rt, mesh, ppu };
-    this.view.addChildAt(mesh, 0);
+    this.view.addChildAt(mesh, this.view.getChildIndex(this.tilesLayer));
     this.stats.textureBytes += w * h * 4 * 1.33;
     this.stats.bakeMs += performance.now() - t0;
   }
@@ -289,6 +300,12 @@ export class WorldLayer {
     }
     // The Far image only needs drawing underneath while some on-screen tile is still unpainted.
     if (this.far) this.far.mesh.visible = !allOnScreenPainted;
+  }
+
+  /** Far-zoom dimming for the sea beyond the edges (the painted map dims in its shader). */
+  setDim(dim: number) {
+    const v = Math.round(255 * (1 - dim));
+    this.sea.tint = (v << 16) | (v << 8) | v;
   }
 
   get pendingTiles() {

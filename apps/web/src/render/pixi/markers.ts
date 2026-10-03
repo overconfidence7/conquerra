@@ -230,6 +230,9 @@ export class MarkerLayer {
     }
   }
 
+  /** Where markers sit after the last layout, relative to the camera origin (so panning doesn't change them). */
+  screenBoxes: { x: number; y: number; w: number; h: number; dy: number }[] = [];
+
   /** Re-run collisions (after zooming or a rebuild). */
   layout(cam: Camera, z: ZoomDetail) {
     const k = pillHeight(z) / REF;
@@ -238,6 +241,7 @@ export class MarkerLayer {
       return { id: m.id, x, y, w: m.metrics.w * k, h: m.metrics.h * k, dy: m.metrics.dy * k, priority: m.priority };
     });
     const placed = layoutMarkers(boxes);
+    this.screenBoxes = [];
     for (const b of boxes) {
       const m = this.markers.get(b.id)!;
       const p = placed.get(b.id)!;
@@ -247,6 +251,7 @@ export class MarkerLayer {
       m.root.scale.set(k);
       m.merged.visible = p.merged.length > 0;
       if (p.merged.length) m.mergedText.text = `+${p.merged.length}`;
+      if (!m.hidden) this.screenBoxes.push({ x: p.x - cam.x, y: p.y - cam.y, w: b.w, h: b.h, dy: b.dy });
     }
     this.place(cam, z);
   }

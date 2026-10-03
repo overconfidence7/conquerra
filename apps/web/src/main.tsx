@@ -19,8 +19,10 @@ function App() {
 // For the perf / screenshot script (scripts/map-check.ts): drive the game from outside.
 (window as unknown as { __conquerraStore?: typeof useGame }).__conquerraStore = useGame;
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+if (new URLSearchParams(location.search).get("lab") === "houses") void import("./lab/houseLab").then((m) => m.runHouseLab(document.getElementById("root")!));
+else
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );

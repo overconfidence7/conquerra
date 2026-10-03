@@ -8,40 +8,90 @@ export interface Camera {
   scale: number;
 }
 
+/** Screen space covered by menus that sit over the map (px). The camera fits and clamps to what's left. */
+export interface Insets {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
 export interface Viewport {
   width: number;
   height: number;
+  insets?: Insets;
 }
 
+/** The part of the map the camera frames, in map units (x and y default to 0: the whole map). */
 export interface MapSize {
   width: number;
   height: number;
+  x?: number;
+  y?: number;
+}
+
+/** The screen area not covered by menus. */
+export function usable(vp: Viewport): { left: number; top: number; width: number; height: number } {
+  const i = vp.insets ?? { top: 0, right: 0, bottom: 0, left: 0 };
+  return { left: i.left, top: i.top, width: Math.max(1, vp.width - i.left - i.right), height: Math.max(1, vp.height - i.top - i.bottom) };
+}
+
+/**
+ * What the camera frames: the land, with a little sea round it, instead of the whole map rectangle (which has a
+ * wide band of open sea). Uses only the map's outlines, so it works the same on any map.
+ */
+export function landFrame(g: { width: number; height: number; territories: readonly { rings: readonly (readonly number[])[] }[] }): Required<MapSize> {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const t of g.territories)
+    for (const r of t.rings)
+      for (let i = 0; i < r.length; i += 2) {
+        x0 = Math.min(x0, r[i]!);
+        x1 = Math.max(x1, r[i]!);
+        y0 = Math.min(y0, r[i + 1]!);
+        y1 = Math.max(y1, r[i + 1]!);
+      }
+  if (!Number.isFinite(x0)) return { x: 0, y: 0, width: g.width, height: g.height };
+  const pad = Math.max(x1 - x0, y1 - y0) * 0.03;
+  x0 = Math.max(0, x0 - pad);
+  y0 = Math.max(0, y0 - pad);
+  x1 = Math.min(g.width, x1 + pad);
+  y1 = Math.min(g.height, y1 + pad);
+  return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
 }
 
 export const toScreen = (c: Camera, mx: number, my: number): [number, number] => [mx * c.scale + c.x, my * c.scale + c.y];
 export const toMap = (c: Camera, sx: number, sy: number): [number, number] => [(sx - c.x) / c.scale, (sy - c.y) / c.scale];
 
-/** The whole map, centred, with a little margin. */
-export function fitCamera(map: MapSize, vp: Viewport, margin = 12): Camera {
-  const scale = Math.min((vp.width - margin * 2) / map.width, (vp.height - margin * 2) / map.height);
-  return { scale, x: (vp.width - map.width * scale) / 2, y: (vp.height - map.height * scale) / 2 };
+/** The whole frame, centred in the screen space the menus leave free, with a little margin. */
+export function fitCamera(map: MapSize, vp: Viewport, margin = 8): Camera {
+  const u = usable(vp);
+  const scale = Math.min((u.width - margin * 2) / map.width, (u.height - margin * 2) / map.height);
+  const mx = map.x ?? 0, my = map.y ?? 0;
+  return { scale, x: u.left + (u.width - map.width * scale) / 2 - mx * scale, y: u.top + (u.height - map.height * scale) / 2 - my * scale };
 }
 
 /** How far in and out you can zoom: a bit past "whole map", up to a few territories filling the screen. */
 export function scaleLimits(map: MapSize, vp: Viewport, maxScale: number): { min: number; max: number } {
   const fit = fitCamera(map, vp).scale;
-  return { min: fit * 0.85, max: Math.max(fit * 1.5, maxScale) };
+  return { min: fit * 0.92, max: Math.max(fit * 1.5, maxScale) };
 }
 
-/** Keep at least part of the map on screen, and centre it when it's smaller than the screen. */
+/**
+ * Keep the frame on screen. When it's smaller than the free screen space it's centred; when bigger, you can pan
+ * to each edge plus a small margin, never into a wide band of empty sea.
+ */
 export function clampCamera(c: Camera, map: MapSize, vp: Viewport): Camera {
-  const w = map.width * c.scale, h = map.height * c.scale;
-  // A little room past the edge, so the coast needn't sit right against the screen edge. Less when the map is
-  // only just bigger than the screen, so you don't see a strip of empty sea.
-  const slackX = Math.min(vp.width * 0.12, Math.max(0, w - vp.width) * 0.5), slackY = Math.min(vp.height * 0.12, Math.max(0, h - vp.height) * 0.5);
-  const x = w <= vp.width ? (vp.width - w) / 2 : Math.min(slackX, Math.max(vp.width - w - slackX, c.x));
-  const y = h <= vp.height ? (vp.height - h) / 2 : Math.min(slackY, Math.max(vp.height - h - slackY, c.y));
-  return { scale: c.scale, x, y };
+  const u = usable(vp);
+  const axis = (pos: number, start: number, size: number, uStart: number, uSize: number) => {
+    const len = size * c.scale;
+    const s0 = start * c.scale;
+    if (len <= uSize) return uStart + (uSize - len) / 2 - s0;
+    const slack = Math.min(uSize * 0.06, (len - uSize) * 0.5);
+    // Screen position of the frame's start edge must stay within [uStart + uSize - len - slack, uStart + slack].
+    const edge = Math.min(uStart + slack, Math.max(uStart + uSize - len - slack, pos + s0));
+    return edge - s0;
+  };
+  return { scale: c.scale, x: axis(c.x, map.x ?? 0, map.width, u.left, u.width), y: axis(c.y, map.y ?? 0, map.height, u.top, u.height) };
 }
 
 /** Zoom by `factor` keeping the map point under (sx, sy) where it is. */

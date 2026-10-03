@@ -61,7 +61,7 @@ Both were made without knowing our rules, so they show things we don't have. The
 
 ## Menus
 - **Palette:** panels Navy `#0F1620` / Raised `#172231`; gold trim `#C9A45C` with a highlight `#E3C77E`; text Parchment `#EDE6D6`, muted `#9AA3AE`; danger `#C2553F`.
-- **House tinctures** (bright enough to glow on the illustrated land): Gules, Azure, Vert, Or, Purpure, Tenné, Celeste, Murrey, Sable, Argent. Each House also gets a pattern on its banner and shield, so colorblind players can tell them apart.
+- **House tinctures** (bright enough to glow on the illustrated land): Gules, Azure, Vert, Or, Purpure, Tenné, Teal, Murrey, Sable, Argent. Each House also gets a pattern on its banner and shield, so colorblind players can tell them apart.
 - **Type:**
   - *Cinzel* for the logo, headings, province and place names
   - *Spectral* for panel text and logs

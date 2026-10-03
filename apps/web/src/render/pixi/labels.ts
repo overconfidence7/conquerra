@@ -11,7 +11,11 @@ import { labelCurve, quadPoint } from "../../map/shapes";
 
 const RES = 2.2; // texture pixels per map unit
 
-function curvedText(text: string, path: readonly number[], size: number, opts: { fill: string; stroke: string; font: string; spacing: number }) {
+/**
+ * A name curved along a label line, as one small upright picture per letter (placed and rotated along the curve),
+ * so letters that would sit under an army marker can fade on their own.
+ */
+function curvedGlyphs(text: string, path: readonly number[], size: number, opts: { fill: string; stroke: string; font: string; spacing: number }) {
   const [x0, y0, cx, cy, x1, y1] = labelCurve(path);
   // Arc length table for even letter spacing.
   const steps = 64;
@@ -25,34 +29,33 @@ function curvedText(text: string, path: readonly number[], size: number, opts: {
     const t = (i - 1 + (d - lens[i - 1]!) / Math.max(1e-6, lens[i]! - lens[i - 1]!)) / steps;
     return quadPoint(x0, y0, cx, cy, x1, y1, Math.max(0, Math.min(1, t)));
   };
-  const pad = size * 1.2;
-  const minX = Math.min(x0, x1, cx) - pad, maxX = Math.max(x0, x1, cx) + pad;
-  const minY = Math.min(y0, y1, cy) - pad, maxY = Math.max(y0, y1, cy) + pad;
-  const [c, ctx] = canvas((maxX - minX) * RES, (maxY - minY) * RES);
-  ctx.scale(RES, RES);
-  ctx.translate(-minX, -minY);
-  ctx.font = `${opts.font} ${size}px Cinzel, serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
+  const [, mctx] = canvas(4, 4);
+  const font = `${opts.font} ${size}px Cinzel, serif`;
+  mctx.font = font;
   const chars = [...text];
-  const widths = chars.map((ch) => ctx.measureText(ch).width + size * opts.spacing);
+  const widths = chars.map((ch) => mctx.measureText(ch).width + size * opts.spacing);
   const textLen = widths.reduce((a, b) => a + b, 0);
   let d = Math.max(0, (total - textLen) / 2);
-  ctx.lineJoin = "round";
+  const out: { canvas: HTMLCanvasElement; x: number; y: number; angle: number; r: number }[] = [];
+  const box = size * 1.5;
   for (let i = 0; i < chars.length; i++) {
     const [x, y, ang] = at(d + widths[i]! / 2);
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(ang);
+    d += widths[i]!;
+    if (chars[i] === " ") continue;
+    const [c, ctx] = canvas(box * RES, box * RES);
+    ctx.scale(RES, RES);
+    ctx.font = font;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
     ctx.strokeStyle = opts.stroke;
     ctx.lineWidth = size * 0.22;
-    ctx.strokeText(chars[i]!, 0, 0);
+    ctx.strokeText(chars[i]!, box / 2, box / 2);
     ctx.fillStyle = opts.fill;
-    ctx.fillText(chars[i]!, 0, 0);
-    ctx.restore();
-    d += widths[i]!;
+    ctx.fillText(chars[i]!, box / 2, box / 2);
+    out.push({ canvas: c, x, y, angle: ang, r: size * 0.45 });
   }
-  return { canvas: c, x: minX, y: minY };
+  return out;
 }
 
 function straightText(text: string, x: number, y: number, size: number, opts: { fill: string; stroke: string; font: string }) {
@@ -74,8 +77,17 @@ function straightText(text: string, x: number, y: number, size: number, opts: { 
   return { canvas: c, x: x - w / 2, y: y - h / 2 };
 }
 
+/** One letter of a province name, in map units (for fading letters that would cover an army marker). */
+export interface Glyph {
+  sprite: Sprite;
+  x: number;
+  y: number;
+  r: number;
+}
+
 export interface MapLabels {
   provinces: Container;
+  glyphs: Glyph[];
   places: Container;
   destroy(): void;
 }
@@ -85,6 +97,7 @@ export function buildLabels(map: MapDef, illustrated: boolean): MapLabels {
   const provinces = new Container();
   const places = new Container();
   const textures: Texture[] = [];
+  const glyphs: Glyph[] = [];
   const add = (layer: Container, l: { canvas: HTMLCanvasElement; x: number; y: number }) => {
     const t = Texture.from(l.canvas);
     textures.push(t);
@@ -99,12 +112,20 @@ export function buildLabels(map: MapDef, illustrated: boolean): MapLabels {
     const [x0, y0, , , x1, y1] = pl.path as [number, number, number, number, number, number];
     const len = Math.hypot(x1 - x0, y1 - y0);
     const size = Math.max(13, Math.min(30, (len / Math.max(6, name.length)) * 1.05));
-    add(
-      provinces,
-      curvedText(name.toUpperCase(), pl.path, size, illustrated
-        ? { fill: "rgba(58,40,22,0.88)", stroke: "rgba(246,236,210,0.55)", font: "700", spacing: 0.22 }
-        : { fill: "rgba(20,24,32,0.85)", stroke: "rgba(255,255,255,0.6)", font: "700", spacing: 0.22 }),
-    );
+    const style = illustrated
+      ? { fill: "rgba(58,40,22,0.88)", stroke: "rgba(246,236,210,0.55)", font: "700", spacing: 0.22 }
+      : { fill: "rgba(20,24,32,0.85)", stroke: "rgba(255,255,255,0.6)", font: "700", spacing: 0.22 };
+    for (const gl of curvedGlyphs(name.toUpperCase(), pl.path, size, style)) {
+      const t = Texture.from(gl.canvas);
+      textures.push(t);
+      const sp = new Sprite(t);
+      sp.anchor.set(0.5);
+      sp.position.set(gl.x, gl.y);
+      sp.rotation = gl.angle;
+      sp.scale.set(1 / RES);
+      provinces.addChild(sp);
+      glyphs.push({ sprite: sp, x: gl.x, y: gl.y, r: gl.r });
+    }
   }
   for (const w of g.water)
     add(places, straightText(w.name, w.label.x, w.label.y, w.kind === "sea" ? 15 : 11, { fill: "rgba(225,240,250,0.9)", stroke: "rgba(15,40,70,0.55)", font: "italic 600" }));
@@ -112,6 +133,7 @@ export function buildLabels(map: MapDef, illustrated: boolean): MapLabels {
     add(places, straightText(m.name, m.label.x, m.label.y, 10, { fill: "rgba(250,246,236,0.95)", stroke: "rgba(40,30,20,0.75)", font: "600" }));
   return {
     provinces,
+    glyphs,
     places,
     destroy() {
       for (const t of textures) t.destroy(true);

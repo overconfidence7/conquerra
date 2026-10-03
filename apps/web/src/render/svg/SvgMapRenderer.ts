@@ -1,5 +1,5 @@
 import type { Line } from "@conquerra/content";
-import { toMap } from "../../map/camera";
+import { landFrame, toMap, type Insets } from "../../map/camera";
 import { houseOf } from "../../map/houses";
 import { hitTester } from "../../map/shapes";
 import { territoryStatus } from "../../map/status";
@@ -49,7 +49,7 @@ class SvgMapRenderer implements MapRenderer {
     for (const l of g.seaLanes) el("path", { d: path([l.path], false), fill: "none", stroke: "#f2f2f2", "stroke-width": 2, "stroke-dasharray": "6 5" }, geo);
     for (const p of g.passes) el("circle", { cx: p.x, cy: p.y, r: 6, fill: "#e8d39a", stroke: "#1b1206", "stroke-width": 1.5 }, geo);
     opts.host.appendChild(this.svg);
-    this.cam = new CameraController({ width: g.width, height: g.height }, typicalTerritorySize(opts.ctx.map));
+    this.cam = new CameraController(landFrame(g), typicalTerritorySize(opts.ctx.map));
     let drawnScale = 0, pending = false;
     this.cam.onChange((c) => {
       this.root.setAttribute("transform", `translate(${c.x},${c.y}) scale(${c.scale})`);
@@ -113,6 +113,10 @@ class SvgMapRenderer implements MapRenderer {
     // This map is always the Tactical look.
   }
 
+  setInsets(insets: Insets) {
+    this.cam.setInsets(insets);
+  }
+
   fit(animate = true) {
     this.cam.fit(animate);
   }
@@ -123,7 +127,7 @@ class SvgMapRenderer implements MapRenderer {
 
   resize() {
     const { host } = this.opts;
-    this.cam.setViewport({ width: host.clientWidth || 1, height: host.clientHeight || 1 });
+    this.cam.setViewport({ width: host.clientWidth || 1, height: host.clientHeight || 1, ...(this.cam.vp.insets ? { insets: this.cam.vp.insets } : {}) });
   }
 
   destroy() {

@@ -8,6 +8,8 @@ import type { DetailMix } from "../../map/zoom";
 import type { MapScene } from "../types";
 import type { TextureBank } from "./bank";
 import { buildLabels, type MapLabels } from "./labels";
+import { RealmLayer } from "./realms";
+import { glyphAlphas } from "../../map/layout";
 
 /**
  * The info layer in map space: House tint and borders, the selection glow, reachable-target highlights, order
@@ -26,6 +28,7 @@ export class InfoLayer {
   readonly tint = new Graphics();
   readonly lines = new Graphics();
   readonly glow = new Graphics();
+  readonly realmLayer = new RealmLayer();
   readonly sites = new Container();
   readonly figures = new Container();
   readonly arrows = new Graphics();
@@ -61,6 +64,17 @@ export class InfoLayer {
       return s.kind === "seen" && s.owner ? s.owner : null;
     };
     this.realms = groupOutlines(this.map.geometry!, ownerOf);
+    const held = new Map<string, (readonly Line[])[]>();
+    for (const [id] of this.status) {
+      const o = ownerOf(id);
+      if (o) (held.get(o) ?? held.set(o, []).get(o)!).push(this.rings.get(id)!);
+    }
+    this.realmLayer.setRealms([...this.realms].map(([owner, outlines]) => ({ house: houseOf(view, owner), outlines, territories: held.get(owner) ?? [] })));
+    this.realmLayer.setRemembered(
+      [...this.status].filter(([, s]) => s.kind === "remembered" && s.owner).map(([id, s]) => ({ house: houseOf(view, s.owner), rings: this.rings.get(id)! })),
+    );
+    this.realmLayer.setSelected(scene.selected ? (this.rings.get(scene.selected) ?? null) : null);
+    this.realmLayer.visible = !tactical;
     this.drawFills();
     this.drawSites();
     this.labels.illustrated.provinces.visible = this.labels.illustrated.places.visible = !tactical;
@@ -151,6 +165,14 @@ export class InfoLayer {
     }
   }
 
+  /** Army markers win: fade the letters of province names that would sit under one. Boxes are camera-relative px. */
+  fadeNamesUnder(boxes: readonly { x: number; y: number; w: number; h: number; dy: number }[], cam: { scale: number }) {
+    for (const set of [this.labels.illustrated, this.labels.tactical]) {
+      const pts = set.glyphs.map((g) => ({ x: g.x * cam.scale, y: g.y * cam.scale, r: g.r * cam.scale }));
+      glyphAlphas(pts, boxes).forEach((a, i) => (set.glyphs[i]!.sprite.alpha = a));
+    }
+  }
+
   /** Redraw lines and arrows when the zoom has changed enough; set fades. */
   setZoom(scale: number, mix: DetailMix) {
     this.tint.alpha = this.isTactical ? 1 : mix.tint;
@@ -184,21 +206,9 @@ export class InfoLayer {
         } else ring(L, l, false).stroke({ width: 1.1 * px, color: 0xf3ead2, alpha: 0.42, join: "round", cap: "round" });
       }
     }
-    // Realms: a thick glowing House border round everything each House holds (that you can see).
-    for (const [owner, outlines] of this.realms) {
-      const h = houseOf(view, owner);
-      const glow = hexNum(h.glow), col = hexNum(h.color);
-      for (const l of outlines) {
-        if (this.isTactical) {
-          ring(G, l, false).stroke({ width: 2.6 * px, color: INK, alpha: 0.9, join: "round" });
-          continue;
-        }
-        ring(G, l, false).stroke({ width: 13 * px, color: glow, alpha: 0.16, join: "round", cap: "round" });
-        ring(G, l, false).stroke({ width: 7 * px, color: glow, alpha: 0.32, join: "round", cap: "round" });
-        ring(G, l, false).stroke({ width: 3.2 * px, color: col, alpha: 1, join: "round", cap: "round" });
-        ring(G, l, false).stroke({ width: 1 * px, color: 0xffffff, alpha: h === NEUTRAL_HOUSE ? 0 : 0.45, join: "round", cap: "round" });
-      }
-    }
+    // Realms: in Tactical, a dark line round everything each House holds. Illustrated: the House bands (realms.ts).
+    if (this.isTactical) for (const outlines of this.realms.values()) for (const l of outlines) ring(G, l, false).stroke({ width: 2.6 * px, color: INK, alpha: 0.9, join: "round" });
+    else this.realmLayer.draw(px);
     // Where the selected army can go.
     for (const id of targets) {
       for (const r of this.rings.get(id) ?? []) {
@@ -206,10 +216,9 @@ export class InfoLayer {
         ring(G, r).stroke({ width: 2.2 * px, color: 0xffffff, alpha: 0.8, join: "round" });
       }
     }
-    // Selection: a gold glow.
-    if (selected)
+    // Selection in Tactical: a gold outline (illustrated: the pulsing double rule in realms.ts).
+    if (selected && this.isTactical)
       for (const r of this.rings.get(selected) ?? []) {
-        ring(G, r).stroke({ width: 14 * px, color: GOLD_HI, alpha: 0.25, join: "round" });
         ring(G, r).stroke({ width: 7 * px, color: GOLD_HI, alpha: 0.5, join: "round" });
         ring(G, r).stroke({ width: 2.6 * px, color: 0xfff1c1, alpha: 1, join: "round" });
       }
@@ -260,6 +269,7 @@ export class InfoLayer {
     this.labels.illustrated.destroy();
     this.labels.tactical.destroy();
     for (const c of [this.tactical, this.tint, this.lines, this.glow, this.sites, this.figures, this.arrows, this.names]) c.destroy({ children: true });
+    this.realmLayer.destroy();
   }
 }
 

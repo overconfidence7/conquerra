@@ -69,7 +69,7 @@ export const scaleForPx = (px: number, territorySize: number) => px / territoryS
 export interface DetailMix {
   /** How much to darken the illustration (Far dims it). */
   dim: number;
-  /** House tint inside owned land. */
+  /** Flat House tint over owned land (Far zoom; the border wash covers Mid and Near). */
   tint: number;
   /** Province names. */
   provinceNames: number;
@@ -87,7 +87,8 @@ export function detailMix(z: Pick<ZoomDetail, "far" | "near">, tactical: boolean
     return { dim: 0, tint: 1, provinceNames: 1 - 0.6 * z.near, icons: 1, nearDetail: 1, names: 1 - z.far };
   return {
     dim: 0.38 * z.far,
-    tint: 0.16 + 0.2 * z.far,
+    // Mid and Near: the House wash along the border only. Far: a stronger flat tint over the whole land.
+    tint: 0.42 * z.far,
     provinceNames: Math.max(0, 0.4 + 0.6 * z.far - 0.4 * z.near),
     icons: 1 - z.far,
     nearDetail: z.near,

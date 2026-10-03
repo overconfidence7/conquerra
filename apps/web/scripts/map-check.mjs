@@ -3,6 +3,7 @@
  *
  *   pnpm map-check screens   -> docs/art/screens/*.png
  *   pnpm map-check perf      -> performance numbers (phone emulation, CPU slowed down 4x), printed and saved
+ *   pnpm map-check houses    -> docs/art/screens/houses.png and house-on-ground.png
  *
  * It needs the built game running: `pnpm build` then `pnpm --filter web preview` (http://localhost:4173),
  * or pass another address as MAP_URL.
@@ -14,7 +15,7 @@ import puppeteer from "puppeteer-core";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const URL = process.env.MAP_URL ?? "http://localhost:4173/";
-const CHROME = process.env.CHROME ?? "C:/Program Files/Google/Chrome/Application/chrome.exe";
+const CHROME = process.env.CHROME ?? (process.platform === "win32" ? "C:/Program Files/Google/Chrome/Application/chrome.exe" : "/opt/pw-browsers/chromium-1194/chrome-linux/chrome");
 const mode = process.argv[2] ?? "screens";
 
 const DESKTOP = { width: 1440, height: 900, deviceScaleFactor: 1 };
@@ -26,7 +27,10 @@ async function launch() {
   return puppeteer.launch({
     executablePath: CHROME,
     headless: true,
-    args: ["--enable-gpu", "--use-angle=d3d11", "--ignore-gpu-blocklist", "--enable-precise-memory-info"],
+    // Windows: the real GPU. Elsewhere (cloud machines without a GPU): software WebGL.
+    args: process.platform === "win32"
+      ? ["--enable-gpu", "--use-angle=d3d11", "--ignore-gpu-blocklist", "--enable-precise-memory-info"]
+      : ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--no-sandbox"],
   });
 }
 
@@ -204,4 +208,20 @@ async function perf() {
   writeFileSync(join(root, "docs/art/screens/perf.json"), JSON.stringify(results, null, 2) + "\n");
 }
 
-await (mode === "perf" ? perf() : screens());
+/** The House swatches: houses.png (normal and colourblind) and house-on-ground.png (every House on every ground). */
+async function houses() {
+  const browser = await launch();
+  const page = await browser.newPage();
+  await page.setViewport({ width: 1900, height: 1500, deviceScaleFactor: 1 });
+  page.on("pageerror", (e) => console.log("page error:", e.message));
+  await page.goto(URL + "?lab=houses", { waitUntil: "networkidle0" });
+  await page.waitForFunction(() => document.body.dataset.ready === "1", { timeout: 60000 });
+  await sleep(300);
+  mkdirSync(join(root, "docs/art/screens"), { recursive: true });
+  await (await page.$("#houses canvas")).screenshot({ path: join(root, "docs/art/screens/houses.png") });
+  await (await page.$("#house-on-ground canvas")).screenshot({ path: join(root, "docs/art/screens/house-on-ground.png") });
+  console.log("  saved docs/art/screens/houses.png and house-on-ground.png");
+  await browser.close();
+}
+
+await (mode === "perf" ? perf() : mode === "houses" ? houses() : screens());

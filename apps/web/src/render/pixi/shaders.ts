@@ -157,15 +157,23 @@ void main() {
     c += water * (s - 0.22) * 0.09;
   }
   // Fog: R = standard fog. G is kept free for blackout fog (thick clouds hiding the land), not built yet.
+  // A soft, pale haze: the painted land shows faintly through it (mostly grey, only lightly darkened), with
+  // drifting mist on top. Pale against the bright, coloured land you can see, so it's obvious at a glance.
   vec4 fg = texture(uFog, mu);
-  if (fg.r > 0.01) {
+  float fogged = fg.r * (1.0 - water * 0.6);
+  if (fogged > 0.01) {
     float l = dot(c, vec3(0.299, 0.587, 0.114));
-    vec3 g = mix(c, vec3(l), 0.8) * 0.58 + vec3(0.035, 0.04, 0.055);
+    vec3 g = mix(c, vec3(l), 0.72);
+    g = mix(g * 0.9, vec3(0.78, 0.8, 0.84), 0.36);
     float mist = fbm(vPos * 0.011 + vec2(t * 0.010, t * 0.004));
-    g = mix(g, vec3(0.74, 0.76, 0.8), smoothstep(0.42, 0.82, mist) * 0.42);
-    c = mix(c, g, fg.r);
+    g = mix(g, vec3(0.88, 0.89, 0.92), smoothstep(0.4, 0.8, mist) * 0.38);
+    c = mix(c, g, fogged);
   }
-  c *= 1.0 - uDim;
-  finalColor = vec4(c, 1.0);
+  // Far-zoom dimming, lighter on fogged land so the two don't stack into a dark blanket.
+  c *= 1.0 - uDim * (1.0 - 0.75 * fogged);
+  // Fade the map's outer edge into the open sea drawn beyond it, so the edge of the painting never shows.
+  vec2 e = min(mu, 1.0 - mu) * uMap;
+  float a = smoothstep(0.0, 40.0, min(e.x, e.y));
+  finalColor = vec4(c * a, a);
 }
 `;

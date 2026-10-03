@@ -160,3 +160,15 @@ export function layoutMarkers(boxes: readonly MarkerBox[], opts: { gap?: number;
   }
   return out;
 }
+
+/**
+ * Army markers always win over painted names: how visible each letter of a province name should be, given the
+ * markers' boxes on screen (all in screen px; boxes are centred on x, y + dy). Letters under a marker fade almost
+ * away; their neighbours half fade, so the name thins out smoothly instead of having a hard gap.
+ */
+export function glyphAlphas(glyphs: readonly { x: number; y: number; r: number }[], boxes: readonly { x: number; y: number; w: number; h: number; dy?: number }[], pad = 3): number[] {
+  const covered = glyphs.map((g) =>
+    boxes.some((b) => Math.abs(g.x - b.x) < b.w / 2 + g.r + pad && Math.abs(g.y - (b.y + (b.dy ?? 0))) < b.h / 2 + g.r + pad),
+  );
+  return covered.map((c, i) => (c ? 0.08 : covered[i - 1] || covered[i + 1] ? 0.55 : 1));
+}

@@ -122,3 +122,36 @@ export function labelCurve(path: readonly number[]): [number, number, number, nu
   const [x0, y0, mx, my, x1, y1] = path as [number, number, number, number, number, number];
   return [x0, y0, 2 * mx - (x0 + x1) / 2, 2 * my - (y0 + y1) / 2, x1, y1];
 }
+
+/**
+ * Split a line into dashes (`dash` long, `gap` apart, in the line's own units), for dashed outlines.
+ * Closed rings repeat their first point at the end first (pass `closed`).
+ */
+export function dashes(line: readonly number[], dash: number, gap: number, closed = false): number[][] {
+  const pts = closed && line.length >= 4 ? [...line, line[0]!, line[1]!] : [...line];
+  const out: number[][] = [];
+  let on = true, left = dash, cur: number[] = [pts[0]!, pts[1]!];
+  for (let i = 2; i < pts.length; i += 2) {
+    let x0 = pts[i - 2]!, y0 = pts[i - 1]!;
+    const x1 = pts[i]!, y1 = pts[i + 1]!;
+    let seg = Math.hypot(x1 - x0, y1 - y0);
+    while (seg > 1e-9) {
+      const step = Math.min(seg, left);
+      const t = step / seg;
+      const nx = x0 + (x1 - x0) * t, ny = y0 + (y1 - y0) * t;
+      if (on) cur.push(nx, ny);
+      x0 = nx;
+      y0 = ny;
+      seg -= step;
+      left -= step;
+      if (left <= 1e-9) {
+        if (on && cur.length >= 4) out.push(cur);
+        on = !on;
+        left = on ? dash : gap;
+        cur = [x0, y0];
+      }
+    }
+  }
+  if (on && cur.length >= 4) out.push(cur);
+  return out;
+}

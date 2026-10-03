@@ -1,4 +1,4 @@
-import { centreOn, clampCamera, fitCamera, lerpCamera, scaleLimits, toMap, zoomAt, type Camera, type MapSize, type Viewport } from "../map/camera";
+import { centreOn, clampCamera, fitCamera, lerpCamera, scaleLimits, toMap, usable, zoomAt, type Camera, type Insets, type MapSize, type Viewport } from "../map/camera";
 import { NEAR_FROM_PX, scaleForPx } from "../map/zoom";
 
 /**
@@ -32,6 +32,19 @@ export class CameraController {
     if (first) this.cam = fitCamera(this.map, vp);
     else this.cam = centreOn(mx, my, this.cam.scale, vp);
     this.set(this.cam);
+  }
+
+  /** Menus that cover part of the map: fit and limits use the rest of the screen. Keeps the same map point centred. */
+  setInsets(insets: Insets) {
+    const u = usable(this.vp);
+    const [mx, my] = toMap(this.cam, u.left + u.width / 2, u.top + u.height / 2);
+    const wasFit = this.nearFit;
+    this.vp = { ...this.vp, insets };
+    if (wasFit) this.set(fitCamera(this.map, this.vp));
+    else {
+      const n = usable(this.vp);
+      this.set({ scale: this.cam.scale, x: n.left + n.width / 2 - mx * this.cam.scale, y: n.top + n.height / 2 - my * this.cam.scale });
+    }
   }
 
   set(c: Camera, animateMs = 0) {

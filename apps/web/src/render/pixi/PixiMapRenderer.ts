@@ -1,6 +1,6 @@
 import { Application, Container } from "pixi.js";
 import { ArtBook } from "../../art/book";
-import { centreOn, fitCamera, toMap } from "../../map/camera";
+import { centreOn, fitCamera, landFrame, toMap, type Insets } from "../../map/camera";
 import { hitTester, type HitTester } from "../../map/shapes";
 import { detailMix, MID_FROM_PX, scaleForPx, typicalTerritorySize, zoomDetail, type ZoomDetail } from "../../map/zoom";
 import { attachInput, CameraController } from "../controls";
@@ -81,7 +81,7 @@ class PixiMapRenderer implements MapRenderer {
   ) {
     const g = opts.ctx.map.geometry!;
     this.territorySize = typicalTerritorySize(opts.ctx.map);
-    this.cam = new CameraController({ width: g.width, height: g.height }, this.territorySize);
+    this.cam = new CameraController(landFrame(g), this.territorySize);
     this.tactical = opts.tactical;
     this.detail = zoomDetail(1, this.territorySize);
     this.hit = hitTester(g);
@@ -126,13 +126,13 @@ class PixiMapRenderer implements MapRenderer {
     this.info = new InfoLayer(ctx.map, this.bank);
     mark("labels");
     this.markers = new MarkerLayer(ctx.map, this.bank, this.app.renderer.resolution);
-    this.mapLayer.addChild(this.world.view, this.info.tactical, this.info.tint, this.info.lines, this.info.glow, this.info.sites, this.info.figures, this.info.names, this.info.arrows);
+    this.mapLayer.addChild(this.world.view, this.info.tactical, this.info.tint, this.info.lines, this.info.realmLayer.root, this.info.glow, this.info.sites, this.info.figures, this.info.names, this.info.arrows);
     this.app.stage.addChild(this.mapLayer, this.markers.root);
     this.world.bakeFar();
     mark("far");
 
     this.cam.onChange(() => (this.dirtyCam = true));
-    this.cam.setViewport({ width: host.clientWidth, height: host.clientHeight });
+    this.cam.setViewport({ width: host.clientWidth, height: host.clientHeight, ...(this.opts.insets ? { insets: this.opts.insets } : {}) });
     this.startView();
     this.resizeObs = new ResizeObserver(() => this.resize());
     this.resizeObs.observe(host);
@@ -156,7 +156,7 @@ class PixiMapRenderer implements MapRenderer {
   /** Start at Mid zoom on your capital when the whole map would be too small (phones); otherwise show it all. */
   private startView() {
     const g = this.opts.ctx.map.geometry!;
-    const fit = fitCamera(g, this.cam.vp);
+    const fit = fitCamera(this.cam.map, this.cam.vp);
     const focus = this.opts.focus ? g.territories.find((t) => t.id === this.opts.focus) : null;
     if (focus && zoomDetail(fit.scale, this.territorySize).level === "far")
       this.cam.set(centreOn(focus.label.x, focus.label.y, scaleForPx(MID_FROM_PX * 1.25, this.territorySize), this.cam.vp));
@@ -187,6 +187,7 @@ class PixiMapRenderer implements MapRenderer {
     while (this.frameTimes.length && this.frameTimes[0]! < now - 2000) this.frameTimes.shift();
     this.cam.tick(now);
     this.world.display.uniforms.uTime = (now - this.t0) / 1000;
+    this.info.realmLayer.tick((now - this.t0) / 1000);
     // Paint remaining tiles a couple per frame, nearest the screen first.
     if (this.world.pendingTiles) {
       this.world.bakeTiles(this.cam.animating ? 1 : 2, this.cam.cam, this.cam.vp);
@@ -205,6 +206,7 @@ class PixiMapRenderer implements MapRenderer {
     this.detail = zoomDetail(c.scale, this.territorySize);
     const mix = detailMix(this.detail, this.tactical);
     this.world.display.uniforms.uDim = mix.dim;
+    this.world.setDim(mix.dim);
     this.world.update(c, this.cam.vp, this.app.renderer.resolution);
     this.info.setZoom(c.scale, mix);
     const rebuilt = this.scene ? this.markers.update(this.scene, mix, this.tactical) : false;
@@ -212,6 +214,7 @@ class PixiMapRenderer implements MapRenderer {
     if (rebuilt || this.laidOutScale === 0 || Math.abs(Math.log(c.scale / this.laidOutScale)) > 0.02) {
       this.laidOutScale = c.scale;
       this.markers.layout(c, this.detail);
+      this.info.fadeNamesUnder(this.markers.screenBoxes, c);
     } else this.markers.place(c, this.detail);
     if (prev !== this.detail.level) this.events.zoomChanged?.(this.detail.level);
   }
@@ -245,6 +248,11 @@ class PixiMapRenderer implements MapRenderer {
     this.cam.fit(animate);
   }
 
+  setInsets(insets: Insets) {
+    this.opts.insets = insets;
+    this.cam.setInsets(insets);
+  }
+
   zoomBy(f: number) {
     this.cam.zoomAt(f, this.cam.vp.width / 2, this.cam.vp.height / 2, 200);
   }
@@ -253,7 +261,7 @@ class PixiMapRenderer implements MapRenderer {
     const { host } = this.opts;
     if (!host.clientWidth || !host.clientHeight) return;
     this.app.renderer.resize(host.clientWidth, host.clientHeight);
-    this.cam.setViewport({ width: host.clientWidth, height: host.clientHeight });
+    this.cam.setViewport({ width: host.clientWidth, height: host.clientHeight, ...(this.cam.vp.insets ? { insets: this.cam.vp.insets } : {}) });
   }
 
   /** Numbers for the performance report (and a quick look in the browser console). */

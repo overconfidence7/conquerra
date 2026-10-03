@@ -1,5 +1,6 @@
 import type { GameContext, PlayerView, TerritoryId } from "@conquerra/engine";
 import type { Odds } from "../logic/orders";
+import type { Insets } from "../map/camera";
 import type { ZoomLevel } from "../map/zoom";
 
 /** A queued (or being-drafted) move or attack, drawn as an arrow. */
@@ -40,6 +41,8 @@ export interface MapRenderer {
   setScene(scene: MapScene): void;
   setTactical(on: boolean): void;
   fit(animate?: boolean): void;
+  /** Screen space covered by menus over the map; fitting and panning use the rest. */
+  setInsets(insets: Insets): void;
   zoomBy(factor: number): void;
   resize(): void;
   destroy(): void;
@@ -50,6 +53,7 @@ export interface RendererOptions {
   host: HTMLElement;
   events: MapEvents;
   tactical: boolean;
+  insets?: Insets;
   /** Where to look first (your capital). */
   focus?: TerritoryId | null;
 }

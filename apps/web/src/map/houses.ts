@@ -26,7 +26,8 @@ export const HOUSES: readonly House[] = [
   { name: "Vert", color: "#2e9e4f", glow: "#4fe07a", ink: "#ffffff", pattern: "bend" },
   { name: "Purpure", color: "#8e44c9", glow: "#c07bff", ink: "#ffffff", pattern: "fess" },
   { name: "Tenné", color: "#d9731e", glow: "#ff9a3d", ink: "#ffffff", pattern: "saltire" },
-  { name: "Celeste", color: "#4fb8e0", glow: "#8fe3ff", ink: "#0b2733", pattern: "cross" },
+  // Teal replaced Celeste (session 5): clearly apart from Azure and Vert, also for colourblind players.
+  { name: "Teal", color: "#1aa6a6", glow: "#4fe3dc", ink: "#ffffff", pattern: "cross" },
   { name: "Murrey", color: "#a3325f", glow: "#e0558d", ink: "#ffffff", pattern: "chief" },
   { name: "Argent", color: "#e4e6ec", glow: "#ffffff", ink: "#1d2430", pattern: "bordure" },
   { name: "Sable", color: "#2a2b33", glow: "#9aa0b4", ink: "#f2f2f2", pattern: "quarterly" },
