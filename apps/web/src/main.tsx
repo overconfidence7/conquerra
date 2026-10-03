@@ -4,6 +4,7 @@ import { useGame } from "./store";
 import { GameOver } from "./ui/GameOver";
 import { GameScreen } from "./ui/GameScreen";
 import { Lobby } from "./ui/Lobby";
+import { UpdatePrompt } from "./ui/UpdatePrompt";
 import "@fontsource/manrope/800.css";
 import "@fontsource/cinzel/600.css";
 import "@fontsource/cinzel/700.css";
@@ -12,11 +13,20 @@ import "@fontsource/spectral/600.css";
 import "@fontsource/spectral/400-italic.css";
 import "./styles.css";
 
-function App() {
+function Screen() {
   const screen = useGame((s) => s.screen);
   if (screen === "game") return <GameScreen />;
   if (screen === "over") return <GameOver />;
   return <Lobby />;
+}
+
+function App() {
+  return (
+    <>
+      <Screen />
+      <UpdatePrompt />
+    </>
+  );
 }
 
 // For the perf / screenshot script (scripts/map-check.ts): drive the game from outside.

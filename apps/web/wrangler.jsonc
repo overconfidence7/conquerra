@@ -1,0 +1,17 @@
+// The private preview at conquerra.overconfidenceonline.com (docs/infra-cloudflare.md).
+// A Worker that only serves the built web app as static files: no server code until M4.
+// Deploy from the repo root with `pnpm deploy:preview` (after the one-time steps in the README).
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "conquerra",
+  "account_id": "a3c440cb9c05c9f7f9007386e9c0f6c4",
+  "compatibility_date": "2026-10-01",
+  // No public address: no workers.dev URL and no preview URLs. The only way in is the custom domain, behind Access.
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  },
+  "routes": [{ "pattern": "conquerra.overconfidenceonline.com", "custom_domain": true }]
+}

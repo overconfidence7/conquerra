@@ -14,7 +14,9 @@
     "build-maps": "pnpm --filter @conquerra/mapgen build-maps",
     "art:import": "pnpm --filter @conquerra/art run art-import",
     "map-check": "node apps/web/scripts/map-check.mjs",
-    "ui-check": "node apps/web/scripts/ui-check.mjs"
+    "ui-check": "node apps/web/scripts/ui-check.mjs",
+    "deploy:preview": "pnpm test && pnpm build && wrangler deploy --config apps/web/wrangler.jsonc && node apps/web/scripts/check-preview.mjs",
+    "check:preview": "node apps/web/scripts/check-preview.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
@@ -22,6 +24,7 @@
     "puppeteer-core": "^25.12.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "wrangler": "^4.147.0"
   }
 }

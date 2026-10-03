@@ -6,7 +6,7 @@ A fantasy, military-first strategy game of rival kingdoms. Everyone sets their o
 - Rules as built: [`docs/rules-reference.md`](docs/rules-reference.md)
 - Build plan: [`docs/03-build-plan.md`](docs/03-build-plan.md)
 - Decisions: [`docs/decisions.md`](docs/decisions.md)
-- Will live at **conquerra.overconfidenceonline.com**
+- Private preview: **conquerra.overconfidenceonline.com** (only Nate can open it; see "The private preview" below)
 
 ## How to play it locally (Windows)
 
@@ -26,7 +26,7 @@ You only need to do steps 1–2 once.
    ```
    Your browser opens the game (if it doesn't, go to http://localhost:5173). Leave the PowerShell window open while you play; press `Ctrl+C` in it to stop.
 
-**How a turn works:** tap one of your territories (blue), then tap a neighbour to move or attack. Pick how many troops ("Just enough" is a good default), tap a preset if you like, then "Add attack". Recruit, hire, build and raise culture from the panel. When you're done, press **Lock in**: the bots plan their orders, everything plays out at once, and you get a report of what you could see.
+**How a turn works:** tap one of your territories (blue), then tap a neighbour to move or attack. Pick how many troops ("Just enough" is a good default), tap a backup plan if you like (more under "More…"), then "Add attack". The round buttons do the rest: **Recruit** is one tap (all the troops you can afford), **Spend** hires specialists or builds, **Culture** and **Retreat** act on the selected territory. When you're done, press the red **Lock in** seal (or let the timer run out: your orders lock in as they are). Then watch the turn play out on the map (Skip jumps to the end), and read the turn report.
 
 ## What's here
 
@@ -60,13 +60,58 @@ pnpm art:import                       # bring Nate's art in from art/incoming/ (
 pnpm build-maps                       # rebuild the maps (after renaming places in packages/mapgen/names/)
 pnpm map-check screens                # map screenshots into docs/art/screens/ (needs the built game running)
 pnpm map-check perf                   # map speed in phone emulation (needs the built game running)
+pnpm map-check houses                 # House colour swatches (normal and colourblind) and House borders on every ground
+pnpm ui-check screens                 # menu, replay and phone screenshots into docs/art/screens/ (needs the built game running)
+pnpm ui-check play                    # plays whole games on a laptop screen and a phone, with a timer auto-lock
+pnpm deploy:preview                   # update the private preview (see below)
 ```
 
 **The map:** an illustrated WebGL map (PixiJS). Mouse wheel or pinch to zoom, drag to pan, double-tap to fit; hover (or tap and hold on a phone) for a territory's card. "Tactical" switches to flat colours. Add `?plainmap` to the address to see the simple map that browsers without WebGL get.
 
 **Adding art:** save Nate's images into `art/incoming/` with the names in `docs/art/asset-list-and-prompts.md`, then run `pnpm art:import`. The game picks them up on its next load; anything missing keeps its placeholder.
 
-For `pnpm map-check`, first run `pnpm build`, then `pnpm --filter web preview` in a second window.
+For `pnpm map-check` and `pnpm ui-check`, first run `pnpm build`, then `pnpm --filter web preview` in a second window.
+
+## The private preview (conquerra.overconfidenceonline.com)
+
+The game is online privately so Nate can play on his phone. It's just the web game as static files on a Cloudflare Worker, behind Cloudflare Access (Google sign-in, Nate's email only). There's no `workers.dev` address, so the only way in is through the sign-in.
+
+### How to update the preview
+
+From the project folder in PowerShell:
+
+```
+pnpm deploy:preview
+```
+
+It runs the tests, builds the game, uploads it, then checks that the site still asks for the Google sign-in (it stops with a red ✗ if not). On your phone the installed app shows **"Update ready"** next time you open it; tap **Update now** when you're between games.
+
+### One-time setup (do these once, in this order)
+
+1. Get the latest code and tools (PowerShell, in the project folder):
+   ```
+   git pull
+   pnpm install
+   ```
+2. Log Wrangler (Cloudflare's tool) in to your Cloudflare account. A browser window opens; click **Allow**:
+   ```
+   npx wrangler login
+   ```
+3. **Lock the door first.** In the Cloudflare dashboard go to **Zero Trust → Access → Applications → Add an application → Self-hosted**, then:
+   - Application name: `Conquerra`
+   - Session duration: **1 month** (so the installed app doesn't ask you to sign in every day)
+   - Public hostname: subdomain `conquerra`, domain `overconfidenceonline.com` (the site doesn't exist yet; that's fine, and it means it's never open even for a moment)
+   - Login methods: **Google** only (it's already set up for Keel)
+   - Add a policy: name `Nate only`, action **Allow**, include **Emails** → `nkurtz@gmail.com`
+   - Save the application.
+4. Put the game online (this also creates the `conquerra` address and its certificate):
+   ```
+   pnpm deploy:preview
+   ```
+   The last lines should all start with ✓ and say "The preview is locked".
+5. On your phone, open **https://conquerra.overconfidenceonline.com** in Chrome, sign in with Google, then use Chrome's menu → **Install app** (or "Add to Home screen"). After the first visit, single player works with no connection.
+
+To let a friend in later, add their email to the `Nate only` policy (rename it then!).
 
 ## Tuning balance
 
