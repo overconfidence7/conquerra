@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M2 (playable browser game vs bots): session 4 (the illustrated map) done; session 5 (menus, replay, timer, phone, preview) next. Nate is generating art in parallel.**
+**Phase: M2 (playable browser game vs bots): session 5 done (menus, replay, timer, phone, installable app). The private preview is ready to go online as soon as Nate does the one-time Cloudflare steps in the README.**
 
-Claude Code sessions completed: **4** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
+Claude Code sessions completed: **5** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
 ---
 
@@ -162,3 +162,23 @@ Claude Code sessions completed: **4** (a new orchestrator prompt is due after se
 - **Speed** (phone emulation with the processor slowed 4x): 60 frames a second while panning at every zoom on both maps; the map appears about 2.2–2.4 seconds after pressing Start.
 - Full games played to the end on a laptop and in phone emulation (with Tactical view on).
 - Screenshots: `docs/art/screens/`. 159 automated tests pass (32 new).
+
+### Oct 3: Claude Code session 5 (M2, part 4: menus, replay, timer, phone, installable app, preview)
+- **Missing inputs:** the orchestrator's Oct 3 doc updates and Nate's art batches 2 and 3 weren't on GitHub, so this session worked from the pasted prompt (saved as `docs/prompts/claude-code-session-05.md`) and the 4 textures already in the game. Everything else uses painted placeholders, including new ones for Leader portraits, card vistas and the wax seal.
+- **The "Azure 0?" bug:** two engine bugs together. A battle that killed everyone on both sides left the defender holding land with 0 troops, and your memory never noted land you lost. Now the last defender holds with 1 troop, and you remember who took your land. Both have tests.
+- **Map fixes:**
+  - "Fit map" fills the screen around the menus, with open sea painted beyond the edges.
+  - Province names fade where an army marker sits.
+  - **Teal replaces Celeste**, checked with colourblind simulations (`houses.png`).
+  - Fog is a pale haze you can see the land through.
+  - House borders: each House's band sits inside its own land, with an ink line between neighbours and a soft wash inward. Selection is a pulsing gold double rule; remembered land has a dashed outline (`house-on-ground.png`).
+  - Natural ground edges, beaches on the coasts, rock and snow on high ground, one colour grade, and soft shadows under trees, peaks and towns.
+- **Art import makes the art match:** it evens out baked-in light and dark patches and nudges colours toward a small palette (`packages/art/src/palette.ts`); before/after in `art-matching-before-after.png`. It also no longer deletes art when run on a computer that doesn't have the originals.
+- **Turn timer:** 1, 3, 5 or 10 minutes, or No timer. It turns gold at 1 minute and red at 15 seconds. When it runs out, your orders lock in as they are. It's kept by the game host (the server in M4), not the rules.
+- **Animated replay:** after Lock in, armies march, battles clash and show the result, land changes colour, and recruits pop in. Fog shows only a pulse and "A battle in Northreach". About 10–20 seconds. Skip, and Watch again from the report.
+- **Gilded menus:** top bar (gold +N per turn, turn, timer), Houses panel (shield, Leader portrait, in or out), round action buttons, army panel, order queue, wax seal, territory card with vista, Leader card, pop-ups, a grouped turn report, minimap, and gilded lobby and game-over screens.
+  - Recruit is now one tap and Hire and Build became "Spend", so **a typical turn takes 7 taps** (was 8).
+- **Phone:** full-screen map, action bar at the bottom, and a bottom sheet you drag between half and full. Checked at 412×915 and 360×740.
+- **Installable app:** installs from Chrome, works offline for single player, and shows "Update ready" instead of reloading mid-game.
+- **Private preview:** `pnpm deploy:preview` uploads the game, then checks that the site still asks for the Google sign-in. There's no public workers.dev address. Nate's one-time steps are in the README. This cloud session couldn't reach Cloudflare or the domain, so it isn't live yet.
+- Full games played to the end on a laptop screen and in phone emulation, each with a real timer auto-lock (`pnpm ui-check play`). 198 automated tests pass (39 new). Screenshots: `docs/art/screens/ui-*.png` and the map shots.

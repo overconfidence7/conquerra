@@ -1,4 +1,4 @@
-# Conquerra Rules Reference (Milestone 2, session 4)
+# Conquerra Rules Reference (Milestone 2, session 5)
 
 *A 10-minute read. This is how the engine actually plays today. Numbers are the current balance settings from `packages/content/data/rules.json`; they will change as we tune.*
 
@@ -14,13 +14,27 @@
 - Each player starts with a **capital**, **12 troops** there, **20 gold**, and their **Leader**.
 - Capitals come from the map's **fair layout** for that many players: every capital is about as far from its nearest rival as the others, has land around it worth about the same, and stands on plains (see §12).
 - Every other territory starts neutral with **1 troop**.
-- The host also sets: the **turn timer** (5 minutes by default; anything from 1 minute up to a week), an optional **turn limit**, the **luck level** (30% by default), and **fog** (on by default).
+- The host also sets: the **turn timer** (see §3), an optional **turn limit**, the **luck level** (30% by default), and **fog** (on by default).
 
 ## 3. A turn
 1. **Orders (the timer runs).** Everyone writes as many orders as they like, in secret.
 2. **Resolution.** The game shuffles the seat order, then plays orders **one per player at a time, round-robin**: everyone's 1st order, then everyone's 2nd, and so on.
-3. **Replay.** Everyone watches what happened, trimmed to what they could see (see §9).
+3. **Replay.** Everyone watches what happened on the map, trimmed to what they could see (see §11).
 4. **End of turn.** Buildings finish, fallen Leaders come back (see §9), gold comes in, upkeep is paid.
+
+**The turn timer**
+- The host picks it in the lobby: **1, 3, 5 (default) or 10 minutes**, or **No timer** for relaxed solo play. (Longer timers, up to a week, come with online games.)
+- The countdown is kept by the game host (your browser's background game today, the server from M4), not by the rules engine.
+- It turns **gold at 1 minute** left and **red at 15 seconds**.
+- **When it runs out, your orders lock in as they are**, exactly as if you had pressed Lock in. (Orders you haven't finished adding, such as an attack you're still choosing troops for, don't count.)
+- Lock in early and the turn plays straight away: the bots have already locked in.
+- The next countdown starts when the replay ends, plus 3 seconds to glance at the report.
+
+**The replay**
+- After Lock in, the turn plays out on the map in the order it happened: armies march along their arrows, each battle shows a short clash and then the result (who holds the land, and the losses on each side), captured land changes colour, and recruits and buildings pop in.
+- A short pop-up names the big moments ("Gules captures Oakcrest"). Something in the fog shows only as a soft pulse on its province and "A battle in Northreach", with no names and no numbers.
+- A typical turn takes about 10–20 seconds; very busy turns are sped up. **Skip** jumps to the end. There's no pause, play or speed control (decided).
+- Then the **turn report** lists it all in words: your gains and losses first, then what you saw, then what came out of the fog. **Watch again** replays the turn.
 
 **Leader timing tricks** (only while your Leader is alive):
 - **Seize the Initiative**: one order goes before everyone else's. Then it rests for 3 turns.
@@ -102,6 +116,7 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
 - On average, each point of attack strength kills **1.0** defender, and each point of defense strength kills **0.6** attackers. Healers reduce their own side's losses.
 - **Luck** spreads each side's actual losses up to 30% either way around that average (most results land near the middle). The host can set luck from 0% to 100%.
 - The attacker **captures** the territory if every defender dies and at least one attacker survives. Survivors move in; buildings and culture stay with the land.
+- If **both sides are wiped out**, the last defender holds on: the land keeps 1 troop. (Land is never left owned with 0 troops.)
 - A Leader in a captured territory, or in an attacking army that's wiped out, **falls**.
 - **Leaders come back for free.** At the end of the turn it fell, your Leader returns at your capital, or at your strongest territory (most troops) if you've lost the capital. So it's waiting for you when you plan your next turn. Seize the Initiative and Lie in Wait cooldowns carry on as before.
 - When a player is knocked out, the game records **who knocked them out**. (In Milestone 3 that player gets the loser's Leader as a general.)
@@ -125,6 +140,7 @@ Engineers make any of these ready immediately. A building under construction giv
 - **You can see a capital when you can see its land:** the map labels it "Capital".
 - **Last seen:** land you saw before but can't see now shows what you **last saw** there: the owner, troops and building, marked **"?"** with its age ("seen 2 turns ago"). Land you've never seen says "Unexplored".
   - Your memory updates at the end of every turn from what you can see then (and when the game starts).
+  - **Land you lose:** you see it fall, so your memory records who took it and with how many, even if it's deep in the fog afterwards.
   - It only ever holds what you really saw, so it goes **stale**: the enemy may have moved on since.
   - Each player's memory is kept in the game itself, so it's the same on every device. In M3, a spy who is **fooled** brings back false intel that goes into this same memory, and looks just like the real thing.
 - **The replay follows the same rule:**

@@ -25,10 +25,10 @@
 ### M2 (browser alpha vs bots): optional private preview
 - The alpha runs entirely in the browser, so it can be hosted as static files at `conquerra.overconfidenceonline.com`, behind Access, so only Nate (and invited friends) can open it, on phone or laptop.
 - Cost: $0.
-- Setup:
-  - A Worker serving static assets, deployed from GitHub.
-  - A custom domain.
-  - A new Access application "Conquerra" using the existing Google login, with an allow list of emails.
+- Setup (built in session 5; see the README, "The private preview"):
+  - A Worker `conquerra` serving the built game as static assets (`apps/web/wrangler.jsonc`), deployed with Wrangler from Nate's computer (`pnpm deploy:preview`). Deploying from GitHub waits until M4.
+  - No public address: `workers_dev = false`, preview URLs off. Only the custom domain `conquerra.overconfidenceonline.com`.
+  - A new Access application "Conquerra" using the existing Google login, allowing only `nkurtz@gmail.com`, created before the domain goes live. Session duration 1 month, so the installed app doesn't ask to sign in every day.
 
 ### M4 (online with friends): the real backend
 - **Worker** `conquerra`: serves the web app and the API on `conquerra.overconfidenceonline.com`.
