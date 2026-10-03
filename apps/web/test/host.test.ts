@@ -1,9 +1,10 @@
 import { recruitBot } from "@conquerra/bots";
 import { describe, expect, it } from "vitest";
-import { HUMAN_ID, LocalGame } from "../src/host/localGame";
+import { HUMAN_ID, LocalGame, REPORT_GRACE_MS } from "../src/host/localGame";
+import { formatClock, remainingMs, timerTone } from "../src/logic/timer";
 import type { LobbySettings } from "../src/host/protocol";
 
-const settings: LobbySettings = { mapId: "embervale", bots: 3, luck: 0.3, fog: true, mode: "classic" };
+const settings: LobbySettings = { mapId: "embervale", bots: 3, luck: 0.3, fog: true, mode: "classic", turnSeconds: 300 };
 const isOut = (g: LocalGame, u: ReturnType<LocalGame["update"]>) => u.view.players.find((p) => p.id === HUMAN_ID)!.eliminatedTurn !== null;
 
 describe("local game host", () => {
@@ -73,5 +74,90 @@ describe("local game host", () => {
     const g = new LocalGame(settings, "still-in");
     expect(() => g.watchNext()).toThrow(/still in/);
     expect(() => g.finish()).toThrow(/still in/);
+  });
+});
+
+describe("turn timer (kept by the host)", () => {
+  const clockGame = (turnSeconds: number | null) => {
+    let now = 1_000_000;
+    const g = new LocalGame({ ...settings, turnSeconds }, "timer-test", () => now);
+    return { g, advance: (ms: number) => (now += ms), now: () => now };
+  };
+
+  it("counts down from the game's timer setting", () => {
+    const { g, now } = clockGame(60);
+    expect(g.update().clock).toEqual({ endsAt: now() + 60_000, turnMs: 60_000 });
+  });
+
+  it("when time runs out, your saved orders lock in exactly as if you'd pressed Lock in", () => {
+    const { g, advance } = clockGame(60);
+    const plan = recruitBot.plan(g.ctx, g.update().view);
+    g.saveOrders(plan, 1);
+    advance(59_000);
+    expect(g.expireIfDue()).toBeNull();
+    advance(1_000);
+    const u = g.expireIfDue()!;
+    expect(u.autoLocked).toBe(true);
+    expect(u.view.turn).toBe(2);
+    // Same result as pressing Lock in with those orders.
+    const twin = clockGame(60);
+    const manual = twin.g.lockIn(plan, 1);
+    expect(u.view).toEqual(manual.view);
+    expect(u.report).toEqual(manual.report);
+  });
+
+  it("the next countdown starts after the replay and a moment for the report", () => {
+    const { g, advance, now } = clockGame(180);
+    advance(5_000);
+    const u = g.lockIn([], 1);
+    const replay = u.clock!.endsAt - now() - 180_000;
+    expect(replay).toBeGreaterThan(REPORT_GRACE_MS);
+    expect(replay).toBeLessThan(25_000 + REPORT_GRACE_MS);
+  });
+
+  it("a late Lock in for a turn the timer already locked in changes nothing", () => {
+    const { g, advance } = clockGame(60);
+    advance(61_000);
+    const auto = g.expireIfDue()!;
+    const late = g.lockIn([{ id: "x", kind: "recruit", territory: auto.view.me.capital, count: 1 }], 1);
+    expect(late.report).toBeNull();
+    expect(late.view).toEqual(auto.view);
+  });
+
+  it("orders saved for an old turn don't carry into the next", () => {
+    const { g, advance } = clockGame(60);
+    const plan = recruitBot.plan(g.ctx, g.update().view);
+    g.lockIn([], 1);
+    g.saveOrders(plan, 1); // stale
+    advance(10 * 60_000);
+    const u = g.expireIfDue()!;
+    expect(u.report!.events.some((e) => e.type === "recruited" && e.player === HUMAN_ID)).toBe(false);
+  });
+
+  it("No timer: no countdown, nothing ever locks in by itself", () => {
+    const { g, advance } = clockGame(null);
+    expect(g.update().clock).toBeNull();
+    advance(365 * 24 * 3600 * 1000);
+    expect(g.expireIfDue()).toBeNull();
+    expect(g.lockIn([], 1).clock).toBeNull();
+  });
+});
+
+describe("timer warnings", () => {
+  it("calm, then gold at 1 minute, then red at 15 seconds", () => {
+    expect(timerTone(5 * 60_000)).toBe("calm");
+    expect(timerTone(60_001)).toBe("calm");
+    expect(timerTone(60_000)).toBe("gold");
+    expect(timerTone(15_001)).toBe("gold");
+    expect(timerTone(15_000)).toBe("red");
+    expect(timerTone(0)).toBe("red");
+  });
+  it("shows the full turn while the replay is still playing, and never below zero", () => {
+    const clock = { endsAt: 100_000, turnMs: 60_000 };
+    expect(remainingMs(clock, 0)).toBe(60_000);
+    expect(remainingMs(clock, 70_000)).toBe(30_000);
+    expect(remainingMs(clock, 200_000)).toBe(0);
+    expect(formatClock(299_100)).toBe("5:00");
+    expect(formatClock(7_000)).toBe("0:07");
   });
 });

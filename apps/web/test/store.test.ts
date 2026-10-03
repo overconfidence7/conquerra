@@ -8,7 +8,9 @@ function inProcessHost(seed: string): GameHost {
   let game: LocalGame | null = null;
   return {
     start: async (s: LobbySettings) => (game = new LocalGame(s, seed)).start(),
-    lockIn: async (orders) => game!.lockIn(orders),
+    lockIn: async (orders, turn) => game!.lockIn(orders, turn),
+    saveOrders: (orders, turn) => game?.saveOrders(orders, turn),
+    onAutoLock: () => {},
     watchNext: async () => game!.watchNext(),
     finish: async () => game!.finish(),
     suggest: async () => game!.suggest(),
@@ -24,6 +26,7 @@ async function playUntilKnockedOut() {
     const v = useGame.getState().view!;
     if (v.winner || knockedOut(v)) break;
     await useGame.getState().lockIn();
+    useGame.getState().endReplay();
   }
 }
 
@@ -61,6 +64,8 @@ describe("game screen state", () => {
     expect(useGame.getState().watching).toBe(true);
     const turn = useGame.getState().view!.turn;
     await useGame.getState().watchNext();
+    expect(useGame.getState().replay).not.toBeNull();
+    useGame.getState().endReplay();
     s = useGame.getState();
     if (s.screen === "game") {
       expect(s.view!.turn).toBe(turn + 1);
@@ -71,6 +76,26 @@ describe("game screen state", () => {
     }
     expect(useGame.getState().screen).toBe("over");
     expect(useGame.getState().view!.winner).not.toBeNull();
+  });
+
+  it("after Lock in the replay plays first, then the report; Watch again replays it", async () => {
+    await useGame.getState().start();
+    const before = useGame.getState().view!;
+    await useGame.getState().lockIn();
+    let s = useGame.getState();
+    expect(s.replay?.before).toBe(before);
+    expect(s.replay?.report.turn).toBe(before.turn);
+    expect(s.showReport).toBe(false);
+    // Lock in does nothing while the replay is on screen.
+    await s.lockIn();
+    expect(useGame.getState().view!.turn).toBe(before.turn + 1);
+    s.endReplay();
+    s = useGame.getState();
+    expect(s.replay).toBeNull();
+    expect(s.showReport).toBe(true);
+    s.watchAgain();
+    expect(useGame.getState().replay?.before).toBe(before);
+    expect(useGame.getState().showReport).toBe(false);
   });
 
   it("knocked out: 'See the result' goes straight to the end", async () => {

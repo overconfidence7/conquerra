@@ -3,7 +3,8 @@ import { BOT_NAMES } from "./host/names";
 import type { GameContext, Order, PlayerView, TerritoryId } from "@conquerra/engine";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
-import type { GameHost, LobbySettings, TurnReport } from "./host/protocol";
+import type { GameHost, HostUpdate, LobbySettings, TurnReport } from "./host/protocol";
+import { DEFAULT_TIMER, type TurnClock } from "./logic/timer";
 import { draftToOrder, type NewOrder, planQueue, removeOrder, shiftOrder, tapTerritory, type MoveDraft } from "./logic/orders";
 
 export type Screen = "lobby" | "game" | "over";
@@ -24,6 +25,14 @@ interface GameStore {
   fastForwarded: number;
   /** Knocked out and chose "Watch to the end". */
   watching: boolean;
+  /** The turn timer (null with No timer). */
+  clock: TurnClock | null;
+  /** The animated replay being shown: the view from before the turn and what happened. Null when not replaying. */
+  replay: { before: PlayerView; report: TurnReport; key: number } | null;
+  /** The view from before the last turn (for Watch again). */
+  lastBefore: PlayerView | null;
+  /** The last turn was locked in by the timer, not by you. */
+  autoLocked: boolean;
   busy: boolean;
   error: string | null;
 
@@ -39,6 +48,10 @@ interface GameStore {
   shift(id: string, dir: -1 | 1): void;
   lockIn(): Promise<void>;
   setShowReport(v: boolean): void;
+  /** The replay finished (or Skip): show the turn report. */
+  endReplay(): void;
+  /** From the turn report: play the last turn's replay again. */
+  watchAgain(): void;
   /** Knocked out: switch to watching (the full map and each turn's report). */
   watch(): void;
   /** While watching: the bots play the next turn. */
@@ -77,7 +90,7 @@ const nextOrderId = () => `o${++orderCounter}`;
 
 const defaultLobby = (): LobbySettings => {
   const bots = 3;
-  return { mapId: "embervale", bots, luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1) };
+  return { mapId: "embervale", bots, luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER };
 };
 
 export const useGame = create<GameStore>((set, get) => ({
@@ -94,6 +107,10 @@ export const useGame = create<GameStore>((set, get) => ({
   showReport: false,
   fastForwarded: 0,
   watching: false,
+  clock: null,
+  replay: null,
+  lastBefore: null,
+  autoLocked: false,
   busy: false,
   error: null,
 
@@ -115,6 +132,9 @@ export const useGame = create<GameStore>((set, get) => ({
     get().host?.dispose();
     const host = takeHost();
     set({ busy: true, error: null, host });
+    host.onAutoLock((u) => {
+      if (get().host === host) applyTurn(u, true);
+    });
     try {
       const u = await host.start(lobby);
       set({
@@ -129,6 +149,10 @@ export const useGame = create<GameStore>((set, get) => ({
         showReport: false,
         fastForwarded: 0,
         watching: false,
+        clock: u.clock,
+        replay: null,
+        lastBefore: null,
+        autoLocked: false,
       });
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
@@ -175,24 +199,13 @@ export const useGame = create<GameStore>((set, get) => ({
   },
 
   async lockIn() {
-    const { host, queue, busy } = get();
-    if (!host || busy) return;
+    const { host, queue, busy, view } = get();
+    if (!host || busy || !view || get().replay) return;
     set({ busy: true, error: null });
     try {
-      const u = await host.lockIn(queue);
-      const over = u.view.winner !== null;
-      const out = knockedOut(u.view);
-      set({
-        view: u.view,
-        report: u.report,
-        fastForwarded: u.fastForwarded,
-        queue: [],
-        draft: null,
-        selected: over || out ? null : u.view.me.capital,
-        // Knocked out: the "Watch to the end / See the result" choice shows instead of the report pop-up.
-        showReport: !over && !out,
-        screen: over ? "over" : "game",
-      });
+      const u = await host.lockIn(queue, view.turn);
+      // No report: the timer locked this turn in first (that update already arrived).
+      if (u.report) applyTurn(u, false);
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
     } finally {
@@ -200,6 +213,20 @@ export const useGame = create<GameStore>((set, get) => ({
     }
   },
 
+  endReplay() {
+    const { view } = get();
+    if (!view) return;
+    const over = view.winner !== null;
+    const out = knockedOut(view);
+    // Knocked out: the "Watch to the end / See the result" choice shows instead of the report.
+    set({ replay: null, showReport: !over && !out && !get().watching, screen: over ? "over" : "game" });
+  },
+
+  watchAgain() {
+    const { lastBefore, report } = get();
+    if (!lastBefore || !report) return;
+    set({ replay: { before: lastBefore, report, key: Date.now() }, showReport: false });
+  },
   setShowReport: (v) => set({ showReport: v }),
 
   watch: () => set({ watching: true, showReport: false }),
@@ -209,8 +236,9 @@ export const useGame = create<GameStore>((set, get) => ({
     if (!host || busy) return;
     set({ busy: true, error: null });
     try {
+      const before = get().view!;
       const u = await host.watchNext();
-      set({ view: u.view, report: u.report, screen: u.view.winner ? "over" : "game" });
+      set({ view: u.view, report: u.report, lastBefore: before, replay: u.report ? { before, report: u.report, key: Date.now() } : null, clock: null });
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
     } finally {
@@ -241,6 +269,32 @@ export const useGame = create<GameStore>((set, get) => ({
 
   playAgain() {
     get().host?.dispose();
-    set({ screen: "lobby", host: null, view: null, ctx: null, queue: [], selected: null, draft: null, report: null, showReport: false, watching: false });
+    set({ screen: "lobby", host: null, view: null, ctx: null, queue: [], selected: null, draft: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null });
   },
 }));
+
+/** A turn resolved (you locked in, or the timer did): play its replay, then the report. */
+function applyTurn(u: HostUpdate, auto: boolean) {
+  const before = useGame.getState().view;
+  const over = u.view.winner !== null;
+  const out = knockedOut(u.view);
+  useGame.setState({
+    view: u.view,
+    report: u.report,
+    fastForwarded: u.fastForwarded,
+    clock: u.clock,
+    queue: [],
+    draft: null,
+    selected: over || out ? null : u.view.me.capital,
+    showReport: false,
+    autoLocked: auto,
+    lastBefore: before,
+    replay: before && u.report ? { before, report: u.report, key: Date.now() } : null,
+  });
+  if (!before || !u.report) useGame.getState().endReplay();
+}
+
+// The host keeps your orders as you build them: they're what locks in if the timer runs out.
+useGame.subscribe((s, prev) => {
+  if (s.queue !== prev.queue && s.host && s.view) s.host.saveOrders(s.queue, s.view.turn);
+});

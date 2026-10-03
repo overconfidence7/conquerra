@@ -14,8 +14,13 @@ export function createLocalHost(): GameHost {
   const worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
   let nextId = 1;
   const pending = new Map<number, { resolve: (u: unknown) => void; reject: (e: Error) => void }>();
+  const autoLock: ((u: HostUpdate) => void)[] = [];
   worker.onmessage = (e: MessageEvent<HostResponse>) => {
     const res = e.data;
+    if ("pushed" in res) {
+      for (const f of autoLock) f(res.pushed);
+      return;
+    }
     const p = pending.get(res.id);
     if (!p) return;
     pending.delete(res.id);
@@ -30,7 +35,9 @@ export function createLocalHost(): GameHost {
     });
   return {
     start: (settings: LobbySettings) => send<HostStart>({ type: "start", settings, seed: newSeed() }),
-    lockIn: (orders) => send({ type: "lockIn", orders }),
+    lockIn: (orders, turn) => send({ type: "lockIn", orders, turn }),
+    saveOrders: (orders, turn) => worker.postMessage({ id: nextId++, type: "saveOrders", orders, turn } as HostRequest),
+    onAutoLock: (f) => void autoLock.push(f),
     watchNext: () => send({ type: "watchNext" }),
     finish: () => send({ type: "finish" }),
     suggest: () => send<Order[]>({ type: "suggest" }),

@@ -1,5 +1,6 @@
 import type { MapDef, Rules } from "@conquerra/content";
 import type { GameMode, Order, PlayerView, ReplayEvent } from "@conquerra/engine";
+import type { TurnClock } from "../logic/timer";
 
 /**
  * The contract between the UI and whatever runs the game.
@@ -14,6 +15,8 @@ export interface LobbySettings {
   luck: number;
   fog: boolean;
   mode: GameMode;
+  /** Turn timer in seconds (1, 3, 5 or 10 minutes), or null for No timer. */
+  turnSeconds: number | null;
 }
 
 export interface TurnReport {
@@ -30,6 +33,10 @@ export interface HostUpdate {
   report: TurnReport | null;
   /** Turns the bots played on their own when you skipped to the end after being knocked out. */
   fastForwarded: number;
+  /** The turn timer: when your orders lock in automatically. Null with No timer, while watching, or at the end. */
+  clock: TurnClock | null;
+  /** Set when this update came from the timer running out (your saved orders were locked in for you). */
+  autoLocked?: boolean;
 }
 
 /**
@@ -43,8 +50,16 @@ export interface HostStart extends HostUpdate {
 
 export interface GameHost {
   start(settings: LobbySettings): Promise<HostStart>;
-  /** Send this turn's orders. Bots plan their own, the turn resolves, and you get your new view. */
-  lockIn(orders: Order[]): Promise<HostUpdate>;
+  /**
+   * Send this turn's orders. Bots plan their own, the turn resolves, and you get your new view.
+   * `turn` is the turn the orders are for: if the timer already locked that turn in, nothing happens and you get
+   * the current view.
+   */
+  lockIn(orders: Order[], turn: number): Promise<HostUpdate>;
+  /** Keep the host up to date with your orders as you build them: they're what locks in when time runs out. */
+  saveOrders(orders: Order[], turn: number): void;
+  /** Called when the timer runs out and the host locks your saved orders in for you. */
+  onAutoLock(listener: (update: HostUpdate) => void): void;
   /** Once you're knocked out: the bots play one more turn, and you see the whole map and that turn's report. */
   watchNext(): Promise<HostUpdate>;
   /** Once you're knocked out: the bots play on to the end. */
@@ -57,12 +72,15 @@ export interface GameHost {
 /** Messages over the worker boundary. */
 export type HostRequest =
   | { id: number; type: "start"; settings: LobbySettings; seed: string }
-  | { id: number; type: "lockIn"; orders: Order[] }
+  | { id: number; type: "lockIn"; orders: Order[]; turn: number }
+  | { id: number; type: "saveOrders"; orders: Order[]; turn: number }
   | { id: number; type: "watchNext" }
   | { id: number; type: "finish" }
   | { id: number; type: "suggest" };
 
 export type HostResponse =
   | { id: number; ok: true; update: HostUpdate | HostStart }
+  /** Not an answer: the timer ran out and the host locked your orders in (id is 0). */
+  | { id: 0; ok: true; pushed: HostUpdate }
   | { id: number; ok: true; orders: Order[] }
   | { id: number; ok: false; error: string };

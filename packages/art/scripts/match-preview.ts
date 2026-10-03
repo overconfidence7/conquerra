@@ -11,7 +11,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import sharp from "sharp";
+import sharp, { type OverlayOptions } from "sharp";
 import { flattenLighting, matchColour, type Rgba } from "../src/import";
 import { GROUND_TARGETS } from "../src/palette";
 
@@ -39,7 +39,7 @@ const tile2x2 = async (img: Rgba) => {
 
 const LABEL = 150, HEAD = 40, GAP = 12;
 const W = LABEL + 2 * (2 * T) + GAP * 2, H = HEAD + names.length * (2 * T + GAP);
-const parts: sharp.OverlayOptions[] = [];
+const parts: OverlayOptions[] = [];
 const text: string[] = [];
 let y = HEAD;
 for (const n of names) {
