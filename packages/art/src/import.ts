@@ -4,11 +4,14 @@
  *   - ground and water textures: crop square, resize, and make them tile seamlessly
  *   - tinted art (shields, banners, flags, army figures): also writes a mask of the light grey parts,
  *     which the game colours with each House's tincture
+ *   - making the art match (palette.ts): ground textures have big baked-in light and dark patches evened out, and
+ *     textures and sprite families (trees, mountains, hills, settlements) are nudged toward one colour and contrast
  * Node only (uses sharp). Run it with `pnpm art:import`.
  */
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { extname, join } from "node:path";
 import sharp, { type Sharp } from "sharp";
+import { colourTargetFor } from "./palette";
 import { ASSETS, ASSET_BY_NAME, type ArtManifest, type AssetSpec } from "./registry";
 
 // Don't hold files open after reading them (Windows locks open files, which blocks Nate re-saving art).
@@ -168,6 +171,91 @@ export function tintMask(img: Rgba): Rgba {
   return { data: out, width: img.width, height: img.height };
 }
 
+// ---------- Making the art match ----------
+
+const lumOf = (d: ArrayLike<number>, i: number) => 0.299 * d[i]! + 0.587 * d[i + 1]! + 0.114 * d[i + 2]!;
+
+/** Blur a square field that wraps around at the edges (a tiling texture), with three box passes each way. */
+function wrapBlur(f: Float32Array, s: number, r: number): Float32Array {
+  let a: Float32Array = f, b: Float32Array = new Float32Array(f.length);
+  const pass = (src: Float32Array, dst: Float32Array, horizontal: boolean) => {
+    const n = 2 * r + 1;
+    for (let line = 0; line < s; line++) {
+      const at = (k: number) => (horizontal ? src[line * s + ((k + s * 4) % s)]! : src[((k + s * 4) % s) * s + line]!);
+      let sum = 0;
+      for (let k = -r; k <= r; k++) sum += at(k);
+      for (let k = 0; k < s; k++) {
+        if (horizontal) dst[line * s + k] = sum / n;
+        else dst[k * s + line] = sum / n;
+        sum += at(k + r + 1) - at(k - r);
+      }
+    }
+  };
+  for (let i = 0; i < 3; i++) {
+    pass(a, b, true);
+    [a, b] = [b, a];
+    pass(a, b, false);
+    [a, b] = [b, a];
+  }
+  return a;
+}
+
+/**
+ * Even out big light and dark patches in a tiling texture (built-in shading), keeping the small detail. Each pixel
+ * is scaled by how much darker or lighter its neighbourhood (about an eighth of the texture) is than average.
+ * `strength` 0 = unchanged, 1 = the large-scale brightness is made completely even. Changes `img` in place.
+ */
+export function flattenLighting(img: Rgba, strength: number): void {
+  const { data, width: s } = img;
+  const lum = new Float32Array(s * s);
+  let mean = 0;
+  for (let p = 0; p < s * s; p++) mean += lum[p] = lumOf(data, p * 4);
+  mean /= s * s;
+  const blur = wrapBlur(lum, s, Math.max(2, Math.round(s / 16)));
+  for (let p = 0; p < s * s; p++) {
+    const f = mean / Math.max(4, blur[p]!);
+    const k = Math.max(0.5, Math.min(2, 1 + (f - 1) * strength));
+    for (let c = 0; c < 3; c++) data[p * 4 + c] = Math.max(0, Math.min(255, Math.round(data[p * 4 + c]! * k)));
+  }
+}
+
+/** Average colour and brightness spread of an image (only fairly solid pixels count). */
+export function colourStats(img: Rgba): { mean: [number, number, number]; contrast: number } {
+  const { data } = img;
+  const sum: [number, number, number] = [0, 0, 0];
+  let n = 0, l1 = 0, l2 = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3]! < 128) continue;
+    sum[0] += data[i]!;
+    sum[1] += data[i + 1]!;
+    sum[2] += data[i + 2]!;
+    const l = lumOf(data, i);
+    l1 += l;
+    l2 += l * l;
+    n++;
+  }
+  if (!n) return { mean: [0, 0, 0], contrast: 0 };
+  const lm = l1 / n;
+  return { mean: [sum[0]! / n, sum[1]! / n, sum[2]! / n], contrast: Math.sqrt(Math.max(0, l2 / n - lm * lm)) };
+}
+
+/**
+ * Nudge an image toward a target average colour and contrast (`strength` of the way there), so pieces from
+ * different AI batches sit together. Changes `img` in place; see palette.ts for the targets.
+ */
+export function matchColour(img: Rgba, target: { colour: string; contrast: number; strength: number }): void {
+  const { data } = img;
+  const st = colourStats(img);
+  const t = [1, 3, 5].map((i) => parseInt(target.colour.slice(i, i + 2), 16));
+  const mean = st.mean.map((m, c) => m + (t[c]! - m) * target.strength);
+  const ratio = st.contrast > 0.5 ? target.contrast / st.contrast : 1;
+  const k = Math.max(0.6, Math.min(1.6, 1 + (ratio - 1) * target.strength));
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] === 0) continue;
+    for (let c = 0; c < 3; c++) data[i + c] = Math.max(0, Math.min(255, Math.round(mean[c]! + (data[i + c]! - st.mean[c]!) * k)));
+  }
+}
+
 // ---------- The import ----------
 
 export interface ImportReport {
@@ -230,6 +318,12 @@ export async function importArt({ incomingDir, outDir }: ImportOptions): Promise
       const side = Math.min(w0, h0);
       const square = await raw(src.clone().extract({ left: Math.floor((w0 - side) / 2), top: Math.floor((h0 - side) / 2), width: side, height: side }).resize(spec.size, spec.size, { kernel: "lanczos3" }));
       const seamless = makeSeamless(square);
+      const target = colourTargetFor(spec.name, spec.kind);
+      if (target?.flatten) flattenLighting(seamless, target.flatten);
+      if (target) {
+        matchColour(seamless, target);
+        notes.push("colour matched");
+      }
       await fromRaw(seamless).webp({ quality: 86 }).toFile(join(outDir, outName));
       width = height = spec.size;
     } else if (spec.kind === "portrait" || spec.kind === "vista") {
@@ -255,6 +349,11 @@ export async function importArt({ incomingDir, outDir }: ImportOptions): Promise
       width = Math.max(1, Math.round(box.width * scale));
       height = Math.max(1, Math.round(box.height * scale));
       const sized = await raw(fromRaw(await raw(trimmed)).resize(width, height, { kernel: "lanczos3" }));
+      const target = colourTargetFor(spec.name, spec.kind);
+      if (target) {
+        matchColour(sized, target);
+        notes.push("colour matched to its family");
+      }
       await fromRaw(sized).webp({ quality: 90, alphaQuality: 100 }).toFile(join(outDir, outName));
       if (spec.tint) {
         tintFile = `${spec.name}.tint.webp`;

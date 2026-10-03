@@ -3,8 +3,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
 import { afterAll, describe, expect, it } from "vitest";
-import { ASSETS } from "../src/registry";
-import { cutOutMagenta, formatReport, hasMagentaBackground, importArt, makeSeamless, matchFileName, opaqueBounds, type Rgba } from "../src/import";
+import { ASSETS, TERRAIN_TEXTURES, WATER_TEXTURES } from "../src/registry";
+import { colourTargetFor } from "../src/palette";
+import { colourStats, cutOutMagenta, flattenLighting, formatReport, hasMagentaBackground, importArt, makeSeamless, matchColour, matchFileName, opaqueBounds, type Rgba } from "../src/import";
 
 const tmp = mkdtempSync(join(tmpdir(), "conquerra-art-"));
 afterAll(() => rmSync(tmp, { recursive: true, force: true }));
@@ -107,4 +108,68 @@ describe("pnpm art:import", () => {
     expect(text).toContain("dragon.png");
     expect(text).toContain("cropped to a square from 700×600");
   }, 30_000);
+});
+
+describe("making the art match", () => {
+  /** A 64x64 texture: fine checker detail, plus a big dark patch in one corner (baked-in shading). */
+  const shaded = () => {
+    const s = 64, data = new Uint8ClampedArray(s * s * 4);
+    for (let y = 0; y < s; y++)
+      for (let x = 0; x < s; x++) {
+        const detail = (x + y) % 2 ? 12 : -12;
+        const patch = x < 32 && y < 32 ? 0.5 : 1;
+        const v = (120 + detail) * patch;
+        data.set([v, v * 0.9, v * 0.6, 255], (y * s + x) * 4);
+      }
+    return { data, width: s, height: s };
+  };
+  const meanLum = (img: { data: Uint8ClampedArray }, x0: number, y0: number, w: number) => {
+    let t = 0;
+    for (let y = y0; y < y0 + w; y++) for (let x = x0; x < x0 + w; x++) t += img.data[(y * 64 + x) * 4]!;
+    return t / (w * w);
+  };
+
+  it("flattening evens out a big dark patch but keeps the fine detail", () => {
+    const img = shaded();
+    const before = meanLum(img, 40, 40, 16) / meanLum(img, 8, 8, 16);
+    flattenLighting(img, 1);
+    const after = meanLum(img, 40, 40, 16) / meanLum(img, 8, 8, 16);
+    expect(before).toBeGreaterThan(1.8);
+    expect(after).toBeLessThan(1.25);
+    // Neighbouring pixels still differ (the checker detail survives).
+    const i = (48 * 64 + 48) * 4;
+    expect(Math.abs(img.data[i]! - img.data[i + 4]!)).toBeGreaterThan(10);
+  });
+
+  it("flattening at strength 0 changes nothing", () => {
+    const img = shaded();
+    const copy = new Uint8ClampedArray(img.data);
+    flattenLighting(img, 0);
+    expect([...img.data]).toEqual([...copy]);
+  });
+
+  it("colour matching moves the average colour and contrast toward the target", () => {
+    const img = shaded();
+    const target = { colour: "#3a6a30", contrast: 10, strength: 1 };
+    matchColour(img, target);
+    const st = colourStats(img);
+    expect(Math.abs(st.mean[0] - 0x3a)).toBeLessThan(4);
+    expect(Math.abs(st.mean[1] - 0x6a)).toBeLessThan(4);
+    expect(st.contrast).toBeLessThan(colourStats(shaded()).contrast);
+  });
+
+  it("half strength goes about half way, and see-through pixels are left alone", () => {
+    const img = shaded();
+    img.data[3] = 0;
+    const r0 = colourStats(img).mean[0];
+    matchColour(img, { colour: "#000000", contrast: 30, strength: 0.5 });
+    expect(Math.abs(colourStats(img).mean[0] - r0 / 2)).toBeLessThan(2);
+    expect(img.data[3]).toBe(0);
+  });
+
+  it("every ground texture and every sprite family has a target", () => {
+    for (const n of [...TERRAIN_TEXTURES, ...WATER_TEXTURES]) expect(colourTargetFor(n, "texture")).not.toBeNull();
+    for (const n of ["tree-conifer-1", "mountain-3", "hill-2", "village-1", "town-2", "capital-1"]) expect(colourTargetFor(n, "sprite")).not.toBeNull();
+    expect(colourTargetFor("icon-gold", "icon")).toBeNull();
+  });
 });
