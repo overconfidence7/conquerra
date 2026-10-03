@@ -55,18 +55,26 @@ async function startGame(page, { mapId, fog = true, bots }) {
   return { firstMap, allPainted };
 }
 
-/** Play turns with the Recruit bot planning your orders. */
+/** Play turns with the Recruit bot planning your orders (started in the page and polled, never awaited across). */
 async function playTurns(page, n) {
   for (let i = 0; i < n; i++) {
-    const done = await page.evaluate(async () => {
-      const g = window.__conquerraStore.getState();
-      if (g.screen !== "game" || !g.view || g.view.winner) return true;
-      await g.autoPlan();
-      await window.__conquerraStore.getState().lockIn();
-      window.__conquerraStore.getState().setShowReport(false);
-      return false;
+    await page.evaluate(() => {
+      window.__turnDone = null;
+      (async () => {
+        const g = window.__conquerraStore.getState();
+        if (g.screen !== "game" || !g.view || g.view.winner) return (window.__turnDone = "over");
+        await g.autoPlan();
+        await window.__conquerraStore.getState().lockIn();
+        // Skip the animated replay and the report.
+        window.__conquerraStore.getState().endReplay();
+        window.__conquerraStore.getState().setShowReport(false);
+        window.__turnDone = "ok";
+      })().catch((e) => (window.__turnDone = `error: ${e.message}`));
     });
-    if (done) break;
+    await page.waitForFunction(() => window.__turnDone !== null, { timeout: 60000, polling: 100 });
+    const done = await page.evaluate(() => window.__turnDone);
+    if (done.startsWith("error")) console.log("  " + done);
+    if (done !== "ok") break;
   }
   await sleep(400);
 }

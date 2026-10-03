@@ -107,6 +107,15 @@ describe("pnpm art:import", () => {
     expect(text).toContain("Imported 3 files");
     expect(text).toContain("dragon.png");
     expect(text).toContain("cropped to a square from 700×600");
+
+    // Importing again on a computer without the originals keeps the art the game already has.
+    const empty = join(tmp, "empty");
+    mkdirSync(empty);
+    const again = await importArt({ incomingDir: empty, outDir: out });
+    expect(Object.keys(again.manifest.assets).sort()).toEqual(["figure-army", "terrain-grass", "tree-conifer-1"]);
+    expect(again.report.kept.sort()).toEqual(["figure-army", "terrain-grass", "tree-conifer-1"]);
+    expect(readdirSync(out)).toContain("terrain-grass.webp");
+    expect(formatReport(again.report)).toContain("Kept 3");
   }, 30_000);
 });
 

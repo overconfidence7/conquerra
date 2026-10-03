@@ -77,12 +77,25 @@ void main() {
   float w[8];
   w[0] = b0.r; w[1] = b0.g; w[2] = b0.b; w[3] = b1.r; w[4] = b1.g; w[5] = b1.b; w[6] = b2.r; w[7] = b2.g;
   gTileMix = smoothstep(0.3, 0.7, vnoise(p * 0.011));
-  // Wobble each ground type's edge with one of two noises, so neighbouring types interlock instead of fading.
-  float na = vnoise(p * 0.06) - 0.5, nb = vnoise(p * 0.06 + 31.7) - 0.5;
+  // Natural edges: each ground type's edge is shaped by ragged noise (big wobbles plus fine fraying) and kept
+  // fairly crisp, so neighbouring types interlock like a painted map instead of fading into blurred squares.
+  float na = fbm(p * 0.045) - 0.5, nb = fbm(p * 0.045 + 31.7) - 0.5;
+  float fray = vnoise(p * 0.32) - 0.5;
+  // Height above the sea (0 at the shore, 1 at the highest peaks), for rock and snow.
+  float hAbove = clamp((texture(uAux1, p / uMap).b - uSea) / max(0.001, 1.0 - uSea), 0.0, 1.0);
+  vec2 rg = texture(uAux2, p / uMap).rg;
+  // Rock and snow follow height inside mountain ranges: rock on the high slopes, snow on the tops.
+  float hn = hAbove + na * 0.12 + fray * 0.05;
+  w[4] = max(w[4], rg.x * smoothstep(0.42, 0.6, hn));
+  w[5] = max(w[5], rg.x * smoothstep(0.7, 0.84, hn));
+  // A thin band of sand along every coast.
+  vec2 lc = texture(uAux1, p / uMap).rg;
+  float shore = smoothstep(0.5, 0.56, lc.x) * (1.0 - smoothstep(0.54, 0.62, lc.y + na * 0.1 + fray * 0.05));
+  w[7] = max(w[7], shore * (1.0 - rg.x));
   float total = 0.0;
   for (int i = 0; i < 8; i++) {
     float n = mod(float(i), 2.0) < 0.5 ? na : nb;
-    w[i] = smoothstep(0.18, 0.82, w[i] + n * (0.26 + 0.04 * float(i)));
+    w[i] = smoothstep(0.36, 0.64, w[i] + n * (0.42 + 0.03 * float(i)) + fray * 0.14);
     total += w[i];
   }
   vec3 land = vec3(0.0);
@@ -128,6 +141,12 @@ void main() {
   float edge = smoothstep(0.08, 0.45, a1.r) * (1.0 - smoothstep(0.45, 0.9, a1.r));
   vec3 col = mix(water, land, coast);
   col = mix(col, col * 0.62, edge * 0.55);
+  // One colour grade over the whole painted world, so pieces from different art batches sit together:
+  // a touch warmer, gently richer, with soft contrast.
+  float lum = dot(col, vec3(0.299, 0.587, 0.114));
+  col = mix(vec3(lum), col, 1.08);
+  col *= vec3(1.03, 1.0, 0.95);
+  col = mix(col, col * col * (3.0 - 2.0 * col), 0.18);
   finalColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }
 `;

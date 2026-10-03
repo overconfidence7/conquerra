@@ -222,6 +222,25 @@ export class WorldLayer {
       }
       return t;
     };
+    // A soft contact shadow under every sprite, down and to the right (the light comes from the upper left).
+    const [shadowCanvas, sctx] = canvas(64, 32);
+    const grad = sctx.createRadialGradient(32, 16, 2, 32, 16, 30);
+    grad.addColorStop(0, "rgba(0,0,0,0.55)");
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    sctx.fillStyle = grad;
+    sctx.scale(1, 0.5);
+    sctx.fillRect(0, 0, 64, 64);
+    const shadowTex = Texture.from(shadowCanvas);
+    this.disposables.push(shadowTex);
+    const shadow = (x: number, y: number, size: number) => {
+      const s = new Sprite(shadowTex);
+      s.anchor.set(0.5);
+      s.width = size * 0.95;
+      s.height = size * 0.34;
+      s.alpha = 0.55;
+      s.position.set(x + size * 0.14, y + size * 0.04);
+      return s;
+    };
     const place = (name: string, x: number, y: number, size: number, flip: boolean) => {
       const t = tex(name);
       const s = new Sprite(t);
@@ -235,10 +254,16 @@ export class WorldLayer {
       const kind = DECOR_ART[d.kind]!;
       const flip = ((d.x * 7 + d.y * 13) | 0) % 3 === 0 && d.kind !== "peak";
       const jitter = 0.88 + (((d.x * 31 + d.y * 17) | 0) % 25) / 100;
-      items.push({ y: d.y, make: () => place(`${kind}-${d.v}`, d.x, d.y, DECOR_SIZE[d.kind]! * jitter, flip) });
+      const size = DECOR_SIZE[d.kind]! * jitter;
+      // Shadows sort just before their own sprite.
+      items.push({ y: d.y - 0.001, make: () => shadow(d.x, d.y, size) });
+      items.push({ y: d.y, make: () => place(`${kind}-${d.v}`, d.x, d.y, size, flip) });
     }
     g.territories.forEach((t, i) => {
-      if (t.castle) items.push({ y: t.castle.y, make: () => place(`capital-${(i % 2) + 1}`, t.castle!.x, t.castle!.y, CASTLE_SIZE, false) });
+      if (t.castle) {
+        items.push({ y: t.castle.y - 0.001, make: () => shadow(t.castle!.x, t.castle!.y, CASTLE_SIZE) });
+        items.push({ y: t.castle.y, make: () => place(`capital-${(i % 2) + 1}`, t.castle!.x, t.castle!.y, CASTLE_SIZE, false) });
+      }
     });
     items.sort((a, b) => a.y - b.y);
     for (const it of items) this.bakeScene.addChild(it.make());

@@ -27,6 +27,16 @@ export function createLocalHost(): GameHost {
     if (!res.ok) p.reject(new Error(res.error));
     else p.resolve("orders" in res ? res.orders : res.update);
   };
+  // If the engine's worker stops (it crashed, or the browser killed it), say so instead of waiting forever.
+  const failAll = (why: string) => {
+    for (const p of pending.values()) p.reject(new Error(why));
+    pending.clear();
+  };
+  worker.onerror = (e) => {
+    console.error("Game host stopped:", e.message);
+    failAll("The game engine stopped unexpectedly. Reload the page to start again.");
+  };
+  worker.onmessageerror = () => failAll("The game engine sent a message the page couldn't read.");
   const send = <T = HostUpdate>(body: Body) =>
     new Promise<T>((resolve, reject) => {
       const id = nextId++;

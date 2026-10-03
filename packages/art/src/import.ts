@@ -8,7 +8,7 @@
  *     textures and sprite families (trees, mountains, hills, settlements) are nudged toward one colour and contrast
  * Node only (uses sharp). Run it with `pnpm art:import`.
  */
-import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { extname, join } from "node:path";
 import sharp, { type Sharp } from "sharp";
 import { colourTargetFor } from "./palette";
@@ -266,11 +266,22 @@ export interface ImportReport {
   warnings: string[];
   /** Asset names with no file yet (the game shows a placeholder). */
   missing: AssetSpec[];
+  /** Imported before and kept, because their originals aren't in art/incoming now. */
+  kept: string[];
 }
 
 export interface ImportOptions {
   incomingDir: string;
   outDir: string;
+}
+
+function readManifest(path: string): ArtManifest {
+  try {
+    const m = JSON.parse(readFileSync(path, "utf8")) as ArtManifest;
+    return m && typeof m.assets === "object" ? m : { version: 1, assets: {} };
+  } catch {
+    return { version: 1, assets: {} };
+  }
 }
 
 const raw = async (s: Sharp): Promise<Rgba> => {
@@ -281,7 +292,7 @@ const fromRaw = (img: Rgba) => sharp(Buffer.from(img.data.buffer, img.data.byteO
 
 export async function importArt({ incomingDir, outDir }: ImportOptions): Promise<{ manifest: ArtManifest; report: ImportReport }> {
   const manifest: ArtManifest = { version: 1, assets: {} };
-  const report: ImportReport = { imported: [], unknown: [], warnings: [], missing: [] };
+  const report: ImportReport = { imported: [], unknown: [], warnings: [], missing: [], kept: [] };
   mkdirSync(outDir, { recursive: true });
   const files = readdirSync(incomingDir).sort();
 
@@ -364,6 +375,14 @@ export async function importArt({ incomingDir, outDir }: ImportOptions): Promise
     report.imported.push({ file, asset: spec.name, ...(notes.length ? { note: notes.join("; ") } : {}) });
   }
 
+  // Art imported earlier whose original isn't in art/incoming any more (for example on another computer) stays,
+  // so an import never throws away art the game already has. Only names the game no longer knows are dropped.
+  const previous = readManifest(join(outDir, "manifest.json"));
+  for (const [name, e] of Object.entries(previous.assets)) {
+    if (manifest.assets[name] || !ASSET_BY_NAME.has(name) || !existsSync(join(outDir, e.file))) continue;
+    manifest.assets[name] = e;
+    report.kept.push(name);
+  }
   report.missing = ASSETS.filter((a) => !manifest.assets[a.name]);
   // Clear out files from earlier imports that are no longer in the manifest.
   const keep = new Set(Object.values(manifest.assets).flatMap((e) => [e.file, ...(e.tintMask ? [e.tintMask] : [])]));
@@ -377,6 +396,7 @@ export function formatReport(report: ImportReport): string {
   const out: string[] = [];
   out.push(report.imported.length ? `Imported ${report.imported.length} file${report.imported.length === 1 ? "" : "s"}:` : "No art imported (art/incoming has no files with names the game knows).");
   for (const i of report.imported) out.push(`  ✓ ${i.file}${i.note ? ` (${i.note})` : ""}`);
+  if (report.kept?.length) out.push(`Kept ${report.kept.length} imported before (their originals aren't in art/incoming): ${report.kept.join(", ")}`);
   if (report.unknown.length) {
     out.push("", "Not recognised (check the name against docs/art/asset-list-and-prompts.md):");
     for (const u of report.unknown) out.push(`  ? ${u.file}${u.suggestion ? `: did you mean ${u.suggestion}.png?` : ""}`);
