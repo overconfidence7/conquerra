@@ -1,7 +1,7 @@
 import type { BorderType, SpecialistType } from "@conquerra/content";
 import { expectBattle, rollLosses, type BattleExpectation } from "./combat";
 import { cultureProtection, incomeFor, investCost, scoreFor, specialistUnlocked } from "./economy";
-import { updateIntel } from "./intel";
+import { recordSighting, updateIntel } from "./intel";
 import { indexMap, type MapIndex } from "./mapIndex";
 import { expandPreset } from "./presets";
 import { Rng } from "./rng";
@@ -65,6 +65,8 @@ class Turn {
   readonly lastCapturer = new Map<PlayerId, PlayerId>();
   /** Set by a move that captured its target, so `then` follow-ups know where to push from. */
   lastCapture: TerritoryId | null = null;
+  /** The last capture each player saw of their own land this turn (player|territory -> what they saw). */
+  readonly lostSights = new Map<string, { player: PlayerId; territory: TerritoryId; owner: PlayerId; troops: number; building: TerritoryState["building"] }>();
   /** Vision cache; bumped whenever something that affects vision changes. */
   private visionEpoch = 0;
   private visionCache = new Map<PlayerId, { epoch: number; set: Set<TerritoryId> }>();
@@ -370,8 +372,10 @@ class Turn {
     const defenderLeader = !!defender && defender.leader.alive && defender.leader.territory === o.to;
     const exp = this.expect(pid, o.to, plan);
     const luck = this.s.settings.luck;
-    const defLoss = rollLosses(exp.expectedDefenderLosses, luck, to.troops, this.rng);
+    let defLoss = rollLosses(exp.expectedDefenderLosses, luck, to.troops, this.rng);
     const atkLoss = rollLosses(exp.expectedAttackerLosses, luck, plan.troops, this.rng);
+    // Both sides wiped out: the last defender holds. Land is never left owned with 0 troops.
+    if (to.troops > 0 && defLoss >= to.troops && atkLoss >= plan.troops) defLoss = to.troops - 1;
     const attackers = snapshot(plan.troops, plan.specialists);
     const defenders = snapshot(to.troops, to.specialists);
     const survivors = plan.troops - atkLoss;
@@ -391,7 +395,11 @@ class Turn {
         this.emit({ type: "leaderKilled", player: defender.id, territory: o.to });
       }
       if (plan.leaderGoes) p.leader.territory = o.to;
-      if (defenderId) this.lastCapturer.set(defenderId, pid);
+      if (defenderId) {
+        this.lastCapturer.set(defenderId, pid);
+        // You see your own land fall: remember who took it and with how many.
+        this.lostSights.set(`${defenderId}|${o.to}`, { player: defenderId, territory: o.to, owner: pid, troops: survivors, building: to.building });
+      }
       this.lastCapture = o.to;
     } else {
       specialistsLost.push(...this.settle(to).map((s) => s.type));
@@ -621,6 +629,12 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
 
   s.rng = T.rng.state;
   if (!s.winner) s.turn += 1;
+  // Land you lost this turn: you watched it fall, so you remember the capture (updateIntel below overrides it
+  // if you can still see the land now).
+  if (s.settings.fog && !s.winner)
+    for (const l of T.lostSights.values())
+      if (T.player(l.player).eliminatedTurn === null)
+        recordSighting(s, l.player, l.territory, { owner: l.owner, troops: l.troops, building: l.building, turn: s.turn });
   // Everyone remembers what they can see now; land that slips into the fog keeps its last-seen entry.
   updateIntel(ctx, s);
   return { state: s, events: T.events };

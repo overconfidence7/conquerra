@@ -29,7 +29,7 @@ async function playUntilKnockedOut() {
 
 describe("game screen state", () => {
   beforeEach(() => {
-    setHostFactory(() => inProcessHost("store-idle"));
+    setHostFactory(() => inProcessHost("store-idle-4"));
     useGame.getState().playAgain();
   });
 

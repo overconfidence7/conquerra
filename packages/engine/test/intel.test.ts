@@ -48,6 +48,7 @@ describe("last seen intel (v0.2 §8)", () => {
     const ctx = embervaleCtx();
     const idx = indexMap(ctx.map);
     let stale = 0;
+    let lostSeen = 0;
     for (const seed of ["memory-1", "memory-2", "memory-3"]) {
       let s = createGame(ctx, { gameId: "m", seed, players: [1, 2, 3, 4].map((i) => ({ id: `p${i}`, name: `P${i}` })) });
       for (const p of s.players) p.gold = 60;
@@ -70,11 +71,20 @@ describe("last seen intel (v0.2 §8)", () => {
           for (const [id, mem] of Object.entries(s.intel[p.id] ?? {})) {
             const then = history.get(mem.turn)!;
             if (mem.turn < s.turn) stale++;
+            // Owned land never holds 0 troops, so neither does a memory of it.
+            if (mem.owner) expect(mem.troops).toBeGreaterThan(0);
+            if (!visionFor(ctx, then, p.id).has(id)) {
+              // The one exception to "in sight": land you lost that turn. You saw it fall to someone else.
+              expect(history.get(mem.turn - 1)!.territories[id]!.owner).toBe(p.id);
+              expect(mem.owner).not.toBe(p.id);
+              lostSeen++;
+              continue;
+            }
             // It was in sight on the turn it's stamped with, and matches the truth on that turn exactly.
-            expect(visionFor(ctx, then, p.id).has(id)).toBe(true);
             const t = then.territories[id]!;
             expect(mem).toEqual({ owner: t.owner, troops: t.troops, building: t.building, turn: mem.turn });
           }
+          for (const t of Object.values(s.territories)) if (t.owner) expect(t.troops).toBeGreaterThan(0);
           // The view never carries a fogged territory's current state, only the memory.
           const v = viewFor(ctx, s, p.id);
           for (const [id, tv] of Object.entries(v.territories)) {
@@ -87,6 +97,28 @@ describe("last seen intel (v0.2 §8)", () => {
     }
     // Plenty of the checked entries were old ones, from land that had slipped into the fog.
     expect(stale).toBeGreaterThan(100);
+    expect(lostSeen).toBeGreaterThan(0);
+  });
+
+  it("remembers the capture of your own land, even once it's deep in the fog", () => {
+    // p1 holds a and c; b is empty. p2 takes c, leaving p1 with only a, which can't see c.
+    const { ctx, s } = lineSetup({ a: ["p1", 5], c: ["p1", 1], d: ["p2", 20], e: ["p2", 5] });
+    const r = resolveTurn(ctx, s, { p2: [mv("d", "c", 10)] });
+    const battle = r.events.find((e) => e.type === "battle")!;
+    expect(battle).toMatchObject({ captured: true });
+    const v = viewFor(ctx, r.state, "p1");
+    expect(v.territories.c).toEqual({ detail: "fogged", lastSeen: { owner: "p2", troops: r.state.territories.c!.troops, building: null, turn: 2 } });
+    // Not "still mine, 1 troop", which is what the old memory said.
+    expect(s.intel.p1!.c).toMatchObject({ owner: "p1", troops: 1 });
+  });
+
+  it("a battle that wipes out both sides leaves the last defender holding (never 0 troops)", () => {
+    const { ctx, s } = lineSetup({ a: ["p1", 5], b: ["p1", 2], c: ["p2", 1], e: ["p2", 5] });
+    const r = resolveTurn(ctx, s, { p1: [mv("b", "c", 1)] });
+    const battle = r.events.find((e) => e.type === "battle");
+    expect(battle).toMatchObject({ captured: false, result: { attackerLosses: 1, defenderLosses: 0 } });
+    expect(r.state.territories.c).toMatchObject({ owner: "p2", troops: 1 });
+    expect(r.state.intel.p1!.c).toMatchObject({ owner: "p2", troops: 1 });
   });
 
   it("keeps no memory with fog off", () => {
