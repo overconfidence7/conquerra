@@ -1,6 +1,7 @@
 import type { GameContext, PlayerView, TerritoryId } from "@conquerra/engine";
 import type { Odds } from "../logic/orders";
 import type { Insets } from "../map/camera";
+import type { ReplayFrame } from "../replay/timeline";
 import type { ZoomLevel } from "../map/zoom";
 
 /** A queued (or being-drafted) move or attack, drawn as an arrow. */
@@ -33,6 +34,8 @@ export interface MapEvents {
   /** Mouse hover, or tap-and-hold on a phone: show the card for this territory at this screen point; null hides it. */
   inspect(territory: TerritoryId | null, at: { x: number; y: number }, how: "hover" | "hold"): void;
   zoomChanged?(level: ZoomLevel): void;
+  /** The part of the map on screen moved (map units), for the minimap. */
+  viewMoved?(rect: { x: number; y: number; width: number; height: number }): void;
 }
 
 /** The small interface the UI uses: "show this view, highlight this, draw these orders". */
@@ -44,6 +47,10 @@ export interface MapRenderer {
   /** Screen space covered by menus over the map; fitting and panning use the rest. */
   setInsets(insets: Insets): void;
   zoomBy(factor: number): void;
+  /** Glide to a map point (the minimap's tap), keeping the zoom. */
+  centreOn(x: number, y: number): void;
+  /** One moment of the animated replay to draw over the map, or null when there's no replay. */
+  setReplay(frame: ReplayFrame | null): void;
   resize(): void;
   destroy(): void;
 }

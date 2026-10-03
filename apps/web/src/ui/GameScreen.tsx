@@ -1,23 +1,44 @@
 import type { GameContext, PlayerView } from "@conquerra/engine";
-import { useMemo } from "react";
-import { isMine, planQueue } from "../logic/orders";
-import { describeOrder, namer, orderTags } from "../logic/text";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { incomeEstimate } from "../logic/actions";
+import { planQueue } from "../logic/orders";
+import type { Insets } from "../map/camera";
+import type { Beat } from "../replay/timeline";
+import { toastFor } from "../replay/toasts";
+import type { MapRenderer } from "../render/types";
 import { knockedOut, useGame } from "../store";
-import { colorOf } from "./colors";
-import { MapView } from "./MapView";
+import { ActionBar, LockSeal } from "./ActionBar";
+import { BottomSheet, type SheetSize } from "./BottomSheet";
+import { Frame } from "./Frame";
+import { Icon } from "./icons";
+import { LeaderCard } from "./LeaderCard";
+import { MapView, readTactical, saveTactical } from "./MapView";
+import { Minimap, type ViewRect } from "./Minimap";
+import { OrderQueue } from "./OrderQueue";
 import { Panel } from "./Panel";
-import { TurnLog, TurnLogLines } from "./TurnLog";
+import { PlayersPanel } from "./PlayersPanel";
+import { TerritoryCard } from "./TerritoryCard";
+import { Toasts, type ShownToast } from "./Toasts";
+import { TopBar } from "./TopBar";
+import { ReportBody, TurnReportDialog } from "./TurnReport";
+import { useReplay } from "./useReplay";
 
-function LeaderStatus({ view }: { view: PlayerView }) {
-  const { leader, cooldowns } = view.me;
-  if (!leader.alive) return <span title="Your Leader comes back at the end of this turn">👑 Fallen</span>;
-  const ready = (n: number) => (n === 0 ? "ready" : `${n} turn${n === 1 ? "" : "s"}`);
-  return (
-    <span title="Seize the Initiative: one order goes first. Lie in Wait: one order goes last.">
-      👑 ⚡{ready(cooldowns.seize)} ⏳{ready(cooldowns.lie)}
-    </span>
-  );
+/** Phones (and narrow windows) get the full-screen map with a bottom sheet. */
+const PHONE_QUERY = "(max-width: 760px)";
+function usePhone() {
+  const [phone, setPhone] = useState(() => window.matchMedia(PHONE_QUERY).matches);
+  useEffect(() => {
+    const m = window.matchMedia(PHONE_QUERY);
+    const f = () => setPhone(m.matches);
+    m.addEventListener("change", f);
+    return () => m.removeEventListener("change", f);
+  }, []);
+  return phone;
 }
+
+/** Screen space the menus cover, so "fit map" uses the rest. */
+const DESKTOP_INSETS: Insets = { top: 72, right: 336, bottom: 216, left: 8 };
+const PHONE_INSETS: Insets = { top: 56, right: 0, bottom: 84, left: 0 };
 
 /** Shown once when you're knocked out while the game goes on. */
 function KnockedOutChoice({ view }: { view: PlayerView }) {
@@ -26,8 +47,7 @@ function KnockedOutChoice({ view }: { view: PlayerView }) {
   const by = me.eliminatedBy ? view.players.find((p) => p.id === me.eliminatedBy)?.name : null;
   return (
     <div className="overlay">
-      <div className="dialog" role="dialog" aria-label="You have been knocked out">
-        <h2>You've been knocked out</h2>
+      <Frame className="dialog" role="dialog" label="You have been knocked out" title="You've been knocked out">
         <p>
           {by ? `${by} took your last territory` : "You lost your last territory"} on turn {me.eliminatedTurn}. The others fight on.
         </p>
@@ -35,146 +55,316 @@ function KnockedOutChoice({ view }: { view: PlayerView }) {
           <button className="primary wide" onClick={watch} disabled={busy} autoFocus>
             Watch to the end
           </button>
-          <p className="muted small">See the whole map and each turn's report. You can skip ahead any time.</p>
+          <p className="muted small">See the whole map and each turn's replay. You can skip ahead any time.</p>
           <button className="wide" onClick={seeResult} disabled={busy}>
             {busy ? "The bots are finishing the game…" : "See the result"}
           </button>
         </div>
-      </div>
+      </Frame>
     </div>
   );
 }
 
 /** While watching after being knocked out: next turn, skip ahead, and the last turn's report. */
-function WatchPanel({ ctx, view }: { ctx: GameContext; view: PlayerView }) {
+function WatchPanel({ ctx, view, replaying }: { ctx: GameContext; view: PlayerView; replaying: boolean }) {
   const { report, watchNext, seeResult, busy } = useGame();
   return (
-    <div className="panel">
-      <div className="panel-head">
-        <h2>Watching · turn {view.turn}</h2>
-      </div>
+    <Frame className="watch-panel" title={`Watching · turn ${view.turn}`}>
       <p className="muted small">You're out, so you see the whole map. The bots play on.</p>
-      <button className="primary wide" onClick={watchNext} disabled={busy}>
+      <button className="primary wide" onClick={watchNext} disabled={busy || replaying}>
         {busy ? "Playing…" : "Next turn ▶"}
       </button>
       <button className="wide" onClick={seeResult} disabled={busy}>
         Skip to the end ⏭
       </button>
-      {report && (
+      {report && !replaying && (
         <div className="watch-report">
-          <h3>Turn {report.turn}</h3>
-          <TurnLogLines ctx={ctx} view={view} report={report} />
+          <ReportBody ctx={ctx} view={view} report={report} />
         </div>
       )}
-    </div>
+    </Frame>
   );
 }
 
+function Settings({ tactical, onTactical, onFit, onReport, onLeave, onClose }: { tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onLeave(): void; onClose(): void }) {
+  return (
+    <Frame className="popover" title="Settings" extra={<button className="link" onClick={onClose}>Close</button>}>
+      <button className="menu-item" onClick={onTactical} aria-pressed={tactical}>
+        Tactical view <span className="muted">{tactical ? "On" : "Off"}</span>
+      </button>
+      <button className="menu-item" onClick={onFit}>
+        Fit the whole map
+      </button>
+      {onReport && (
+        <button className="menu-item" onClick={onReport}>
+          Last turn's report
+        </button>
+      )}
+      <hr className="rule" />
+      <button className="menu-item" onClick={onLeave}>
+        Leave this game
+      </button>
+    </Frame>
+  );
+}
+
+let toastId = 0;
+
 export function GameScreen() {
-  const { ctx, view, queue, selected, draft, report, showReport, watching, busy, error, tap, clearSelection, remove, shift, lockIn, setShowReport } = useGame();
+  const g = useGame();
+  const { ctx, view, queue, selected, draft, report, showReport, watching, busy, error, replay, clock, autoLocked } = g;
+  const phone = usePhone();
+  const renderer = useRef<MapRenderer | null>(null);
+  const [tactical, setTactical] = useState(readTactical);
+  const [settings, setSettings] = useState(false);
+  const [spendOpen, setSpendOpen] = useState(false);
+  const [sheet, setSheet] = useState<SheetSize>("closed");
+  const [tab, setTab] = useState("army");
+  const [playersOn, setPlayersOn] = useState(false);
+  const [minimapOn, setMinimapOn] = useState(false);
+  const [rect, setRect] = useState<ViewRect | null>(null);
+  const [toasts, setToasts] = useState<ShownToast[]>([]);
+
+  const pushToast = useCallback((t: Omit<ShownToast, "id">) => {
+    const id = ++toastId;
+    setToasts((list) => [...list.slice(-3), { ...t, id }]);
+    setTimeout(() => setToasts((list) => list.filter((x) => x.id !== id)), 3600);
+  }, []);
+
+  const onBeat = useCallback(
+    (b: Beat) => {
+      if (!ctx || !view) return;
+      let n = 0;
+      for (const e of b.events) {
+        const t = toastFor(ctx, view, e);
+        if (t && n++ < 2) pushToast(t);
+      }
+    },
+    [ctx, view, pushToast],
+  );
+  const onEnd = useCallback(() => {
+    useGame.getState().endReplay();
+    if (useGame.getState().autoLocked) pushToast({ text: "Time's up: your orders were locked in", tone: "info", house: null });
+  }, [pushToast]);
+  const rp = useReplay(ctx, replay, renderer, onBeat, onEnd);
+
   const plan = useMemo(() => (ctx && view ? planQueue(ctx, view, queue) : null), [ctx, view, queue]);
+  const income = useMemo(() => (ctx && view ? incomeEstimate(ctx, view) : 0), [ctx, view]);
+
+  // On a phone, choosing a territory or drafting an attack opens the army sheet.
+  useEffect(() => {
+    if (!phone) return;
+    if (draft) {
+      setTab("army");
+      setSheet((s) => (s === "closed" ? "half" : s));
+    }
+  }, [draft, phone]);
+  useEffect(() => setSpendOpen(false), [selected]);
+
   if (!ctx || !view || !plan) return null;
-  const n = namer(ctx, view);
   const out = knockedOut(view);
-  const territories = Object.values(view.territories).filter((t) => t.detail === "full" && t.owner === view.me.id).length;
+  const replaying = !!replay;
+  const shownView = rp.view ?? view;
+  // On a phone the open sheet covers the lower part of the map: the map keeps what you're looking at above it.
+  const sheetPx = !phone || replaying || out || sheet === "closed" ? 0 : Math.round(window.innerHeight * (sheet === "half" ? 0.46 : 0.86));
+  const insets = phone ? { ...PHONE_INSETS, bottom: PHONE_INSETS.bottom + sheetPx } : DESKTOP_INSETS;
+  const toggleTactical = () =>
+    setTactical((t) => {
+      saveTactical(!t);
+      return !t;
+    });
+  const act = !out && !replaying;
+
+  const map = (
+    <div className="map-layer">
+      <MapView
+        ctx={ctx}
+        view={shownView}
+        queue={act ? queue : []}
+        selected={act ? selected : null}
+        draft={act ? draft : null}
+        showTargets={act && (plan.free.get(selected ?? "") ?? 0) > 0}
+        onTap={(t) => {
+          if (!act) return;
+          g.tap(t);
+          if (phone) {
+            setTab("army");
+            setSheet((s) => (s === "closed" ? "half" : s));
+          }
+        }}
+        onBackground={() => {
+          g.clearSelection();
+          if (phone) setSheet("closed");
+        }}
+        tactical={tactical}
+        insets={insets}
+        rendererRef={renderer}
+        onViewMoved={setRect}
+      />
+    </div>
+  );
+
+  const army = <Panel ctx={ctx} view={view} plan={plan} queue={queue} selected={selected} draft={draft} spendOpen={spendOpen} />;
+  const seal = <LockSeal count={queue.length} busy={busy} disabled={!act} onLock={() => void g.lockIn()} />;
+  const actions = (
+    <ActionBar
+      ctx={ctx}
+      view={view}
+      plan={plan}
+      spendOpen={spendOpen}
+      disabled={!act}
+      onSpend={() => {
+        setSpendOpen((o) => !o);
+        if (phone) {
+          setTab("army");
+          setSheet((s) => (s === "closed" ? "half" : s));
+        }
+      }}
+      onMove={() => {
+        setSpendOpen(false);
+        if (phone) {
+          setTab("army");
+          setSheet((s) => (s === "closed" ? "half" : s));
+        }
+      }}
+    />
+  );
+  const replayBar = replaying && (
+    <Frame className="replay-bar slim">
+      <span className="what">Turn {replay!.report.turn}</span>
+      <span className="progress">
+        <i style={{ width: `${Math.round(rp.progress * 100)}%` }} />
+      </span>
+      <button onClick={rp.skip}>Skip ▸▸</button>
+    </Frame>
+  );
+  const settingsMenu = settings && (
+    <Settings
+      tactical={tactical}
+      onTactical={toggleTactical}
+      onFit={() => renderer.current?.fit()}
+      onReport={report && !replaying ? () => (setSettings(false), g.setShowReport(true)) : null}
+      onLeave={() => g.playAgain()}
+      onClose={() => setSettings(false)}
+    />
+  );
+  const topbar = (
+    <TopBar
+      view={view}
+      gold={view.me.gold}
+      goldAfter={plan.goldLeft}
+      income={income}
+      clock={out ? null : clock}
+      replaying={replaying}
+      phone={phone}
+      onSettings={() => setSettings((s) => !s)}
+    />
+  );
+  const minimap = <Minimap ctx={ctx} view={shownView} rect={rect} onJump={(x, y) => renderer.current?.centreOn(x, y)} />;
+  const overlays = (
+    <>
+      {showReport && report && !replaying && (
+        <TurnReportDialog ctx={ctx} view={view} report={report} autoLocked={autoLocked} onClose={() => g.setShowReport(false)} onWatchAgain={() => g.watchAgain()} />
+      )}
+      {out && !watching && !replaying && <KnockedOutChoice view={view} />}
+      {error && (
+        <Frame className="slim" style={{ position: "absolute", zIndex: 40, left: 8, top: phone ? 60 : 72 }}>
+          <p className="warn">{error}</p>
+        </Frame>
+      )}
+    </>
+  );
+
+  if (phone) {
+    const tabs = [
+      { id: "army", label: "Army" },
+      { id: "orders", label: `Orders (${queue.length})` },
+      { id: "card", label: "Card" },
+      ...(report ? [{ id: "report", label: "Report" }] : []),
+    ];
+    return (
+      <div className="game phone">
+        {map}
+        {topbar}
+        <div className="map-tools" style={{ top: 62, left: 8 }}>
+          <button className={`icon-btn ${minimapOn ? "on" : ""}`} onClick={() => setMinimapOn((m) => !m)} aria-label="Minimap" aria-pressed={minimapOn}>
+            <Icon.map />
+          </button>
+          <button className={`icon-btn ${playersOn ? "on" : ""}`} onClick={() => setPlayersOn((p) => !p)} aria-label="Players" aria-pressed={playersOn}>
+            <Icon.people />
+          </button>
+        </div>
+        {minimapOn && <Frame className="mini-float slim">{minimap}</Frame>}
+        {playersOn && (
+          <div className="popover">
+            <PlayersPanel view={view} />
+          </div>
+        )}
+        {settingsMenu}
+        <Toasts toasts={toasts} />
+        {replayBar}
+        {out && watching && <WatchPanel ctx={ctx} view={view} replaying={replaying} />}
+        {!out && (
+          <BottomSheet size={replaying ? "closed" : sheet} onSize={setSheet} bottom={76} tabs={tabs} tab={tab} onTab={setTab}>
+            {tab === "army" && army}
+            {tab === "orders" && <OrderQueue ctx={ctx} view={view} plan={plan} queue={queue} bare />}
+            {tab === "card" && (selected ? <TerritoryCard ctx={ctx} view={view} id={selected} /> : <p className="muted">Tap a territory to see its card. Tap and hold anywhere for a quick look.</p>)}
+            {tab === "card" && <LeaderCard ctx={ctx} view={view} queue={queue} />}
+            {tab === "report" && report && <ReportBody ctx={ctx} view={view} report={report} />}
+            {tab === "report" && report && <button onClick={() => g.watchAgain()}>Watch again</button>}
+          </BottomSheet>
+        )}
+        {!out && (
+          <Frame className="phonebar slim">
+            {actions}
+            <button className="icon-btn orders-btn" aria-label="Orders" onClick={() => (setTab("orders"), setSheet((s) => (s === "closed" || tab !== "orders" ? "half" : "closed")))}>
+              {queue.length}
+            </button>
+            {seal}
+          </Frame>
+        )}
+        {overlays}
+      </div>
+    );
+  }
 
   return (
-    <div className="game">
-      <header className="topbar">
-        <span className="brand">Conquerra</span>
-        <span>Turn {view.turn}{view.settings.turnLimit ? ` / ${view.settings.turnLimit}` : ""}</span>
-        <span title="Gold now → after your queued orders">
-          💰 {view.me.gold}
-          {plan.goldLeft !== view.me.gold && <span className="muted"> → {plan.goldLeft}</span>}
-        </span>
-        <span>🏳 {territories}</span>
-        <LeaderStatus view={view} />
-        <span className="players">
-          {view.players.map((p) => (
-            <span key={p.id} className={`dot ${p.eliminatedTurn !== null ? "out" : ""}`} style={{ background: colorOf(view, p.id) }} title={`${p.name}${p.eliminatedTurn !== null ? " (out)" : ""}`} />
-          ))}
-        </span>
-        {report && (
-          <button className="link" onClick={() => setShowReport(true)}>
-            Last turn
-          </button>
-        )}
-      </header>
-
-      <main className="layout">
-        <section className="map-wrap">
-          <MapView
-            ctx={ctx}
-            view={view}
-            queue={out ? [] : queue}
-            selected={out ? null : selected}
-            draft={out ? null : draft}
-            showTargets={!out && (plan.free.get(selected ?? "") ?? 0) > 0}
-            onTap={out ? () => {} : tap}
-            onBackground={clearSelection}
-          />
-        </section>
-
-        <aside className="side">
-          {out ? (
-            watching ? (
-              <WatchPanel ctx={ctx} view={view} />
-            ) : (
-              <p className="muted">You're out of the game.</p>
-            )
-          ) : (
-          <>
-          <Panel ctx={ctx} view={view} plan={plan} queue={queue} selected={selected} draft={draft} />
-
-          <div className="panel queue">
-            <div className="panel-head">
-              <h2>Orders ({queue.length})</h2>
-              <span className="muted">💰 {plan.goldLeft} left</span>
-            </div>
-            {queue.length === 0 && <p className="muted small">No orders yet. Orders run in this order, one per player at a time.</p>}
-            <ol>
-              {queue.map((o, i) => (
-                <li key={o.id}>
-                  <div className="order-line">
-                    <span className="order-n">{i + 1}</span>
-                    <span className="order-text">
-                      {describeOrder(o, n, o.kind === "move" && !isMine(view, o.to))}
-                      {plan.costs[i]! > 0 && <span className="cost"> {plan.costs[i]}g</span>}
-                      {orderTags(o).map((t) => (
-                        <span key={t} className="tag">
-                          {t}
-                        </span>
-                      ))}
-                    </span>
-                    <span className="order-tools">
-                      <button onClick={() => shift(o.id, -1)} disabled={i === 0} aria-label="move up">
-                        ↑
-                      </button>
-                      <button onClick={() => shift(o.id, 1)} disabled={i === queue.length - 1} aria-label="move down">
-                        ↓
-                      </button>
-                      <button onClick={() => remove(o.id)} aria-label="delete">
-                        ✕
-                      </button>
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          {error && <p className="warn">{error}</p>}
-          <button className="primary wide lock" disabled={busy} onClick={lockIn}>
-            {busy ? "Resolving…" : queue.length ? `Lock in ${queue.length} order${queue.length === 1 ? "" : "s"}` : "Lock in (no orders)"}
-          </button>
-          </>
-          )}
-          {out && error && <p className="warn">{error}</p>}
-        </aside>
-      </main>
-
-      {showReport && report && <TurnLog ctx={ctx as GameContext} view={view} report={report} onClose={() => setShowReport(false)} />}
-      {out && !watching && <KnockedOutChoice view={view} />}
+    <div className="game desktop">
+      {map}
+      {topbar}
+      <div className="map-tools" style={{ top: DESKTOP_INSETS.top + 4, right: DESKTOP_INSETS.right + 4 }}>
+        <button onClick={() => renderer.current?.zoomBy(1.4)} aria-label="Zoom in">
+          +
+        </button>
+        <button onClick={() => renderer.current?.zoomBy(1 / 1.4)} aria-label="Zoom out">
+          −
+        </button>
+        <button onClick={() => renderer.current?.fit()} aria-label="Fit the whole map">
+          ⤢
+        </button>
+      </div>
+      <aside className="rightcol">
+        <PlayersPanel view={view} />
+        {selected && act && <TerritoryCard ctx={ctx} view={view} id={selected} />}
+        {!out && <LeaderCard ctx={ctx} view={view} queue={queue} />}
+      </aside>
+      {settingsMenu}
+      <Toasts toasts={toasts} />
+      {replayBar}
+      {out ? (
+        watching && <WatchPanel ctx={ctx} view={view} replaying={replaying} />
+      ) : (
+        <div className="dock">
+          <Frame className="slim">{minimap}</Frame>
+          <Frame className="army slim">
+            {actions}
+            {army}
+          </Frame>
+          <OrderQueue ctx={ctx} view={view} plan={plan} queue={queue} />
+          <div className="seal-wrap">{seal}</div>
+        </div>
+      )}
+      {overlays}
     </div>
   );
 }

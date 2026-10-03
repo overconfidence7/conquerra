@@ -1,11 +1,21 @@
 import type { GameContext, Order, PlayerView, TerritoryId } from "@conquerra/engine";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isAttack, isMine, moveTargets, oddsFor, type MoveDraft } from "../logic/orders";
-import { territoryCard } from "../map/card";
+import type { Insets } from "../map/camera";
+import { TerritoryCard } from "./TerritoryCard";
 import type { MapRenderer, MapScene, OrderArrow } from "../render/types";
 
 interface Props {
   ctx: GameContext;
+  /** Menus over the map: fit and panning use the rest of the screen. */
+  insets?: Insets;
+  /** Tactical view (owned by the game screen's settings). */
+  tactical: boolean;
+  /** Shared handle on the renderer (for the minimap and the replay). */
+  rendererRef?: React.MutableRefObject<MapRenderer | null>;
+  onViewMoved?(rect: { x: number; y: number; width: number; height: number }): void;
+  /** Zoom buttons on the map (the game screen has its own). */
+  tools?: boolean;
   view: PlayerView;
   queue: readonly Order[];
   selected: TerritoryId | null;
@@ -17,11 +27,18 @@ interface Props {
 }
 
 const TACTICAL_KEY = "conquerra.tactical";
-const readTactical = () => {
+export const readTactical = () => {
   try {
     return localStorage.getItem(TACTICAL_KEY) === "1";
   } catch {
     return false;
+  }
+};
+export const saveTactical = (on: boolean) => {
+  try {
+    localStorage.setItem(TACTICAL_KEY, on ? "1" : "0");
+  } catch {
+    // Private browsing: the choice just isn't remembered.
   }
 };
 
@@ -47,16 +64,16 @@ interface CardState {
   how: "hover" | "hold";
 }
 
-export function MapView({ ctx, view, queue, selected, draft, showTargets, onTap, onBackground }: Props) {
+export function MapView({ ctx, view, queue, selected, draft, showTargets, onTap, onBackground, insets, tactical, rendererRef, onViewMoved, tools = false }: Props) {
   const host = useRef<HTMLDivElement>(null);
-  const renderer = useRef<MapRenderer | null>(null);
-  const [tactical, setTactical] = useState(readTactical);
+  const ownRef = useRef<MapRenderer | null>(null);
+  const renderer = rendererRef ?? ownRef;
   const [kind, setKind] = useState<MapRenderer["kind"] | null>(null);
   const [card, setCard] = useState<CardState | null>(null);
   const scene = useMemo(() => buildScene(ctx, view, queue, selected, draft, showTargets), [ctx, view, queue, selected, draft, showTargets]);
   // Latest handlers and scene, for the renderer's callbacks and its async start.
-  const live = useRef({ onTap, onBackground, scene });
-  live.current = { onTap, onBackground, scene };
+  const live = useRef({ onTap, onBackground, scene, onViewMoved, insets, tactical });
+  live.current = { onTap, onBackground, scene, onViewMoved, insets, tactical };
 
   useEffect(() => {
     const el = host.current!;
@@ -65,8 +82,9 @@ export function MapView({ ctx, view, queue, selected, draft, showTargets, onTap,
     const opts = {
       ctx,
       host: el,
-      tactical: readTactical(),
+      tactical: live.current.tactical,
       focus: view.me.capital,
+      ...(live.current.insets ? { insets: live.current.insets } : {}),
       events: {
         tap: (t: TerritoryId | null) => {
           setCard(null);
@@ -74,6 +92,7 @@ export function MapView({ ctx, view, queue, selected, draft, showTargets, onTap,
           else live.current.onBackground?.();
         },
         inspect: (t: TerritoryId | null, at: { x: number; y: number }, how: "hover" | "hold") => setCard(t ? { id: t, x: at.x, y: at.y, how } : null),
+        viewMoved: (r: { x: number; y: number; width: number; height: number }) => live.current.onViewMoved?.(r),
       },
     };
     (async () => {
@@ -116,56 +135,41 @@ export function MapView({ ctx, view, queue, selected, draft, showTargets, onTap,
 
   useEffect(() => {
     renderer.current?.setTactical(tactical);
-    try {
-      localStorage.setItem(TACTICAL_KEY, tactical ? "1" : "0");
-    } catch {
-      // Private browsing: the choice just isn't remembered.
-    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tactical, kind]);
 
-  const info = card ? territoryCard(ctx, view, card.id) : null;
+  const insetKey = insets ? `${insets.top},${insets.right},${insets.bottom},${insets.left}` : "";
+  useEffect(() => {
+    if (insets) renderer.current?.setInsets(insets);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [insetKey, kind]);
+
   const hostW = host.current?.clientWidth ?? 800;
 
   return (
     <div className="map-host" ref={host} data-renderer={kind ?? "loading"}>
       {!kind && <div className="map-loading">Unrolling the map…</div>}
-      <div className="map-tools">
-        <button onClick={() => renderer.current?.zoomBy(1.4)} aria-label="Zoom in" title="Zoom in">
-          +
-        </button>
-        <button onClick={() => renderer.current?.zoomBy(1 / 1.4)} aria-label="Zoom out" title="Zoom out">
-          −
-        </button>
-        <button onClick={() => renderer.current?.fit()} aria-label="Fit the whole map" title="Fit the whole map">
-          ⤢
-        </button>
-        {kind === "illustrated" && (
-          <button className={tactical ? "on" : ""} onClick={() => setTactical((t) => !t)} aria-pressed={tactical} title="Tactical view: flat colours, every detail">
-            Tactical
+      {tools && (
+        <div className="map-tools" style={{ top: 8, right: 8 }}>
+          <button onClick={() => renderer.current?.zoomBy(1.4)} aria-label="Zoom in">
+            +
           </button>
-        )}
-      </div>
-      {info && card && (
+          <button onClick={() => renderer.current?.zoomBy(1 / 1.4)} aria-label="Zoom out">
+            −
+          </button>
+          <button onClick={() => renderer.current?.fit()} aria-label="Fit the whole map">
+            ⤢
+          </button>
+        </div>
+      )}
+      {card && (
         <div
-          className={`tcard ${info.uncertain ? "uncertain" : ""} ${card.how === "hold" && card.y > 300 ? "above" : ""}`}
+          className={`hovercard ${card.how === "hold" && card.y > 300 ? "above" : ""}`}
           role="tooltip"
           // Beside the mouse; above the finger on a phone (below it near the top), so it never hides the territory.
-          style={{ left: Math.max(4, Math.min(card.x + (card.how === "hold" ? -112 : 14), hostW - 228)), top: card.how === "hold" ? (card.y > 300 ? card.y - 28 : card.y + 36) : card.y + 14 }}
+          style={{ left: Math.max(4, Math.min(card.x + (card.how === "hold" ? -118 : 14), hostW - 240)), top: card.how === "hold" ? (card.y > 300 ? card.y - 28 : card.y + 36) : card.y + 14 }}
         >
-          <div className="tcard-title">{info.title}</div>
-          <div className="tcard-sub">{info.subtitle}</div>
-          {info.intel && <div className="tcard-intel">{info.intel}</div>}
-          <dl>
-            {info.lines.map((l) => (
-              <div key={l.label}>
-                <dt>{l.label}</dt>
-                <dd>
-                  {l.color && <span className="swatch" style={{ background: l.color }} />}
-                  {l.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          <TerritoryCard ctx={ctx} view={view} id={card.id} compact={card.how === "hover"} />
         </div>
       )}
     </div>

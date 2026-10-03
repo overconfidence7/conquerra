@@ -8,6 +8,8 @@ import type { MapEvents, MapRenderer, MapScene, RendererOptions } from "../types
 import { TextureBank } from "./bank";
 import { InfoLayer } from "./info";
 import { MarkerLayer } from "./markers";
+import { ReplayLayer } from "./replayLayer";
+import type { ReplayFrame } from "../../replay/timeline";
 import { WorldLayer } from "./world";
 
 /** Can this browser do WebGL at all? If not, the UI uses the plain (SVG) Tactical map instead. */
@@ -56,6 +58,8 @@ class PixiMapRenderer implements MapRenderer {
   private world!: WorldLayer;
   private info!: InfoLayer;
   private markers!: MarkerLayer;
+  private replay!: ReplayLayer;
+  private replayFrame: ReplayFrame | null = null;
   private bank!: TextureBank;
   private art!: ArtBook;
   private mapLayer = new Container();
@@ -127,7 +131,8 @@ class PixiMapRenderer implements MapRenderer {
     mark("labels");
     this.markers = new MarkerLayer(ctx.map, this.bank, this.app.renderer.resolution);
     this.mapLayer.addChild(this.world.view, this.info.tactical, this.info.tint, this.info.lines, this.info.realmLayer.root, this.info.glow, this.info.sites, this.info.figures, this.info.names, this.info.arrows);
-    this.app.stage.addChild(this.mapLayer, this.markers.root);
+    this.replay = new ReplayLayer(ctx.map);
+    this.app.stage.addChild(this.mapLayer, this.markers.root, this.replay.root);
     this.world.bakeFar();
     mark("far");
 
@@ -194,6 +199,7 @@ class PixiMapRenderer implements MapRenderer {
       this.dirtyCam = true;
     }
     if (this.dirtyCam) this.applyCamera();
+    if (this.replayFrame && this.scene) this.replay.draw(this.replayFrame, this.cam.cam, this.scene.view);
     if (!this.firstMapMs) this.firstMapMs = now - this.t0;
   }
 
@@ -217,6 +223,8 @@ class PixiMapRenderer implements MapRenderer {
       this.info.fadeNamesUnder(this.markers.screenBoxes, c);
     } else this.markers.place(c, this.detail);
     if (prev !== this.detail.level) this.events.zoomChanged?.(this.detail.level);
+    const [vx, vy] = toMap(c, 0, 0);
+    this.events.viewMoved?.({ x: vx, y: vy, width: this.cam.vp.width / c.scale, height: this.cam.vp.height / c.scale });
   }
 
   private applyMode() {
@@ -246,6 +254,15 @@ class PixiMapRenderer implements MapRenderer {
 
   fit(animate = true) {
     this.cam.fit(animate);
+  }
+
+  centreOn(x: number, y: number) {
+    this.cam.centreOn(x, y, this.cam.cam.scale, 320);
+  }
+
+  setReplay(frame: ReplayFrame | null) {
+    this.replayFrame = frame;
+    if (!frame && this.replay && this.scene) this.replay.draw(null, this.cam.cam, this.scene.view);
   }
 
   setInsets(insets: Insets) {
@@ -300,6 +317,7 @@ class PixiMapRenderer implements MapRenderer {
       this.world?.destroy();
       this.info?.destroy();
       this.markers?.destroy();
+      this.replay?.destroy();
       this.bank?.destroy();
       this.app.destroy({ removeView: true }, { children: true });
     } catch {

@@ -32,6 +32,8 @@ interface Props {
   queue: readonly Order[];
   selected: TerritoryId | null;
   draft: MoveDraft | null;
+  /** The Spend button is on: show hiring and building for the selected territory. */
+  spendOpen?: boolean;
 }
 
 /** The context panel: a draft move/attack if one is open, otherwise the selected territory. */
@@ -40,8 +42,8 @@ export function Panel(props: Props) {
   if (props.selected) return <TerritoryPanel {...props} selected={props.selected} />;
   return (
     <div className="panel hint">
-      <p>Tap one of your territories to give it orders.</p>
-      <p className="muted">Then tap a neighbour to move or attack.</p>
+      <p>Tap one of your territories, then a neighbour to move or attack.</p>
+      <p className="muted small">Or use the round buttons: Recruit is one tap.</p>
     </div>
   );
 }
@@ -60,8 +62,12 @@ function Stepper({ value, min, max, onChange }: { value: number; min: number; ma
   );
 }
 
+/** Presets shown up front; the rest wait behind "More". */
+const MAIN_PRESETS = new Set(["onlyIfStronger", "followThrough"]);
+
 function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraft }) {
   const { updateDraft, addDraft, clearSelection, select } = useGame();
+  const [more, setMore] = useState(false);
   const n = namer(ctx, view);
   const attack = isAttack(view, draft);
   const max = plan.free.get(draft.from) ?? 0;
@@ -120,7 +126,7 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
       {max === 0 && <p className="warn">No troops left to send from here this turn.</p>}
 
       <div className="chips">
-        {presetsFor(view, draft).map((p) => (
+        {presetsFor(view, draft).filter((p) => more || MAIN_PRESETS.has(p.id) || draft.preset === p.id).map((p) => (
           <button
             key={p.id}
             className={`chip ${draft.preset === p.id ? "on" : ""}`}
@@ -130,9 +136,12 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
             {p.name}
           </button>
         ))}
+        <button className="chip" onClick={() => setMore((m) => !m)} aria-expanded={more}>
+          {more ? "Less" : "More…"}
+        </button>
       </div>
 
-      {view.me.leader.alive && (
+      {view.me.leader.alive && (more || draft.withLeader || draft.timing) && (
         <div className="chips">
           {leaderCanJoin(view, draft.from) && (
             <button className={`chip leader ${draft.withLeader ? "on" : ""}`} onClick={() => updateDraft({ withLeader: !draft.withLeader })} title="Your Leader goes with this army: +20% strength">
@@ -160,6 +169,7 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
         </div>
       )}
 
+      {view.me.leader.alive && !more && !draft.withLeader && !draft.timing && <p className="muted small">More… has the Leader and the other backup plans.</p>}
       <button className="primary wide" disabled={draft.troops <= 0} onClick={addDraft}>
         Add {attack ? "attack" : "move"}
       </button>
@@ -173,7 +183,7 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
   );
 }
 
-function TerritoryPanel({ ctx, view, plan, selected }: Props & { selected: TerritoryId }) {
+function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { selected: TerritoryId }) {
   const { add } = useGame();
   const idx = indexMap(ctx.map);
   const n = namer(ctx, view);
@@ -246,7 +256,7 @@ function TerritoryPanel({ ctx, view, plan, selected }: Props & { selected: Terri
       {site && (
         <div className="action">
           <div className="row">
-            <button className="primary" disabled={recruit < 1} onClick={() => add({ kind: "recruit", territory: selected, count: recruit })}>
+            <button disabled={recruit < 1} onClick={() => add({ kind: "recruit", territory: selected, count: recruit })}>
               Recruit {recruit}
             </button>
             <Stepper value={recruit} min={affordable > 0 ? 1 : 0} max={affordable} onChange={setRecruit} />
@@ -255,9 +265,9 @@ function TerritoryPanel({ ctx, view, plan, selected }: Props & { selected: Terri
         </div>
       )}
 
-      {site && (
-        <details className="action">
-          <summary>Hire a specialist</summary>
+      {spendOpen && site && (
+        <div className="action">
+          <h3>Hire a specialist</h3>
           <div className="grid-buttons">
             {hires.map((h) => (
               <button
@@ -271,12 +281,13 @@ function TerritoryPanel({ ctx, view, plan, selected }: Props & { selected: Terri
               </button>
             ))}
           </div>
-        </details>
+        </div>
       )}
+      {spendOpen && !site && <p className="muted small">Specialists are hired at your capital or a barracks.</p>}
 
-      {!plan.building.has(selected) && (
-        <details className="action">
-          <summary>Build</summary>
+      {spendOpen && !plan.building.has(selected) && (
+        <div className="action">
+          <h3>Build</h3>
           <div className="grid-buttons">
             {buildOptions(ctx, plan, selected).map((b) => (
               <button key={b.building} disabled={!b.ok} onClick={() => add({ kind: "build", territory: selected, building: b.building })}>
@@ -285,26 +296,15 @@ function TerritoryPanel({ ctx, view, plan, selected }: Props & { selected: Terri
               </button>
             ))}
           </div>
-        </details>
+        </div>
       )}
 
-      <div className="row wrap">
-        {cultureCost !== null && (
-          <button disabled={cultureCost > plan.goldLeft} onClick={() => add({ kind: "invest", territory: selected })} title="More income and protection here; unlocks fancier specialists in this province">
-            ✦ Raise culture to {(plan.culture.get(selected) ?? 0) + 1} <span className="cost">{cultureCost}g</span>
-          </button>
-        )}
-        {hasOwnNeighbour && (
-          <>
-            <button onClick={() => add({ kind: "retreat", from: selected })} title="Pull this army back to your safest neighbouring territory">
-              ↩ Retreat
-            </button>
-            <button onClick={() => add({ kind: "retreat", from: selected, preset: { id: "retreatIfOutnumbered" } })} title="Only pull back if a bigger enemy army is next door">
-              ↩ Retreat if outnumbered
-            </button>
-          </>
-        )}
-      </div>
+      {spendOpen && hasOwnNeighbour && (
+        <button onClick={() => add({ kind: "retreat", from: selected, preset: { id: "retreatIfOutnumbered" } })} title="Only pull back if a bigger enemy army is next door">
+          ↩ Retreat only if outnumbered
+        </button>
+      )}
+      {!spendOpen && cultureCost !== null && <p className="muted small">Culture here: {plan.culture.get(selected) ?? 0}. Raising it costs {cultureCost}g.</p>}
     </div>
   );
 }

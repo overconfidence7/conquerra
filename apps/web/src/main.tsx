@@ -7,6 +7,9 @@ import { Lobby } from "./ui/Lobby";
 import "@fontsource/manrope/800.css";
 import "@fontsource/cinzel/600.css";
 import "@fontsource/cinzel/700.css";
+import "@fontsource/spectral/400.css";
+import "@fontsource/spectral/600.css";
+import "@fontsource/spectral/400-italic.css";
 import "./styles.css";
 
 function App() {

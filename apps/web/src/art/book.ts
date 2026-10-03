@@ -69,6 +69,12 @@ export class ArtBook {
     return this.cache.get(name) ?? null;
   }
 
+  /** Where an imported file is (for menus that show art as plain images: portraits and vistas), or null. */
+  urlOf(name: string, base: string = import.meta.env.BASE_URL): string | null {
+    const e = this.manifest.assets[name];
+    return e ? `${base}art/${e.file}` : null;
+  }
+
   /** Names of the real art in use (for the debug overlay and the perf report). */
   get realNames(): string[] {
     return [...this.loaded.keys()].sort();

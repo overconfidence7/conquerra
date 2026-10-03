@@ -113,6 +113,13 @@ class SvgMapRenderer implements MapRenderer {
     // This map is always the Tactical look.
   }
 
+  centreOn(x: number, y: number) {
+    this.cam.centreOn(x, y, this.cam.cam.scale, 320);
+  }
+
+  /** The plain map shows the replay through the changing view only (no marching armies). */
+  setReplay() {}
+
   setInsets(insets: Insets) {
     this.cam.setInsets(insets);
   }

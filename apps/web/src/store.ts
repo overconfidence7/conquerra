@@ -5,6 +5,7 @@ import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
 import type { GameHost, HostUpdate, LobbySettings, TurnReport } from "./host/protocol";
 import { DEFAULT_TIMER, type TurnClock } from "./logic/timer";
+import { actionBarState } from "./logic/actions";
 import { draftToOrder, type NewOrder, planQueue, removeOrder, shiftOrder, tapTerritory, type MoveDraft } from "./logic/orders";
 
 export type Screen = "lobby" | "game" | "over";
@@ -44,6 +45,8 @@ interface GameStore {
   updateDraft(patch: Partial<MoveDraft>): void;
   addDraft(): void;
   add(order: NewOrder): void;
+  /** The action bar's Recruit: one tap recruits all you can afford (at the selected territory if it can, else the capital). */
+  quickRecruit(): void;
   remove(id: string): void;
   shift(id: string, dir: -1 | 1): void;
   lockIn(): Promise<void>;
@@ -188,6 +191,14 @@ export const useGame = create<GameStore>((set, get) => ({
 
   add(order) {
     set({ queue: [...get().queue, { ...order, id: nextOrderId() } as Order] });
+  },
+
+  quickRecruit() {
+    const { ctx, view, queue, selected } = get();
+    if (!ctx || !view) return;
+    const plan = planQueue(ctx, view, queue);
+    const a = actionBarState(ctx, view, plan, selected).recruit;
+    if (a.ok && a.at) get().add({ kind: "recruit", territory: a.at, count: a.count });
   },
 
   remove(id) {

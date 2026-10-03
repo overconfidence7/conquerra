@@ -1,3 +1,4 @@
+import { menuPlaceholder } from "./menuPlaceholders";
 import { canvas, fbmField, groundShadow, hex, INK, mix, paintField, rand, ramp, rgb, shade, wrapped, type Ctx, type RGB } from "./paint";
 
 /**
@@ -962,7 +963,7 @@ function shield(): Painted {
 
 const variant = (name: string) => Number(name.slice(name.lastIndexOf("-") + 1));
 
-/** The placeholder for an asset name, or null if it has none (portraits and vistas are session 5). */
+/** The placeholder for an asset name, or null if it has none. */
 export function placeholder(name: string): Painted | null {
   const t = TEXTURES[name];
   if (t) return { image: t() };
@@ -984,5 +985,7 @@ export function placeholder(name: string): Painted | null {
   if (name === "banner-flag") return flag(28, 44, 0.1);
   if (name === "banner-base") return flag(32, 32, 0.12);
   if (name === "shield-base") return shield();
+  const m = menuPlaceholder(name);
+  if (m) return { image: m };
   return null;
 }

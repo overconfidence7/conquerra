@@ -2,6 +2,9 @@ import { mapCatalog, suggestedMode } from "@conquerra/content";
 import { BOT_NAMES } from "../host/names";
 import { useEffect } from "react";
 import { prewarmHost, useGame } from "../store";
+import { TIMER_CHOICES, timerLabel } from "../logic/timer";
+import { useArtUrl } from "./art";
+import { Frame } from "./Frame";
 
 const LUCK = [
   { value: 0, label: "None" },
@@ -20,10 +23,16 @@ export function Lobby() {
   const map = mapCatalog.find((m) => m.id === lobby.mapId) ?? mapCatalog[0]!;
   const players = lobby.bots + 1;
   const rec = map.recommendedPlayers;
+  const emblem = useArtUrl("emblem");
   return (
     <div className="lobby">
-      <h1>Conquerra</h1>
+      <Frame>
+      <div className="logo">
+        {emblem && <img src={emblem} alt="" />}
+        <h1>Conquerra</h1>
+      </div>
       <p className="muted">Set your orders, lock in, and watch every plan play out at once.</p>
+      <hr className="rule" />
 
       <div className="field">
         <span className="field-name">Map</span>
@@ -89,10 +98,25 @@ export function Lobby() {
         </span>
       </div>
 
+      <div className="field">
+        <span className="field-name">Turn timer</span>
+        <span className="seg">
+          {TIMER_CHOICES.map((t) => (
+            <button key={String(t)} className={lobby.turnSeconds === t ? "on" : ""} onClick={() => setLobby({ turnSeconds: t })}>
+              {timerLabel(t)}
+            </button>
+          ))}
+        </span>
+        <span className="muted small">
+          {lobby.turnSeconds === null ? "Take as long as you like." : "When time runs out, your orders lock in as they are."}
+        </span>
+      </div>
+
       {error && <p className="warn">{error}</p>}
       <button className="primary wide big" onClick={start} disabled={busy}>
         {busy ? "Starting…" : "Start"}
       </button>
+      </Frame>
     </div>
   );
 }
