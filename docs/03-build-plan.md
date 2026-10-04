@@ -83,10 +83,12 @@ Research, outline v0.1, v0.2 additions, and decisions.
   - **Session 3 ✅:** the seeded map maker and real geography (`04-design-additions.md` §9): seas, lakes, mountain ranges, passes, rivers, sea lanes, choke points, plus the height map, biome and decoration data the illustrated map needs. Rebuild both test maps.
   - **Session 4 ✅:** the illustrated map renderer (WebGL/PixiJS) in the "Gilded Atlas" style (`docs/06-art-direction.md`): terrain from the biome data, relief lighting from the height map, sprites and specialist figures, the info layer (borders, banners, icons), zoom levels, Tactical view, fog mist, "last seen" intel, the hover/tap card, the art import script and placeholders.
   - **Session 5 ✅:** the gilded menus (territory card, army panel, Leader portrait, turn report, minimap), the animated replay, the turn timer, phone layout, installable app, and the private preview setup. It ran in the cloud, so it couldn't reach Nate's art or Cloudflare.
-  - **Session 6 (run locally on Nate's computer):** import art batches 2 and 3 and judge them in the game, retake the screenshots, put the private preview online, and have the replay camera follow off-screen action. Then Nate's real-phone test closes M2.
+  - **Session 6 ✅ (run locally):** Nate's art imported and in the menus, a replay freeze fixed, the replay camera, screenshots retaken, and the private preview online behind Access.
+  - **Session 7 (run locally): Nate's phone test findings:** the installed app showed the desktop layout on his phone; **chained attacks** (no limit); **amounts as shares** (All, 3/4, 1/2, 1/4, Just enough); the clipped army panel row.
 - Exit: Nate plays full games against bots on phone and laptop.
 
 ### M3: Depth + balance
+- **Session order (agreed Oct 4):** 8 smarter bots and the map lab · 9 generals (Leader standing instructions), captured generals, the Fallen · 10 Spoils and Fate decks · 11 preset diplomacy · 12 spies and culture unlocks · 13 balance pass.
 - Leader-as-general (standing instructions) and captured generals.
 - Spoils and Fate decks (events and missions).
 - Preset-based diplomacy with counteroffers and the re-confirm rule.

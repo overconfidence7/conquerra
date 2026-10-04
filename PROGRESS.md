@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M2 (playable browser game vs bots): session 6 reviewed. The private preview is online and locked to Nate. Nate's real-phone test closes M2; then M3 starts (session 7).**
+**Phase: M2 wrap-up: session 7 (run locally) fixes what Nate's phone test found and adds chained attacks and share-based amounts. Then M3 (sessions 8–13).**
 
 Claude Code sessions completed: **6** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
@@ -255,3 +255,11 @@ Claude Code sessions completed: **6** (a new orchestrator prompt is due after se
 - Art for Nate to redo when he has time: `tree-conifer-1` and `-2` (still round bushes), then the rock, snow and hills textures.
 - **Next:** Nate plays on his phone (sign in, install the app, a game with a 1-minute timer). That closes M2. Then session 7 starts M3.
 - Six Claude Code sessions are done, so there's a fresh orchestrator prompt: `docs/prompts/orchestrator-03.md`.
+
+### Oct 4: Nate's phone test, and the plan for M3
+- **On Nate's phone:** the app installed fine and the timer locked his orders in when it ran out. But the installed app showed the **desktop layout** instead of the phone one.
+- **Nate's new ideas, now decided:**
+  - **Chained attacks:** win at B, and the same army can attack on from B in a later order that turn. No limit on hops, but each hop waits its turn in the order queue, so rivals can react in between.
+  - **Amounts as shares:** send All, 3/4, 1/2 or 1/4 of the army (or "Just enough") rather than typing a troop number, because a chained army's size isn't known until its battle is over.
+- **Plan:** session 7 fixes the phone layout, builds chaining and shares, and fixes the army panel's clipped row. Then M3 in this order: smarter bots and the map lab; generals and the Fallen; the Spoils and Fate card decks; diplomacy; spies and culture unlocks; a balance pass.
+- Next prompt: `docs/prompts/claude-code-session-07.md` (run it locally).
