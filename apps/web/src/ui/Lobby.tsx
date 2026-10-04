@@ -5,6 +5,7 @@ import { prewarmHost, useGame } from "../store";
 import { TIMER_CHOICES, timerLabel } from "../logic/timer";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
+import { VersionLine } from "./Diagnostics";
 
 const LUCK = [
   { value: 0, label: "None" },
@@ -116,6 +117,7 @@ export function Lobby() {
       <button className="primary wide big" onClick={start} disabled={busy}>
         {busy ? "Starting…" : "Start"}
       </button>
+      <VersionLine />
       </Frame>
     </div>
   );

@@ -1,9 +1,9 @@
 import type { CSSProperties, ReactNode } from "react";
 
 /** The one gilded frame every panel uses: navy, a thin double gold rule and small corner ornaments. */
-export function Frame({ title, extra, className = "", style, children, role, label }: { title?: ReactNode; extra?: ReactNode; className?: string; style?: CSSProperties; children?: ReactNode; role?: string; label?: string }) {
+export function Frame({ title, extra, className = "", style, children, role, label, boxRef }: { title?: ReactNode; extra?: ReactNode; className?: string; style?: CSSProperties; children?: ReactNode; role?: string; label?: string; boxRef?: (el: HTMLDivElement | null) => void }) {
   return (
-    <div className={`frame ${className}`} style={style} role={role} aria-label={label}>
+    <div className={`frame ${className}`} style={style} role={role} aria-label={label} ref={boxRef}>
       {(["tl", "tr", "bl", "br"] as const).map((c) => (
         <span key={c} className={`corner ${c}`}>
           <i />

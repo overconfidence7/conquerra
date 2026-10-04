@@ -1,5 +1,18 @@
+import { execSync } from "node:child_process";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+
+/** "0.1.0 · Oct 4 · 8b6d540": shown in Settings, so we can tell which version a phone is running. */
+function buildLabel() {
+  let commit = "local";
+  try {
+    commit = execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+  } catch {
+    // Not a git checkout.
+  }
+  const date = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+  return `${process.env.npm_package_version ?? "0.1.0"} · ${date} · ${commit}`;
+}
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
@@ -37,6 +50,7 @@ export default defineConfig({
       },
     }),
   ],
+  define: { __BUILD__: JSON.stringify(buildLabel()) },
   worker: { format: "es" },
   server: { open: true },
 });

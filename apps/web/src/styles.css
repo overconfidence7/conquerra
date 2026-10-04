@@ -192,7 +192,12 @@ select { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(
 /* Bottom dock (desktop): minimap · action bar + army panel · order queue · seal */
 .dock { position: absolute; left: 8px; right: 8px; bottom: 8px; height: 216px; z-index: 7; display: grid; grid-template-columns: 210px minmax(0, 1fr) 300px 128px; gap: 10px; }
 .dock > .frame { overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
-.dock .army { overflow-y: auto; scrollbar-width: thin; }
+/* The army panel grows up over the map as far as it needs (a draft has more in it than the dock's height), and
+   scrolls only if it would reach the top bar. */
+.dock .army-cell { position: relative; min-width: 0; }
+.dock .army-cell > .army { position: absolute; left: 0; right: 0; bottom: 0; min-height: 100%; max-height: calc(100vh - 96px); display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: thin; }
+.queue ol.more { -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), transparent); }
+.dock .army-cell > .army.more { -webkit-mask-image: linear-gradient(#000 calc(100% - 24px), transparent); mask-image: linear-gradient(#000 calc(100% - 24px), transparent); }
 .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
 .round {
   width: 58px; height: 58px; border-radius: 50%; padding: 0; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
@@ -341,3 +346,14 @@ select { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(
 /* When the column is taller than the screen allows (many Houses), it scrolls; a soft fade says there's more. */
 .rightcol.more { -webkit-mask-image: linear-gradient(#000 calc(100% - 28px), transparent); mask-image: linear-gradient(#000 calc(100% - 28px), transparent); }
 .rightcol .tcard dl { gap: 0; }
+
+/* Layout diagnostics (hidden: ?debug=layout, or tap the version 5 times) */
+.diagnostics { z-index: 70; }
+.diag { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; margin: 0; font-size: 0.85rem; }
+.diag div { display: grid; grid-template-columns: minmax(0, 11em) minmax(0, 1fr); gap: 8px; border-bottom: 1px solid var(--line); padding: 3px 0; }
+.diag dt { color: var(--muted); }
+.diag dd { margin: 0; font-family: var(--font-num); word-break: break-word; }
+.version-line { align-self: center; opacity: 0.7; }
+
+/* "Update ready" */
+.update-prompt { position: fixed; z-index: 60; left: 50%; bottom: 96px; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; }

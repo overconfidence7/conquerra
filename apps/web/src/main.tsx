@@ -4,6 +4,7 @@ import { useGame } from "./store";
 import { GameOver } from "./ui/GameOver";
 import { GameScreen } from "./ui/GameScreen";
 import { Lobby } from "./ui/Lobby";
+import { Diagnostics } from "./ui/Diagnostics";
 import { UpdatePrompt } from "./ui/UpdatePrompt";
 import "@fontsource/manrope/800.css";
 import "@fontsource/cinzel/600.css";
@@ -33,6 +34,7 @@ function App() {
     <>
       <Screen />
       <UpdatePrompt />
+      <Diagnostics />
     </>
   );
 }

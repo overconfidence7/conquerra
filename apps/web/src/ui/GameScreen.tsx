@@ -22,33 +22,14 @@ import { Toasts, type ShownToast } from "./Toasts";
 import { TopBar } from "./TopBar";
 import { ReportBody, TurnReportDialog } from "./TurnReport";
 import { useReplay } from "./useReplay";
-
-/** Marks a scrolling column with "more" while there's content below the fold (a soft fade at its foot). */
-function moreCue(el: HTMLElement | null) {
-  if (!el || el.dataset.cue) return;
-  el.dataset.cue = "1";
-  const update = () => el.classList.toggle("more", el.scrollHeight - el.scrollTop - el.clientHeight > 4);
-  el.addEventListener("scroll", update, { passive: true });
-  new ResizeObserver(update).observe(el);
-  new MutationObserver(update).observe(el, { childList: true, subtree: true });
-  update();
-}
+import { moreCue } from "./moreCue";
+import { useLayout, useLayoutChoice } from "./useLayout";
+import { VersionLine } from "./Diagnostics";
+import type { LayoutChoice } from "../logic/layout";
 
 /** One shared empty list: a new [] on every render made the map rebuild its whole info layer many times a second during the replay (and freeze on big realms). */
 const NO_ORDERS: readonly Order[] = [];
 
-/** Phones (and narrow windows) get the full-screen map with a bottom sheet. */
-const PHONE_QUERY = "(max-width: 760px)";
-function usePhone() {
-  const [phone, setPhone] = useState(() => window.matchMedia(PHONE_QUERY).matches);
-  useEffect(() => {
-    const m = window.matchMedia(PHONE_QUERY);
-    const f = () => setPhone(m.matches);
-    m.addEventListener("change", f);
-    return () => m.removeEventListener("change", f);
-  }, []);
-  return phone;
-}
 
 /** Screen space the menus cover, so "fit map" uses the rest. */
 const DESKTOP_INSETS: Insets = { top: 72, right: 336, bottom: 216, left: 8 };
@@ -114,11 +95,35 @@ function Settings({ tactical, onTactical, onFit, onReport, onLeave, onClose }: {
           Last turn's report
         </button>
       )}
+      <LayoutSetting />
       <hr className="rule" />
       <button className="menu-item" onClick={onLeave}>
         Leave this game
       </button>
+      <VersionLine />
     </Frame>
+  );
+}
+
+/** Settings → Layout: Auto (from the screen), or always Phone / Desktop. Remembered on this device. */
+function LayoutSetting() {
+  const { choice, set } = useLayoutChoice();
+  const options: [LayoutChoice, string][] = [
+    ["auto", "Auto"],
+    ["phone", "Phone"],
+    ["desktop", "Desktop"],
+  ];
+  return (
+    <div className="menu-item" role="radiogroup" aria-label="Layout">
+      <span>Layout</span>
+      <span className="seg">
+        {options.map(([c, label]) => (
+          <button key={c} role="radio" aria-checked={choice === c} className={choice === c ? "on" : ""} onClick={() => set(c)}>
+            {label}
+          </button>
+        ))}
+      </span>
+    </div>
   );
 }
 
@@ -127,7 +132,7 @@ let toastId = 0;
 export function GameScreen() {
   const g = useGame();
   const { ctx, view, queue, selected, draft, report, showReport, watching, busy, error, replay, clock, autoLocked } = g;
-  const phone = usePhone();
+  const phone = useLayout().layout === "phone";
   const renderer = useRef<MapRenderer | null>(null);
   const [tactical, setTactical] = useState(readTactical);
   const [settings, setSettings] = useState(false);
@@ -372,10 +377,12 @@ export function GameScreen() {
       ) : (
         <div className="dock">
           <Frame className="slim">{minimap}</Frame>
-          <Frame className="army slim">
-            {actions}
-            {army}
-          </Frame>
+          <div className="army-cell">
+            <Frame className="army slim" boxRef={moreCue}>
+              {actions}
+              {army}
+            </Frame>
+          </div>
           <OrderQueue ctx={ctx} view={view} plan={plan} queue={shownQueue} />
           <div className="seal-wrap">{seal}</div>
         </div>

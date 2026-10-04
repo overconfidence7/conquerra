@@ -129,7 +129,7 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
           Odds{estimate ? " (estimate)" : ""}: {ODDS_LABEL[odds]}
         </div>
       )}
-      {odds && estimate && <p className="muted small">Its army depends on how the battle before it goes.</p>}
+      {odds && odds !== "unknown" && estimate && <p className="muted small">Its army depends on how the battle before it goes.</p>}
       {attack && crossing !== "normal" && (
         <p className="muted small">
           {CROSSING[crossing]}: attack ×{ctx.rules.borders[crossing].attackMult}
@@ -226,7 +226,7 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
       </p>
       {plan.captured.has(selected) && (
         <p className="arriving">
-          Your attack should take this: about {plan.army.get(selected) ?? 0} arrive. Tap a neighbour to push on from here.
+          Your attack should take this: about {plan.arriving.get(selected) ?? 0} arrive. Tap a neighbour to push on from here.
         </p>
       )}
     </>

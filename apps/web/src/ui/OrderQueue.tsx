@@ -3,6 +3,7 @@ import { amountPill, isAttack, planQueue, type QueuePlan } from "../logic/orders
 import { describeOrder, namer, orderTags } from "../logic/text";
 import { useGame } from "../store";
 import { Frame } from "./Frame";
+import { moreCue } from "./moreCue";
 
 /** Your orders for this turn, in the order they'll run. Reorder or delete; gold left at the top. */
 export function OrderQueue({ ctx, view, plan, queue, bare = false }: { ctx: GameContext; view: PlayerView; plan: QueuePlan; queue: readonly Order[]; bare?: boolean }) {
@@ -11,7 +12,7 @@ export function OrderQueue({ ctx, view, plan, queue, bare = false }: { ctx: Game
   const body = (
     <>
       {queue.length === 0 && <p className="muted small">No orders yet. Tap your land, then a neighbour to attack; or use the round buttons.</p>}
-      <ol>
+      <ol ref={moreCue}>
         {queue.map((o, i) => {
           const before = o.kind === "move" ? planQueue(ctx, view, queue.slice(0, i)) : null;
           const hop = plan.hop[i];

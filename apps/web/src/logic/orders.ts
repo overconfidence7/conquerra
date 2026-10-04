@@ -58,6 +58,8 @@ export interface QueuePlan {
   captured: Set<TerritoryId>;
   /** Land an army moves into or captures earlier in the queue: it can go on from there (a chained hop). */
   arrived: Set<TerritoryId>;
+  /** How many troops should arrive at each of those (before any of them push on). */
+  arriving: Map<TerritoryId, number>;
   /** Armies whose size depends on a battle earlier in the queue: their numbers and odds are estimates. */
   estimated: Set<TerritoryId>;
   /** Troops each order should send (an estimate when it depends on an earlier battle); 0 for other orders. */
@@ -90,6 +92,7 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
     targeted: new Set(),
     captured: new Set(),
     arrived: new Set(),
+    arriving: new Map(),
     estimated: new Set(),
     sent: [],
     hop: [],
@@ -156,6 +159,7 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
           plan.armySpecs.set(o.to, [...(est.attack ? [] : (plan.armySpecs.get(o.to) ?? [])), ...specs].slice(0, rules.specialists.maxPerArmy));
           plan.armySpecs.set(o.from, []);
           plan.arrived.add(o.to);
+          plan.arriving.set(o.to, est.arrives);
           chainAt.set(o.to, chain && plan.hop[i] !== null ? { root: chain.root, hops: plan.hop[i]! } : { root: i, hops: 1 });
           if (est.attack || estimate) plan.estimated.add(o.to);
         } else if (est.attack) {

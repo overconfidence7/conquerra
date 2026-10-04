@@ -60,7 +60,7 @@ export function buildScene(ctx: GameContext, view: PlayerView, queue: readonly O
     targets: showTargets && selected ? moveTargets(ctx, view, selected, plan).map((t) => t.to) : [],
     arrows,
     // Only where an attack should capture (or a hop pushes on from): the plain moves already show on your own markers.
-    arriving: [...plan.captured].filter((t) => plan.arrived.has(t)).map((t) => ({ territory: t, troops: plan.army.get(t) ?? 0 })),
+    arriving: [...plan.captured].map((t) => ({ territory: t, troops: plan.arriving.get(t) ?? 0 })),
     odds: draft && isAttack(view, draft, plan) ? { target: draft.to, odds: oddsFor(ctx, view, plan, draft), estimate: oddsAreEstimate(plan, draft) } : null,
   };
 }
