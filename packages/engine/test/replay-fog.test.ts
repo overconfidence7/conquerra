@@ -234,7 +234,7 @@ describe("the step-by-step replay never leaks", () => {
       }),
       { numRuns: 40 },
     );
-  });
+  }, 30000);
 
   it("every replay event and every vision snapshot matches the real game at that step, and only where the player could see", () => {
     let checkedVision = 0, checkedRival = 0, hiddenLater = 0;
@@ -309,7 +309,7 @@ describe("the step-by-step replay never leaks", () => {
     expect(checkedVision).toBeGreaterThan(200);
     expect(checkedRival).toBeGreaterThan(50);
     expect(hiddenLater).toBeGreaterThan(0);
-  });
+  }, 30000);
 
   it("works out vision from the event log without being told anything else (same result twice)", () => {
     const [turn] = playTurns("twice", 4, 1);

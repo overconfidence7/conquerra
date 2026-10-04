@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M2 is done. M3 (depth and balance, sessions 8–14) starts with session 8: the fog lifts during the replay, and smarter bots.**
+**Phase: M3 (depth and balance, sessions 8–14). Session 8 is done: the fog lifts during the replay, and the smarter Captain bot is the default. Next: session 9, the map lab and art test bench.**
 
-Claude Code sessions completed: **7** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
+Claude Code sessions completed: **8** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
 ---
 
@@ -288,3 +288,17 @@ Claude Code sessions completed: **7** (a new orchestrator prompt is due after se
   - **The map builder is for players from the start** (not just Nate). That means saving, sharing and playing each other's maps, with automatic fairness checks. It still comes after online play.
 - **M3 grows by one session:** 8 the fog lifts during the replay, plus smarter bots · 9 the map lab · 10 generals and the Fallen · 11 Spoils and Fate decks · 12 diplomacy · 13 spies and culture unlocks · 14 balance pass.
 - Next prompt: `docs/prompts/claude-code-session-08.md` (run it locally).
+
+### Oct 4: Claude Code session 8 (M3 start: the fog lifts during the replay, smarter bots)
+- **The fog lifts during the replay.** What you can see is now worked out step by step through the turn. Take a territory and the fog fades off the land around it right then, so you can watch a chain push into land you couldn't see. Lose one and the land around it fogs over from that moment. Everything you saw along the way goes into your "last seen" memory ("Seen last turn" on the next turn).
+  - **The replay rule, narrowed:** someone else's action shows in full only if you could see its land *at the moment it happened*. Land that only came into view later in the turn doesn't count any more (the old rule used "visible at the start or end of the turn"), so a few things that used to show now don't.
+  - It's worked out from the turn's event log, the record the server will keep in M4. A test checks every replay event and every revealed territory against the real game at that moment.
+  - On screen: the fog fades in about a third of a second, the replay ends exactly on the new turn's map, the camera follows a chain off screen (and your own battles beat a fogged pulse for its attention), and the turn report has "What came out of the fog".
+  - Turn speed, measured back to back: 0.22 → 0.30 ms on average at 4 players, 0.53 → 0.67 ms at 10. Still well under a millisecond.
+- **Captain bot, the new default** (Lobby → Bots: Recruit (easy) / Captain). It plays only from its own view and holds passes cheaply, gathers a real army before breaking through, lands where the far side is weak, finishes weakened rivals (one spearhead in the endgame), defends its capital, and chains on into the fog. The full list is in `docs/rules-reference.md` §13.
+  - It wins **37%** of games against three Recruits (fair: 25%) and **77%** head to head.
+  - All-Captain games: **4 players 24.0 turns, 6 players 25.0** (both on target now; were 24.9 and 26.0). 2 players: 22.3. 10 players got longer: 36 → 40.
+  - **Runaways got more common** (one player on half the map by turn 10: 45% → 55% at 4 players, 27% → 46% at 6). No rules changed; options for Nate are in `docs/sim-results-m3-bots.md`.
+  - Bots take about 3.5 ms a turn for nine Captains at 10 players (worst 27 ms, on a laptop running slow).
+- **Desktop site tip:** if Chrome's Desktop site is on (a phone drawing a page much wider than its screen), a one-line tip in the lobby and the game says how to turn it off. You can dismiss it, and the phone remembers.
+- 269 automated tests pass (29 new). Screenshots: `docs/art/screens/ui-replay-fog-1.png`, `-2.png`, `-3.png`, `ui-replay-fog-phone-2.png`, `ui-lobby-bots.png`, `ui-desktop-site-tip.png`.

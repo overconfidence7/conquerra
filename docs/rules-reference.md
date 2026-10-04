@@ -1,4 +1,4 @@
-# Conquerra Rules Reference (Milestone 2, session 7)
+# Conquerra Rules Reference (Milestone 3, session 8)
 
 *A 10-minute read. This is how the engine actually plays today. Numbers are the current balance settings from `packages/content/data/rules.json`; they will change as we tune.*
 
@@ -14,7 +14,7 @@
 - Each player starts with a **capital**, **12 troops** there, **20 gold**, and their **Leader**.
 - Capitals come from the map's **fair layout** for that many players: every capital is about as far from its nearest rival as the others, has land around it worth about the same, and stands on plains (see §12).
 - Every other territory starts neutral with **1 troop**.
-- The host also sets: the **turn timer** (see §3), an optional **turn limit**, the **luck level** (30% by default), and **fog** (on by default).
+- The host also sets: the **turn timer** (see §3), an optional **turn limit**, the **luck level** (30% by default), **fog** (on by default), and how the **bots** play: **Captain** (the default) or **Recruit** (easy).
 
 ## 3. A turn
 1. **Orders (the timer runs).** Everyone writes as many orders as they like, in secret.
@@ -33,8 +33,9 @@
 **The replay**
 - After Lock in, the turn plays out on the map in the order it happened: armies march along their arrows, each battle shows a short clash and then the result (who holds the land, and the losses on each side), captured land changes colour, and recruits and buildings pop in.
 - A short pop-up names the big moments ("Gules captures Oakcrest"). Something in the fog shows only as a soft pulse on its province and "A battle in Northreach", with no names and no numbers.
+- **The fog lifts as you go:** when your army takes a territory, the fog fades off the land around it right then, so you can watch a chain push into land you couldn't see. Land you lose fogs over from that moment (see §11).
 - A typical turn takes about 10–20 seconds; very busy turns are sped up. **Skip** jumps to the end. There's no pause, play or speed control (decided).
-- Then the **turn report** lists it all in words: your gains and losses first, then what you saw, then what came out of the fog. **Watch again** replays the turn.
+- Then the **turn report** lists it all in words: your gains and losses first, then what you saw, then **what came out of the fog** (rival armies, capitals and Leaders you spotted during the turn, and fighting you couldn't see). **Watch again** replays the turn from the fog you started with.
 
 **Leader timing tricks** (only while your Leader is alive):
 - **Seize the Initiative**: one order goes before everyone else's. Then it rests for 3 turns.
@@ -161,18 +162,27 @@ Engineers make any of these ready immediately. A building under construction giv
 - Other players' gold is always hidden.
 - **You can see a capital when you can see its land:** the map labels it "Capital".
 - **Last seen:** land you saw before but can't see now shows what you **last saw** there: the owner, troops and building, marked **"?"** with its age ("seen 2 turns ago"). Land you've never seen says "Unexplored".
-  - Your memory updates at the end of every turn from what you can see then (and when the game starts).
+  - Your memory updates at the end of every turn from what you can see then (and when the game starts), and **also from everything you saw during the turn** (see "The fog lifts during the replay" below). Land you only saw part-way through a turn reads "Seen last turn" on the next one.
   - **Land you lose:** you see it fall, so your memory records who took it and with how many, even if it's deep in the fog afterwards.
   - It only ever holds what you really saw, so it goes **stale**: the enemy may have moved on since.
   - Each player's memory is kept in the game itself, so it's the same on every device. In M3, a spy who is **fooled** brings back false intel that goes into this same memory, and looks just like the real thing.
-- **The replay follows the same rule:**
+- **The fog lifts during the replay.** What you can see is worked out step by step through the turn, not just at the start and the end:
+  - When the turn starts, you see exactly what you saw while planning.
+  - Each time something changes what you can see (you take land, you lose land, a watchtower is finished, scouts move), your vision is worked out again from the game as it is at that moment.
+  - **Take a territory** and from that moment you see it and its neighbours in full detail as they are then: owner, troops, specialists, building, culture, Leader. So a chain pushing into the fog reveals the land hop by hop.
+  - **Lose a territory** and from that moment land you can no longer see fogs over, showing what you last saw.
+  - Everything you saw along the way goes into your "last seen" memory, as it was when you saw it. That includes land you took and lost again in the same turn.
+  - On screen, the fog fades off newly seen land (about a third of a second) and its troop numbers and borders appear. Land that fogs over takes the "last seen" look. By the end of the replay the map is exactly your view for the new turn.
+- **What the replay shows:**
   - You always see your own actions and every battle you were part of.
-  - Anything touching a territory you could see (at the start or end of the turn) shows in full.
+  - Anyone else's action shows in full **if you could see its territory at the moment it happened** (just before or just after it).
+  - **Changed in session 8:** land that only came into view *later* in the turn doesn't count. If a rival moved troops on a hill you only spotted three hops into your chain, you don't see the move; you just see the hill as it is when your army gets there. (The old rule showed anything on land you could see at the start or the end of the turn.)
   - A Leader coming back shows to its owner, and to anyone who can see where it reappears.
   - A battle in the fog shows only as a **surface detail**: "a battle in Northreach." No names, no numbers. The same goes for a Leader falling in the fog.
   - Quiet things in the fog (moves, recruiting, building, culture) don't show at all.
   - Eliminations and the end of the game are announced to everyone.
-- Eliminated players see the whole board. When you're knocked out you choose **Watch to the end** (the bots play on; you see every turn's report and can skip ahead) or **See the result**.
+- Eliminated players see the whole board. (In the turn you're knocked out, the fog lifts off everything as that turn's replay starts.)
+- With fog off, none of this applies: everyone sees everything, all the time. When you're knocked out you choose **Watch to the end** (the bots play on; you see every turn's report and can skip ahead) or **See the result**.
 
 ## 12. The map: water, mountains, passes, sea lanes and choke points
 Maps are made by the **map maker** (same seed, same map) and look like a real place, not a grid.
@@ -189,6 +199,18 @@ Maps are made by the **map maker** (same seed, same map) and look like a real pl
 - **Our test maps** (both made by the map maker):
   - **Embervale**: 40 territories, 8 provinces, suits 4–6 players. 2 passes, 3 sea lanes.
   - **Greatmarch**: 80 territories, 20 provinces, suits 8–10 players. 7 passes, 3 sea lanes.
+
+## 13. Bots
+Bots play by exactly the same rules as people, and only from their own view (including their "last seen" memory). They never peek.
+- **Recruit (easy):** grabs the most valuable land it can probably take, piles troops at the front and rarely plans ahead.
+- **Captain (the default):** a short list of priorities:
+  1. **Holds choke points cheaply.** On a pass or sea-lane landing facing a rival, it keeps just enough troops to hold (the crossing penalty does the rest) and builds a fort there when it can afford one.
+  2. **Breaks through with force.** It only attacks through a pass or across a sea lane with a real army (half as much again as the attack needs), gathering at the crossing until it has one, and brings siege for a fort when it can hire it. Once through, it chains on.
+  3. **Lands from the sea** where the far side is weak.
+  4. **Finishes what it starts.** It goes after a rival with only a few territories left. With 3 or fewer players left it concentrates on the weakest rival it borders: one spearhead front (where that rival is weakest, nearer its capital), with the rest of its front line holding and sending spare troops there.
+  5. **Defends its capital** when a big army stands next to it: it keeps enough there to hold, recruits there and builds a fort.
+  6. **Chains like a person.** It hops on when the army that should arrive is comfortably more (1.25 times) than the next hop needs, into the fog too, on its best guess of what's there. Every hop keeps "Only if still stronger", so a bad guess just stops the chain.
+- If a realm loses its capital and has no barracks, it builds one straight away.
 
 ## Not in yet (later milestones)
 Spies, generals and standing instructions, Spoils and Fate decks, diplomacy, the Fallen, factions.

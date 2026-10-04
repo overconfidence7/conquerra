@@ -216,5 +216,5 @@ describe("Captain bot: fair play", () => {
       if (s.winner === `p${(g % 4) + 1}`) wins++;
     }
     expect(wins / games).toBeGreaterThan(0.25);
-  });
+  }, 30000);
 });

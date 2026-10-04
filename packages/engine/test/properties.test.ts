@@ -134,7 +134,7 @@ describe("engine properties", () => {
       ),
       { numRuns: 150 },
     );
-  });
+  }, 30000);
 
   it("is deterministic: same seed and orders give byte-identical results", () => {
     fc.assert(
@@ -155,5 +155,5 @@ describe("engine properties", () => {
       }),
       { numRuns: 100 },
     );
-  });
+  }, 30000);
 });

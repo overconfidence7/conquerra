@@ -123,14 +123,23 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
   /** The focused rival's capital, if we've seen it, and how far every territory is from it. */
   const focusCapital = focus ? (idx.ids.find((t) => seen(t)?.capitalOf === focus) ?? null) : null;
   const toFocusCapital = focusCapital ? distancesFrom(idx, focusCapital) : null;
+  /** How hard the focused rival's armies next to `t` are to beat (troops x terrain x fort). */
+  const opposition = (t: TerritoryId) =>
+    idx.neighbors.get(t)!.reduce((m, x) => {
+      if (rivalAt(x) !== focus) return m;
+      const v = seen(x)!;
+      return Math.max(m, v.troops * rules.terrain[idx.byId.get(x)!.terrain].defenseMult * (v.building === "fort" ? rules.buildings.fort.defenseMult : 1));
+    }, 0);
   /**
-   * In the endgame, one spearhead: the front facing the focused rival that's nearest its capital (or, not knowing
-   * where that is, the one with the biggest army). Reinforcements go there instead of being spread along every front.
+   * In the endgame, one spearhead: the front facing the focused rival where its armies are weakest, nearer its
+   * capital breaking ties. Reinforcements go there instead of being spread along every front (and never pile up in
+   * front of a fort they can't break).
    */
   const spearhead = endgame && focus
     ? (frontier
         .filter((t) => idx.neighbors.get(t)!.some((x) => rivalAt(x) === focus))
-        .sort((a, b) => (toFocusCapital ? toFocusCapital.get(a)! - toFocusCapital.get(b)! : 0) || troopsAt(b) - troopsAt(a) || (a < b ? -1 : 1))[0] ?? null)
+        .map((t) => ({ t, score: opposition(t) + 3 * (toFocusCapital?.get(t) ?? 0) }))
+        .sort((a, b) => a.score - b.score || (a.t < b.t ? -1 : 1))[0]?.t ?? null)
     : null;
 
   /** Troops needed in `t` so that no rival army we can see next to it is likely to take it (crossings, terrain, fort and Leaders count). */
@@ -218,7 +227,8 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
     gold -= rules.buildings.barracks.cost;
   }
 
-  // Recruit at the threatened capital, else the recruiting site nearest the front we care about.
+  // Recruit at the threatened capital, else at the site nearest the front we care about.
+  // (Recruiting next to the endgame spearhead instead was tried: it made games about 4 turns longer.)
   const site = capThreatened
     ? capital!
     : [...recruitSites].sort((a, b) => Number(isFrontier(b)) - Number(isFrontier(a)) || frontRank(b) - frontRank(a) || (a < b ? -1 : 1))[0];
@@ -447,9 +457,16 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
   let reserveUsed = false;
   for (const t of mine) {
     const avail = free.get(t)!;
-    if (avail <= 0 || attackedFrom.has(t) || goals.has(t)) continue;
-    // Interior troops, and the spare troops of a choke point we hold, go to the best goal they can reach.
-    if (isFrontier(t) && !chokeHolder(t)) continue;
+    if (avail <= 0 || attackedFrom.has(t) || (goals.has(t) && t !== spearhead && !spearhead) || t === spearhead) continue;
+    // Interior troops, and the spare troops of a choke point we hold, go to the best goal they can reach. In the
+    // endgame the front line also shifts sideways: a front stack keeps what it needs to hold its stretch and sends
+    // the rest to the spearhead (otherwise two big realms just stare at each other along a long front).
+    let send = avail;
+    if (isFrontier(t) && !chokeHolder(t)) {
+      if (!spearhead) continue;
+      send = Math.min(avail, troopsAt(t) + (t === site ? recruited : 0) - holdNeed(t));
+      if (send <= 0) continue;
+    }
     let best: { g: TerritoryId; score: number; d: number } | null = null;
     for (const [g, w] of goals) {
       const d = distFrom.get(g)!.get(t);
@@ -464,10 +481,10 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
     // One interior stack next to a threatened front waits in reserve and only goes if that front is hit.
     if (!reserveUsed && best.d === 1 && !goals.has(capital ?? "") && biggestEnemyNear(step) > troopsAt(step) && me.leader.alive && me.cooldowns.lie === 0) {
       reserveUsed = true;
-      orders.push({ id: id(), kind: "move", from: t, to: step, troops: avail, preset: { id: "reinforceIfHit" }, timing: "last" });
+      orders.push({ id: id(), kind: "move", from: t, to: step, troops: send, preset: { id: "reinforceIfHit" }, timing: "last" });
       continue;
     }
-    orders.push({ id: id(), kind: "move", from: t, to: step, troops: avail });
+    orders.push({ id: id(), kind: "move", from: t, to: step, troops: send });
   }
 
   // ---------- Pull back stacks that would be crushed (never the capital or a choke point) ----------
