@@ -1,21 +1,27 @@
 import type { SpecialistType } from "@conquerra/content";
-import { indexMap, type GameContext, type Order, type PlayerView, type TerritoryId } from "@conquerra/engine";
+import { amountLabel, indexMap, type GameContext, type Order, type PlayerView, type TerritoryId } from "@conquerra/engine";
 import { useEffect, useState } from "react";
 import {
   affordableTroops,
+  amountChoices,
+  amountPill,
   buildOptions,
   hireOptions,
   isAttack,
+  isHop,
   isMine,
   isRecruitSite,
   justEnough,
   leaderCanJoin,
   nextCultureCost,
   ODDS_LABEL,
+  oddsAreEstimate,
   oddsFor,
   presetsFor,
+  sameAmount,
   seen,
   timingAvailable,
+  troopsOf,
   type MoveDraft,
   type QueuePlan,
 } from "../logic/orders";
@@ -70,17 +76,17 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
   const { updateDraft, addDraft, clearSelection, select } = useGame();
   const [more, setMore] = useState(false);
   const n = namer(ctx, view);
-  const attack = isAttack(view, draft);
+  const attack = isAttack(view, draft, plan);
   const max = plan.free.get(draft.from) ?? 0;
-  const odds = attack ? oddsFor(ctx, view, draft) : null;
+  const troops = troopsOf(ctx, view, plan, draft);
+  const estimate = oddsAreEstimate(plan, draft);
+  const odds = attack ? oddsFor(ctx, view, plan, draft, troops) : null;
   const target = seen(view, draft.to);
   const enough = attack ? justEnough(ctx, view, plan, draft) : null;
   const crossing = indexMap(ctx.map).border(draft.via ?? draft.from, draft.to) ?? "normal";
-  const quick = [
-    ...(enough !== null ? [{ label: "Just enough", value: enough }] : []),
-    { label: "Half", value: Math.max(1, Math.ceil(max / 2)) },
-    { label: "All", value: max },
-  ];
+  // Just enough only when it would do; the exact number lives under More.
+  const chips = amountChoices(attack).filter((a) => a !== "enough" || enough !== null);
+  const exact = typeof draft.amount === "number";
   return (
     <div className="panel">
       <div className="panel-head">
@@ -96,29 +102,34 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
         {draft.via ? ` via ${n.place(draft.via)} (cavalry)` : ""}
         {attack && target ? ` · defenders: ${target.troops}${target.owner ? ` (${n.who(target.owner)})` : " (neutral)"}` : ""}
       </p>
+      {isHop(plan, draft.from) && <p className="muted small">A chained hop: the army that should arrive in {n.place(draft.from)} pushes on, in your next slot after it gets there.</p>}
+      {draft.raise && <p className="arriving">Your attack on {n.place(draft.from)} will send All instead of Just enough, so there's an army to push on with.</p>}
 
-      <div className="row">
-        <span>Troops</span>
-        <Stepper value={draft.troops} min={max > 0 ? 1 : 0} max={max} onChange={(troops) => updateDraft({ troops })} />
-        <input
-          type="range"
-          min={max > 0 ? 1 : 0}
-          max={max}
-          value={draft.troops}
-          onChange={(e) => updateDraft({ troops: Number(e.target.value) })}
-          aria-label="troops"
-        />
+      <div className="row send-row">
+        <span>Send</span>
+        <span className="pill" aria-label="troops to send">{amountPill(troops, draft.amount, estimate)}</span>
       </div>
-      {max > 1 && (
-        <div className="chips">
-          {quick.map((q) => (
-            <button key={q.label} className={`chip ${draft.troops === q.value ? "on" : ""}`} onClick={() => updateDraft({ troops: q.value })}>
-              {q.label} ({q.value})
+      {max > 0 && (
+        <div className="chips share-chips" role="radiogroup" aria-label="How many to send">
+          {chips.map((a) => (
+            <button key={amountLabel(a)} role="radio" aria-checked={sameAmount(draft.amount, a)} className={`chip ${sameAmount(draft.amount, a) ? "on" : ""}`} onClick={() => updateDraft({ amount: a })}>
+              {amountLabel(a)}
             </button>
           ))}
         </div>
       )}
-      {odds && <div className={`odds odds-${odds}`}>Odds: {ODDS_LABEL[odds]}</div>}
+      {(more || exact) && max > 0 && (
+        <div className="row">
+          <span className="muted small">Exactly</span>
+          <Stepper value={exact ? Math.min(Number(draft.amount), max) : troops} min={1} max={max} onChange={(v) => updateDraft({ amount: v })} />
+        </div>
+      )}
+      {odds && (
+        <div className={`odds odds-${odds}`}>
+          Odds{estimate ? " (estimate)" : ""}: {ODDS_LABEL[odds]}
+        </div>
+      )}
+      {odds && estimate && <p className="muted small">Its army depends on how the battle before it goes.</p>}
       {attack && crossing !== "normal" && (
         <p className="muted small">
           {CROSSING[crossing]}: attack ×{ctx.rules.borders[crossing].attackMult}
@@ -127,7 +138,7 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
       {max === 0 && <p className="warn">No troops left to send from here this turn.</p>}
 
       <div className="chips">
-        {presetsFor(view, draft).filter((p) => more || MAIN_PRESETS.has(p.id) || draft.preset === p.id).map((p) => (
+        {presetsFor(view, draft, plan).filter((p) => more || MAIN_PRESETS.has(p.id) || draft.preset === p.id).map((p) => (
           <button
             key={p.id}
             className={`chip ${draft.preset === p.id ? "on" : ""}`}
@@ -170,11 +181,11 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
         </div>
       )}
 
-      {view.me.leader.alive && !more && !draft.withLeader && !draft.timing && <p className="muted small">More… has the Leader and the other backup plans.</p>}
-      <button className="primary wide" disabled={draft.troops <= 0} onClick={addDraft}>
+      {!more && !draft.withLeader && !draft.timing && <p className="muted small">More… has an exact number{view.me.leader.alive ? ", the Leader" : ""} and the other backup plans.</p>}
+      <button className="primary wide" disabled={troops <= 0} onClick={addDraft}>
         Add {attack ? "attack" : "move"}
       </button>
-      {draft.preset && <p className="muted small">{presetsFor(view, draft).find((p) => p.id === draft.preset)?.description}</p>}
+      {draft.preset && <p className="muted small">{presetsFor(view, draft, plan).find((p) => p.id === draft.preset)?.description}</p>}
       {isMine(view, draft.to) && (
         <button className="link small" onClick={() => select(draft.to)}>
           Just select {n.place(draft.to)} instead
@@ -213,6 +224,11 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
       <p className="muted small">
         {province.name} (+{province.bonus} if you hold it all) · {def.terrain}, defense ×{terrain.defenseMult}, +{terrain.income} gold
       </p>
+      {plan.captured.has(selected) && (
+        <p className="arriving">
+          Your attack should take this: about {plan.army.get(selected) ?? 0} arrive. Tap a neighbour to push on from here.
+        </p>
+      )}
     </>
   );
 

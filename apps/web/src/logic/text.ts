@@ -1,5 +1,5 @@
 import type { BuildingType, SpecialistType, Terrain } from "@conquerra/content";
-import { indexMap, PRESETS, type ArmySnapshot, type GameContext, type Order, type PlayerView, type ReplayEvent } from "@conquerra/engine";
+import { amountLabel, indexMap, PRESETS, type ArmySnapshot, type GameContext, type Order, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 
 export const SPECIALIST_ICON: Record<SpecialistType, string> = { cavalry: "🐎", siege: "🎯", scouts: "🔭", engineers: "🔨", healers: "⚕️" };
 export const SPECIALIST_NAME: Record<SpecialistType, string> = { cavalry: "Cavalry", siege: "Siege", scouts: "Scouts", engineers: "Engineers", healers: "Healers" };
@@ -41,7 +41,8 @@ const army = (a: ArmySnapshot) =>
 const presetName = (id: string) => PRESETS.find((p) => p.id === id)?.name ?? id;
 
 /** One line for an order in the queue. */
-export function describeOrder(o: Order, n: Namer, attack: boolean): string {
+/** `sending`: what a move sends, e.g. "about 9, 3/4" (defaults to its share, e.g. "3/4"). */
+export function describeOrder(o: Order, n: Namer, attack: boolean, sending?: string): string {
   switch (o.kind) {
     case "recruit":
       return `Recruit ${o.count} at ${n.place(o.territory)}`;
@@ -56,7 +57,7 @@ export function describeOrder(o: Order, n: Namer, attack: boolean): string {
     case "advance":
       return `Advance from ${n.place(o.from)}`;
     case "move":
-      return `${attack ? "Attack" : "Move"} ${n.place(o.to)} from ${n.place(o.from)}${o.via ? ` via ${n.place(o.via)}` : ""} with ${o.troops}`;
+      return `${attack ? "Attack" : "Move"} ${n.place(o.to)} from ${n.place(o.from)}${o.via ? ` via ${n.place(o.via)}` : ""} with ${sending ?? amountLabel(o.troops)}`;
   }
 }
 

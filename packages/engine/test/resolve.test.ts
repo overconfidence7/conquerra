@@ -110,14 +110,14 @@ describe("turn resolution", () => {
     expect(find(events, "built")).toBeTruthy();
   });
 
-  it("troops that moved can't move again the same turn", () => {
+  it("troops that moved in can go on in a later order (chained moves)", () => {
     const ctx = ctxWith();
     const s = lineGame(ctx);
     board(s, { a: ["p1", 10], b: ["p1", 2], c: ["p1", 1], e: ["p2", 3] });
     const { state } = resolveTurn(ctx, s, { p1: [mv("a", "b", "all"), mv("b", "c", "all")] });
-    // b's own 2 fresh soldiers go on to c (the 9 who just arrived stay and count as the garrison).
-    expect(state.territories.b!.troops).toBe(9);
-    expect(state.territories.c!.troops).toBe(3);
+    // The 9 who arrived at b, and b's own spare soldier, all go on to c.
+    expect(state.territories.b!.troops).toBe(1);
+    expect(state.territories.c!.troops).toBe(11);
   });
 
   it("Seize the Initiative goes before everyone, then goes on cooldown", () => {

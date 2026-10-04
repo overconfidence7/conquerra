@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { SPECIALIST_TYPES } from "@conquerra/content";
-import { createGame, indexMap, replayFor, resolveTurn, viewFor, type GameState, type Order, type OrdersByPlayer, type PresetId } from "../src";
+import { createGame, indexMap, replayFor, resolveTurn, viewFor, type GameState, type Order, type OrdersByPlayer, type PresetId, type TroopAmount } from "../src";
 import { embervaleCtx } from "./helpers";
 
 const ctx = embervaleCtx();
@@ -20,7 +20,12 @@ const orderArb: fc.Arbitrary<Order> = fc.oneof(
     from: terr,
     to: terr,
     via: fc.option(terr, { nil: undefined }),
-    troops: fc.oneof(fc.constant("all" as const), fc.integer({ min: -5, max: 50 })),
+    troops: fc.oneof(
+      fc.constant("all" as const),
+      fc.constant("enough" as const),
+      fc.integer({ min: -5, max: 50 }),
+      fc.constantFrom(0.25, 0.5, 0.75, 7, -1, Number.NaN).map((share) => ({ share }) as TroopAmount),
+    ),
     specialists: fc.option(fc.oneof(fc.constant("all" as const), fc.array(spec, { maxLength: 3 })), { nil: undefined }),
     withLeader: fc.boolean(),
     preset,
@@ -41,18 +46,26 @@ const orderArb: fc.Arbitrary<Order> = fc.oneof(
 /** Smarter random orders: moves from territories the player actually holds to neighbors, plus spending. */
 function plausibleOrders(s: GameState, pid: string, picks: number[]): Order[] {
   const mine = ids.filter((id) => s.territories[id]!.owner === pid);
+  const amounts: TroopAmount[] = ["all", "enough", { share: 0.75 }, { share: 0.5 }, { share: 0.25 }, 3];
+  let prev: Order | null = null;
   return picks.map((n, i): Order => {
-    const from = mine[n % Math.max(1, mine.length)] ?? ids[0]!;
+    // Sometimes chain: push on from where the previous move went.
+    const from = prev?.kind === "move" && n % 5 === 0 ? prev.to : (mine[n % Math.max(1, mine.length)] ?? ids[0]!);
     const nbrs = idx.neighbors.get(from)!;
     const id = `${pid}-${i}`;
+    let o: Order;
     switch (n % 6) {
       case 0:
-        return { id, kind: "hire", territory: from, specialist: SPECIALIST_TYPES[n % SPECIALIST_TYPES.length]! };
+        o = { id, kind: "hire", territory: from, specialist: SPECIALIST_TYPES[n % SPECIALIST_TYPES.length]! };
+        break;
       case 1:
-        return { id, kind: "invest", territory: from };
+        o = { id, kind: "invest", territory: from };
+        break;
       default:
-        return { id, kind: "move", from, to: nbrs[n % nbrs.length]!, troops: "all", withLeader: n % 3 === 0, ...(n % 4 === 0 ? { preset: { id: presetIds[n % presetIds.length]! } } : {}) };
+        o = { id, kind: "move", from, to: nbrs[n % nbrs.length]!, troops: amounts[(n >> 2) % amounts.length]!, withLeader: n % 3 === 0, ...(n % 4 === 0 ? { preset: { id: presetIds[n % presetIds.length]! } } : {}) };
     }
+    prev = o;
+    return o;
   });
 }
 

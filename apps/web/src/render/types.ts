@@ -12,9 +12,16 @@ export interface OrderArrow {
   via?: TerritoryId;
   /** Position in the order list (0 for the draft). */
   n: number;
-  troops: number | "all";
+  /** For a chain of hops (an army pushing on from where it arrived): this arrow's hop number. Null otherwise. */
+  hop: number | null;
   attack: boolean;
   draft: boolean;
+}
+
+/** A faint "arriving" marker where a queued order should land an army (the size is a guess until the turn plays). */
+export interface Arrival {
+  territory: TerritoryId;
+  troops: number;
 }
 
 /** Everything the map shows that changes during a game. The UI builds this; the renderer just draws it. */
@@ -24,8 +31,10 @@ export interface MapScene {
   /** Territories the selected army can reach (highlighted). */
   targets: TerritoryId[];
   arrows: OrderArrow[];
-  /** The odds badge (four pips) on the target of the attack being drafted. */
-  odds: { target: TerritoryId; odds: Odds } | null;
+  /** Where queued orders should land armies this turn. */
+  arriving: Arrival[];
+  /** The odds badge (four pips) on the target of the attack being drafted. An estimate when its army depends on an earlier battle. */
+  odds: { target: TerritoryId; odds: Odds; estimate: boolean } | null;
 }
 
 export interface MapEvents {

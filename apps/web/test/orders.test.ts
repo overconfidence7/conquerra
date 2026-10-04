@@ -3,17 +3,21 @@ import { createGame, viewFor, type GameContext, type GameState, type Order, type
 import { describe, expect, it } from "vitest";
 import {
   affordableTroops,
+  amountPill,
+  chainTip,
   defaultPreset,
   draftToOrder,
   justEnough,
   moveTargets,
   newDraft,
+  oddsAreEstimate,
   oddsFor,
   planQueue,
   removeOrder,
   shiftOrder,
   tapTerritory,
   timingAvailable,
+  troopsOf,
   type MoveDraft,
 } from "../src/logic/orders";
 import { namer, narrateTurn } from "../src/logic/text";
@@ -89,22 +93,85 @@ describe("gold left after queued orders", () => {
   });
 });
 
-describe("default troop counts", () => {
-  it("a new move sends all but the 1-troop garrison, including troops recruited earlier in the queue", () => {
-    const view = viewOf(game({ a: ["you", 12], e: ["bot", 10] }, 20));
-    expect(newDraft(view, planQueue(ctx, view, []), { from: "a", to: "b" }).troops).toBe(11);
+describe("default amounts", () => {
+  it("a move sends All: everyone but the 1-troop garrison, including troops recruited earlier in the queue", () => {
+    const view = viewOf(game({ a: ["you", 12], b: ["you", 1], e: ["bot", 10] }, 20));
+    const d = newDraft(ctx, view, planQueue(ctx, view, []), { from: "a", to: "b" });
+    expect(d.amount).toBe("all");
+    expect(troopsOf(ctx, view, planQueue(ctx, view, []), d)).toBe(11);
     const plan = planQueue(ctx, view, [o({ kind: "recruit", territory: "a", count: 10 })]);
-    expect(newDraft(view, plan, { from: "a", to: "b" }).troops).toBe(21);
+    expect(troopsOf(ctx, view, plan, d)).toBe(21);
   });
 
-  it("troops already sent by earlier orders aren't offered again", () => {
+  it("a first attack sends Just enough (All if even that wouldn't do); a chained hop sends All", () => {
+    const view = viewOf(game({ a: ["you", 30], b: [null, 2], c: [null, 2], e: ["bot", 10] }));
+    const plan = planQueue(ctx, view, []);
+    expect(newDraft(ctx, view, plan, { from: "a", to: "b" }).amount).toBe("enough");
+    const weak = viewOf(game({ a: ["you", 3], b: ["bot", 10], e: ["bot", 10] }));
+    expect(newDraft(ctx, weak, planQueue(ctx, weak, []), { from: "a", to: "b" }).amount).toBe("all");
+    const chained = planQueue(ctx, view, [o({ kind: "move", from: "a", to: "b", troops: "all" })]);
+    expect(newDraft(ctx, view, chained, { from: "b", to: "c" }).amount).toBe("all");
+  });
+
+  it("troops already sent aren't offered again; an army that moved in can go on", () => {
     const view = viewOf(game({ a: ["you", 12], b: ["you", 2], e: ["bot", 10] }));
     const plan = planQueue(ctx, view, [o({ kind: "move", from: "a", to: "b", troops: 7 })]);
     expect(plan.free.get("a")).toBe(4);
-    // Troops that moved in can't move again this turn.
-    expect(plan.free.get("b")).toBe(1);
+    expect(plan.free.get("b")).toBe(8);
     const all = planQueue(ctx, view, [o({ kind: "retreat", from: "a" })]);
     expect(all.free.get("a")).toBe(0);
+  });
+
+  it("a share is of the army there when the order plays; the pill says when it's an estimate", () => {
+    const view = viewOf(game({ a: ["you", 13], b: [null, 1], e: ["bot", 10] }));
+    const d: MoveDraft = { from: "a", to: "b", amount: { share: 0.75 }, preset: null, withLeader: false, timing: null };
+    expect(troopsOf(ctx, view, planQueue(ctx, view, []), d)).toBe(10);
+    expect(amountPill(10, d.amount, false)).toBe("10, 3/4");
+    expect(amountPill(9, { share: 0.75 }, true)).toBe("about 9, 3/4");
+    expect(amountPill(5, 5, false)).toBe("5");
+  });
+});
+
+describe("planning a chain", () => {
+  const view = viewOf(game({ a: ["you", 20], b: [null, 1], c: [null, 1], d: [null, 1], e: ["bot", 10] }));
+  const q = [o({ kind: "move", from: "a", to: "b", troops: "all" }), o({ kind: "move", from: "b", to: "c", troops: "all" }), o({ kind: "move", from: "c", to: "d", troops: "all" })];
+  it("an attack that should capture makes its target yours for later orders, with the expected army", () => {
+    const plan = planQueue(ctx, view, q.slice(0, 1));
+    expect(plan.captured.has("b")).toBe(true);
+    // 19 go; about 1 falls taking a 1-troop neutral.
+    expect(plan.army.get("b")).toBe(18);
+    expect(plan.free.get("b")).toBe(17);
+    expect(oddsAreEstimate(plan, { from: "b" })).toBe(true);
+    expect(oddsAreEstimate(plan, { from: "a" })).toBe(false);
+  });
+  it("numbers the hops, leaving 1 behind at every stop", () => {
+    const plan = planQueue(ctx, view, q);
+    expect(plan.hop).toEqual([1, 2, 3]);
+    // c is out of sight at the start of the turn: the plan assumes the hop into it costs nothing.
+    expect(plan.sent).toEqual([19, 17, 16]);
+    for (const t of ["a", "b", "c"]) expect(plan.army.get(t)).toBe(1);
+    expect(chainTip(plan, q, "a")).toBe("d");
+  });
+  it("an attack expected to fail lands nothing, so no hop can launch from there", () => {
+    const strong = viewOf(game({ a: ["you", 6], b: ["bot", 30], e: ["bot", 10] }));
+    const plan = planQueue(ctx, strong, [o({ kind: "move", from: "a", to: "b", troops: "all" })]);
+    expect(plan.captured.has("b")).toBe(false);
+    expect(moveTargets(ctx, strong, "b", plan)).toEqual([]);
+  });
+  it("tap where the army is heading to select it, then a neighbour; or tap the neighbour straight away", () => {
+    const first = q.slice(0, 1);
+    const plan = planQueue(ctx, view, first);
+    expect(tapTerritory(ctx, view, plan, "a", "b", first)).toEqual({ kind: "select", territory: "b" });
+    expect(tapTerritory(ctx, view, plan, "b", "c", first)).toMatchObject({ kind: "draft", draft: { from: "b", to: "c", amount: "all", preset: "onlyIfStronger" } });
+    expect(tapTerritory(ctx, view, plan, "a", "c", first)).toMatchObject({ kind: "draft", draft: { from: "b", to: "c" } });
+  });
+  it("a hop into land you can't see shows no numbers: the odds say 'Can't see'", () => {
+    const plan = planQueue(ctx, view, q.slice(0, 2));
+    // d is three steps from your land at the start of the turn: hidden.
+    expect(view.territories.d!.detail).not.toBe("full");
+    const hop: MoveDraft = { from: "c", to: "d", amount: "all", preset: null, withLeader: false, timing: null };
+    expect(oddsFor(ctx, view, plan, hop)).toBe("unknown");
+    expect(justEnough(ctx, view, plan, hop)).toBeNull();
   });
 });
 
@@ -115,7 +182,7 @@ describe("tapping the map", () => {
   it("tap your territory to select it, then a neighbour to draft a move or attack", () => {
     expect(tapTerritory(ctx, view, plan, null, "a")).toEqual({ kind: "select", territory: "a" });
     const t = tapTerritory(ctx, view, plan, "a", "b");
-    expect(t).toMatchObject({ kind: "draft", draft: { from: "a", to: "b", troops: 11, preset: "onlyIfStronger", withLeader: false, timing: null } });
+    expect(t).toMatchObject({ kind: "draft", draft: { from: "a", to: "b", amount: "enough", preset: "onlyIfStronger", withLeader: false, timing: null } });
   });
   it("attacks start with 'Only if still stronger' switched on; moves into your own land start with no preset", () => {
     const own = game({ a: ["you", 12], b: ["you", 2], e: ["bot", 10] });
@@ -134,6 +201,7 @@ describe("tapping the map", () => {
   });
   it("an army with nothing left to send just changes the selection", () => {
     const spent = planQueue(ctx, view, [o({ kind: "move", from: "a", to: "b", troops: 11 })]);
+    // (b is where the army is heading: tapping it selects it, ready to push on.)
     expect(tapTerritory(ctx, view, spent, "a", "b")).toEqual({ kind: "select", territory: "b" });
   });
   it("cavalry can reach two steps through your own land", () => {
@@ -145,10 +213,10 @@ describe("tapping the map", () => {
 });
 
 describe("drafts become orders", () => {
-  it("carries the preset, the Leader and the timing trick", () => {
-    const d = { from: "a", to: "b", troops: 5, preset: "onlyIfStronger" as const, withLeader: true, timing: "first" as const };
-    expect(draftToOrder(d, "x")).toEqual({ id: "x", kind: "move", from: "a", to: "b", troops: 5, withLeader: true, preset: { id: "onlyIfStronger" }, timing: "first" });
-    expect(draftToOrder({ ...d, preset: null, withLeader: false, timing: null }, "y")).toEqual({ id: "y", kind: "move", from: "a", to: "b", troops: 5 });
+  it("carries the amount, the preset, the Leader and the timing trick", () => {
+    const d: MoveDraft = { from: "a", to: "b", amount: { share: 0.5 }, preset: "onlyIfStronger", withLeader: true, timing: "first" };
+    expect(draftToOrder(d, "x")).toEqual({ id: "x", kind: "move", from: "a", to: "b", troops: { share: 0.5 }, withLeader: true, preset: { id: "onlyIfStronger" }, timing: "first" });
+    expect(draftToOrder({ ...d, amount: 5, preset: null, withLeader: false, timing: null }, "y")).toEqual({ id: "y", kind: "move", from: "a", to: "b", troops: 5 });
   });
   it("Seize the Initiative goes on one order, and only when it's off cooldown", () => {
     const s = game({ a: ["you", 12], e: ["bot", 10] });
@@ -164,18 +232,19 @@ describe("odds badge", () => {
   const s = game({ a: ["you", 30], b: ["bot", 10], e: ["bot", 10] });
   const view = viewOf(s);
   const plan = planQueue(ctx, view, []);
-  const d = newDraft(view, plan, { from: "a", to: "b" });
+  const d: MoveDraft = { ...newDraft(ctx, view, plan, { from: "a", to: "b" }), amount: "all" };
   it("matches the engine's preview", () => {
-    expect(oddsFor(ctx, view, d)).toBe("guaranteed");
-    expect(oddsFor(ctx, view, { ...d, troops: 2 })).toBe("impossible");
-    expect(oddsFor(ctx, view, { ...d, troops: 0 })).toBe("impossible");
+    expect(oddsFor(ctx, view, plan, d)).toBe("guaranteed");
+    expect(oddsFor(ctx, view, plan, { ...d, amount: 2 })).toBe("impossible");
+    expect(oddsFor(ctx, view, plan, { ...d, amount: 0 })).toBe("impossible");
   });
   it("'Just enough' is the smallest army that's likely to win, plus a margin", () => {
     const k = justEnough(ctx, view, plan, d)!;
-    expect(["likely", "guaranteed"]).toContain(oddsFor(ctx, view, { ...d, troops: k }));
+    expect(["likely", "guaranteed"]).toContain(oddsFor(ctx, view, plan, { ...d, amount: k }));
+    expect(troopsOf(ctx, view, plan, { ...d, amount: "enough" })).toBe(k);
     expect(k).toBeLessThan(29);
     const weak = viewOf(game({ a: ["you", 3], b: ["bot", 10], e: ["bot", 10] }));
-    expect(justEnough(ctx, weak, planQueue(ctx, weak, []), { ...d, troops: 2 })).toBeNull();
+    expect(justEnough(ctx, weak, planQueue(ctx, weak, []), d)).toBeNull();
   });
 });
 

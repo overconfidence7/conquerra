@@ -1,9 +1,14 @@
 import type { BuildingType, SpecialistType } from "@conquerra/content";
 import {
+  amountLabel,
+  fewestToTake,
   indexMap,
   investCost,
+  isShare,
   PRESETS,
   previewAttack,
+  SHARES,
+  troopsFor,
   type GameContext,
   type Order,
   type PlayerView,
@@ -11,6 +16,7 @@ import {
   type PresetInfo,
   type TerritoryDetail,
   type TerritoryId,
+  type TroopAmount,
 } from "@conquerra/engine";
 
 /**
@@ -34,8 +40,12 @@ export interface QueuePlan {
   goldLeft: number;
   /** Gold each order spends, in queue order (0 for moves). */
   costs: number[];
-  /** Troops that can still be sent from each of your territories (the 1-troop garrison always stays). */
+  /** Troops that can still be sent from each territory you hold or should hold by then (the 1-troop garrison always stays). */
   free: Map<TerritoryId, number>;
+  /** The army expected in each territory you hold or should hold, after the orders so far. */
+  army: Map<TerritoryId, number>;
+  /** Specialist types expected with each army. */
+  armySpecs: Map<TerritoryId, SpecialistType[]>;
   /** Specialists each of your armies will have after queued hires. */
   specialists: Map<TerritoryId, number>;
   /** Culture level each of your territories reaches after queued raises. */
@@ -44,11 +54,25 @@ export interface QueuePlan {
   building: Set<TerritoryId>;
   /** Territories with an attack queued against them. */
   targeted: Set<TerritoryId>;
+  /** Land an attack earlier in the queue should capture (yours by the time later orders run, if it goes to plan). */
+  captured: Set<TerritoryId>;
+  /** Land an army moves into or captures earlier in the queue: it can go on from there (a chained hop). */
+  arrived: Set<TerritoryId>;
+  /** Armies whose size depends on a battle earlier in the queue: their numbers and odds are estimates. */
+  estimated: Set<TerritoryId>;
+  /** Troops each order should send (an estimate when it depends on an earlier battle); 0 for other orders. */
+  sent: number[];
+  /** For moves in a chain: the hop number (1 for the first). Null for everything else. */
+  hop: (number | null)[];
 }
 
+/** Yours now, or should be by the time later orders run (captured earlier in the queue). */
+export const isOwned = (view: PlayerView, plan: QueuePlan | null, t: TerritoryId) => isMine(view, t) || !!plan?.captured.has(t);
+
 /**
- * Plays the queue forward the way the engine will run your orders (one after another, in order),
- * to work out gold and free troops. Recruits can act the same turn; troops that move in can't move again.
+ * Plays the queue forward the way the engine will run your orders (one after another, in order), to work out gold,
+ * where armies should end up and how big they'll be. Recruits can act the same turn; an army that moves in or
+ * captures can go on in a later order (chained attacks). Battles are assumed to go as expected (an average roll).
  */
 export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Order[]): QueuePlan {
   const { rules } = ctx;
@@ -58,30 +82,49 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
     goldLeft: 0,
     costs: [],
     free: new Map(),
+    army: new Map(),
+    armySpecs: new Map(),
     specialists: new Map(),
     culture: new Map(),
     building: new Set(),
     targeted: new Set(),
+    captured: new Set(),
+    arrived: new Set(),
+    estimated: new Set(),
+    sent: [],
+    hop: [],
+  };
+  /** Troops resting after a failed attack can't go again (they count in the army, not in what's free). */
+  const resting = new Map<TerritoryId, number>();
+  const setArmy = (t: TerritoryId, n: number) => {
+    plan.army.set(t, n);
+    plan.free.set(t, Math.max(0, n - garrison - (resting.get(t) ?? 0)));
   };
   for (const [id, v] of Object.entries(view.territories)) {
     if (v.detail !== "full" || v.owner !== view.me.id) continue;
-    plan.free.set(id, Math.max(0, v.troops - garrison));
+    setArmy(id, v.troops);
+    plan.armySpecs.set(id, v.specialists.map((x) => x.type));
     plan.specialists.set(id, v.specialists.length);
     plan.culture.set(id, v.culture);
     if (v.building || v.construction) plan.building.add(id);
   }
-  for (const o of queue) {
+  /** Which chain each arrival belongs to (the queue index of its first move), and its hop count so far. */
+  const chainAt = new Map<TerritoryId, { root: number; hops: number }>();
+  for (const [i, o] of queue.entries()) {
     let cost = 0;
+    let sent = 0;
+    plan.hop.push(null);
     switch (o.kind) {
       case "recruit": {
         const count = Math.min(o.count, Math.floor(gold / rules.troops.cost));
         cost = Math.max(0, count) * rules.troops.cost;
-        plan.free.set(o.territory, (plan.free.get(o.territory) ?? 0) + Math.max(0, count));
+        if (count > 0) setArmy(o.territory, (plan.army.get(o.territory) ?? 0) + count);
         break;
       }
       case "hire":
         cost = rules.specialists[o.specialist].cost;
         plan.specialists.set(o.territory, (plan.specialists.get(o.territory) ?? 0) + 1);
+        plan.armySpecs.set(o.territory, [...(plan.armySpecs.get(o.territory) ?? []), o.specialist]);
         break;
       case "build":
         cost = rules.buildings[o.building].cost;
@@ -94,10 +137,33 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
         break;
       }
       case "move": {
-        const avail = plan.free.get(o.from) ?? 0;
-        const sent = o.troops === "all" ? avail : Math.min(o.troops, avail);
-        plan.free.set(o.from, avail - sent);
-        if (!isMine(view, o.to)) plan.targeted.add(o.to);
+        const est = expectMove(ctx, view, plan, o);
+        sent = est.troops;
+        if (sent <= 0) break;
+        const specs = plan.armySpecs.get(o.from) ?? [];
+        const estimate = plan.estimated.has(o.from);
+        setArmy(o.from, (plan.army.get(o.from) ?? 0) - sent);
+        const chain = chainAt.get(o.from);
+        if (chain && plan.arrived.has(o.from)) {
+          // A hop: number it within its chain (the move that first arrived there is hop 1).
+          plan.hop[chain.root] ??= 1;
+          plan.hop[i] = chain.hops + 1;
+        }
+        if (est.attack) plan.targeted.add(o.to);
+        if (est.arrives > 0) {
+          if (est.attack) plan.captured.add(o.to);
+          setArmy(o.to, (est.attack ? 0 : (plan.army.get(o.to) ?? 0)) + est.arrives);
+          plan.armySpecs.set(o.to, [...(est.attack ? [] : (plan.armySpecs.get(o.to) ?? [])), ...specs].slice(0, rules.specialists.maxPerArmy));
+          plan.armySpecs.set(o.from, []);
+          plan.arrived.add(o.to);
+          chainAt.set(o.to, chain && plan.hop[i] !== null ? { root: chain.root, hops: plan.hop[i]! } : { root: i, hops: 1 });
+          if (est.attack || estimate) plan.estimated.add(o.to);
+        } else if (est.attack) {
+          // Expected to fail: the survivors fall back and rest.
+          const back = Math.max(0, est.survivors);
+          resting.set(o.from, (resting.get(o.from) ?? 0) + back);
+          setArmy(o.from, (plan.army.get(o.from) ?? 0) + back);
+        }
         break;
       }
       case "retreat":
@@ -107,9 +173,30 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
     if (cost > gold) cost = o.kind === "recruit" ? cost : 0; // the engine skips what you can't afford
     gold -= cost;
     plan.costs.push(cost);
+    plan.sent.push(sent);
   }
   plan.goldLeft = gold;
   return plan;
+}
+
+/** How a queued move is expected to go: troops sent, and how many should arrive (0 if an attack is expected to fail). */
+function expectMove(ctx: GameContext, view: PlayerView, plan: QueuePlan, o: Extract<Order, { kind: "move" }>) {
+  const d: MoveDraft = { from: o.from, to: o.to, ...(o.via ? { via: o.via } : {}), amount: o.troops, preset: null, withLeader: !!o.withLeader, timing: null };
+  const troops = troopsOf(ctx, view, plan, d);
+  const attack = isAttack(view, d, plan);
+  if (!attack) return { troops, attack, arrives: troops, survivors: troops };
+  const e = expectation(ctx, view, plan, d, troops);
+  // Can't see the target: assume it goes to plan, so you can still chain on (the odds say "Can't see").
+  if (!e) return { troops, attack, arrives: troops, survivors: troops };
+  const survivors = Math.round(troops - e.expectedAttackerLosses);
+  return { troops, attack, arrives: e.captureLikely ? Math.max(1, survivors) : 0, survivors };
+}
+
+/** How many troops an order would send now (an estimate when its army depends on an earlier battle). */
+export function troopsOf(ctx: GameContext, view: PlayerView, plan: QueuePlan, d: MoveDraft): number {
+  const avail = plan.free.get(d.from) ?? 0;
+  const army = Math.max(0, plan.army.get(d.from) ?? 0);
+  return troopsFor(d.amount, army, avail, () => (isAttack(view, d, plan) ? justEnough(ctx, view, plan, d) : avail));
 }
 
 /** How many troops a recruit order defaults to: as many as the gold left buys. */
@@ -123,16 +210,19 @@ export interface MoveTarget {
   via?: TerritoryId;
 }
 
-/** Where an army can go: every neighbour, plus two steps through your own land if it has cavalry. */
-export function moveTargets(ctx: GameContext, view: PlayerView, from: TerritoryId): MoveTarget[] {
+/**
+ * Where an army can go: every neighbour, plus two steps through your own land if it has cavalry. Works from land an
+ * earlier order should capture too (a chained hop).
+ */
+export function moveTargets(ctx: GameContext, view: PlayerView, from: TerritoryId, plan: QueuePlan | null = null): MoveTarget[] {
   const idx = indexMap(ctx.map);
-  const here = seen(view, from);
-  if (!here || here.owner !== view.me.id) return [];
+  if (!isOwned(view, plan, from)) return [];
   const out: MoveTarget[] = (idx.neighbors.get(from) ?? []).map((to) => ({ to }));
-  if (here.specialists.some((s) => s.type === "cavalry")) {
+  const specs = plan?.armySpecs.get(from) ?? seen(view, from)?.specialists.map((s) => s.type) ?? [];
+  if (specs.includes("cavalry")) {
     const near = new Set([from, ...(idx.neighbors.get(from) ?? [])]);
     for (const via of idx.neighbors.get(from) ?? []) {
-      if (!isMine(view, via)) continue;
+      if (!isOwned(view, plan, via)) continue;
       for (const to of idx.neighbors.get(via) ?? []) if (!near.has(to) && !out.some((t) => t.to === to)) out.push({ to, via });
     }
   }
@@ -143,29 +233,54 @@ export interface MoveDraft {
   from: TerritoryId;
   to: TerritoryId;
   via?: TerritoryId;
-  troops: number;
+  /** A share of the army there when the order plays, Just enough, or an exact number (under More). */
+  amount: TroopAmount;
   preset: PresetId | null;
   withLeader: boolean;
   timing: "first" | "last" | null;
+  /**
+   * A hop pushing on from an attack that sends Just enough: that attack (this order id) is raised to All when the
+   * hop is added, so there's an army to push on with.
+   */
+  raise?: string;
 }
 
-/** The preset a new order starts with: attacks start with "Only if still stronger" switched on (one tap turns it off). */
-export const defaultPreset = (view: PlayerView, to: TerritoryId): PresetId | null => (isAttack(view, { to }) ? "onlyIfStronger" : null);
+/** The queued attack into `from` that sends Just enough, if a hop from there should raise it to All. */
+export function raiseFor(plan: QueuePlan, queue: readonly Order[], from: TerritoryId): string | undefined {
+  if (!plan.captured.has(from)) return undefined;
+  const into = [...queue].reverse().find((o) => o.kind === "move" && o.to === from);
+  return into?.kind === "move" && into.troops === "enough" ? into.id : undefined;
+}
 
-/** A new move or attack with the defaults: all free troops but the garrison; attacks start with "Only if still stronger". */
-export function newDraft(view: PlayerView, plan: QueuePlan, target: MoveTarget & { from: TerritoryId }): MoveDraft {
-  return {
+/** The queue as it will be once this draft is added (with its Just-enough attack raised to All). */
+export const queueFor = (queue: readonly Order[], d: Pick<MoveDraft, "raise"> | null): readonly Order[] =>
+  d?.raise ? queue.map((o) => (o.id === d.raise && o.kind === "move" ? { ...o, troops: "all" as const } : o)) : queue;
+
+/** The preset a new order starts with: attacks start with "Only if still stronger" switched on (one tap turns it off). */
+export const defaultPreset = (view: PlayerView, to: TerritoryId, plan: QueuePlan | null = null): PresetId | null => (isAttack(view, { to }, plan) ? "onlyIfStronger" : null);
+
+/** Is this order pushing on from land an earlier order moves into or captures (a chained hop)? */
+export const isHop = (plan: QueuePlan, from: TerritoryId) => plan.arrived.has(from);
+
+/**
+ * A new move or attack with the defaults: a first attack sends Just enough (or All if even that wouldn't do);
+ * a chained hop and a move send All. Attacks start with "Only if still stronger".
+ */
+export function newDraft(ctx: GameContext, view: PlayerView, plan: QueuePlan, target: MoveTarget & { from: TerritoryId }): MoveDraft {
+  const d: MoveDraft = {
     from: target.from,
     to: target.to,
     ...(target.via ? { via: target.via } : {}),
-    troops: plan.free.get(target.from) ?? 0,
-    preset: defaultPreset(view, target.to),
+    amount: "all",
+    preset: defaultPreset(view, target.to, plan),
     withLeader: false,
     timing: null,
   };
+  if (isAttack(view, d, plan) && !isHop(plan, d.from) && justEnough(ctx, view, plan, d) !== null) d.amount = "enough";
+  return d;
 }
 
-export const isAttack = (view: PlayerView, d: Pick<MoveDraft, "to">) => !isMine(view, d.to);
+export const isAttack = (view: PlayerView, d: Pick<MoveDraft, "to">, plan: QueuePlan | null = null) => !isOwned(view, plan, d.to);
 
 export type Odds = "guaranteed" | "likely" | "possible" | "impossible" | "unknown";
 export const ODDS_LABEL: Record<Odds, string> = {
@@ -176,18 +291,24 @@ export const ODDS_LABEL: Record<Odds, string> = {
   unknown: "Can't see",
 };
 
-/** The odds badge, from the same math the engine uses. Based on the board at the start of the turn. */
-export function oddsFor(ctx: GameContext, view: PlayerView, d: MoveDraft): Odds {
-  if (d.troops <= 0) return "impossible";
-  const specialists = seen(view, d.from)?.specialists.map((s) => s.type) ?? [];
-  const e = previewAttack(ctx, view, {
+function expectation(ctx: GameContext, view: PlayerView, plan: QueuePlan, d: Omit<MoveDraft, "amount">, troops: number) {
+  return previewAttack(ctx, view, {
     from: d.from,
     to: d.to,
-    troops: d.troops,
-    specialists,
+    troops,
+    specialists: plan.armySpecs.get(d.from) ?? [],
     withLeader: d.withLeader,
     ...(d.via ? { via: d.via } : {}),
   });
+}
+
+/**
+ * The odds badge, from the same math the engine uses, with the troops this order should send. Based on the board at
+ * the start of the turn (and, for a chained hop, the army expected to arrive: see `oddsAreEstimate`).
+ */
+export function oddsFor(ctx: GameContext, view: PlayerView, plan: QueuePlan, d: MoveDraft, troops = troopsOf(ctx, view, plan, d)): Odds {
+  if (troops <= 0) return "impossible";
+  const e = expectation(ctx, view, plan, d, troops);
   if (!e) return "unknown";
   if (e.captureGuaranteed) return "guaranteed";
   if (e.captureLikely) return "likely";
@@ -195,26 +316,34 @@ export function oddsFor(ctx: GameContext, view: PlayerView, d: MoveDraft): Odds 
   return "possible";
 }
 
+/** The army for this order depends on a battle earlier in the queue, so its odds are an estimate. */
+export const oddsAreEstimate = (plan: QueuePlan, d: Pick<MoveDraft, "from">) => plan.estimated.has(d.from);
+
 /**
- * Fewest troops expected to take the target, plus a small safety margin (the same rule the bots use),
+ * Fewest troops expected to take the target, plus a small safety margin (the same rule the engine and bots use),
  * capped at what's free. Null if even every free troop isn't likely to win, or the target is hidden.
  */
-export function justEnough(ctx: GameContext, view: PlayerView, plan: QueuePlan, d: MoveDraft): number | null {
+export function justEnough(ctx: GameContext, view: PlayerView, plan: QueuePlan, d: Omit<MoveDraft, "amount">): number | null {
   const max = plan.free.get(d.from) ?? 0;
-  const likely = (troops: number) => troops > 0 && ["likely", "guaranteed"].includes(oddsFor(ctx, view, { ...d, troops }));
-  if (!likely(max)) return null;
-  let lo = 1, hi = max;
-  while (lo < hi) {
-    const mid = (lo + hi) >> 1;
-    if (likely(mid)) hi = mid;
-    else lo = mid + 1;
-  }
-  return Math.min(max, lo + Math.max(1, Math.ceil(lo * 0.2)));
+  return fewestToTake((troops) => !!expectation(ctx, view, plan, d, troops)?.captureLikely, max);
+}
+
+/** The share chips, in order: Just enough (attacks only), All, 3/4, 1/2, 1/4. */
+export function amountChoices(attack: boolean): TroopAmount[] {
+  return [...(attack ? (["enough"] as TroopAmount[]) : []), "all", ...SHARES.map((share) => ({ share }))];
+}
+
+export const sameAmount = (a: TroopAmount, b: TroopAmount) => (isShare(a) && isShare(b) ? a.share === b.share : a === b);
+
+/** "about 9, 3/4" ("9, All" when it isn't an estimate; just "9" for an exact number). */
+export function amountPill(troops: number, amount: TroopAmount, estimate: boolean): string {
+  const n = `${estimate ? "about " : ""}${troops}`;
+  return typeof amount === "number" ? n : `${n}, ${amountLabel(amount)}`;
 }
 
 /** The preset chips that make sense for this order. */
-export function presetsFor(view: PlayerView, d: Pick<MoveDraft, "to">): PresetInfo[] {
-  const ids: PresetId[] = isAttack(view, d)
+export function presetsFor(view: PlayerView, d: Pick<MoveDraft, "to">, plan: QueuePlan | null = null): PresetInfo[] {
+  const ids: PresetId[] = isAttack(view, d, plan)
     ? ["onlyIfStronger", "holdIfThreatened", "retreatIfOutnumbered", "followThrough"]
     : ["reinforceIfHit", "holdIfThreatened"];
   return ids.map((id) => PRESETS.find((p) => p.id === id)!);
@@ -237,11 +366,27 @@ export function draftToOrder(d: MoveDraft, id: string): Order {
     from: d.from,
     to: d.to,
     ...(d.via ? { via: d.via } : {}),
-    troops: d.troops,
+    troops: d.amount,
     ...(d.withLeader ? { withLeader: true } : {}),
     ...(d.preset ? { preset: { id: d.preset } } : {}),
     ...(d.timing ? { timing: d.timing } : {}),
   };
+}
+
+/**
+ * Where the army from `from` ends up after the queued orders: follow the last queued move out of each stop that
+ * should arrive. Null if nothing arrives anywhere from `from`.
+ */
+export function chainTip(plan: QueuePlan, queue: readonly Order[], from: TerritoryId): TerritoryId | null {
+  let tip: TerritoryId | null = null;
+  let at = from;
+  for (let guard = 0; guard < queue.length; guard++) {
+    const out = [...queue].reverse().find((o) => o.kind === "move" && o.from === at && plan.arrived.has(o.to));
+    if (!out || out.kind !== "move") break;
+    tip = out.to;
+    at = out.to;
+  }
+  return tip;
 }
 
 // ---------- Tapping the map ----------
@@ -252,6 +397,8 @@ export type TapAction = { kind: "select"; territory: TerritoryId } | { kind: "de
  * What a tap on the map does:
  *  - tap one of your territories to select it;
  *  - with one selected, tap a territory it can reach to start a move or attack (if it has troops to send);
+ *  - tap where the selected army is heading (an arrow you queued) to select it there, then a neighbour to push on:
+ *    a chained hop. Tapping a neighbour of where the army is heading starts that hop straight away;
  *  - tap the selected territory again to clear the selection; tap anything else to look at it.
  */
 export function tapTerritory(
@@ -260,11 +407,22 @@ export function tapTerritory(
   plan: QueuePlan,
   selected: TerritoryId | null,
   tapped: TerritoryId,
+  queue: readonly Order[] = [],
 ): TapAction {
   if (selected === tapped) return { kind: "deselect" };
-  if (selected && isMine(view, selected) && (plan.free.get(selected) ?? 0) > 0) {
-    const target = moveTargets(ctx, view, selected).find((t) => t.to === tapped);
-    if (target) return { kind: "draft", draft: newDraft(view, plan, { ...target, from: selected }) };
+  if (selected && plan.arrived.has(tapped) && queue.some((o) => o.kind === "move" && o.from === selected && o.to === tapped))
+    return { kind: "select", territory: tapped };
+  if (selected && isOwned(view, plan, selected)) {
+    const draftFrom = (from: TerritoryId): MoveDraft | null => {
+      const raise = raiseFor(plan, queue, from);
+      const p = raise ? planQueue(ctx, view, queueFor(queue, { raise })) : plan;
+      if ((p.free.get(from) ?? 0) <= 0) return null;
+      const target = moveTargets(ctx, view, from, p).find((t) => t.to === tapped);
+      return target ? { ...newDraft(ctx, view, p, { ...target, from }), ...(raise ? { raise } : {}) } : null;
+    };
+    const tip = chainTip(plan, queue, selected);
+    const draft = draftFrom(selected) ?? (tip && tip !== tapped ? draftFrom(tip) : null);
+    if (draft) return { kind: "draft", draft };
   }
   return { kind: "select", territory: tapped };
 }

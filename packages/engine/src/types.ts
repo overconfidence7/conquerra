@@ -1,4 +1,5 @@
 import type { BuildingType, MapDef, Rules, SpecialistType } from "@conquerra/content";
+import type { TroopAmount } from "./amounts";
 import type { Intel } from "./intel";
 import type { RngState } from "./rng";
 
@@ -118,7 +119,8 @@ export type OrderBody =
       to: TerritoryId;
       /** Middle step for 2-territory moves (armies with cavalry). Must be yours when the order runs. */
       via?: TerritoryId;
-      troops: number | "all";
+      /** A share of the army there when the order plays ("all", 3/4, 1/2, 1/4), "enough" (Just enough), or an exact number. */
+      troops: TroopAmount;
       /** Which specialists go along. Default: all of them (they travel with the stack). */
       specialists?: SpecialistType[] | "all";
       withLeader?: boolean;

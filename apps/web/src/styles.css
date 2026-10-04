@@ -247,6 +247,11 @@ select { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(
 .odds-possible { background: #b37218; color: #fff; }
 .odds-impossible { background: #9b2f22; color: #fff; }
 .odds-unknown { background: var(--raised-2); }
+.pill { display: inline-block; border-radius: 999px; padding: 3px 12px; font: 800 0.95rem var(--font-num, Manrope, sans-serif); background: var(--navy); color: #e3c77e; border: 1px solid #c9a45c; }
+.share-chips .chip { padding: 5px 10px; min-width: 52px; }
+.arriving { font-size: 0.85rem; border: 1px dashed #c9a45c; border-radius: 6px; padding: 6px 8px; color: #e3c77e; background: rgba(201, 164, 92, 0.08); }
+.order-line.hop { padding-left: 14px; }
+.tag.hop { background: #e3c77e; color: var(--navy); }
 .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .grid-buttons button { text-align: left; }
 .hint { text-align: center; color: var(--muted); }

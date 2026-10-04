@@ -24,6 +24,9 @@ export interface GameSummary {
   byBorder: Record<string, { battles: number; captures: number }>;
   orders: number;
   fizzles: number;
+  /** Moves and attacks launched from land the same army moved into or captured earlier that turn (chained hops). */
+  hops: number;
+  hopCaptures: number;
   initiatives: number;
   leadersKilled: number;
   hires: number;
@@ -33,6 +36,8 @@ export interface GameSummary {
   decidedTurn: number | null;
   /** How many times the territory leader changed hands. */
   leadChanges: number;
+  /** Biggest share of the map's territories any one player held after turn 10 (null if the game ended sooner). */
+  topShareTurn10: number | null;
   /** CPU time per turn in milliseconds: the engine resolving, and the bots planning (all seats). */
   resolveMs: number[];
   planMs: number[];
@@ -44,8 +49,8 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
   let s = createGame(ctx, { gameId: `sim-${seed}`, seed, players, settings });
   const idx = indexMap(ctx.map);
   const sum: GameSummary = {
-    seed, winner: "draw", winnerSeat: null, endReason: null, turns: 0, battles: 0, captures: 0, byBorder: {}, orders: 0, fizzles: 0,
-    initiatives: 0, leadersKilled: 0, hires: 0, invests: 0, presets: 0, decidedTurn: null, leadChanges: 0, resolveMs: [], planMs: [],
+    seed, winner: "draw", winnerSeat: null, endReason: null, turns: 0, battles: 0, captures: 0, byBorder: {}, orders: 0, fizzles: 0, hops: 0, hopCaptures: 0,
+    initiatives: 0, leadersKilled: 0, hires: 0, invests: 0, presets: 0, decidedTurn: null, leadChanges: 0, topShareTurn10: null, resolveMs: [], planMs: [],
   };
   const leaders: (string | null)[] = [];
   const log: StepEvent[][] = [];
@@ -66,7 +71,15 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
     sum.resolveMs.push(p2 - p1);
     s = r.state;
     if (keepLog) log.push(r.events);
+    const arrived = new Set<string>();
     for (const e of r.events) {
+      if (e.type === "battle" || e.type === "moved") {
+        if (arrived.has(`${e.player}|${e.from}`)) {
+          sum.hops++;
+          if (e.type === "battle" && e.captured) sum.hopCaptures++;
+        }
+        if (e.type === "moved" || e.captured) arrived.add(`${e.player}|${e.to}`);
+      }
       if (e.type === "battle") {
         sum.battles++;
         if (e.captured) sum.captures++;
@@ -88,6 +101,7 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
     }
     const top = [...counts.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0]?.[0] ?? null;
     if (leaders.length && leaders[leaders.length - 1] !== top) sum.leadChanges++;
+    if (leaders.length === 9) sum.topShareTurn10 = Math.max(0, ...counts.values()) / idx.ids.length;
     leaders.push(top);
   }
   sum.winner = s.winner;

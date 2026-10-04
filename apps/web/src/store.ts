@@ -6,7 +6,7 @@ import { createLocalHost } from "./host/localHost";
 import type { GameHost, HostUpdate, LobbySettings, TurnReport } from "./host/protocol";
 import { DEFAULT_TIMER, type TurnClock } from "./logic/timer";
 import { actionBarState } from "./logic/actions";
-import { draftToOrder, type NewOrder, planQueue, removeOrder, shiftOrder, tapTerritory, type MoveDraft } from "./logic/orders";
+import { draftToOrder, type NewOrder, planQueue, queueFor, removeOrder, shiftOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
 
 export type Screen = "lobby" | "game" | "over";
 
@@ -167,7 +167,7 @@ export const useGame = create<GameStore>((set, get) => ({
   tap(t) {
     const { ctx, view, queue, selected } = get();
     if (!ctx || !view) return;
-    const action = tapTerritory(ctx, view, planQueue(ctx, view, queue), selected, t);
+    const action = tapTerritory(ctx, view, planQueue(ctx, view, queue), selected, t, queue);
     if (action.kind === "deselect") set({ selected: null, draft: null });
     else if (action.kind === "select") set({ selected: action.territory, draft: null });
     else set({ draft: action.draft });
@@ -182,10 +182,18 @@ export const useGame = create<GameStore>((set, get) => ({
   },
 
   addDraft() {
-    const d = get().draft;
-    if (!d || d.troops <= 0) return;
-    // Seize / Lie in Wait go on one order only.
-    const queue = get().queue.map((o) => (d.timing && o.timing === d.timing ? { ...o, timing: undefined } : o));
+    const { draft: d, ctx, view } = get();
+    if (!d || !ctx || !view) return;
+    // A hop from an attack that sends Just enough raises that attack to All (the panel says so).
+    const base = queueFor(get().queue, d);
+    if (troopsOf(ctx, view, planQueue(ctx, view, base), d) <= 0) return;
+    const queue = base.map((o) => {
+      // Seize / Lie in Wait go on one order only.
+      if (d.timing && o.timing === d.timing) o = { ...o, timing: undefined };
+      // Your own hop from where an attack lands replaces that attack's Follow through (one army, sent once).
+      if (o.kind === "move" && o.to === d.from && o.preset?.id === "followThrough") o = { ...o, preset: undefined };
+      return o;
+    });
     set({ queue: [...queue, draftToOrder(d, nextOrderId())], draft: null, selected: d.from });
   },
 

@@ -93,6 +93,10 @@ for (const players of playerCounts) {
   console.log(`Battles by border (per game, % that captured): ${kinds.map((k) => { const b = results.reduce((a, g) => a + (g.byBorder[k]?.battles ?? 0), 0), c = results.reduce((a, g) => a + (g.byBorder[k]?.captures ?? 0), 0); return `${k} ${(b / Math.max(1, results.length)).toFixed(1)} (${b ? ((100 * c) / b).toFixed(0) : "-"}%)`; }).join(", ")}`);
   console.log(`Orders per game: ${avg((g) => g.orders).toFixed(0)} (${((100 * results.reduce((a, g) => a + g.presets, 0)) / Math.max(1, results.reduce((a, g) => a + g.orders, 0))).toFixed(0)}% with a preset), fizzled: ${((100 * results.reduce((a, g) => a + g.fizzles, 0)) / Math.max(1, results.reduce((a, g) => a + g.orders, 0))).toFixed(1)}%`);
   console.log(`Predictability (lower = more exciting): winner locked in the lead at ${(100 * (decided.reduce((a, g) => a + g.decidedTurn! / g.turns, 0) / Math.max(1, decided.length))).toFixed(0)}% of the game; ${avg((g) => g.leadChanges).toFixed(1)} lead changes per game`);
+  const hops = results.reduce((a, g) => a + g.hops, 0);
+  console.log(`Chained hops per game: ${avg((g) => g.hops).toFixed(1)} (${hops ? ((100 * results.reduce((a, g) => a + g.hopCaptures, 0)) / hops).toFixed(0) : "-"}% captured)`);
+  const at10 = results.filter((g) => g.topShareTurn10 !== null);
+  console.log(`Runaway check: one player held more than half the map after turn 10 in ${pct(at10.filter((g) => g.topShareTurn10! > 0.5).length)} of games (${pct(results.length - at10.length)} were already over by then)`);
   console.log(`CPU per turn (this machine): resolve avg ${ms(resolve.avg)}, p95 ${ms(resolve.p95)}, worst ${ms(resolve.max)} | bots planning (all seats) avg ${ms(plan.avg)}, worst ${ms(plan.max)} | total avg ${ms(total.avg)}, worst ${ms(total.max)}`);
   if (errors.length) {
     console.log(`CRASHES (first 3):`);

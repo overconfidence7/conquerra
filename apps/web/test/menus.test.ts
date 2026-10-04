@@ -27,7 +27,7 @@ function inProcessHost(seed: string): GameHost {
   };
 }
 
-describe("tap count: a typical turn takes 8 taps or fewer", () => {
+describe("tap count: a typical turn takes 7 taps or fewer", () => {
   beforeEach(() => {
     setHostFactory(() => inProcessHost("taps"));
     useGame.getState().playAgain();
@@ -52,13 +52,9 @@ describe("tap count: a typical turn takes 8 taps or fewer", () => {
       if (selected !== pick.from) tap(() => g().tap(pick.from));
       tap(() => g().tap(pick.to));
       expect(g().draft?.preset).toBe("onlyIfStronger");
-      // One army doing both attacks: the first sends "Just enough" (one tap on the amount chip), not "all but 1".
-      if (k === 0 && sources.length === 1) {
-        const d = g().draft!;
-        const plan2 = planQueue(g().ctx!, g().view!, g().queue);
-        const enough = justEnough(g().ctx!, g().view!, plan2, d) ?? Math.ceil((plan2.free.get(d.from) ?? 0) / 2);
-        tap(() => g().updateDraft({ troops: Math.min(enough, (plan2.free.get(d.from) ?? 0) - 2) }));
-      }
+      // A first attack already sends "Just enough", so one army can make both attacks with no extra taps.
+      const enough = justEnough(g().ctx!, g().view!, planQueue(g().ctx!, g().view!, g().queue), g().draft!);
+      expect(g().draft?.amount).toBe(enough === null ? "all" : "enough");
       tap(() => g().addDraft());
     }
     await tap(() => g().lockIn());
@@ -66,7 +62,33 @@ describe("tap count: a typical turn takes 8 taps or fewer", () => {
     expect(q.turn).toBe(1);
     expect(q.events.filter((e) => e.type === "recruited" || e.type === "battle" || e.type === "fizzled").length).toBeGreaterThanOrEqual(3);
     console.log(`Typical turn: ${taps} taps`);
-    expect(taps).toBeLessThanOrEqual(8);
+    expect(taps).toBeLessThanOrEqual(7);
+  });
+
+  it("recruit, an attack and a chained hop on from there, lock in", async () => {
+    await useGame.getState().start();
+    let taps = 0;
+    const tap = <T,>(f: () => T) => (taps++, f());
+    const g = () => useGame.getState();
+    const cap = g().view!.me.capital;
+    const near = (t: string) => ctx.map.borders.flatMap((b) => (b.a === t ? [b.b] : b.b === t ? [b.a] : []));
+    tap(() => g().quickRecruit());
+    // A neighbour to take, and a place beyond it the capital can't reach in one step.
+    const beyondOf = (t: string) => near(t).find((x) => x !== cap && !near(cap).includes(x));
+    const first = near(cap).find((t) => !isMine(g().view!, t) && beyondOf(t))!;
+    const beyond = beyondOf(first)!;
+    tap(() => g().tap(first));
+    tap(() => g().addDraft());
+    // Tap past the arrow: the next hop starts from where the army is heading, and sends All.
+    tap(() => g().tap(beyond));
+    expect(g().draft).toMatchObject({ from: first, to: beyond, amount: "all" });
+    // The first attack sent Just enough: adding the hop raises it to All, so there is an army to push on with.
+    expect(g().draft?.raise).toBe(g().queue[1]!.id);
+    tap(() => g().addDraft());
+    expect(g().queue.flatMap((o) => (o.kind === "move" ? [`${o.from}>${o.to}`] : []))).toEqual([`${cap}>${first}`, `${first}>${beyond}`]);
+    await tap(() => g().lockIn());
+    console.log(`Turn with a chained hop: ${taps} taps`);
+    expect(taps).toBeLessThanOrEqual(7);
   });
 });
 

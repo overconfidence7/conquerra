@@ -1,7 +1,7 @@
 import type { GameContext, Order, PlayerView } from "@conquerra/engine";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { incomeEstimate } from "../logic/actions";
-import { planQueue } from "../logic/orders";
+import { planQueue, queueFor } from "../logic/orders";
 import type { Insets } from "../map/camera";
 import type { Beat } from "../replay/timeline";
 import { toastFor } from "../replay/toasts";
@@ -162,7 +162,9 @@ export function GameScreen() {
   }, [pushToast]);
   const rp = useReplay(ctx, replay, renderer, onBeat, onEnd);
 
-  const plan = useMemo(() => (ctx && view ? planQueue(ctx, view, queue) : null), [ctx, view, queue]);
+  // While a hop is being drafted, show the queue as it will be once it's added (its Just-enough attack raised to All).
+  const shownQueue = useMemo(() => queueFor(queue, draft), [queue, draft]);
+  const plan = useMemo(() => (ctx && view ? planQueue(ctx, view, shownQueue) : null), [ctx, view, shownQueue]);
   const income = useMemo(() => (ctx && view ? incomeEstimate(ctx, view) : 0), [ctx, view]);
 
   // On a phone, choosing a territory or drafting an attack opens the army sheet.
@@ -194,7 +196,7 @@ export function GameScreen() {
       <MapView
         ctx={ctx}
         view={shownView}
-        queue={act ? queue : NO_ORDERS}
+        queue={act ? shownQueue : NO_ORDERS}
         selected={act ? selected : null}
         draft={act ? draft : null}
         showTargets={act && (plan.free.get(selected ?? "") ?? 0) > 0}
@@ -321,7 +323,7 @@ export function GameScreen() {
         {!out && (
           <BottomSheet size={replaying ? "closed" : sheet} onSize={setSheet} bottom={76} tabs={tabs} tab={tab} onTab={setTab}>
             {tab === "army" && army}
-            {tab === "orders" && <OrderQueue ctx={ctx} view={view} plan={plan} queue={queue} bare />}
+            {tab === "orders" && <OrderQueue ctx={ctx} view={view} plan={plan} queue={shownQueue} bare />}
             {tab === "card" && (selected ? <TerritoryCard ctx={ctx} view={view} id={selected} /> : <p className="muted">Tap a territory to see its card. Tap and hold anywhere for a quick look.</p>)}
             {tab === "card" && <LeaderCard ctx={ctx} view={view} queue={queue} />}
             {tab === "report" && report && <ReportBody ctx={ctx} view={view} report={report} />}
@@ -374,7 +376,7 @@ export function GameScreen() {
             {actions}
             {army}
           </Frame>
-          <OrderQueue ctx={ctx} view={view} plan={plan} queue={queue} />
+          <OrderQueue ctx={ctx} view={view} plan={plan} queue={shownQueue} />
           <div className="seal-wrap">{seal}</div>
         </div>
       )}

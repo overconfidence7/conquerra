@@ -1,6 +1,6 @@
 import type { GameContext, Order, PlayerView, TerritoryId } from "@conquerra/engine";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { isAttack, isMine, moveTargets, oddsFor, type MoveDraft } from "../logic/orders";
+import { isAttack, moveTargets, oddsAreEstimate, oddsFor, planQueue, type MoveDraft } from "../logic/orders";
 import type { Insets } from "../map/camera";
 import { TerritoryCard } from "./TerritoryCard";
 import type { MapRenderer, MapScene, OrderArrow } from "../render/types";
@@ -44,16 +44,24 @@ export const saveTactical = (on: boolean) => {
 
 /** Builds what the map shows from the game screen's state. */
 export function buildScene(ctx: GameContext, view: PlayerView, queue: readonly Order[], selected: TerritoryId | null, draft: MoveDraft | null, showTargets: boolean): MapScene {
-  const arrows: OrderArrow[] = [
-    ...queue.flatMap((o, i) => (o.kind === "move" ? [{ key: o.id, from: o.from, to: o.to, ...(o.via ? { via: o.via } : {}), n: i + 1, troops: o.troops, attack: !isMine(view, o.to), draft: false }] : [])),
-    ...(draft ? [{ key: "draft", from: draft.from, to: draft.to, ...(draft.via ? { via: draft.via } : {}), n: 0, troops: draft.troops, attack: isAttack(view, draft), draft: true }] : []),
-  ];
+  // Walk the queue step by step, so each arrow is an attack or a move as it will be when it plays.
+  const arrows: OrderArrow[] = [];
+  queue.forEach((o, i) => {
+    if (o.kind !== "move") return;
+    const before = planQueue(ctx, view, queue.slice(0, i));
+    arrows.push({ key: o.id, from: o.from, to: o.to, ...(o.via ? { via: o.via } : {}), n: i + 1, hop: null, attack: isAttack(view, o, before), draft: false });
+  });
+  const plan = planQueue(ctx, view, queue);
+  for (const a of arrows) a.hop = plan.hop[a.n - 1] ?? null;
+  if (draft) arrows.push({ key: "draft", from: draft.from, to: draft.to, ...(draft.via ? { via: draft.via } : {}), n: 0, hop: null, attack: isAttack(view, draft, plan), draft: true });
   return {
     view,
     selected,
-    targets: showTargets && selected ? moveTargets(ctx, view, selected).map((t) => t.to) : [],
+    targets: showTargets && selected ? moveTargets(ctx, view, selected, plan).map((t) => t.to) : [],
     arrows,
-    odds: draft && isAttack(view, draft) ? { target: draft.to, odds: oddsFor(ctx, view, draft) } : null,
+    // Only where an attack should capture (or a hop pushes on from): the plain moves already show on your own markers.
+    arriving: [...plan.captured].filter((t) => plan.arrived.has(t)).map((t) => ({ territory: t, troops: plan.army.get(t) ?? 0 })),
+    odds: draft && isAttack(view, draft, plan) ? { target: draft.to, odds: oddsFor(ctx, view, plan, draft), estimate: oddsAreEstimate(plan, draft) } : null,
   };
 }
 

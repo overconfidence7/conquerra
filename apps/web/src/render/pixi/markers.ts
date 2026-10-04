@@ -196,31 +196,50 @@ export class MarkerLayer {
     return { root, icons, near, names, merged, mergedText };
   }
 
-  /** Order numbers on the arrows, and the odds badge on the drafted attack's target. */
+  /**
+   * Order numbers on the arrows (a chain's arrows show their hop numbers on gold), the faint "arriving" marker where
+   * an attack should land an army, and the odds badge on the drafted attack's target ("≈" when it's an estimate).
+   */
   private buildBadges(scene: MapScene) {
     for (const c of this.badges.removeChildren()) c.destroy({ children: true });
+    const text = (s: string, size: number, fill: number) => {
+      const t = new Text({ text: s, style: { fontFamily: "Manrope, sans-serif", fontWeight: "800", fontSize: size, fill }, resolution: this.resolution });
+      t.anchor.set(0.5);
+      return t;
+    };
+    for (const r of scene.arriving) {
+      const b = new Container();
+      b.label = `arrive:${r.territory}`;
+      const label = text(`≈${r.troops}`, 12, NAVY);
+      const w = Math.max(30, label.width + 14);
+      b.addChild(new Graphics().roundRect(-w / 2, -9, w, 18, 9).fill({ color: GOLD_HI, alpha: 0.55 }).stroke({ width: 1.5, color: PARCH, alpha: 0.8 }), label);
+      b.alpha = 0.9;
+      this.badges.addChild(b);
+    }
     for (const a of scene.arrows) {
       if (a.draft) continue;
       const b = new Container();
       b.label = `arrow:${a.key}`;
-      b.addChild(new Graphics().circle(0, 0, 9).fill(NAVY).stroke({ width: 1.5, color: GOLD }));
-      const t = new Text({ text: String(a.n), style: { fontFamily: "Manrope, sans-serif", fontWeight: "800", fontSize: 11, fill: GOLD_HI }, resolution: this.resolution });
-      t.anchor.set(0.5);
-      b.addChild(t);
+      if (a.hop !== null) b.addChild(new Graphics().circle(0, 0, 9.5).fill(GOLD_HI).stroke({ width: 1.5, color: NAVY }), text(String(a.hop), 11, NAVY));
+      else b.addChild(new Graphics().circle(0, 0, 9).fill(NAVY).stroke({ width: 1.5, color: GOLD }), text(String(a.n), 11, GOLD_HI));
       this.badges.addChild(b);
     }
     if (scene.odds) {
       const b = new Container();
       b.label = `odds:${scene.odds.target}`;
       const pips = ODDS_PIPS[scene.odds.odds], col = ODDS_COLOR[scene.odds.odds];
-      b.addChild(new Graphics().roundRect(-27, -9, 54, 18, 9).fill({ color: NAVY, alpha: 0.95 }).stroke({ width: 1.5, color: GOLD }));
+      const est = scene.odds.estimate;
+      const x0 = est ? -37 : -27;
+      b.addChild(new Graphics().roundRect(x0, -9, -x0 * 2, 18, 9).fill({ color: NAVY, alpha: 0.95 }).stroke({ width: 1.5, color: GOLD }));
       const g = new Graphics();
       for (let i = 0; i < 4; i++) {
-        g.circle(-16.5 + i * 11, 0, 3.6);
+        g.circle((est ? -8 : -16.5) + i * 11, 0, 3.6);
         if (i < pips) g.fill(col);
         else g.stroke({ width: 1.2, color: 0x5d6673 });
       }
       b.addChild(g);
+      // An estimate: the army depends on how an earlier battle goes.
+      if (est) b.addChild(text("≈", 14, PARCH)).position.set(-26, -1);
       if (scene.odds.odds === "unknown") {
         const q = new Text({ text: "?", style: { fontFamily: "Manrope, sans-serif", fontWeight: "800", fontSize: 13, fill: PARCH }, resolution: this.resolution });
         q.anchor.set(0.5);
@@ -278,6 +297,13 @@ export class MarkerLayer {
         const p0 = this.labelOf.get(a.via ?? a.from)!, p1 = this.labelOf.get(a.to)!;
         const [x, y] = toScreen(cam, a.via ? p0.x : (this.labelOf.get(a.from)!.x + p1.x) / 2, a.via ? p0.y : (this.labelOf.get(a.from)!.y + p1.y) / 2);
         b.position.set(x, y);
+      } else if (kind === "arrive") {
+        const m = this.markers.get(id);
+        const p = this.labelOf.get(id)!;
+        const [x, y] = toScreen(cam, p.x, p.y);
+        const off = m ? m.offset : [0, 0];
+        // Just under the army marker that's there now.
+        b.position.set(x + off[0]!, y + off[1]! + (m ? (m.metrics.h / 2 + m.metrics.dy) * k + 12 : 14));
       } else {
         const m = this.markers.get(id);
         const p = this.labelOf.get(id)!;

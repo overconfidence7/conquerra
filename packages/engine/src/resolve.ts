@@ -1,4 +1,5 @@
 import type { BorderType, SpecialistType } from "@conquerra/content";
+import { fewestToTake, troopsFor } from "./amounts";
 import { expectBattle, rollLosses, type BattleExpectation } from "./combat";
 import { cultureProtection, incomeFor, investCost, scoreFor, specialistUnlocked } from "./economy";
 import { recordSighting, updateIntel } from "./intel";
@@ -38,12 +39,15 @@ interface MovePlan {
   border: BorderType;
 }
 
-/** A queued order, plus where a follow-through is pushing on from (those troops may act again). */
+/** A queued order, plus where a follow-through is pushing on from. */
 interface Queued {
   order: Order;
   chainFrom?: TerritoryId;
   chainDepth?: number;
 }
+
+/** The territory an order sends troops out of (moves, retreats and follow-through advances). */
+const launchesFrom = (o: Order): TerritoryId | null => (o.kind === "move" || o.kind === "retreat" || o.kind === "advance" ? o.from : null);
 
 const snapshot = (troops: number, specialists: readonly Specialist[]): ArmySnapshot => ({
   troops,
@@ -55,9 +59,12 @@ class Turn {
   readonly idx: MapIndex;
   readonly rng: Rng;
   readonly events: StepEvent[] = [];
-  /** Troops that already moved or fought this turn, per territory; they can't move again. */
+  /**
+   * Troops resting for the rest of the turn, per territory: the survivors of a failed attack, who fell back.
+   * (An army that moved in or captured can go again in a later order: chained attacks.)
+   */
   readonly spentTroops = new Map<TerritoryId, number>();
-  /** Specialists (by id) that already moved this turn. */
+  /** Specialists (by id) resting with them. */
   readonly spentSpecialists = new Set<string>();
   /** Territories attacked so far this turn (for "Reinforce if hit"). */
   readonly attacked = new Set<TerritoryId>();
@@ -111,6 +118,10 @@ class Turn {
   markSpent(t: TerritoryId, troops: number, specialists: readonly Specialist[]) {
     this.spentTroops.set(t, (this.spentTroops.get(t) ?? 0) + troops);
     for (const s of specialists) this.spentSpecialists.add(s.id);
+  }
+  /** A territory changed hands: whoever stands there now is a fresh army. */
+  clearSpent(t: TerritoryId) {
+    this.spentTroops.delete(t);
   }
   /** Specialists can't exist without troops: an army reduced to 0 loses them. */
   settle(t: TerritoryState): Specialist[] {
@@ -184,11 +195,6 @@ class Turn {
     if (!this.alive(pid)) {
       this.emit({ type: "fizzled", player: pid, orderId: order.id, reason: "player eliminated", usedFallback: false });
       return null;
-    }
-    // A follow-through army may act again: free up the troops standing where it pushes on from.
-    if (q.chainFrom && depth === 0) {
-      this.spentTroops.delete(q.chainFrom);
-      for (const s of this.terr(q.chainFrom)?.specialists ?? []) this.spentSpecialists.delete(s.id);
     }
     this.lastCapture = null;
     const failed = (order.conditions ?? []).find((c) => !this.check(pid, c, order));
@@ -301,12 +307,6 @@ class Turn {
       border = this.idx.border(o.via, o.to);
     } else if (!adjacent(o.from, o.to)) return "territories are not adjacent";
 
-    // Troops: only fresh ones, always leaving the garrison behind.
-    const fresh = this.freshTroops(o.from);
-    const asked = o.troops === "all" ? fresh : Math.max(0, Math.floor(Number(o.troops) || 0));
-    const troops = Math.min(asked, fresh, from.troops - rules.setup.minGarrison);
-    if (troops <= 0) return "no troops available to move";
-
     // Specialists travel with the stack: all fresh ones by default, or the listed types.
     const freshSpecs = from.specialists.filter((s) => !this.spentSpecialists.has(s.id));
     let specialists: Specialist[];
@@ -324,7 +324,16 @@ class Turn {
     if (o.via && !specialists.some((s) => s.type === "cavalry")) return "only armies with cavalry can move two territories";
 
     const leaderGoes = !!o.withLeader && p.leader.alive && p.leader.territory === o.from;
-    return { troops, specialists, leaderGoes, border: border ?? "normal" };
+
+    // Troops: a share of the army that can act, always leaving the garrison behind.
+    const fresh = this.freshTroops(o.from);
+    const available = Math.min(fresh, from.troops - rules.setup.minGarrison);
+    const attack = to.owner !== pid;
+    const draft: MovePlan = { troops: 0, specialists, leaderGoes, border: border ?? "normal" };
+    const enough = () => (attack ? fewestToTake((n) => this.expect(pid, o.to, { ...draft, troops: n }).captureLikely, available) : available);
+    const troops = troopsFor(o.troops, fresh, available, enough);
+    if (troops <= 0) return "no troops available to move";
+    return { ...draft, troops };
   }
 
   expect(pid: PlayerId, toId: TerritoryId, plan: MovePlan): BattleExpectation {
@@ -359,7 +368,6 @@ class Turn {
     if (to.owner === pid) {
       to.troops += plan.troops;
       to.specialists.push(...plan.specialists);
-      this.markSpent(o.to, plan.troops, plan.specialists);
       if (plan.leaderGoes) p.leader.territory = o.to;
       this.emit({ type: "moved", player: pid, orderId, from: o.from, to: o.to, army: snapshot(plan.troops, plan.specialists), withLeader: plan.leaderGoes, retreat });
       return null;
@@ -389,7 +397,8 @@ class Turn {
       to.owner = pid;
       to.troops = survivors;
       to.specialists = [...plan.specialists];
-      this.markSpent(o.to, survivors, plan.specialists);
+      // The winners can push on from here in a later order (chained attacks).
+      this.clearSpent(o.to);
       if (defenderLeader && defender) {
         defender.leader = { alive: false, territory: null };
         this.emit({ type: "leaderKilled", player: defender.id, territory: o.to });
@@ -404,7 +413,7 @@ class Turn {
     } else {
       specialistsLost.push(...this.settle(to).map((s) => s.type));
       if (survivors > 0) {
-        // Survivors fall back to where they came from and can't act again this turn.
+        // Survivors fall back to where they came from and rest for the rest of the turn.
         from.troops += survivors;
         from.specialists.push(...plan.specialists);
         this.markSpent(o.from, survivors, plan.specialists);
@@ -484,12 +493,26 @@ class Turn {
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
+ * "Follow through" pushes on in the player's next slot, unless they queued their own next hop from the same place:
+ * then the manual chain wins and the automatic one steps aside, so the same army is never sent twice.
+ */
+function queueFollowThrough(T: Turn, pid: PlayerId, q: Queued[], next: Queued) {
+  if (q.some((x) => launchesFrom(x.order) === next.chainFrom)) {
+    T.emit({ type: "fizzled", player: pid, orderId: next.order.id, reason: "your own next order from there goes instead", usedFallback: false });
+    return;
+  }
+  q.unshift(next);
+}
+
+/**
  * Resolve one turn. Pure: the input state is not modified.
  *
  * 1. Seats are shuffled with the game's seeded RNG. Presets are expanded into conditions and fallbacks.
  * 2. "First" orders (Seize the Initiative) run, in seat order.
  * 3. Round-robin: each player's next queued order runs, one per player per round, until all queues are empty.
- *    A successful "Follow through" goes to the front of that player's queue.
+ *    A successful "Follow through" goes to the front of that player's queue (unless they queued their own next hop).
+ *    An army that moved in or captured can go again from there in a later order (chained attacks); each hop waits
+ *    for its own slot, so rivals' orders land in between.
  * 4. "Last" orders (Lie in Wait) run, in seat order.
  * 5. Buildings finish, income and upkeep (with unrest if you can't pay), cooldowns, victory check.
  */
@@ -525,7 +548,7 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
     T.player(pid).cooldowns.seize = rules.leader.seizeInitiativeCooldown;
     T.emit({ type: "initiative", player: pid, timing: "first", orderId: o.id });
     const next = T.run(pid, { order: o });
-    if (next) queues.get(pid)!.unshift(next);
+    if (next) queueFollowThrough(T, pid, queues.get(pid)!, next);
   }
 
   let more = true;
@@ -537,7 +560,7 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
       if (!item) continue;
       more = true;
       const next = T.run(pid, item);
-      if (next) q.unshift(next);
+      if (next) queueFollowThrough(T, pid, q, next);
     }
   }
 

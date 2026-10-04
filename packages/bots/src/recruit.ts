@@ -1,5 +1,6 @@
 import type { SpecialistType } from "@conquerra/content";
 import {
+  fewestToTake,
   indexMap,
   investCost,
   previewAttack,
@@ -27,7 +28,8 @@ type Seen = TerritoryDetail & { detail: "full" };
  *     when it clearly helps (siege next to enemy forts, cavalry for reach, healers once unlocked),
  *     a little culture in safe interior land when rich, and everything else on troops at the front.
  *  2. Attack the most valuable neighbours it can probably take, with the "Only if still stronger" preset,
- *     and "Follow through" when it has plenty to spare.
+ *     and "Follow through" when it has plenty to spare. When the army that should arrive is clearly stronger
+ *     (at least twice what the next target needs), it chains on by hand instead: up to 3 hops.
  *  3. March idle interior troops toward the front, concentrating on the border that faces the most enemy troops.
  *  4. Keep a reserve ready with "Reinforce if hit", and pull badly outnumbered stacks back with "Retreat if outnumbered".
  */
@@ -164,6 +166,8 @@ export const recruitBot: Bot = {
     const targeted = new Set<TerritoryId>();
     let usedInitiative = false;
     const attackedFrom = new Set<TerritoryId>();
+    /** Attacks queued this turn, for chaining on from where they should arrive. */
+    const queued: { order: Order; from: TerritoryId; to: TerritoryId; troops: number }[] = [];
     for (const c of candidates) {
       if (targeted.has(c.to)) continue;
       const avail = free.get(c.from)!;
@@ -189,6 +193,40 @@ export const recruitBot: Bot = {
         usedInitiative = true;
       }
       orders.push(o);
+      queued.push({ order: o, from: c.from, to: c.to, troops: send });
+    }
+
+    // Chained attacks: push on from where an attack should arrive, when that army is clearly stronger than the next
+    // target. Each hop is a later order, so it waits for its own slot and rivals can react in between.
+    const MAX_HOPS = 3;
+    for (const first of queued) {
+      let from = first.to, sent = first.troops, prevFrom = first.from, link = first.order;
+      for (let hop = 0; hop < MAX_HOPS - 1; hop++) {
+        const e = previewAttack(ctx, view, { from: prevFrom, to: from, troops: sent, specialists: specsAt(prevFrom) });
+        if (!e?.captureLikely) break;
+        const army = Math.floor(sent - e.expectedAttackerLosses);
+        const avail = army - garrison;
+        if (avail <= 0) break;
+        let best: { to: TerritoryId; value: number; need: number } | null = null;
+        for (const n of idx.neighbors.get(from)!) {
+          const nv = seen(n);
+          if (!nv || nv.owner === me.id || targeted.has(n)) continue;
+          const need = fewestToTake((troops) => previewAttack(ctx, view, { from, to: n, troops, specialists: specsAt(prevFrom) })?.captureLikely ?? false, avail);
+          if (need === null || avail < need * 2) continue;
+          const value = valueOf(n);
+          if (!best || value > best.value) best = { to: n, value, need };
+        }
+        if (!best) break;
+        // The manual hop replaces Follow through on the attack it chains from.
+        if (link.preset?.id === "followThrough") link.preset = { id: "onlyIfStronger" };
+        const o: Order = { id: id(), kind: "move", from, to: best.to, troops: "all", preset: { id: "onlyIfStronger" } };
+        orders.push(o);
+        targeted.add(best.to);
+        prevFrom = from;
+        from = best.to;
+        sent = avail;
+        link = o;
+      }
     }
 
     // ---------- 3. Move idle interior troops toward the front ----------
@@ -246,13 +284,5 @@ function smallestWinningArmy(
   avail: number,
   specialists: SpecialistType[],
 ): number | null {
-  const likely = (troops: number) => previewAttack(ctx, view, { from, to, troops, specialists })?.captureLikely ?? false;
-  if (avail <= 0 || !likely(avail)) return null;
-  let lo = 1, hi = avail;
-  while (lo < hi) {
-    const mid = (lo + hi) >> 1;
-    if (likely(mid)) hi = mid;
-    else lo = mid + 1;
-  }
-  return Math.min(avail, lo + Math.max(1, Math.ceil(lo * 0.2)));
+  return fewestToTake((troops) => previewAttack(ctx, view, { from, to, troops, specialists })?.captureLikely ?? false, avail);
 }

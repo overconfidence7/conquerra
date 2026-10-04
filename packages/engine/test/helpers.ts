@@ -1,7 +1,7 @@
 import { defaultRules, MapDef, type Rules, type SpecialistType } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { createGame } from "../src";
-import type { GameContext, GameState, Order, StepEvent } from "../src";
+import type { GameContext, GameState, Order, StepEvent, TroopAmount } from "../src";
 
 /** A five-territory line map: a - b - c - d - e. Capitals at a and e. */
 export const lineMap: MapDef = MapDef.parse({
@@ -87,7 +87,7 @@ export const capOf = (s: GameState, pid: string) => s.players.find((p) => p.id =
 export const player = (s: GameState, pid: string) => s.players.find((p) => p.id === pid)!;
 
 let n = 0;
-export const mv = (from: string, to: string, troops: number | "all", extra: Partial<Order> = {}): Order =>
+export const mv = (from: string, to: string, troops: TroopAmount, extra: Partial<Order> = {}): Order =>
   ({ id: `o${++n}`, kind: "move", from, to, troops, ...extra }) as Order;
 
 export const types = (ev: StepEvent[]) => ev.map((e) => e.type);

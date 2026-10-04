@@ -7,6 +7,7 @@ export { visionFor, visibleTerritories, type Vision, type VisionSource } from ".
 export { replayFor, type ReplayEvent, type SurfaceEvent } from "./replay";
 export { PRESETS, expandPreset, type PresetInfo } from "./presets";
 export { expectBattle, rollLosses, healerReduction, type BattleExpectation, type BattleInput } from "./combat";
+export { SHARES, amountLabel, fewestToTake, isShare, troopsFor, type Share, type TroopAmount } from "./amounts";
 export { previewAttack, type AttackPlan } from "./preview";
 export {
   incomeFor,
