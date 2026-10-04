@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M2 (playable browser game vs bots): session 5 done (menus, replay, timer, phone, installable app). The private preview is ready to go online as soon as Nate does the one-time Cloudflare steps in the README.**
+**Phase: M2 (playable browser game vs bots): session 5 reviewed. Session 6 runs **locally on Nate's computer**: bring in his art, put the private preview online, then Nate's real-phone test closes M2.**
 
 Claude Code sessions completed: **5** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
@@ -163,6 +163,37 @@ Claude Code sessions completed: **5** (a new orchestrator prompt is due after se
 - Full games played to the end on a laptop and in phone emulation (with Tactical view on).
 - Screenshots: `docs/art/screens/`. 159 automated tests pass (32 new).
 
+### Oct 2: Orchestrator review of session 4
+- Checked the work: it matches the plan, GitHub's checks pass, and the screenshots look like a real illustrated atlas.
+- Small things to fix in session 5:
+  - In the fog, one territory showed **your own colour with "0?"**, probably an old memory of land you lost.
+  - Region names run over army markers at Mid zoom.
+  - At Far zoom on a laptop the map only fills about two-thirds of the screen.
+- **Nate's second art batch** (18 files: the rest of the ground and water textures, mountains, hills and trees) arrived after the session. It's on-style. To redo: `tree-conifer-1` and `-2` (round bushes, not pines) and `tree-broadleaf-3` (a smudge). Rock, snow and hills textures have big built-in shadows that repeat. The prompt pack now asks for flat, even lighting.
+- Nate's calls:
+  - The seventh House colour becomes **Teal** (Celeste looked like Azure).
+  - **Lighter fog**: a soft haze you can see the land through.
+  - Raw art stays out of GitHub; Nate backs it up to **Google Drive**.
+  - **Session 5 waits for the art batch Nate is generating now**, so the menus use real icons and portraits.
+- Next prompt: `docs/prompts/claude-code-session-05.md`.
+
+### Oct 3: Map builder idea, and making the art blend
+- Nate raised a **custom map builder** as a future add-on, and asked how the art will blend and how House borders will show.
+- **Map builder:** it shares a real foundation with random maps (the map maker's cells, outlines, quality checks, placement and the renderer), so they're planned together but built in order: a dev-only **map lab** early in M3, **random maps** in M5 (after splitting the map maker into stages that can be re-run and pinned), then the **builder** in M6 or sooner. Plan: `docs/07-map-tooling.md`.
+- **Blending:** every map is data that one renderer paints, so blending gets fixed once and works for every map. Session 5 adds colour matching in the art importer, natural edges between ground types, and one final colour grade.
+- **Borders:** the session 4 screenshots showed the glow straddling the line (where two Houses meet, one colour wins), spilling onto water, and the flat tint muddying the ground. New rules in `docs/06-art-direction.md`: each House's band sits inside its own land, an edge wash instead of a flat fill, tints that keep the House colour true, and a selection style that can't be mistaken for a House. Added to session 5 Part A, with a House-on-every-ground check image.
+- Question for Nate: is the builder for him only (a desktop tool) or for players too?
+
+### Oct 3: Art session 2 (Gemini): Tier 1 and Tier 2 art finished
+- Claude drove Gemini through Chrome and reviewed every image before keeping it. **44 new files** are in `art/incoming/` (79 in total), each listed in `_source-map.txt`:
+  - **Tier 1:** figure-cavalry, -siege, -scouts, -engineers, -healers, banner-flag, ship, bridge, cloud-1..3.
+  - **Tier 2:** shield-base, banner-base, 13 icons (crown, gold, culture, troops, fort, market, barracks, watchtower, cavalry, siege, scouts, engineers, healers), emblem, seal, frame-corner, leader-01..10 (navy backgrounds) and five vistas (city, valley, forest, mountain, harbor).
+- **Rejected:** a flag with a fort wall blended in from a reference image, a ship with a tiny fort tower on it, a bridge with a ghost ship under the arch, and a cloud with a stray orb. The last two were fixed by asking Gemini to remove the stray piece. Rejects are in `art/incoming/_review/rejected/` or left unused in Downloads.
+- **Small compromises:** the bottom coin in `icon-gold` fades slightly into the background (invisible at 24px). `icon-barracks` is a touch more cartoon-like than the others. Most figures are at a lower camera angle than 45°, matching `figure-army`. Vistas are 16:9 (Gemini's widest), so the importer trims a little off the top and bottom to make 2:1.
+- **Lessons** (now in the prompt pack): pick reference images that don't share subjects with the new image, name the last subject in each prompt ("no ship"), review the downloaded file rather than the preview, scrub Gemini's corner watermark from PNG downloads, and start a new chat every 8–10 images.
+- `docs/art/asset-list-and-prompts.md` now has the current semi-realistic style line and the prompts that worked (the project copy is updated too).
+- Next: run `pnpm art:import` and check the results in the game (session 5).
+
 ### Oct 3: Claude Code session 5 (M2, part 4: menus, replay, timer, phone, installable app, preview)
 - **Missing inputs:** the orchestrator's Oct 3 doc updates and Nate's art batches 2 and 3 weren't on GitHub, so this session worked from the pasted prompt (saved as `docs/prompts/claude-code-session-05.md`) and the 4 textures already in the game. Everything else uses painted placeholders, including new ones for Leader portraits, card vistas and the wax seal.
 - **The "Azure 0?" bug:** two engine bugs together. A battle that killed everyone on both sides left the defender holding land with 0 troops, and your memory never noted land you lost. Now the last defender holds with 1 troop, and you remember who took your land. Both have tests.
@@ -182,3 +213,13 @@ Claude Code sessions completed: **5** (a new orchestrator prompt is due after se
 - **Installable app:** installs from Chrome, works offline for single player, and shows "Update ready" instead of reloading mid-game.
 - **Private preview:** `pnpm deploy:preview` uploads the game, then checks that the site still asks for the Google sign-in. There's no public workers.dev address. Nate's one-time steps are in the README. This cloud session couldn't reach Cloudflare or the domain, so it isn't live yet.
 - Full games played to the end on a laptop screen and in phone emulation, each with a real timer auto-lock (`pnpm ui-check play`). 198 automated tests pass (39 new). Screenshots: `docs/art/screens/ui-*.png` and the map shots.
+
+### Oct 4: Orchestrator review of session 5
+- Checked the work: GitHub's checks pass, the scope held, and the new screens look good (gilded menus, replay, phone layout). A typical turn is now **7 taps**.
+- **Lesson: session 5 ran in the cloud**, so it couldn't see Nate's art (it stays on his computer, out of GitHub) or reach Cloudflare. It also worked on a side branch. From now on, sessions that need the art, the browser or Cloudflare run **locally on Nate's computer**.
+- Tidied up:
+  - Merged the Oct 3 docs (art direction, map tooling, the art list), which were still sitting uncommitted on Nate's computer, with session 5's docs, and moved everything onto `main`.
+  - **Created the Cloudflare Access lock** ("Conquerra": Google sign-in only, policy "Conquerra players" = Nate's email, sign-in lasts a month). Nothing is online yet: no Conquerra Worker exists.
+- Nate's call: **keep Purpure**. Azure and Purpure look alike to colourblind players, but their banner patterns tell them apart.
+- Small things for session 6: the Leader card's text runs into the bottom bar on desktop, and the army panel's hint line is clipped.
+- Next prompt: `docs/prompts/claude-code-session-06.md` (run it in Claude Code on Nate's computer, not in the cloud).

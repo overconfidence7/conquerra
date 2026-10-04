@@ -82,7 +82,8 @@ Research, outline v0.1, v0.2 additions, and decisions.
   - **Session 2 ✅:** small engine updates, then the browser app: map, order builder with presets and odds, local game vs bots, a simple text log.
   - **Session 3 ✅:** the seeded map maker and real geography (`04-design-additions.md` §9): seas, lakes, mountain ranges, passes, rivers, sea lanes, choke points, plus the height map, biome and decoration data the illustrated map needs. Rebuild both test maps.
   - **Session 4 ✅:** the illustrated map renderer (WebGL/PixiJS) in the "Gilded Atlas" style (`docs/06-art-direction.md`): terrain from the biome data, relief lighting from the height map, sprites and specialist figures, the info layer (borders, banners, icons), zoom levels, Tactical view, fog mist, "last seen" intel, the hover/tap card, the art import script and placeholders.
-  - **Session 5 ✅:** the gilded menus (territory card, army panel, Leader portrait, turn report, minimap), the animated replay, the turn timer, phone layout, installable app, and the private preview (ready to deploy; Nate's one-time Cloudflare steps are in the README).
+  - **Session 5 ✅:** the gilded menus (territory card, army panel, Leader portrait, turn report, minimap), the animated replay, the turn timer, phone layout, installable app, and the private preview setup. It ran in the cloud, so it couldn't reach Nate's art or Cloudflare.
+  - **Session 6 (run locally on Nate's computer):** import art batches 2 and 3 and judge them in the game, retake the screenshots, put the private preview online, and have the replay camera follow off-screen action. Then Nate's real-phone test closes M2.
 - Exit: Nate plays full games against bots on phone and laptop.
 
 ### M3: Depth + balance
@@ -94,6 +95,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
 - Spies: independent travel, country infiltration, spy-vs-spy defense with deception (`04-design-additions.md` §8).
 - Smarter bots: hold passes with small armies, push through choke points with enough force, plan sea-lane landings. This should bring 4–6 player games back under 25 turns on average.
 - Balance pass using the sim.
+- **Map lab** (dev-only, early in M3): seed and knobs in, the real illustrated map out, with its quality checks, a 12-seed gallery and the art test bench. See `docs/07-map-tooling.md`.
 
 ### M4: Online with friends (Cloudflare)
 - Live 5-minute turns, plus a longer-timer option.
@@ -107,11 +109,12 @@ Research, outline v0.1, v0.2 additions, and decisions.
 ### M5: Public 1.0
 - Public Google sign-in, matchmaking and ratings.
 - 50-player battle royale, asymmetric factions, secret objectives, team games.
-- Random maps generated on the spot, and the "blackout" fog option (`04-design-additions.md` §9).
+- Random maps generated on the spot, and the "blackout" fog option (`04-design-additions.md` §9). First split the map maker into stages with their own random streams and pins (`docs/07-map-tooling.md`), so the map builder can reuse it.
 - Anti-collusion, tutorial, one-time purchase.
 
 ### M6: Native apps + later
-- iOS and Android apps, map editor, cosmetics.
+- iOS and Android apps, cosmetics.
+- **Map builder** on the same staged map maker (`docs/07-map-tooling.md`): for Nate first, players later.
 
 ## Working conventions for Claude Code
 - Start each session by reading `CLAUDE.md`, `docs/02-game-design-outline.md` and the current milestone in this file.

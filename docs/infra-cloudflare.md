@@ -29,6 +29,7 @@
   - A Worker `conquerra` serving the built game as static assets (`apps/web/wrangler.jsonc`), deployed with Wrangler from Nate's computer (`pnpm deploy:preview`). Deploying from GitHub waits until M4.
   - No public address: `workers_dev = false`, preview URLs off. Only the custom domain `conquerra.overconfidenceonline.com`.
   - A new Access application "Conquerra" using the existing Google login, allowing only `nkurtz@gmail.com`, created before the domain goes live. Session duration 1 month, so the installed app doesn't ask to sign in every day.
+  - **Done Oct 4:** the Access app "Conquerra" exists (Google sign-in only, instant sign-in, 1 month, policy "Conquerra players" allowing only Nate's email). Still to do: `npx wrangler login` and `pnpm deploy:preview` on Nate's computer (session 6).
 
 ### M4 (online with friends): the real backend
 - **Worker** `conquerra`: serves the web app and the API on `conquerra.overconfidenceonline.com`.
