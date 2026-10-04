@@ -302,3 +302,12 @@ Claude Code sessions completed: **8** (a new orchestrator prompt is due after se
   - Bots take about 3.5 ms a turn for nine Captains at 10 players (worst 27 ms, on a laptop running slow).
 - **Desktop site tip:** if Chrome's Desktop site is on (a phone drawing a page much wider than its screen), a one-line tip in the lobby and the game says how to turn it off. You can dismiss it, and the phone remembers.
 - 269 automated tests pass (29 new). Screenshots: `docs/art/screens/ui-replay-fog-1.png`, `-2.png`, `-3.png`, `ui-replay-fog-phone-2.png`, `ui-lobby-bots.png`, `ui-desktop-site-tip.png`.
+
+### Oct 4: Orchestrator review of session 8
+- Checked the work: GitHub's checks pass, the scope held, and the screenshots show the fog clearing around each capture during the replay, the lobby's new Bots row and the Desktop site tip.
+- **Nate's calls:**
+  - **Runaways:** Captain bots made early runaways more common (6 players: 27% → 46% of games with one player on half the map by turn 10). The fix is in the bots, not the rules: in session 10, Captains (and generals, which use the same brain) gang up on whoever is running away with the map, as people do. Rule brakes stay on file for the balance pass.
+  - The smarter bot keeps the name **Captain**.
+  - **The map lab lives on the private preview** (only Nate can sign in), so he can use it from his laptop. It's hidden at public launch.
+- Still to come: Nate's play test of session 8 (Captain bots, a chain into the fog).
+- Next prompt: `docs/prompts/claude-code-session-09.md` (run it locally): the map lab and the art test bench. After session 9, a fresh orchestrator prompt is due.

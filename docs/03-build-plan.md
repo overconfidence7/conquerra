@@ -90,8 +90,8 @@ Research, outline v0.1, v0.2 additions, and decisions.
 ### M3: Depth + balance
 - **Session order (agreed Oct 4, revised the same evening):**
   - **8:** the fog lifts during the replay (step-by-step vision, sightings go into "last seen"), plus smarter bots (a new default level; Recruit stays as the easy level)
-  - **9:** the map lab and the art test bench
-  - **10:** generals (Leader standing instructions), captured generals, the Fallen
+  - **9:** the map lab and the art test bench (on the private preview at `?lab=maps`), plus a few candidate maps
+  - **10:** generals (Leader standing instructions), captured generals, the Fallen; Captains and generals gang up on a runaway leader
   - **11:** Spoils and Fate decks
   - **12:** preset diplomacy
   - **13:** spies and culture unlocks
