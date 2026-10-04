@@ -74,7 +74,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
 - Sim reports game length. **Target: about 15–25 turns.**
 - Exit: tests green, 1,000+ bot games with no crashes, a plain-language rules reference (`docs/rules-reference.md`) for Nate to read.
 
-### M2: Playable local alpha (browser, vs bots)
+### M2: Playable local alpha (browser, vs bots) ✅ Done (Oct 4)
 - Map, plus a fast order builder with presets (goal: a basic turn in about 60 seconds, a deep turn within 5 minutes).
 - 5-minute timer, odds preview, and the shared replay showing your visible area.
 - A private preview at `conquerra.overconfidenceonline.com` behind Cloudflare Access (Google login already set up), so Nate can test on his phone. See `docs/infra-cloudflare.md`. (Decided Oct 2.)
@@ -84,11 +84,19 @@ Research, outline v0.1, v0.2 additions, and decisions.
   - **Session 4 ✅:** the illustrated map renderer (WebGL/PixiJS) in the "Gilded Atlas" style (`docs/06-art-direction.md`): terrain from the biome data, relief lighting from the height map, sprites and specialist figures, the info layer (borders, banners, icons), zoom levels, Tactical view, fog mist, "last seen" intel, the hover/tap card, the art import script and placeholders.
   - **Session 5 ✅:** the gilded menus (territory card, army panel, Leader portrait, turn report, minimap), the animated replay, the turn timer, phone layout, installable app, and the private preview setup. It ran in the cloud, so it couldn't reach Nate's art or Cloudflare.
   - **Session 6 ✅ (run locally):** Nate's art imported and in the menus, a replay freeze fixed, the replay camera, screenshots retaken, and the private preview online behind Access.
-  - **Session 7 (run locally): Nate's phone test findings:** the installed app showed the desktop layout on his phone; **chained attacks** (no limit); **amounts as shares** (All, 3/4, 1/2, 1/4, Just enough); the clipped army panel row.
+  - **Session 7 ✅ (run locally):** Nate's phone test findings: the phone layout (the cause was Chrome's "Desktop site"), **chained attacks** (no limit), **amounts as shares** (All, 3/4, 1/2, 1/4, Just enough), and the clipped army panel row.
 - Exit: Nate plays full games against bots on phone and laptop.
 
 ### M3: Depth + balance
-- **Session order (agreed Oct 4):** 8 smarter bots and the map lab · 9 generals (Leader standing instructions), captured generals, the Fallen · 10 Spoils and Fate decks · 11 preset diplomacy · 12 spies and culture unlocks · 13 balance pass.
+- **Session order (agreed Oct 4, revised the same evening):**
+  - **8:** the fog lifts during the replay (step-by-step vision, sightings go into "last seen"), plus smarter bots (a new default level; Recruit stays as the easy level)
+  - **9:** the map lab and the art test bench
+  - **10:** generals (Leader standing instructions), captured generals, the Fallen
+  - **11:** Spoils and Fate decks
+  - **12:** preset diplomacy
+  - **13:** spies and culture unlocks
+  - **14:** balance pass (runaways, 10-player game length, seat fairness)
+- A fresh orchestrator prompt is due after session 9.
 - Leader-as-general (standing instructions) and captured generals.
 - Spoils and Fate decks (events and missions).
 - Preset-based diplomacy with counteroffers and the re-confirm rule.
@@ -116,7 +124,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
 
 ### M6: Native apps + later
 - iOS and Android apps, cosmetics.
-- **Map builder** on the same staged map maker (`docs/07-map-tooling.md`): for Nate first, players later.
+- **Map builder** on the same staged map maker (`docs/07-map-tooling.md`): **a player feature from the start** (decided Oct 4). Players save, share and play each other's maps, so it needs M4's online storage, automatic quality and fairness checks, undo and light moderation. It can come sooner than M6 once M4 is done.
 
 ## Working conventions for Claude Code
 - Start each session by reading `CLAUDE.md`, `docs/02-game-design-outline.md` and the current milestone in this file.

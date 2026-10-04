@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M2 wrap-up: session 7 (run locally) fixes what Nate's phone test found and adds chained attacks and share-based amounts. Then M3 (sessions 8–13).**
+**Phase: M2 is done. M3 (depth and balance, sessions 8–14) starts with session 8: the fog lifts during the replay, and smarter bots.**
 
 Claude Code sessions completed: **7** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
@@ -276,3 +276,15 @@ Claude Code sessions completed: **7** (a new orchestrator prompt is due after se
 - **Simulator (1,000 games each):** chaining shortens 4–6 player games by about a turn (4 players: 25.9 → 24.9 turns). Seats stay fair. Runaways (one player with half the map by turn 10) rise a little: 40% → 45% at 4 players, 24% → 27% at 6. 10-player games are still about 36 turns. Details and options: `docs/sim-results-m2-chaining.md`. No rules were changed for balance.
 - 240 automated tests pass (30 new). Screenshots: `docs/art/screens/ui-chain-desktop.png`, `ui-chain-phone.png`, `ui-share-chips.png`, `ui-share-chips-phone.png`, `ui-diagnostics.png`, and `ui-desktop.png` (retaken).
 - **Nate's phone check (after the deploy):** the installed app updated (version c20f39b). Its diagnostics showed the cause: Chrome's **"Desktop site"** mode was on, so the phone reported a desktop computer with a 980px-wide page on a 384px screen. The new check picked the phone layout anyway, but in Desktop site mode everything is drawn for a 980px page and shrunk to fit. Once Nate turned Desktop site off, the phone layout looked right. Queuing a chain on the phone worked, with hop numbers and the "≈" marker.
+
+### Oct 4: Orchestrator review of session 7 (M2 is done)
+- Checked the work: GitHub's checks pass, the scope held, and the screenshots show the chain (numbered hops, "≈" arrival markers), the share chips, and the desktop army panel no longer cut off. **M2 is done:** Nate has played full games against bots on his laptop and his phone.
+- **Phone:** the tiny-looking menus and the main menu not filling the screen came from Chrome's "Desktop site" setting too. With it off, everything looks right. The game will show a one-line tip when it detects Desktop site.
+- **Nate's calls:**
+  - The survivors of a failed attack fall back and can't attack again that turn.
+  - Runaways: no rule change for now. We'll look again after the smarter bots and in the balance pass.
+  - 10-player games (about 36 turns): wait for the smarter bots and the balance pass. Conquest stays the lobby's suggestion for 8+.
+  - **New idea: the fog lifts during the replay.** As your army takes a territory, you start seeing around it right then, so you can watch a chain push into the fog. Anything you see along the way goes into your "last seen" memory.
+  - **The map builder is for players from the start** (not just Nate). That means saving, sharing and playing each other's maps, with automatic fairness checks. It still comes after online play.
+- **M3 grows by one session:** 8 the fog lifts during the replay, plus smarter bots · 9 the map lab · 10 generals and the Fallen · 11 Spoils and Fate decks · 12 diplomacy · 13 spies and culture unlocks · 14 balance pass.
+- Next prompt: `docs/prompts/claude-code-session-08.md` (run it locally).

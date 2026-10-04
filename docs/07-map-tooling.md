@@ -7,7 +7,7 @@
 
 1. **Map lab** (early M3, dev-only): a page where you pick a seed and a few knobs and see the real illustrated map, its quality checks and a gallery of seeds. It costs little, helps Nate curate maps now, and doubles as the art test bench (below).
 2. **Random maps** (M5): split the map maker into stages that can be re-run on their own, then offer "Random map" in the lobby.
-3. **Map builder** (M6, or sooner if Nate wants it): screens for editing each stage by hand, on top of the same pipeline.
+3. **Map builder** (after M4's online play; M6 or sooner): screens for editing each stage by hand, on top of the same pipeline. **Decided Oct 4: it's a player feature from the start**, not just a tool for Nate.
 
 Each step reuses most of the one before it. Building the builder first would mean building the pipeline split anyway, with a much bigger interface on top, before we know what random maps need.
 
@@ -46,6 +46,10 @@ Today `generateMap` runs every step in one pass with one shared random stream. T
 - **Seed gallery:** 12 random maps side by side.
 - Every new art batch gets checked here, and the screenshots go in `docs/art/screens/bench/`.
 
-## Questions for Nate
-1. **Who is the builder for?** Just you (a desktop tool for making our maps) or players (a feature they use and share)? A player feature needs undo, a phone-friendly layout, sharing and moderation, roughly three times the work. Suggestion: build it for you first, and open it to players later.
-2. **Should player-made maps be playable online?** If so, they need storage and a review step (M4 infrastructure or later).
+## Decided (Oct 4): the builder is for players
+Nate chose a player feature from the start. What that adds on top of the shared pipeline:
+- **Playable online:** player maps are saved online (D1 for the listing, R2 for the map data) and can be picked in the lobby by friends, then publicly. So it follows M4.
+- **Quality and fairness gate:** a map can only be played after `checkMap` passes (connected, no slivers, fair capitals for each player count it claims, enough choke points). The builder shows the failures as live warnings.
+- **Undo**, and a layout that works on a laptop first. Phone editing can come later; playing a player map works everywhere.
+- **Light moderation:** map and place names go through a word filter, with a way to report a map.
+- The map lab (session 9) is still the first step: its preview, checks panel and seed gallery become the builder's core.
