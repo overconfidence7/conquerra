@@ -4,6 +4,8 @@
 
 **Status (Oct 3):** every Tier 1 and Tier 2 item below is in `art/incoming/` (79 files). Tier 3 is still to do.
 
+**In the game (Oct 4, session 6):** all 79 imported and judged on both maps. Worth redoing, in order: (1) `tree-conifer-1` and `-2` (still round bushes; use the pine prompt below, "clear spiky tips"); (2) `terrain-rock` and `terrain-snow` (big boulders; mostly hidden under mountain sprites, so low priority); (3) `terrain-hills` (big swirls). Everything else fits; the importer fixed the pink edges, the `tree-broadleaf-3` smudge and the cream clouds.
+
 **Before you start:** confirm your image tool's terms allow commercial use of the images, since the game will be sold.
 
 ## How to prompt (read once)

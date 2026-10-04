@@ -30,6 +30,8 @@
   - No public address: `workers_dev = false`, preview URLs off. Only the custom domain `conquerra.overconfidenceonline.com`.
   - A new Access application "Conquerra" using the existing Google login, allowing only `nkurtz@gmail.com`, created before the domain goes live. Session duration 1 month, so the installed app doesn't ask to sign in every day.
   - **Done Oct 4:** the Access app "Conquerra" exists (Google sign-in only, instant sign-in, 1 month, policy "Conquerra players" allowing only Nate's email). Still to do: `npx wrangler login` and `pnpm deploy:preview` on Nate's computer (session 6).
+  - **Session 6 (Oct 4):** Wrangler logged in on Nate's computer; the Worker `conquerra` is uploaded (versions `2751944d`, then `095343fd`). Cloudflare confirms: workers.dev address **off**, preview addresses **off**, custom domain `conquerra.overconfidenceonline.com` attached with a certificate. **But the address doesn't answer yet:** the zone's own nameservers have no record for `conquerra` (keel resolves fine), so nobody can open it, which is safe. Next: look in the dashboard (DNS → Records, and Workers → conquerra → Domains & Routes) for why the record is missing, then re-run `pnpm check:preview`.
+  - `wrangler deployments list --config apps/web/wrangler.jsonc` works.
 
 ### M4 (online with friends): the real backend
 - **Worker** `conquerra`: serves the web app and the API on `conquerra.overconfidenceonline.com`.

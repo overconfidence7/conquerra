@@ -86,7 +86,7 @@ pnpm deploy:preview
 
 It runs the tests, builds the game, uploads it, then checks that the site still asks for the Google sign-in (it stops with a red ✗ if not). On your phone the installed app shows **"Update ready"** next time you open it; tap **Update now** when you're between games.
 
-### One-time setup (do these once, in this order)
+### One-time setup (already done Oct 4; only needed again on a new computer)
 
 1. Get the latest code and tools (PowerShell, in the project folder):
    ```
@@ -97,21 +97,15 @@ It runs the tests, builds the game, uploads it, then checks that the site still 
    ```
    npx wrangler login
    ```
-3. **Lock the door first.** In the Cloudflare dashboard go to **Zero Trust → Access → Applications → Add an application → Self-hosted**, then:
-   - Application name: `Conquerra`
-   - Session duration: **1 month** (so the installed app doesn't ask you to sign in every day)
-   - Public hostname: subdomain `conquerra`, domain `overconfidenceonline.com` (the site doesn't exist yet; that's fine, and it means it's never open even for a moment)
-   - Login methods: **Google** only (it's already set up for Keel)
-   - Add a policy: name `Nate only`, action **Allow**, include **Emails** → `nkurtz@gmail.com`
-   - Save the application.
-4. Put the game online (this also creates the `conquerra` address and its certificate):
+3. The lock: the Cloudflare Access app **Conquerra** (Google sign-in, sign-in lasts a month, policy **Conquerra players**). Done Oct 4; nothing to do.
+4. Put the game online:
    ```
    pnpm deploy:preview
    ```
    The last lines should all start with ✓ and say "The preview is locked".
 5. On your phone, open **https://conquerra.overconfidenceonline.com** in Chrome, sign in with Google, then use Chrome's menu → **Install app** (or "Add to Home screen"). After the first visit, single player works with no connection.
 
-To let a friend in later, add their email to the `Nate only` policy (rename it then!).
+**To let a friend in:** Cloudflare dashboard → Zero Trust → Access → Applications → **Conquerra** → Policies → **Conquerra players** → add their email under Include → Save. (They sign in with that Google account.)
 
 ## Tuning balance
 

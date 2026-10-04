@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M2 (playable browser game vs bots): session 5 reviewed. Session 6 runs **locally on Nate's computer**: bring in his art, put the private preview online, then Nate's real-phone test closes M2.**
+**Phase: M2 (playable browser game vs bots): session 6 done. Nate's art is in the game and the private preview is online. Nate's real-phone test closes M2.**
 
-Claude Code sessions completed: **5** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
+Claude Code sessions completed: **6** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
 ---
 
@@ -223,3 +223,24 @@ Claude Code sessions completed: **5** (a new orchestrator prompt is due after se
 - Nate's call: **keep Purpure**. Azure and Purpure look alike to colourblind players, but their banner patterns tell them apart.
 - Small things for session 6: the Leader card's text runs into the bottom bar on desktop, and the army panel's hint line is clipped.
 - Next prompt: `docs/prompts/claude-code-session-06.md` (run it in Claude Code on Nate's computer, not in the cloud).
+
+### Oct 4: Claude Code session 6 (M2 finish: real art, polish, the preview goes live)
+- **Computer in sync:** Nate's old local doc copies were checked line by line against `main`. Nothing was lost, except that the saved session 5 prompt was a shortened copy, so the orchestrator's full original was put back. Old side branch deleted. Work is on `main` again.
+- **Nate's art is in:** all 79 files of Tier 1 and Tier 2 imported, nothing missing or rejected. The menus now use the real emblem (top bar and app icons), wax seal, gold frame corners, the icons (action bar, army panel, territory card), Leader portraits and the vistas.
+- **Art fixes made by the importer** (no redraws needed):
+  - Gemini's backgrounds are lighter pinks than pure magenta, which left ghost squares behind clouds and a hill, and pink edges around many pieces. Both are fixed.
+  - The `tree-broadleaf-3` smudge is removed automatically.
+  - Clouds are made cool white.
+  - Grass, rock, snow and water are evened out more.
+  - The open sea no longer shows a repeating grid.
+- **Still worth redoing (Nate):** the two pine clusters (`tree-conifer-1`, `-2`) still read as round bushes; tuning can't change shapes. Lower priority: the rock, snow and hills textures still have big built-in shapes (mostly hidden under mountains and hills).
+- **A real freeze, found and fixed:** on the third or fourth turn the replay could lock the page up. The map was redrawing all its borders about 30 times a second during the replay. It now redraws only when something changes. Whole games now play to the end on laptop and phone.
+- **Polish:**
+  - The desktop Leader card fits, and the army panel's hint isn't clipped.
+  - The round buttons show Nate's icons, with the Recruit count as a badge.
+  - "Lock in" sits on a ribbon under the seal's star.
+  - The phone replay bar stays on one line, and "1 troop" is no longer "1 troops".
+- **Replay camera:** when a battle, fogged battle or fallen Leader happens off screen, the camera glides there (never zooming), holds, and glides back at the end. Skip, or moving the map yourself, stops it. For fogged events it aims only at the pulse.
+- **Speed** (phone emulation, CPU slowed 4x, real art, this laptop's Intel GPU): the map appears in about 2.1 s (Embervale) and 2.2 s (Greatmarch). This laptop's Chrome holds every page, even a blank one, at 30 fps. With that cap lifted, panning runs at 215–315 fps at every zoom, so there's lots of room. Memory: 52–85 MB.
+- **Private preview: uploaded, but not reachable yet.** Wrangler is logged in and `pnpm deploy:preview` uploaded the game. Cloudflare confirms there's no workers.dev address and no preview addresses, and the custom domain is attached with a certificate. But the domain's nameservers still have no `conquerra` record after 25+ minutes, so the address doesn't open for anyone (safe: the game isn't exposed). The lock check therefore couldn't confirm the Google sign-in yet. Nate needs to look in the Cloudflare dashboard (steps in the session summary), then run `pnpm check:preview`.
+- 210 automated tests pass (12 new). Screenshots retaken: `docs/art/screens/`.
