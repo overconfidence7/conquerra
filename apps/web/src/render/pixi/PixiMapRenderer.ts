@@ -12,6 +12,9 @@ import { ReplayLayer } from "./replayLayer";
 import type { ReplayFrame } from "../../replay/timeline";
 import { WorldLayer } from "./world";
 
+/** How long the fog takes to lift off newly seen land (or settle on land you lost sight of). */
+export const FOG_FADE_MS = 300;
+
 /** Can this browser do WebGL at all? If not, the UI uses the plain (SVG) Tactical map instead. */
 export function webglAvailable(): boolean {
   try {
@@ -64,6 +67,8 @@ class PixiMapRenderer implements MapRenderer {
   private art!: ArtBook;
   private mapLayer = new Container();
   private scene: MapScene | null = null;
+  /** Which land the fog mask was last drawn for: it's only redrawn when that changes. */
+  private fogKey: string | null = null;
   private tactical: boolean;
   private detail: ZoomDetail;
   private hit: HitTester;
@@ -192,6 +197,7 @@ class PixiMapRenderer implements MapRenderer {
     while (this.frameTimes.length && this.frameTimes[0]! < now - 2000) this.frameTimes.shift();
     this.cam.tick(now);
     this.world.display.uniforms.uTime = (now - this.t0) / 1000;
+    this.world.tickFog(now);
     this.info.realmLayer.tick((now - this.t0) / 1000);
     // Paint remaining tiles a couple per frame, nearest the screen first.
     if (this.world.pendingTiles) {
@@ -235,8 +241,14 @@ class PixiMapRenderer implements MapRenderer {
   setScene(scene: MapScene) {
     this.scene = scene;
     if (!this.world) return;
+    // The fog mask only changes when vision does (during the replay: as land comes into view or fogs over), and
+    // then it eases across in FOG_FADE_MS rather than jumping.
     const fogged = this.opts.ctx.map.geometry!.territories.filter((t) => scene.view.territories[t.id]?.detail !== "full");
-    this.world.setFog(fogged);
+    const fogKey = fogged.map((t) => t.id).join("|");
+    if (fogKey !== this.fogKey) {
+      this.world.setFog(fogged, this.fogKey === null ? 0 : FOG_FADE_MS);
+      this.fogKey = fogKey;
+    }
     this.info.setScene(scene, this.tactical);
     this.laidOutScale = 0;
     this.dirtyCam = true;

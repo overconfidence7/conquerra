@@ -17,6 +17,7 @@ const battle = (step: number, from: string, to: string, captured: boolean): Repl
   to,
   defender: "p1",
   attackers: army(10),
+  withLeader: false,
   defenders: army(4),
   result: { attackStrength: 10, defenseStrength: 4, expectedDefenderLosses: 4, expectedAttackerLosses: 2, defenderLosses: 4, attackerLosses: 2 },
   captured,
@@ -32,7 +33,7 @@ describe("replay timeline", () => {
     { type: "moved", step: 3, player: "p1", orderId: "c", from: t(0), to: t(1), army: army(5), withLeader: false, retreat: false },
     battle(4, t(5), t(1), true),
     { type: "surface", step: 5, what: "battle", province: ctx.map.provinces[3]!.id },
-    { type: "income", step: 6, player: "p1", income: 9, upkeep: 0, goldAfter: 20, deserted: 0 },
+    { type: "income", step: 6, player: "p1", income: 9, upkeep: 0, goldAfter: 20, deserted: 0, deserters: [] },
   ];
 
   it("plays in step order, folds the recruits into one beat, and leaves the income for the report", () => {

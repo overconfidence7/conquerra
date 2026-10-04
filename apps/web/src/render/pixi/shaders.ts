@@ -158,11 +158,13 @@ in vec2 vUV;
 out vec4 finalColor;
 uniform sampler2D uTile;
 uniform sampler2D uFog;
+uniform sampler2D uFogPrev;
 uniform sampler2D uAux1;
 uniform vec2 uMap;
 uniform float uTime;
 uniform float uDim;
 uniform float uMotion;
+uniform float uFogMix;
 ${NOISE}
 
 void main() {
@@ -178,7 +180,8 @@ void main() {
   // Fog: R = standard fog. G is kept free for blackout fog (thick clouds hiding the land), not built yet.
   // A soft, pale haze: the painted land shows faintly through it (mostly grey, only lightly darkened), with
   // drifting mist on top. Pale against the bright, coloured land you can see, so it's obvious at a glance.
-  vec4 fg = texture(uFog, mu);
+  // During the replay the fog eases from the old mask to the new one as land comes into view (uFogMix 0 -> 1).
+  vec4 fg = mix(texture(uFogPrev, mu), texture(uFog, mu), uFogMix);
   float fogged = fg.r * (1.0 - water * 0.6);
   if (fogged > 0.01) {
     float l = dot(c, vec3(0.299, 0.587, 0.114));

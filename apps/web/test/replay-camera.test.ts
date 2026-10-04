@@ -31,6 +31,7 @@ const battle = (step: number, to: string): ReplayEvent => ({
   to,
   defender: "p1",
   attackers: army(10),
+  withLeader: false,
   defenders: army(4),
   result: { attackStrength: 10, defenseStrength: 4, expectedDefenderLosses: 4, expectedAttackerLosses: 2, defenderLosses: 4, attackerLosses: 2 },
   captured: true,
@@ -101,7 +102,12 @@ describe("replay camera", () => {
         planned += moves.length;
         const allowed = [zoomedIn, ...tl.beats.flatMap((b) => (focusOf(b, spots) ? [centredOn(zoomedIn, vp, focusOf(b, spots)!)] : []))];
         for (const [i, m] of moves.entries()) {
-          if (i > 0 && i < moves.length - 1) expect(m.at - moves[i - 1]!.at).toBeGreaterThanOrEqual(CAMERA_HOLD_MS);
+          // It holds still between glides, except to follow the next hop of a chain it's already following.
+          const beat = tl.beats.find((b) => b.start === m.at);
+          const prevBeat = tl.beats.find((b) => b.start === moves[i - 1]?.at);
+          const e = beat?.events[0], pe = prevBeat?.events[0];
+          const chainHop = e?.type === "battle" && pe?.type === "battle" && e.player === pe.player && e.from === pe.to;
+          if (i > 0 && i < moves.length - 1 && !chainHop) expect(m.at - moves[i - 1]!.at).toBeGreaterThanOrEqual(CAMERA_HOLD_MS);
           expect(m.cam.scale).toBe(zoomedIn.scale);
           expect(allowed).toContainEqual(m.cam);
         }

@@ -1,3 +1,4 @@
+import type { SpecialistType } from "@conquerra/content";
 import type { PlayerView, ReplayEvent, TerritoryId, TerritoryView } from "@conquerra/engine";
 
 /**
@@ -18,6 +19,11 @@ export interface Beat {
   start: number;
   duration: number;
   events: ReplayEvent[];
+  /**
+   * For each event: how many events (in list order) the map shows once its result is in. Usually just past the event
+   * itself; further when a vision event follows it (the fog lifts as the land is taken).
+   */
+  ends: number[];
   /** Index (in the event list) of the last event this beat covers; the map shows everything up to it once done. */
   lastIndex: number;
 }
@@ -72,6 +78,8 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     case "income":
     case "initiative":
     case "fizzled":
+    // The fog lifting (or falling) rides on the beat of the step that caused it.
+    case "vision":
       return null;
   }
 };
@@ -81,23 +89,32 @@ const GROUPS: ReadonlySet<BeatKind> = new Set(["pop", "march", "pulse"]);
 
 export function buildTimeline(events: readonly ReplayEvent[]): Timeline {
   const sorted = events.map((e, i) => ({ e, i })).sort((a, b) => a.e.step - b.e.step || a.i - b.i);
-  const raw: { kind: BeatKind; events: ReplayEvent[]; lastIndex: number; ms: number }[] = [];
+  const raw: { kind: BeatKind; events: ReplayEvent[]; ends: number[]; lastIndex: number; ms: number }[] = [];
   for (const { e, i } of sorted) {
+    const prev = raw[raw.length - 1];
+    // A vision event lands with the event just before it: for a capture, the fog lifts as the result shows.
+    if (e.type === "vision") {
+      if (prev) {
+        prev.ends[prev.ends.length - 1] = i + 1;
+        prev.lastIndex = i;
+      }
+      continue;
+    }
     const kind = kindOf(e);
     if (!kind) continue;
-    const prev = raw[raw.length - 1];
     if (prev && prev.kind === kind && GROUPS.has(kind)) {
       prev.events.push(e);
+      prev.ends.push(i + 1);
       prev.lastIndex = i;
       prev.ms += EXTRA_MS[kind] ?? 0;
-    } else raw.push({ kind, events: [e], lastIndex: i, ms: BEAT_MS[kind] });
+    } else raw.push({ kind, events: [e], ends: [i + 1], lastIndex: i, ms: BEAT_MS[kind] });
   }
   const sum = raw.reduce((t, b) => t + b.ms, 0);
   const squeeze = sum > TARGET_MAX_MS ? TARGET_MAX_MS / sum : 1;
   let t = 0;
   const beats = raw.map((b) => {
     const duration = Math.round(Math.max(b.ms * MIN_SHARE, b.ms * squeeze));
-    const beat: Beat = { kind: b.kind, start: t, duration, events: b.events, lastIndex: b.lastIndex };
+    const beat: Beat = { kind: b.kind, start: t, duration, events: b.events, ends: b.ends, lastIndex: b.lastIndex };
     t += duration;
     return beat;
   });
@@ -192,8 +209,8 @@ export function frameAt(tl: Timeline, t: number): ReplayFrame {
             attackerLosses: e.result.attackerLosses,
             defenderLosses: e.result.defenderLosses,
           });
-        // The land changes hands once the result shows.
-        if (p >= RESULT_AT) frame.applied = Math.max(frame.applied, eventIndexBefore(tl, b, e) + 1);
+        // The land changes hands once the result shows (and the fog lifts around it, if it does).
+        if (p >= RESULT_AT) frame.applied = Math.max(frame.applied, b.ends[k]!);
       } else if (e.type === "surface") frame.pulses.push({ province: e.province, what: e.what, progress: q });
       else if (e.type === "recruited") frame.pops.push({ at: e.territory, player: e.player, label: `+${e.count}`, progress: q });
       else if (e.type === "hired") frame.pops.push({ at: e.territory, player: e.player, label: "+1 specialist", progress: q });
@@ -206,32 +223,71 @@ export function frameAt(tl: Timeline, t: number): ReplayFrame {
   return frame;
 }
 
-/** The index in the original event list of a beat's event (beats keep events in order, ending at lastIndex). */
-function eventIndexBefore(tl: Timeline, b: Beat, e: ReplayEvent): number {
-  return b.lastIndex - (b.events.length - 1 - b.events.indexOf(e));
-}
-
 // ---------- The map during the replay ----------
+
+type Seen = Extract<TerritoryView, { detail: "full" }>;
 
 /**
  * The view to draw part-way through the replay: the view from before the turn, with the first `applied` events
- * played onto it (troops marching out and in, land changing hands, recruits arriving). Only territories you could
- * already see in detail change; everything else waits for the view after the turn, which replaces this at the end.
+ * played onto it (troops marching out and in, land changing hands, recruits arriving, Leaders moving).
+ *
+ * The fog lifts during the replay: a "vision" event brings land into view with the detail it had at that moment, and
+ * fogs over land you no longer see (it takes the "last seen" look). Only land you can see at that point changes;
+ * by the end this matches the view after the turn, which then replaces it.
  */
 export function replayView(before: PlayerView, events: readonly ReplayEvent[], applied: number): PlayerView {
   const territories: Record<TerritoryId, TerritoryView> = { ...before.territories };
-  const edit = (id: TerritoryId, f: (t: Extract<TerritoryView, { detail: "full" }>) => void) => {
+  const edit = (id: TerritoryId, f: (t: Seen) => void) => {
     const t = territories[id];
     if (!t || t.detail !== "full") return;
-    const copy = { ...t, specialists: [...t.specialists] };
+    const copy: Seen = { ...t, specialists: [...t.specialists], leaders: [...t.leaders] };
     f(copy);
     copy.troops = Math.max(0, copy.troops);
     territories[id] = copy;
   };
-  for (const e of events.slice(0, applied)) {
+  const specialistsAt = (id: TerritoryId) => {
+    const t = territories[id];
+    return t?.detail === "full" ? t.specialists : [];
+  };
+  /**
+   * Specialists leaving with an army: the first of each listed type (the view has their ids, the event their types).
+   * An army marching out of the fog brings specialists the view never had: they get stand-in ids.
+   */
+  const takeSpecialists = (from: TerritoryId, types: readonly SpecialistType[], step: number) => {
+    const want = [...types];
+    const out: Seen["specialists"] = [];
+    for (const s of specialistsAt(from)) {
+      const k = want.indexOf(s.type);
+      if (k >= 0) (out.push(s), want.splice(k, 1));
+    }
+    const ids = new Set(out.map((s) => s.id));
+    edit(from, (t) => (t.specialists = t.specialists.filter((s) => !ids.has(s.id))));
+    return [...out, ...want.map((type, k) => ({ id: `replay-${step}-${k}`, type }))];
+  };
+  const moveLeader = (player: string, from: TerritoryId | null, to: TerritoryId | null) => {
+    if (from) edit(from, (t) => (t.leaders = t.leaders.filter((p) => p !== player)));
+    if (to) edit(to, (t) => (t.leaders = t.leaders.includes(player) ? t.leaders : [...t.leaders, player]));
+  };
+  /** Where each House's Leader stands, as far as this view knows. */
+  const leaderAt = (player: string) => Object.keys(territories).find((id) => {
+    const t = territories[id]!;
+    return t.detail === "full" && t.leaders.includes(player);
+  }) ?? null;
+
+  /** Capitals this view knows about: yours, and any it has shown (a capital is labelled once you see it). */
+  const capitals = new Map<TerritoryId, string>([[before.me.capital, before.me.id]]);
+  const noteCapitals = (list: Record<TerritoryId, TerritoryView>) => {
+    for (const [id, t] of Object.entries(list)) if (t.detail === "full" && t.capitalOf) capitals.set(id, t.capitalOf);
+  };
+  noteCapitals(before.territories);
+
+  events.slice(0, applied).forEach((e, i) => {
     switch (e.type) {
       case "recruited":
         edit(e.territory, (t) => (t.troops += e.count));
+        break;
+      case "hired":
+        edit(e.territory, (t) => t.specialists.push({ id: `replay-${i}`, type: e.specialist }));
         break;
       case "built":
         edit(e.territory, (t) => {
@@ -242,26 +298,56 @@ export function replayView(before: PlayerView, events: readonly ReplayEvent[], a
       case "completed":
         edit(e.territory, (t) => ((t.building = e.building), (t.construction = null)));
         break;
-      case "moved":
-        edit(e.from, (t) => (t.troops -= e.army.troops));
-        edit(e.to, (t) => (t.troops += e.army.troops));
+      case "invested":
+        edit(e.territory, (t) => (t.culture = e.culture));
         break;
+      case "moved": {
+        const specs = takeSpecialists(e.from, e.army.specialists, e.step);
+        edit(e.from, (t) => (t.troops -= e.army.troops));
+        edit(e.to, (t) => ((t.troops += e.army.troops), t.specialists.push(...specs)));
+        if (e.withLeader) moveLeader(e.player, e.from, e.to);
+        break;
+      }
       case "battle": {
         const survivors = e.attackers.troops - e.result.attackerLosses;
-        edit(e.from, (t) => (t.troops -= e.attackers.troops - (e.captured ? 0 : survivors)));
+        const specs = takeSpecialists(e.from, e.attackers.specialists, e.step);
+        edit(e.from, (t) => {
+          t.troops -= e.attackers.troops - (e.captured ? 0 : survivors);
+          if (!e.captured && survivors > 0) t.specialists.push(...specs);
+        });
         edit(e.to, (t) => {
           if (e.captured) {
             t.owner = e.player;
             t.troops = survivors;
-            t.specialists = [];
-            t.capitalOf = null;
-          } else t.troops -= e.result.defenderLosses;
+            t.specialists = specs;
+            // Taking back your own capital (or a rival's you've seen) makes it a capital again.
+            t.capitalOf = capitals.get(e.to) === e.player ? e.player : null;
+          } else {
+            t.troops -= e.result.defenderLosses;
+            if (t.troops <= 0) t.specialists = [];
+          }
         });
+        if (e.captured && e.withLeader) moveLeader(e.player, e.from, e.to);
         break;
       }
+      case "leaderKilled":
+        moveLeader(e.player, leaderAt(e.player), null);
+        break;
+      case "leaderReturned":
+        moveLeader(e.player, leaderAt(e.player), e.territory);
+        break;
+      case "income":
+        // Your own deserters (you see your own land); nobody else's income is in your replay.
+        for (const d of e.deserters) edit(d.territory, (t) => (t.troops -= d.troops));
+        break;
+      case "vision":
+        noteCapitals(e.revealed);
+        for (const [id, seen] of Object.entries(e.revealed)) territories[id] = { ...seen, specialists: [...seen.specialists], leaders: [...seen.leaders] };
+        for (const [id, last] of Object.entries(e.fogged)) territories[id] = { detail: "fogged", lastSeen: { ...last } };
+        break;
       default:
         break;
     }
-  }
+  });
   return { ...before, territories };
 }

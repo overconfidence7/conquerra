@@ -180,6 +180,8 @@ export type GameEvent =
       to: TerritoryId;
       defender: PlayerId | null;
       attackers: ArmySnapshot;
+      /** The attacker's Leader went along (it moves in on a capture). */
+      withLeader: boolean;
       defenders: ArmySnapshot;
       result: CombatResult;
       captured: boolean;
@@ -190,7 +192,16 @@ export type GameEvent =
   /** A fallen Leader comes back for free at the end of the turn: at the capital, or the strongest territory if the capital is lost. */
   | { type: "leaderReturned"; player: PlayerId; territory: TerritoryId }
   | { type: "eliminated"; player: PlayerId; by: PlayerId | null }
-  | { type: "income"; player: PlayerId; income: number; upkeep: number; goldAfter: number; deserted: number }
+  | {
+      type: "income";
+      player: PlayerId;
+      income: number;
+      upkeep: number;
+      goldAfter: number;
+      deserted: number;
+      /** Where the deserters left from (so the turn can be replayed exactly from the event log). */
+      deserters: { territory: TerritoryId; troops: number }[];
+    }
   | { type: "gameOver"; winner: PlayerId | "draw"; reason: NonNullable<GameState["endReason"]>; scores: Record<PlayerId, number> };
 
 export type StepEvent = GameEvent & { step: number };

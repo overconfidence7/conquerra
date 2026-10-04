@@ -39,6 +39,7 @@ export class InfoLayer {
   private realms = new Map<string, Line[]>();
   /** Who holds what, as last drawn: House borders are only rebuilt when this changes (not every replay frame). */
   private realmKey = "";
+  private rememberedKey: string | null = null;
   private drawnScale = 0;
   private isTactical = false;
   private rings: Map<string, readonly Line[]>;
@@ -78,9 +79,13 @@ export class InfoLayer {
       }
       this.realmLayer.setRealms([...this.realms].map(([owner, outlines]) => ({ house: houseOf(view, owner), outlines, territories: held.get(owner) ?? [] })));
     }
-    this.realmLayer.setRemembered(
-      [...this.status].filter(([, s]) => s.kind === "remembered" && s.owner).map(([id, s]) => ({ house: houseOf(view, s.owner), rings: this.rings.get(id)! })),
-    );
+    // Remembered land (the dashed "last seen" outline) only changes when vision does.
+    const remembered = [...this.status].filter(([, s]) => s.kind === "remembered" && s.owner);
+    const rememberedKey = remembered.map(([id, s]) => `${id}:${houseOf(view, s.owner).name}`).join("|");
+    if (rememberedKey !== this.rememberedKey) {
+      this.rememberedKey = rememberedKey;
+      this.realmLayer.setRemembered(remembered.map(([id, s]) => ({ house: houseOf(view, s.owner), rings: this.rings.get(id)! })));
+    }
     this.realmLayer.setSelected(scene.selected ? (this.rings.get(scene.selected) ?? null) : null);
     this.realmLayer.visible = !tactical;
     this.drawFills();

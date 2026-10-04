@@ -97,16 +97,29 @@ export function centredOn(cam: Camera, vp: Viewport, s: Spot): Camera {
  * The camera moves for one replay, starting from (and ending at) `home`. For each followed beat: if its spot is
  * already on screen, or the camera moved less than CAMERA_HOLD_MS ago, stay; if home can see it, go home;
  * otherwise centre on it. Back home at the end.
+ *
+ * Chains: a battle that pushes on from the land the last followed battle took (the next hop of a chain, often into
+ * land that only just came out of the fog) is followed even inside the hold, so a chain running off screen stays in
+ * view. It only ever moves on in the chain's direction, so it can't ping-pong.
  */
 export function planReplayCamera(timeline: Timeline, spots: ReplaySpots, home: Camera, vp: Viewport): CameraMove[] {
   const moves: CameraMove[] = [];
   let cur = home;
   let lastAt = -Infinity;
+  /** Where the last followed battle was fought, and by whom (to recognise the next hop of a chain). */
+  let lastTaken: { player: string; at: string } | null = null;
   for (const beat of timeline.beats) {
-    if (!FOLLOWED.has(beat.kind) || beat.start - lastAt < CAMERA_HOLD_MS) continue;
+    if (!FOLLOWED.has(beat.kind)) continue;
+    const e = beat.events[0];
+    const hop = !!lastTaken && e?.type === "battle" && e.player === lastTaken.player && e.from === lastTaken.at;
+    if (beat.start - lastAt < CAMERA_HOLD_MS && !hop) continue;
     const s = focusOf(beat, spots);
-    if (!s || inView(cur, vp, s)) continue;
+    if (!s || inView(cur, vp, s)) {
+      if (hop && e?.type === "battle") lastTaken = { player: e.player, at: e.to };
+      continue;
+    }
     lastAt = beat.start;
+    lastTaken = e?.type === "battle" ? { player: e.player, at: e.to } : null;
     cur = inView(home, vp, s) ? home : centredOn(cur, vp, s);
     moves.push({ at: beat.start, cam: cur, ms: CAMERA_EASE_MS });
   }

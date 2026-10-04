@@ -2,7 +2,7 @@ import type { BorderType, SpecialistType } from "@conquerra/content";
 import { fewestToTake, troopsFor } from "./amounts";
 import { expectBattle, rollLosses, type BattleExpectation } from "./combat";
 import { cultureProtection, incomeFor, investCost, scoreFor, specialistUnlocked } from "./economy";
-import { recordSighting, updateIntel } from "./intel";
+import { updateIntel } from "./intel";
 import { indexMap, type MapIndex } from "./mapIndex";
 import { expandPreset } from "./presets";
 import { Rng } from "./rng";
@@ -23,7 +23,11 @@ import type {
   TerritoryState,
   TurnResult,
 } from "./types";
+import { recordTurnSightings } from "./sightings";
 import { visibleTerritories } from "./vision";
+
+/** Called after every event with the live board (tests use it to check the replay against the real game). */
+export type TurnObserver = (e: StepEvent, live: Readonly<GameState>) => void;
 
 const MAX_FALLBACK_DEPTH = 5;
 const MAX_CHAIN_DEPTH = 5;
@@ -72,8 +76,6 @@ class Turn {
   readonly lastCapturer = new Map<PlayerId, PlayerId>();
   /** Set by a move that captured its target, so `then` follow-ups know where to push from. */
   lastCapture: TerritoryId | null = null;
-  /** The last capture each player saw of their own land this turn (player|territory -> what they saw). */
-  readonly lostSights = new Map<string, { player: PlayerId; territory: TerritoryId; owner: PlayerId; troops: number; building: TerritoryState["building"] }>();
   /** Vision cache; bumped whenever something that affects vision changes. */
   private visionEpoch = 0;
   private visionCache = new Map<PlayerId, { epoch: number; set: Set<TerritoryId> }>();
@@ -83,13 +85,16 @@ class Turn {
     readonly s: GameState,
     /** The board as it stood when the turn began (for "Hold if threatened"). */
     readonly start: GameState,
+    private readonly observe?: TurnObserver,
   ) {
     this.idx = indexMap(ctx.map);
     this.rng = new Rng(s.rng);
   }
 
   emit(e: GameEvent) {
-    this.events.push({ ...e, step: this.events.length } as StepEvent);
+    const step = { ...e, step: this.events.length } as StepEvent;
+    this.events.push(step);
+    this.observe?.(step, this.s);
   }
   player(id: PlayerId): PlayerState {
     const p = this.s.players.find((x) => x.id === id);
@@ -391,6 +396,8 @@ class Turn {
     const specialistsLost: SpecialistType[] = [];
 
     const captured = to.troops === 0 && survivors > 0;
+    /** Leaders who fall in this battle. They're announced right after it, so the event log reads in order. */
+    const fallen: PlayerState[] = [];
     if (captured) {
       // The defending army is gone; its specialists are lost with it. Buildings and culture stay with the land.
       specialistsLost.push(...to.specialists.map((s) => s.type));
@@ -399,16 +406,9 @@ class Turn {
       to.specialists = [...plan.specialists];
       // The winners can push on from here in a later order (chained attacks).
       this.clearSpent(o.to);
-      if (defenderLeader && defender) {
-        defender.leader = { alive: false, territory: null };
-        this.emit({ type: "leaderKilled", player: defender.id, territory: o.to });
-      }
+      if (defenderLeader && defender) fallen.push(defender);
       if (plan.leaderGoes) p.leader.territory = o.to;
-      if (defenderId) {
-        this.lastCapturer.set(defenderId, pid);
-        // You see your own land fall: remember who took it and with how many.
-        this.lostSights.set(`${defenderId}|${o.to}`, { player: defenderId, territory: o.to, owner: pid, troops: survivors, building: to.building });
-      }
+      if (defenderId) this.lastCapturer.set(defenderId, pid);
       this.lastCapture = o.to;
     } else {
       specialistsLost.push(...this.settle(to).map((s) => s.type));
@@ -419,10 +419,7 @@ class Turn {
         this.markSpent(o.from, survivors, plan.specialists);
       } else {
         specialistsLost.push(...plan.specialists.map((s) => s.type));
-        if (plan.leaderGoes) {
-          p.leader = { alive: false, territory: null };
-          this.emit({ type: "leaderKilled", player: pid, territory: o.from });
-        }
+        if (plan.leaderGoes) fallen.push(p);
       }
     }
     this.emit({
@@ -433,6 +430,7 @@ class Turn {
       to: o.to,
       defender: defenderId,
       attackers,
+      withLeader: plan.leaderGoes,
       defenders,
       result: {
         attackStrength: round2(exp.attackStrength),
@@ -445,6 +443,10 @@ class Turn {
       captured,
       specialistsLost,
     });
+    for (const f of fallen) {
+      f.leader = { alive: false, territory: null };
+      this.emit({ type: "leaderKilled", player: f.id, territory: f === p ? o.from : o.to });
+    }
     if (captured && defenderId) this.checkEliminated(defenderId);
     return null;
   }
@@ -516,10 +518,10 @@ function queueFollowThrough(T: Turn, pid: PlayerId, q: Queued[], next: Queued) {
  * 4. "Last" orders (Lie in Wait) run, in seat order.
  * 5. Buildings finish, income and upkeep (with unrest if you can't pay), cooldowns, victory check.
  */
-export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersByPlayer): TurnResult {
+export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersByPlayer, observe?: TurnObserver): TurnResult {
   if (state.winner) throw new Error("Game is already over");
   const s: GameState = JSON.parse(JSON.stringify(state));
-  const T = new Turn(ctx, s, state);
+  const T = new Turn(ctx, s, state, observe);
   const { rules } = ctx;
 
   const active = s.players.filter((p) => p.eliminatedTurn === null).map((p) => p.id);
@@ -604,6 +606,7 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
     if (p.eliminatedTurn !== null) continue;
     const inc = incomeFor(ctx, s, pid);
     let deserted = 0;
+    const deserters: { territory: TerritoryId; troops: number }[] = [];
     p.gold += inc.net;
     if (p.gold < 0) {
       // Unrest: one troop deserts per gold short, lowest-culture land first. Culture talks some of them out of it.
@@ -625,9 +628,10 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
         T.settle(t);
         short -= due;
         deserted += lose;
+        if (lose > 0) deserters.push({ territory: id, troops: lose });
       }
     }
-    T.emit({ type: "income", player: pid, income: inc.net + inc.upkeep + inc.specialistUpkeep, upkeep: inc.upkeep + inc.specialistUpkeep, goldAfter: p.gold, deserted });
+    T.emit({ type: "income", player: pid, income: inc.net + inc.upkeep + inc.specialistUpkeep, upkeep: inc.upkeep + inc.specialistUpkeep, goldAfter: p.gold, deserted, deserters });
     p.cooldowns.seize = Math.max(0, p.cooldowns.seize - 1);
     p.cooldowns.lie = Math.max(0, p.cooldowns.lie - 1);
   }
@@ -652,13 +656,17 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
 
   s.rng = T.rng.state;
   if (!s.winner) s.turn += 1;
-  // Land you lost this turn: you watched it fall, so you remember the capture (updateIntel below overrides it
-  // if you can still see the land now).
+  // Everything you saw during the turn goes into your memory, as it was when you saw it (land that came into view
+  // as you advanced, land you watched fall). Worked out from the event log, the same way the replay is.
   if (s.settings.fog && !s.winner)
-    for (const l of T.lostSights.values())
-      if (T.player(l.player).eliminatedTurn === null)
-        recordSighting(s, l.player, l.territory, { owner: l.owner, troops: l.troops, building: l.building, turn: s.turn });
-  // Everyone remembers what they can see now; land that slips into the fog keeps its last-seen entry.
+    recordTurnSightings(
+      ctx,
+      state,
+      T.events,
+      s.players.filter((p) => p.eliminatedTurn === null).map((p) => p.id),
+      s,
+    );
+  // Then everyone remembers what they can see now; land that slips into the fog keeps its last-seen entry.
   updateIntel(ctx, s);
   return { state: s, events: T.events };
 }

@@ -265,7 +265,7 @@ describe("turn log", () => {
       { type: "surface", what: "battle", province: "east", step: 1 },
       { type: "surface", what: "battle", province: "east", step: 2 },
       { type: "surface", what: "leaderFell", province: "east", step: 3 },
-      { type: "income", player: "you", income: 10, upkeep: 0, goldAfter: 30, deserted: 0, step: 4 },
+      { type: "income", player: "you", income: 10, upkeep: 0, goldAfter: 30, deserted: 0, deserters: [], step: 4 },
     ];
     const lines = narrateTurn(ctx, events, namer(ctx, view)).map((l) => l.text);
     expect(lines).toEqual([

@@ -47,12 +47,17 @@ const quad = (x: number, y: number, w: number, h: number) =>
 export class WorldLayer {
   /** What's on screen: the Far image or the tiles. */
   readonly view = new Container();
-  readonly display: UniformGroup<{ uMap: { value: Float32Array; type: "vec2<f32>" }; uTime: { value: number; type: "f32" }; uDim: { value: number; type: "f32" }; uMotion: { value: number; type: "f32" } }>;
+  readonly display: UniformGroup<{ uMap: { value: Float32Array; type: "vec2<f32>" }; uTime: { value: number; type: "f32" }; uDim: { value: number; type: "f32" }; uMotion: { value: number; type: "f32" }; uFogMix: { value: number; type: "f32" } }>;
   private bakeScene = new Container();
   private tiles: Tile[] = [];
   private far: { rt: RenderTexture; mesh: Mesh<MeshGeometry, Shader>; ppu: number } | null = null;
   private fogCanvas: HTMLCanvasElement;
   private fogTex: Texture;
+  /** The fog as it was before the last change: the display blends from it to the new fog (uFogMix 0 -> 1). */
+  private fogPrevCanvas: HTMLCanvasElement;
+  private fogPrevTex: Texture;
+  private fogFade: { from: number; ms: number } | null = null;
+  private fogDrawn = false;
   private aux: AuxData;
   private auxTex: Texture;
   private disposables: { destroy(): void }[] = [];
@@ -83,10 +88,13 @@ export class WorldLayer {
       uTime: { value: 0, type: "f32" },
       uDim: { value: 0, type: "f32" },
       uMotion: { value: 1, type: "f32" },
+      uFogMix: { value: 1, type: "f32" },
     });
     // Fog mask: half a pixel per map unit is plenty (it's soft anyway).
     [this.fogCanvas] = canvas(Math.ceil(g.width * 0.5), Math.ceil(g.height * 0.5));
     this.fogTex = Texture.from(this.fogCanvas);
+    [this.fogPrevCanvas] = canvas(this.fogCanvas.width, this.fogCanvas.height);
+    this.fogPrevTex = Texture.from(this.fogPrevCanvas);
     t = this.step("textures", t);
     this.buildBakeScene();
     this.step("scene", t);
@@ -116,7 +124,7 @@ export class WorldLayer {
   private displayShader(tex: Texture) {
     return Shader.from({
       gl: { vertex: VERTEX, fragment: DISPLAY_FRAGMENT },
-      resources: { uTile: tex.source, uFog: this.fogTex.source, uAux1: this.auxTex.source, display: this.display },
+      resources: { uTile: tex.source, uFog: this.fogTex.source, uFogPrev: this.fogPrevTex.source, uAux1: this.auxTex.source, display: this.display },
     });
   }
 
@@ -343,10 +351,33 @@ export class WorldLayer {
     return this.tiles.filter((t) => !t.rt).length;
   }
 
-  /** Mark which land is in the fog (1) and which isn't (0). */
-  setFog(fogged: readonly { rings: readonly (readonly number[])[] }[]) {
+  /**
+   * Mark which land is in the fog (1) and which isn't (0). With `fadeMs`, the fog eases from how it was to the new
+   * mask (the fog lifting off land your army just took, during the replay); the first fog is drawn straight away.
+   */
+  setFog(fogged: readonly { rings: readonly (readonly number[])[] }[], fadeMs = 0) {
     const c = this.fogCanvas;
     const ctx = c.getContext("2d")!;
+    if (fadeMs > 0 && this.fogDrawn) {
+      // What's on screen now (part-way through a fade, too) becomes the starting point.
+      const pctx = this.fogPrevCanvas.getContext("2d")!;
+      const mix = this.display.uniforms.uFogMix;
+      if (mix < 1) {
+        pctx.globalAlpha = mix;
+        pctx.drawImage(c, 0, 0);
+        pctx.globalAlpha = 1;
+      } else {
+        pctx.clearRect(0, 0, c.width, c.height);
+        pctx.drawImage(c, 0, 0);
+      }
+      this.fogPrevTex.source.update();
+      this.fogFade = { from: performance.now(), ms: fadeMs };
+      this.display.uniforms.uFogMix = 0;
+    } else {
+      this.fogFade = null;
+      this.display.uniforms.uFogMix = 1;
+    }
+    this.fogDrawn = true;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, c.width, c.height);
@@ -366,10 +397,20 @@ export class WorldLayer {
     this.fogTex.source.update();
   }
 
+  /** Move a fog fade along; true while it's still going. */
+  tickFog(now: number): boolean {
+    if (!this.fogFade) return false;
+    const x = Math.min(1, (now - this.fogFade.from) / this.fogFade.ms);
+    this.display.uniforms.uFogMix = x * x * (3 - 2 * x);
+    if (x >= 1) this.fogFade = null;
+    return this.fogFade !== null;
+  }
+
   destroy() {
     for (const t of this.tiles) t.rt?.destroy(true);
     this.far?.rt.destroy(true);
     this.fogTex.destroy(true);
+    this.fogPrevTex.destroy(true);
     this.auxTex.destroy(true);
     for (const d of this.disposables) d.destroy();
     this.bakeScene.destroy({ children: true });

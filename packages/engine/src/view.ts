@@ -39,7 +39,7 @@ export interface PlayerView {
 }
 
 /** The true detail of a territory. Spies' forged intel (M3) will be produced by an alternative to this. */
-function trueDetail(state: GameState, id: TerritoryId): TerritoryDetail {
+export function trueDetail(state: GameState, id: TerritoryId): TerritoryDetail {
   const t = state.territories[id]!;
   return {
     owner: t.owner,

@@ -34,7 +34,7 @@ export function ReportBody({ ctx, view, report }: { ctx: GameContext; view: Play
       )}
       {g.fog.length > 0 && (
         <section className="report-group">
-          <h3>From the fog</h3>
+          <h3>What came out of the fog</h3>
           <Lines lines={g.fog} />
         </section>
       )}

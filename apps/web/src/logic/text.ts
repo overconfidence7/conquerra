@@ -144,6 +144,9 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       };
     case "gameOver":
       return { text: e.winner === "draw" ? "The game ends in a draw." : `${who(e.winner)} ${verb(e.winner, "win", "wins")} the game!`, tone: isMe(e.winner) ? "good" : "info" };
+    // What came into view goes in its own part of the report (logic/report.ts).
+    case "vision":
+      return null;
   }
 }
 

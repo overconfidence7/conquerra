@@ -19,18 +19,19 @@ describe("last seen intel (v0.2 §8)", () => {
     expect(s.intel.p1!.d).toEqual({ owner: "p2", troops: 20, building: null, turn: 1 });
     expect(s.intel.p1!.e).toBeUndefined();
 
-    // p2 takes c. p1 now holds only a-b, so d drops into the fog.
+    // p2 takes c. p1 now holds only a-b, so d drops into the fog at that moment: p1 last saw it just after p2's
+    // army marched out of it (20 - 15 = 5), during turn 1.
     const r1 = resolveTurn(ctx, s, { p2: [mv("d", "c", 15)] });
     const v1 = viewFor(ctx, r1.state, "p1");
     expect(v1.turn).toBe(2);
     expect(v1.territories.c).toMatchObject({ detail: "full", owner: "p2" });
-    expect(v1.territories.d).toEqual({ detail: "fogged", lastSeen: { owner: "p2", troops: 20, building: null, turn: 1 } });
+    expect(v1.territories.d).toEqual({ detail: "fogged", lastSeen: { owner: "p2", troops: 5, building: null, turn: 1 } });
     expect(v1.territories.e).toEqual({ detail: "fogged" });
 
     // d changes behind the fog; p1's memory doesn't.
     const r2 = resolveTurn(ctx, r1.state, { p2: [{ id: "r", kind: "recruit", territory: "e", count: 3 } as Order] });
     const v2 = viewFor(ctx, r2.state, "p1");
-    expect(v2.territories.d).toEqual({ detail: "fogged", lastSeen: { owner: "p2", troops: 20, building: null, turn: 1 } });
+    expect(v2.territories.d).toEqual({ detail: "fogged", lastSeen: { owner: "p2", troops: 5, building: null, turn: 1 } });
     // The land p1 can still see is fresh.
     expect(r2.state.intel.p1!.c!.turn).toBe(3);
   });
@@ -48,11 +49,13 @@ describe("last seen intel (v0.2 §8)", () => {
     const ctx = embervaleCtx();
     const idx = indexMap(ctx.map);
     let stale = 0;
-    let lostSeen = 0;
+    let midTurn = 0;
     for (const seed of ["memory-1", "memory-2", "memory-3"]) {
       let s = createGame(ctx, { gameId: "m", seed, players: [1, 2, 3, 4].map((i) => ({ id: `p${i}`, name: `P${i}` })) });
       for (const p of s.players) p.gold = 60;
       const history = new Map<number, GameState>([[s.turn, s]]);
+      /** Every moment of each turn: the real board after each step (copied, with who could see what). */
+      const moments = new Map<number, GameState[]>();
       const rng = new Rng(seedRng(`${seed}-orders`));
       for (let turn = 0; turn < 25 && !s.winner; turn++) {
         // Each player throws its biggest army at a random neighbour, so borders move and land drops into the fog.
@@ -64,25 +67,32 @@ describe("last seen intel (v0.2 §8)", () => {
           const ns = idx.neighbors.get(from)!;
           orders[p.id] = [{ id: `r${turn}`, kind: "recruit", territory: p.capital, count: 3 }, mv(from, ns[rng.int(ns.length)]!, "all")];
         }
-        s = resolveTurn(ctx, s, orders).state;
+        const steps: GameState[] = [s];
+        const resolving = s.turn;
+        s = resolveTurn(ctx, s, orders, (_e, live) => steps.push(JSON.parse(JSON.stringify(live)) as GameState)).state;
+        moments.set(resolving, steps);
         history.set(s.turn, s);
 
         for (const p of s.players) {
           for (const [id, mem] of Object.entries(s.intel[p.id] ?? {})) {
-            const then = history.get(mem.turn)!;
             if (mem.turn < s.turn) stale++;
             // Owned land never holds 0 troops, so neither does a memory of it.
             if (mem.owner) expect(mem.troops).toBeGreaterThan(0);
-            if (!visionFor(ctx, then, p.id).has(id)) {
-              // The one exception to "in sight": land you lost that turn. You saw it fall to someone else.
-              expect(history.get(mem.turn - 1)!.territories[id]!.owner).toBe(p.id);
-              expect(mem.owner).not.toBe(p.id);
-              lostSeen++;
-              continue;
-            }
-            // It was in sight on the turn it's stamped with, and matches the truth on that turn exactly.
-            const t = then.territories[id]!;
-            expect(mem).toEqual({ owner: t.owner, troops: t.troops, building: t.building, turn: mem.turn });
+            const matches = (st: GameState) => {
+              const t = st.territories[id]!;
+              return t.owner === mem.owner && t.troops === mem.troops && t.building === mem.building;
+            };
+            // Either it was in sight when that turn's planning began and matches the truth then exactly...
+            const then = history.get(mem.turn)!;
+            if (visionFor(ctx, then, p.id).has(id) && matches(then)) continue;
+            // ...or it was seen during that turn's resolution: at some step it was in sight (just before or just
+            // after it) and the memory matches the board right after that step.
+            const during = moments.get(mem.turn) ?? [];
+            const seenAt = during.findIndex(
+              (st, k) => k > 0 && matches(st) && (visionFor(ctx, st, p.id).has(id) || visionFor(ctx, during[k - 1]!, p.id).has(id)),
+            );
+            expect(seenAt, `${p.id} remembers ${id} as ${JSON.stringify(mem)}`).toBeGreaterThan(0);
+            midTurn++;
           }
           for (const t of Object.values(s.territories)) if (t.owner) expect(t.troops).toBeGreaterThan(0);
           // The view never carries a fogged territory's current state, only the memory.
@@ -95,9 +105,10 @@ describe("last seen intel (v0.2 §8)", () => {
         }
       }
     }
-    // Plenty of the checked entries were old ones, from land that had slipped into the fog.
+    // Plenty of the checked entries were old ones, from land that had slipped into the fog, and plenty were seen
+    // part-way through a turn.
     expect(stale).toBeGreaterThan(100);
-    expect(lostSeen).toBeGreaterThan(0);
+    expect(midTurn).toBeGreaterThan(20);
   });
 
   it("remembers the capture of your own land, even once it's deep in the fog", () => {
@@ -107,7 +118,8 @@ describe("last seen intel (v0.2 §8)", () => {
     const battle = r.events.find((e) => e.type === "battle")!;
     expect(battle).toMatchObject({ captured: true });
     const v = viewFor(ctx, r.state, "p1");
-    expect(v.territories.c).toEqual({ detail: "fogged", lastSeen: { owner: "p2", troops: r.state.territories.c!.troops, building: null, turn: 2 } });
+    // Seen as it fell, during turn 1: on turn 2 it reads "Seen last turn".
+    expect(v.territories.c).toEqual({ detail: "fogged", lastSeen: { owner: "p2", troops: r.state.territories.c!.troops, building: null, turn: 1 } });
     // Not "still mine, 1 troop", which is what the old memory said.
     expect(s.intel.p1!.c).toMatchObject({ owner: "p1", troops: 1 });
   });
