@@ -1,6 +1,280 @@
 {
   "version": 1,
   "assets": {
+    "banner-base": {
+      "file": "banner-base.webp",
+      "width": 92,
+      "height": 128,
+      "tintMask": "banner-base.tint.webp"
+    },
+    "banner-flag": {
+      "file": "banner-flag.webp",
+      "width": 171,
+      "height": 256,
+      "tintMask": "banner-flag.tint.webp"
+    },
+    "bridge": {
+      "file": "bridge.webp",
+      "width": 192,
+      "height": 125
+    },
+    "building-barracks": {
+      "file": "building-barracks.webp",
+      "width": 256,
+      "height": 231
+    },
+    "building-fort": {
+      "file": "building-fort.webp",
+      "width": 256,
+      "height": 245
+    },
+    "building-market": {
+      "file": "building-market.webp",
+      "width": 256,
+      "height": 228
+    },
+    "building-watchtower": {
+      "file": "building-watchtower.webp",
+      "width": 256,
+      "height": 249
+    },
+    "capital-1": {
+      "file": "capital-1.webp",
+      "width": 384,
+      "height": 369
+    },
+    "capital-2": {
+      "file": "capital-2.webp",
+      "width": 384,
+      "height": 366
+    },
+    "cloud-1": {
+      "file": "cloud-1.webp",
+      "width": 512,
+      "height": 302
+    },
+    "cloud-2": {
+      "file": "cloud-2.webp",
+      "width": 512,
+      "height": 500
+    },
+    "cloud-3": {
+      "file": "cloud-3.webp",
+      "width": 512,
+      "height": 495
+    },
+    "emblem": {
+      "file": "emblem.webp",
+      "width": 255,
+      "height": 256
+    },
+    "figure-army": {
+      "file": "figure-army.webp",
+      "width": 212,
+      "height": 256,
+      "tintMask": "figure-army.tint.webp"
+    },
+    "figure-cavalry": {
+      "file": "figure-cavalry.webp",
+      "width": 224,
+      "height": 256,
+      "tintMask": "figure-cavalry.tint.webp"
+    },
+    "figure-engineers": {
+      "file": "figure-engineers.webp",
+      "width": 256,
+      "height": 251,
+      "tintMask": "figure-engineers.tint.webp"
+    },
+    "figure-healers": {
+      "file": "figure-healers.webp",
+      "width": 256,
+      "height": 215,
+      "tintMask": "figure-healers.tint.webp"
+    },
+    "figure-scouts": {
+      "file": "figure-scouts.webp",
+      "width": 202,
+      "height": 256,
+      "tintMask": "figure-scouts.tint.webp"
+    },
+    "figure-siege": {
+      "file": "figure-siege.webp",
+      "width": 256,
+      "height": 240,
+      "tintMask": "figure-siege.tint.webp"
+    },
+    "frame-corner": {
+      "file": "frame-corner.webp",
+      "width": 255,
+      "height": 256
+    },
+    "hill-1": {
+      "file": "hill-1.webp",
+      "width": 192,
+      "height": 108
+    },
+    "hill-2": {
+      "file": "hill-2.webp",
+      "width": 192,
+      "height": 111
+    },
+    "hill-3": {
+      "file": "hill-3.webp",
+      "width": 192,
+      "height": 89
+    },
+    "icon-barracks": {
+      "file": "icon-barracks.webp",
+      "width": 128,
+      "height": 91
+    },
+    "icon-cavalry": {
+      "file": "icon-cavalry.webp",
+      "width": 128,
+      "height": 127
+    },
+    "icon-crown": {
+      "file": "icon-crown.webp",
+      "width": 128,
+      "height": 115
+    },
+    "icon-culture": {
+      "file": "icon-culture.webp",
+      "width": 128,
+      "height": 116
+    },
+    "icon-engineers": {
+      "file": "icon-engineers.webp",
+      "width": 128,
+      "height": 127
+    },
+    "icon-fort": {
+      "file": "icon-fort.webp",
+      "width": 128,
+      "height": 89
+    },
+    "icon-gold": {
+      "file": "icon-gold.webp",
+      "width": 128,
+      "height": 108
+    },
+    "icon-healers": {
+      "file": "icon-healers.webp",
+      "width": 125,
+      "height": 128
+    },
+    "icon-market": {
+      "file": "icon-market.webp",
+      "width": 128,
+      "height": 115
+    },
+    "icon-scouts": {
+      "file": "icon-scouts.webp",
+      "width": 128,
+      "height": 115
+    },
+    "icon-siege": {
+      "file": "icon-siege.webp",
+      "width": 128,
+      "height": 123
+    },
+    "icon-troops": {
+      "file": "icon-troops.webp",
+      "width": 123,
+      "height": 128
+    },
+    "icon-watchtower": {
+      "file": "icon-watchtower.webp",
+      "width": 41,
+      "height": 128
+    },
+    "leader-01": {
+      "file": "leader-01.webp",
+      "width": 512,
+      "height": 512
+    },
+    "leader-02": {
+      "file": "leader-02.webp",
+      "width": 512,
+      "height": 512
+    },
+    "leader-03": {
+      "file": "leader-03.webp",
+      "width": 512,
+      "height": 512
+    },
+    "leader-04": {
+      "file": "leader-04.webp",
+      "width": 512,
+      "height": 512
+    },
+    "leader-05": {
+      "file": "leader-05.webp",
+      "width": 512,
+      "height": 512
+    },
+    "leader-06": {
+      "file": "leader-06.webp",
+      "width": 512,
+      "height": 512
+    },
+    "leader-07": {
+      "file": "leader-07.webp",
+      "width": 512,
+      "height": 512
+    },
+    "leader-08": {
+      "file": "leader-08.webp",
+      "width": 512,
+      "height": 512
+    },
+    "leader-09": {
+      "file": "leader-09.webp",
+      "width": 512,
+      "height": 512
+    },
+    "leader-10": {
+      "file": "leader-10.webp",
+      "width": 512,
+      "height": 512
+    },
+    "mountain-1": {
+      "file": "mountain-1.webp",
+      "width": 256,
+      "height": 216
+    },
+    "mountain-2": {
+      "file": "mountain-2.webp",
+      "width": 256,
+      "height": 200
+    },
+    "mountain-3": {
+      "file": "mountain-3.webp",
+      "width": 256,
+      "height": 207
+    },
+    "mountain-4": {
+      "file": "mountain-4.webp",
+      "width": 256,
+      "height": 212
+    },
+    "seal": {
+      "file": "seal.webp",
+      "width": 253,
+      "height": 256
+    },
+    "shield-base": {
+      "file": "shield-base.webp",
+      "width": 97,
+      "height": 128,
+      "tintMask": "shield-base.tint.webp"
+    },
+    "ship": {
+      "file": "ship.webp",
+      "width": 215,
+      "height": 256
+    },
     "terrain-farmland": {
       "file": "terrain-farmland.webp",
       "width": 512,
@@ -18,6 +292,116 @@
     },
     "terrain-hills": {
       "file": "terrain-hills.webp",
+      "width": 512,
+      "height": 512
+    },
+    "terrain-rock": {
+      "file": "terrain-rock.webp",
+      "width": 512,
+      "height": 512
+    },
+    "terrain-sand": {
+      "file": "terrain-sand.webp",
+      "width": 512,
+      "height": 512
+    },
+    "terrain-snow": {
+      "file": "terrain-snow.webp",
+      "width": 512,
+      "height": 512
+    },
+    "terrain-swamp": {
+      "file": "terrain-swamp.webp",
+      "width": 512,
+      "height": 512
+    },
+    "town-1": {
+      "file": "town-1.webp",
+      "width": 256,
+      "height": 248
+    },
+    "town-2": {
+      "file": "town-2.webp",
+      "width": 256,
+      "height": 212
+    },
+    "tree-broadleaf-1": {
+      "file": "tree-broadleaf-1.webp",
+      "width": 189,
+      "height": 192
+    },
+    "tree-broadleaf-2": {
+      "file": "tree-broadleaf-2.webp",
+      "width": 192,
+      "height": 189
+    },
+    "tree-broadleaf-3": {
+      "file": "tree-broadleaf-3.webp",
+      "width": 192,
+      "height": 180
+    },
+    "tree-conifer-1": {
+      "file": "tree-conifer-1.webp",
+      "width": 192,
+      "height": 188
+    },
+    "tree-conifer-2": {
+      "file": "tree-conifer-2.webp",
+      "width": 192,
+      "height": 192
+    },
+    "tree-conifer-3": {
+      "file": "tree-conifer-3.webp",
+      "width": 192,
+      "height": 179
+    },
+    "village-1": {
+      "file": "village-1.webp",
+      "width": 256,
+      "height": 204
+    },
+    "village-2": {
+      "file": "village-2.webp",
+      "width": 256,
+      "height": 217
+    },
+    "village-3": {
+      "file": "village-3.webp",
+      "width": 256,
+      "height": 213
+    },
+    "vista-city": {
+      "file": "vista-city.webp",
+      "width": 1200,
+      "height": 600
+    },
+    "vista-forest": {
+      "file": "vista-forest.webp",
+      "width": 1200,
+      "height": 600
+    },
+    "vista-harbor": {
+      "file": "vista-harbor.webp",
+      "width": 1200,
+      "height": 600
+    },
+    "vista-mountain": {
+      "file": "vista-mountain.webp",
+      "width": 1200,
+      "height": 600
+    },
+    "vista-valley": {
+      "file": "vista-valley.webp",
+      "width": 1200,
+      "height": 600
+    },
+    "water-deep": {
+      "file": "water-deep.webp",
+      "width": 512,
+      "height": 512
+    },
+    "water-shallow": {
+      "file": "water-shallow.webp",
       "width": 512,
       "height": 512
     }

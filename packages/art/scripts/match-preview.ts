@@ -12,12 +12,22 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp, { type OverlayOptions } from "sharp";
-import { flattenLighting, matchColour, type Rgba } from "../src/import";
+import { flattenLighting, makeSeamless, matchColour, type Rgba } from "../src/import";
 import { GROUND_TARGETS } from "../src/palette";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const artDir = join(root, "apps/web/public/art");
 const apply = process.argv.includes("--apply");
+const incoming = join(root, "art/incoming");
+/** Nate's original for a texture, if it's on this computer (squared and made seamless, nothing else). */
+const original = async (name: string): Promise<Rgba | null> => {
+  const file = ["png", "jpg", "jpeg", "webp"].map((e) => join(incoming, `${name}.${e}`)).find(existsSync);
+  if (!file || apply) return null;
+  const meta = await sharp(file).metadata();
+  const side = Math.min(meta.width!, meta.height!);
+  const { data, info } = await sharp(file).extract({ left: Math.floor((meta.width! - side) / 2), top: Math.floor((meta.height! - side) / 2), width: side, height: side }).resize(512, 512).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  return makeSeamless({ data, width: info.width, height: info.height });
+};
 const T = 192; // one repeat in the picture
 
 const manifest = JSON.parse(readFileSync(join(artDir, "manifest.json"), "utf8")) as { assets: Record<string, { file: string }> };
@@ -44,11 +54,16 @@ const text: string[] = [];
 let y = HEAD;
 for (const n of names) {
   const file = join(artDir, manifest.assets[n]!.file);
-  const before = await toRaw(file);
-  const after: Rgba = { data: new Uint8ClampedArray(before.data), width: before.width, height: before.height };
+  // With Nate's originals here: before = the original, after = exactly what the game uses (imported by art:import).
+  // Without them: the game's texture, and what one more pass of matching would do to it.
+  const orig = await original(n);
+  const before = orig ?? (await toRaw(file));
+  const after: Rgba = orig ? await toRaw(file) : { data: new Uint8ClampedArray(before.data), width: before.width, height: before.height };
   const t = GROUND_TARGETS[n]!;
-  if (t.flatten) flattenLighting(after, t.flatten);
-  matchColour(after, t);
+  if (!orig) {
+    if (t.flatten) flattenLighting(after, t.flatten);
+    matchColour(after, t);
+  }
   parts.push({ input: await tile2x2(before), left: LABEL, top: y }, { input: await tile2x2(after), left: LABEL + 2 * T + GAP, top: y });
   text.push(`<text x="10" y="${y + T}" font-family="serif" font-size="18" fill="#EDE6D6">${n.replace("terrain-", "")}</text>`);
   if (apply) await png(after).webp({ quality: 86 }).toFile(file + ".tmp"), writeFileSync(file, readFileSync(file + ".tmp")), (await import("node:fs")).rmSync(file + ".tmp");

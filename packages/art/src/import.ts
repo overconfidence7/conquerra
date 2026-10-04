@@ -38,7 +38,8 @@ function levenshtein(a: string, b: string): number {
 
 /** Which asset a file in art/incoming is, by its name. Forgiving about case, spaces and underscores. */
 export function matchFileName(file: string): NameMatch {
-  if (IGNORED.has(file.toLowerCase())) return { kind: "ignored" };
+  // "_review/", "_source-map.txt": Nate's own notes and folders, never art.
+  if (IGNORED.has(file.toLowerCase()) || file.startsWith("_")) return { kind: "ignored" };
   const ext = extname(file).toLowerCase();
   if (!IMAGE_TYPES.has(ext)) return { kind: "notImage" };
   const stem = file.slice(0, file.length - ext.length);
@@ -89,18 +90,35 @@ export function hasMagentaBackground(img: Rgba): boolean {
  * Changes `img` in place. Returns how many pixels became fully transparent.
  */
 export function cutOutMagenta(img: Rgba): number {
-  const { data } = img;
+  const { data, width: w, height: h } = img;
+  // The image's own background colour: Gemini's "magenta" is often a lighter pink (e.g. 236,41,239), so measure it
+  // from the border instead of assuming pure #FF00FF.
+  const bg = [0, 0, 0];
+  let nb = 0;
+  for (let k = 0; k < w + h; k++) {
+    for (const [x, y] of k < w ? [[k, 0], [k, h - 1]] : [[0, k - w], [w - 1, k - w]]) {
+      const i = (y! * w + x!) * 4;
+      if (MAGENTA_DIST(data[i]!, data[i + 1]!, data[i + 2]!) < 110) (bg[0]! += data[i]!), (bg[1]! += data[i + 1]!), (bg[2]! += data[i + 2]!), nb++;
+    }
+  }
+  const [br, bgG, bb] = nb ? bg.map((v) => v / nb) : [255, 0, 255];
   let cleared = 0;
   for (let i = 0; i < data.length; i += 4) {
     const r = data[i]!, g = data[i + 1]!, b = data[i + 2]!;
-    const dist = MAGENTA_DIST(r, g, b);
-    if (dist >= 150) continue;
-    // 0 at pure magenta, 1 once clearly a different colour.
-    const keep = Math.max(0, Math.min(1, (dist - 45) / 105));
+    // 0 at the background colour, 1 once clearly a different colour.
+    const dist = Math.sqrt((r - br!) ** 2 + (g - bgG!) ** 2 + (b - bb!) ** 2);
+    const keepDist = Math.max(0, Math.min(1, (dist - 35) / 95));
+    // Magenta cast: red and blue both well above green and close to each other (shadowed or tinted background).
+    // Sprites never contain magenta, so strongly magenta pixels are background whatever their brightness.
+    const hi = Math.max(r, b);
+    const cast = hi < 40 || Math.abs(r - b) > 0.45 * hi ? 0 : (Math.min(r, b) - g) / hi;
+    const keepCast = Math.max(0, Math.min(1, (0.58 - cast) / 0.28));
+    const keep = Math.min(keepDist, keepCast);
     if (keep === 0) cleared++;
     data[i + 3] = Math.round(data[i + 3]! * keep);
-    // De-spill: pull red and blue down toward green, so edges aren't pink.
-    const spill = Math.max(0, Math.min(r, b) - g) * (1 - keep);
+    // De-spill: pull red and blue down toward green on pink-tinted pixels, so edges aren't pink.
+    const spillW = Math.max(1 - keep, Math.max(0, Math.min(1, (cast - 0.06) / 0.12)));
+    const spill = Math.max(0, Math.min(r, b) - g) * spillW;
     data[i] = r - spill;
     data[i + 2] = b - spill;
   }
@@ -169,6 +187,50 @@ export function tintMask(img: Rgba): Rgba {
     out[i + 3] = Math.round(data[i + 3]! * w);
   }
   return { data: out, width: img.width, height: img.height };
+}
+
+/**
+ * Remove stray pieces the AI left beside a sprite: detached blobs that are small (under 15% of the drawing) and
+ * clearly a different colour from the rest (a smudge beside a tree cluster), plus specks under 0.3%. Changes `img`
+ * in place; returns how many stray pieces (not specks) were removed.
+ */
+export function removeStrayBlobs(img: Rgba): number {
+  const { data, width: w, height: h } = img;
+  const solid = (p: number) => data[p * 4 + 3]! > 40;
+  const label = new Int32Array(w * h).fill(-1);
+  const blobs: { pixels: number[]; sum: [number, number, number] }[] = [];
+  const total: [number, number, number] = [0, 0, 0];
+  let area = 0;
+  for (let s = 0; s < w * h; s++) {
+    if (label[s]! >= 0 || !solid(s)) continue;
+    const blob = { pixels: [] as number[], sum: [0, 0, 0] as [number, number, number] };
+    const stack = [s];
+    label[s] = blobs.length;
+    while (stack.length) {
+      const p = stack.pop()!;
+      blob.pixels.push(p);
+      for (let c = 0; c < 3; c++) blob.sum[c]! += data[p * 4 + c]!;
+      const x = p % w, y = (p / w) | 0;
+      for (const q of [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, y > 0 ? p - w : -1, y < h - 1 ? p + w : -1])
+        if (q >= 0 && label[q]! < 0 && solid(q)) (label[q] = blobs.length), stack.push(q);
+    }
+    for (let c = 0; c < 3; c++) total[c]! += blob.sum[c]!;
+    area += blob.pixels.length;
+    blobs.push(blob);
+  }
+  if (blobs.length < 2) return 0;
+  let removed = 0;
+  for (const b of blobs) {
+    const n = b.pixels.length;
+    const rest = area - n;
+    const dist = Math.sqrt([0, 1, 2].reduce((d, c) => d + (b.sum[c]! / n - (total[c]! - b.sum[c]!) / rest) ** 2, 0));
+    const speck = n < area * 0.003;
+    if (speck || (n < area * 0.15 && dist > 45)) {
+      for (const p of b.pixels) data[p * 4 + 3] = 0;
+      if (!speck) removed++;
+    }
+  }
+  return removed;
 }
 
 // ---------- Making the art match ----------
@@ -349,6 +411,10 @@ export async function importArt({ incomingDir, outDir }: ImportOptions): Promise
       if (hasMagentaBackground(img)) {
         cutOutMagenta(img);
         notes.push("magenta background removed");
+        if (spec.kind === "sprite") {
+          const strays = removeStrayBlobs(img);
+          if (strays) notes.push(`${strays} stray piece${strays === 1 ? "" : "s"} removed`);
+        }
       }
       const box = opaqueBounds(img);
       if (!box) {

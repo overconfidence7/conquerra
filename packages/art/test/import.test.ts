@@ -3,9 +3,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
 import { afterAll, describe, expect, it } from "vitest";
-import { ASSETS, TERRAIN_TEXTURES, WATER_TEXTURES } from "../src/registry";
+import { ASSETS, FIGURE_SPRITES, TERRAIN_TEXTURES, WATER_TEXTURES } from "../src/registry";
 import { colourTargetFor } from "../src/palette";
-import { colourStats, cutOutMagenta, flattenLighting, formatReport, hasMagentaBackground, importArt, makeSeamless, matchColour, matchFileName, opaqueBounds, type Rgba } from "../src/import";
+import { colourStats, cutOutMagenta, flattenLighting, formatReport, hasMagentaBackground, importArt, makeSeamless, matchColour, matchFileName, opaqueBounds, removeStrayBlobs, type Rgba } from "../src/import";
 
 const tmp = mkdtempSync(join(tmpdir(), "conquerra-art-"));
 afterAll(() => rmSync(tmp, { recursive: true, force: true }));
@@ -181,4 +181,92 @@ describe("making the art match", () => {
     for (const n of ["tree-conifer-1", "mountain-3", "hill-2", "village-1", "town-2", "capital-1"]) expect(colourTargetFor(n, "sprite")).not.toBeNull();
     expect(colourTargetFor("icon-gold", "icon")).toBeNull();
   });
+});
+
+describe("session 6: Nate's whole art list", () => {
+  /** Every file name the art list (docs/art/asset-list-and-prompts.md) asks for, with its "…" ranges expanded. */
+  const namesInArtList = () => {
+    const doc = readFileSync(join(__dirname, "../../../docs/art/asset-list-and-prompts.md"), "utf8");
+    const tiers = doc.slice(doc.indexOf("## Tier 1"), doc.indexOf("## Tier 3"));
+    const names = new Set<string>();
+    // "`tree-conifer-1.png` … `-3.png`" and "`leader-01.png` … `leader-10.png`"
+    for (const m of tiers.matchAll(/`([a-z-]+?)-(\d+)\.png`\s*…\s*`(?:[a-z-]*?)-?(\d+)\.png`/g)) {
+      const width = m[2]!.length;
+      for (let i = Number(m[2]); i <= Number(m[3]); i++) names.add(`${m[1]}-${String(i).padStart(width, "0")}`);
+    }
+    for (const m of tiers.matchAll(/`([a-z][a-z0-9-]*)\.png`/g)) names.add(m[1]!);
+    for (const m of tiers.matchAll(/`(vista-[a-z]+)\.png`/g)) names.add(m[1]!);
+    return [...names];
+  };
+
+  it("recognises every name in the art list (Tier 1 and Tier 2), and the list has all of them", () => {
+    const names = namesInArtList();
+    expect(names.length).toBe(ASSETS.length);
+    for (const n of names) expect(matchFileName(`${n}.png`)).toMatchObject({ kind: "ok", spec: { name: n } });
+    for (const n of ["figure-healers", "ship", "bridge", "cloud-3", "shield-base", "banner-base", "icon-watchtower", "emblem", "seal", "frame-corner", "leader-07", "vista-mountain"])
+      expect(names).toContain(n);
+  });
+
+  it("every piece made in white/grey for tinting gets a tint mask: all figures, banners, shields and the flag", () => {
+    const tinted = ASSETS.filter((a) => a.tint).map((a) => a.name).sort();
+    expect(tinted).toEqual([...FIGURE_SPRITES, "banner-base", "banner-flag", "shield-base"].sort());
+  });
+
+  it("skips Nate's notes and review folders quietly", () => {
+    expect(matchFileName("_source-map.txt")).toEqual({ kind: "ignored" });
+    expect(matchFileName("_review")).toEqual({ kind: "ignored" });
+  });
+
+  it("cuts out Gemini's lighter pink backgrounds and the darker magenta shadows on them", () => {
+    // A light pink background (236,41,239), a magenta shadow patch, and a brown drawing in the middle.
+    const w = 48, h = 48, data = new Uint8ClampedArray(w * h * 4);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const inside = Math.abs(x - 24) < 10 && Math.abs(y - 24) < 10;
+        const shadow = !inside && x < 12 && y > 30;
+        data.set(inside ? [120, 80, 50, 255] : shadow ? [150, 0, 140, 255] : [236, 41, 239, 255], (y * w + x) * 4);
+      }
+    const img = { data, width: w, height: h };
+    expect(hasMagentaBackground(img)).toBe(true);
+    cutOutMagenta(img);
+    expect(px(img, 0, 0)[3]).toBe(0);
+    expect(px(img, 4, 40)[3]).toBe(0); // the shadow went too
+    expect(px(img, 24, 24)).toEqual([120, 80, 50, 255]);
+    // A pinkish edge pixel (background bled into brown ground) loses its pink.
+    const edge = { data: new Uint8ClampedArray([255, 0, 255, 255, 160, 80, 112, 255, 255, 0, 255, 255, 255, 0, 255, 255]), width: 2, height: 2 };
+    cutOutMagenta(edge);
+    expect(edge.data[4]! - edge.data[5]!).toBeGreaterThan(edge.data[6]! - edge.data[5]! + 20); // red stays above blue: brown, not pink
+  });
+
+  it("removes a small stray blob of a different colour beside a sprite, but keeps detached parts that match", () => {
+    const w = 60, h = 30, data = new Uint8ClampedArray(w * h * 4);
+    const disc = (cx: number, cy: number, r: number, c: number[]) => {
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if ((x - cx) ** 2 + (y - cy) ** 2 < r * r) data.set([...c, 255], (y * w + x) * 4);
+    };
+    disc(12, 15, 9, [70, 110, 50]); // two green trees, apart
+    disc(34, 15, 9, [75, 105, 55]);
+    disc(54, 4, 3, [140, 125, 95]); // a grey-brown smudge
+    const img = { data, width: w, height: h };
+    expect(removeStrayBlobs(img)).toBe(1);
+    expect(px(img, 54, 4)[3]).toBe(0);
+    expect(px(img, 12, 15)[3]).toBe(255);
+    expect(px(img, 34, 15)[3]).toBe(255);
+  });
+
+  it("re-running the import is safe: same manifest, same files", async () => {
+    const incoming = join(tmp, "rerun-in"), out = join(tmp, "rerun-out");
+    const { mkdirSync } = await import("node:fs");
+    mkdirSync(incoming);
+    const sprite = magentaSprite(200, 160);
+    await sharp(Buffer.from(sprite.data), { raw: { width: 200, height: 160, channels: 4 } }).png().toFile(join(incoming, "figure-scouts.png"));
+    await sharp({ create: { width: 600, height: 600, channels: 3, background: { r: 30, g: 80, b: 120 } } }).png().toFile(join(incoming, "water-deep.png"));
+    await sharp({ create: { width: 10, height: 10, channels: 3, background: { r: 0, g: 0, b: 0 } } }).png().toFile(join(incoming, "_notes.png"));
+    const first = await importArt({ incomingDir: incoming, outDir: out });
+    const files = readdirSync(out).sort();
+    const second = await importArt({ incomingDir: incoming, outDir: out });
+    expect(second.manifest).toEqual(first.manifest);
+    expect(readdirSync(out).sort()).toEqual(files);
+    expect(files).toContain("figure-scouts.tint.webp");
+    expect(second.report.unknown).toEqual([]);
+  }, 30_000);
 });
