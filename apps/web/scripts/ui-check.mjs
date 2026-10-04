@@ -5,6 +5,10 @@
  *   pnpm ui-check chain     -> a 3-hop chained attack queued on the map (desktop and phone), the share chips and
  *                              the layout diagnostics view: docs/art/screens/ui-chain-*.png, ui-share-chips.png,
  *                              ui-diagnostics.png
+ *   pnpm ui-check fog       -> a 3-hop chain into the fog, at three moments of its replay (start, the fog lifting
+ *                              after the first capture, end): docs/art/screens/ui-replay-fog-1/2/3.png and
+ *                              ui-replay-fog-phone-2.png; the lobby's Bots row (ui-lobby-bots.png); and the
+ *                              Desktop site tip, emulated (ui-desktop-site-tip.png)
  *   pnpm ui-check play      -> plays a whole game on a laptop screen and in phone emulation, using the replay
  *                              (and Skip), the turn timer (one real auto-lock) and the bottom sheet; prints a log
  *
@@ -248,7 +252,99 @@ async function play(vp, label) {
   await browser.close();
 }
 
-if (mode === "play") {
+/** Recruit, then a 3-hop chain from the capital into the fog: a neutral you can see, then two you can't. */
+async function queueFogChain(page) {
+  return page.evaluate(() => {
+    const s = window.__conquerraStore;
+    const g = () => s.getState();
+    const { ctx, view } = g();
+    const near = (t) => ctx.map.borders.flatMap((b) => (b.a === t ? [b.b] : b.b === t ? [b.a] : []));
+    const at = (t) => ctx.map.geometry.territories.find((x) => x.id === t).label;
+    const mid = { x: ctx.map.geometry.width / 2, y: ctx.map.geometry.height / 2 };
+    const cap = view.me.capital;
+    const v = (t) => view.territories[t];
+    let best = null;
+    for (const a of near(cap))
+      for (const b of near(a))
+        for (const c of near(b)) {
+          if (new Set([cap, a, b, c]).size < 4) continue;
+          if (!(v(a).detail === "full" && v(a).owner === null && v(b).detail === "fogged" && v(c).detail === "fogged")) continue;
+          // Prefer chains heading toward the middle of the map (open screen, away from the edges and menus).
+          const d = Math.hypot(at(c).x - mid.x, at(c).y - mid.y);
+          if (!best || d < best.d) best = { path: [cap, a, b, c], d };
+        }
+    const path = best.path;
+    g().add({ kind: "recruit", territory: cap, count: 99 });
+    for (let k = 1; k <= 3; k++) g().add({ kind: "move", from: path[k - 1], to: path[k], troops: "all" });
+    return path;
+  });
+}
+
+async function fog() {
+  const browser = await launch();
+  const page = await browser.newPage();
+  page.on("pageerror", (e) => console.log("page error:", e.message));
+  // The lobby, with the Bots row.
+  await page.setViewport(DESKTOP);
+  await page.goto(URL, { waitUntil: "networkidle0" });
+  await sleep(400);
+  await page.screenshot({ path: out("ui-lobby-bots.png") });
+  await page.screenshot({ path: out("ui-lobby.png") });
+  for (const [vp, name] of [[DESKTOP, ""], [PHONE, "-phone"]]) {
+    await page.setViewport(vp);
+    await start(page, { bots: 3, turnSeconds: null });
+    const path = await queueFogChain(page);
+    if (vp === DESKTOP) await page.evaluate(() => window.__conquerraMap.zoomBy(1.6));
+    await sleep(400);
+    await page.evaluate((ids) => {
+      const g = window.__conquerraStore.getState();
+      const pts = ids.map((t) => g.ctx.map.geometry.territories.find((x) => x.id === t).label);
+      window.__conquerraMap.centreOn(pts.reduce((a, p) => a + p.x, 0) / pts.length, pts.reduce((a, p) => a + p.y, 0) / pts.length);
+    }, path);
+    await store(page, () => window.__conquerraStore.setState({ selected: null }));
+    await sleep(900);
+    await page.click(".seal");
+    await waitFor(page, async () => (await state(page)).replay);
+    // 1. The start: the fog as it was while planning.
+    await sleep(350);
+    if (vp === DESKTOP) await page.screenshot({ path: out("ui-replay-fog-1.png") });
+    // 2. Just after the first capture: the fog has lifted around it.
+    const first = await page.evaluate(() => window.__conquerraStore.getState().report.events.findIndex((e) => e.type === "vision"));
+    const lifted = await waitFor(page, () => page.evaluate((i) => (window.__conquerraReplay?.applied ?? 0) > i, first), 40000);
+    // Let the fog fade (0.3 s) and any camera glide (0.45 s) finish.
+    await sleep(800);
+    await page.screenshot({ path: out(`ui-replay-fog${name}-2.png`) });
+    // 3. The end: the map is exactly the new turn's view.
+    if (vp === DESKTOP) {
+      await waitFor(page, async () => !(await state(page)).replay, 40000);
+      await store(page, () => window.__conquerraStore.getState().setShowReport(false));
+      await sleep(700);
+      await page.screenshot({ path: out("ui-replay-fog-3.png") });
+    }
+    console.log(`  ${name || "desktop"}: chain ${path.join(" > ")}${lifted ? "" : " (the fog-lift moment was not caught)"}`);
+  }
+  await browser.close();
+
+  // The Desktop site tip: a 384 x 832 phone drawing a 980px-wide page (what Nate's phone reported).
+  const b2 = await launch();
+  const p2 = await b2.newPage();
+  await p2.evaluateOnNewDocument(() => {
+    Object.defineProperty(window.screen, "width", { get: () => 384 });
+    Object.defineProperty(window.screen, "height", { get: () => 832 });
+    const real = window.matchMedia.bind(window);
+    window.matchMedia = (q) => (q.includes("pointer: coarse") ? { matches: true, media: q, onchange: null, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, dispatchEvent: () => false } : real(q));
+  });
+  await p2.setViewport({ width: 980, height: 2124, deviceScaleFactor: 1, hasTouch: true });
+  await p2.goto(URL, { waitUntil: "networkidle0" });
+  await sleep(500);
+  await p2.screenshot({ path: out("ui-desktop-site-tip.png") });
+  console.log(`  Desktop site tip shown: ${await p2.evaluate(() => !!document.querySelector(".desktop-site-tip"))}`);
+  await b2.close();
+  console.log("  saved docs/art/screens/ui-replay-fog-*.png, ui-lobby-bots.png, ui-desktop-site-tip.png");
+}
+
+if (mode === "fog") await fog();
+else if (mode === "play") {
   if (!process.argv.includes("--phone-only")) await play(DESKTOP, "laptop");
   await play(PHONE, "phone");
 } else if (mode === "chain") await chain();

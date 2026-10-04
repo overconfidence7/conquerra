@@ -6,6 +6,7 @@ import { GameScreen } from "./ui/GameScreen";
 import { Lobby } from "./ui/Lobby";
 import { Diagnostics } from "./ui/Diagnostics";
 import { UpdatePrompt } from "./ui/UpdatePrompt";
+import { DesktopSiteTip } from "./ui/DesktopSiteTip";
 import "@fontsource/manrope/800.css";
 import "@fontsource/cinzel/600.css";
 import "@fontsource/cinzel/700.css";
@@ -33,6 +34,7 @@ function App() {
   return (
     <>
       <Screen />
+      <DesktopSiteTip />
       <UpdatePrompt />
       <Diagnostics />
     </>

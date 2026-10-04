@@ -1,0 +1,480 @@
+import type { BorderType, SpecialistType } from "@conquerra/content";
+import {
+  distancesFrom,
+  expectBattle,
+  fewestToTake,
+  indexMap,
+  investCost,
+  previewAttack,
+  Rng,
+  seedRng,
+  type GameContext,
+  type Order,
+  type PlayerId,
+  type PlayerView,
+  type TerritoryDetail,
+  type TerritoryId,
+} from "@conquerra/engine";
+import type { Bot } from "./recruit";
+
+type Seen = TerritoryDetail & { detail: "full" };
+/** What a territory probably holds (what we see, or our best guess for land in the fog). */
+type Guess = Pick<Seen, "owner" | "troops" | "building" | "culture" | "leaders" | "capitalOf"> & { specialists: SpecialistType[] };
+
+/** The Captain's priorities, each of which the simulator can switch off to measure what it's worth. */
+export type CaptainFeature = "chokes" | "breakthrough" | "focus" | "capital" | "forts";
+
+export interface CaptainOptions {
+  /** Chain on when the army that should arrive is at least this many times what the next hop needs. */
+  chainMargin: number;
+  /** Priorities switched off (simulator experiments only). */
+  off?: readonly CaptainFeature[];
+}
+
+/** Tuned in the simulator (docs/sim-results-m3-bots.md): hop on when the next hop is comfortably likely to win. */
+export const CAPTAIN_CHAIN_MARGIN = 1.25;
+/** Attacking through a pass or across a sea lane: gather at least this many times what the attack needs. */
+const BREAKTHROUGH_MARGIN = 1.5;
+/** A rival with this little land (as far as we know) is worth finishing off. */
+const WEAK_RIVAL_LAND = 3;
+const MAX_HOPS = 4;
+/** Unexplored land is guessed as a neutral with this many troops (they start with 1). */
+const UNEXPLORED_GUESS = 2;
+/** At the end of a chain, this many spare troops add Follow through (one more push, wherever looks weakest then). */
+const FOLLOW_THROUGH_SPARE = 6;
+
+/** The Captain with other settings (the simulator tunes the chain margin). */
+export const makeCaptainBot = (opts: CaptainOptions = { chainMargin: CAPTAIN_CHAIN_MARGIN }): Bot => ({
+  id: "captain",
+  name: "Captain",
+  plan: (ctx, view) => plan(ctx, view, opts),
+});
+
+/**
+ * "Captain" bot: the default opponent from session 8. Like the Recruit, it plays only from its own fog-limited view
+ * (including its "last seen" memory), with the same rules as people. What it does better, in priority order:
+ *  1. Holds choke points cheaply: on a pass or sea-lane landing facing a rival, it keeps just enough troops to hold
+ *     (the crossing penalty does the rest) and builds a fort there when it can afford one, instead of piling up.
+ *  2. Breaks through with force: it only attacks through a pass or across a sea lane with a real army (half as
+ *     much again as the attack needs), gathering troops at the crossing until it has one, and brings siege for a
+ *     fort when it can hire it. Once through, it chains on.
+ *  3. Lands from the sea where the far side is weak (cheap landings score well, and a landing opens a new front).
+ *  4. Finishes what it starts: it goes after a rival with only a few territories left, and with 3 or fewer players
+ *     left it concentrates on one rival (the weakest it borders) and that rival's capital, instead of trading land
+ *     back and forth with everyone.
+ *  5. Defends its capital when a big army stands next to it: it keeps enough there to hold, recruits there, builds a
+ *     fort and sends reinforcements.
+ *  6. Chains like a person: it hops on when the army that should arrive is comfortably more than the next hop needs.
+ */
+export const captainBot: Bot = makeCaptainBot();
+
+function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[] {
+  const { rules } = ctx;
+  const idx = indexMap(ctx.map);
+  const me = view.me;
+  const rng = new Rng(seedRng(`${view.gameId}|${me.id}|${view.turn}|captain`));
+  const orders: Order[] = [];
+  let n = 0;
+  const id = () => `${me.id}-t${view.turn}-${n++}`;
+  const garrison = rules.setup.minGarrison;
+  const on = (f: CaptainFeature) => !opts.off?.includes(f);
+
+  const seen = (t: TerritoryId): Seen | null => {
+    const v = view.territories[t];
+    return v && v.detail === "full" ? v : null;
+  };
+  const owned = (t: TerritoryId) => seen(t)?.owner === me.id;
+  const rivalAt = (t: TerritoryId): PlayerId | null => {
+    const v = seen(t);
+    return v && v.owner !== null && v.owner !== me.id ? v.owner : null;
+  };
+  const troopsAt = (t: TerritoryId) => seen(t)?.troops ?? 0;
+  const specsAt = (t: TerritoryId): SpecialistType[] => seen(t)?.specialists.map((s) => s.type) ?? [];
+  const mine = idx.ids.filter(owned);
+  if (!mine.length) return [];
+  const border = (a: TerritoryId, b: TerritoryId): BorderType => idx.border(a, b) ?? "normal";
+  const crossing = (a: TerritoryId, b: TerritoryId) => {
+    const k = border(a, b);
+    return k === "pass" || k === "sea";
+  };
+  const isFrontier = (t: TerritoryId) => idx.neighbors.get(t)!.some((x) => !owned(x));
+  const frontier = mine.filter(isFrontier);
+  const enemyPressure = (t: TerritoryId) => idx.neighbors.get(t)!.reduce((a, x) => a + (rivalAt(x) ? troopsAt(x) : 0), 0);
+  const biggestEnemyNear = (t: TerritoryId) => idx.neighbors.get(t)!.reduce((a, x) => Math.max(a, rivalAt(x) ? troopsAt(x) : 0), 0);
+
+  // ---------- The picture: who's left, who we border, who to finish ----------
+  const alive = view.players.filter((p) => p.eliminatedTurn === null);
+  /** Land each rival holds as far as we know: what we see, plus what we last saw. */
+  const knownLand = new Map<PlayerId, number>();
+  for (const t of idx.ids) {
+    const v = view.territories[t]!;
+    const o = v.detail === "full" ? v.owner : (v.lastSeen?.owner ?? null);
+    if (o && o !== me.id) knownLand.set(o, (knownLand.get(o) ?? 0) + 1);
+  }
+  const facing = new Map<PlayerId, number>();
+  for (const f of frontier) for (const nb of idx.neighbors.get(f)!) {
+    const r = rivalAt(nb);
+    if (r) facing.set(r, (facing.get(r) ?? 0) + troopsAt(nb));
+  }
+  const endgame = alive.length <= 3;
+  const weakest = [...facing.keys()].sort((a, b) => (knownLand.get(a) ?? 0) - (knownLand.get(b) ?? 0) || facing.get(a)! - facing.get(b)! || (a < b ? -1 : 1))[0] ?? null;
+  /** The rival we concentrate on: a weakened neighbour, or in the endgame the weakest one we border. */
+  const focus = on("focus") && weakest && (endgame || (knownLand.get(weakest) ?? 0) <= WEAK_RIVAL_LAND) ? weakest : null;
+  /** The focused rival's capital, if we've seen it, and how far every territory is from it. */
+  const focusCapital = focus ? (idx.ids.find((t) => seen(t)?.capitalOf === focus) ?? null) : null;
+  const toFocusCapital = focusCapital ? distancesFrom(idx, focusCapital) : null;
+  /**
+   * In the endgame, one spearhead: the front facing the focused rival that's nearest its capital (or, not knowing
+   * where that is, the one with the biggest army). Reinforcements go there instead of being spread along every front.
+   */
+  const spearhead = endgame && focus
+    ? (frontier
+        .filter((t) => idx.neighbors.get(t)!.some((x) => rivalAt(x) === focus))
+        .sort((a, b) => (toFocusCapital ? toFocusCapital.get(a)! - toFocusCapital.get(b)! : 0) || troopsAt(b) - troopsAt(a) || (a < b ? -1 : 1))[0] ?? null)
+    : null;
+
+  /** Troops needed in `t` so that no rival army we can see next to it is likely to take it (crossings, terrain, fort and Leaders count). */
+  const needCache = new Map<TerritoryId, number>();
+  const holdNeed = (t: TerritoryId): number => {
+    const hit = needCache.get(t);
+    if (hit !== undefined) return hit;
+    const v = seen(t)!;
+    let need = garrison;
+    for (const nb of idx.neighbors.get(t)!) {
+      const r = rivalAt(nb);
+      if (!r) continue;
+      const e = seen(nb)!;
+      const attackers = e.troops - garrison;
+      if (attackers <= 0) continue;
+      const takes = (defenders: number) =>
+        expectBattle(rules, {
+          attackers,
+          attackerSpecialists: e.specialists.map((s) => s.type),
+          attackerLeader: e.leaders.includes(r),
+          defenders,
+          defenderSpecialists: v.specialists.map((s) => s.type),
+          defenderLeader: v.leaders.includes(me.id),
+          terrain: idx.byId.get(t)!.terrain,
+          building: v.building,
+          border: border(nb, t),
+          luck: view.settings.luck,
+        }).captureLikely;
+      let lo = 1, hi = attackers * 3 + 1;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (takes(mid)) lo = mid + 1;
+        else hi = mid;
+      }
+      need = Math.max(need, lo);
+    }
+    needCache.set(t, need);
+    return need;
+  };
+  /** A choke point we hold: every rival next to it is across a pass or a sea lane. */
+  const chokeHolder = (t: TerritoryId) => {
+    if (!on("chokes")) return false;
+    const rivals = idx.neighbors.get(t)!.filter((nb) => rivalAt(nb));
+    return rivals.length > 0 && rivals.every((nb) => crossing(t, nb));
+  };
+  const capital = owned(me.capital) ? me.capital : null;
+  // 5. A big army next to the capital: hold it.
+  const capThreatened = on("capital") && !!capital && holdNeed(capital) >= troopsAt(capital) && biggestEnemyNear(capital) > garrison;
+
+  // ---------- Spending ----------
+  let gold = me.gold;
+  const building = (t: TerritoryId) => !!seen(t)!.building || !!seen(t)!.construction;
+
+  // 1/5. A fort where it counts: the threatened capital, else a choke point we hold facing a rival army.
+  const fortBuilding = mine.some((t) => seen(t)!.construction?.building === "fort");
+  const fortSpots = [...(capThreatened && capital ? [capital] : []), ...frontier.filter((t) => chokeHolder(t) && biggestEnemyNear(t) >= 4)].filter((t) => !building(t));
+  const fortAt = fortSpots.sort((a, b) => (a === capital ? -1 : b === capital ? 1 : 0) || biggestEnemyNear(b) - biggestEnemyNear(a) || (a < b ? -1 : 1))[0];
+  if (on("forts") && fortAt && !fortBuilding && gold >= rules.buildings.fort.cost + rules.troops.cost * 3) {
+    orders.push({ id: id(), kind: "build", territory: fortAt, building: "fort" });
+    gold -= rules.buildings.fort.cost;
+  }
+
+  // A barracks near the front we care about most, once the realm has grown.
+  const recruitSites = mine.filter((t) => t === me.capital || seen(t)?.building === "barracks");
+  const facesFocus = (t: TerritoryId) => !!focus && idx.neighbors.get(t)!.some((x) => rivalAt(x) === focus);
+  const frontRank = (t: TerritoryId) => (facesFocus(t) ? 1000 : 0) + enemyPressure(t);
+  const hotFront = [...frontier].sort((a, b) => frontRank(b) - frontRank(a) || (a < b ? -1 : 1))[0];
+  const nearSite = (t: TerritoryId) => recruitSites.some((r) => r === t || idx.neighbors.get(t)!.includes(r));
+  const barracksBuilding = mine.some((t) => seen(t)!.construction?.building === "barracks");
+  // Nowhere left to recruit (the capital fell and there's no barracks): build one at once, in the safest land we hold.
+  const homeless = !recruitSites.length && !barracksBuilding;
+  const shelter = homeless ? [...mine].filter((t) => !building(t)).sort((a, b) => enemyPressure(a) - enemyPressure(b) || troopsAt(b) - troopsAt(a) || (a < b ? -1 : 1))[0] : undefined;
+  if (shelter && gold >= rules.buildings.barracks.cost) {
+    orders.push({ id: id(), kind: "build", territory: shelter, building: "barracks" });
+    gold -= rules.buildings.barracks.cost;
+  } else if (
+    hotFront &&
+    !nearSite(hotFront) &&
+    !barracksBuilding &&
+    mine.length >= 5 &&
+    !building(hotFront) &&
+    gold >= rules.buildings.barracks.cost + rules.troops.cost * 4
+  ) {
+    orders.push({ id: id(), kind: "build", territory: hotFront, building: "barracks" });
+    gold -= rules.buildings.barracks.cost;
+  }
+
+  // Recruit at the threatened capital, else the recruiting site nearest the front we care about.
+  const site = capThreatened
+    ? capital!
+    : [...recruitSites].sort((a, b) => Number(isFrontier(b)) - Number(isFrontier(a)) || frontRank(b) - frontRank(a) || (a < b ? -1 : 1))[0];
+  if (site) {
+    const here = seen(site)!;
+    const room = rules.specialists.maxPerArmy - here.specialists.length;
+    const has = (t: SpecialistType) => here.specialists.some((s) => s.type === t);
+    const provinceCulture = (idx.provinceMembers.get(idx.byId.get(site)!.province) ?? []).filter(owned).reduce((a, t) => a + seen(t)!.culture, 0);
+    const unlocked = (t: SpecialistType) => rules.specialists[t].cultureRequired <= provinceCulture;
+    // 2. Siege for a fort we'll have to break (next to the site, or across a crossing from it).
+    const fortAhead = idx.neighbors.get(site)!.some((x) => rivalAt(x) && seen(x)!.building === "fort");
+    let want: SpecialistType | null = null;
+    if (fortAhead && !has("siege") && unlocked("siege")) want = "siege";
+    else if (unlocked("healers") && !has("healers") && here.troops >= 15) want = "healers";
+    else if (!has("cavalry") && here.troops >= 10 && rng.next() < 0.3) want = "cavalry";
+    if (want && room > 0 && gold >= rules.specialists[want].cost + rules.troops.cost * 4) {
+      orders.push({ id: id(), kind: "hire", territory: site, specialist: want });
+      gold -= rules.specialists[want].cost;
+    }
+  }
+
+  // A little culture in safe interior land when comfortably rich (military first).
+  const interior = mine.filter((t) => !isFrontier(t));
+  if (interior.length && gold >= 40 && !capThreatened && rng.next() < 0.4) {
+    const spot = [...interior].sort((a, b) => seen(a)!.culture - seen(b)!.culture || (a < b ? -1 : 1))[0]!;
+    const cost = investCost(rules, seen(spot)!.culture);
+    if (cost !== null && gold - cost >= 25) {
+      orders.push({ id: id(), kind: "invest", territory: spot });
+      gold -= cost;
+    }
+  }
+
+  let recruited = 0;
+  if (site && gold >= rules.troops.cost) {
+    recruited = Math.floor(gold / rules.troops.cost);
+    orders.push({ id: id(), kind: "recruit", territory: site, count: recruited });
+    gold -= recruited * rules.troops.cost;
+  }
+
+  // ---------- What each army must keep back ----------
+  // The capital under threat keeps enough to hold; a choke point keeps just enough to hold (the crossing helps);
+  // everywhere else keeps the 1-troop garrison (attacking is the best defence).
+  const keep = (t: TerritoryId) => {
+    if (t === capital && capThreatened) return holdNeed(t);
+    if (chokeHolder(t)) return holdNeed(t);
+    return garrison;
+  };
+  const free = new Map<TerritoryId, number>();
+  for (const t of mine) free.set(t, Math.max(0, troopsAt(t) + (t === site ? recruited : 0) - keep(t)));
+
+  // ---------- Attacks ----------
+  /**
+   * What we expect to find in `t`, the way a player would guess: what we see; else what we last saw there (a rival
+   * army grows a little for each turn since); else an untouched neutral. Used to plan hops into the fog. Every hop
+   * keeps "Only if still stronger", so the engine checks the real odds when it plays, by which time the land is in view.
+   */
+  const look = (t: TerritoryId): Guess => {
+    const v = view.territories[t]!;
+    if (v.detail === "full") return { owner: v.owner, troops: v.troops, specialists: v.specialists.map((s) => s.type), building: v.building, culture: v.culture, leaders: v.leaders, capitalOf: v.capitalOf };
+    const last = v.lastSeen;
+    if (last) return { owner: last.owner, troops: last.troops + (last.owner ? 2 * Math.max(1, view.turn - last.turn) : 0), specialists: [], building: last.building, culture: 0, leaders: [], capitalOf: null };
+    return { owner: null, troops: UNEXPLORED_GUESS, specialists: [], building: null, culture: 0, leaders: [], capitalOf: null };
+  };
+  const expectAt = (from: TerritoryId, to: TerritoryId, troops: number, specs: readonly SpecialistType[]) => {
+    const g = look(to);
+    return expectBattle(rules, {
+      attackers: troops,
+      attackerSpecialists: specs,
+      attackerLeader: false,
+      defenders: g.troops,
+      defenderSpecialists: g.specialists,
+      defenderLeader: !!g.owner && g.leaders.includes(g.owner),
+      terrain: idx.byId.get(to)!.terrain,
+      building: g.building,
+      border: border(from, to),
+      luck: view.settings.luck,
+    });
+  };
+  const valueOf = (t: TerritoryId): number => {
+    const v = look(t);
+    const def = idx.byId.get(t)!;
+    let val = 1 + rules.terrain[def.terrain].income + v.culture * 0.5;
+    const prov = ctx.map.provinces.find((p) => p.id === def.province)!;
+    const missing = (idx.provinceMembers.get(prov.id) ?? []).filter((m) => !owned(m)).length;
+    if (missing === 1) val += prov.bonus * 2;
+    else if (missing === 2) val += prov.bonus;
+    if (v.building) val += 2;
+    // Our own capital, taken from us: take it back.
+    if (t === me.capital) val += 10;
+    if (v.owner && v.owner !== me.id) {
+      val += 2;
+      if (v.leaders.includes(v.owner)) val += 3;
+      // 4. A rival's capital, and the land of a rival we're finishing off.
+      if (v.capitalOf === v.owner) val += 8;
+      if ((knownLand.get(v.owner) ?? 0) <= WEAK_RIVAL_LAND) val += 4;
+      if (v.owner === focus) val *= 2;
+      // In the endgame, land of other rivals is worth less: no trading land back and forth with everyone.
+      else if (endgame && focus) val *= 0.5;
+    }
+    // On the way to the focused rival's capital.
+    if (toFocusCapital && (toFocusCapital.get(t) ?? 99) <= 2) val += 4;
+    return val;
+  };
+  /** Fewest troops from `avail` likely to take `to` from `from` (with a small safety margin), or null. */
+  const needFor = (from: TerritoryId, to: TerritoryId, avail: number, specs = specsAt(from)) =>
+    fewestToTake((troops) => previewAttack(ctx, view, { from, to, troops, specialists: specs })?.captureLikely ?? false, avail);
+
+  type Plan = { from: TerritoryId; to: TerritoryId; troops: number; score: number; vsPlayer: boolean; breakthrough: boolean };
+  const candidates: Plan[] = [];
+  /** Crossings we'd like to break through but can't yet: gather troops there (the staging point). */
+  const staging = new Map<TerritoryId, number>();
+  for (const from of mine) {
+    const avail = free.get(from)!;
+    for (const to of idx.neighbors.get(from)!) {
+      const tv = seen(to);
+      if (!tv || tv.owner === me.id) continue;
+      const rival = tv.owner;
+      const offFocus = endgame && !!focus && rival !== null && rival !== focus;
+      const value = valueOf(to);
+      if (on("breakthrough") && crossing(from, to)) {
+        // 2/3. Through a pass or across the sea only with a real army, so it can push on afterwards.
+        const need = needFor(from, to, Math.max(avail, troopsAt(from) * 4));
+        if (need === null) continue;
+        const real = Math.ceil(need * BREAKTHROUGH_MARGIN);
+        if (avail >= real && !offFocus) candidates.push({ from, to, troops: avail, score: (value * 1.25) / real, vsPlayer: rival !== null, breakthrough: true });
+        else if (!offFocus && (rival === focus || rival === null || tv.troops <= 3)) staging.set(from, Math.max(staging.get(from) ?? 0, value));
+        continue;
+      }
+      if (avail <= 0) continue;
+      const need = needFor(from, to, avail);
+      if (need === null) continue;
+      candidates.push({ from, to, troops: need, score: value / Math.max(1, need), vsPlayer: rival !== null, breakthrough: false });
+    }
+  }
+  candidates.sort((a, b) => b.score - a.score || (a.to < b.to ? -1 : 1));
+  const targeted = new Set<TerritoryId>();
+  const attackedFrom = new Set<TerritoryId>();
+  let usedInitiative = false;
+  const queued: { order: Order; from: TerritoryId; to: TerritoryId; troops: number }[] = [];
+  for (const c of candidates) {
+    if (targeted.has(c.to)) continue;
+    const avail = free.get(c.from)!;
+    if (avail < c.troops || avail <= 0) continue;
+    // Concentrate: a big stack throws extra weight into its main attack (all of it for a breakthrough).
+    const extra = c.breakthrough ? avail - c.troops : attackedFrom.has(c.from) ? 0 : Math.floor((avail - c.troops) * 0.5);
+    const send = c.troops + extra;
+    free.set(c.from, avail - send);
+    targeted.add(c.to);
+    attackedFrom.add(c.from);
+    const o: Order = { id: id(), kind: "move", from: c.from, to: c.to, troops: send, preset: { id: "onlyIfStronger" } };
+    if (!usedInitiative && c.vsPlayer && me.leader.alive && me.cooldowns.seize === 0) {
+      o.timing = "first";
+      usedInitiative = true;
+    }
+    orders.push(o);
+    queued.push({ order: o, from: c.from, to: c.to, troops: send });
+    staging.delete(c.from);
+  }
+
+  // 6. Chain on from where an attack should arrive, while the next hop is comfortably likely to win (into the fog
+  // too, on our best guess of what's there). Plenty left at the end: Follow through pushes on once more.
+  for (const first of queued) {
+    const specs = specsAt(first.from);
+    let from = first.to, sent = first.troops, prevFrom = first.from, last = first.order;
+    for (let hop = 0; hop < MAX_HOPS - 1; hop++) {
+      const e = expectAt(prevFrom, from, sent, specs);
+      if (!e.captureLikely) break;
+      const avail = Math.floor(sent - e.expectedAttackerLosses) - garrison;
+      if (avail <= 0) break;
+      let best: { to: TerritoryId; value: number } | null = null;
+      for (const nb of idx.neighbors.get(from)!) {
+        if (owned(nb) || look(nb).owner === me.id || targeted.has(nb)) continue;
+        const need = fewestToTake((troops) => expectAt(from, nb, troops, specs).captureLikely, avail);
+        const margin = crossing(from, nb) ? Math.max(opts.chainMargin, BREAKTHROUGH_MARGIN) : opts.chainMargin;
+        if (need === null || avail < need * margin) continue;
+        const value = valueOf(nb);
+        if (!best || value > best.value || (value === best.value && nb < best.to)) best = { to: nb, value };
+      }
+      if (!best) break;
+      last = { id: id(), kind: "move", from, to: best.to, troops: "all", preset: { id: "onlyIfStronger" } };
+      orders.push(last);
+      targeted.add(best.to);
+      prevFrom = from;
+      from = best.to;
+      sent = avail;
+    }
+    const end = expectAt(prevFrom, from, sent, specs);
+    if (end.captureLikely && Math.floor(sent - end.expectedAttackerLosses) - garrison >= FOLLOW_THROUGH_SPARE) {
+      last.preset = { id: "followThrough" };
+      last.conditions = [{ kind: "odds", atLeast: "likely" }];
+    }
+  }
+
+  // ---------- Reinforcements: march spare troops to where they matter most ----------
+  /** Where troops are wanted, and how badly. */
+  const goals = new Map<TerritoryId, number>();
+  const want = (t: TerritoryId, w: number) => goals.set(t, Math.max(goals.get(t) ?? 0, w));
+  // The capital only pulls troops in if what's there plus the new recruits still isn't enough to hold it.
+  if (capThreatened && capital && holdNeed(capital) > troopsAt(capital) + (site === capital ? recruited : 0)) want(capital, 100);
+  for (const t of frontier) {
+    if (chokeHolder(t)) {
+      if (holdNeed(t) > troopsAt(t)) want(t, 50);
+      continue;
+    }
+    if (t === spearhead) want(t, 60);
+    else if (spearhead && facesFocus(t)) want(t, 3 + enemyPressure(t) / 30);
+    else if (facesFocus(t)) want(t, 30 + enemyPressure(t) / 10);
+    else want(t, enemyPressure(t) > 0 ? 5 + enemyPressure(t) / 20 : 1);
+  }
+  for (const [t, value] of staging) want(t, 40 + value);
+  // Distances (through our own land) from each goal.
+  const distFrom = new Map<TerritoryId, Map<TerritoryId, number>>();
+  for (const g of goals.keys()) {
+    const d = new Map<TerritoryId, number>([[g, 0]]);
+    const q = [g];
+    while (q.length) {
+      const cur = q.shift()!;
+      for (const nb of idx.neighbors.get(cur)!)
+        if (owned(nb) && !d.has(nb)) {
+          d.set(nb, d.get(cur)! + 1);
+          q.push(nb);
+        }
+    }
+    distFrom.set(g, d);
+  }
+  let reserveUsed = false;
+  for (const t of mine) {
+    const avail = free.get(t)!;
+    if (avail <= 0 || attackedFrom.has(t) || goals.has(t)) continue;
+    // Interior troops, and the spare troops of a choke point we hold, go to the best goal they can reach.
+    if (isFrontier(t) && !chokeHolder(t)) continue;
+    let best: { g: TerritoryId; score: number; d: number } | null = null;
+    for (const [g, w] of goals) {
+      const d = distFrom.get(g)!.get(t);
+      if (d === undefined || d === 0) continue;
+      const score = w / (1 + d);
+      if (!best || score > best.score || (score === best.score && g < best.g)) best = { g, score, d };
+    }
+    if (!best) continue;
+    const dg = distFrom.get(best.g)!;
+    const step = idx.neighbors.get(t)!.filter((nb) => owned(nb) && dg.get(nb) === best!.d - 1).sort()[0];
+    if (!step) continue;
+    // One interior stack next to a threatened front waits in reserve and only goes if that front is hit.
+    if (!reserveUsed && best.d === 1 && !goals.has(capital ?? "") && biggestEnemyNear(step) > troopsAt(step) && me.leader.alive && me.cooldowns.lie === 0) {
+      reserveUsed = true;
+      orders.push({ id: id(), kind: "move", from: t, to: step, troops: avail, preset: { id: "reinforceIfHit" }, timing: "last" });
+      continue;
+    }
+    orders.push({ id: id(), kind: "move", from: t, to: step, troops: avail });
+  }
+
+  // ---------- Pull back stacks that would be crushed (never the capital or a choke point) ----------
+  for (const t of frontier) {
+    if (t === capital || attackedFrom.has(t) || chokeHolder(t)) continue;
+    const here = troopsAt(t);
+    if (here >= 6 && biggestEnemyNear(t) >= here * 2.5) orders.push({ id: id(), kind: "retreat", from: t, preset: { id: "retreatIfOutnumbered" } });
+  }
+  return orders;
+}

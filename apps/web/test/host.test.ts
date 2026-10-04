@@ -4,7 +4,7 @@ import { HUMAN_ID, LocalGame, REPORT_GRACE_MS } from "../src/host/localGame";
 import { formatClock, remainingMs, timerTone } from "../src/logic/timer";
 import type { LobbySettings } from "../src/host/protocol";
 
-const settings: LobbySettings = { mapId: "embervale", bots: 3, luck: 0.3, fog: true, mode: "classic", turnSeconds: 300 };
+const settings: LobbySettings = { mapId: "embervale", bots: 3, botLevel: "captain", luck: 0.3, fog: true, mode: "classic", turnSeconds: 300 };
 const isOut = (g: LocalGame, u: ReturnType<LocalGame["update"]>) => u.view.players.find((p) => p.id === HUMAN_ID)!.eliminatedTurn !== null;
 
 describe("local game host", () => {

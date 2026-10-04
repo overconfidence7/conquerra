@@ -48,3 +48,21 @@ export function chooseLayout(f: ScreenFacts, choice: LayoutChoice = "auto"): { l
 
 /** Phones and tablets say so in their user agent (unless "Desktop site" is on). */
 export const isMobileAgent = (ua: string) => /Android|iPhone|iPad|iPod|Mobile|Silk|Kindle|Opera Mini/i.test(ua);
+
+/** "Much wider than the screen": the page is this many times the screen's width (Desktop site draws ~980px on ~400px). */
+export const DESKTOP_SITE_RATIO = 1.5;
+
+/**
+ * Is Chrome's "Desktop site" setting on? A phone-sized touch screen drawing a page much wider than the screen
+ * itself. Then the whole game is drawn for a wide page and shrunk to fit, so everything looks small: the game shows a
+ * one-line tip on how to turn it off (it doesn't try to rescale itself). Returns how many times too wide, or 0.
+ */
+export function desktopSiteZoom(f: ScreenFacts): number {
+  const touch = f.coarse || f.mobileAgent;
+  const short = Math.min(f.screenWidth, f.screenHeight);
+  if (!touch || short <= 0 || short > PHONE_MAX_SHORT_SIDE || f.innerWidth <= 0) return 0;
+  // The screen's width along the page's width: its short side upright, its long side held sideways.
+  const along = f.innerWidth > f.innerHeight ? Math.max(f.screenWidth, f.screenHeight) : short;
+  const ratio = f.innerWidth / along;
+  return ratio > DESKTOP_SITE_RATIO ? ratio : 0;
+}

@@ -101,24 +101,32 @@ export function centredOn(cam: Camera, vp: Viewport, s: Spot): Camera {
  * Chains: a battle that pushes on from the land the last followed battle took (the next hop of a chain, often into
  * land that only just came out of the fog) is followed even inside the hold, so a chain running off screen stays in
  * view. It only ever moves on in the chain's direction, so it can't ping-pong.
+ *
+ * Your own battles (and battles against you) come first: one may cut short a hold that started for something less
+ * important (a fogged pulse, or someone else's battle), so the camera is never off watching the fog while your army
+ * takes land. Give `me` to turn this on.
  */
-export function planReplayCamera(timeline: Timeline, spots: ReplaySpots, home: Camera, vp: Viewport): CameraMove[] {
+export function planReplayCamera(timeline: Timeline, spots: ReplaySpots, home: Camera, vp: Viewport, me: string | null = null): CameraMove[] {
   const moves: CameraMove[] = [];
   let cur = home;
   let lastAt = -Infinity;
   /** Where the last followed battle was fought, and by whom (to recognise the next hop of a chain). */
   let lastTaken: { player: string; at: string } | null = null;
+  /** Was the last glide for one of your own battles? */
+  let lastMine = false;
   for (const beat of timeline.beats) {
     if (!FOLLOWED.has(beat.kind)) continue;
     const e = beat.events[0];
     const hop = !!lastTaken && e?.type === "battle" && e.player === lastTaken.player && e.from === lastTaken.at;
-    if (beat.start - lastAt < CAMERA_HOLD_MS && !hop) continue;
+    const mine = !!me && e?.type === "battle" && (e.player === me || e.defender === me);
+    if (beat.start - lastAt < CAMERA_HOLD_MS && !hop && !(mine && !lastMine)) continue;
     const s = focusOf(beat, spots);
     if (!s || inView(cur, vp, s)) {
       if (hop && e?.type === "battle") lastTaken = { player: e.player, at: e.to };
       continue;
     }
     lastAt = beat.start;
+    lastMine = mine;
     lastTaken = e?.type === "battle" ? { player: e.player, at: e.to } : null;
     cur = inView(home, vp, s) ? home : centredOn(cur, vp, s);
     moves.push({ at: beat.start, cam: cur, ms: CAMERA_EASE_MS });

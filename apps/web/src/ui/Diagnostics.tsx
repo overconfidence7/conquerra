@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { Frame } from "./Frame";
 import { checkForUpdate, useUpdates } from "./UpdatePrompt";
 import { useLayout } from "./useLayout";
+import { desktopSiteZoom } from "../logic/layout";
 
 export const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
 
@@ -48,6 +49,7 @@ export function Diagnostics() {
   const rows: [string, string][] = [
     ["Layout chosen", `${layout === "phone" ? "Phone" : "Desktop"} (because ${why})`],
     ["Layout setting", choice === "auto" ? "Auto" : choice === "phone" ? "Phone" : "Desktop"],
+    ["Chrome's Desktop site", desktopSiteZoom(facts) ? `looks on (page ${desktopSiteZoom(facts).toFixed(1)}× wider than the screen)` : "looks off"],
     ["Page (innerWidth × innerHeight)", `${facts.innerWidth} × ${facts.innerHeight}`],
     ["Screen (screen.width × height)", `${facts.screenWidth} × ${facts.screenHeight}`],
     ["devicePixelRatio", String(Math.round(facts.devicePixelRatio * 100) / 100)],

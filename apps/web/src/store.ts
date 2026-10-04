@@ -62,7 +62,7 @@ interface GameStore {
   /** Knocked out: skip ahead to the end and see the result. */
   seeResult(): Promise<void>;
   playAgain(): void;
-  /** Replace your orders with the Recruit bot's plan (testing; the perf script plays whole games with it). */
+  /** Replace your orders with a bot's plan (the game's bot level; testing: the perf script plays whole games with it). */
   autoPlan(): Promise<void>;
 }
 
@@ -93,7 +93,7 @@ const nextOrderId = () => `o${++orderCounter}`;
 
 const defaultLobby = (): LobbySettings => {
   const bots = 3;
-  return { mapId: "embervale", bots, luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER };
+  return { mapId: "embervale", bots, botLevel: "captain", luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER };
 };
 
 export const useGame = create<GameStore>((set, get) => ({

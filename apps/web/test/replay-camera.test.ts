@@ -79,6 +79,17 @@ describe("replay camera", () => {
     expect(moves.map((m) => m.at)).toEqual([tl.beats[1]!.start, tl.total]);
   });
 
+  it("your own battles come first: one cuts short the hold after a fogged pulse", () => {
+    const farProvince = ctx.map.territories.find((t) => t.id === far)!.province;
+    const tl = buildTimeline([intro, { type: "surface", step: 1, what: "battle", province: farProvince }, battle(2, here)]);
+    // p1 is attacked at home right after the camera went off to the pulse: it comes straight back for that.
+    const moves = planReplayCamera(tl, spots, zoomedIn, vp, "p1");
+    expect(moves.map((m) => m.at)).toEqual([tl.beats[1]!.start, tl.beats[2]!.start]);
+    expect(moves[1]!.cam).toEqual(zoomedIn);
+    // Someone else's battle doesn't cut a hold short.
+    expect(planReplayCamera(tl, spots, zoomedIn, vp, "p3").map((m) => m.at)).toEqual([tl.beats[1]!.start, tl.total]);
+  });
+
   it("a fogged battle is aimed at its pulse (the province centre), never closer than you were", () => {
     const farProvince = ctx.map.territories.find((t) => t.id === far)!.province;
     const pulse: ReplayEvent = { type: "surface", step: 1, what: "battle", province: farProvince };

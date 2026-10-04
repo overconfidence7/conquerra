@@ -36,7 +36,7 @@ export function useReplay(
     let lastProgress = 0;
     // The camera plan, from where you're looking now. It stops for good if you pan or zoom during the replay.
     const start = renderer.current?.viewState();
-    const moves: CameraMove[] = start && spots ? planReplayCamera(timeline, spots, start.cam, start.vp) : [];
+    const moves: CameraMove[] = start && spots ? planReplayCamera(timeline, spots, start.cam, start.vp, replay.before.me.id) : [];
     let nextMove = 0;
     let moved = false;
     const yours = () => !start || renderer.current?.viewState().userMoves !== start.userMoves;

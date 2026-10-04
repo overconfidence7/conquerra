@@ -16,6 +16,8 @@ export interface GameSummary {
   seed: string;
   winner: string | "draw";
   winnerSeat: number | null;
+  /** Which bot (by id, e.g. "captain") won, for mixed tables. */
+  winnerBot: string | null;
   endReason: GameState["endReason"];
   turns: number;
   battles: number;
@@ -41,25 +43,33 @@ export interface GameSummary {
   /** CPU time per turn in milliseconds: the engine resolving, and the bots planning (all seats). */
   resolveMs: number[];
   planMs: number[];
+  /** Planning time per bot per turn (ms), by bot id. */
+  planMsByBot: Record<string, number[]>;
   log?: StepEvent[][];
 }
 
-export function runGame(ctx: GameContext, seed: string, playerCount: number, settings: Partial<GameSettings>, keepLog = false, bot: Bot = recruitBot): GameSummary {
+/** `bot`: one bot for every seat, or one per seat (mixed tables). */
+export function runGame(ctx: GameContext, seed: string, playerCount: number, settings: Partial<GameSettings>, keepLog = false, bot: Bot | Bot[] = recruitBot): GameSummary {
+  const seatBot = (i: number) => (Array.isArray(bot) ? bot[i % bot.length]! : bot);
   const players = Array.from({ length: playerCount }, (_, i) => ({ id: `p${i + 1}`, name: `Bot ${i + 1}` }));
   let s = createGame(ctx, { gameId: `sim-${seed}`, seed, players, settings });
   const idx = indexMap(ctx.map);
   const sum: GameSummary = {
     seed, winner: "draw", winnerSeat: null, endReason: null, turns: 0, battles: 0, captures: 0, byBorder: {}, orders: 0, fizzles: 0, hops: 0, hopCaptures: 0,
-    initiatives: 0, leadersKilled: 0, hires: 0, invests: 0, presets: 0, decidedTurn: null, leadChanges: 0, topShareTurn10: null, resolveMs: [], planMs: [],
+    initiatives: 0, leadersKilled: 0, hires: 0, invests: 0, presets: 0, decidedTurn: null, leadChanges: 0, topShareTurn10: null, resolveMs: [], planMs: [], planMsByBot: {}, winnerBot: null,
   };
   const leaders: (string | null)[] = [];
   const log: StepEvent[][] = [];
   while (!s.winner) {
     const orders: OrdersByPlayer = {};
     const p0 = performance.now();
-    for (const p of s.players)
+    for (const [seat, p] of s.players.entries())
       if (p.eliminatedTurn === null) {
-        const o = bot.plan(ctx, viewFor(ctx, s, p.id));
+        const b = seatBot(seat);
+        const v = viewFor(ctx, s, p.id);
+        const b0 = performance.now();
+        const o = b.plan(ctx, v);
+        (sum.planMsByBot[b.id] ??= []).push(performance.now() - b0);
         orders[p.id] = o;
         sum.orders += o.length;
         sum.presets += o.filter((x) => x.preset).length;
@@ -108,6 +118,7 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
   sum.endReason = s.endReason;
   sum.turns = s.turn;
   sum.winnerSeat = s.winner === "draw" ? null : players.findIndex((p) => p.id === s.winner);
+  sum.winnerBot = sum.winnerSeat === null ? null : seatBot(sum.winnerSeat).id;
   if (s.winner !== "draw") {
     let t = leaders.length;
     while (t > 0 && leaders[t - 1] === s.winner) t--;

@@ -2,10 +2,16 @@ import { mapCatalog, suggestedMode } from "@conquerra/content";
 import { BOT_NAMES } from "../host/names";
 import { useEffect } from "react";
 import { prewarmHost, useGame } from "../store";
+import type { BotLevel } from "../host/protocol";
 import { TIMER_CHOICES, timerLabel } from "../logic/timer";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
 import { VersionLine } from "./Diagnostics";
+
+const BOT_LEVELS: { value: BotLevel; label: string; note: string }[] = [
+  { value: "recruit", label: "Recruit (easy)", note: "Straightforward: grabs what it can and rarely plans ahead." },
+  { value: "captain", label: "Captain", note: "Holds passes, gathers before breaking through, and finishes off the weak." },
+];
 
 const LUCK = [
   { value: 0, label: "None" },
@@ -47,7 +53,7 @@ export function Lobby() {
       </div>
 
       <div className="field">
-        <span className="field-name">Opponents (Recruit bots)</span>
+        <span className="field-name">Opponents</span>
         <span className="seg">
           {Array.from({ length: Math.min(map.maxPlayers - 1, BOT_NAMES.length) }, (_, i) => i + 1).map((b) => (
             <button key={b} className={lobby.bots === b ? "on" : ""} onClick={() => setLobby({ bots: b })}>
@@ -58,6 +64,18 @@ export function Lobby() {
         <span className="muted small">
           {players} players{players >= rec.min && players <= rec.max ? " · a good fit for this map" : ` · this map suits ${rec.min}–${rec.max}`}
         </span>
+      </div>
+
+      <div className="field">
+        <span className="field-name">Bots</span>
+        <span className="seg">
+          {BOT_LEVELS.map((b) => (
+            <button key={b.value} className={lobby.botLevel === b.value ? "on" : ""} onClick={() => setLobby({ botLevel: b.value })}>
+              {b.label}
+            </button>
+          ))}
+        </span>
+        <span className="muted small">{BOT_LEVELS.find((b) => b.value === lobby.botLevel)?.note}</span>
       </div>
 
       <div className="field">

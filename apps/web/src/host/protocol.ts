@@ -8,9 +8,13 @@ import type { TurnClock } from "../logic/timer";
  * The UI only ever gets what a server would send: the map and rules once at the start, then this player's
  * fogged view and fog-trimmed replay each turn.
  */
+/** How the bots play: Recruit (easy) or Captain (the default). */
+export type BotLevel = "recruit" | "captain";
+
 export interface LobbySettings {
   mapId: string;
   bots: number;
+  botLevel: BotLevel;
   /** 0..1 share of combat that is luck. */
   luck: number;
   fog: boolean;
@@ -64,7 +68,7 @@ export interface GameHost {
   watchNext(): Promise<HostUpdate>;
   /** Once you're knocked out: the bots play on to the end. */
   finish(): Promise<HostUpdate>;
-  /** What the Recruit bot would order for you this turn (for testing; maybe an "auto-orders" button later). */
+  /** What a bot of this game's level would order for you this turn (for testing; maybe an "auto-orders" button later). */
   suggest(): Promise<Order[]>;
   dispose(): void;
 }

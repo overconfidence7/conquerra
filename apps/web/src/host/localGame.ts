@@ -1,4 +1,4 @@
-import { recruitBot } from "@conquerra/bots";
+import { captainBot, recruitBot, type Bot } from "@conquerra/bots";
 import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import {
@@ -13,11 +13,14 @@ import {
 } from "@conquerra/engine";
 import { buildTimeline } from "../replay/timeline";
 import { BOT_NAMES } from "./names";
-import type { HostStart, HostUpdate, LobbySettings } from "./protocol";
+import type { BotLevel, HostStart, HostUpdate, LobbySettings } from "./protocol";
 
 export { BOT_NAMES };
 
 export const HUMAN_ID = "you";
+
+/** The bot for each lobby level. */
+export const BOTS: Record<BotLevel, Bot> = { recruit: recruitBot, captain: captainBot };
 
 /**
  * A whole single-player game: the full state, the bots and turn resolution.
@@ -35,6 +38,7 @@ export class LocalGame {
   private deadline: number | null = null;
   /** Your orders as you build them (the page keeps sending them), locked in when time runs out. */
   private saved: Order[] = [];
+  private bot: Bot;
 
   constructor(
     settings: LobbySettings,
@@ -45,6 +49,7 @@ export class LocalGame {
     const map = maps[settings.mapId];
     if (!map) throw new Error(`Unknown map ${settings.mapId}`);
     this.ctx = { map, rules: defaultRules };
+    this.bot = BOTS[settings.botLevel] ?? captainBot;
     const bots = Math.max(1, Math.min(map.maxPlayers - 1, BOT_NAMES.length, Math.floor(settings.bots)));
     const players = [
       { id: HUMAN_ID, name: "You" },
@@ -93,7 +98,7 @@ export class LocalGame {
   private botOrders(): OrdersByPlayer {
     const orders: OrdersByPlayer = {};
     for (const p of this.state.players)
-      if (p.id !== HUMAN_ID && p.eliminatedTurn === null) orders[p.id] = recruitBot.plan(this.ctx, viewFor(this.ctx, this.state, p.id));
+      if (p.id !== HUMAN_ID && p.eliminatedTurn === null) orders[p.id] = this.bot.plan(this.ctx, viewFor(this.ctx, this.state, p.id));
     return orders;
   }
 
@@ -142,10 +147,10 @@ export class LocalGame {
     return this.update(this.play(null));
   }
 
-  /** The Recruit bot's orders for you this turn, planned from your own view only. */
+  /** A bot's orders for you this turn (the game's level), planned from your own view only. */
   suggest(): Order[] {
     if (this.state.winner || this.knockedOut) return [];
-    return recruitBot.plan(this.ctx, viewFor(this.ctx, this.state, HUMAN_ID));
+    return this.bot.plan(this.ctx, viewFor(this.ctx, this.state, HUMAN_ID));
   }
 
   /** Knocked out: the bots play on to the end (the engine's turn cap guarantees one). */
