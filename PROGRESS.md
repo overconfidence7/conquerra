@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M2 (playable browser game vs bots): session 6 done. Nate's art is in the game and the private preview is online. Nate's real-phone test closes M2.**
+**Phase: M2 (playable browser game vs bots): session 6 reviewed. The private preview is online and locked to Nate. Nate's real-phone test closes M2; then M3 starts (session 7).**
 
 Claude Code sessions completed: **6** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
@@ -244,3 +244,14 @@ Claude Code sessions completed: **6** (a new orchestrator prompt is due after se
 - **Speed** (phone emulation, CPU slowed 4x, real art, this laptop's Intel GPU): the map appears in about 2.1 s (Embervale) and 2.2 s (Greatmarch). This laptop's Chrome holds every page, even a blank one, at 30 fps. With that cap lifted, panning runs at 215–315 fps at every zoom, so there's lots of room. Memory: 52–85 MB.
 - **Private preview: uploaded, but not reachable yet.** Wrangler is logged in and `pnpm deploy:preview` uploaded the game. Cloudflare confirms there's no workers.dev address and no preview addresses, and the custom domain is attached with a certificate. But the domain's nameservers still have no `conquerra` record after 25+ minutes, so the address doesn't open for anyone (safe: the game isn't exposed). The lock check therefore couldn't confirm the Google sign-in yet. Nate needs to look in the Cloudflare dashboard (steps in the session summary), then run `pnpm check:preview`.
 - 210 automated tests pass (12 new). Screenshots retaken: `docs/art/screens/`.
+
+### Oct 4: Orchestrator review of session 6 (the preview is live)
+- Checked the work: GitHub's checks pass, all of Nate's art is in, and the game looks like the Gilded Atlas we aimed for.
+- **The preview is online and locked.** The missing DNS record turned out to be a delay: an hour later the `conquerra` record was in Cloudflare's DNS list and the address answered. The orchestrator checked it from the browser on Nate's computer:
+  - without a sign-in, every page and file redirects to the Cloudflare sign-in, so nothing of the game loads
+  - signed in as Nate (Google), the game loads
+  - `conquerra.nkurtz.workers.dev` shows "nothing here", so there's no back door
+- Small things for the next session: the army panel's bottom row (Recruit −, 12, +) is still cut off on desktop.
+- Art for Nate to redo when he has time: `tree-conifer-1` and `-2` (still round bushes), then the rock, snow and hills textures.
+- **Next:** Nate plays on his phone (sign in, install the app, a game with a 1-minute timer). That closes M2. Then session 7 starts M3.
+- Six Claude Code sessions are done, so there's a fresh orchestrator prompt: `docs/prompts/orchestrator-03.md`.
