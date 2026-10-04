@@ -1,6 +1,7 @@
 import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { indexMap, type GameContext, type GameMode } from "@conquerra/engine";
+import { makeRecruitBot } from "@conquerra/bots";
 import { narrate } from "./narrate";
 import { runGame, type GameSummary } from "./runGame";
 
@@ -11,7 +12,9 @@ import { runGame, type GameSummary } from "./runGame";
  *   pnpm sim --games 50 --players 2,6,10       includes CPU timing (10 players uses the Greatmarch map)
  *   pnpm sim --watch --seed demo               print one game turn by turn in plain English
  * Options: --map embervale|greatmarch (default: Embervale up to 6 players, Greatmarch above),
- *          --luck 0.3, --mode classic|conquest, --turn-limit N, --fog on|off, --seed prefix
+ *          --luck 0.3, --mode classic|conquest, --turn-limit N, --fog on|off, --seed prefix,
+ *          --chain-margin 2 (bots chain on when the arriving army is this many times what the next target needs;
+ *          1 = chain whenever the hop is likely to win: a stress test for chained attacks)
  */
 const args = process.argv.slice(2);
 const arg = (name: string, dflt: string) => {
@@ -28,6 +31,8 @@ const turnLimit = arg("turn-limit", "") ? Number(arg("turn-limit", "")) : null;
 const fog = arg("fog", "on") !== "off";
 const seedPrefix = arg("seed", "sim");
 const settings = { luck, mode, fog, ...(turnLimit ? { turnLimit } : {}) };
+const chainMargin = Number(arg("chain-margin", "2"));
+const bot = makeRecruitBot({ chainMargin });
 
 function ctxFor(players: number): GameContext {
   const name = arg("map", players > 6 ? "greatmarch" : "embervale");
@@ -62,7 +67,7 @@ for (const players of playerCounts) {
   for (let i = 0; i < games; i++) {
     const seed = `${seedPrefix}-${players}p-${i}`;
     try {
-      results.push(runGame(ctx, seed, players, settings));
+      results.push(runGame(ctx, seed, players, settings, false, bot));
     } catch (e) {
       errors.push({ seed, error: e instanceof Error ? (e.stack ?? e.message) : String(e) });
     }
@@ -83,7 +88,7 @@ for (const players of playerCounts) {
   const plan = stats(results.flatMap((g) => g.planMs));
   const total = stats(results.flatMap((g) => g.resolveMs.map((r, i) => r + g.planMs[i]!)));
 
-  console.log(`\n=== ${players} players — ${ctx.map.name}, Recruit bots, luck ${luck}, ${mode}${turnLimit ? ` (${turnLimit} turns)` : ""}, fog ${fog ? "on" : "off"} ===`);
+  console.log(`\n=== ${players} players — ${ctx.map.name}, Recruit bots${chainMargin !== 2 ? ` (chain margin ${chainMargin})` : ""}, luck ${luck}, ${mode}${turnLimit ? ` (${turnLimit} turns)` : ""}, fog ${fog ? "on" : "off"} ===`);
   console.log(`Games: ${results.length} finished, ${errors.length} crashed, in ${(wall / 1000).toFixed(1)}s`);
   console.log(`Win rate by seat (fair ≈ ${(100 / players).toFixed(1)}% each): ${wins.map((w) => pct(w)).join(" / ")}   draws ${pct(draws)}`);
   console.log(`How games ended: ${[...reasons.entries()].map(([k, v]) => `${k} ${pct(v)}`).join(", ")}`);

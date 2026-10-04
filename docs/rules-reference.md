@@ -1,4 +1,4 @@
-# Conquerra Rules Reference (Milestone 2, session 5)
+# Conquerra Rules Reference (Milestone 2, session 7)
 
 *A 10-minute read. This is how the engine actually plays today. Numbers are the current balance settings from `packages/content/data/rules.json`; they will change as we tune.*
 
@@ -18,7 +18,7 @@
 
 ## 3. A turn
 1. **Orders (the timer runs).** Everyone writes as many orders as they like, in secret.
-2. **Resolution.** The game shuffles the seat order, then plays orders **one per player at a time, round-robin**: everyone's 1st order, then everyone's 2nd, and so on.
+2. **Resolution.** The game shuffles the seat order, then plays orders **one per player at a time, round-robin**: everyone's 1st order, then everyone's 2nd, and so on. A chained hop (§4) is just another order in your list, so it waits its turn like the rest.
 3. **Replay.** Everyone watches what happened on the map, trimmed to what they could see (see §11).
 4. **End of turn.** Buildings finish, fallen Leaders come back (see §9), gold comes in, upkeep is paid.
 
@@ -45,15 +45,37 @@
 |---|---|
 | **Recruit** | Buy troops (2 gold each) at your capital or a barracks. Ask for more than you can afford and you get as many as you can pay for. New troops can act the same turn. |
 | **Hire** | Buy a specialist at your capital or a barracks (see §6). |
-| **Move / attack** | Send troops to a neighbouring territory. If it's yours, they move in; if not, they attack. |
+| **Move / attack** | Send troops to a neighbouring territory. If it's yours, they move in; if not, they attack. You choose **how many** as a share (below). |
 | **Build** | Put a building on a territory you hold (one per territory). |
 | **Raise culture** | Spend gold to raise a territory's culture by 1 (see §7). |
 | **Retreat** | Pull an army back to the safest neighbouring territory you hold. |
 
+**How many troops go: shares**
+You don't type a number. You pick a **share of the army that's there when the order plays**:
+
+| Choice | What it sends |
+|---|---|
+| **Just enough** | The fewest troops likely to win, plus a small safety margin. Attacks only. **A first attack starts with this.** |
+| **All** | Everyone except the 1 troop that must stay. **Moves and chained hops start with this.** |
+| **3/4, 1/2, 1/4** | That share of the army, rounded to the nearest troop. |
+| **Exactly…** (under More) | A set number (or everyone who can go, if fewer are there). |
+
+- Shares are worked out **when the order plays**, not when you write it. Troops you recruited earlier that turn count, and so does an army that arrived from an earlier order.
+- A share always sends **at least 1** and always **leaves 1** behind. (An army of 2 sends 1 whatever you pick; an army of 1 can't move.)
+- If even everyone wouldn't likely win, "Just enough" sends All.
+- The order screen shows an estimate ("about 9, 3/4"). It says "about" when the army depends on a battle earlier in your list.
+
 **Rules of movement**
 - Every territory you hold keeps **at least 1 troop** behind; you can't empty it.
-- Troops that moved or fought this turn can't move again this turn.
-- An army that attacks and fails falls back to where it came from.
+- **Chained attacks:** an army that moved into or captured a territory earlier in your order list **can go again from there** in a later order the same turn. There's no limit on hops.
+  - Each hop is its **own order** and waits for **its own slot** in the round-robin. Everyone else's next order plays in between, so a rival can hit the land you just took before you push on.
+  - Every hop leaves **1 troop behind**, so a long chain thins out as it goes.
+  - If a hop **fails**, its survivors fall back to where that hop started (as with any failed attack).
+  - If an earlier hop fails or fizzles, a later hop from land you **don't hold** when its turn comes **fizzles**, or runs its backup if it has one.
+  - The survivors of a **failed attack** rest for the rest of the turn: they can't go again.
+- **Cavalry** still moves **2 territories inside one order** (the middle one must be yours), so a cavalry army covers more ground per hop.
+
+**Planning a chain on the map:** after you queue an attack on B, B shows a faint **"≈18" arriving marker**: the army expected to get there. Tap B, then one of its neighbours, to queue the next hop. Or save a tap: with your army still selected, tap a neighbour of B straight away. The arrows of a chain show their **hop numbers** (①②③) on gold. If the first attack was set to "Just enough", adding a hop raises it to All so there's an army to push on with (the order screen says so). A hop's odds are marked **"estimate"** because they depend on how the battle before it goes. A hop into land you can't see shows "Can't see": no peeking.
 
 ## 5. Backups and presets
 Any order can have **conditions** ("only if…") and a **backup** order that runs if the conditions fail or the order is no longer possible. If there's no backup, the order just **fizzles** and your next order carries on.
@@ -65,7 +87,7 @@ To keep turns fast, you normally pick a **one-tap preset** instead of building c
 | **Only if still stronger** | Attack only if the odds are still at least "likely" when the order comes up. **New attacks start with this switched on**; one tap turns it off. |
 | **Hold if threatened** | Cancel the move if enemy armies next to the launch point grew this turn. |
 | **Retreat if outnumbered** | If a bigger enemy army is next door, pull back to the safest territory you hold instead. |
-| **Follow through** | If the attack captures its target, push on to the next one in your next slot. You pick where, or the army picks the weakest neighbour it can likely take. |
+| **Follow through** | The automatic chained attack: if the attack captures its target, push on in your next slot. You pick where, or the army picks the weakest neighbour it can likely take. **If you queue your own next hop from there, Follow through steps aside** (one army is never sent twice). |
 | **Reinforce if hit** | Send these troops only if the destination was attacked earlier this turn (pairs well with Lie in Wait). |
 
 Custom conditions stay available behind an "Advanced" toggle. **Conditions can't see through fog**: a condition about a territory you can't see counts as "no."

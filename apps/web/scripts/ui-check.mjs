@@ -2,6 +2,9 @@
  * UI check: screenshots of the menus, the replay and the phone layout, and full games played to the end.
  *
  *   pnpm ui-check screens   -> docs/art/screens/ui-*.png (desktop and phone)
+ *   pnpm ui-check chain     -> a 3-hop chained attack queued on the map (desktop and phone), the share chips and
+ *                              the layout diagnostics view: docs/art/screens/ui-chain-*.png, ui-share-chips.png,
+ *                              ui-diagnostics.png
  *   pnpm ui-check play      -> plays a whole game on a laptop screen and in phone emulation, using the replay
  *                              (and Skip), the turn timer (one real auto-lock) and the bottom sheet; prints a log
  *
@@ -117,6 +120,73 @@ async function screens() {
   await browser.close();
 }
 
+/** Recruit, then a 3-hop chain out from the capital (each hop queued by tapping just past the last arrow). */
+async function queueChain(page) {
+  return page.evaluate(() => {
+    const s = window.__conquerraStore;
+    const g = () => s.getState();
+    const near = (t) => g().ctx.map.borders.flatMap((b) => (b.a === t ? [b.b] : b.b === t ? [b.a] : []));
+    const cap = g().view.me.capital;
+    const dist = new Map([[cap, 0]]);
+    const q = [cap];
+    while (q.length) {
+      const c = q.shift();
+      for (const n of near(c)) if (!dist.has(n)) (dist.set(n, dist.get(c) + 1), q.push(n));
+    }
+    const path = [cap];
+    for (let k = 1; k <= 4; k++) path.push(near(path[k - 1]).find((n) => dist.get(n) === k));
+    g().quickRecruit();
+    for (let k = 1; k <= 3; k++) (g().tap(path[k]), g().addDraft());
+    return path;
+  });
+}
+
+async function chain() {
+  const browser = await launch();
+  const page = await browser.newPage();
+  page.on("pageerror", (e) => console.log("page error:", e.message));
+  for (const [vp, name] of [[DESKTOP, "desktop"], [PHONE, "phone"]]) {
+    await page.setViewport(vp);
+    await start(page, { bots: 3 });
+    const path = await queueChain(page);
+    if (vp === DESKTOP) await page.evaluate(() => window.__conquerraMap.zoomBy(1.5));
+    await sleep(500);
+    // Centre on the middle of the chain.
+    await page.evaluate((ids) => {
+      const g = window.__conquerraStore.getState();
+      const pts = ids.map((t) => g.ctx.map.geometry.territories.find((x) => x.id === t).label);
+      window.__conquerraMap.centreOn(pts.reduce((a, p) => a + p.x, 0) / pts.length, pts.reduce((a, p) => a + p.y, 0) / pts.length);
+    }, path.slice(0, 4));
+    await sleep(600);
+    // Select where the chain ends, so the next tap would push on from there.
+    await store(page, (t) => window.__conquerraStore.setState({ selected: t }), path[3]);
+    await sleep(900);
+    await page.screenshot({ path: out(`ui-chain-${name}.png`) });
+    if (vp === DESKTOP) {
+      // A first attack (just the recruit queued): all the share chips, Just enough first.
+      await page.evaluate((cap) => {
+        const s = window.__conquerraStore;
+        const g = s.getState();
+        s.setState({ queue: g.queue.slice(0, 1), selected: cap, draft: null });
+        s.getState().tap(g.ctx.map.borders.flatMap((b) => (b.a === cap ? [b.b] : b.b === cap ? [b.a] : []))[0]);
+      }, path[0]);
+      await sleep(700);
+      await (await page.$(".army-cell .army")).screenshot({ path: out("ui-share-chips.png") });
+    } else {
+      // A fourth hop: the estimate pill and the odds marked as an estimate.
+      await store(page, (t) => window.__conquerraStore.getState().tap(t), path[4]);
+      await sleep(700);
+      await page.screenshot({ path: out("ui-share-chips-phone.png") });
+    }
+    console.log(`  ${name}: chain ${path.slice(0, 4).join(" > ")}`);
+  }
+  await page.goto(`${URL}?debug=layout`, { waitUntil: "networkidle0" });
+  await sleep(400);
+  await page.screenshot({ path: out("ui-diagnostics.png") });
+  console.log("  saved docs/art/screens/ui-chain-*.png, ui-share-chips*.png, ui-diagnostics.png");
+  await browser.close();
+}
+
 /** A whole game: one turn left to the timer (1-minute timer, so it auto-locks), the rest with Skip or watching. */
 async function play(vp, label) {
   const browser = await launch();
@@ -181,4 +251,5 @@ async function play(vp, label) {
 if (mode === "play") {
   if (!process.argv.includes("--phone-only")) await play(DESKTOP, "laptop");
   await play(PHONE, "phone");
-} else await screens();
+} else if (mode === "chain") await chain();
+else await screens();

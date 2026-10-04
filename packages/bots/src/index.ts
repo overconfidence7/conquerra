@@ -1,1 +1,1 @@
-export { recruitBot, type Bot } from "./recruit";
+export { makeRecruitBot, recruitBot, type Bot, type RecruitOptions } from "./recruit";
