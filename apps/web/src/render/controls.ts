@@ -9,6 +9,8 @@ export class CameraController {
   vp: Viewport = { width: 1, height: 1 };
   private anim: { from: Camera; to: Camera; t0: number; ms: number } | null = null;
   private listeners: ((c: Camera) => void)[] = [];
+  /** Counts the player's own pans, zooms and fits, so the replay camera can step aside when they take over. */
+  userMoves = 0;
 
   constructor(
     readonly map: MapSize,
@@ -73,10 +75,12 @@ export class CameraController {
   }
 
   fit(animate = true) {
+    this.userMoves++;
     this.set(fitCamera(this.map, this.vp), animate ? 280 : 0);
   }
 
   zoomAt(factor: number, sx: number, sy: number, animateMs = 0) {
+    this.userMoves++;
     this.set(zoomAt(this.cam, factor, sx, sy, this.limits), animateMs);
   }
 
@@ -85,6 +89,7 @@ export class CameraController {
   }
 
   pan(dx: number, dy: number) {
+    this.userMoves++;
     this.set({ ...this.cam, x: this.cam.x + dx, y: this.cam.y + dy });
   }
 

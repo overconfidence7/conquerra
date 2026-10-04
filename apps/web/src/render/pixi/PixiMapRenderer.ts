@@ -1,6 +1,6 @@
 import { Application, Container } from "pixi.js";
 import { ArtBook } from "../../art/book";
-import { centreOn, fitCamera, landFrame, toMap, type Insets } from "../../map/camera";
+import { centreOn, fitCamera, landFrame, toMap, type Camera, type Insets } from "../../map/camera";
 import { hitTester, type HitTester } from "../../map/shapes";
 import { detailMix, MID_FROM_PX, scaleForPx, typicalTerritorySize, zoomDetail, type ZoomDetail } from "../../map/zoom";
 import { attachInput, CameraController } from "../controls";
@@ -254,6 +254,14 @@ class PixiMapRenderer implements MapRenderer {
 
   fit(animate = true) {
     this.cam.fit(animate);
+  }
+
+  viewState() {
+    return { cam: { ...this.cam.cam }, vp: this.cam.vp, userMoves: this.cam.userMoves };
+  }
+
+  glideTo(cam: Camera, ms: number) {
+    this.cam.set(cam, ms);
   }
 
   centreOn(x: number, y: number) {

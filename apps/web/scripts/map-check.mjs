@@ -29,7 +29,9 @@ async function launch() {
     headless: true,
     // Windows: the real GPU. Elsewhere (cloud machines without a GPU): software WebGL.
     args: process.platform === "win32"
-      ? ["--enable-gpu", "--use-angle=d3d11", "--ignore-gpu-blocklist", "--enable-precise-memory-info"]
+      ? ["--enable-gpu", "--use-angle=d3d11", "--ignore-gpu-blocklist", "--enable-precise-memory-info",
+          // UNCAPPED=1: lift Chrome's frame-rate cap (some laptops hold every page at 30 fps), to see real headroom.
+          ...(process.env.UNCAPPED ? ["--disable-frame-rate-limit", "--disable-gpu-vsync"] : [])]
       : ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--no-sandbox"],
   });
 }

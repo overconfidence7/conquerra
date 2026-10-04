@@ -1,6 +1,7 @@
 import type { GameContext, PlayerView, TerritoryId } from "@conquerra/engine";
 import { territoryCard } from "../map/card";
 import { useArtUrl } from "./art";
+import { ArtIcon } from "./ArtIcon";
 import { Frame } from "./Frame";
 
 /** Which vista picture suits a territory: capitals and towns get the city, coasts the harbour, else by terrain. */
@@ -31,7 +32,10 @@ export function TerritoryCard({ ctx, view, id, compact = false }: { ctx: GameCon
       <dl>
         {info.lines.map((l) => (
           <div key={l.label}>
-            <dt>{l.label}</dt>
+            <dt>
+              {l.icon && <ArtIcon name={l.icon} size={16} />}
+              {l.label}
+            </dt>
             <dd>
               {l.color && <span className="swatch" style={{ background: l.color }} />}
               {l.value}

@@ -1,6 +1,6 @@
 import type { GameContext, PlayerView, TerritoryId } from "@conquerra/engine";
 import type { Odds } from "../logic/orders";
-import type { Insets } from "../map/camera";
+import type { Camera, Insets, Viewport } from "../map/camera";
 import type { ReplayFrame } from "../replay/timeline";
 import type { ZoomLevel } from "../map/zoom";
 
@@ -49,6 +49,10 @@ export interface MapRenderer {
   zoomBy(factor: number): void;
   /** Glide to a map point (the minimap's tap), keeping the zoom. */
   centreOn(x: number, y: number): void;
+  /** The camera now and the screen it's for, plus a count of the player's own pans and zooms (the replay camera). */
+  viewState(): { cam: Camera; vp: Viewport; userMoves: number };
+  /** Glide to a camera over `ms` (the replay camera). */
+  glideTo(cam: Camera, ms: number): void;
   /** One moment of the animated replay to draw over the map, or null when there's no replay. */
   setReplay(frame: ReplayFrame | null): void;
   resize(): void;

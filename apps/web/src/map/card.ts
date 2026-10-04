@@ -11,6 +11,8 @@ export interface CardLine {
   value: string;
   /** A House colour to show beside the value (owner). */
   color?: string;
+  /** An illustrated icon (art name) to show beside the label. */
+  icon?: string;
 }
 
 export interface TerritoryCard {
@@ -41,20 +43,20 @@ export function territoryCard(ctx: GameContext, view: PlayerView, id: TerritoryI
   const v = view.territories[id]!;
   const playerName = (owner: string | null) => (owner ? (view.players.find((p) => p.id === owner)?.name ?? "Unknown") : "Nobody (neutral)");
   const where = `${province?.name ?? ""} · ${TERRAIN_NAME[def.terrain]}`;
-  const worth: CardLine = { label: "Gold", value: `+${gold} a turn${province ? ` · province +${province.bonus}` : ""}` };
+  const worth: CardLine = { label: "Gold", icon: "icon-gold", value: `+${gold} a turn${province ? ` · province +${province.bonus}` : ""}` };
 
   if (v.detail === "full") {
     const capital = v.capitalOf ? (v.capitalOf === view.me.id ? "Your capital" : "Capital") : null;
     const building = v.building ? BUILDING_NAME[v.building] : v.construction ? `${BUILDING_NAME[v.construction.building]} (being built)` : "None";
     const lines: CardLine[] = [
       { label: "Owner", value: playerName(v.owner), color: houseOf(view, v.owner).color },
-      { label: "Troops", value: String(v.troops) },
-      { label: "Building", value: building },
-      { label: "Culture", value: `${v.culture} of ${ctx.rules.culture.max}` },
+      { label: "Troops", icon: "icon-troops", value: String(v.troops) },
+      { label: "Building", value: building, ...(v.building || v.construction ? { icon: `icon-${v.building ?? v.construction!.building}` } : {}) },
+      { label: "Culture", icon: "icon-culture", value: `${v.culture} of ${ctx.rules.culture.max}` },
       worth,
       { label: "Specialists", value: v.specialists.length ? v.specialists.map((s) => SPECIALIST_NAME[s.type]).join(", ") : "None" },
     ];
-    if (v.leaders.length) lines.splice(2, 0, { label: "Leader", value: v.leaders.map((p) => (p === view.me.id ? "Yours" : playerName(p))).join(", ") });
+    if (v.leaders.length) lines.splice(2, 0, { label: "Leader", icon: "icon-crown", value: v.leaders.map((p) => (p === view.me.id ? "Yours" : playerName(p))).join(", ") });
     return { title: def.name, subtitle: capital ? `${capital} · ${where}` : where, lines, intel: null, uncertain: false };
   }
   if (v.lastSeen) {
@@ -64,7 +66,7 @@ export function territoryCard(ctx: GameContext, view: PlayerView, id: TerritoryI
       subtitle: where,
       lines: [
         { label: "Owner", value: `${playerName(s.owner)}?`, color: houseOf(view, s.owner).color },
-        { label: "Troops", value: `${s.troops}?` },
+        { label: "Troops", icon: "icon-troops", value: `${s.troops}?` },
         { label: "Building", value: `${s.building ? BUILDING_NAME[s.building] : "None"}?` },
         worth,
       ],

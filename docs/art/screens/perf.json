@@ -1,72 +1,72 @@
 [
   {
     "map": "embervale",
-    "firstMapMs": 2213,
-    "allPaintedMs": 2267,
-    "paintMs": 1396,
+    "firstMapMs": 2210,
+    "allPaintedMs": 2269,
+    "paintMs": 1302,
     "steps": {
-      "webgl": 106,
-      "artAndFonts": 44,
-      "world": 914,
-      "labels": 59,
-      "far": 470,
-      "masks": 477,
-      "textures": 2,
-      "scene": 434,
-      "farPaint": 468
+      "webgl": 103,
+      "artAndFonts": 166,
+      "world": 549,
+      "labels": 106,
+      "far": 745,
+      "masks": 473,
+      "textures": 3,
+      "scene": 70,
+      "farPaint": 738
     },
     "textureMB": 34.2,
     "ppu": 2.5,
     "pan": {
       "far": {
-        "fps": 60,
-        "p95ms": 16.9
+        "fps": 268.7,
+        "p95ms": 5.1
       },
       "mid": {
-        "fps": 60,
-        "p95ms": 16.9
+        "fps": 256.7,
+        "p95ms": 5.7
       },
       "near": {
-        "fps": 60,
-        "p95ms": 16.9
+        "fps": 315.4,
+        "p95ms": 4.1
       }
     },
-    "jsHeapMB": 28,
+    "jsHeapMB": 65.6,
     "gpu": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x0000A7A0) Direct3D11 vs_5_0 ps_5_0, D3D11)"
   },
   {
     "map": "greatmarch",
-    "firstMapMs": 2338,
-    "allPaintedMs": 2486,
-    "paintMs": 1287,
+    "firstMapMs": 2422,
+    "allPaintedMs": 2578,
+    "paintMs": 1098,
     "steps": {
-      "webgl": 114,
-      "artAndFonts": 44,
-      "world": 1090,
-      "labels": 117,
-      "far": 163,
-      "masks": 657,
-      "textures": 2,
-      "scene": 431,
-      "farPaint": 159
+      "webgl": 199,
+      "artAndFonts": 257,
+      "world": 833,
+      "labels": 269,
+      "far": 244,
+      "masks": 719,
+      "textures": 3,
+      "scene": 107,
+      "farPaint": 241
     },
     "textureMB": 47.4,
     "ppu": 2.16,
     "pan": {
       "far": {
-        "fps": 60,
-        "p95ms": 16.9
+        "fps": 215.4,
+        "p95ms": 6.3
       },
       "mid": {
-        "fps": 60,
-        "p95ms": 16.8
+        "fps": 226.6,
+        "p95ms": 6.1
       },
       "near": {
-        "fps": 60,
-        "p95ms": 16.8
+        "fps": 254.2,
+        "p95ms": 5.5
       }
     },
-    "jsHeapMB": 66.2,
+    "jsHeapMB": 85,
     "gpu": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x0000A7A0) Direct3D11 vs_5_0 ps_5_0, D3D11)"
   }
 ]

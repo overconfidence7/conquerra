@@ -19,7 +19,8 @@ import {
   type MoveDraft,
   type QueuePlan,
 } from "../logic/orders";
-import { BUILDING_HELP, BUILDING_ICON, BUILDING_NAME, SPECIALIST_HELP, SPECIALIST_ICON, SPECIALIST_NAME, TERRAIN_ICON, namer } from "../logic/text";
+import { BUILDING_HELP, BUILDING_NAME, SPECIALIST_HELP, SPECIALIST_NAME, TERRAIN_ICON, namer } from "../logic/text";
+import { ArtIcon, buildingIcon, specialistIcon } from "./ArtIcon";
 import { useGame } from "../store";
 import { colorOf } from "./colors";
 
@@ -226,13 +227,37 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
   const facts = (
     <ul className="facts">
       <li>
-        <b>{v.troops}</b> troops{mine && plan.free.get(selected) !== undefined ? ` (${plan.free.get(selected)} free to move)` : ""}
+        <b>{v.troops}</b> {v.troops === 1 ? "troop" : "troops"}{mine && plan.free.get(selected) !== undefined ? ` (${plan.free.get(selected)} free to move)` : ""}
       </li>
-      {v.specialists.length > 0 && <li>{v.specialists.map((s) => `${SPECIALIST_ICON[s.type]} ${SPECIALIST_NAME[s.type]}`).join(", ")}</li>}
-      {v.building && <li>{`${BUILDING_ICON[v.building]} ${BUILDING_NAME[v.building]}`}</li>}
-      {v.construction && <li>🚧 Building a {BUILDING_NAME[v.construction.building].toLowerCase()}</li>}
-      {v.culture > 0 && <li>✦ Culture {v.culture}</li>}
-      {v.leaders.length > 0 && <li>👑 {v.leaders.map((l) => (n.isMe(l) ? "Your Leader" : `${n.who(l)}'s Leader`)).join(", ")}</li>}
+      {v.specialists.length > 0 && (
+        <li>
+          {v.specialists.map((s, i) => (
+            <span key={i} className="with-icon">
+              <ArtIcon name={specialistIcon(s.type)} size={18} />
+              {SPECIALIST_NAME[s.type]}
+            </span>
+          ))}
+        </li>
+      )}
+      {v.building && (
+        <li className="with-icon">
+          <ArtIcon name={buildingIcon(v.building)} size={18} />
+          {BUILDING_NAME[v.building]}
+        </li>
+      )}
+      {v.construction && (
+        <li className="with-icon">
+          <ArtIcon name={buildingIcon(v.construction.building)} size={18} className="ghost" />
+          Building a {BUILDING_NAME[v.construction.building].toLowerCase()}
+        </li>
+      )}
+      {v.culture > 0 && (
+        <li className="with-icon">
+          <ArtIcon name="icon-culture" size={18} />
+          Culture {v.culture}
+        </li>
+      )}
+      {v.leaders.length > 0 && <li className="with-icon"><ArtIcon name="icon-crown" size={18} />{v.leaders.map((l) => (n.isMe(l) ? "Your Leader" : `${n.who(l)}'s Leader`)).join(", ")}</li>}
     </ul>
   );
   if (!mine)
@@ -276,7 +301,7 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
                 title={h.why ?? SPECIALIST_HELP[h.specialist]}
                 onClick={() => add({ kind: "hire", territory: selected, specialist: h.specialist as SpecialistType })}
               >
-                {SPECIALIST_ICON[h.specialist]} {SPECIALIST_NAME[h.specialist]} <span className="cost">{h.cost}g</span>
+                <ArtIcon name={specialistIcon(h.specialist as SpecialistType)} size={22} /> {SPECIALIST_NAME[h.specialist]} <span className="cost">{h.cost}g</span>
                 <span className="small muted block">{h.why ?? SPECIALIST_HELP[h.specialist]}</span>
               </button>
             ))}
@@ -291,7 +316,7 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
           <div className="grid-buttons">
             {buildOptions(ctx, plan, selected).map((b) => (
               <button key={b.building} disabled={!b.ok} onClick={() => add({ kind: "build", territory: selected, building: b.building })}>
-                {BUILDING_ICON[b.building]} {BUILDING_NAME[b.building]} <span className="cost">{b.cost}g</span>
+                <ArtIcon name={buildingIcon(b.building)} size={22} /> {BUILDING_NAME[b.building]} <span className="cost">{b.cost}g</span>
                 <span className="small muted block">{BUILDING_HELP[b.building]}</span>
               </button>
             ))}

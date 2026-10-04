@@ -59,6 +59,8 @@ export class WorldLayer {
   private tilesLayer = new Container();
   /** Open sea beyond the map's edges, so zooming out or panning never shows a flat background. */
   private sea: TilingSprite;
+  /** A second, larger and turned copy over the open sea at half strength, so its repeats never line up. */
+  private seaBreak: TilingSprite;
   readonly stats = { bakeMs: 0, tilesBaked: 0, tileCount: 0, textureBytes: 0, steps: {} as Record<string, number> };
   private step(name: string, t0: number) {
     this.stats.steps[name] = Math.round(performance.now() - t0);
@@ -103,7 +105,11 @@ export class WorldLayer {
     this.sea.tileScale.set(REPEAT_UNITS / deep.image.width);
     // Line the repeats up with the painted deep water at the map's edge.
     this.sea.tilePosition.set((g.width * M) % REPEAT_UNITS, (g.height * M) % REPEAT_UNITS);
-    this.view.addChild(this.sea, this.tilesLayer);
+    this.seaBreak = new TilingSprite({ texture: seaTex, width: this.sea.width, height: this.sea.height, alpha: 0.5 });
+    this.seaBreak.position.copyFrom(this.sea.position);
+    this.seaBreak.tileScale.set((REPEAT_UNITS * 2.37) / deep.image.width);
+    this.seaBreak.tileRotation = 0.61;
+    this.view.addChild(this.sea, this.seaBreak, this.tilesLayer);
     this.stats.bakeMs += performance.now() - t0;
   }
 
@@ -330,7 +336,7 @@ export class WorldLayer {
   /** Far-zoom dimming for the sea beyond the edges (the painted map dims in its shader). */
   setDim(dim: number) {
     const v = Math.round(255 * (1 - dim));
-    this.sea.tint = (v << 16) | (v << 8) | v;
+    this.sea.tint = this.seaBreak.tint = (v << 16) | (v << 8) | v;
   }
 
   get pendingTiles() {

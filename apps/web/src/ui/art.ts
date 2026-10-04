@@ -16,7 +16,7 @@ export function artUrl(name: string): Promise<string | null> {
   if (!p) {
     p = artBook().then((b) => {
       const real = b.urlOf(name);
-      if (real && (name.startsWith("leader-") || name.startsWith("vista-"))) return real;
+      if (real) return real;
       const a = b.get(name);
       if (!a) return null;
       const img = a.image as HTMLCanvasElement | ImageBitmap;

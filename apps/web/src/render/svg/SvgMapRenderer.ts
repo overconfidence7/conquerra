@@ -1,5 +1,5 @@
 import type { Line } from "@conquerra/content";
-import { landFrame, toMap, type Insets } from "../../map/camera";
+import { landFrame, toMap, type Camera, type Insets } from "../../map/camera";
 import { houseOf } from "../../map/houses";
 import { hitTester } from "../../map/shapes";
 import { territoryStatus } from "../../map/status";
@@ -111,6 +111,14 @@ class SvgMapRenderer implements MapRenderer {
 
   setTactical() {
     // This map is always the Tactical look.
+  }
+
+  viewState() {
+    return { cam: { ...this.cam.cam }, vp: this.cam.vp, userMoves: this.cam.userMoves };
+  }
+
+  glideTo(cam: Camera, ms: number) {
+    this.cam.set(cam, ms);
   }
 
   centreOn(x: number, y: number) {

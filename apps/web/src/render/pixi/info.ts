@@ -37,6 +37,8 @@ export class InfoLayer {
   private scene: MapScene | null = null;
   private status = new Map<string, TerritoryStatus>();
   private realms = new Map<string, Line[]>();
+  /** Who holds what, as last drawn: House borders are only rebuilt when this changes (not every replay frame). */
+  private realmKey = "";
   private drawnScale = 0;
   private isTactical = false;
   private rings: Map<string, readonly Line[]>;
@@ -63,13 +65,19 @@ export class InfoLayer {
       const s = this.status.get(id)!;
       return s.kind === "seen" && s.owner ? s.owner : null;
     };
-    this.realms = groupOutlines(this.map.geometry!, ownerOf);
-    const held = new Map<string, (readonly Line[])[]>();
-    for (const [id] of this.status) {
-      const o = ownerOf(id);
-      if (o) (held.get(o) ?? held.set(o, []).get(o)!).push(this.rings.get(id)!);
+    // The replay updates the scene many times a second; rebuilding every border (with its wash) each time froze the
+    // page once realms grew. Rebuild only when ownership changes.
+    const realmKey = this.map.territories.map((t) => `${ownerOf(t.id) ?? ""}:${houseOf(view, ownerOf(t.id)).name}`).join("|");
+    if (realmKey !== this.realmKey) {
+      this.realmKey = realmKey;
+      this.realms = groupOutlines(this.map.geometry!, ownerOf);
+      const held = new Map<string, (readonly Line[])[]>();
+      for (const [id] of this.status) {
+        const o = ownerOf(id);
+        if (o) (held.get(o) ?? held.set(o, []).get(o)!).push(this.rings.get(id)!);
+      }
+      this.realmLayer.setRealms([...this.realms].map(([owner, outlines]) => ({ house: houseOf(view, owner), outlines, territories: held.get(owner) ?? [] })));
     }
-    this.realmLayer.setRealms([...this.realms].map(([owner, outlines]) => ({ house: houseOf(view, owner), outlines, territories: held.get(owner) ?? [] })));
     this.realmLayer.setRemembered(
       [...this.status].filter(([, s]) => s.kind === "remembered" && s.owner).map(([id, s]) => ({ house: houseOf(view, s.owner), rings: this.rings.get(id)! })),
     );

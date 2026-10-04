@@ -1,4 +1,4 @@
-import type { GameContext, PlayerView } from "@conquerra/engine";
+import type { GameContext, Order, PlayerView } from "@conquerra/engine";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { incomeEstimate } from "../logic/actions";
 import { planQueue } from "../logic/orders";
@@ -22,6 +22,20 @@ import { Toasts, type ShownToast } from "./Toasts";
 import { TopBar } from "./TopBar";
 import { ReportBody, TurnReportDialog } from "./TurnReport";
 import { useReplay } from "./useReplay";
+
+/** Marks a scrolling column with "more" while there's content below the fold (a soft fade at its foot). */
+function moreCue(el: HTMLElement | null) {
+  if (!el || el.dataset.cue) return;
+  el.dataset.cue = "1";
+  const update = () => el.classList.toggle("more", el.scrollHeight - el.scrollTop - el.clientHeight > 4);
+  el.addEventListener("scroll", update, { passive: true });
+  new ResizeObserver(update).observe(el);
+  new MutationObserver(update).observe(el, { childList: true, subtree: true });
+  update();
+}
+
+/** One shared empty list: a new [] on every render made the map rebuild its whole info layer many times a second during the replay (and freeze on big realms). */
+const NO_ORDERS: readonly Order[] = [];
 
 /** Phones (and narrow windows) get the full-screen map with a bottom sheet. */
 const PHONE_QUERY = "(max-width: 760px)";
@@ -180,7 +194,7 @@ export function GameScreen() {
       <MapView
         ctx={ctx}
         view={shownView}
-        queue={act ? queue : []}
+        queue={act ? queue : NO_ORDERS}
         selected={act ? selected : null}
         draft={act ? draft : null}
         showTargets={act && (plan.free.get(selected ?? "") ?? 0) > 0}
@@ -343,7 +357,7 @@ export function GameScreen() {
           ⤢
         </button>
       </div>
-      <aside className="rightcol">
+      <aside className="rightcol" ref={moreCue}>
         <PlayersPanel view={view} />
         {selected && act && <TerritoryCard ctx={ctx} view={view} id={selected} />}
         {!out && <LeaderCard ctx={ctx} view={view} queue={queue} />}

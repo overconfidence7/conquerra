@@ -4,6 +4,7 @@ import { Container, Graphics, Text } from "pixi.js";
 import { toScreen, type Camera } from "../../map/camera";
 import { hexNum, houseOf } from "../../map/houses";
 import { quadPoint } from "../../map/shapes";
+import { replaySpots } from "../../replay/camera";
 import { MARCH_SHARE, RESULT_AT, type ReplayFrame } from "../../replay/timeline";
 
 /**
@@ -18,19 +19,14 @@ export class ReplayLayer {
   readonly root = new Container();
   private g = new Graphics();
   private texts: Text[] = [];
-  private labelOf: Map<string, { x: number; y: number }>;
-  private provinceAt = new Map<string, { x: number; y: number }>();
+  private labelOf: ReadonlyMap<string, { x: number; y: number }>;
+  /** Province centres, shared with the replay camera so it aims exactly at each pulse. */
+  private provinceAt: ReadonlyMap<string, { x: number; y: number }>;
 
   constructor(map: MapDef) {
-    const geo = map.geometry!;
-    this.labelOf = new Map(geo.territories.map((t) => [t.id, t.label]));
-    const sums = new Map<string, { x: number; y: number; n: number }>();
-    for (const t of map.territories) {
-      const l = this.labelOf.get(t.id)!;
-      const s = sums.get(t.province) ?? { x: 0, y: 0, n: 0 };
-      sums.set(t.province, { x: s.x + l.x, y: s.y + l.y, n: s.n + 1 });
-    }
-    for (const [p, s] of sums) this.provinceAt.set(p, { x: s.x / s.n, y: s.y / s.n });
+    const spots = replaySpots(map);
+    this.labelOf = spots.territory;
+    this.provinceAt = spots.province;
     this.root.addChild(this.g);
   }
 

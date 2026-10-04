@@ -12,6 +12,14 @@ import "@fontsource/spectral/400.css";
 import "@fontsource/spectral/600.css";
 import "@fontsource/spectral/400-italic.css";
 import "./styles.css";
+import { artUrl } from "./ui/art";
+
+// Nate's gold filigree corner replaces the drawn corners on every gilded frame once it has loaded.
+void artUrl("frame-corner").then((u) => {
+  if (!u) return;
+  document.documentElement.style.setProperty("--frame-corner", `url("${u}")`);
+  document.documentElement.classList.add("corner-art");
+});
 
 function Screen() {
   const screen = useGame((s) => s.screen);
