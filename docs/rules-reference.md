@@ -213,6 +213,12 @@ Bots play by exactly the same rules as people, and only from their own view (inc
   4. **Finishes what it starts.** It goes after a rival with only a few territories left. With 3 or fewer players left it concentrates on the weakest rival it borders: one spearhead front (where that rival is weakest, nearer its capital), with the rest of its front line holding and sending spare troops there.
   5. **Defends its capital** when a big army stands next to it: it keeps enough there to hold, recruits there and builds a fort.
   6. **Chains like a person.** It hops on when the army that should arrive is comfortably more (1.25 times) than the next hop needs, into the fog too, on its best guess of what's there. Every hop keeps "Only if still stronger", so a bad guess just stops the chain.
+  7. **Loyal land.** It raises culture at its capital and at choke points it holds, but only where a rival army is next door and enough troops stand there for the bonus to be worth the gold, and never while a choke point is short of troops.
+  8. **Gangs up on a runaway leader.** When one rival looks to hold about **40% of the land**, or at least a quarter of it and **1.75 times anyone else's** (judged only from what the bot sees and remembers: nobody is shown land counts), with at least two rivals left:
+     - that rival becomes its main target, and its fronts with that rival come first and keep honest garrisons
+     - it stops attacking weaker rivals whose land touches the leader's (they're holding it off)
+  9. **Holds against a fast attacker.** If last turn's replay (exactly what that seat watched) showed one rival taking **3 or more territories** next to its land, it keeps honest garrisons on that front, sends troops and recruits there, and armies within two steps of it fight only that rival instead of expanding.
+- The same rules apply to every seat: nobody gangs up on you because you're human, only because you're ahead.
 - If a realm loses its capital and has no barracks, it builds one straight away.
 
 ## Not in yet (later milestones)

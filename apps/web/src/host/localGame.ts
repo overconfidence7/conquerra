@@ -12,6 +12,7 @@ import {
   type NewGameOptions,
   type Order,
   type OrdersByPlayer,
+  type ReplayEvent,
   type SavedGame,
 } from "@conquerra/engine";
 import { buildTimeline } from "../replay/timeline";
@@ -45,6 +46,8 @@ export class LocalGame {
   /** How the game was set up and every turn's orders, for "Save this game". */
   private readonly setup: NewGameOptions;
   private readonly history: OrdersByPlayer[] = [];
+  /** What each bot watched in the last replay (from its own seat). */
+  private lastTurn = new Map<string, ReplayEvent[]>();
 
   constructor(
     settings: LobbySettings,
@@ -105,7 +108,7 @@ export class LocalGame {
   private botOrders(): OrdersByPlayer {
     const orders: OrdersByPlayer = {};
     for (const p of this.state.players)
-      if (p.id !== HUMAN_ID && p.eliminatedTurn === null) orders[p.id] = this.bot.plan(this.ctx, viewFor(this.ctx, this.state, p.id));
+      if (p.id !== HUMAN_ID && p.eliminatedTurn === null) orders[p.id] = this.bot.plan(this.ctx, viewFor(this.ctx, this.state, p.id), this.lastTurn.get(p.id));
     return orders;
   }
 
@@ -116,6 +119,8 @@ export class LocalGame {
     const result = resolveTurn(this.ctx, before, orders);
     this.history.push(orders);
     this.state = result.state;
+    // What each bot watched in this turn's replay (only its own view), for its next plan.
+    this.lastTurn = new Map(this.state.players.filter((p) => p.id !== HUMAN_ID && p.eliminatedTurn === null).map((p) => [p.id, replayFor(this.ctx, before, result, p.id)]));
     const report = { turn: before.turn, events: replayFor(this.ctx, before, result, HUMAN_ID) };
     this.startClock(buildTimeline(report.events).total);
     return report;

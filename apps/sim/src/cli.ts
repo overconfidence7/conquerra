@@ -38,11 +38,13 @@ const seedPrefix = arg("seed", "sim");
 const settings = { luck, mode, fog, ...(turnLimit ? { turnLimit } : {}) };
 const botKind = arg("bots", "captain");
 const marginArg = arg("chain-margin", "");
+/** Tuning the Captain's runaway rule (priority 8): --runaway-share 0.4 --runaway-lead 1.75. */
+const runawayTuning = { ...(arg("runaway-share", "") ? { runawayShare: Number(arg("runaway-share", "")) } : {}), ...(arg("runaway-lead", "") ? { runawayLead: Number(arg("runaway-lead", "")) } : {}) };
 const makeBot = (kind: string): Bot => {
   // --chain-margin tunes the bot under test (--bots, Captain by default); other bots at a mixed table keep theirs.
   const margin = marginArg && kind === botKind ? Number(marginArg) : null;
   if (kind === "recruit") return makeRecruitBot({ chainMargin: margin ?? 2 });
-  if (kind === "captain") return makeCaptainBot({ chainMargin: margin ?? CAPTAIN_CHAIN_MARGIN, off: (arg("captain-off", "") ? arg("captain-off", "").split(",") : []) as CaptainFeature[] });
+  if (kind === "captain") return makeCaptainBot({ ...runawayTuning, chainMargin: margin ?? CAPTAIN_CHAIN_MARGIN, off: (arg("captain-off", "") ? arg("captain-off", "").split(",") : []) as CaptainFeature[] });
   // "captain-no-culture" etc.: a Captain with one priority switched off, under its own name (for mixed tables).
   if (kind.startsWith("captain-no-")) return { ...makeCaptainBot({ chainMargin: margin ?? CAPTAIN_CHAIN_MARGIN, off: [kind.slice("captain-no-".length) as CaptainFeature] }), id: kind };
   throw new Error(`Unknown bot "${kind}" (recruit, captain, or captain-no-<priority>)`);
@@ -99,6 +101,8 @@ const stats = (xs: number[]) => {
   return { avg, p95: s[Math.floor(s.length * 0.95)] ?? 0, max: s[s.length - 1] ?? 0 };
 };
 const ms = (x: number) => `${x.toFixed(2)} ms`;
+/** Rough real-time estimate (Nate, Oct 5): minutes per turn. */
+const SOLO_TURN_MIN = 1.5, REPLAY_MIN = 0.5, ONLINE_TURN_MIN = 5;
 const pct2 = (k: number, of: number) => `${((100 * k) / Math.max(1, of)).toFixed(0)}%`;
 let crashed = 0;
 
@@ -146,6 +150,10 @@ for (const players of playerCounts) {
   console.log(`Planning time per bot per turn: ${[...perBot].map(([k, v]) => { const st = stats(v); return `${k} avg ${ms(st.avg)}, p95 ${ms(st.p95)}, worst ${ms(st.max)}`; }).join(" | ")}`);
   console.log(`How games ended: ${[...reasons.entries()].map(([k, v]) => `${k} ${pct(v)}`).join(", ")}`);
   console.log(`Game length (turns): avg ${avg((g) => g.turns).toFixed(1)}, median ${turns[Math.floor(turns.length / 2)] ?? "-"}, min ${turns[0] ?? "-"}, max ${turns[turns.length - 1] ?? "-"}; ${pct(inBand)} within 15–25`);
+  // Real time, roughly: a typical single-player turn takes about 1.5 minutes to plan plus about half a minute of
+  // replay; a live online game with the 5-minute timer, about 5.5 minutes a turn if people use most of the timer.
+  const t = avg((g) => g.turns);
+  console.log(`Real time, roughly: single player about ${Math.round(t * (SOLO_TURN_MIN + REPLAY_MIN))} minutes (${SOLO_TURN_MIN} min a turn + ${REPLAY_MIN} min replay); live online with the 5-minute timer up to about ${((t * (ONLINE_TURN_MIN + REPLAY_MIN)) / 60).toFixed(1)} hours`);
   console.log(`Per game: ${avg((g) => g.battles).toFixed(1)} battles, ${avg((g) => g.captures).toFixed(1)} captures, ${avg((g) => g.hires).toFixed(1)} specialists hired, ${avg((g) => g.invests).toFixed(1)} culture raises, ${avg((g) => g.leadersKilled).toFixed(1)} leaders killed`);
   const inv = (k: keyof GameSummary["investsAt"]) => results.reduce((a, g) => a + g.investsAt[k], 0);
   const invTotal = results.reduce((a, g) => a + g.invests, 0);
@@ -163,6 +171,10 @@ for (const players of playerCounts) {
   console.log(`Chained hops per game: ${avg((g) => g.hops).toFixed(1)} (${hops ? ((100 * results.reduce((a, g) => a + g.hopCaptures, 0)) / hops).toFixed(0) : "-"}% captured)`);
   const at10 = results.filter((g) => g.topShareTurn10 !== null);
   console.log(`Runaway check: one player held more than half the map after turn 10 in ${pct(at10.filter((g) => g.topShareTurn10! > 0.5).length)} of games (${pct(results.length - at10.length)} were already over by then)`);
+  const won = results.filter((g) => g.winner !== "draw");
+  const half = won.filter((g) => g.leaderHalfway !== null);
+  const long = won.filter((g) => g.leaderTurn10 !== null);
+  console.log(`Runaway, two clearer measures: the leader at the halfway point went on to win ${pct2(half.filter((g) => g.leaderHalfway === g.winner).length, half.length)} of games; comebacks (the winner was not the leader after turn 10) ${pct2(long.filter((g) => g.leaderTurn10 !== g.winner).length, long.length)} of games that went past turn 10`);
   console.log(`CPU per turn (this machine): resolve avg ${ms(resolve.avg)}, p95 ${ms(resolve.p95)}, worst ${ms(resolve.max)} | bots planning (all seats) avg ${ms(plan.avg)}, worst ${ms(plan.max)} | total avg ${ms(total.avg)}, worst ${ms(total.max)}`);
   if (errors.length) {
     console.log(`CRASHES (first 3):`);

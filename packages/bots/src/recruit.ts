@@ -10,6 +10,7 @@ import {
   type GameContext,
   type Order,
   type PlayerView,
+  type ReplayEvent,
   type TerritoryDetail,
   type TerritoryId,
 } from "@conquerra/engine";
@@ -17,7 +18,12 @@ import {
 export interface Bot {
   id: string;
   name: string;
-  plan(ctx: GameContext, view: PlayerView): Order[];
+  /**
+   * Orders for one seat. `lastTurn`: what that seat watched in the previous turn's replay (`replayFor`), exactly
+   * what a person sitting there saw, so a bot can react to what happened (a rival chaining through its border)
+   * without ever reading beyond its own view.
+   */
+  plan(ctx: GameContext, view: PlayerView, lastTurn?: readonly ReplayEvent[]): Order[];
 }
 
 type Seen = TerritoryDetail & { detail: "full" };

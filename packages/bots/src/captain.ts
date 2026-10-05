@@ -13,6 +13,7 @@ import {
   type Order,
   type PlayerId,
   type PlayerView,
+  type ReplayEvent,
   type TerritoryDetail,
   type TerritoryId,
 } from "@conquerra/engine";
@@ -23,13 +24,16 @@ type Seen = TerritoryDetail & { detail: "full" };
 type Guess = Pick<Seen, "owner" | "troops" | "building" | "culture" | "leaders" | "capitalOf"> & { specialists: SpecialistType[] };
 
 /** The Captain's priorities, each of which the simulator can switch off to measure what it's worth. */
-export type CaptainFeature = "chokes" | "breakthrough" | "focus" | "capital" | "forts" | "culture";
+export type CaptainFeature = "chokes" | "breakthrough" | "focus" | "capital" | "forts" | "culture" | "runaway" | "raider";
 
 export interface CaptainOptions {
   /** Chain on when the army that should arrive is at least this many times what the next hop needs. */
   chainMargin: number;
   /** Priorities switched off (simulator experiments only). */
   off?: readonly CaptainFeature[];
+  /** Simulator tuning of priority 8: the share of the land that marks a runaway leader, and the lead over anyone else. */
+  runawayShare?: number;
+  runawayLead?: number;
 }
 
 /** Tuned in the simulator (docs/sim-results-m3-bots.md): hop on when the next hop is comfortably likely to win. */
@@ -48,7 +52,7 @@ const FOLLOW_THROUGH_SPARE = 6;
 export const makeCaptainBot = (opts: CaptainOptions = { chainMargin: CAPTAIN_CHAIN_MARGIN }): Bot => ({
   id: "captain",
   name: "Captain",
-  plan: (ctx, view) => plan(ctx, view, opts),
+  plan: (ctx, view, lastTurn) => plan(ctx, view, opts, lastTurn),
 });
 
 /**
@@ -66,8 +70,14 @@ export const makeCaptainBot = (opts: CaptainOptions = { chainMargin: CAPTAIN_CHA
  *  5. Defends its capital when a big army stands next to it: it keeps enough there to hold, recruits there, builds a
  *     fort and sends reinforcements.
  *  6. Chains like a person: it hops on when the army that should arrive is comfortably more than the next hop needs.
- *  7. Loyal land: raises culture where it means to hold (its capital, choke points it holds against a rival, frontier
- *     land with a fort) once it has a real army's worth of gold to spare.
+ *  7. Loyal land: raises culture at its capital and choke points it holds, where a rival army is next door and enough
+ *     troops stand there for the bonus to be worth the gold, once it has a real army's worth of gold to spare.
+ *  8. Gangs up on a runaway leader: when one rival looks to hold about 40% of the land, or far more than anyone
+ *     else (estimated from its own view and memory), that rival becomes its main target, its fronts with that rival
+ *     come first and keep honest garrisons, and it stops attacking weaker rivals who are holding the leader off.
+ *  9. Holds against a fast attacker: when last turn's replay showed a rival taking several territories along its
+ *     border, it holds that front and its choke points (recruits there, keeps garrisons, marches nearby troops in)
+ *     instead of carrying on with its own expansion close by.
  */
 export const captainBot: Bot = makeCaptainBot();
 
@@ -77,8 +87,16 @@ const LOYAL_RESERVE_THREATENED = 3;
 const LOYAL_FROM_TURN = 3;
 /** Loyal land: a level is worth buying when the troops there, made this much stronger over this many fights, beat its price in troops (tuned: 2 to 8 tried). */
 const LOYAL_FIGHTS = 4;
+/** A runaway leader (priority 8): it looks to hold this share of the land, or at least RUNAWAY_MIN_SHARE and this many times anyone else. */
+const RUNAWAY_SHARE = 0.4;
+const RUNAWAY_MIN_SHARE = 0.25;
+const RUNAWAY_LEAD = 1.75;
+/** A fast attacker (priority 9): it took at least this many territories next to our land (or ours) last turn. */
+const RAID_CAPTURES = 3;
+/** Armies this close (through our own land) to the raided front march there instead of attacking elsewhere. */
+const RAID_RADIUS = 2;
 
-function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[] {
+function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn?: readonly ReplayEvent[]): Order[] {
   const { rules } = ctx;
   const idx = indexMap(ctx.map);
   const me = view.me;
@@ -114,11 +132,15 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
 
   // ---------- The picture: who's left, who we border, who to finish ----------
   const alive = view.players.filter((p) => p.eliminatedTurn === null);
+  /** Who holds `t` as far as we know: what we see, else what we last saw. */
+  const look0 = (t: TerritoryId): PlayerId | null => {
+    const v = view.territories[t]!;
+    return v.detail === "full" ? v.owner : (v.lastSeen?.owner ?? null);
+  };
   /** Land each rival holds as far as we know: what we see, plus what we last saw. */
   const knownLand = new Map<PlayerId, number>();
   for (const t of idx.ids) {
-    const v = view.territories[t]!;
-    const o = v.detail === "full" ? v.owner : (v.lastSeen?.owner ?? null);
+    const o = look0(t);
     if (o && o !== me.id) knownLand.set(o, (knownLand.get(o) ?? 0) + 1);
   }
   const facing = new Map<PlayerId, number>();
@@ -128,8 +150,49 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
   }
   const endgame = alive.length <= 3;
   const weakest = [...facing.keys()].sort((a, b) => (knownLand.get(a) ?? 0) - (knownLand.get(b) ?? 0) || facing.get(a)! - facing.get(b)! || (a < b ? -1 : 1))[0] ?? null;
-  /** The rival we concentrate on: a weakened neighbour, or in the endgame the weakest one we border. */
-  const focus = on("focus") && weakest && (endgame || (knownLand.get(weakest) ?? 0) <= WEAK_RIVAL_LAND) ? weakest : null;
+
+  // 8. A rival running away with the map. Nobody shows land counts, so we estimate from what we see and remember:
+  // it looks to hold RUNAWAY_SHARE of the land, or far more than anyone else (us included). Only with at least two
+  // rivals left (head to head, the other player is always the target anyway). The same rule for every seat.
+  const living = new Set(alive.map((p) => p.id));
+  const estimates = [...knownLand].filter(([p]) => living.has(p)).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
+  const [top, topLand] = estimates[0] ?? [null, 0];
+  const runnerUp = Math.max(mine.length, estimates[1]?.[1] ?? 0);
+  const total = idx.ids.length;
+  const runaway =
+    on("runaway") && top && alive.length >= 3 && (topLand >= (opts.runawayShare ?? RUNAWAY_SHARE) * total || (topLand >= RUNAWAY_MIN_SHARE * total && topLand >= (opts.runawayLead ?? RUNAWAY_LEAD) * runnerUp)) ? top : null;
+  /** Rivals whose land touches the runaway's: they're holding it off, so weakening them only helps it. */
+  const shieldsLeader = new Set<PlayerId>();
+  if (runaway)
+    for (const t of idx.ids) {
+      if (look0(t) !== runaway) continue;
+      for (const nb of idx.neighbors.get(t)!) {
+        const o = look0(nb);
+        if (o && o !== runaway && o !== me.id) shieldsLeader.add(o);
+      }
+    }
+
+  // 9. A rival chaining through our border: in last turn's replay (what we watched, nothing more) it took several
+  // territories next to our land, or ours. We hold that front and its choke points before expanding elsewhere.
+  const raids = new Map<PlayerId, number>();
+  for (const e of lastTurn ?? [])
+    if (e.type === "battle" && e.captured && e.player !== me.id && (e.defender === me.id || idx.neighbors.get(e.to)!.some(owned))) raids.set(e.player, (raids.get(e.player) ?? 0) + 1);
+  const raider = on("raider")
+    ? ([...raids].filter(([p, k]) => k >= RAID_CAPTURES && facing.has(p)).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0]?.[0] ?? null)
+    : null;
+  const facesRival = (t: TerritoryId, r: PlayerId) => idx.neighbors.get(t)!.some((x) => rivalAt(x) === r);
+  const facesRaider = (t: TerritoryId) => !!raider && facesRival(t, raider);
+
+  /**
+   * The rival we concentrate on: the runaway leader if we border it; otherwise a weakened neighbour, or in the
+   * endgame the weakest one we border (but never a weak rival that's holding off a runaway leader).
+   */
+  const focus =
+    runaway && facing.has(runaway)
+      ? runaway
+      : on("focus") && weakest && (endgame || (knownLand.get(weakest) ?? 0) <= WEAK_RIVAL_LAND) && !shieldsLeader.has(weakest)
+        ? weakest
+        : null;
   /** The focused rival's capital, if we've seen it, and how far every territory is from it. */
   const focusCapital = focus ? (idx.ids.find((t) => seen(t)?.capitalOf === focus) ?? null) : null;
   const toFocusCapital = focusCapital ? distancesFrom(idx, focusCapital) : null;
@@ -218,7 +281,7 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
   const recruitSites = mine.filter((t) => isRecruitSiteIn(ctx, view, t));
   const hireSite = (t: TerritoryId) => t === me.capital || seen(t)?.building === "barracks";
   const facesFocus = (t: TerritoryId) => !!focus && idx.neighbors.get(t)!.some((x) => rivalAt(x) === focus);
-  const frontRank = (t: TerritoryId) => (facesFocus(t) ? 1000 : 0) + enemyPressure(t);
+  const frontRank = (t: TerritoryId) => (facesRaider(t) ? 2000 : 0) + (facesFocus(t) ? 1000 : 0) + enemyPressure(t);
   const hotFront = [...frontier].sort((a, b) => frontRank(b) - frontRank(a) || (a < b ? -1 : 1))[0];
   const nearSite = (t: TerritoryId) => recruitSites.some((r) => r === t || idx.neighbors.get(t)!.includes(r));
   const barracksBuilding = mine.some((t) => seen(t)!.construction?.building === "barracks");
@@ -309,6 +372,8 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
   const keep = (t: TerritoryId) => {
     if (t === capital && capThreatened) return holdNeed(t);
     if (chokeHolder(t)) return holdNeed(t);
+    // 8/9. Honest garrisons on the fronts with a runaway leader or a fast attacker.
+    if ((runaway && facesRival(t, runaway)) || facesRaider(t)) return Math.max(garrison, holdNeed(t));
     return garrison;
   };
   const free = new Map<TerritoryId, number>();
@@ -362,7 +427,7 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
       if ((knownLand.get(v.owner) ?? 0) <= WEAK_RIVAL_LAND) val += 4;
       if (v.owner === focus) val *= 2;
       // In the endgame, land of other rivals is worth less: no trading land back and forth with everyone.
-      else if (endgame && focus) val *= 0.5;
+      else if ((endgame || runaway) && focus) val *= 0.5;
     }
     // On the way to the focused rival's capital.
     if (toFocusCapital && (toFocusCapital.get(t) ?? 99) <= 2) val += 4;
@@ -371,6 +436,22 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
   /** Fewest troops from `avail` likely to take `to` from `from` (with a small safety margin), or null. */
   const needFor = (from: TerritoryId, to: TerritoryId, avail: number, specs = specsAt(from)) =>
     fewestToTake((troops) => previewAttack(ctx, view, { from, to, troops, specialists: specs })?.captureLikely ?? false, avail);
+
+  /** 9. Our land within RAID_RADIUS steps (through our own land) of a front facing the fast attacker. */
+  const nearRaid = new Map<TerritoryId, number>();
+  if (raider) {
+    const q = frontier.filter(facesRaider);
+    for (const t of q) nearRaid.set(t, 0);
+    for (let h = 0; h < q.length; h++) {
+      const d = nearRaid.get(q[h]!)!;
+      if (d >= RAID_RADIUS) continue;
+      for (const nb of idx.neighbors.get(q[h]!)!)
+        if (owned(nb) && !nearRaid.has(nb)) {
+          nearRaid.set(nb, d + 1);
+          q.push(nb);
+        }
+    }
+  }
 
   type Plan = { from: TerritoryId; to: TerritoryId; troops: number; score: number; vsPlayer: boolean; breakthrough: boolean };
   const candidates: Plan[] = [];
@@ -382,6 +463,10 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
       const tv = seen(to);
       if (!tv || tv.owner === me.id) continue;
       const rival = tv.owner;
+      // 8. Not a rival that's holding off the runaway leader (unless it's our own capital to take back).
+      if (rival && shieldsLeader.has(rival) && to !== me.capital) continue;
+      // 9. Armies near a front a fast attacker is pushing through fight only that attacker.
+      if (nearRaid.has(from) && rival !== raider) continue;
       const offFocus = endgame && !!focus && rival !== null && rival !== focus;
       const value = valueOf(to);
       if (on("breakthrough") && crossing(from, to)) {
@@ -436,7 +521,8 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
       if (avail <= 0) break;
       let best: { to: TerritoryId; value: number } | null = null;
       for (const nb of idx.neighbors.get(from)!) {
-        if (owned(nb) || look(nb).owner === me.id || targeted.has(nb)) continue;
+        const owner = look(nb).owner;
+        if (owned(nb) || owner === me.id || targeted.has(nb) || (owner && shieldsLeader.has(owner))) continue;
         const need = fewestToTake((troops) => expectAt(from, nb, troops, specs).captureLikely, avail);
         const margin = crossing(from, nb) ? Math.max(opts.chainMargin, BREAKTHROUGH_MARGIN) : opts.chainMargin;
         if (need === null || avail < need * margin) continue;
@@ -466,10 +552,12 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
   if (capThreatened && capital && holdNeed(capital) > troopsAt(capital) + (site === capital ? recruited : 0)) want(capital, 100);
   for (const t of frontier) {
     if (chokeHolder(t)) {
-      if (holdNeed(t) > troopsAt(t)) want(t, 50);
+      if (holdNeed(t) > troopsAt(t)) want(t, facesRaider(t) ? 70 : 50);
       continue;
     }
-    if (t === spearhead) want(t, 60);
+    // 9. The front a fast attacker is pushing through comes first.
+    if (facesRaider(t)) want(t, 45 + enemyPressure(t) / 10);
+    else if (t === spearhead) want(t, 60);
     else if (spearhead && facesFocus(t)) want(t, 3 + enemyPressure(t) / 30);
     else if (facesFocus(t)) want(t, 30 + enemyPressure(t) / 10);
     else want(t, enemyPressure(t) > 0 ? 5 + enemyPressure(t) / 20 : 1);
@@ -493,13 +581,15 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
   let reserveUsed = false;
   for (const t of mine) {
     const avail = free.get(t)!;
-    if (avail <= 0 || attackedFrom.has(t) || (goals.has(t) && t !== spearhead && !spearhead) || t === spearhead) continue;
+    // 9. Near a front a fast attacker is pushing through, our other front stacks send their spare troops there too.
+    const raidHelper = nearRaid.has(t) && !facesRaider(t) && !chokeHolder(t);
+    if (avail <= 0 || attackedFrom.has(t) || (goals.has(t) && t !== spearhead && !spearhead && !raidHelper) || t === spearhead) continue;
     // Interior troops, and the spare troops of a choke point we hold, go to the best goal they can reach. In the
     // endgame the front line also shifts sideways: a front stack keeps what it needs to hold its stretch and sends
     // the rest to the spearhead (otherwise two big realms just stare at each other along a long front).
     let send = avail;
     if (isFrontier(t) && !chokeHolder(t)) {
-      if (!spearhead) continue;
+      if (!spearhead && !raidHelper) continue;
       send = Math.min(avail, troopsAt(t) + (t === site ? recruited : 0) - holdNeed(t));
       if (send <= 0) continue;
     }

@@ -3,12 +3,14 @@ import { recruitBot, type Bot } from "@conquerra/bots";
 import {
   createGame,
   indexMap,
+  replayFor,
   resolveTurn,
   viewFor,
   type GameContext,
   type GameSettings,
   type GameState,
   type OrdersByPlayer,
+  type ReplayEvent,
   type StepEvent,
 } from "@conquerra/engine";
 
@@ -47,6 +49,10 @@ export interface GameSummary {
   leadChanges: number;
   /** Biggest share of the map's territories any one player held after turn 10 (null if the game ended sooner). */
   topShareTurn10: number | null;
+  /** Who held the most territories after turn 10 (null if the game ended sooner). */
+  leaderTurn10: string | null;
+  /** Who held the most territories at the game's halfway point (after turn ceil(turns / 2)). */
+  leaderHalfway: string | null;
   /** CPU time per turn in milliseconds: the engine resolving, and the bots planning (all seats). */
   resolveMs: number[];
   planMs: number[];
@@ -63,10 +69,11 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
   const idx = indexMap(ctx.map);
   const sum: GameSummary = {
     seed, winner: "draw", winnerSeat: null, endReason: null, turns: 0, battles: 0, captures: 0, lopsided: 0, lopsidedFailed: 0, byBorder: {}, orders: 0, fizzles: 0, hops: 0, hopCaptures: 0,
-    initiatives: 0, leadersKilled: 0, hires: 0, invests: 0, investsAt: { capital: 0, choke: 0, frontier: 0, interior: 0 }, recruitsAt: { capital: 0, barracks: 0, province: 0 }, presets: 0, decidedTurn: null, leadChanges: 0, topShareTurn10: null, resolveMs: [], planMs: [], planMsByBot: {}, winnerBot: null,
+    initiatives: 0, leadersKilled: 0, hires: 0, invests: 0, investsAt: { capital: 0, choke: 0, frontier: 0, interior: 0 }, recruitsAt: { capital: 0, barracks: 0, province: 0 }, presets: 0, decidedTurn: null, leadChanges: 0, topShareTurn10: null, leaderTurn10: null, leaderHalfway: null, resolveMs: [], planMs: [], planMsByBot: {}, winnerBot: null,
   };
   const leaders: (string | null)[] = [];
   const log: StepEvent[][] = [];
+  let lastTurn = new Map<string, ReplayEvent[]>();
   while (!s.winner) {
     const orders: OrdersByPlayer = {};
     const p0 = performance.now();
@@ -75,7 +82,7 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
         const b = seatBot(seat);
         const v = viewFor(ctx, s, p.id);
         const b0 = performance.now();
-        const o = b.plan(ctx, v);
+        const o = b.plan(ctx, v, lastTurn.get(p.id));
         (sum.planMsByBot[b.id] ??= []).push(performance.now() - b0);
         orders[p.id] = o;
         sum.orders += o.length;
@@ -88,6 +95,8 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
     sum.planMs.push(p1 - p0);
     sum.resolveMs.push(p2 - p1);
     s = r.state;
+    // What each seat watched in this turn's replay: the bots see it next turn, as a person would.
+    lastTurn = new Map(r.state.players.filter((p) => p.eliminatedTurn === null).map((p) => [p.id, replayFor(ctx, before, r, p.id)]));
     if (keepLog) log.push(r.events);
     const arrived = new Set<string>();
     for (const e of r.events) {
@@ -148,6 +157,8 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
     while (t > 0 && leaders[t - 1] === s.winner) t--;
     sum.decidedTurn = t + 1;
   }
+  sum.leaderTurn10 = leaders.length > 10 ? (leaders[9] ?? null) : null;
+  sum.leaderHalfway = leaders[Math.ceil(leaders.length / 2) - 1] ?? null;
   if (keepLog) sum.log = log;
   return sum;
 }

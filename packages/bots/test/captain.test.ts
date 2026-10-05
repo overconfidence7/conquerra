@@ -1,8 +1,8 @@
 import { defaultRules, MapDef, type BorderType, type Terrain } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
-import { createGame, indexMap, isRecruitSiteIn, resolveTurn, viewFor, type GameContext, type GameState, type Order } from "@conquerra/engine";
+import { createGame, indexMap, isRecruitSiteIn, resolveTurn, viewFor, type GameContext, type GameState, type Order, type ReplayEvent } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
-import { captainBot, recruitBot, type Bot } from "../src";
+import { CAPTAIN_CHAIN_MARGIN, captainBot, makeCaptainBot, recruitBot, type Bot } from "../src";
 
 const ember: GameContext = { map: maps.embervale!, rules: defaultRules };
 
@@ -58,7 +58,7 @@ function scenario(opts: {
 const moves = (orders: Order[]) => orders.filter((o): o is Extract<Order, { kind: "move" }> => o.kind === "move");
 const sentFrom = (orders: Order[], from: string) => moves(orders).filter((o) => o.from === from).reduce((a, o) => a + (typeof o.troops === "number" ? o.troops : 0), 0);
 
-describe("Captain bot: the six priorities", () => {
+describe("Captain bot: its priorities", () => {
   it("1. holds a pass it borders with a small garrison, and builds a fort there", () => {
     // p1 holds a-b-c; c faces p2's army at d through a mountain pass.
     const { plan } = scenario({ line: "abcdef", borders: { cd: "pass" }, layout: { a: ["p1", 4], b: ["p1", 1], c: ["p1", 20], d: ["p2", 12], e: ["p2", 5], f: ["p2", 3] }, caps: ["a", "f"], gold: 30 });
@@ -145,6 +145,42 @@ describe("Captain bot: the six priorities", () => {
     // Not worth it with only a few troops there (the bonus is a share of the defenders), nor with no rival army near.
     expect(at(3, 12)).toEqual([]);
     expect(at(30, 1)).toEqual([]);
+  });
+
+  it("8. gangs up on a runaway leader: attacks it, and leaves alone a weak rival that's holding it off", () => {
+    // p2 holds 9 of 12 territories (p1 remembers most of them). p3, down to its capital c, sits between p1 and p2.
+    const layout: Record<string, [string | null, number]> = { a: ["p1", 4], b: ["p1", 30], c: ["p3", 2] };
+    const memory: Record<string, [string | null, number]> = {};
+    for (const t of "defghijkl") (layout[t] = ["p2", 3]), t !== "e" && (memory[t] = ["p2", 3]);
+    const sc = () => scenario({ line: "abcdefghijkl", extra: [["b", "e"]], layout, memory, caps: ["a", "l", "c"], players: 3 });
+    const targets = (bot: Bot) => moves(sc().plan(bot)).filter((o) => o.from === "b").map((o) => o.to);
+    // Without the rule, p1 finishes off weak p3 first (its capital, two troops).
+    expect(targets(makeCaptainBot({ chainMargin: CAPTAIN_CHAIN_MARGIN, off: ["runaway"] }))).toContain("c");
+    // With it, p1 goes for the leader and leaves p3 to keep fighting it.
+    const orders = targets(captainBot);
+    expect(orders).toContain("e");
+    expect(orders).not.toContain("c");
+  });
+
+  it("9. holds against a fast attacker: after watching a rival take several territories along its border, it reinforces that front instead of expanding next to it", () => {
+    // p1: capital a, b, c (15 troops), d on the front with p2's big army at e. f is an empty neutral next to c.
+    const sc = scenario({ line: "abcde", islands: "f", extra: [["c", "f"]], layout: { a: ["p1", 3], b: ["p1", 3], c: ["p1", 15], d: ["p1", 2], e: ["p2", 20] }, caps: ["a", "e"] });
+    const view = viewFor(sc.ctx, sc.s, "p1");
+    // What p1 watched last turn: p2 took three territories next to its land.
+    const raid = [0, 1, 2].map((i) => ({ type: "battle", step: i, player: "p2", captured: true, to: "e", from: "x", defender: null }) as unknown as ReplayEvent);
+    const calm = captainBot.plan(sc.ctx, view);
+    expect(moves(calm).some((o) => o.from === "c" && o.to === "f")).toBe(true);
+    const alarmed = captainBot.plan(sc.ctx, view, raid);
+    expect(moves(alarmed).some((o) => o.from === "c" && o.to === "f")).toBe(false);
+    expect(moves(alarmed).some((o) => o.from === "c" && o.to === "d")).toBe(true);
+  });
+
+  it("8 and 9 are judged from the bot's own view only: the same seat rule for everyone, no peeking at the real state", () => {
+    // p2 really holds 9 of 12, but p1 has never seen most of it: no runaway as far as p1 knows, so p3 is fair game.
+    const layout: Record<string, [string | null, number]> = { a: ["p1", 4], b: ["p1", 30], c: ["p3", 2] };
+    for (const t of "defghijkl") layout[t] = ["p2", 3];
+    const orders = scenario({ line: "abcdefghijkl", extra: [["b", "e"]], layout, caps: ["a", "l", "c"], players: 3 }).plan();
+    expect(moves(orders).filter((o) => o.from === "b").map((o) => o.to)).toContain("c");
   });
 });
 
