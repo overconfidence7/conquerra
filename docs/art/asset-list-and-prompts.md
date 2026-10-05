@@ -6,6 +6,8 @@
 
 **In the game (Oct 4, session 6):** all 79 imported and judged on both maps. Worth redoing, in order: (1) `tree-conifer-1` and `-2` (still round bushes; use the pine prompt below, "clear spiky tips"); (2) `terrain-rock` and `terrain-snow` (big boulders; mostly hidden under mountain sprites, so low priority); (3) `terrain-hills` (big swirls). Everything else fits; the importer fixed the pink edges, the `tree-broadleaf-3` smudge and the cream clouds.
 
+**Batch 3 (Oct 5, for session 11):** about 20 images: the redo items plus new pieces for the visual upgrade. See "Batch 3" at the end of this file. The art session prompt is `docs/prompts/gemini-art-session-03.md`.
+
 **Before you start:** confirm your image tool's terms allow commercial use of the images, since the game will be sold.
 
 ## How to prompt (read once)
@@ -115,3 +117,41 @@ File names: `vista-city.png` (castle city on a hill above fields), `vista-valley
 
 ## Tier 3: later
 Lobby and title background art, the game-over screen, faction-specific castles, extra building variants, seasonal textures and the marketing key art.
+
+---
+
+## Batch 3 (Oct 5): for session 11, the big visual upgrade
+*About 20 images. Same rules as above: the style line first, PNG into `art/incoming/` with the exact file name, magenta background for sprites. Work top to bottom; session 11 copes with anything missing (it keeps today's drawing for that piece). The "before" pictures these are judged against are in `docs/art/screens/bench/`.*
+
+### 1. Redo (same file names; the new file replaces the old one)
+| File | Prompt (after the style line) | What was wrong |
+|---|---|---|
+| `tree-conifer-1.png`, `tree-conifer-2.png` | A small cluster of 3–5 tall, narrow, pointed pine trees seen from above at a slight angle, so each tree shows as a **dark green star of spiky branch tips around a pointed top**, with a narrow pointed shadow. Clearly different from round leafy trees: **no round or bushy shapes, no smooth outlines**. (Make 2 different clusters.) | They read as round bushes next to the oaks. |
+| `terrain-hills.png` | Seamless tileable texture of short grass and bare earth on rolling ground, from directly above, **completely flat even lighting, no shadows, no swirls, no big shapes**: only small-scale detail (tufts, pebbles, small earth patches) spread evenly across the whole image. | Big swirls that repeat. |
+| `terrain-rock.png` | Seamless tileable texture of grey mountain scree and gravel from directly above, **completely flat even lighting, no boulders, no shadows**: small stones and grit spread evenly across the whole image. | Big boulders that repeat. |
+| `terrain-snow.png` | Seamless tileable texture of wind-packed snow with a few small grey rock specks showing through, from directly above, **completely flat even lighting, no big shapes or shadows**, detail spread evenly. | Big shapes that repeat. |
+
+### 2. The dragon map outline (not magenta)
+| File | Prompt (no style line for this one) |
+|---|---|
+| `mask-dragon.png` | A solid flat black silhouette of a dragon seen from the side, facing left, wings raised and spread, on a pure white background. Black and white only: no detail, no shading, no grey. **Chunky, rounded shapes:** a thick neck, a thick tail that curls, broad wings with a scalloped edge and no thin spikes, short stubby horns and legs, so it still reads as a dragon at a small size. The dragon fills most of the image with a wide white margin. |
+
+*This becomes the shape of Wyrmland. Thin parts (claws, spines, a whip tail) can't become land, so chunky is right. Make 2–3 and keep the one that most clearly says "dragon" when you squint at it small.*
+
+### 3. New map sprites (magenta background, three-quarter view unless noted)
+| File | Prompt (after the style line) |
+|---|---|
+| `ridge-1.png` … `ridge-3.png` | A short mountain ridge: three or four connected rocky peaks of different heights in a row, running left to right, snow on the highest one, grey-brown rock with small dark pines at the base. Clearly wider than tall. (Make 3 different ridges.) Ranges get drawn as chains of these, so they read as ranges, not rubble. |
+| `cliff-1.png` … `cliff-3.png` | A short stretch of rocky sea cliff running left to right: a grassy top edge, a grey-brown rock face, and a thin line of white foam along its bottom edge. Only the cliff and foam: no sea, no sky. Clearly wider than tall. (Make 3 different stretches.) |
+| `pass-gate.png` | A mountain pass gatehouse: a stone archway with an open wooden gate between two short square stone towers, a cobbled road running through the arch toward the viewer. |
+| `scaffold.png` | Wooden construction scaffolding with nothing inside it: a square frame of rough timber poles with lashed crossbeams, two ladders, a small rope hoist, a stack of planks and a few cut stone blocks at its foot. (Drawn over a building while it's being built.) |
+| `bridge-wood.png` | A short rustic wooden bridge: a plank deck on timber trestles with simple rails, running diagonally. Only the bridge: no water, no banks. |
+| `landmark-ruins.png` | The crumbling ruins of an ancient stone temple: a few broken columns, one fallen arch, mossy blocks. Only the ruins, no ground around them. |
+| `landmark-stones.png` | A ring of seven tall grey weathered standing stones, one stone lying fallen, a lintel across two of them. Only the stones, no ground around them. |
+| `landmark-lighthouse.png` | A tall round stone lighthouse with a lantern room at the top and a small keeper's cottage at its foot, on a little rocky base. |
+| `landmark-windmill.png` | A medieval wooden post windmill with four lattice sails, on a small stone base. |
+
+### 4. Info layer (magenta background, front view)
+| File | Prompt (after the style line) |
+|---|---|
+| `frame-plaque.png` | An empty ornate nameplate, front view: a wide horizontal plate of dark navy enamel, about four times wider than tall, with a thin polished gold rim and small scrolled gold end caps on the left and right. Completely empty in the middle, no text, every part fully solid. (The game writes the province name and bonus on it.) |

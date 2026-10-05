@@ -217,3 +217,9 @@
 - 2026-10-05: The lab's panels (preview, checks in plain words, fairness table, size chart, gallery) take a finished map, so the player map builder can reuse them; the pure parts are in `packages/mapgen/src/report.ts`.
 - 2026-10-05: The art bench's grids are made-up maps (plain map data) drawn by the game's own renderer, so art is judged at true size with real blending, borders and markers, and the renderer has no special cases. `pnpm map-check bench` saves the "before" set for session 11 to `docs/art/screens/bench/`.
 - 2026-10-05: Candidate maps are in `docs/maps/candidates.md`, not in `MAP_CONFIGS`: Nate picks which become official.
+- 2026-10-05: **All six session 10 candidates become official maps (Nate):** the Shattered Isles (archipelago, 60), the Twin Realms (twin continents, 80), the Moon Coast (crescent, 80), the Ringsea (inland sea, 100), the Crownlands (crown, 100) and Wyrmland (dragon, 120). The lobby lists eight maps.
+- 2026-10-05: **Wyrmland's dragon is redrawn from a Gemini outline** (a chunky black silhouette, `mask-dragon.png`, art batch 3) via the mask script, because the hand-drawn one doesn't read as a dragon at Far zoom.
+- 2026-10-05: **10-player games may use 120-territory maps (Nate)**, even though they run about 41–45 turns. Wyrmland is suggested for 6–10.
+- 2026-10-05: **Mountain-range defaults stay** (Nate); ranges are tuned map by map.
+- 2026-10-05: **Art batch 3** (for session 11, about 20 images): pines, and the hills, rock and snow textures redone; the dragon outline; `ridge-1..3`, `cliff-1..3`, `pass-gate`, `scaffold`, `bridge-wood`, `landmark-ruins/-stones/-lighthouse/-windmill`, `frame-plaque`. Landmarks are decoration only, placed by general rules seeded from the map.
+

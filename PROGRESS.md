@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–10 are done. Next: session 11, the big visual upgrade (judged on the new art test bench); Nate picks the official new maps from `docs/maps/candidates.md`.**
+**Phase: M3 (depth and balance). Sessions 7–10 are done. Next: art batch 3 in Gemini (`docs/prompts/gemini-art-session-03.md`), then session 11: the big visual upgrade, judged on the art test bench, and the six new maps made official.**
 
 Claude Code sessions completed: **10** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
@@ -434,3 +434,20 @@ No new art had arrived and Nate's session 9 play test isn't in yet, so there was
   - one Far view per shape: `shape-continent.png`, `shape-archipelago.png`, `shape-twinContinents.png`, `shape-crescent.png`, `shape-inlandSea.png`, `shape-crown.png`, `shape-dragon.png`, `shape-shield.png`
   - the bench set in `bench/`, and big-map phone numbers in `perf-big.json`
 - **Nate's check of the lab:** asked after the deploy (his notes and picks go below once he's tried it).
+
+### Oct 5: Orchestrator review of session 10
+- **Checked the work:**
+  - GitHub's checks pass on every commit, all four parts landed, and the engine and the existing maps didn't change.
+  - Re-ran the most surprising number: on the Twin Realms, 4-player games take 24.4 turns, against 34.3 on a plain continent of the same size. It matches.
+  - Looked at the Far view of every shape, the lab and the bench pictures. The isles, the twin continents, the crescent and the ring look like real places, and the crown reads well enough. **The dragon doesn't read as a dragon** (it looks like a lumpy continent).
+  - One small bug: the bench's redo sheet cuts off its "Trees at 4x" row. It's fixed in session 11.
+- **Nate's calls:**
+  - **All six candidates become official maps:** the Shattered Isles, the Twin Realms, the Moon Coast, the Ringsea, the Crownlands and Wyrmland.
+  - **The dragon:** Gemini draws a chunky black dragon outline in the next art batch, and session 11 rebuilds Wyrmland from it.
+  - **10-player games may use 120-territory maps** even though they run about 41–45 turns. Wyrmland is suggested for 6–10.
+  - **Mountain-range defaults stay as they are.** Range counts are tuned map by map (Wyrmland keeps 2).
+- **Still to come:** Nate's play test of session 9, and his look at the map lab.
+- **Next:**
+  1. **Art batch 3** (about 20 images): Nate runs `docs/prompts/gemini-art-session-03.md` in a Claude chat that drives Gemini. It covers the redone pines and the hills, rock and snow textures, the dragon outline, mountain ridges, sea cliffs, a pass gate, scaffolding, a wooden bridge, four landmarks and a plaque frame. The list is at the end of `docs/art/asset-list-and-prompts.md`.
+  2. **Session 11** (`docs/prompts/claude-code-session-11.md`, run it locally): the new art on the map, the six new maps in the lobby, the renderer pass (House colours, forests, a softer Far view), a roomier desktop layout, and before/after pictures on the bench.
+

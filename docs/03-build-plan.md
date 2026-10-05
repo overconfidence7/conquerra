@@ -91,8 +91,8 @@ Research, outline v0.1, v0.2 additions, and decisions.
 - **Session order (agreed Oct 4, revised again after Nate's play test that evening):**
   - **8 ✅:** the fog lifts during the replay; the Captain bot
   - **9 ✅ (finished by 9b after the usage limit):** play-test fixes: the combat bug, recruiting (capital, barracks or a full province; choose how many), culture as "loyal land", map clarity (no hairline borders, wider passes, neighbour marks, province borders and plaques), buildings that stand on the map, plain-words reports, "Save this game"
-  - **10:** bigger maps (60–120 territories) in new land shapes, the map lab, the art test bench, candidate maps (`docs/07-map-tooling.md`)
-  - **11:** the big visual upgrade with a new art batch (`docs/08-visual-upgrade-plan.md`)
+  - **10 ✅:** bigger maps (60–120 territories) in new land shapes, the map lab, the art test bench, candidate maps (`docs/07-map-tooling.md`)
+  - **11:** the big visual upgrade with art batch 3 (`docs/08-visual-upgrade-plan.md`), and the six new maps made official
   - **12:** generals (Leader standing instructions), captured generals, the Fallen (the Captains' gang-up moved up to 9b; generals reuse it)
   - **13:** Spoils and Fate decks
   - **14:** preset diplomacy

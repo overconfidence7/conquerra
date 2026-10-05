@@ -63,7 +63,7 @@
 - **Sizes:** a 40-territory quick map stays; new maps are 60–120 territories.
 - The map lab is where these get made, judged and simulated.
 
-**Session 11: the big visual upgrade.** A new art batch from Nate (Gemini, using the prompt pack), then a renderer pass.
+**Session 11: the big visual upgrade.** A new art batch from Nate (Gemini, using the prompt pack), then a renderer pass. *(Oct 5: the batch is "Batch 3" in `docs/art/asset-list-and-prompts.md`, made with `docs/prompts/gemini-art-session-03.md`. Session 11's prompt is `docs/prompts/claude-code-session-11.md`.)*
 - **New art:**
   - pines that look like pines
   - better rock, snow and hills textures

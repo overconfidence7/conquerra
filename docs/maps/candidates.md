@@ -1,5 +1,7 @@
 # Candidate maps (session 10)
 
+**Nate's pick (Oct 5): all six become official in session 11.** Wyrmland is rebuilt from a Gemini dragon outline and suggested for 6–10 players.
+
 *Six new maps for Nate to choose from, made with the new land shapes. None is in the lobby yet: Nate picks which become official (then follow "How to make a seed an official map" in `docs/07-map-tooling.md`).*
 
 **How they were picked:** for each recipe I made six seeds in the map lab's way (`pnpm try-maps`), looked at them side by side, and took the one that looks most like a real place. Each one then got 200 all-Captain games (fog on, normal luck, Classic) at the two ends of its suggested player range, next to 200 games on a plain one-continent map of the same size, to see what the shape itself does. The numbers are in `docs/maps/candidates.json`; `pnpm --filter @conquerra/sim candidates` makes them again.
