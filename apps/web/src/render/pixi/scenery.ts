@@ -517,7 +517,19 @@ function landmarks(map: MapDef, gr: Ground, ko: Keepout, coast: CoastPoint[][], 
   const g = map.geometry!;
   const want = Math.max(1, Math.round(map.territories.length / 15));
   const W = SCENERY_SIZE.landmark;
-  const rivers = g.rivers.map((r) => r.path);
+  // Squares a river runs through (on the biome grid), so "away from rivers" is one lookup.
+  const { cols, rows, cellSize } = g.biome;
+  const wet = new Uint8Array(cols * rows);
+  for (const r of g.rivers)
+    for (let i = 0; i + 2 < r.path.length; i += 2) {
+      const ax = r.path[i]!, ay = r.path[i + 1]!, bx = r.path[i + 2]!, by = r.path[i + 3]!;
+      const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / (cellSize / 2)));
+      for (let k = 0; k <= n; k++) {
+        const c = Math.floor((ax + ((bx - ax) * k) / n) / cellSize), rr = Math.floor((ay + ((by - ay) * k) / n) / cellSize);
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (c + dx >= 0 && c + dx < cols && rr + dy >= 0 && rr + dy < rows) wet[(rr + dy) * cols + c + dx] = 1;
+      }
+    }
+  const nearRiver = (x: number, y: number) => wet[Math.floor(y / cellSize) * cols + Math.floor(x / cellSize)] === 1;
   const clear = (x: number, y: number) =>
     !ko.labels.some((l) => dist(l.x, l.y, x, y) < Math.max(l.r, 24) + 16) &&
     !ko.plaques.some((p) => Math.abs(p.x - x) < 80 && Math.abs(p.y - y) < 26) &&
@@ -525,18 +537,15 @@ function landmarks(map: MapDef, gr: Ground, ko: Keepout, coast: CoastPoint[][], 
     !ko.sites.some((s) => dist(s.x, s.y, x, y) < 34) &&
     !ko.passes.some((p) => dist(p.x, p.y, x, y) < 56) &&
     !ko.laneEnds.some((e) => dist(e.x, e.y, x, y) < 34) &&
-    !rivers.some((r) => {
-      for (let i = 0; i < r.length; i += 2) if (dist(r[i]!, r[i + 1]!, x, y) < 12) return true;
-      return false;
-    });
+    !nearRiver(x, y);
   // Spread them out: about the spacing of `want` points over the land, at most.
   let landCells = 0;
   for (const ch of g.biome.data) if (ch !== "o" && ch !== "O") landCells++;
   const spacing = Math.max(160, Math.sqrt((landCells * g.biome.cellSize * g.biome.cellSize) / want) * 0.7);
   // Candidates: biome squares (seeded order) and, for lighthouses, coast points facing open water.
+  // (Land squares only: the sea is most of the grid on island maps.)
   const cells: { x: number; y: number }[] = [];
-  const { cols, rows, cellSize } = g.biome;
-  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) cells.push({ x: (c + 0.5) * cellSize, y: (r + 0.5) * cellSize });
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (!gr.water((c + 0.5) * cellSize, (r + 0.5) * cellSize)) cells.push({ x: (c + 0.5) * cellSize, y: (r + 0.5) * cellSize });
   rng.shuffle(cells);
   const shore = rng.shuffle(coast.flat().map((p) => ({ x: p.x - p.nx * 9, y: p.y - p.ny * 9 })));
   const out: Scenery["landmarks"] = [];
@@ -589,12 +598,28 @@ function forests(map: MapDef, gr: Ground, seed: string, hidden: Set<number>): Pi
       if (clearings.some((k) => dist(k.x, k.y, x, y) < 70)) continue;
       clearings.push({ x, y, r: 11 + (glade(x + 31, y - 17) - 0.5) * 6 });
     }
+  // Only trees in a forest (many trees close by) change kind: lone trees in fields keep the one they were given.
+  const B = 32;
+  const trees = new Map<number, { x: number; y: number }[]>();
+  const bkey = (bx: number, by: number) => (bx + 4096) * 8192 + (by + 4096);
+  for (const d of g.decorations) {
+    if (d.kind !== "tree-conifer" && d.kind !== "tree-broadleaf") continue;
+    const k = bkey(Math.floor(d.x / B), Math.floor(d.y / B));
+    (trees.get(k) ?? trees.set(k, []).get(k)!).push(d);
+  }
+  const inForest = (x: number, y: number) => {
+    let n = 0;
+    const bx = Math.floor(x / B), by = Math.floor(y / B);
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) for (const t of trees.get(bkey(bx + dx, by + dy)) ?? []) if (dist(t.x, t.y, x, y) < 28) n++;
+    return n >= 8;
+  };
   g.decorations.forEach((d, i) => {
     if (d.kind !== "tree-conifer" && d.kind !== "tree-broadleaf") return;
     if (clearings.some((k) => dist(k.x, k.y, d.x, d.y) < k.r * 1.3)) {
       hidden.add(i);
       return;
     }
+    if (!inForest(d.x, d.y)) return;
     // Pines on high ground and in the north; the line between wobbles with the noise.
     const north = 1 - d.y / g.height;
     const score = gr.height(d.x, d.y) * 1.6 + north * 0.7 + (mix(d.x, d.y) - 0.5) * 0.9;
@@ -615,8 +640,14 @@ export function sceneryFor(map: MapDef): Scenery {
   const coast = coastPoints(map, gr, 6);
   const hidden = new Set<number>();
   // The chains replace the scattered peaks inside ranges (peaks on high ground outside a range stay).
+  const rangeBoxes = g.mountains.map((m) => {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const r of m.rings)
+      for (let i = 0; i < r.length; i += 2) (x0 = Math.min(x0, r[i]!)), (x1 = Math.max(x1, r[i]!)), (y0 = Math.min(y0, r[i + 1]!)), (y1 = Math.max(y1, r[i + 1]!));
+    return { m, x0, y0, x1, y1 };
+  });
   g.decorations.forEach((d, i) => {
-    if (d.kind === "peak" && g.mountains.some((m) => insideRings(m.rings, d.x, d.y))) hidden.add(i);
+    if (d.kind === "peak" && rangeBoxes.some((b) => d.x >= b.x0 && d.x <= b.x1 && d.y >= b.y0 && d.y <= b.y1 && insideRings(b.m.rings, d.x, d.y))) hidden.add(i);
   });
   const lm = landmarks(map, gr, ko, coast, seeded(`${seed}|landmarks`));
   // Landmarks stand in the open: nothing drawn right on top of them.

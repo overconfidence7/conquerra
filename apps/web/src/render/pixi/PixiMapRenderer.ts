@@ -10,6 +10,7 @@ import { InfoLayer } from "./info";
 import { MarkerLayer } from "./markers";
 import { ReplayLayer } from "./replayLayer";
 import type { ReplayFrame } from "../../replay/timeline";
+import { sceneryFor } from "./scenery";
 import { WorldLayer } from "./world";
 
 /** How long the fog takes to lift off newly seen land (or settle on land you lost sight of). */
@@ -104,6 +105,8 @@ class PixiMapRenderer implements MapRenderer {
       this.steps[name] = Math.round(performance.now() - t);
       t = performance.now();
     };
+    // The art and fonts start downloading straight away; the WebGL set-up and the scenery happen while they arrive.
+    const loading = Promise.all([ArtBook.load(), fontsReady()]);
     await this.app.init({
       resizeTo: host,
       background: "#173a5c",
@@ -122,7 +125,9 @@ class PixiMapRenderer implements MapRenderer {
     this.app.stage.interactiveChildren = false;
 
     mark("webgl");
-    [this.art] = await Promise.all([ArtBook.load(), fontsReady()]);
+    const scenery = sceneryFor(ctx.map);
+    mark("scenery");
+    [this.art] = await loading;
     if (this.destroyed) return;
     mark("artAndFonts");
     this.bank = new TextureBank(this.art);
@@ -130,7 +135,7 @@ class PixiMapRenderer implements MapRenderer {
     const phone = Math.min(screen.width, screen.height) < 700;
     const budget = phone ? 8e6 : 14e6;
     const ppu = Math.min(2.5, Math.sqrt(budget / (g.width * g.height)));
-    this.world = new WorldLayer(this.app.renderer, ctx.map, this.art, { ppu });
+    this.world = new WorldLayer(this.app.renderer, ctx.map, this.art, { ppu }, scenery);
     mark("world");
     this.info = new InfoLayer(ctx.map, this.bank);
     this.info.onRealms = (realms) => this.world.setOwners(realms);

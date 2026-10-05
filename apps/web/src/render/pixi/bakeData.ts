@@ -168,31 +168,36 @@ export function auxCanvases(g: MapGeometry, ppu = 1, glades: readonly { x: numbe
     }
   }
   const smooth = boxBlur(height, w, h, Math.max(1, Math.round(5 * ppu)), 2);
+  // Forest glades: each one painted straight into its own small patch (a few lumpy blobs with soft edges), so a
+  // handful of glades never costs a whole-map image and blur.
   let glade: Float32Array | null = null;
   if (glades.length) {
-    const c = makeCanvas(w, h);
-    const ctx = c.getContext("2d", { willReadFrequently: true })!;
-    ctx.scale(ppu, ppu);
-    ctx.fillStyle = "#fff";
-    for (const k of glades) {
-      // A lumpy glade: a few overlapping blobs with ragged edges (the same every time for the same spot).
-      let seed = Math.round(k.x * 7 + k.y * 13) >>> 0 || 1;
-      const rnd = () => ((seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296);
-      for (let b = 0; b < 3; b++) {
-        const a0 = rnd() * Math.PI * 2, off = b ? k.r * (0.5 + rnd() * 0.5) : 0;
-        const cx = k.x + Math.cos(a0) * off, cy = k.y + Math.sin(a0) * off * 0.7, r0 = k.r * (b ? 0.55 + rnd() * 0.3 : 0.9);
-        ctx.beginPath();
-        for (let a = 0; a < 14; a++) {
-          const r = r0 * (0.78 + rnd() * 0.44);
-          ctx.lineTo(cx + Math.cos((a * Math.PI) / 7) * r, cy + Math.sin((a * Math.PI) / 7) * r);
-        }
-        ctx.fill();
-      }
-    }
-    const px = ctx.getImageData(0, 0, w, h).data;
     glade = new Float32Array(w * h);
-    for (let i = 0; i < glade.length; i++) glade[i] = px[i * 4 + 3]! / 255;
-    glade = boxBlur(glade, w, h, Math.max(1, Math.round(2 * ppu)), 2);
+    for (const k of glades) {
+      let seed = Math.round(k.x * 7 + k.y * 13) >>> 0 || 1;
+      const rnd = () => (seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296;
+      const blobs = Array.from({ length: 3 }, (_, b) => {
+        const a0 = rnd() * Math.PI * 2, off = b ? k.r * (0.5 + rnd() * 0.5) : 0;
+        return { x: k.x + Math.cos(a0) * off, y: k.y + Math.sin(a0) * off * 0.7, r: k.r * (b ? 0.55 + rnd() * 0.3 : 0.9), wob: rnd() * 6.28, amp: 0.12 + rnd() * 0.1 };
+      });
+      const reach = k.r * 2.2;
+      const x0 = Math.max(0, Math.floor((k.x - reach) * ppu)), x1 = Math.min(w - 1, Math.ceil((k.x + reach) * ppu));
+      const y0 = Math.max(0, Math.floor((k.y - reach) * ppu)), y1 = Math.min(h - 1, Math.ceil((k.y + reach) * ppu));
+      const soft = 2.5;
+      for (let py = y0; py <= y1; py++)
+        for (let px = x0; px <= x1; px++) {
+          const mx = (px + 0.5) / ppu, my = (py + 0.5) / ppu;
+          let v = 0;
+          for (const b of blobs) {
+            const dx = mx - b.x, dy = my - b.y;
+            // A ragged edge: the radius wobbles round the blob.
+            const r = b.r * (1 + b.amp * Math.sin(Math.atan2(dy, dx) * 5 + b.wob));
+            v = Math.max(v, Math.min(1, Math.max(0, (r - Math.hypot(dx, dy)) / soft + 0.5)));
+          }
+          const i = py * w + px;
+          if (v > glade[i]!) glade[i] = v;
+        }
+    }
   }
   return { ppu, width: w, height: h, aux1: pack(w, h, land, landBlur, smooth), aux2: pack(w, h, range, rangeBlur, glade) };
 }

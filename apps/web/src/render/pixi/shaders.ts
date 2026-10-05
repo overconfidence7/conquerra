@@ -230,8 +230,11 @@ void main() {
   vec4 own = texture(uOwner, mu);
   if (own.a > 0.004) {
     vec3 h = own.rgb / own.a;
-    float inside = texture(uOwnerBlur, mu).a / own.a;
-    float edge = clamp((1.0 - inside) * 2.4, 0.0, 1.0);
+    // How far this pixel is from the realm's edge: the blurred copy has less coverage near land nobody holds (or
+    // water), and other Houses' colours mixed in near their land.
+    vec4 bl = texture(uOwnerBlur, mu);
+    float away = (1.0 - bl.a) + length(bl.rgb - h * bl.a) * 2.5;
+    float edge = clamp(away * 2.4, 0.0, 1.0);
     c = houseTint(c, h, own.a * max(uTint, edge * uWash));
   }
   // Fade the map's outer edge into the open sea drawn beyond it, so the edge of the painting never shows.

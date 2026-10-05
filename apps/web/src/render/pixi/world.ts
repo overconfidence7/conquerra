@@ -100,11 +100,13 @@ export class WorldLayer {
     map: MapDef,
     private art: ArtBook,
     readonly opts: WorldOptions,
+    /** Worked out ahead (the renderer does it while the art downloads); otherwise here. */
+    scenery?: Scenery,
   ) {
     const t0 = performance.now();
     const g = (this.g = map.geometry!);
-    this.scenery = sceneryFor(map);
-    let t = this.step("scenery", t0);
+    this.scenery = scenery ?? sceneryFor(map);
+    let t = this.step("sceneryInWorld", t0);
     // The masks are soft anyway: about a million pixels is plenty, so big maps use a little less than 1 per unit.
     this.aux = auxCanvases(g, Math.min(1, Math.sqrt(1.1e6 / (g.width * g.height))), this.scenery.clearings);
     t = this.step("masks", t);

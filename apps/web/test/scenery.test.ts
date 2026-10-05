@@ -95,3 +95,13 @@ describe("painted scenery (ranges, cliffs, bridges, gates, landmarks, forests)",
     expect([...kinds].sort()).toEqual(["stone", "wood"]);
   });
 });
+
+describe("forests on the art test bench", () => {
+  it("lone trees keep their kind (only trees inside a forest become pines or broadleaf by height and north)", async () => {
+    const { spriteSheetMap } = await import("../src/lab/bench/benchMaps");
+    const map = spriteSheetMap();
+    expect(sceneryFor(map).treeKind.size).toBe(0);
+    // ...while real forests do get the mix.
+    expect(sceneryFor(maps.greatmarch!).treeKind.size).toBeGreaterThan(100);
+  });
+});

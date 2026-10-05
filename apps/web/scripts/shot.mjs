@@ -1,6 +1,8 @@
 /**
  * Quick look at a real map in the game (dev helper): start a game, zoom, save a screenshot.
  *   node apps/web/scripts/shot.mjs <mapId> <out.png> [far|mid|near|<px>] [x,y] [fog on|off] [tactical]
+ * LAB=1: draw the map's recipe (packages/mapgen/src/configs.ts) in the map lab instead of starting a game (for a
+ * build that doesn't have the map in its lobby yet). Capitals for 6 players.
  * Needs the built game running (`pnpm build`, `pnpm --filter web preview`), or MAP_URL.
  */
 import puppeteer from "puppeteer-core";
@@ -14,10 +16,19 @@ const browser = await puppeteer.launch({ executablePath: CHROME, headless: true,
 const page = await browser.newPage();
 await page.setViewport({ width: Number(process.env.W ?? 1440), height: Number(process.env.H ?? 900), deviceScaleFactor: 1 });
 page.on("pageerror", (e) => console.log("page error:", e.message));
-await page.goto(URL, { waitUntil: "networkidle0" });
-await page.evaluate((t) => localStorage.setItem("conquerra.tactical", t ? "1" : "0"), !!tactical);
-await page.evaluate((m, fog) => window.__conquerraStore.getState().setLobby({ mapId: m, fog: fog !== "off" }), mapId, fog);
-await page.evaluate(() => [...document.querySelectorAll("button")].find((x) => x.textContent?.trim() === "Start").click());
+if (process.env.LAB) {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync(new globalThis.URL("../../../packages/mapgen/src/configs.ts", import.meta.url), "utf8");
+  const line = src.split(/\r?\n/).find((l) => l.includes(`id: "${mapId}"`));
+  const recipe = Function(`return (${line.trim().replace(/,$/, "")})`)();
+  await page.goto(`${URL}?lab=maps&recipe=${encodeURIComponent(JSON.stringify(recipe))}&full=1`, { waitUntil: "networkidle0" });
+  await page.waitForFunction(() => window.__labMade, { timeout: 600000, polling: 200 });
+} else {
+  await page.goto(URL, { waitUntil: "networkidle0" });
+  await page.evaluate((t) => localStorage.setItem("conquerra.tactical", t ? "1" : "0"), !!tactical);
+  await page.evaluate((m, fog) => window.__conquerraStore.getState().setLobby({ mapId: m, fog: fog !== "off" }), mapId, fog);
+  await page.evaluate(() => [...document.querySelectorAll("button")].find((x) => x.textContent?.trim() === "Start").click());
+}
 await page.waitForFunction(() => { const s = window.__conquerraMap?.stats?.(); return s && s.firstMapMs > 0 && s.tilesBaked === s.tileCount; }, { timeout: 120000, polling: 100 });
 if (zoom === "fit") await page.evaluate(() => window.__conquerraMap.fit(false));
 else
