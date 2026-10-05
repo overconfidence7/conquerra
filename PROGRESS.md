@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Session 8 is done. Next: session 9 fixes what Nate's play test found (a combat bug, recruiting, culture, map clarity, buildings), then 10 the map lab and bigger maps, then 11 a big visual upgrade.**
+**Phase: M3 (depth and balance). Session 9 (Nate's play-test fixes) is part done: 9b and 9c finish it. Then 10 the map lab and bigger maps, then 11 a big visual upgrade.**
 
 Claude Code sessions completed: **8** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
@@ -332,3 +332,19 @@ Nate played a full game (against Recruit bots; Captains next). What he found, an
 - 16: balance pass
 
 Next prompt: `docs/prompts/claude-code-session-09.md` (run it locally). A fresh orchestrator prompt comes after session 9.
+
+### Oct 5: Claude Code session 9, part 1 (stopped at the usage limit)
+- **Done and pushed:**
+  - **The combat bug is fixed.** Luck is now rolled on the full expected losses, so an overwhelming attack always wins: lopsided attacks that failed went from 5.3% to 0.
+  - **Every order that didn't happen says which one and why**, in plain words. A failed attack says why the defence held ("They held: hills and a fort").
+  - **Settings → Save this game** makes a small file that `pnpm sim --replay` plays back exactly.
+  - **Recruiting:** at your capital, a barracks, or anywhere in a province you hold completely. You choose how many with the same chips as attacks, and every place you can recruit lights up. A typical turn is still 6 taps.
+  - **Culture defends:** +5% per level. Half done: not yet tuned or shown on the map.
+- **What the orchestrator found:** the jump in runaways comes mostly from the combat fix. Attacks finally work, so games are faster (4 players: 23.9 → about 19 turns) and more decisive (one player on half the map by turn 10: 54% → 80%).
+- **Nate's calls:**
+  - Runaways are a **bot strategy** problem, not an engine or chaining one. The bots should account for a player pulling ahead. The "gang up on the leader" behaviour moves up into session 9b, along with bots defending against a fast attacker.
+  - **Game length in real time:** his game against Recruit bots took about 30 minutes, which is too short. His targets are **single player 45–90 minutes** and **a live online game 2 hours or more**. No rule change now: cards, generals, diplomacy, bigger maps and smarter opponents will all lengthen games. The sim write-ups will start estimating real time.
+- **The rest of session 9 is split in two:**
+  - **9b:** finish culture (tune it, show it), bots gang up and defend, the sim write-up, deploy
+  - **9c:** map clarity and buildings
+- Next prompt: `docs/prompts/claude-code-session-09b.md`, then `claude-code-session-09c.md` (both run locally).
