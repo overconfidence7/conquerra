@@ -18,6 +18,24 @@
 - **Numbers after the rebuild:** Embervale: shortest land border 24.0 (was 4.4), none under a quarter of typical, passes 36, 42, 45 (were 12, 23). Greatmarch: shortest 22.9 (was 0.6), passes 29–50 (were 9–31).
 - **Same seeds, same land:** both maps keep their coasts, lakes, islands and ranges (Embervale's config now names the seed its v1 map came from, `embervale#2`). Place names changed, and now come from their own random sequence, so later changes to shapes won't rename places again.
 
+## Shapes and sizes (session 10)
+- **A `shape` knob** in the recipe (`MapGenOptions`), in `packages/mapgen/src/shapes.ts`:
+  - `continent`: one rounded landmass (the default, and what Embervale and Greatmarch use, so they don't change)
+  - `archipelago`: many islands on a loose grid, so each has a neighbour across a short stretch of sea. Every island gets at least one sea lane (`islands` sets how many).
+  - `twinContinents`: two big landmasses with a channel between them, sea lanes across it, and sometimes a narrow land bridge (`landBridge`)
+  - `inlandSea`: land in a ring round a central sea, with an isle in the middle (`islands`)
+  - `crescent`: a curved landmass round a bay, with isles strung across the bay's mouth
+  - `mask`: the land grows inside a silhouette (`mask`: `dragon`, `shield` or `crown`, in `masks.ts`)
+- **How a shape works:** the shape is drawn as a smooth field (deep inside = high, the coast = 0, the sea = low), and the same coast noise as before bends it into bays and headlands (`roughness`, 0–1). Parts thinner than about one territory are trimmed first, so tips and necks don't turn into slivers. Each shape draws its random numbers from its own sequence (`seed|shape`), and only uses exact arithmetic, so the same seed gives the same map everywhere.
+- **Water share:** a shape sets its own (the sea around and inside it) unless the recipe gives `water`.
+- **Capitals and ranges** may go on every landmass of 3 or more territories (not just the biggest), so islands and both twins get capitals and mountains.
+- **Adding a silhouette:** draw an outline in `masks.ts`, or turn a black-and-white picture into one: `pnpm --filter @conquerra/mapgen mask picture.png wolf "The Wolf"` (black is land), then add the line it prints.
+- **Sizes:** 40 (the quick map) to 120 territories. `recipeFor(shape, size, seed)` (`recipes.ts`) fills in sensible knobs: about 4.5 territories a province, and more lakes, rivers, ranges, sea lanes and choke points as maps grow. Who a size suits: 60 → 2–6 players (4–6 recommended), 80 → 2–8 (4–8), 100 → 2–10 (6–10), 120 → 2–10 (8–10). Every player count from 2 up gets a fair capital layout.
+- **Ids past 100:** maps over 100 territories number them `t000`–`t119`.
+- **Hairline fix, last resort:** when two territories meet at a point squeezed between mountains (or at the coast) and no neighbour can take the corner, that one cell now joins the range (or becomes a little cove). Before, the maker gave up and tried the next seed; big maps hit this often. Maps that never needed it come out exactly as before.
+- **Trying many seeds:** `pnpm --filter @conquerra/mapgen try-maps --shapes archipelago,crescent --sizes 60,120 --seeds 5 --out docs/maps/try` reports how many pass, how long they take and why attempts were rejected, and saves a picture of each.
+- **How long it takes** (this laptop, 4 seeds each, including rejected tries): 60 territories 0.3–1.6 s; 80: 0.5–2.7 s; 100: 1.3–3 s (crescent about 11 s); 120: 2–8.5 s (crescents and silhouettes need the most retries; worst single map about 23 s).
+
 ## Coordinates
 - Map units, origin top-left, y down. `geometry.width` × `geometry.height` (Embervale 1133 × 781, Greatmarch 1577 × 1088).
 - Lines and outlines are flat number lists `[x0, y0, x1, y1, …]`, rounded to 0.1.

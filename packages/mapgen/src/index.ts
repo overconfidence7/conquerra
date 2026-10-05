@@ -12,9 +12,10 @@ import { buildArcs, ringsOf, tidy } from "./outline";
 import { labelLine, labelPoint, placeDecorations, siteIn, CASTLE_CLEAR, type Spot } from "./places";
 import { makeProvinces } from "./provinces";
 import { makeRivers } from "./rivers";
+import { makeShapeField, type LandShape } from "./shapes";
 import { makeTerritories } from "./territories";
 import { assignBiomes, assignTerrain, buildGrids, carveRivers, cellHeights, toBase64 } from "./terrain";
-import { dist, r1 } from "./util";
+import { clamp, dist, r1 } from "./util";
 
 export { checkMap, borderLengths, MIN_BORDER_CHECK, MIN_PASS_CHECK, chokePoints, shapeArea, fairness, allDistances, territoryIncome } from "./checks";
 export { fromBase64, TERRAIN_BIOMES } from "./terrain";
@@ -23,6 +24,9 @@ export { insideRings } from "./util";
 export { mapPreviewSvg } from "./preview";
 export { MAP_CONFIGS } from "./configs";
 export { applyRenames, type NameFile } from "./renames";
+export { LAND_SHAPES, SHAPE_NAMES, type LandShape } from "./shapes";
+export { allMasks, MASKS, IMAGE_MASKS, type MaskDef } from "./masks";
+export { recipeFor, SIZES, type Recipe } from "./recipes";
 
 /** Bump when a change to the map maker would change its output. */
 export const MAPGEN_VERSION = 2;
@@ -59,8 +63,20 @@ export interface MapGenOptions {
   rivers?: number;
   /** The map is rejected unless it has at least this many choke points (default 5). */
   minChokePoints?: number;
-  /** Width / height (default 1.45). */
+  /** Width / height (default 1.45, or the shape's own). */
   aspect?: number;
+  /** The land's overall shape (default "continent": one rounded landmass, as Embervale and Greatmarch). */
+  shape?: LandShape;
+  /** Which silhouette, for shape "mask" (see masks.ts). */
+  mask?: string;
+  /** Archipelago: how many islands. Inland sea and crescent: isles in the middle. */
+  islands?: number;
+  /** Twin continents: join them with a narrow land bridge (default: a coin toss). */
+  landBridge?: boolean;
+  /** How much the coast noise bends a shape, 0–1 (default about 0.5). Not used by "continent". */
+  roughness?: number;
+  /** Longest sea lane, in mesh cells (default 16; extra lanes up to 4 less). */
+  laneReach?: number;
   /** Return the first map even if it fails the checks (for looking at problems). */
   debug?: boolean;
   /** Where debug notes go (default: nowhere). */
@@ -103,10 +119,16 @@ export function generateMap(opts: MapGenOptions, rules: Rules): MapGenResult {
 function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number): MapDef {
   const rng = new Rng(seedRng(seed));
   const T = o.territories;
-  const waterShare = o.water ?? 0.38;
+  // A shape other than the original continent is drawn from its own random sequence, before anything else.
+  const shape =
+    o.shape && o.shape !== "continent"
+      ? makeShapeField({ shape: o.shape, territories: T, ...(o.mask ? { mask: o.mask } : {}), ...(o.islands !== undefined ? { islands: o.islands } : {}), ...(o.landBridge !== undefined ? { landBridge: o.landBridge } : {}) }, new Rng(seedRng(`${seed}|shape`)))
+      : null;
+  // A shape sets its own share of water (the sea around and between it) unless the recipe says otherwise.
+  const waterShare = o.water ?? (shape ? clamp(1 - shape.insideShare, 0.25, 0.8) : 0.38);
   const spacing = 14;
   const cells = (T * 70) / (1 - waterShare);
-  const aspect = o.aspect ?? 1.45;
+  const aspect = o.aspect ?? shape?.aspect ?? 1.45;
   const width = Math.round(Math.sqrt(cells * spacing * spacing * aspect));
   const height = Math.round((cells * spacing * spacing) / width);
   const mesh = buildMesh(rng, width, height, spacing);
@@ -119,6 +141,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
     lakes: o.lakes ?? 2,
     islandChains: o.islandChains ?? 1,
     islandCells: 70,
+    ...(shape ? { shape, roughness: o.roughness ?? 0.5 } : {}),
   });
   const water = land.water;
 
@@ -141,10 +164,14 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
     return s;
   })();
   const rock = new Uint8Array(N);
+  // Where ranges and capitals may go: the biggest landmass, or with a shape, every landmass of 3+ territories.
+  const landmasses = components(mesh, (c) => owner[c]! >= 0);
+  const mainCells = shape ? landmasses.filter((comp) => new Set(comp.map((c) => owner[c])).size >= 3).flat() : landmasses[0]!;
   const barriers = planBarriers(mesh, rng, owner, T, land.elev, (c) => frameSea[c] === 1, {
     ranges: o.mountainRanges ?? 2,
     straits: o.straits ?? 0,
     length: 0.6,
+    ...(shape ? { mainland: new Set(mainCells) } : {}),
   });
   o.log?.("barriers", barriers.map((b) => `${b.kind} cut ${b.cut.length} open ${b.open.length}`));
   const gaps = applyBarriers(mesh, owner, barriers, rock, water, MIN_PASS);
@@ -171,7 +198,18 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
 
   // No hairline borders: territories that barely touch stop touching (pass openings stay as they are).
   const openPairs = new Set(barriers.flatMap((b) => b.open));
-  const shallows = { canFill: (c: number) => water[c] === 1 && !rock[c] && !mesh.cellEdges[c]!.some((e) => mesh.edgeCellB[e] === -1), fill: (c: number) => (water[c] = 0), unfill: (c: number) => (water[c] = 1) };
+  const shallows = { canFill: (c: number) => water[c] === 1 && !rock[c] && !mesh.cellEdges[c]!.some((e) => mesh.edgeCellB[e] === -1), fill: (c: number) => (water[c] = 0), unfill: (c: number) => (water[c] = 1),
+    sink: (c: number) => {
+      const r = mesh.neighbors[c]!.find((m) => rock[m]);
+      if (r !== undefined) {
+        rock[c] = rock[r]!;
+        return () => void (rock[c] = 0);
+      }
+      if (!mesh.neighbors[c]!.some((m) => water[m] === 1 && !rock[m])) return null;
+      water[c] = 1;
+      return () => void (water[c] = 0);
+    },
+  };
   if (!fixHairlines(mesh, owner, new Set([...gaps.values()].flat()), MIN_BORDER, (k) => openPairs.has(k), shallows, o.log)) throw new Rejected("a hairline border couldn't be fixed");
 
   o.log?.("step", "4. Water bodies");
@@ -242,7 +280,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
     landAdj[a]!.push(b);
     landAdj[b]!.push(a);
   }
-  const lanes = makeSeaLanes(mesh, owner, (c) => water[c] === 1, T, landAdj, o.seaLanes ?? 2);
+  const lanes = makeSeaLanes(mesh, owner, (c) => water[c] === 1, T, landAdj, o.seaLanes ?? 2, o.laneReach ?? 16);
   for (const l of lanes) borderType.set(pairKey(l.a, l.b), "sea");
 
   o.log?.("step", "8. Provinces");
@@ -271,7 +309,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
   const order = Array.from({ length: T }, (_, t) => t).sort((a, b) => labels[a]!.y - labels[b]!.y || labels[a]!.x - labels[b]!.x);
   const newIndex = new Array<number>(T);
   order.forEach((t, i) => (newIndex[t] = i));
-  const tid = (t: number) => `t${String(newIndex[t]).padStart(2, "0")}`;
+  const tid = (t: number) => `t${String(newIndex[t]).padStart(T > 100 ? 3 : 2, "0")}`;
   // Names have their own random sequence, so a change to the shapes doesn't rename every place.
   const namer = new Namer(new Rng(seedRng(`${seed}|names`)));
   const tName = order.map(() => namer.territory());
@@ -302,7 +340,10 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
     });
   const base = draft();
   const dists = allDistances(base);
-  const mainland = new Set(components(mesh, (c) => owner[c]! >= 0)[0]!.map((c) => owner[c]!));
+  // Capitals stand on the mainland (with a shape: any landmass of 3+ territories, so islands and twin continents get theirs).
+  const mainland = new Set(
+    (shape ? components(mesh, (c) => owner[c]! >= 0).filter((comp) => new Set(comp.map((c) => owner[c])).size >= 3).flat() : components(mesh, (c) => owner[c]! >= 0)[0]!).map((c) => owner[c]!),
+  );
   const special = new Set(base.borders.filter((b) => b.type === "pass" || b.type === "sea").flatMap((b) => [b.a, b.b]));
   const candidates = order.filter((t) => mainland.has(t) && ["plains", "forest", "hills"].includes(terrain[t]!) && !special.has(tid(t))).map(tid);
   // Every capital stands on plains, so no capital starts with a defensive edge. Turning a slot into plains

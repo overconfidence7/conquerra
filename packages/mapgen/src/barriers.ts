@@ -37,6 +37,8 @@ export interface BarrierOptions {
   straits: number;
   /** Longest a range (each way from its middle) or strait can run before it reaches the coast, as a share of the map's shorter side. */
   length: number;
+  /** Cells where ranges and straits may start (default: the biggest landmass). */
+  mainland?: Set<number>;
 }
 
 interface TerritoryInfo {
@@ -81,7 +83,7 @@ export function planBarriers(
   const barriers: Barrier[] = [];
   const minDim = Math.min(mesh.width, mesh.height);
   const land = Array.from({ length: mesh.cells }, (_, c) => c).filter((c) => owner[c]! >= 0);
-  const mainland = new Set(components(mesh, (c) => owner[c]! >= 0)[0]);
+  const mainland = opts.mainland ?? new Set(components(mesh, (c) => owner[c]! >= 0)[0]);
 
   const tryOne = (kind: "rock" | "water"): Barrier | null => {
     // Where it starts: ranges on high ground, straits at the coast.

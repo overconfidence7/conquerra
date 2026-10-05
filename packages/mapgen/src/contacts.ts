@@ -58,7 +58,13 @@ export function fixHairlines(
   minLength: number,
   keep: (k: number) => boolean,
   /** Water next to a narrow neck of land that may be filled in to widen it (never mountain rock); `fill` makes it land. */
-  water: { canFill: (c: number) => boolean; fill: (c: number) => void; unfill: (c: number) => void },
+  water: {
+    canFill: (c: number) => boolean;
+    fill: (c: number) => void;
+    unfill: (c: number) => void;
+    /** Last resort: a land cell next to the sea or a mountain range may become a cove or join the range. Returns how to undo it, or null. */
+    sink?: (c: number) => (() => void) | null;
+  },
   log?: (...a: unknown[]) => void,
 ): boolean {
   const minCells = 6;
@@ -72,7 +78,7 @@ export function fixHairlines(
     return { bad, worst };
   };
   /** Moves that might fix the contact between two territories: [cell, new owner]. */
-  const movesFor = (k: number): [number, number][] => {
+  const movesFor = (k: number, coves = false): [number, number][] => {
     const edges = contactEdges(mesh, owner).get(k);
     if (!edges) return [];
     const a = owner[mesh.edgeCellA[edges[0]!]!]!, b = owner[mesh.edgeCellB[edges[0]!]!]!;
@@ -99,45 +105,68 @@ export function fixHairlines(
             seen.add(`${m}>${owner[cell]}`);
             out.push([m, owner[cell]!]);
           }
+        // Last resort (only when nothing else helps): where they meet at the coast, the meeting cell becomes a little cove.
+        // (Or, between two mountains, it joins the range.)
+        if (coves && water.sink && !fixed.has(cell) && !seen.has(`${cell}>-1`) && staysWhole(mesh, owner, owner[cell]!, cell, minCells)) {
+          seen.add(`${cell}>-1`);
+          out.push([cell, -1]);
+        }
       }
     return out;
   };
-  const apply = (cell: number, to: number) => {
-    if (owner[cell]! < 0) water.fill(cell);
+  /** Make the move; returns how to undo it (null if it can't be made). */
+  const apply = (cell: number, to: number): (() => void) | null => {
+    const from = owner[cell]!;
+    if (to < 0) {
+      const undoSink = water.sink?.(cell);
+      if (!undoSink) return null;
+      owner[cell] = -1;
+      return () => {
+        undoSink();
+        owner[cell] = from;
+      };
+    }
+    if (from < 0) water.fill(cell);
     owner[cell] = to;
+    return () => {
+      owner[cell] = from;
+      if (from < 0) water.unfill(cell);
+    };
   };
   const tryMove = ([cell, to]: [number, number], then: () => number): number => {
-    const from = owner[cell]!;
-    apply(cell, to);
+    const undo = apply(cell, to);
+    if (!undo) return Infinity;
     const r = then();
-    owner[cell] = from;
-    if (from < 0) water.unfill(cell);
+    undo();
     return r;
   };
   for (let round = 0; round < 200; round++) {
     const now = badness();
     if (!now.worst) return true;
-    const [k, len] = now.worst;
-    log?.("hairline", round, k, len.toFixed(1), now.bad.toFixed(1));
-    // The single move that helps most; if none helps, the best pair of moves (the second one fixing whatever is
-    // worst after the first).
+    // The shortest contact first. If nothing helps it, try the others, shortest first (fixing them can free it up).
+    const queue = [now.worst[0], ...[...contactLengths(mesh, owner)].filter(([k, l]) => l < minLength && !keep(k) && k !== now.worst![0]).sort((p, q) => p[1] - q[1] || p[0] - q[0]).map(([k]) => k)];
     let best: { moves: [number, number][]; bad: number } | null = null;
-    const consider = (moves: [number, number][], bad: number) => {
-      if (bad < now.bad - 1e-9 && (!best || bad < best.bad - 1e-9)) best = { moves, bad };
-    };
-    const first = movesFor(k);
-    for (const m of first) consider([m], tryMove(m, () => badness().bad));
-    if (!best)
-      for (const m1 of first)
-        tryMove(m1, () => {
-          const mid = badness();
-          if (mid.worst) for (const m2 of movesFor(mid.worst[0])) if (m2[0] !== m1[0]) consider([m1, m2], tryMove(m2, () => badness().bad));
-          return 0;
-        });
-    if (!best) {
+    for (const [i, k] of [...queue, ...queue].entries()) {
+      const coves = i >= queue.length;
+      log?.("hairline", round, k, now.bad.toFixed(1));
+      // The single move that helps most; if none helps, the best pair of moves (the second one fixing whatever is
+      // worst after the first).
+      const consider = (moves: [number, number][], bad: number) => {
+        if (bad < now.bad - 1e-9 && (!best || bad < best.bad - 1e-9)) best = { moves, bad };
+      };
+      const first = movesFor(k, coves);
+      for (const m of first) consider([m], tryMove(m, () => badness().bad));
+      if (!best)
+        for (const m1 of first)
+          tryMove(m1, () => {
+            const mid = badness();
+            if (mid.worst) for (const m2 of movesFor(mid.worst[0], coves)) if (m2[0] !== m1[0]) consider([m1, m2], tryMove(m2, () => badness().bad));
+            return 0;
+          });
+      if (best) break;
       log?.("stuck", k);
-      return false;
     }
+    if (!best) return false;
     for (const [cell, to] of (best as { moves: [number, number][] }).moves) apply(cell, to);
   }
   return false;

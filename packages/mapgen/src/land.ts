@@ -1,5 +1,6 @@
 import type { Rng } from "@conquerra/engine";
 import type { Mesh } from "./mesh";
+import type { ShapeField } from "./shapes";
 import { clamp, dist, Noise, randomDirection } from "./util";
 
 export interface LandOptions {
@@ -13,6 +14,10 @@ export interface LandOptions {
   islandChains: number;
   /** Rough island size, in cells. */
   islandCells: number;
+  /** The land's overall shape (absent: the original rounded continent). */
+  shape?: ShapeField | null;
+  /** With a shape: how much the coast noise bends it (0 = the bare shape, 1 = mostly noise). */
+  roughness?: number;
 }
 
 export interface Land {
@@ -72,9 +77,16 @@ export function makeLand(mesh: Mesh, rng: Rng, opts: LandOptions): Land {
     // Higher towards the middle so the land is a continent ringed by sea; noise makes bays and peninsulas.
     const edge = Math.min(x, W - x, y, H - y) / (0.5 * minDim);
     // A rounded continent (an ellipse filling most of the map) roughened by noise into bays and peninsulas.
-    const ux = (x - W / 2) / (W * 0.44), uy = (y - H / 2) / (H * 0.44);
-    const shape = 1 - (ux * ux + uy * uy);
-    let e = 0.62 * shapeNoise.fbm(x, y, minDim * 0.32, 5) + 0.38 * shape;
+    let e: number;
+    if (opts.shape) {
+      // A chosen shape: its field (about 0 at the coast) bent by the same coast noise.
+      const rough = opts.roughness ?? 0.5;
+      e = rough * shapeNoise.fbm(x, y, minDim * 0.32, 5) + (1 - rough) * (0.5 + 0.5 * opts.shape.at((x / W) * opts.shape.aspect, y / H));
+    } else {
+      const ux = (x - W / 2) / (W * 0.44), uy = (y - H / 2) / (H * 0.44);
+      const shape = 1 - (ux * ux + uy * uy);
+      e = 0.62 * shapeNoise.fbm(x, y, minDim * 0.32, 5) + 0.38 * shape;
+    }
     for (const d of dents) {
       const u = dist(x, y, d.x, d.y) / d.r;
       if (u < 1) e -= d.depth * (1 - u * u) * (1 - u * u);

@@ -30,6 +30,8 @@ export function makeSeaLanes(
   territories: number,
   landAdj: number[][],
   extra: number,
+  /** Longest lane, in mesh cells (the extra lanes: up to 4 less). */
+  reach = 16,
 ): SeaLane[] {
   const sp = mesh.spacing;
   const coastal: number[][] = Array.from({ length: territories }, () => []);
@@ -39,7 +41,7 @@ export function makeSeaLanes(
   }
   // Candidate lanes: for each pair of coastal territories, their closest coastal cells, if the water between is clear.
   const candidates: SeaLane[] = [];
-  const maxLen = sp * 16;
+  const maxLen = sp * reach;
   for (let a = 0; a < territories; a++)
     for (let b = a + 1; b < territories; b++) {
       if (landAdj[a]!.includes(b)) continue;
@@ -86,7 +88,7 @@ export function makeSeaLanes(
   for (let k = 0; k < extra; k++) {
     let best: SeaLane | null = null, bestScore = -Infinity;
     for (const l of candidates) {
-      if (usedT.has(l.a) || usedT.has(l.b) || l.length > sp * 12) continue;
+      if (usedT.has(l.a) || usedT.has(l.b) || l.length > sp * (reach - 4)) continue;
       const g = graphDist(adj, l.a)[l.b]!;
       if (g >= 0 && g < 3) continue;
       const tooClose = lanes.some((o) => dist(o.pts[0], o.pts[1], l.pts[0], l.pts[1]) < sp * 6);
