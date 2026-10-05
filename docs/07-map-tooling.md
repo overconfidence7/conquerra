@@ -113,7 +113,19 @@ Moved from session 9 to 10, because Nate's play-test fixes come first. Nate's di
 
 **How it works:** the first three parts are made-up maps (plain map data built in `apps/web/src/lab/bench/benchMaps.ts` from a grid of tiles), drawn by the game's own renderer exactly like a real map, so new art is judged at true size and with the real blending, borders and markers. The renderer has no special cases for them.
 
-**Saving the set:** `pnpm build`, `pnpm --filter web preview`, then `pnpm map-check bench`. It saves 20 pictures to `docs/art/screens/bench/` (each part at Far, Mid and Near, close-ups of the trees, peaks, buildings, scaffolds, army, the river and coast, plus `redo-list.png` and `house-colours.png`). The set taken in session 10 is session 11's "before"; run it again after the new art and compare side by side.
+**Saving the set:** `pnpm build`, `pnpm --filter web preview`, then `pnpm map-check bench`. It saves 20 pictures to `docs/art/screens/bench-after/` (each part at Far, Mid and Near, close-ups of the trees, peaks, buildings, scaffolds, army, the river and coast, plus `redo-list.png` and `house-colours.png`). Session 10's "before" set stays in `docs/art/screens/bench/` (`BENCH_OUT=bench` retakes it). `BENCH_PARTS=houses,symbols` takes just those parts, and `BENCH_OUT=<folder>` saves somewhere else (handy while tuning).
+
+**Session 11 additions:**
+- The redo sheet shows every batch 3 piece at 3x game size on a ground it goes on, or "not in yet: today's drawing" while it's missing. The "Trees at 4x" row is no longer cut off.
+- Side-by-side before/after pictures of every bench shot, plus Greatmarch and the Ringsea at Far and Mid, are in `docs/art/screens/compare/`.
+- `node apps/web/scripts/shot.mjs <map> <out.png> [far|mid|near|<px>] [x,y]` takes a quick look at a real map in a game (`NOUI=1` hides the menus, `SELECT=1` selects your capital, `FOLD=1` folds the desktop dock, `LAB=1` draws the map's recipe in the lab instead).
+- `node apps/web/scripts/tap-count.mjs` counts the taps for a basic turn on a 384 px phone.
+
+## When art batch 3 arrives (it hadn't by session 11)
+1. Nate runs `docs/prompts/gemini-art-session-03.md`; the files land in `art/incoming/` (old versions of redone files in `art/incoming/_old/`).
+2. `pnpm art:import`. The report should list no unknown files except `mask-dragon.png` (the dragon outline is a map shape, not art).
+3. `pnpm build`, `pnpm --filter web preview`, then `pnpm map-check bench`: every new piece shows up on the bench's redo sheet and in place on the map. Nothing else needs changing: each piece already has its placement rule and falls back to today's drawing until it arrives.
+4. **Wyrmland's dragon:** `pnpm --filter @conquerra/mapgen mask ../../art/incoming/mask-dragon.png dragon "Dragon"`, then swap the hand-drawn `dragon` in `packages/mapgen/src/masks.ts` for the new one, try seeds for Wyrmland's recipe in the lab (shape Silhouette, 120 territories, 2 ranges) until it reads as a dragon at Far and passes every check, show Nate the Far picture, then update its `seed` in `configs.ts`, `pnpm build-maps`, and run 200-game sims at 6, 8 and 10 players.
 
 ## How to make a seed an official map
 1. In the lab, find a map you like (the gallery helps) and make sure every check passes and "Sim this map" looks right at the player counts it suits.

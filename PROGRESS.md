@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–10 are done. Next: art batch 3 in Gemini (`docs/prompts/gemini-art-session-03.md`), then session 11: the big visual upgrade, judged on the art test bench, and the six new maps made official.**
+**Phase: M3 (depth and balance). Sessions 7–11 are done. Next: art batch 3 in Gemini (`docs/prompts/gemini-art-session-03.md`; it hadn't been made by session 11, and every piece is ready to drop in), Nate's play test of session 11, then session 12: generals, captured generals, the Fallen.**
 
-Claude Code sessions completed: **10** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
+Claude Code sessions completed: **11** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
 ---
 
@@ -450,4 +450,35 @@ No new art had arrived and Nate's session 9 play test isn't in yet, so there was
 - **Next:**
   1. **Art batch 3** (about 20 images): Nate runs `docs/prompts/gemini-art-session-03.md` in a Claude chat that drives Gemini. It covers the redone pines and the hills, rock and snow textures, the dragon outline, mountain ridges, sea cliffs, a pass gate, scaffolding, a wooden bridge, four landmarks and a plaque frame. The list is at the end of `docs/art/asset-list-and-prompts.md`.
   2. **Session 11** (`docs/prompts/claude-code-session-11.md`, run it locally): the new art on the map, the six new maps in the lobby, the renderer pass (House colours, forests, a softer Far view), a roomier desktop layout, and before/after pictures on the bench.
+
+### Oct 5: Claude Code session 11 (M3: the big visual upgrade, and six new official maps)
+**Art batch 3 hadn't been made yet** (nothing new in `art/incoming/` or Downloads), so every new piece was built and placed by its rule, and keeps today's drawing until `pnpm art:import` brings the art in. There were no play-test notes to fix first. All five parts are done, each committed and pushed.
+- **Six new official maps.** The Shattered Isles, the Twin Realms, the Moon Coast, the Ringsea, the Crownlands and Wyrmland are in the lobby (eight maps), with recipes exactly as in `docs/maps/candidates.md`.
+  - **Wyrmland keeps today's hand-drawn dragon** (seed `mask-120-2`), suggested for 6–10 players. It gets rebuilt from Gemini's outline when batch 3 arrives (the steps are in `docs/07-map-tooling.md`).
+  - Wyrmland, 200 Captain games each: **6 players 32.9 turns** (84% within 40), **8 players 36.9** (75%), **10 players 39.7** (61%; 6% reached the 60-turn cap).
+  - The Crownlands came out with no rivers (the crown's land never gives one a long enough downhill run). It passes every check, it's just drier.
+  - **Each map loads only when a game on it starts**, so the game's start-up didn't grow: 442.6 KB before, 445.7 KB after the whole session (+3.1 KB). Embervale and Greatmarch are cached for offline play as before; the newer maps are cached the first time they're played.
+  - Tests check every official map is exactly what its recipe makes and passes the checks, that Embervale and Greatmarch are unchanged, and that the lobby lists eight maps.
+- **Two small fixes:** the bench's redo sheet now shows its "Trees at 4x" row, and a province plaque at the map's edge slides in to stay on screen (it was cutting off the dragon picture's left side).
+- **New painting, placed by rules from the map data** (`scenery.ts`; seeded from the map, no map file changes, tested on all eight maps):
+  - **Mountain ranges read as ranges:** chains along each range's middle line, wide ridges where it runs across the screen, stacked peaks where it runs up and down, and every pass left open with its road. Today's peaks stand in for the ridge art.
+  - **A gatehouse on every pass road** (the gate symbol then shows at Far).
+  - **Sea cliffs** on straight, high, open stretches of coast, never by a sea lane's landing, and **a soft painted surf line** on every coast (that part is already visible).
+  - **Bridges at river crossings:** stone ones now (there were none before), wooden ones on streams and farmland once that art is in.
+  - **A few landmarks per map** (about one per 15 territories): lighthouses, windmills, standing stones and ruins, never on a capital, a building site, a pass, or under a pill or plaque.
+  - The scaffold art over buildings being built, and the plaque frame under province plaques.
+- **The painting pass:**
+  - **House colours never muddy the ground:** the tint is now painted by the map's shader, which greys the ground's own colour and then lays the House colour on at its own brightness. Gold stays gold on grass, and red stays red on forest. Every House is checked on every ground on the bench.
+  - **Forests:** pines higher up and in the north, broadleaf lower and in the south, with a few open glades.
+  - **A softer, more painterly Far view** (one painted atlas), with borders, pills and plaques still crisp.
+  - **Tactical view** checked: truly flat House colours.
+- **Desktop menus:** one compact panel for the selected territory (bottom left, only as tall as its contents), the right column for the players and your Leader, and a dock (minimap and orders) that folds to a slim bar. The seal and the timer always show. There's now one type scale, and the round buttons' labels are bigger. **The phone is unchanged: a basic turn is still 6 taps on a 384 px screen.**
+- **Phone performance** (emulated mid-range phone, CPU slowed 4x, measured back to back with the old version): Greatmarch paints in **3.88 s (was 3.64)**, and the 120-territory maps in **3.49–3.74 s (were 3.42–3.69)**. Panning runs at **54–56 frames a second, unchanged**. To keep it there, the scenery is worked out while the art downloads.
+- **Pictures:**
+  - before/after side by side: `docs/art/screens/compare/` (every bench shot, plus `greatmarch-far/-mid` and `ringsea-far/-mid`)
+  - the "after" bench set: `docs/art/screens/bench-after/`
+  - the game: `ui-desktop.png`, `ui-desktop-selected.png`, `ui-selected-panel.png`, `ui-desktop-folded.png`, `ui-phone.png`, `ui-phone-small.png`
+  - the dragon: `shape-dragon.png` (still today's dragon)
+- 432 automated tests pass. Deployed to the private preview (version `2fda17a7`); the lock check passed.
+- **Asked Nate to play on the preview** (Ringsea on his phone, Twin Realms on his laptop, the lobby's eight maps, one game on Wyrmland). His notes go below once he's played.
 

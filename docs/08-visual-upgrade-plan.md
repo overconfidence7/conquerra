@@ -83,4 +83,18 @@
   - clearer type sizes
 - **Judged on the art test bench** (built in session 10) before and after, with screenshots side by side. The "before" set is in `docs/art/screens/bench/` (`pnpm map-check bench` retakes it; see `docs/07-map-tooling.md`, "The art test bench").
 
+### Session 11: what got done (Oct 5)
+Art batch 3 hadn't been made yet, so every new piece is built and placed but keeps today's drawing until its art is imported (see `docs/07-map-tooling.md`, "When art batch 3 arrives").
+- [x] The six new maps are official and in the lobby (eight maps); each map's data loads only when a game on it starts.
+- [ ] Pines that look like pines; better rock, snow and hills textures: **waiting for batch 3** (nothing to change in code: they import by name).
+- [x] Mountain ranges drawn as ranges: chains along each range's spine, passes left open (ridge art waiting for batch 3; today's peaks stand in).
+- [x] Coasts: cliffs on high, straight, open coasts (art waiting for batch 3) and a painted surf line (done).
+- [x] Pass gatehouses, the wooden bridge, scaffolding, landmarks and the plaque frame: placed by rules, art waiting for batch 3. Stone bridges now stand at river crossings (there were none before).
+- [x] House washes: painted by the map's shader so each House keeps its own hue on every ground (Or no longer mustard on grass).
+- [x] Forests: pines high and north, broadleaf low and south, with glades.
+- [x] A softer, more painterly Far view; Tactical checked truly flat.
+- [x] Desktop: one merged panel for the selected territory, a foldable dock, one type scale. Phone unchanged (6 taps on 384 px).
+- [x] Judged on the bench: before and after side by side in `docs/art/screens/compare/`.
+- [ ] Wyrmland redrawn from the Gemini dragon outline: **waiting for batch 3** (it keeps today's dragon).
+
 **Guardrails still apply:** the painting never carries game state, the info layer reads at every zoom, and Tactical view is one tap away.

@@ -59,7 +59,7 @@ Both were made without knowing our rules, so they show things we don't have. The
 Session 4's borders are a good start, but the screenshots show three problems: the glow straddles the line, so where two Houses meet the colours overlap and one wins; the glow spills into the sea and into neighbours' land; and the flat tint muddies the ground (Gules over hills reads brown, Or over grass reads mustard). The rules:
 1. **Each House's band sits inside its own land.** Where two Houses meet you see both colours side by side, split by a thin dark ink line. No glow crosses into a neighbour or onto water.
 2. **An edge wash, not a flat fill.** The colour is strongest at the border and fades to almost nothing about 15 map units inward, so the middle of a territory keeps its natural ground. At Far zoom the inside tint rises (as now); Tactical view stays flat.
-3. **Keep the House colour true on every ground.** Tint so the hue survives the ground underneath (Gules looks red over hills, sand and snow), not a plain see-through fill. Checked with a grid of every House over every ground type.
+3. **Keep the House colour true on every ground.** Tint so the hue survives the ground underneath (Gules looks red over hills, sand and snow), not a plain see-through fill. Checked with a grid of every House over every ground type. *(Session 11: the map's display shader paints the tint. It greys the ground's own colour first, then lays the House's `land` colour on at the House's own brightness, keeping the painting's light and shade. Gold no longer turns mustard over grass, and red no longer turns brown over forest. Each House's `land` colour is in `apps/web/src/map/houses.ts`.)*
 4. **Neutral land:** a thin pale line only. **Between two of your own territories:** the thin pale line only. **Province edges:** heavier, as now.
 5. **Selection can't look like a House.** Or and Argent are already pale gold and white, so selection is a gold double rule just outside the House band with a slow pulse, not just a colour.
 6. **Remembered land** ("last seen" in the fog): a faint dashed line in the last-seen owner's colour, so the "?" markers and the borders tell the same story.
@@ -74,6 +74,18 @@ Every map (ours, random or hand-built) is data that one renderer paints, so blen
 - **Natural edges between ground types:** ragged, noise-shaped edges instead of blurred squares, with sensible rules (rock on high, steep ground; snow only on the highest; sand in a thin band along coasts; swamp near low rivers) and a scatter of small "fringe" pieces (bushes at a forest edge, pebbles at a rock edge).
 - **Grounded sprites:** a soft contact shadow under each one, cast down and to the right to match the light from the upper left, with slight size, flip and shade changes so repeats don't show.
 - **The art test bench** (`docs/07-map-tooling.md`) is where every new art batch gets judged.
+
+### Scenery placed by rules (session 11)
+Everything below is worked out by the renderer from the map data alone (`apps/web/src/render/pixi/scenery.ts`), seeded from the map, so the same map always gets the same painting, any new map gets it too, and no map file changes. None of it carries game state.
+- **Mountain ranges as ranges:** each range's middle line is found from its outline, and pieces go along it, biggest first, overlapping like a chain. Where the range runs across the screen a wide `ridge-*` goes there; where it runs up and down (a ridge across it would look wrong in this three-quarter view), single peaks stack instead. Smaller single peaks fill the ends and the gaps. Nothing goes near a pass, so the gap and its road stay open, and nothing hangs over a coast or a sea lane's landing. Until the ridge art arrives, three of today's peaks in a row stand in for each ridge.
+- **Pass gatehouses:** `pass-gate` stands on every pass road. With it in, the info layer's gate symbol shows at Far and gives way to the painting from Mid in.
+- **Sea cliffs:** `cliff-*` on fairly straight stretches of coast that face down the screen (so the rock face shows), with open sea in front and high or rocky land behind; never on sand, never by a sea lane's landing, a banner, a castle or a building site. A few per map.
+- **Surf:** a soft, broken white line where the waves meet every coast, and a faint swell a little way out.
+- **Bridges:** one where two territories meet across a river, at the middle of their shared border: `bridge-wood` near a river's source or among farmland in its middle reaches, the stone `bridge` further down (the stone one stands in until the wooden art arrives).
+- **Landmarks** (decoration only, no name, nothing on the card): about one per 15 territories, spread out: lighthouses on coasts, windmills on farmland, standing stones on grass or hills, ruins almost anywhere. Never on a capital, a building site, a pass, a river, a sea lane's landing, or under a banner or a province plaque.
+- **Forests:** inside forests, pines on high ground and further north, broadleaf lower and further south, with a ragged line between; a few lumpy open glades in big forests. Lone trees keep the kind the map maker gave them.
+- **Buildings being built:** `scaffold` over the washed-out building (the drawn scaffold stands in until it arrives). **Province plaques** sit on `frame-plaque`, stretched in the middle so its end caps keep their shape (the drawn plaque until then).
+- **The Far view** is softer, like one painted atlas: the land is read a little blurrier, with a warm parchment grade and a faint paper grain. The sea is unchanged, and borders, pills and plaques stay crisp.
 
 ### Fog
 - **Standard fog** (default): a soft, pale haze. The painted land shows faintly through it (desaturated, only lightly darkened) with drifting mist, so the map never reads as a dark blanket early in a game. No owners or troops, except faded "last seen" markers with a "?". (Lightened Oct 2.)
@@ -94,8 +106,11 @@ Every map (ours, random or hand-built) is data that one renderer paints, so blen
 |---|---|
 | **Top bar** | Logo · gold (+N per turn) · Turn N and the timer · settings |
 | **Left rail** | Map, Turn report, Settings (more only as M3 features arrive) |
-| **Right column** | Players panel (House, name, Leader portrait, still in or out; no territory counts), event pop-ups, then the territory card |
-| **Bottom** | The action bar of big round icon buttons (Move/Attack, Recruit, Hire, Build, Culture, Retreat), the army panel, the order queue, the Lock in seal and the minimap |
+| **Right column** | Players panel (House, name, Leader portrait, still in or out; no territory counts), event pop-ups, then your Leader |
+| **Bottom left** (session 11) | One panel for the selected territory, only as tall as what's in it: the round action buttons (Attack, Recruit, Spend, Culture, Retreat), a slim vista strip, who holds it, troops, terrain/gold/province chips, buildings, culture, then what you can do there. Fogged land shows what you last saw. |
+| **Bottom right** (session 11) | The dock: minimap and order queue. It folds down to a slim "Orders (n) · gold left" bar and remembers it. The Lock in seal always shows (and the turn timer is in the top bar). |
+
+**Type scale (session 11):** one scale for titles, body, small print and labels (`--fs-title`, `--fs-body`, `--fs-small`, `--fs-label` in `styles.css`), readable on a laptop at 100% zoom; nothing smaller than the label size.
 
 ### Phone layout
 The map is full screen with a compact top bar. The action bar sits at the bottom; panels open as a bottom sheet, and the minimap and players panel are toggles.
