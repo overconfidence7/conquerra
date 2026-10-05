@@ -40,7 +40,7 @@ export interface MarkerMetrics {
 
 const DIGIT_W = 0.62;
 /** How far the culture laurels hang below the pill (screen px). */
-export const CULTURE_PIP_DROP = 6;
+export const CULTURE_PIP_DROP = 10;
 
 /** Pill height for a zoom: grows a little as you zoom in, never below the minimum. */
 export function pillHeight(z: Pick<ZoomDetail, "territoryPx">): number {

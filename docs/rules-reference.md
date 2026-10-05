@@ -44,8 +44,8 @@
 ## 4. Orders
 | Order | What it does |
 |---|---|
-| **Recruit** | Buy troops (2 gold each) at your capital or a barracks. Ask for more than you can afford and you get as many as you can pay for. New troops can act the same turn. |
-| **Hire** | Buy a specialist at your capital or a barracks (see §6). |
+| **Recruit** | Buy troops (2 gold each) at your capital, any barracks, or **any territory in a province you hold completely** (session 9). Choose how many with the same chips as attacks: All, 3/4, 1/2 or 1/4 of your gold (an exact number under More; the default is All). You can queue several recruits to split troops across sites, and edit them in the queue. While Recruit is open, every place you can recruit glows. Ask for more than you can afford and you get as many as you can pay for. New troops can act the same turn. |
+| **Hire** | Buy a specialist at your capital or a barracks (see §6). Hiring doesn't use the province rule. |
 | **Move / attack** | Send troops to a neighbouring territory. If it's yours, they move in; if not, they attack. You choose **how many** as a share (below). |
 | **Build** | Put a building on a territory you hold (one per territory). |
 | **Raise culture** | Spend gold to raise a territory's culture by 1 (see §7). |
@@ -158,6 +158,8 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
 | **Watchtower** | 4 | Ready at the end of this turn | See 1 territory further |
 
 Engineers make any of these ready immediately. A building under construction gives nothing yet; if the territory is captured, the conqueror inherits it.
+
+**On the map** (session 9): buildings stand next to the army marker, about the size of a capital's castle, on a soft ground shadow, and never under the marker. One being built shows behind a wooden scaffold, and the marker's building icon carries a small hourglass ("ready next turn"). Buildings you only remember (in the fog) are greyed.
 
 ## 11. Fog of war
 - With fog on, you see **full detail** (owner, troops, specialists, buildings, culture, Leaders) on **your own territories and the ones bordering them**. Watchtowers and scouts see 1 territory further.

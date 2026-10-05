@@ -9,6 +9,9 @@
  *                              after the first capture, end): docs/art/screens/ui-replay-fog-1/2/3.png and
  *                              ui-replay-fog-phone-2.png; the lobby's Bots row (ui-lobby-bots.png); and the
  *                              Desktop site tip, emulated (ui-desktop-site-tip.png)
+ *   pnpm ui-check clarity  -> session 9's clarity shots: recruit sites, culture card and pips, a "called off" report line,
+ *                              neighbour links, province plaques at Mid and Far, buildings, the reworded panel and
+ *                              card (desktop and phone), and Tactical view: docs/art/screens/ui-*.png
  *   pnpm ui-check play      -> plays a whole game on a laptop screen and in phone emulation, using the replay
  *                              (and Skip), the turn timer (one real auto-lock) and the bottom sheet; prints a log
  *
@@ -343,7 +346,211 @@ async function fog() {
   console.log("  saved docs/art/screens/ui-replay-fog-*.png, ui-lobby-bots.png, ui-desktop-site-tip.png");
 }
 
-if (mode === "fog") await fog();
+/**
+ * Session 9's clarity screenshots (pnpm ui-check clarity): the recruit sites glowing, the culture card and pips,
+ * a turn report with a "called off" line, neighbour links (a pass and a sea lane), province borders and plaques at
+ * Mid and Far, buildings (built and being built) at Mid and Near, the reworded army panel and territory card
+ * (desktop and phone), and Tactical view. Everything comes from a real game, except ui-buildings-board-staged-*,
+ * where the page's own view is edited to show all four buildings finished and being built side by side (the
+ * engine only ever shows a fort being built, since the others finish the turn they're ordered).
+ */
+async function clarity() {
+  mkdirSync(join(root, "docs/art/screens"), { recursive: true });
+  const browser = await launch();
+  const page = await browser.newPage();
+  page.on("pageerror", (e) => console.log("page error:", e.message));
+  await page.setViewport(DESKTOP);
+  await page.goto(URL, { waitUntil: "networkidle0" });
+  await page.evaluate(() => localStorage.setItem("conquerra.tactical", "0"));
+  await start(page, { bots: 3, botLevel: "captain" });
+  const g = (f, arg) => page.evaluate(f, arg);
+  /** Lock in whatever is queued (or let the bot plan it), skip the replay; keep the report open if asked. */
+  const turn = async ({ auto = true, report = false } = {}) => {
+    await g(async (auto) => {
+      const s = window.__conquerraStore.getState();
+      if (auto) await s.autoPlan();
+      await window.__conquerraStore.getState().lockIn();
+      window.__conquerraStore.getState().endReplay();
+    }, auto);
+    await sleep(300);
+    await g((r) => window.__conquerraStore.getState().setShowReport(r), report);
+    await sleep(300);
+  };
+  const zoom = (px, at) => g(({ px, at }) => { const cam = window.__conquerraMap.camera; cam.centreOn(at.x, at.y, px / cam.territorySize); }, { px, at });
+  const labelOf = (id) => g((id) => window.__conquerraStore.getState().ctx.map.geometry.territories.find((t) => t.id === id).label, id);
+  const mapShot = async (file) => {
+    await sleep(700);
+    await (await page.$(".map-host")).screenshot({ path: out(file) });
+    console.log("  saved " + file);
+  };
+  const pageShot = async (file) => {
+    await sleep(500);
+    await page.screenshot({ path: out(file) });
+    console.log("  saved " + file);
+  };
+
+  for (let i = 0; i < 4; i++) await turn();
+  /** The bot plans the armies; its spending (recruits, hires, builds, culture) is dropped so ours can be added. */
+  const armiesOnly = () =>
+    g(async () => {
+      await window.__conquerraStore.getState().autoPlan();
+      const st = window.__conquerraStore;
+      st.setState({ queue: st.getState().queue.filter((o) => o.kind === "move" || o.kind === "retreat" || o.kind === "advance") });
+    });
+
+  // ---- Buildings: order all four, plus culture at the capital ----
+  await armiesOnly();
+  const built = await g(() => {
+    const s = window.__conquerraStore.getState();
+    const v = s.view;
+    const cap = v.me.capital;
+    const mine = Object.entries(v.territories).filter(([id, t]) => t.detail === "full" && t.owner === v.me.id && !t.building && !t.construction && id !== cap).map(([id]) => id);
+    const kinds = ["fort", "market", "barracks", "watchtower"];
+    const at = {};
+    kinds.forEach((b, i) => { if (mine[i]) { s.add({ kind: "build", territory: mine[i], building: b }); at[b] = mine[i]; } });
+    s.add({ kind: "invest", territory: cap });
+    return { at, gold: v.me.gold, cap };
+  });
+  console.log(`  ordered buildings ${JSON.stringify(built.at)} with ${built.gold} gold`);
+  await turn({ auto: false });
+  // The fort is being built now; the others are finished.
+  const fortAt = await labelOf(built.at.fort ?? built.cap);
+  await zoom(120, fortAt);
+  await mapShot("ui-buildings-mid.png");
+  await zoom(260, fortAt);
+  await mapShot("ui-buildings-near.png");
+  await armiesOnly();
+  await g((cap) => window.__conquerraStore.getState().add({ kind: "invest", territory: cap }), built.cap);
+  await turn({ auto: false });
+
+  // ---- Culture: the card and the laurels (the capital is at culture 2 now) ----
+  await g((cap) => window.__conquerraStore.getState().select(cap), built.cap);
+  const cap = await labelOf(built.cap);
+  await zoom(150, cap);
+  await sleep(600);
+  const card = await page.$(".rightcol .tcard");
+  if (card) await card.screenshot({ path: out("ui-culture-card.png") });
+  await mapShot("ui-culture-pips.png");
+  await pageShot("ui-army-panel.png");
+  if (card) await (await page.$(".rightcol .tcard")).screenshot({ path: out("ui-territory-card.png") });
+
+  // ---- A turn report with a "called off" line: a 1-troop attack on a stronger army, "Only if still stronger" ----
+  await g(async () => {
+    await window.__conquerraStore.getState().autoPlan();
+    const s = window.__conquerraStore.getState();
+    const v = s.view;
+    for (const b of s.ctx.map.borders) {
+      for (const [from, to] of [[b.a, b.b], [b.b, b.a]]) {
+        const f = v.territories[from], t = v.territories[to];
+        if (f.detail === "full" && f.owner === v.me.id && f.troops >= 2 && t.detail === "full" && t.owner !== v.me.id && t.troops >= 3) {
+          s.add({ kind: "move", from, to, troops: 1, preset: { id: "onlyIfStronger" } });
+          return;
+        }
+      }
+    }
+  });
+  await turn({ auto: false, report: true });
+  const said = await g(() => [...document.querySelectorAll(".report-group li, .report-group p")].map((e) => e.textContent).filter((t) => /called off/.test(t)));
+  console.log(`  report: ${said[0] ?? "(no called-off line this time)"}`);
+  await pageShot("ui-report-called-off.png");
+  await g(() => window.__conquerraStore.getState().setShowReport(false));
+
+  // ---- Recruit: every site glows ----
+  await g(() => window.__conquerraStore.getState().select(window.__conquerraStore.getState().view.me.capital));
+  await zoom(80, cap);
+  await page.evaluate(() => [...document.querySelectorAll("button.round")].find((b) => b.textContent.includes("Recruit")).click());
+  await pageShot("ui-recruit-sites.png");
+  await g(() => window.__conquerraStore.getState().clearSelection());
+
+  // ---- Neighbour links: a territory by a pass, and one with a long sea lane ----
+  const pick = await g(() => {
+    const map = window.__conquerraStore.getState().ctx.map;
+    const pass = map.borders.find((b) => b.type === "pass");
+    const lanes = map.geometry.seaLanes.map((l) => ({ l, len: Math.hypot(l.path[2] - l.path[0], l.path[3] - l.path[1]) })).sort((a, b) => b.len - a.len);
+    return { pass: pass.a, sea: lanes[0].l.a };
+  });
+  for (const [what, id] of [["pass", pick.pass], ["sea", pick.sea]]) {
+    await g((id) => window.__conquerraStore.getState().select(id), id);
+    await zoom(140, await labelOf(id));
+    await mapShot(`ui-links-${what}.png`);
+  }
+
+  // ---- Provinces at Mid and Far ----
+  await g(() => window.__conquerraStore.getState().clearSelection());
+  await zoom(110, cap);
+  await mapShot("ui-provinces-mid.png");
+  await g(() => window.__conquerraMap.fit(false));
+  await zoom(50, cap);
+  await mapShot("ui-provinces-far.png");
+
+  // ---- Tactical view (Settings → Tactical view) ----
+  await zoom(110, cap);
+  await page.click('button[aria-label="Settings"]');
+  await sleep(300);
+  await page.evaluate(() => [...document.querySelectorAll(".menu-item")].find((b) => b.textContent.includes("Tactical view")).click());
+  await page.evaluate(() => [...document.querySelectorAll(".popover button.link")].find((b) => b.textContent.trim() === "Close")?.click());
+  await mapShot("ui-tactical.png");
+  await mapShot("embervale-tactical.png");
+  await page.click('button[aria-label="Settings"]');
+  await sleep(300);
+  await page.evaluate(() => [...document.querySelectorAll(".menu-item")].find((b) => b.textContent.includes("Tactical view")).click());
+  await page.evaluate(() => [...document.querySelectorAll(".popover button.link")].find((b) => b.textContent.trim() === "Close")?.click());
+
+  // ---- Staged board: all four buildings, finished and being built, side by side (the page's view only) ----
+  const at = await g(() => {
+    const st = window.__conquerraStore;
+    const s = st.getState();
+    const v = structuredClone(s.view);
+    const map = s.ctx.map;
+    const c = map.geometry.territories.find((t) => t.id === v.me.capital).label;
+    const lbl = (id) => map.geometry.territories.find((t) => t.id === id).label;
+    const ids = map.territories.map((t) => t.id).filter((id) => id !== v.me.capital && v.territories[id].detail === "full").sort((a, b) => Math.hypot(lbl(a).x - c.x, lbl(a).y - c.y) - Math.hypot(lbl(b).x - c.x, lbl(b).y - c.y));
+    const kinds = ["fort", "market", "barracks", "watchtower"];
+    ids.slice(0, 8).forEach((id, i) => {
+      const t = v.territories[id];
+      if (i < 4) (t.building = kinds[i]), (t.construction = null);
+      else (t.building = null), (t.construction = { building: kinds[i - 4], doneAtEndOfTurn: v.turn });
+    });
+    st.setState({ view: v, selected: null });
+    return c;
+  });
+  await zoom(120, at);
+  await mapShot("ui-buildings-board-staged-mid.png");
+  await zoom(250, at);
+  await mapShot("ui-buildings-board-staged-near.png");
+
+  // ---- Phone: the army panel, the card and the recruit sites at 384 px wide ----
+  const phone = await browser.newPage();
+  phone.on("pageerror", (e) => console.log("page error:", e.message));
+  await phone.setViewport({ width: 384, height: 832, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  await phone.goto(URL, { waitUntil: "networkidle0" });
+  await start(phone, { bots: 3, botLevel: "captain" });
+  for (let i = 0; i < 4; i++) {
+    await phone.evaluate(async () => {
+      const s = window.__conquerraStore.getState();
+      await s.autoPlan();
+      await window.__conquerraStore.getState().lockIn();
+      window.__conquerraStore.getState().endReplay();
+      window.__conquerraStore.getState().setShowReport(false);
+    });
+    await sleep(300);
+  }
+  await phone.evaluate(() => window.__conquerraStore.getState().select(window.__conquerraStore.getState().view.me.capital));
+  await phone.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.getAttribute("aria-label") === "Attack").click());
+  await sleep(700);
+  await phone.screenshot({ path: out("ui-army-panel-phone.png") });
+  await phone.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === "Card").click());
+  await sleep(600);
+  await phone.screenshot({ path: out("ui-territory-card-phone.png") });
+  await phone.evaluate(() => [...document.querySelectorAll("button.round")].find((b) => b.textContent.includes("Recruit")).click());
+  await sleep(700);
+  await phone.screenshot({ path: out("ui-recruit-sites-phone.png") });
+  console.log("  saved ui-army-panel-phone.png, ui-territory-card-phone.png, ui-recruit-sites-phone.png");
+  await browser.close();
+}
+
+if (mode === "clarity") await clarity();
+else if (mode === "fog") await fog();
 else if (mode === "play") {
   if (!process.argv.includes("--phone-only")) await play(DESKTOP, "laptop");
   await play(PHONE, "phone");

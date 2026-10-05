@@ -31,18 +31,18 @@ const nameStyle = (size: number): TextStyleOptions => ({ fontFamily: "Cinzel, se
  */
 function laurels(level: number, y: number): Graphics {
   const g = new Graphics();
-  const step = 7.5, w = level * step + 4, h = 9;
+  const step = 11, w = level * step + 6, h = 13;
   g.roundRect(-w / 2, y - 2, w, h, 4).fill({ color: NAVY, alpha: 0.92 }).stroke({ width: 1, color: GOLD, alpha: 0.9 });
   const leaf = (cx: number, cy: number, angle: number) => {
-    // A lens-shaped leaf 5.5 long, pointing along `angle` from (cx, cy).
+    // A lens-shaped leaf 8 long, pointing along `angle` from (cx, cy).
     const pts: [number, number][] = [];
-    for (let i = 0; i <= 8; i++) pts.push([(i / 8) * 5.5, Math.sin((i / 8) * Math.PI) * 1.5]);
+    for (let i = 0; i <= 8; i++) pts.push([(i / 8) * 8, Math.sin((i / 8) * Math.PI) * 2.2]);
     for (let i = 7; i >= 1; i--) pts.push([pts[i]![0], -pts[i]![1]]);
     const c = Math.cos(angle), sn = Math.sin(angle);
     g.poly(pts.flatMap(([a, b]) => [cx + a * c - b * sn, cy + a * sn + b * c])).fill(GOLD_HI);
   };
   for (let i = 0; i < level; i++) {
-    const cx = (i - (level - 1) / 2) * step, cy = y + 5.5;
+    const cx = (i - (level - 1) / 2) * step, cy = y + 8.5;
     leaf(cx, cy, -Math.PI / 2 - 0.5);
     leaf(cx, cy, -Math.PI / 2 + 0.5);
   }

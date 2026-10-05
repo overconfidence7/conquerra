@@ -133,11 +133,17 @@ async function screens() {
   await zoomTo(page, ZOOM_PX.near, [cap.x, cap.y]);
   await shot(page, "embervale-near.png");
   await zoomTo(page, ZOOM_PX.mid, [cap.x, cap.y]);
-  await page.click(".map-tools button:last-child");
-  await sleep(500);
+  // Tactical view lives in Settings (the map tools' last button is "fit the whole map").
+  const tactical = async () => {
+    await page.click('button[aria-label="Settings"]');
+    await sleep(300);
+    await page.evaluate(() => [...document.querySelectorAll(".menu-item")].find((b) => b.textContent.includes("Tactical view")).click());
+    await page.evaluate(() => [...document.querySelectorAll(".popover button.link")].find((b) => b.textContent.trim() === "Close")?.click());
+    await sleep(500);
+  };
+  await tactical();
   await shot(page, "embervale-tactical.png");
-  await page.click(".map-tools button:last-child");
-  await sleep(400);
+  await tactical();
   if (info.remembered.length) {
     const target = info.remembered[0];
     const p = await label(page, target.id);
