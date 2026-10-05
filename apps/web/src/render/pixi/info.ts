@@ -13,7 +13,7 @@ import { RealmLayer } from "./realms";
 import { glyphAlphas } from "../../map/layout";
 
 /**
- * The info layer in map space: House tint and borders, the selection glow, reachable-target highlights, order
+ * The info layer in map space: House borders (the House tint itself is painted by the world layer's shader), the selection glow, reachable-target highlights, order
  * arrows, building sprites at each site, specialist figures at Near zoom, and the place names. Line widths are in
  * screen pixels, so lines are redrawn when the zoom changes enough.
  */
@@ -30,7 +30,8 @@ const ring = (g: Graphics, r: Line, close = true) => g.poly(r as number[], close
 
 export class InfoLayer {
   readonly tactical = new Graphics();
-  readonly tint = new Graphics();
+  /** Called when who holds what changes: the world layer paints the House tint from it (in its shader). */
+  onRealms: ((realms: { color: string; territories: (readonly Line[])[] }[]) => void) | null = null;
   readonly lines = new Graphics();
   readonly glow = new Graphics();
   readonly realmLayer = new RealmLayer();
@@ -92,6 +93,7 @@ export class InfoLayer {
         if (o) (held.get(o) ?? held.set(o, []).get(o)!).push(this.rings.get(id)!);
       }
       this.realmLayer.setRealms([...this.realms].map(([owner, outlines]) => ({ house: houseOf(view, owner), outlines, territories: held.get(owner) ?? [] })));
+      this.onRealms?.([...held].map(([owner, territories]) => ({ color: houseOf(view, owner).land, territories })));
     }
     // Remembered land (the dashed "last seen" outline) only changes when vision does.
     const remembered = [...this.status].filter(([, s]) => s.kind === "remembered" && s.owner);
@@ -109,13 +111,12 @@ export class InfoLayer {
     this.drawnScale = 0; // lines and arrows redraw at the next zoom update
   }
 
-  /** Fills: the flat Tactical map, or the House tint over the painting. */
+  /** The flat Tactical map. (Illustrated, the House tint is painted by the world layer's shader: see onRealms.) */
   private drawFills() {
     const g = this.map.geometry!;
     const { view } = this.scene!;
-    const t = this.tactical, tint = this.tint;
+    const t = this.tactical;
     t.clear();
-    tint.clear();
     if (this.isTactical) {
       t.rect(0, 0, g.width, g.height).fill(0x24506e);
       for (const w of g.water) for (const r of w.rings) ring(t, r).fill(0x24506e);
@@ -137,12 +138,6 @@ export class InfoLayer {
       return;
     }
     t.visible = false;
-    for (const [id, s] of this.status) {
-      if (s.kind !== "seen" || !s.owner) continue;
-      const rings = this.rings.get(id)!;
-      ring(tint, rings[0]!).fill(hexNum(houseOf(view, s.owner).color));
-      for (const hole of rings.slice(1)) ring(tint, hole).cut();
-    }
   }
 
   /** The soft ground shadow the castles stand on (world.ts), made once. */
@@ -239,7 +234,6 @@ export class InfoLayer {
 
   /** Redraw lines and arrows when the zoom has changed enough; set fades. */
   setZoom(scale: number, mix: DetailMix) {
-    this.tint.alpha = this.isTactical ? 1 : mix.tint;
     // The gate symbol always shows at Far and in Tactical; with the painted gatehouse it gives way from Mid in.
     // (Illustrated, `icons` is 1 - Far.)
     this.gates.alpha = this.isTactical || !this.paintedGates ? 1 : 1 - mix.icons;
@@ -436,7 +430,7 @@ export class InfoLayer {
   destroy() {
     this.labels.illustrated.destroy();
     this.labels.tactical.destroy();
-    for (const c of [this.tactical, this.tint, this.lines, this.gates, this.glow, this.links, this.sites, this.figures, this.arrows, this.names]) c.destroy({ children: true });
+    for (const c of [this.tactical, this.lines, this.gates, this.glow, this.links, this.sites, this.figures, this.arrows, this.names]) c.destroy({ children: true });
     this.shadowTex?.destroy(true);
     this.realmLayer.destroy();
   }

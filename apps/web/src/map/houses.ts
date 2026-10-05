@@ -10,6 +10,11 @@ export interface House {
   color: string;
   /** Border glow on the map (brighter or lighter where the tincture itself would vanish on the land). */
   glow: string;
+  /**
+   * The colour owned land takes on (the House tint, painted in shaders.ts): tuned per House on the art test bench
+   * so none muddies the ground.
+   */
+  land: string;
   /** The pattern's colour, and text on a solid fill of `color`. */
   ink: string;
   pattern: Pattern;
@@ -20,21 +25,21 @@ export interface House {
  * Each also has its own pattern, so colourblind players can tell them apart.
  */
 export const HOUSES: readonly House[] = [
-  { name: "Azure", color: "#2f6fe0", glow: "#5b9bff", ink: "#ffffff", pattern: "plain" },
-  { name: "Gules", color: "#d2342b", glow: "#ff5a4a", ink: "#ffffff", pattern: "chevron" },
-  { name: "Or", color: "#e2ad1c", glow: "#ffd23f", ink: "#2a1d05", pattern: "pale" },
-  { name: "Vert", color: "#2e9e4f", glow: "#4fe07a", ink: "#ffffff", pattern: "bend" },
-  { name: "Purpure", color: "#8e44c9", glow: "#c07bff", ink: "#ffffff", pattern: "fess" },
-  { name: "Tenné", color: "#d9731e", glow: "#ff9a3d", ink: "#ffffff", pattern: "saltire" },
+  { name: "Azure", color: "#2f6fe0", glow: "#5b9bff", land: "#2f6fe0", ink: "#ffffff", pattern: "plain" },
+  { name: "Gules", color: "#d2342b", glow: "#ff5a4a", land: "#d2342b", ink: "#ffffff", pattern: "chevron" },
+  { name: "Or", color: "#e2ad1c", glow: "#ffd23f", land: "#e2ad1c", ink: "#2a1d05", pattern: "pale" },
+  { name: "Vert", color: "#2e9e4f", glow: "#4fe07a", land: "#2e9e4f", ink: "#ffffff", pattern: "bend" },
+  { name: "Purpure", color: "#8e44c9", glow: "#c07bff", land: "#8e44c9", ink: "#ffffff", pattern: "fess" },
+  { name: "Tenné", color: "#d9731e", glow: "#ff9a3d", land: "#d9731e", ink: "#ffffff", pattern: "saltire" },
   // Teal replaced Celeste (session 5): clearly apart from Azure and Vert, also for colourblind players.
-  { name: "Teal", color: "#1aa6a6", glow: "#4fe3dc", ink: "#ffffff", pattern: "cross" },
-  { name: "Murrey", color: "#a3325f", glow: "#e0558d", ink: "#ffffff", pattern: "chief" },
-  { name: "Argent", color: "#e4e6ec", glow: "#ffffff", ink: "#1d2430", pattern: "bordure" },
-  { name: "Sable", color: "#2a2b33", glow: "#9aa0b4", ink: "#f2f2f2", pattern: "quarterly" },
+  { name: "Teal", color: "#1aa6a6", glow: "#4fe3dc", land: "#1aa6a6", ink: "#ffffff", pattern: "cross" },
+  { name: "Murrey", color: "#a3325f", glow: "#e0558d", land: "#a3325f", ink: "#ffffff", pattern: "chief" },
+  { name: "Argent", color: "#e4e6ec", glow: "#ffffff", land: "#e4e6ec", ink: "#1d2430", pattern: "bordure" },
+  { name: "Sable", color: "#2a2b33", glow: "#9aa0b4", land: "#3d404c", ink: "#f2f2f2", pattern: "quarterly" },
 ];
 
 /** Unowned land. */
-export const NEUTRAL_HOUSE: House = { name: "Neutral", color: "#d8cdb0", glow: "#f3ead2", ink: "#2b2418", pattern: "plain" };
+export const NEUTRAL_HOUSE: House = { name: "Neutral", color: "#d8cdb0", glow: "#f3ead2", land: "#d8cdb0", ink: "#2b2418", pattern: "plain" };
 
 /** Which House a player is: their seat in the player list. */
 export function houseIndex(view: Pick<PlayerView, "players">, owner: string | null): number {

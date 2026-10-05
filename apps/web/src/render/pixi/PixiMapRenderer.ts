@@ -133,9 +133,10 @@ class PixiMapRenderer implements MapRenderer {
     this.world = new WorldLayer(this.app.renderer, ctx.map, this.art, { ppu });
     mark("world");
     this.info = new InfoLayer(ctx.map, this.bank);
+    this.info.onRealms = (realms) => this.world.setOwners(realms);
     mark("labels");
     this.markers = new MarkerLayer(ctx.map, this.bank, this.app.renderer.resolution);
-    this.mapLayer.addChild(this.world.view, this.info.tactical, this.info.tint, this.info.lines, this.info.realmLayer.root, this.info.gates, this.info.glow, this.info.sites, this.info.figures, this.info.names, this.info.links, this.info.arrows);
+    this.mapLayer.addChild(this.world.view, this.info.tactical, this.info.lines, this.info.realmLayer.root, this.info.gates, this.info.glow, this.info.sites, this.info.figures, this.info.names, this.info.links, this.info.arrows);
     this.replay = new ReplayLayer(ctx.map);
     this.app.stage.addChild(this.mapLayer, this.markers.root, this.replay.root);
     this.world.bakeFar();
@@ -218,6 +219,8 @@ class PixiMapRenderer implements MapRenderer {
     this.detail = zoomDetail(c.scale, this.territorySize);
     const mix = detailMix(this.detail, this.tactical);
     this.world.display.uniforms.uDim = mix.dim;
+    this.world.setTint(mix.tint);
+    this.world.display.uniforms.uFar = this.tactical ? 0 : this.detail.far;
     this.world.setDim(mix.dim);
     this.world.update(c, this.cam.vp, this.app.renderer.resolution);
     this.info.setZoom(c.scale, mix);

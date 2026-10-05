@@ -7,15 +7,14 @@ import { dashes } from "../../map/shapes";
  * House borders (docs/06-art-direction.md, "Borders and ownership"):
  *  - each House's coloured band sits inside its own land (masked by its own fill), so where two Houses meet you
  *    see both colours side by side with a thin ink line between, and nothing spills onto water;
- *  - instead of a flat tint, a wash of the House colour fades inward from the border (about 15 map units);
+ *  - instead of a flat tint, a wash of the House colour fades inward from the border (about 15 map units): the world
+ *    layer's display shader paints it (houseTint in shaders.ts), so the House's hue survives any ground;
  *  - selection is a pulsing gold double rule just outside the band;
  *  - remembered land (in the fog) gets a faint dashed line in the last-seen owner's colour.
  * Built only from territory outlines, so it works unchanged on any map.
  */
 
 const INK = 0x1b1206, GOLD = 0xe3c77e, GOLD_LIGHT = 0xfff1c1;
-/** The wash: strokes centred on the border, masked to the inside, so the inner half fades in steps. */
-const WASH: readonly [width: number, alpha: number][] = [30, 26, 22, 18, 14, 10, 6, 3].map((w) => [w, 0.055] as [number, number]);
 
 type Rings = readonly Line[];
 const ring = (g: Graphics, r: Line, close = true) => g.poly(r as number[], close);
@@ -30,7 +29,6 @@ export interface RealmInput {
 
 interface Realm extends RealmInput {
   root: Container;
-  wash: Graphics;
   band: Graphics;
   mask: Graphics;
 }
@@ -56,17 +54,14 @@ export class RealmLayer {
     for (const r of this.realms) r.root.destroy({ children: true });
     this.realms = input.map((r) => {
       const root = new Container();
-      const wash = new Graphics(), band = new Graphics(), mask = new Graphics();
+      const band = new Graphics(), mask = new Graphics();
       for (const t of r.territories) {
         ring(mask, t[0]!).fill(0xffffff);
         for (const hole of t.slice(1)) ring(mask, hole).cut();
       }
-      root.addChild(wash, band, mask);
+      root.addChild(band, mask);
       root.mask = mask;
-      // The wash is in map units, so it's drawn once.
-      const glow = hexNum(r.house.glow);
-      for (const [w, a] of WASH) for (const l of r.outlines) ring(wash, l, false).stroke({ width: w, color: glow, alpha: a, join: "round", cap: "round" });
-      return { ...r, root, wash, band, mask };
+      return { ...r, root, band, mask };
     });
     this.realms.forEach((r, i) => this.root.addChildAt(r.root, i));
   }

@@ -88,7 +88,7 @@ export function detailMix(z: Pick<ZoomDetail, "far" | "near">, tactical: boolean
   return {
     dim: 0.38 * z.far,
     // Mid and Near: the House wash along the border only. Far: a stronger flat tint over the whole land.
-    tint: 0.42 * z.far,
+    tint: 0.55 * z.far,
     provinceNames: Math.max(0, 0.4 + 0.6 * z.far - 0.4 * z.near),
     icons: 1 - z.far,
     nearDetail: z.near,

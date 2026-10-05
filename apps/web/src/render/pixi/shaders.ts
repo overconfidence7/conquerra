@@ -168,17 +168,42 @@ uniform sampler2D uTile;
 uniform sampler2D uFog;
 uniform sampler2D uFogPrev;
 uniform sampler2D uAux1;
+uniform sampler2D uOwner;
+uniform sampler2D uOwnerBlur;
 uniform vec2 uMap;
 uniform float uTime;
 uniform float uDim;
 uniform float uMotion;
 uniform float uFogMix;
+uniform float uTint;
+uniform float uWash;
+uniform float uFar;
 ${NOISE}
 
+// The House tint keeps the House's own hue on any ground: the ground's colour is greyed first (so red over green
+// doesn't mix to brown, or gold over grass to mustard), then the House colour goes on at its own brightness, with
+// the painting's light and shade kept on top.
+vec3 houseTint(vec3 c, vec3 h, float s) {
+  float l = dot(c, vec3(0.299, 0.587, 0.114));
+  vec3 g = mix(c, vec3(l), min(1.0, s * 1.6));
+  vec3 tinted = clamp(h + (l - 0.42) * 0.5, 0.0, 1.0);
+  return mix(g, tinted, s);
+}
+
 void main() {
-  vec3 c = texture(uTile, vUV).rgb;
+  // At Far the painting goes softer, like one painted atlas: a slightly blurrier read (a lower mipmap level), a warm
+  // parchment grade and a faint paper grain. The info layer on top stays crisp.
+  // Land only: the sea matches the open sea drawn beyond the map's edge.
   vec2 mu = vPos / uMap;
   float land = texture(uAux1, mu).r;
+  float atlas = uFar * smoothstep(0.25, 0.6, land);
+  vec3 c = texture(uTile, vUV, atlas * 0.9).rgb;
+  if (atlas > 0.01) {
+    float l0 = dot(c, vec3(0.299, 0.587, 0.114));
+    vec3 parch = mix(vec3(l0), c, 0.82) * vec3(1.04, 1.0, 0.9) + vec3(0.025, 0.018, 0.0);
+    float grain = (fbm(vPos * 0.06) - 0.5) * 0.07 + (vnoise(vPos * 0.9) - 0.5) * 0.03;
+    c = mix(c, parch * (1.0 + grain), atlas * 0.85);
+  }
   float water = 1.0 - smoothstep(0.35, 0.6, land);
   float t = uTime * uMotion;
   if (water > 0.01) {
@@ -201,6 +226,14 @@ void main() {
   }
   // Far-zoom dimming, lighter on fogged land so the two don't stack into a dark blanket.
   c *= 1.0 - uDim * (1.0 - 0.75 * fogged);
+  // House tint (after the dimming, so owned land stands out at Far): flat at Far, a wash along realm edges closer in.
+  vec4 own = texture(uOwner, mu);
+  if (own.a > 0.004) {
+    vec3 h = own.rgb / own.a;
+    float inside = texture(uOwnerBlur, mu).a / own.a;
+    float edge = clamp((1.0 - inside) * 2.4, 0.0, 1.0);
+    c = houseTint(c, h, own.a * max(uTint, edge * uWash));
+  }
   // Fade the map's outer edge into the open sea drawn beyond it, so the edge of the painting never shows.
   vec2 e = min(mu, 1.0 - mu) * uMap;
   float a = smoothstep(0.0, 40.0, min(e.x, e.y));

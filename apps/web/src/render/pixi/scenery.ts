@@ -587,11 +587,11 @@ function forests(map: MapDef, gr: Ground, seed: string, hidden: Set<number>): Pi
       if (gr.biome(x, y) !== "forest" || glade(x, y) < 0.64) continue;
       if (forestAround(x, y, 20) < 0.85 || forestAround(x, y, 38) < 0.75) continue;
       if (clearings.some((k) => dist(k.x, k.y, x, y) < 70)) continue;
-      clearings.push({ x, y, r: 9 + (glade(x + 31, y - 17) - 0.5) * 6 });
+      clearings.push({ x, y, r: 11 + (glade(x + 31, y - 17) - 0.5) * 6 });
     }
   g.decorations.forEach((d, i) => {
     if (d.kind !== "tree-conifer" && d.kind !== "tree-broadleaf") return;
-    if (clearings.some((k) => dist(k.x, k.y, d.x, d.y) < k.r + 3)) {
+    if (clearings.some((k) => dist(k.x, k.y, d.x, d.y) < k.r * 1.3)) {
       hidden.add(i);
       return;
     }

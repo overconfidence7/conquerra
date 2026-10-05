@@ -1,4 +1,4 @@
-import type { MapDef, MapGeometry } from "@conquerra/content";
+import type { Line, MapDef, MapGeometry } from "@conquerra/content";
 import { TERRAIN_TEXTURES, WATER_TEXTURES } from "@conquerra/art";
 import { Container, Graphics, Matrix, Mesh, MeshGeometry, RenderTexture, Shader, Sprite, Texture, TilingSprite, UniformGroup, type Renderer } from "pixi.js";
 import type { ArtBook } from "../../art/book";
@@ -23,6 +23,8 @@ const REPEAT_UNITS = 170;
 const DECOR_SIZE: Record<string, number> = { "tree-conifer": 17, "tree-broadleaf": 17, peak: 30, hill: 19, village: 22, town: 30 };
 const DECOR_ART: Record<string, string> = { "tree-conifer": "tree-conifer", "tree-broadleaf": "tree-broadleaf", peak: "mountain", hill: "hill", village: "village", town: "town" };
 const CASTLE_SIZE = 46;
+/** How strong the House wash is at a realm's edge (it fades to nothing about 15 map units in). */
+const OWNER_WASH = 0.5;
 
 export interface WorldOptions {
   /** Painted pixels per map unit (detail at Mid and Near zoom). */
@@ -48,7 +50,24 @@ const quad = (x: number, y: number, w: number, h: number) =>
 export class WorldLayer {
   /** What's on screen: the Far image or the tiles. */
   readonly view = new Container();
-  readonly display: UniformGroup<{ uMap: { value: Float32Array; type: "vec2<f32>" }; uTime: { value: number; type: "f32" }; uDim: { value: number; type: "f32" }; uMotion: { value: number; type: "f32" }; uFogMix: { value: number; type: "f32" } }>;
+  readonly display: UniformGroup<{
+    uMap: { value: Float32Array; type: "vec2<f32>" };
+    uTime: { value: number; type: "f32" };
+    uDim: { value: number; type: "f32" };
+    uMotion: { value: number; type: "f32" };
+    uFogMix: { value: number; type: "f32" };
+    uTint: { value: number; type: "f32" };
+    uWash: { value: number; type: "f32" };
+    uFar: { value: number; type: "f32" };
+  }>;
+  /**
+   * Who holds what, for the House tint (drawn by the display shader, so the House's hue survives any ground): each
+   * House's land filled in its colour, and a blurred copy that tells the shader how far inside a realm a pixel is.
+   */
+  private ownerCanvas: HTMLCanvasElement;
+  private ownerTex: Texture;
+  private ownerBlurCanvas: HTMLCanvasElement;
+  private ownerBlurTex: Texture;
   private bakeScene = new Container();
   private tiles: Tile[] = [];
   private far: { rt: RenderTexture; mesh: Mesh<MeshGeometry, Shader>; ppu: number } | null = null;
@@ -96,12 +115,19 @@ export class WorldLayer {
       uDim: { value: 0, type: "f32" },
       uMotion: { value: 1, type: "f32" },
       uFogMix: { value: 1, type: "f32" },
+      uTint: { value: 0, type: "f32" },
+      uWash: { value: OWNER_WASH, type: "f32" },
+      uFar: { value: 0, type: "f32" },
     });
     // Fog mask: half a pixel per map unit is plenty (it's soft anyway).
     [this.fogCanvas] = canvas(Math.ceil(g.width * 0.5), Math.ceil(g.height * 0.5));
     this.fogTex = Texture.from(this.fogCanvas);
     [this.fogPrevCanvas] = canvas(this.fogCanvas.width, this.fogCanvas.height);
     this.fogPrevTex = Texture.from(this.fogPrevCanvas);
+    [this.ownerCanvas] = canvas(this.fogCanvas.width, this.fogCanvas.height);
+    this.ownerTex = Texture.from(this.ownerCanvas);
+    [this.ownerBlurCanvas] = canvas(this.fogCanvas.width, this.fogCanvas.height);
+    this.ownerBlurTex = Texture.from(this.ownerBlurCanvas);
     t = this.step("textures", t);
     this.buildBakeScene();
     this.step("scene", t);
@@ -131,7 +157,15 @@ export class WorldLayer {
   private displayShader(tex: Texture) {
     return Shader.from({
       gl: { vertex: VERTEX, fragment: DISPLAY_FRAGMENT },
-      resources: { uTile: tex.source, uFog: this.fogTex.source, uFogPrev: this.fogPrevTex.source, uAux1: this.auxTex.source, display: this.display },
+      resources: {
+        uTile: tex.source,
+        uFog: this.fogTex.source,
+        uFogPrev: this.fogPrevTex.source,
+        uAux1: this.auxTex.source,
+        uOwner: this.ownerTex.source,
+        uOwnerBlur: this.ownerBlurTex.source,
+        display: this.display,
+      },
     });
   }
 
@@ -439,6 +473,42 @@ export class WorldLayer {
     this.fogTex.source.update();
   }
 
+  /**
+   * Paint who holds what (land you can see now), for the House tint: a flat tint at Far, and at Mid and Near a wash
+   * along each realm's edge that fades out about 15 map units in. Only called when ownership changes.
+   */
+  setOwners(realms: readonly { color: string; territories: readonly (readonly Line[])[] }[]) {
+    const c = this.ownerCanvas;
+    const ctx = c.getContext("2d")!;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.scale(c.width / this.g.width, c.height / this.g.height);
+    for (const r of realms) {
+      ctx.fillStyle = r.color;
+      const p = new Path2D();
+      for (const rings of r.territories)
+        for (const ring of rings) {
+          p.moveTo(ring[0]!, ring[1]!);
+          for (let i = 2; i < ring.length; i += 2) p.lineTo(ring[i]!, ring[i + 1]!);
+          p.closePath();
+        }
+      ctx.fill(p, "evenodd");
+    }
+    this.ownerTex.source.update();
+    // The blurred copy (radius about 9 map units): 1 deep inside a realm, falling toward its edge.
+    const b = this.ownerBlurCanvas.getContext("2d")!;
+    b.clearRect(0, 0, c.width, c.height);
+    b.filter = `blur(${Math.max(1, (9 * c.width) / this.g.width).toFixed(1)}px)`;
+    b.drawImage(c, 0, 0);
+    b.filter = "none";
+    this.ownerBlurTex.source.update();
+  }
+
+  /** How strong the flat House tint is (Far zoom); the edge wash is always on. */
+  setTint(flat: number) {
+    this.display.uniforms.uTint = flat;
+  }
+
   /** Move a fog fade along; true while it's still going. */
   tickFog(now: number): boolean {
     if (!this.fogFade) return false;
@@ -453,6 +523,8 @@ export class WorldLayer {
     this.far?.rt.destroy(true);
     this.fogTex.destroy(true);
     this.fogPrevTex.destroy(true);
+    this.ownerTex.destroy(true);
+    this.ownerBlurTex.destroy(true);
     this.auxTex.destroy(true);
     for (const d of this.disposables) d.destroy();
     this.bakeScene.destroy({ children: true });

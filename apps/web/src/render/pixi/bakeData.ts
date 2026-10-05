@@ -175,18 +175,24 @@ export function auxCanvases(g: MapGeometry, ppu = 1, glades: readonly { x: numbe
     ctx.scale(ppu, ppu);
     ctx.fillStyle = "#fff";
     for (const k of glades) {
-      // A ragged edge: a ring of slightly different radii.
-      ctx.beginPath();
-      for (let a = 0; a < 12; a++) {
-        const r = k.r * (0.85 + 0.3 * (((a * 7 + Math.round(k.x)) % 5) / 4));
-        ctx.lineTo(k.x + Math.cos((a * Math.PI) / 6) * r, k.y + Math.sin((a * Math.PI) / 6) * r);
+      // A lumpy glade: a few overlapping blobs with ragged edges (the same every time for the same spot).
+      let seed = Math.round(k.x * 7 + k.y * 13) >>> 0 || 1;
+      const rnd = () => ((seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296);
+      for (let b = 0; b < 3; b++) {
+        const a0 = rnd() * Math.PI * 2, off = b ? k.r * (0.5 + rnd() * 0.5) : 0;
+        const cx = k.x + Math.cos(a0) * off, cy = k.y + Math.sin(a0) * off * 0.7, r0 = k.r * (b ? 0.55 + rnd() * 0.3 : 0.9);
+        ctx.beginPath();
+        for (let a = 0; a < 14; a++) {
+          const r = r0 * (0.78 + rnd() * 0.44);
+          ctx.lineTo(cx + Math.cos((a * Math.PI) / 7) * r, cy + Math.sin((a * Math.PI) / 7) * r);
+        }
+        ctx.fill();
       }
-      ctx.fill();
     }
     const px = ctx.getImageData(0, 0, w, h).data;
     glade = new Float32Array(w * h);
     for (let i = 0; i < glade.length; i++) glade[i] = px[i * 4 + 3]! / 255;
-    glade = boxBlur(glade, w, h, Math.max(1, Math.round(3 * ppu)), 2);
+    glade = boxBlur(glade, w, h, Math.max(1, Math.round(2 * ppu)), 2);
   }
   return { ppu, width: w, height: h, aux1: pack(w, h, land, landBlur, smooth), aux2: pack(w, h, range, rangeBlur, glade) };
 }
