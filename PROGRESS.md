@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Session 9 (Nate's play-test fixes) is part done: 9b finishes it. Then 10 the map lab and bigger maps, then 11 a big visual upgrade.**
+**Phase: M3 (depth and balance). Session 9 (Nate's play-test fixes) is done. Next: 10 the map lab and bigger maps, then 11 a big visual upgrade. A fresh orchestrator prompt is due now.**
 
-Claude Code sessions completed: **8** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
+Claude Code sessions completed: **9** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
 ---
 
@@ -346,3 +346,32 @@ Next prompt: `docs/prompts/claude-code-session-09.md` (run it locally). A fresh 
   - **Game length in real time:** his game against Recruit bots took about 30 minutes, which is too short. His targets are **single player 45–90 minutes** and **a live online game 2 hours or more**. No rule change now: cards, generals, diplomacy, bigger maps and smarter opponents will all lengthen games. The sim write-ups will start estimating real time.
 - **The rest of session 9 is one session, 9b**, for Nate's next usage window (his call): finish culture, bots that handle a runaway, the sim write-up, map clarity, buildings, then one deploy. It commits after every part, so nothing is lost if it's cut off.
 - Next prompt: `docs/prompts/claude-code-session-09b.md` (run it locally).
+
+### Oct 5: Claude Code session 9 complete (9 and 9b: play-test fixes, bots that handle a runaway, map clarity, buildings)
+Session 9 stopped at the usage limit after the combat fix, plain-words "called off" lines, Save this game and province recruiting (see the entry above). Session 9b finished the rest in one go, committing after each part.
+- **Culture ("loyal land"), tuned and shown:**
+  - Each level makes that territory defend **6% better** (+30% at level 5), and raising it costs **3, 4, 6, 8, 10** gold (was 4, 6, 8, 10, 12).
+  - The size of the bonus barely mattered in the sim; **where the Captain bought it was the problem.** It now buys only at its capital or a choke point it holds, with a rival army next door and enough troops there for the bonus to be worth the gold. Captains that buy culture now win **50%** against Captains that don't (was 37.7%): a fair buy, not a must-buy.
+  - On screen: small gold laurels on the troop pill (one per level, Mid and Near). The card says "Culture 2: defends +12%, shrugs off 30% of unrest, +1 gold, unlocks Siege and Engineers in Old March", or "No culture yet: raising it costs 3 gold". The panel and the Culture button say what the next level adds.
+- **Bots that handle a player pulling ahead** (they judge everything from their own view; the same rule for every seat):
+  - **Gang up on a runaway leader:** a rival that looks to hold about 40% of the land (or far more than anyone else) becomes the main target; those fronts keep honest garrisons; no attacks on weaker rivals who are holding the leader off.
+  - **Turn on a fast attacker:** bots now see what their seat watched in last turn's replay. A rival that took 2+ of their territories becomes the target (its chain is thinly held), and they recruit and march troops to that front instead of grabbing neutral land nearby.
+  - A first version that just dug in cut runaways too, but Recruit bots then beat the Captain far more often, so it was dropped. The Captain is now stronger against Recruits than at the start of the session (33.5% at a table of 1 Captain + 3 Recruits; 92% head to head).
+- **Simulator** (1,000 games each; `docs/sim-results-m3-fixes.md`):
+  - Average turns, session 8 → now: 2 players 22.3 → 19.3, 4 players 24.0 → 20.8, 6 players 25.0 → 27.7, 10 players 39.8 → 35.1.
+  - **Real time, roughly** (1.5 minutes a turn plus half a minute of replay): single player about 39 / 42 / 55 / 70 minutes; online with the 5-minute timer up to 1.8 / 1.9 / 2.5 / 3.2 hours. 4-player games are still a little under Nate's targets.
+  - **Runaways** (4 players): one player on half the map by turn 10: 82% at the start of the session → 38% now. Part 2's bots account for about a third of that (49% → 38% on the same maps); the rebuilt Embervale for the rest (its 4-player capitals start a border closer). The leader at halfway still wins 83% of the time, and 20% of games are comebacks.
+  - Seats are fair; lopsided attacks that failed: 0 of about 330,000.
+  - Recruits: about a quarter of all troops are now recruited in fully held provinces.
+- **Map clarity:**
+  - **No hairline borders:** the map maker now gives the corner to a third neighbour when two territories barely touch (they stop being neighbours), or widens the contact if it can't. Embervale's shortest border went from 4.4 to 24 map units, Greatmarch's from 0.6 to 22.9 (a typical one is about 90). `checkMap` now rejects any map with one.
+  - **Passes are wide:** 36–45 units on Embervale (were 12 and 23) and 29–50 on Greatmarch (were 9–31), each with a road and a gate symbol you can see at Mid zoom. Also a `checkMap` check.
+  - **Both maps rebuilt** (map maker v2) from the same seeds: same coasts, lakes, islands and ranges, a few more passes, and **new place names** (names now come from their own random sequence, so they won't change again when shapes do). They play about the same length.
+  - **Select a territory and every neighbour is marked:** a gilded chevron across the shared border (red core: you'd attack, blue: you'd move), blue ripples for a river, a stone arch for a pass, and its sea lanes light up.
+  - **Every territory edge** is a crisp ink line with a light halo, at every zoom. **Province borders** are a gilded double line, and each province has a plaque: "Old March +4 · you hold 4 of 6" (just "+4" if you hold none of it), at Far and Mid. Plaques and province names never cover an army.
+  - **Tactical view** really is flat House colours. The old screenshot looked painted because the capture script clicked "fit the whole map" instead; it's fixed and retaken.
+- **Buildings stand on the map:** about twice the size, on a ground shadow like the capital's, and they step aside so the army marker never covers them. Being built: a wooden scaffold and a slightly washed-out building (no see-through ghost), and the pill's icon stays solid with a small hourglass.
+- **Plainer panel and card:** the army panel's grey line is now chips ("Plains, defends ×1", "+2 gold a turn", "Old March +4 if you hold all 6 · you hold 3"), and the card is one plain sentence per row with its icon ("Held by Lady Morwen", "12 troops", "Fort, being built (ready next turn)"). Checked on a 384 px phone.
+- **Deployed** to the private preview (version `7af998a7`); the lock check passed.
+- 302 automated tests pass. Screenshots (`docs/art/screens/`): `ui-recruit-sites.png` (+ `-phone`), `ui-culture-card.png`, `ui-culture-pips.png`, `ui-report-called-off.png`, `ui-links-pass.png`, `ui-links-sea.png`, `ui-provinces-mid.png`, `ui-provinces-far.png`, `ui-buildings-mid.png`, `ui-buildings-near.png`, `ui-buildings-board-staged-mid.png` / `-near.png` (all four built and being built, staged by editing the page's view, since only forts are ever "being built" between turns), `ui-army-panel.png` (+ `-phone`), `ui-territory-card.png` (+ `-phone`), `ui-tactical.png`, `embervale-tactical.png`, and the map previews `docs/maps/embervale.png`, `greatmarch.png`. `pnpm ui-check clarity` retakes them.
+- **Nate's play test:** asked to play after the deploy (results below once he has).
