@@ -17,7 +17,7 @@ import { makeTerritories } from "./territories";
 import { assignBiomes, assignTerrain, buildGrids, carveRivers, cellHeights, toBase64 } from "./terrain";
 import { clamp, dist, r1 } from "./util";
 
-export { checkMap, borderLengths, MIN_BORDER_CHECK, MIN_PASS_CHECK, chokePoints, shapeArea, fairness, allDistances, territoryIncome } from "./checks";
+export { checkMap, borderLengths, MIN_BORDER_CHECK, MIN_PASS_CHECK, chokePoints, landBridgeBorders, shapeArea, fairness, allDistances, territoryIncome } from "./checks";
 export { fromBase64, TERRAIN_BIOMES } from "./terrain";
 export { DECORATION_BIOMES, LABEL_CLEAR } from "./places";
 export { insideRings } from "./util";
@@ -27,6 +27,7 @@ export { applyRenames, type NameFile } from "./renames";
 export { LAND_SHAPES, SHAPE_NAMES, type LandShape } from "./shapes";
 export { allMasks, MASKS, IMAGE_MASKS, type MaskDef } from "./masks";
 export { recipeFor, SIZES, type Recipe } from "./recipes";
+export { explainChecks, fairnessRows, sizeSpread, mapFingerprint, recipeToJson, recipeFromJson, type CheckRow, type FairnessRow, type SizeSpread } from "./report";
 
 /** Bump when a change to the map maker would change its output. */
 export const MAPGEN_VERSION = 2;

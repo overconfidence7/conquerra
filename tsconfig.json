@@ -5,6 +5,7 @@
     { "path": "packages/engine" },
     { "path": "packages/bots" },
     { "path": "packages/mapgen" },
+    { "path": "packages/simcore" },
     { "path": "packages/art" },
     { "path": "apps/sim" },
     { "path": "apps/web" }

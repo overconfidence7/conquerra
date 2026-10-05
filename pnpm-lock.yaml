@@ -41,6 +41,9 @@ importers:
       '@conquerra/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@conquerra/simcore':
+        specifier: workspace:*
+        version: link:../../packages/simcore
 
   apps/web:
     dependencies:
@@ -56,6 +59,12 @@ importers:
       '@conquerra/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@conquerra/mapgen':
+        specifier: workspace:*
+        version: link:../../packages/mapgen
+      '@conquerra/simcore':
+        specifier: workspace:*
+        version: link:../../packages/simcore
       '@fontsource/cinzel':
         specifier: ^5.3.0
         version: 5.3.0
@@ -151,6 +160,18 @@ importers:
       sharp:
         specifier: ^0.35.5
         version: 0.35.5(@types/node@22.20.5)
+
+  packages/simcore:
+    dependencies:
+      '@conquerra/bots':
+        specifier: workspace:*
+        version: link:../bots
+      '@conquerra/content':
+        specifier: workspace:*
+        version: link:../content
+      '@conquerra/engine':
+        specifier: workspace:*
+        version: link:../engine
 
 packages:
 

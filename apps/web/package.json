@@ -13,6 +13,8 @@
     "@conquerra/bots": "workspace:*",
     "@conquerra/content": "workspace:*",
     "@conquerra/engine": "workspace:*",
+    "@conquerra/mapgen": "workspace:*",
+    "@conquerra/simcore": "workspace:*",
     "@fontsource/cinzel": "^5.3.0",
     "@fontsource/manrope": "^5.3.0",
     "@fontsource/spectral": "^5.3.0",

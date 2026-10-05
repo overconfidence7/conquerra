@@ -136,16 +136,31 @@ export function chokePoints(map: MapDef): ChokeCount {
       land.get(b.a)!.push(b.b);
       land.get(b.b)!.push(b.a);
     }
-  let landBridges = 0;
+  const landBridges = landBridgeBorders(map, land).length;
+  return { passes, seaLanes, landBridges, total: passes + seaLanes + landBridges };
+}
+
+/** Ordinary borders that are the only land link between two parts of 3+ territories each. */
+export function landBridgeBorders(map: MapDef, landAdj?: Map<string, string[]>): MapDef["borders"] {
+  let land = landAdj;
+  if (!land) {
+    land = new Map<string, string[]>(map.territories.map((t) => [t.id, []]));
+    for (const b of map.borders)
+      if (b.type !== "sea") {
+        land.get(b.a)!.push(b.b);
+        land.get(b.b)!.push(b.a);
+      }
+  }
+  const out: MapDef["borders"] = [];
   for (const b of map.borders) {
     if (b.type === "sea" || b.type === "pass") continue;
     const cut = (x: string, y: string) => (x === b.a && y === b.b) || (x === b.b && y === b.a);
     const side = bfs(land, b.a, cut);
     if (side.has(b.b)) continue;
     const other = bfs(land, b.b, cut);
-    if (side.size >= 3 && other.size >= 3) landBridges++;
+    if (side.size >= 3 && other.size >= 3) out.push(b);
   }
-  return { passes, seaLanes, landBridges, total: passes + seaLanes + landBridges };
+  return out;
 }
 
 /** No hairline borders: every land border is at least this long (map units; a typical one is about 90). */
