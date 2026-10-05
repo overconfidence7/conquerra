@@ -75,6 +75,8 @@ export const captainBot: Bot = makeCaptainBot();
 const LOYAL_RESERVE = 8;
 const LOYAL_RESERVE_THREATENED = 3;
 const LOYAL_FROM_TURN = 3;
+/** Loyal land: a level is worth buying when the troops there, made this much stronger over this many fights, beat its price in troops (tuned: 2 to 8 tried). */
+const LOYAL_FIGHTS = 4;
 
 function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[] {
   const { rules } = ctx;
@@ -263,12 +265,20 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
   }
 
   // 7. Loyal land: culture where it pays. Each level makes that land defend better for good (and blocks unrest), so
-  // it goes where we mean to hold: the capital, choke points we hold against a rival, and frontier land with a fort.
-  // Only with gold to spare after a real army's worth (a threatened capital needs less). Otherwise, a little culture
-  // in safe interior land when comfortably rich, as before.
-  const loyal = on("culture")
+  // it goes where we mean to hold and a rival army stands next door: the capital and choke points we hold, and only
+  // where enough troops stand for the bonus to be worth the gold, never while a choke point is short of troops, and
+  // only with a real army's worth of gold to spare (a threatened capital needs less). Otherwise, a little culture in
+  // safe interior land when comfortably rich, as before. (Buying at every capital, choke point and forted frontier
+  // whenever there was gold to spare lost: 37.7% against Captains that don't. See docs/sim-results-m3-fixes.md.)
+  // Worth it: the troops standing there, made stronger by one more level over a few fights, beat the price in troops.
+  const worthRaising = (t: TerritoryId) => {
+    const cost = investCost(rules, seen(t)!.culture);
+    return cost !== null && troopsAt(t) * rules.culture.defensePerLevel * LOYAL_FIGHTS >= cost / rules.troops.cost;
+  };
+  const shortAtFront = mine.some((t) => chokeHolder(t) && holdNeed(t) > troopsAt(t));
+  const loyal = on("culture") && !shortAtFront
     ? mine
-        .filter((t) => (t === capital || chokeHolder(t) || (isFrontier(t) && seen(t)!.building === "fort")) && seen(t)!.culture < rules.culture.max)
+        .filter((t) => (t === capital || chokeHolder(t)) && biggestEnemyNear(t) > garrison && worthRaising(t) && seen(t)!.culture < rules.culture.max)
         .sort((a, b) => seen(a)!.culture - seen(b)!.culture || Number(b === capital) - Number(a === capital) || biggestEnemyNear(b) - biggestEnemyNear(a) || (a < b ? -1 : 1))[0]
     : undefined;
   const loyalCost = loyal ? investCost(rules, seen(loyal)!.culture) : null;

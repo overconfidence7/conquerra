@@ -26,8 +26,8 @@ export function ActionBar({ ctx, view, plan, spendOpen, onSpend, onMove, disable
   const { selected, select, quickRecruit, add } = useGame();
   const a = actionBarState(ctx, view, plan, selected);
   const mineSelected = a.spend.ok;
-  const btn = (key: string, label: string, icon: ReactElement, ok: boolean, why: string | undefined, onClick: () => void, on = false, count?: number) => (
-    <button key={key} className={`round ${on ? "on" : ""}`} disabled={disabled || !ok} title={ok ? label : why} aria-label={count ? `${label} ${count}` : label} onClick={onClick}>
+  const btn = (key: string, label: string, icon: ReactElement, ok: boolean, why: string | undefined, onClick: () => void, on = false, count?: number, tip?: string) => (
+    <button key={key} className={`round ${on ? "on" : ""}`} disabled={disabled || !ok} title={ok ? (tip ?? label) : why} aria-label={count ? `${label} ${count}` : label} onClick={onClick}>
       {icon}
       <span>{label}</span>
       {count ? <b className="count">{count}</b> : null}
@@ -41,7 +41,7 @@ export function ActionBar({ ctx, view, plan, spendOpen, onSpend, onMove, disable
       }, mineSelected && !spendOpen)}
       {btn("recruit", "Recruit", <ArtIcon name="icon-barracks" size={30} />, a.recruit.ok, a.recruit.why, quickRecruit, false, a.recruit.ok ? a.recruit.count : undefined)}
       {btn("spend", "Spend", <ArtIcon name="icon-gold" size={30} />, a.spend.ok, a.spend.why, onSpend, spendOpen)}
-      {btn("culture", "Culture", <ArtIcon name="icon-culture" size={30} />, a.culture.ok, a.culture.why, () => selected && add({ kind: "invest", territory: selected }))}
+      {btn("culture", "Culture", <ArtIcon name="icon-culture" size={30} />, a.culture.ok, a.culture.why, () => selected && add({ kind: "invest", territory: selected }), false, undefined, a.culture.next)}
       {btn("retreat", "Retreat", <Icon.retreat />, a.retreat.ok, a.retreat.why, () => selected && add({ kind: "retreat", from: selected }))}
     </div>
   );

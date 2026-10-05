@@ -39,6 +39,8 @@ export interface MarkerMetrics {
 }
 
 const DIGIT_W = 0.62;
+/** How far the culture laurels hang below the pill (screen px). */
+export const CULTURE_PIP_DROP = 6;
 
 /** Pill height for a zoom: grows a little as you zoom in, never below the minimum. */
 export function pillHeight(z: Pick<ZoomDetail, "territoryPx">): number {
@@ -54,6 +56,7 @@ export function markerMetrics(c: MarkerContent, z: Pick<ZoomDetail, "territoryPx
   let w = pillW, top = pillH / 2, bottom = pillH / 2;
   if (mix.icons > 0.5) {
     if (c.owned) w += pillH * 0.9; // banner on the left
+    if (c.culture) bottom += CULTURE_PIP_DROP; // laurel pips hang from the pill's lower edge (Mid and Near)
     if (c.building) w += icon + 2; // building icon on the right
     if (c.crown) top = Math.max(top, pillH / 2 + icon * 0.7);
   }
@@ -62,7 +65,6 @@ export function markerMetrics(c: MarkerContent, z: Pick<ZoomDetail, "territoryPx
       bottom += icon + 3;
       w = Math.max(w, c.specialists * (icon + 2));
     }
-    if (c.culture) bottom += 7;
   }
   // The name sits above the pill at Near, except on capitals, whose plaque already names them.
   if (mix.names > 0.5 && c.name && !(c.capital && mix.icons > 0.5)) {

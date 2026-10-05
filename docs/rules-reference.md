@@ -112,12 +112,15 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
 **What happens to specialists when their army is destroyed:** they're **lost**. That's true whether the army dies attacking or its territory is captured. They're never captured or handed to the winner. If an attack fails but some troops survive, the specialists come home with the survivors.
 
 ## 7. Culture (light)
-- Each territory has **one culture number, from 0 to 5**. Raise it one level at a time with gold: **4, 6, 8, 10, 12** gold for levels 1–5.
-- **What it does:**
+- Each territory has **one culture number, from 0 to 5**. Raise it one level at a time with gold: **3, 4, 6, 8, 10** gold for levels 1–5 (was 4, 6, 8, 10, 12 before session 9).
+- **What it does ("loyal land"):**
+  - **Defense:** each level makes that territory defend **6% better** (+30% at level 5). It multiplies with terrain and forts (§9).
   - **Holding bonus:** +0.5 gold per turn per level on that territory, and a full province's bonus grows by 0.5 per level of its average culture.
   - **Protection:** each level blocks 15% of bad effects there (up to 75%). Today that means **unrest** (§8). Fate events and uprisings (Milestone 3) will use the same protection.
   - **Unlocks** the fancier specialists in that province (§6).
 - **Captured culture passes to the conqueror.** Investing in a border region is a gamble.
+- **On screen:** small gold laurels on the troop pill (one per level, at Mid and Near zoom). The territory card says what it does in one line, for example "Culture 2: defends +12%, shrugs off 30% of unrest, +1 gold, unlocks Siege and Engineers in Pinemark", or "No culture yet: raising it costs 3 gold". Before you tap Culture, the panel (and the button's tooltip) says what the next level adds.
+- **Where it pays:** where you mean to hold and a rival army is next door, with a real garrison (the bonus is a share of the defenders). The Captain bot buys it at its capital and choke points on those terms.
 - No culture victory, no culture tree. Military first.
 
 ## 8. Gold, upkeep and unrest
@@ -135,9 +138,9 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
 
 ## 9. Combat (about 70% skill, 30% luck)
 - **Attack strength** = attacking troops × border (river crossing ×0.8, mountain pass ×0.85, sea lane ×0.75) × Leader bonus (+20% if your Leader goes along). See §12.
-- **Defense strength** = defending troops × terrain (plains ×1.0, forest ×1.2, hills ×1.3, mountains ×1.6, swamp ×1.1) × finished fort (×1.6, unless siege cancels it) × Leader bonus (+20% if their Leader is there).
+- **Defense strength** = defending troops × terrain (plains ×1.0, forest ×1.2, hills ×1.3, mountains ×1.6, swamp ×1.1) × finished fort (×1.6, unless siege cancels it) × culture (+6% a level, §7) × Leader bonus (+20% if their Leader is there).
 - On average, each point of attack strength kills **1.0** defender, and each point of defense strength kills **0.6** attackers. Healers reduce their own side's losses.
-- **Luck** spreads each side's actual losses up to 30% either way around that average (most results land near the middle). The host can set luck from 0% to 100%.
+- **Luck** spreads each side's actual losses up to 30% either way around that average (most results land near the middle). The host can set luck from 0% to 100%. Luck is rolled on the full average losses before they're capped at the troops actually there, so an attack the preview calls **guaranteed always captures** (fixed in session 9: a 35-against-1 attack could fail before).
 - The attacker **captures** the territory if every defender dies and at least one attacker survives. Survivors move in; buildings and culture stay with the land.
 - If **both sides are wiped out**, the last defender holds on: the land keeps 1 troop. (Land is never left owned with 0 troops.)
 - A Leader in a captured territory, or in an attacking army that's wiped out, **falls**.

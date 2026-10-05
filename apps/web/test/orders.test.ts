@@ -68,12 +68,12 @@ describe("gold left after queued orders", () => {
       o({ kind: "recruit", territory: "a", count: 5 }), // 10
       o({ kind: "hire", territory: "a", specialist: "cavalry" }), // 8
       o({ kind: "build", territory: "b", building: "market" }), // 6
+      o({ kind: "invest", territory: "b" }), // 3
       o({ kind: "invest", territory: "b" }), // 4
-      o({ kind: "invest", territory: "b" }), // 6
     ];
     const plan = planQueue(ctx, view, queue);
-    expect(plan.costs).toEqual([10, 8, 6, 4, 6]);
-    expect(plan.goldLeft).toBe(60 - 34);
+    expect(plan.costs).toEqual([10, 8, 6, 3, 4]);
+    expect(plan.goldLeft).toBe(60 - 31);
     expect(plan.culture.get("b")).toBe(2);
     expect(plan.building.has("b")).toBe(true);
   });

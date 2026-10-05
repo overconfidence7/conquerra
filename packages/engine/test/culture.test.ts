@@ -96,7 +96,7 @@ describe("loyal land: culture defends", () => {
     luck: 0.3,
   };
 
-  it("each level adds the rules' step to defense (+25% at level 5 with 5% a level), multiplying with terrain and forts", () => {
+  it("each level adds the rules' step to defense (+30% at level 5 with 6% a level), multiplying with terrain and forts", () => {
     const r = defaultRules;
     const step = r.culture.defensePerLevel;
     expect(step).toBeGreaterThanOrEqual(0.04);

@@ -134,6 +134,18 @@ describe("Captain bot: the six priorities", () => {
     const wall = scenario({ line: "abcdefgh", layout: { a: ["p1", 12], c: [null, 9], h: ["p2", 5] }, memory: { c: [null, 9] }, caps: ["a", "h"] }).plan();
     expect(moves(wall).map((o) => `${o.from}${o.to}`)).not.toContain("bc");
   });
+
+  it("7. loyal land: raises culture at its capital when a rival army stands next door and a real garrison holds it", () => {
+    const at = (troops: number, rival: number) => {
+      const sc = scenario({ line: "abcdef", layout: { a: ["p1", 2], b: ["p1", troops], c: ["p2", rival], d: ["p2", 4], e: ["p2", 4], f: ["p2", 4] }, caps: ["b", "f"], gold: 40 });
+      sc.s.turn = 5;
+      return sc.plan().filter((o) => o.kind === "invest");
+    };
+    expect(at(30, 12)).toEqual([expect.objectContaining({ territory: "b" })]);
+    // Not worth it with only a few troops there (the bonus is a share of the defenders), nor with no rival army near.
+    expect(at(3, 12)).toEqual([]);
+    expect(at(30, 1)).toEqual([]);
+  });
 });
 
 describe("Captain bot: fair play", () => {

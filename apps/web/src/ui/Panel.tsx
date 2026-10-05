@@ -35,6 +35,7 @@ import { ArtIcon, buildingIcon, specialistIcon } from "./ArtIcon";
 import { useGame } from "../store";
 import { nearestRecruitSite, RECRUIT_RULE } from "../logic/actions";
 import { colorOf } from "./colors";
+import { cultureLine, cultureNext } from "../map/card";
 
 const CROSSING = { river: "🌊 Across a river", pass: "⛰ Through a mountain pass", sea: "⛵ Over a sea lane" } as const;
 
@@ -358,10 +359,10 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
           Building a {BUILDING_NAME[v.construction.building].toLowerCase()}
         </li>
       )}
-      {v.culture > 0 && (
+      {(v.culture > 0 || mine) && (
         <li className="with-icon">
           <ArtIcon name="icon-culture" size={18} />
-          Culture {v.culture}
+          {cultureLine(ctx, view, selected, mine ? (plan.culture.get(selected) ?? v.culture) : v.culture, plan.culture)}
         </li>
       )}
       {v.leaders.length > 0 && <li className="with-icon"><ArtIcon name="icon-crown" size={18} />{v.leaders.map((l) => (n.isMe(l) ? "Your Leader" : `${n.who(l)}'s Leader`)).join(", ")}</li>}
@@ -436,7 +437,7 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
           ↩ Retreat only if outnumbered
         </button>
       )}
-      {!spendOpen && cultureCost !== null && <p className="muted small">Culture here: {plan.culture.get(selected) ?? 0}. Raising it costs {cultureCost}g.</p>}
+      {!spendOpen && cultureCost !== null && <p className="muted small">Next: {cultureNext(ctx, view, selected, plan.culture.get(selected) ?? 0, plan.culture)}</p>}
     </div>
   );
 }

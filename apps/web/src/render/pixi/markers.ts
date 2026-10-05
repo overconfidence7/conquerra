@@ -3,7 +3,7 @@ import type { PlayerView } from "@conquerra/engine";
 import { Container, Graphics, Sprite, Text, type TextStyleOptions } from "pixi.js";
 import { toScreen, type Camera } from "../../map/camera";
 import { hexNum, houseOf } from "../../map/houses";
-import { layoutMarkers, markerMetrics, pillHeight, type MarkerContent, type MarkerMetrics } from "../../map/layout";
+import { CULTURE_PIP_DROP, layoutMarkers, markerMetrics, pillHeight, type MarkerContent, type MarkerMetrics } from "../../map/layout";
 import { markerContent, markerPriority, territoryStatus, type TerritoryStatus } from "../../map/status";
 import type { DetailMix, ZoomDetail } from "../../map/zoom";
 import type { MapScene } from "../types";
@@ -23,6 +23,30 @@ const ODDS_COLOR = { guaranteed: 0x7fc46a, likely: 0xe3c77e, possible: 0xe39a4e,
 
 const numberStyle = (size: number, fill: number): TextStyleOptions => ({ fontFamily: "Manrope, system-ui, sans-serif", fontWeight: "800", fontSize: size, fill, stroke: { color: 0x0b0f16, width: size * 0.12, join: "round" } });
 const nameStyle = (size: number): TextStyleOptions => ({ fontFamily: "Cinzel, serif", fontWeight: "700", fontSize: size, fill: 0xf3ead2, stroke: { color: 0x1b1206, width: size * 0.28, join: "round" } });
+
+/**
+ * Culture pips: one small laurel sprig per level, in a row on a dark tab centred on the pill's lower edge (y), so
+ * they read on any ground. Each sprig is two gilded leaves in a V.
+ */
+function laurels(level: number, y: number): Graphics {
+  const g = new Graphics();
+  const step = 7.5, w = level * step + 4, h = 9;
+  g.roundRect(-w / 2, y - 2, w, h, 4).fill({ color: NAVY, alpha: 0.92 }).stroke({ width: 1, color: GOLD, alpha: 0.9 });
+  const leaf = (cx: number, cy: number, angle: number) => {
+    // A lens-shaped leaf 5.5 long, pointing along `angle` from (cx, cy).
+    const pts: [number, number][] = [];
+    for (let i = 0; i <= 8; i++) pts.push([(i / 8) * 5.5, Math.sin((i / 8) * Math.PI) * 1.5]);
+    for (let i = 7; i >= 1; i--) pts.push([pts[i]![0], -pts[i]![1]]);
+    const c = Math.cos(angle), sn = Math.sin(angle);
+    g.poly(pts.flatMap(([a, b]) => [cx + a * c - b * sn, cy + a * sn + b * c])).fill(GOLD_HI);
+  };
+  for (let i = 0; i < level; i++) {
+    const cx = (i - (level - 1) / 2) * step, cy = y + 5.5;
+    leaf(cx, cy, -Math.PI / 2 - 0.5);
+    leaf(cx, cy, -Math.PI / 2 + 0.5);
+  }
+  return g;
+}
 
 interface MarkerView {
   id: string;
@@ -142,10 +166,12 @@ export class MarkerLayer {
         icons.addChild(bi);
       }
     }
+    // ---- Culture: small gold laurels on a dark tab along the pill's lower edge (Mid and Near) ----
+    if (!far && s.culture > 0 && s.kind === "seen") icons.addChild(laurels(s.culture, pillH / 2));
     root.addChild(icons);
     // ---- Specialists, culture dots and gold value (Near, or always in Tactical) ----
     if (mix.nearDetail > 0.5 && s.kind === "seen") {
-      let y = pillH / 2 + 3;
+      let y = pillH / 2 + 3 + (s.culture ? CULTURE_PIP_DROP : 0);
       if (s.specialists.length) {
         const n = s.specialists.length, step = icon + 2;
         s.specialists.forEach((sp, i) => {
@@ -156,11 +182,6 @@ export class MarkerLayer {
           near.addChild(si);
         });
         y += icon + 3;
-      }
-      if (s.culture) {
-        const dots = new Graphics();
-        for (let i = 0; i < s.culture; i++) dots.circle((i - (s.culture - 1) / 2) * 7, y + 2.5, 2.4).fill(GOLD_HI).stroke({ width: 1, color: 0x1b1206 });
-        near.addChild(dots);
       }
     }
     root.addChild(near);
@@ -173,7 +194,7 @@ export class MarkerLayer {
     }
     root.addChild(names);
     if (c.capital && !far) {
-      const bottom = pillH / 2 + (mix.nearDetail > 0.5 ? (s.specialists.length ? icon + 3 : 0) + (s.culture ? 7 : 0) : 0) + 3;
+      const bottom = pillH / 2 + (s.culture ? CULTURE_PIP_DROP : 0) + (mix.nearDetail > 0.5 && s.specialists.length ? icon + 3 : 0) + 3;
       const l1 = new Text({ text: c.name, style: { ...nameStyle(font * 0.8), stroke: { color: 0, width: 0 } }, resolution: this.resolution });
       const l2 = new Text({ text: "Capital", style: { fontFamily: "Cinzel, serif", fontWeight: "700", fontSize: font * 0.62, fill: GOLD_HI }, resolution: this.resolution });
       const w = Math.max(l1.width, l2.width) + 12, h = l1.height + l2.height + 4;

@@ -3,7 +3,7 @@ import { maps } from "@conquerra/content/maps";
 import { createGame, resolveTurn, viewFor, type GameContext, type PlayerView } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { clampCamera, fitCamera, toMap, toScreen, zoomAt } from "../src/map/camera";
-import { seenAgo, territoryCard } from "../src/map/card";
+import { cultureLine, cultureNext, seenAgo, territoryCard } from "../src/map/card";
 import { HOUSES, houseOf } from "../src/map/houses";
 import { layoutMarkers, markerMetrics, MIN_PILL_HEIGHT, pillHeight, type MarkerBox, type MarkerContent } from "../src/map/layout";
 import { groupOutlines, hitTester, insideRings } from "../src/map/shapes";
@@ -195,6 +195,20 @@ describe("the tap card", () => {
     expect(card.subtitle).toMatch(/^Your capital/);
     expect(card.lines.map((l) => l.label)).toEqual(["Owner", "Troops", "Leader", "Building", "Culture", "Gold", "Specialists"]);
     expect(card.lines.every((l) => !l.value.endsWith("?"))).toBe(true);
+  });
+
+  it("explains culture in plain words: what it does now, and what the next level adds", () => {
+    const view = fogGame();
+    const cap = view.me.capital;
+    const r = ctx.rules;
+    expect(territoryCard(ctx, view, cap).lines.find((l) => l.label === "Culture")!.value).toBe(`No culture yet: raising it costs ${r.culture.investCost[0]} gold`);
+    const province = ctx.map.provinces.find((p) => p.id === ctx.map.territories.find((t) => t.id === cap)!.province)!;
+    const v = view.territories[cap] as Extract<PlayerView["territories"][string], { detail: "full" }>;
+    v.culture = 2;
+    const step = Math.round(100 * r.culture.defensePerLevel);
+    expect(cultureLine(ctx, view, cap, 2)).toBe(`Culture 2: defends +${2 * step}%, shrugs off 30% of unrest, +1 gold, unlocks Siege and Engineers in ${province.name}`);
+    expect(cultureNext(ctx, view, cap, 2)).toBe(`Culture 3 for ${r.culture.investCost[2]} gold: defends +${3 * step}% (was +${2 * step}%), shrugs off 45% of unrest, +1½ gold, newly unlocks Healers in ${province.name}`);
+    expect(cultureNext(ctx, view, cap, r.culture.max)).toBeNull();
   });
 });
 

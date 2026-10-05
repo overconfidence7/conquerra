@@ -1,4 +1,5 @@
 import { distancesFrom, incomeFor, indexMap, recruitSitesIn, type GameContext, type GameState, type PlayerView, type TerritoryId } from "@conquerra/engine";
+import { cultureNext } from "../map/card";
 import { affordableTroops, isMine, isRecruitSite, nextCultureCost, seen, type QueuePlan } from "./orders";
 
 /**
@@ -13,7 +14,8 @@ export interface ActionBarState {
   recruit: { ok: boolean; at: TerritoryId | null; count: number; why?: string };
   /** Spend (hire a specialist or build): needs one of your territories selected. */
   spend: { ok: boolean; why?: string };
-  culture: { ok: boolean; cost: number | null; why?: string };
+  /** Culture: `next` says what one more level here adds, shown before you tap. */
+  culture: { ok: boolean; cost: number | null; why?: string; next?: string };
   retreat: { ok: boolean; why?: string };
 }
 
@@ -47,7 +49,7 @@ export function actionBarState(ctx: GameContext, view: PlayerView, plan: QueuePl
   return {
     recruit: anySite && count > 0 ? { ok: true, at, count } : { ok: false, at, count, why: !anySite ? `Nowhere to recruit: ${RECRUIT_RULE.toLowerCase()}` : "Not enough gold" },
     spend: mine ? { ok: true } : { ok: false, why: "Select one of your territories first" },
-    culture: !mine ? { ok: false, cost: null, why: "Select one of your territories first" } : cost === null ? { ok: false, cost, why: "Culture is at its highest here" } : cost > plan.goldLeft ? { ok: false, cost, why: "Not enough gold" } : { ok: true, cost },
+    culture: !mine ? { ok: false, cost: null, why: "Select one of your territories first" } : cost === null ? { ok: false, cost, why: "Culture is at its highest here" } : cost > plan.goldLeft ? { ok: false, cost, why: "Not enough gold" } : { ok: true, cost, next: cultureNext(ctx, view, selected!, plan.culture.get(selected!) ?? 0, plan.culture) ?? undefined },
     retreat: ownNeighbour ? { ok: true } : { ok: false, why: mine ? "No territory of yours next door to fall back to" : "Select one of your territories first" },
   };
 }
