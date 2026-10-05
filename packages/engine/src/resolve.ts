@@ -385,8 +385,9 @@ class Turn {
     const defenderLeader = !!defender && defender.leader.alive && defender.leader.territory === o.to;
     const exp = this.expect(pid, o.to, plan);
     const luck = this.s.settings.luck;
-    let defLoss = rollLosses(exp.expectedDefenderLosses, luck, to.troops, this.rng);
-    const atkLoss = rollLosses(exp.expectedAttackerLosses, luck, plan.troops, this.rng);
+    // Roll on the uncapped averages, then cap at each army: a "guaranteed" attack always captures.
+    let defLoss = rollLosses(exp.uncappedDefenderLosses, luck, to.troops, this.rng);
+    const atkLoss = rollLosses(exp.uncappedAttackerLosses, luck, plan.troops, this.rng);
     // Both sides wiped out: the last defender holds. Land is never left owned with 0 troops.
     if (to.troops > 0 && defLoss >= to.troops && atkLoss >= plan.troops) defLoss = to.troops - 1;
     const attackers = snapshot(plan.troops, plan.specialists);

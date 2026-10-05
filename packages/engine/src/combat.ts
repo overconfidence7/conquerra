@@ -18,8 +18,15 @@ export interface BattleInput {
 export interface BattleExpectation {
   attackStrength: number;
   defenseStrength: number;
+  /** Average losses, capped at each side's army (what the screen shows). */
   expectedDefenderLosses: number;
   expectedAttackerLosses: number;
+  /**
+   * Average losses before the cap. Luck is rolled on these, then capped: rolling on the capped number would let
+   * a hopeless defender survive by rounding (35 against 1 rolled "about 1 loss, ±30%", sometimes 0).
+   */
+  uncappedDefenderLosses: number;
+  uncappedAttackerLosses: number;
   /** Lowest / highest possible losses given the luck setting. */
   defenderLossRange: [number, number];
   attackerLossRange: [number, number];
@@ -67,6 +74,8 @@ export function expectBattle(rules: Rules, b: BattleInput): BattleExpectation {
     defenseStrength,
     expectedDefenderLosses: clampD(eDef),
     expectedAttackerLosses: clampA(eAtk),
+    uncappedDefenderLosses: eDef,
+    uncappedAttackerLosses: eAtk,
     defenderLossRange,
     attackerLossRange,
     captureGuaranteed: defenderLossRange[0] >= b.defenders && attackerLossRange[1] < b.attackers,
