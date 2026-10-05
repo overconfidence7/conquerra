@@ -32,6 +32,7 @@ export function previewAttack(ctx: GameContext, view: PlayerView, a: AttackPlan)
     defenderLeader: target.owner !== null && target.leaders.includes(target.owner),
     terrain: def.terrain,
     building: target.building,
+    culture: target.culture,
     border,
     luck: view.settings.luck,
   });

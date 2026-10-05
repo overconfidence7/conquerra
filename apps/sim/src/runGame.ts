@@ -36,6 +36,10 @@ export interface GameSummary {
   leadersKilled: number;
   hires: number;
   invests: number;
+  /** Culture raises by where they went: the capital, a choke point (facing a rival across a pass or sea lane), other frontier land, or interior land. */
+  investsAt: Record<"capital" | "choke" | "frontier" | "interior", number>;
+  /** Troops recruited by site: the capital, a barracks, or a territory in a fully held province. */
+  recruitsAt: Record<"capital" | "barracks" | "province", number>;
   presets: number;
   /** First turn after which the eventual winner led in territory count for the rest of the game. */
   decidedTurn: number | null;
@@ -59,7 +63,7 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
   const idx = indexMap(ctx.map);
   const sum: GameSummary = {
     seed, winner: "draw", winnerSeat: null, endReason: null, turns: 0, battles: 0, captures: 0, lopsided: 0, lopsidedFailed: 0, byBorder: {}, orders: 0, fizzles: 0, hops: 0, hopCaptures: 0,
-    initiatives: 0, leadersKilled: 0, hires: 0, invests: 0, presets: 0, decidedTurn: null, leadChanges: 0, topShareTurn10: null, resolveMs: [], planMs: [], planMsByBot: {}, winnerBot: null,
+    initiatives: 0, leadersKilled: 0, hires: 0, invests: 0, investsAt: { capital: 0, choke: 0, frontier: 0, interior: 0 }, recruitsAt: { capital: 0, barracks: 0, province: 0 }, presets: 0, decidedTurn: null, leadChanges: 0, topShareTurn10: null, resolveMs: [], planMs: [], planMsByBot: {}, winnerBot: null,
   };
   const leaders: (string | null)[] = [];
   const log: StepEvent[][] = [];
@@ -78,6 +82,7 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
         sum.presets += o.filter((x) => x.preset).length;
       }
     const p1 = performance.now();
+    const before = s;
     const r = resolveTurn(ctx, s, orders);
     const p2 = performance.now();
     sum.planMs.push(p1 - p0);
@@ -109,7 +114,19 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
       if (e.type === "initiative") sum.initiatives++;
       if (e.type === "leaderKilled") sum.leadersKilled++;
       if (e.type === "hired") sum.hires++;
-      if (e.type === "invested") sum.invests++;
+      if (e.type === "invested") {
+        sum.invests++;
+        const owner = (t: string) => before.territories[t]!.owner;
+        const nbrs = idx.neighbors.get(e.territory) ?? [];
+        const capital = before.players.find((p) => p.id === e.player)!.capital === e.territory;
+        const choke = nbrs.some((n) => owner(n) && owner(n) !== e.player && ["pass", "sea"].includes(idx.border(e.territory, n) ?? "normal"));
+        const frontier = nbrs.some((n) => owner(n) !== e.player);
+        sum.investsAt[capital ? "capital" : choke ? "choke" : frontier ? "frontier" : "interior"]++;
+      }
+      if (e.type === "recruited") {
+        const capital = before.players.find((p) => p.id === e.player)!.capital === e.territory;
+        sum.recruitsAt[capital ? "capital" : before.territories[e.territory]!.building === "barracks" ? "barracks" : "province"] += e.count;
+      }
     }
     const counts = new Map<string, number>();
     for (const id of idx.ids) {

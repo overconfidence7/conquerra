@@ -43,16 +43,24 @@ const makeBot = (kind: string): Bot => {
   const margin = marginArg && kind === botKind ? Number(marginArg) : null;
   if (kind === "recruit") return makeRecruitBot({ chainMargin: margin ?? 2 });
   if (kind === "captain") return makeCaptainBot({ chainMargin: margin ?? CAPTAIN_CHAIN_MARGIN, off: (arg("captain-off", "") ? arg("captain-off", "").split(",") : []) as CaptainFeature[] });
-  throw new Error(`Unknown bot "${kind}" (recruit or captain)`);
+  // "captain-no-culture" etc.: a Captain with one priority switched off, under its own name (for mixed tables).
+  if (kind.startsWith("captain-no-")) return { ...makeCaptainBot({ chainMargin: margin ?? CAPTAIN_CHAIN_MARGIN, off: [kind.slice("captain-no-".length) as CaptainFeature] }), id: kind };
+  throw new Error(`Unknown bot "${kind}" (recruit, captain, or captain-no-<priority>)`);
 };
 const mix = arg("mix", "") ? arg("mix", "").split(",").map((k) => k.trim()) : null;
 const label = mix ? `mixed table (${mix.join(", ")})` : `${botKind === "captain" ? "Captain" : "Recruit"} bots${marginArg ? ` (chain margin ${marginArg})` : ""}`;
+
+/** Balance experiments: --culture-defense 0.08 (defense per culture level), --culture-costs 3,4,5,6,7. */
+const rules = JSON.parse(JSON.stringify(defaultRules)) as typeof defaultRules;
+if (arg("culture-defense", "")) rules.culture.defensePerLevel = Number(arg("culture-defense", ""));
+if (arg("culture-costs", "")) rules.culture.investCost = arg("culture-costs", "").split(",").map(Number);
+const tuned = arg("culture-defense", "") || arg("culture-costs", "") ? `, culture +${Math.round(rules.culture.defensePerLevel * 100)}%/level costing ${rules.culture.investCost.join("/")}` : "";
 
 function ctxFor(players: number): GameContext {
   const name = arg("map", players > 6 ? "greatmarch" : "embervale");
   const map = maps[name];
   if (!map) throw new Error(`Unknown map. Available: ${Object.keys(maps).join(", ")}`);
-  return { map, rules: defaultRules };
+  return { map, rules };
 }
 
 if (arg("replay", "")) {
@@ -91,6 +99,7 @@ const stats = (xs: number[]) => {
   return { avg, p95: s[Math.floor(s.length * 0.95)] ?? 0, max: s[s.length - 1] ?? 0 };
 };
 const ms = (x: number) => `${x.toFixed(2)} ms`;
+const pct2 = (k: number, of: number) => `${((100 * k) / Math.max(1, of)).toFixed(0)}%`;
 let crashed = 0;
 
 for (const players of playerCounts) {
@@ -124,7 +133,7 @@ for (const players of playerCounts) {
   const plan = stats(results.flatMap((g) => g.planMs));
   const total = stats(results.flatMap((g) => g.resolveMs.map((r, i) => r + g.planMs[i]!)));
 
-  console.log(`\n=== ${players} players — ${ctx.map.name}, ${label}, luck ${luck}, ${mode}${turnLimit ? ` (${turnLimit} turns)` : ""}, fog ${fog ? "on" : "off"} ===`);
+  console.log(`\n=== ${players} players — ${ctx.map.name}, ${label}, luck ${luck}, ${mode}${turnLimit ? ` (${turnLimit} turns)` : ""}, fog ${fog ? "on" : "off"}${tuned} ===`);
   console.log(`Games: ${results.length} finished, ${errors.length} crashed, in ${(wall / 1000).toFixed(1)}s`);
   console.log(`Win rate by seat (fair ≈ ${(100 / players).toFixed(1)}% each): ${wins.map((w) => pct(w)).join(" / ")}   draws ${pct(draws)}`);
   if (mix) {
@@ -138,6 +147,12 @@ for (const players of playerCounts) {
   console.log(`How games ended: ${[...reasons.entries()].map(([k, v]) => `${k} ${pct(v)}`).join(", ")}`);
   console.log(`Game length (turns): avg ${avg((g) => g.turns).toFixed(1)}, median ${turns[Math.floor(turns.length / 2)] ?? "-"}, min ${turns[0] ?? "-"}, max ${turns[turns.length - 1] ?? "-"}; ${pct(inBand)} within 15–25`);
   console.log(`Per game: ${avg((g) => g.battles).toFixed(1)} battles, ${avg((g) => g.captures).toFixed(1)} captures, ${avg((g) => g.hires).toFixed(1)} specialists hired, ${avg((g) => g.invests).toFixed(1)} culture raises, ${avg((g) => g.leadersKilled).toFixed(1)} leaders killed`);
+  const inv = (k: keyof GameSummary["investsAt"]) => results.reduce((a, g) => a + g.investsAt[k], 0);
+  const invTotal = results.reduce((a, g) => a + g.invests, 0);
+  console.log(`Culture: bought in ${pct(results.filter((g) => g.invests > 0).length)} of games; raises went to the capital ${pct2(inv("capital"), invTotal)}, choke points ${pct2(inv("choke"), invTotal)}, other frontier ${pct2(inv("frontier"), invTotal)}, interior ${pct2(inv("interior"), invTotal)}`);
+  const rec = (k: keyof GameSummary["recruitsAt"]) => results.reduce((a, g) => a + g.recruitsAt[k], 0);
+  const recTotal = rec("capital") + rec("barracks") + rec("province");
+  console.log(`Recruits by site (troops): capital ${pct2(rec("capital"), recTotal)}, barracks ${pct2(rec("barracks"), recTotal)}, fully held province ${pct2(rec("province"), recTotal)}`);
   const lop = results.reduce((a, g) => a + g.lopsided, 0), lopFail = results.reduce((a, g) => a + g.lopsidedFailed, 0);
   console.log(`Lopsided attacks (8 times the defenders or more): ${avg((g) => g.lopsided).toFixed(1)} per game, ${lop ? ((100 * lopFail) / lop).toFixed(2) : "-"}% failed (${lopFail} of ${lop})`);
   const kinds = ["normal", "river", "pass", "sea"];

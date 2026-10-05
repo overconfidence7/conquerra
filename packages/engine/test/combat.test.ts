@@ -11,6 +11,7 @@ const base: BattleInput = {
   defenderLeader: false,
   terrain: "plains",
   building: null,
+  culture: 0,
   border: "normal",
   luck: 0.3,
 };

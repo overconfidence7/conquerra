@@ -7,7 +7,7 @@ export { visionFor, visibleTerritories, type Vision, type VisionSource } from ".
 export { replayFor, type ReplayEvent, type SurfaceEvent, type VisionEvent, type SeenTerritory } from "./replay";
 export { TurnVision, recordTurnSightings, sightingOf, type VisionDelta } from "./sightings";
 export { PRESETS, expandPreset, type PresetInfo } from "./presets";
-export { expectBattle, rollLosses, healerReduction, type BattleExpectation, type BattleInput } from "./combat";
+export { expectBattle, rollLosses, healerReduction, cultureDefense, type BattleExpectation, type BattleInput } from "./combat";
 export { SHARES, amountLabel, fewestToTake, isShare, recruitCount, recruitLabel, troopsFor, type RecruitAmount, type Share, type TroopAmount } from "./amounts";
 export { previewAttack, recruitSitesIn, isRecruitSiteIn, type AttackPlan } from "./preview";
 export { explainFizzle, explainHold, describeFizzledOrder, fizzleIsQuiet, type PlaceNames, type ExplainOptions } from "./explain";

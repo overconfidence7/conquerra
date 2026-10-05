@@ -112,7 +112,8 @@
     "incomePerLevel": 0.5,
     "provinceBonusPerLevel": 0.5,
     "protectionPerLevel": 0.15,
-    "maxProtection": 0.75
+    "maxProtection": 0.75,
+    "defensePerLevel": 0.05
   },
   "economy": {
     "startGold": 20,

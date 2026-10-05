@@ -428,6 +428,7 @@ class Turn {
       defenderLeader,
       terrain: this.idx.byId.get(toId)!.terrain,
       building: to.building,
+      culture: to.culture,
       border: plan.border,
       luck: this.s.settings.luck,
     });

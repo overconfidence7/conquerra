@@ -202,6 +202,8 @@ export const Rules = z.object({
     /** Share of a bad effect blocked per culture level (unrest now; events and uprisings later). */
     protectionPerLevel: z.number().min(0).max(1),
     maxProtection: z.number().min(0).max(1),
+    /** "Loyal land": defense bonus per culture level on that territory (0.05 = +5% a level). Multiplies with terrain and forts. */
+    defensePerLevel: z.number().min(0),
   }),
   economy: z.object({
     startGold: z.number().int(),

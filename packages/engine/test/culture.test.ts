@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { cultureProtection, incomeFor, investCost, resolveTurn, viewFor, type Order, type StepEvent } from "../src";
+import { defaultRules } from "@conquerra/content";
+import { cultureDefense, cultureProtection, expectBattle, incomeFor, investCost, previewAttack, resolveTurn, viewFor, type BattleInput, type Order, type StepEvent } from "../src";
 import { board, ctxWith, lineGame, mv, player } from "./helpers";
 
 const invest = (territory: string, id = `i-${territory}`): Order => ({ id, kind: "invest", territory });
@@ -77,5 +78,53 @@ describe("culture", () => {
     board(s, { a: ["p1", 5], e: ["p2", 5, [], { culture: 4 }] });
     expect(viewFor(ctx, s, "p1").territories.e).toEqual({ detail: "fogged" });
     expect(viewFor(ctx, s, "p2").territories.e).toMatchObject({ detail: "full", culture: 4 });
+  });
+});
+
+describe("loyal land: culture defends", () => {
+  const base: BattleInput = {
+    attackers: 20,
+    attackerSpecialists: [],
+    attackerLeader: false,
+    defenders: 10,
+    defenderSpecialists: [],
+    defenderLeader: false,
+    terrain: "plains",
+    building: null,
+    culture: 0,
+    border: "normal",
+    luck: 0.3,
+  };
+
+  it("each level adds the rules' step to defense (+25% at level 5 with 5% a level), multiplying with terrain and forts", () => {
+    const r = defaultRules;
+    const step = r.culture.defensePerLevel;
+    expect(step).toBeGreaterThanOrEqual(0.04);
+    expect(step).toBeLessThanOrEqual(0.08);
+    const plain = expectBattle(r, base).defenseStrength;
+    for (let c = 0; c <= 5; c++) expect(expectBattle(r, { ...base, culture: c }).defenseStrength).toBeCloseTo(plain * (1 + c * step));
+    expect(cultureDefense(r, 5)).toBeCloseTo(1 + 5 * step);
+    const all = expectBattle(r, { ...base, culture: 3, terrain: "hills", building: "fort" }).defenseStrength;
+    expect(all).toBeCloseTo(plain * r.terrain.hills.defenseMult * r.buildings.fort.defenseMult * (1 + 3 * step));
+  });
+
+  it("the odds preview counts it exactly as the engine does", () => {
+    const ctx = ctxWith();
+    const s = lineGame(ctx);
+    board(s, { a: ["p1", 1], b: ["p1", 13], c: ["p2", 8, [], { culture: 4 }], e: ["p2", 1] });
+    const preview = previewAttack(ctx, viewFor(ctx, s, "p1"), { from: "b", to: "c", troops: 12 })!;
+    const { events } = resolveTurn(ctx, s, { p1: [mv("b", "c", 12)] });
+    const battle = events.find((e) => e.type === "battle") as Extract<StepEvent, { type: "battle" }>;
+    expect(battle.result.defenseStrength).toBeCloseTo(preview.defenseStrength, 2);
+    expect(battle.result.expectedAttackerLosses).toBeCloseTo(preview.expectedAttackerLosses, 2);
+    expect(battle.defense.culture).toBe(4);
+  });
+
+  it("a captured territory keeps its culture, and now defends its new owner", () => {
+    const ctx = ctxWith();
+    const s = lineGame(ctx);
+    board(s, { a: ["p1", 1], b: ["p1", 40], c: ["p2", 1, [], { culture: 3 }], e: ["p2", 1] });
+    const { state } = resolveTurn(ctx, s, { p1: [mv("b", "c", "all")] });
+    expect(state.territories.c).toMatchObject({ owner: "p1", culture: 3 });
   });
 });

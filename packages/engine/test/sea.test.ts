@@ -12,7 +12,7 @@ const seaMap: MapDef = MapDef.parse({
 
 describe("sea lanes", () => {
   it("attacking across a sea lane is weaker (the attack penalty from rules.json)", () => {
-    const base = { attackers: 10, attackerSpecialists: [], attackerLeader: false, defenders: 4, defenderSpecialists: [], defenderLeader: false, terrain: "plains" as const, building: null, luck: 0.3 };
+    const base = { attackers: 10, attackerSpecialists: [], attackerLeader: false, defenders: 4, defenderSpecialists: [], defenderLeader: false, terrain: "plains" as const, building: null, culture: 0, luck: 0.3 };
     const land = expectBattle(defaultRules, { ...base, border: "normal" });
     const sea = expectBattle(defaultRules, { ...base, border: "sea" });
     expect(defaultRules.borders.sea.attackMult).toBeLessThan(1);

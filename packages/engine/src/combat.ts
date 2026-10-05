@@ -11,6 +11,8 @@ export interface BattleInput {
   terrain: Terrain;
   /** Only a finished building counts (a fort under construction gives no bonus). */
   building: BuildingType | null;
+  /** The defended territory's culture ("loyal land": each level adds `rules.culture.defensePerLevel` to its defense). */
+  culture: number;
   border: BorderType;
   luck: number;
 }
@@ -48,6 +50,11 @@ export function healerReduction(rules: Rules, specialists: readonly SpecialistTy
   return Math.min(h.maxLossReduction, count(specialists, "healers") * h.lossReduction);
 }
 
+/** "Loyal land": the defense multiplier a territory's culture gives (1.1 at culture 2 with +5% a level). */
+export function cultureDefense(rules: Rules, culture: number): number {
+  return 1 + Math.max(0, culture) * rules.culture.defensePerLevel;
+}
+
 /** Pure math: what should happen on average. Used for previews, bots, presets and resolution. */
 export function expectBattle(rules: Rules, b: BattleInput): BattleExpectation {
   const borderMult = rules.borders[b.border].attackMult;
@@ -62,7 +69,7 @@ export function expectBattle(rules: Rules, b: BattleInput): BattleExpectation {
     const broken = count(b.attackerSpecialists, "siege") * rules.specialists.siege.fortBreak;
     fortMult = 1 + Math.max(0, bonus * (1 - broken));
   }
-  const defenseStrength = b.defenders * rules.troops.defense * rules.terrain[b.terrain].defenseMult * fortMult * leaderD;
+  const defenseStrength = b.defenders * rules.troops.defense * rules.terrain[b.terrain].defenseMult * fortMult * cultureDefense(rules, b.culture) * leaderD;
 
   const eDef = attackStrength * rules.combat.attackKillRate * (1 - healerReduction(rules, b.defenderSpecialists));
   const eAtk = defenseStrength * rules.combat.defenseKillRate * (1 - healerReduction(rules, b.attackerSpecialists));

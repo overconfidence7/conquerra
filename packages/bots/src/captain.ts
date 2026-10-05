@@ -23,7 +23,7 @@ type Seen = TerritoryDetail & { detail: "full" };
 type Guess = Pick<Seen, "owner" | "troops" | "building" | "culture" | "leaders" | "capitalOf"> & { specialists: SpecialistType[] };
 
 /** The Captain's priorities, each of which the simulator can switch off to measure what it's worth. */
-export type CaptainFeature = "chokes" | "breakthrough" | "focus" | "capital" | "forts";
+export type CaptainFeature = "chokes" | "breakthrough" | "focus" | "capital" | "forts" | "culture";
 
 export interface CaptainOptions {
   /** Chain on when the army that should arrive is at least this many times what the next hop needs. */
@@ -66,8 +66,15 @@ export const makeCaptainBot = (opts: CaptainOptions = { chainMargin: CAPTAIN_CHA
  *  5. Defends its capital when a big army stands next to it: it keeps enough there to hold, recruits there, builds a
  *     fort and sends reinforcements.
  *  6. Chains like a person: it hops on when the army that should arrive is comfortably more than the next hop needs.
+ *  7. Loyal land: raises culture where it means to hold (its capital, choke points it holds against a rival, frontier
+ *     land with a fort) once it has a real army's worth of gold to spare.
  */
 export const captainBot: Bot = makeCaptainBot();
+
+/** Loyal land (priority 7): raise culture once the gold left still buys this many troops (fewer at a threatened capital), from this turn on. */
+const LOYAL_RESERVE = 8;
+const LOYAL_RESERVE_THREATENED = 3;
+const LOYAL_FROM_TURN = 3;
 
 function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[] {
   const { rules } = ctx;
@@ -166,6 +173,7 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
           defenderLeader: v.leaders.includes(me.id),
           terrain: idx.byId.get(t)!.terrain,
           building: v.building,
+          culture: v.culture,
           border: border(nb, t),
           luck: view.settings.luck,
         }).captureLikely;
@@ -254,9 +262,22 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
     }
   }
 
-  // A little culture in safe interior land when comfortably rich (military first).
+  // 7. Loyal land: culture where it pays. Each level makes that land defend better for good (and blocks unrest), so
+  // it goes where we mean to hold: the capital, choke points we hold against a rival, and frontier land with a fort.
+  // Only with gold to spare after a real army's worth (a threatened capital needs less). Otherwise, a little culture
+  // in safe interior land when comfortably rich, as before.
+  const loyal = on("culture")
+    ? mine
+        .filter((t) => (t === capital || chokeHolder(t) || (isFrontier(t) && seen(t)!.building === "fort")) && seen(t)!.culture < rules.culture.max)
+        .sort((a, b) => seen(a)!.culture - seen(b)!.culture || Number(b === capital) - Number(a === capital) || biggestEnemyNear(b) - biggestEnemyNear(a) || (a < b ? -1 : 1))[0]
+    : undefined;
+  const loyalCost = loyal ? investCost(rules, seen(loyal)!.culture) : null;
+  const reserve = rules.troops.cost * (loyal === capital && capThreatened ? LOYAL_RESERVE_THREATENED : LOYAL_RESERVE);
   const interior = mine.filter((t) => !isFrontier(t));
-  if (interior.length && gold >= 40 && !capThreatened && rng.next() < 0.4) {
+  if (loyal && loyalCost !== null && view.turn >= LOYAL_FROM_TURN && gold >= loyalCost + reserve) {
+    orders.push({ id: id(), kind: "invest", territory: loyal });
+    gold -= loyalCost;
+  } else if (interior.length && gold >= 40 && !capThreatened && rng.next() < 0.4) {
     const spot = [...interior].sort((a, b) => seen(a)!.culture - seen(b)!.culture || (a < b ? -1 : 1))[0]!;
     const cost = investCost(rules, seen(spot)!.culture);
     if (cost !== null && gold - cost >= 25) {
@@ -307,6 +328,7 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
       defenderLeader: !!g.owner && g.leaders.includes(g.owner),
       terrain: idx.byId.get(to)!.terrain,
       building: g.building,
+      culture: g.culture,
       border: border(from, to),
       luck: view.settings.luck,
     });
