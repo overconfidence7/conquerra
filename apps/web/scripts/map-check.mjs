@@ -404,6 +404,9 @@ async function bench() {
       console.log(`  saved docs/art/screens/bench/${file}`);
     }
   }
+  // Tall enough that the whole redo sheet is on screen (the bench scrolls inside the window, and a screenshot of an
+  // element only gets the part that's showing).
+  await page.setViewport({ ...DESKTOP, height: 2400 });
   await page.goto(`${URL}?lab=bench&part=redo`, { waitUntil: "networkidle0" });
   await page.waitForFunction(() => document.body.dataset.ready === "1", { timeout: 60000 });
   await sleep(300);

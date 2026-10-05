@@ -223,6 +223,7 @@ class PixiMapRenderer implements MapRenderer {
     this.info.setZoom(c.scale, mix);
     const rebuilt = this.scene ? this.markers.update(this.scene, mix, this.tactical) : false;
     this.markers.setAlphas(mix, this.tactical);
+    this.markers.screen = { width: this.cam.vp.width, height: this.cam.vp.height };
     if (rebuilt || this.laidOutScale === 0 || Math.abs(Math.log(c.scale / this.laidOutScale)) > 0.02) {
       this.laidOutScale = c.scale;
       this.markers.layout(c, this.detail);

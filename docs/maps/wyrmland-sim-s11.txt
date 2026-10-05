@@ -1,0 +1,61 @@
+
+> conquerra@0.1.0 sim C:\Users\nkurt\Claude\Projects\Strategy Game
+> tsx apps/sim/src/cli.ts "--games" "200" "--players" "6,8,10" "--map" "wyrmland" "--seed" "wyrm"
+
+
+=== 6 players — Wyrmland, Captain bots, luck 0.3, classic, fog on ===
+Games: 200 finished, 0 crashed, in 52.7s
+Win rate by seat (fair ≈ 16.7% each): 17.0% / 20.0% / 16.0% / 14.0% / 18.0% / 15.0%   draws 0.0%
+Planning time per bot per turn: captain avg 0.84 ms, p95 2.59 ms, worst 10.36 ms
+How games ended: lastStanding 99.5%, turnCap 0.5%
+Game length (turns): avg 32.9, median 32, min 20, max 60; 84.0% within 40, 44.0% in 30–40
+Real time, roughly: single player about 66 minutes (1.5 min a turn + 0.5 min replay); live online with the 5-minute timer up to about 3.0 hours
+Per game: 619.9 battles, 575.5 captures, 9.5 specialists hired, 26.2 culture raises, 21.9 leaders killed
+Culture: bought in 100.0% of games; raises went to the capital 19%, choke points 13%, other frontier 0%, interior 68%
+Recruits by site (troops): capital 12%, barracks 58%, fully held province 30%
+Lopsided attacks (8 times the defenders or more): 221.0 per game, 0.00% failed (0 of 44193)
+Battles by border (per game, % that captured): normal 518.0 (92%), river 85.6 (98%), pass 9.1 (96%), sea 7.2 (99%)
+Orders per game: 1126 (61% with a preset), fizzled: 13.3%
+Predictability (lower = more exciting): winner locked in the lead at 32% of the game; 3.4 lead changes per game
+Chained hops per game: 251.9 (84% captured)
+Runaway check: one player held more than half the map after turn 10 in 0.5% of games (0.0% were already over by then)
+Runaway, two clearer measures: the leader at the halfway point went on to win 84% of games; comebacks (the winner was not the leader after turn 10) 36% of games that went past turn 10
+CPU per turn (this machine): resolve avg 2.33 ms, p95 3.80 ms, worst 16.40 ms | bots planning (all seats) avg 3.68 ms, worst 13.58 ms | total avg 6.01 ms, worst 26.35 ms
+
+=== 8 players — Wyrmland, Captain bots, luck 0.3, classic, fog on ===
+Games: 200 finished, 0 crashed, in 60.6s
+Win rate by seat (fair ≈ 12.5% each): 13.0% / 12.0% / 13.5% / 9.0% / 13.0% / 12.5% / 13.0% / 14.0%   draws 0.0%
+Planning time per bot per turn: captain avg 0.57 ms, p95 2.02 ms, worst 10.71 ms
+How games ended: lastStanding 97.5%, turnCap 2.5%
+Game length (turns): avg 36.9, median 35, min 23, max 60; 74.5% within 40, 57.5% in 30–40
+Real time, roughly: single player about 74 minutes (1.5 min a turn + 0.5 min replay); live online with the 5-minute timer up to about 3.4 hours
+Per game: 898.1 battles, 828.2 captures, 12.0 specialists hired, 32.6 culture raises, 28.7 leaders killed
+Culture: bought in 100.0% of games; raises went to the capital 18%, choke points 16%, other frontier 0%, interior 65%
+Recruits by site (troops): capital 13%, barracks 64%, fully held province 23%
+Lopsided attacks (8 times the defenders or more): 268.3 per game, 0.00% failed (0 of 53656)
+Battles by border (per game, % that captured): normal 751.6 (91%), river 122.3 (98%), pass 12.0 (96%), sea 12.2 (97%)
+Orders per game: 1570 (65% with a preset), fizzled: 14.4%
+Predictability (lower = more exciting): winner locked in the lead at 36% of the game; 5.2 lead changes per game
+Chained hops per game: 314.6 (89% captured)
+Runaway check: one player held more than half the map after turn 10 in 0.0% of games (0.0% were already over by then)
+Runaway, two clearer measures: the leader at the halfway point went on to win 86% of games; comebacks (the winner was not the leader after turn 10) 48% of games that went past turn 10
+CPU per turn (this machine): resolve avg 2.23 ms, p95 4.52 ms, worst 11.09 ms | bots planning (all seats) avg 3.51 ms, worst 15.15 ms | total avg 5.73 ms, worst 21.28 ms
+
+=== 10 players — Wyrmland, Captain bots, luck 0.3, classic, fog on ===
+Games: 200 finished, 0 crashed, in 30.4s
+Win rate by seat (fair ≈ 10.0% each): 9.0% / 7.0% / 10.0% / 9.0% / 9.0% / 11.0% / 11.0% / 14.0% / 12.0% / 8.0%   draws 0.0%
+Planning time per bot per turn: captain avg 0.22 ms, p95 0.73 ms, worst 3.20 ms
+How games ended: lastStanding 94.0%, turnCap 6.0%
+Game length (turns): avg 39.7, median 38, min 25, max 60; 60.5% within 40, 52.0% in 30–40
+Real time, roughly: single player about 79 minutes (1.5 min a turn + 0.5 min replay); live online with the 5-minute timer up to about 3.6 hours
+Per game: 1013.3 battles, 928.3 captures, 14.1 specialists hired, 35.4 culture raises, 43.2 leaders killed
+Culture: bought in 100.0% of games; raises went to the capital 25%, choke points 14%, other frontier 0%, interior 61%
+Recruits by site (troops): capital 16%, barracks 64%, fully held province 20%
+Lopsided attacks (8 times the defenders or more): 269.3 per game, 0.00% failed (0 of 53862)
+Battles by border (per game, % that captured): normal 845.7 (90%), river 144.2 (98%), pass 11.1 (97%), sea 12.2 (97%)
+Orders per game: 1756 (67% with a preset), fizzled: 15.3%
+Predictability (lower = more exciting): winner locked in the lead at 40% of the game; 5.9 lead changes per game
+Chained hops per game: 321.9 (91% captured)
+Runaway check: one player held more than half the map after turn 10 in 0.0% of games (0.0% were already over by then)
+Runaway, two clearer measures: the leader at the halfway point went on to win 81% of games; comebacks (the winner was not the leader after turn 10) 54% of games that went past turn 10
+CPU per turn (this machine): resolve avg 1.05 ms, p95 1.48 ms, worst 7.56 ms | bots planning (all seats) avg 1.57 ms, worst 7.82 ms | total avg 2.63 ms, worst 10.36 ms

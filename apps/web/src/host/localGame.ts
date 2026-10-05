@@ -1,6 +1,5 @@
 import { captainBot, recruitBot, type Bot } from "@conquerra/bots";
-import { defaultRules } from "@conquerra/content";
-import { maps } from "@conquerra/content/maps";
+import { defaultRules, type MapDef } from "@conquerra/content";
 import {
   createGame,
   replayFor,
@@ -50,13 +49,13 @@ export class LocalGame {
   private lastTurn = new Map<string, ReplayEvent[]>();
 
   constructor(
+    /** The map to play on (the worker loads it with `loadMap`; tests pass it straight from `maps`). */
+    map: MapDef,
     settings: LobbySettings,
     seed: string,
     /** The host's clock (ms). Injected so tests can move time; the engine itself never reads a clock. */
     private now: () => number = () => Date.now(),
   ) {
-    const map = maps[settings.mapId];
-    if (!map) throw new Error(`Unknown map ${settings.mapId}`);
     this.ctx = { map, rules: defaultRules };
     this.bot = BOTS[settings.botLevel] ?? captainBot;
     const bots = Math.max(1, Math.min(map.maxPlayers - 1, BOT_NAMES.length, Math.floor(settings.bots)));

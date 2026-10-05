@@ -49,6 +49,8 @@ export const TERRAIN_TEXTURES = [
 export const WATER_TEXTURES = ["water-shallow", "water-deep"] as const;
 
 export const BUILDING_SPRITES = ["building-fort", "building-market", "building-barracks", "building-watchtower"] as const;
+/** Decoration only: a few per map, placed by the renderer from the map data (session 11). */
+export const LANDMARK_SPRITES = ["landmark-ruins", "landmark-stones", "landmark-lighthouse", "landmark-windmill"] as const;
 export const FIGURE_SPRITES = ["figure-army", "figure-cavalry", "figure-siege", "figure-scouts", "figure-engineers", "figure-healers"] as const;
 
 export const ASSETS: AssetSpec[] = [
@@ -69,6 +71,13 @@ export const ASSETS: AssetSpec[] = [
   sprite("ship", 256),
   sprite("bridge", 192),
   ...range("cloud", 3).map((n) => sprite(n, 512)),
+  // Batch 3 (session 11). Ridges and cliffs are wide (the size is the longest side).
+  ...range("ridge", 3).map((n) => sprite(n, 384)),
+  ...range("cliff", 3).map((n) => sprite(n, 384)),
+  sprite("pass-gate", 256),
+  sprite("scaffold", 256),
+  sprite("bridge-wood", 192),
+  ...LANDMARK_SPRITES.map((n) => sprite(n, 256)),
   // ---- Tier 2: info layer and menus ----
   icon("shield-base", true),
   icon("banner-base", true),
@@ -88,6 +97,8 @@ export const ASSETS: AssetSpec[] = [
   { ...icon("emblem"), size: 256 },
   { ...icon("seal"), size: 256 },
   { ...icon("frame-corner"), size: 256 },
+  // A wide nameplate (about 4:1) the province plaques sit on.
+  { ...icon("frame-plaque"), size: 512 },
   ...Array.from({ length: 10 }, (_, i): AssetSpec => ({ name: `leader-${String(i + 1).padStart(2, "0")}`, kind: "portrait", tier: 2, size: 512, minSource: 256 })),
   ...["city", "valley", "forest", "mountain", "harbor"].map((v): AssetSpec => ({ name: `vista-${v}`, kind: "vista", tier: 2, size: 1200, minSource: 600 })),
 ];

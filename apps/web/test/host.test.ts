@@ -1,3 +1,4 @@
+import { maps } from "@conquerra/content/maps";
 import { recruitBot } from "@conquerra/bots";
 import { replaySavedGame, type SavedGame } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
@@ -10,7 +11,7 @@ const isOut = (g: LocalGame, u: ReturnType<LocalGame["update"]>) => u.view.playe
 
 describe("local game host", () => {
   it("sends the map and rules once at the start, then only the player's own fogged view, never the full state", () => {
-    const g = new LocalGame(settings, "host-test");
+    const g = new LocalGame(maps[settings.mapId]!, settings, "host-test");
     const s = g.start();
     expect(s.map.id).toBe("embervale");
     expect(s.map.geometry?.territories.length).toBe(40);
@@ -29,7 +30,7 @@ describe("local game host", () => {
     ["embervale", 3, "classic"],
     ["greatmarch", 7, "conquest"],
   ] as const)("a game on %s can be played to the end from the view alone", (mapId, bots, mode) => {
-    const g = new LocalGame({ ...settings, mapId, bots, mode }, `full-${mapId}`);
+    const g = new LocalGame(maps[mapId]!, { ...settings, mapId, bots, mode }, `full-${mapId}`);
     let u = g.update();
     let turns = 0;
     while (!u.view.winner && turns < 80) {
@@ -46,7 +47,7 @@ describe("local game host", () => {
   });
 
   it("once you're knocked out you choose: watch turn by turn (whole map, each report) or skip to the result", () => {
-    const g = new LocalGame({ ...settings, bots: 3 }, "idle");
+    const g = new LocalGame(maps[settings.mapId]!, { ...settings, bots: 3 }, "idle");
     let u = g.update();
     // Do nothing until a bot knocks you out.
     for (let i = 0; i < 80 && !u.view.winner && !isOut(g, u); i++) u = g.lockIn([]);
@@ -72,7 +73,7 @@ describe("local game host", () => {
   });
 
   it("you can't watch or skip ahead while you're still in the game", () => {
-    const g = new LocalGame(settings, "still-in");
+    const g = new LocalGame(maps[settings.mapId]!, settings, "still-in");
     expect(() => g.watchNext()).toThrow(/still in/);
     expect(() => g.finish()).toThrow(/still in/);
   });
@@ -81,7 +82,7 @@ describe("local game host", () => {
 describe("turn timer (kept by the host)", () => {
   const clockGame = (turnSeconds: number | null) => {
     let now = 1_000_000;
-    const g = new LocalGame({ ...settings, turnSeconds }, "timer-test", () => now);
+    const g = new LocalGame(maps[settings.mapId]!, { ...settings, turnSeconds }, "timer-test", () => now);
     return { g, advance: (ms: number) => (now += ms), now: () => now };
   };
 
@@ -165,7 +166,7 @@ describe("timer warnings", () => {
 
 describe("Save this game", () => {
   it("saves the setup, seed and every turn's orders, and the file plays back to exactly the same game", () => {
-    const g = new LocalGame(settings, "save-test");
+    const g = new LocalGame(maps[settings.mapId]!, settings, "save-test");
     let u = g.update();
     for (let i = 0; i < 6 && !u.view.winner; i++) u = g.lockIn(recruitBot.plan(g.ctx, u.view));
     const save = JSON.parse(JSON.stringify(g.save({ app: "test" }))) as SavedGame;

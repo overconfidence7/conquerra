@@ -3,6 +3,7 @@ import { BOT_NAMES } from "../host/names";
 import { useEffect } from "react";
 import { prewarmHost, useGame } from "../store";
 import type { BotLevel } from "../host/protocol";
+import { mapChoiceLabel } from "../logic/text";
 import { TIMER_CHOICES, timerLabel } from "../logic/timer";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
@@ -46,7 +47,7 @@ export function Lobby() {
         <select value={lobby.mapId} onChange={(e) => setLobby({ mapId: e.target.value })}>
           {mapCatalog.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.name} · {m.territories} territories · suits {m.recommendedPlayers.min}–{m.recommendedPlayers.max} players
+              {mapChoiceLabel(m)}
             </option>
           ))}
         </select>

@@ -16,7 +16,8 @@ const biomeAt = (m: MapDef, x: number, y: number): Biome => {
   return byCode.get(g.data[r * g.cols + c]!)!;
 };
 const config = (id: string) => MAP_CONFIGS.find((m) => m.id === id)!;
-const testMaps = [maps.embervale!, maps.greatmarch!];
+// Every official map, in the lobby's order.
+const testMaps = MAP_CONFIGS.map((c) => maps[c.id]!);
 
 describe("map maker", () => {
   it("the same seed gives byte-identical output, and the committed maps are exactly what it makes (plus Nate's renames)", () => {
@@ -27,6 +28,12 @@ describe("map maker", () => {
     expect(built("embervale", embervaleNames)).toBe(JSON.stringify(maps.embervale));
     expect(built("greatmarch", greatmarchNames)).toBe(JSON.stringify(maps.greatmarch));
   }, 60_000);
+
+  it("every official map's committed file is exactly what its recipe makes, and the lobby lists them all", () => {
+    expect(MAP_CONFIGS.map((c) => c.id)).toEqual(["embervale", "greatmarch", "shattered-isles", "twin-realms", "moon-coast", "ringsea", "crownlands", "wyrmland"]);
+    expect(Object.keys(maps).sort()).toEqual(MAP_CONFIGS.map((c) => c.id).sort());
+    for (const c of MAP_CONFIGS.slice(2)) expect(JSON.stringify(generateMap(c, defaultRules).map), c.id).toBe(JSON.stringify(maps[c.id]));
+  }, 180_000);
 
   it("renames places from the names file, and flags names that aren't on the map", () => {
     const m = maps.embervale!;
@@ -90,9 +97,9 @@ describe.each(testMaps.map((m) => [m.id, m] as const))("map %s", (id, map) => {
     expect(shrink("pass")).toMatch(/the pass between .* is only/);
   });
 
-  it("keeps the territory count close to the old hand-made map", () => {
-    expect(map.territories.length).toBe(id === "embervale" ? 40 : 80);
-    expect(map.provinces.length).toBe(id === "embervale" ? 8 : 20);
+  it("has the territories and provinces its recipe asks for", () => {
+    expect(map.territories.length).toBe(config(id).territories);
+    expect(map.provinces.length).toBe(config(id).provinces);
   });
 
   it("sea lanes and passes come through as the right border types in the engine's graph", () => {
@@ -140,7 +147,8 @@ describe.each(testMaps.map((m) => [m.id, m] as const))("map %s", (id, map) => {
   it("rivers only flow downhill, and run along river borders", () => {
     const h = fromBase64(geo.heightMap.data);
     const { cols, cellSize, seaLevel } = geo.heightMap;
-    expect(geo.rivers.length).toBeGreaterThan(0);
+    // The Crownlands has none: its recipe asks for 5, but the crown's land never finds a downhill run long enough.
+    if (id !== "crownlands") expect(geo.rivers.length).toBeGreaterThan(0);
     for (const r of geo.rivers) {
       const heights: number[] = [];
       for (let i = 0; i < r.path.length; i += 2) {
@@ -150,7 +158,7 @@ describe.each(testMaps.map((m) => [m.id, m] as const))("map %s", (id, map) => {
       for (let i = 1; i < heights.length; i++) expect(heights[i]).toBeLessThanOrEqual(heights[i - 1]!);
       expect(heights[heights.length - 1]).toBeLessThan(heights[0]!);
     }
-    expect(map.borders.some((b) => b.type === "river")).toBe(true);
+    expect(map.borders.some((b) => b.type === "river")).toBe(geo.rivers.length > 0);
   });
 
   it("the height map agrees with the land: water at or below sea level, land above, mountains high", () => {

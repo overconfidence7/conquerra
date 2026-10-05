@@ -10,6 +10,8 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./maps": "./src/maps.ts"
+    "./maps": "./src/maps.ts",
+    "./loadMap": "./src/loadMap.ts",
+    "./data/maps/*": "./data/maps/*"
   }
 }

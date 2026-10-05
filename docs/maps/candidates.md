@@ -2,6 +2,8 @@
 
 **Nate's pick (Oct 5): all six become official in session 11.** Wyrmland is rebuilt from a Gemini dragon outline and suggested for 6–10 players.
 
+**Session 11 (Oct 5): all six are official** (in `packages/mapgen/src/configs.ts` with exactly these recipes, and in the lobby). Art batch 3 hadn't been made yet, so there was no Gemini dragon outline: **Wyrmland keeps today's hand-drawn dragon and seed (`mask-120-2`)** for now, with suggested players 6–10. It gets rebuilt from `mask-dragon.png` once that arrives (see "Wyrmland: session 11 sims" below).
+
 *Six new maps for Nate to choose from, made with the new land shapes. None is in the lobby yet: Nate picks which become official (then follow "How to make a seed an official map" in `docs/07-map-tooling.md`).*
 
 **How they were picked:** for each recipe I made six seeds in the map lab's way (`pnpm try-maps`), looked at them side by side, and took the one that looks most like a real place. Each one then got 200 all-Captain games (fog on, normal luck, Classic) at the two ends of its suggested player range, next to 200 games on a plain one-continent map of the same size, to see what the shape itself does. The numbers are in `docs/maps/candidates.json`; `pnpm --filter @conquerra/sim candidates` makes them again.
@@ -137,6 +139,15 @@ All six pass every check: connected, territories 67–123% of average size, prov
 {"id":"wyrmland","name":"Wyrmland","seed":"mask-120-2","shape":"mask","mask":"dragon","territories":120,"provinces":27,"players":{"min":2,"max":10,"recommended":{"min":6,"max":8}},"seas":0,"lakes":3,"islandChains":1,"mountainRanges":2,"seaLanes":5,"minSeaLanes":2,"rivers":6,"minChokePoints":10,"roughness":0.38}
 ```
 </details>
+
+### Wyrmland: session 11 sims (200 Captain games each, fog on, normal luck, Classic, seeds `wyrm`)
+| Players | Average turns (median) | Within 40 / in 30–40 | Seat wins | Halfway leader wins | Comebacks | Hit the 60-turn cap |
+|---|---|---|---|---|---|---|
+| 6 | **32.9** (32) | 84% / 44% | 14%–20% | 84% | 36% | 0.5% |
+| 8 | **36.9** (35) | 75% / 58% | 9%–14% | 86% | 48% | 2.5% |
+| 10 | **39.7** (38) | 61% / 52% | 7%–14% | 81% | 54% | 6% |
+
+At 10 players a Wyrmland game averages just under 40 turns (Nate allows 120-territory maps for 10 players).
 
 ## Also shown (not candidates)
 A plain 80-territory continent and a shield silhouette, so there's one Far view of every shape: `docs/art/screens/shape-continent.png`, `shape-shield.png`.

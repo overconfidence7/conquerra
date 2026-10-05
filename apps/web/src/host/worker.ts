@@ -1,3 +1,4 @@
+import { loadMap } from "@conquerra/content/loadMap";
 import { LocalGame } from "./localGame";
 import type { HostRequest, HostResponse } from "./protocol";
 
@@ -19,11 +20,12 @@ function armTimer() {
   }, Math.max(0, due - Date.now()) + 5);
 }
 
-scope.onmessage = (e) => {
+scope.onmessage = async (e) => {
   const req = e.data;
   try {
     if (req.type === "start") {
-      game = new LocalGame(req.settings, req.seed);
+      // Only this map's data is fetched, when the game starts.
+      game = new LocalGame(await loadMap(req.settings.mapId), req.settings, req.seed);
       scope.postMessage({ id: req.id, ok: true, update: game.start() });
       armTimer();
     } else {

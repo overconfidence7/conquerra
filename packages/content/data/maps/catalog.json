@@ -20,5 +20,71 @@
       "min": 8,
       "max": 10
     }
+  },
+  {
+    "id": "shattered-isles",
+    "name": "The Shattered Isles",
+    "territories": 60,
+    "minPlayers": 2,
+    "maxPlayers": 6,
+    "recommendedPlayers": {
+      "min": 4,
+      "max": 6
+    }
+  },
+  {
+    "id": "twin-realms",
+    "name": "The Twin Realms",
+    "territories": 80,
+    "minPlayers": 2,
+    "maxPlayers": 8,
+    "recommendedPlayers": {
+      "min": 4,
+      "max": 8
+    }
+  },
+  {
+    "id": "moon-coast",
+    "name": "The Moon Coast",
+    "territories": 80,
+    "minPlayers": 2,
+    "maxPlayers": 8,
+    "recommendedPlayers": {
+      "min": 4,
+      "max": 8
+    }
+  },
+  {
+    "id": "ringsea",
+    "name": "The Ringsea",
+    "territories": 100,
+    "minPlayers": 2,
+    "maxPlayers": 10,
+    "recommendedPlayers": {
+      "min": 6,
+      "max": 10
+    }
+  },
+  {
+    "id": "crownlands",
+    "name": "The Crownlands",
+    "territories": 100,
+    "minPlayers": 2,
+    "maxPlayers": 10,
+    "recommendedPlayers": {
+      "min": 6,
+      "max": 10
+    }
+  },
+  {
+    "id": "wyrmland",
+    "name": "Wyrmland",
+    "territories": 120,
+    "minPlayers": 2,
+    "maxPlayers": 10,
+    "recommendedPlayers": {
+      "min": 6,
+      "max": 10
+    }
   }
 ]

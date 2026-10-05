@@ -1,5 +1,5 @@
-import { defaultRules, type MapDef } from "@conquerra/content";
-import { maps } from "@conquerra/content/maps";
+import { defaultRules, MapDef } from "@conquerra/content";
+import embervaleJson from "@conquerra/content/data/maps/embervale.json";
 import { indexMap } from "@conquerra/engine";
 import { StrictMode, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -30,8 +30,7 @@ const PARTS: { id: Part; label: string; note: string }[] = [
 const PARAMS = new URLSearchParams(location.search);
 
 /** The symbols view: Embervale, your realm around a pass, with culture, buildings and a fort being built. */
-function symbolsScene() {
-  const map = maps.embervale!;
+function symbolsScene(map: MapDef) {
   const idx = indexMap(map);
   const pass = map.borders.find((b) => b.type === "pass")!;
   const mine = new Set([pass.a, ...(idx.neighbors.get(pass.a) ?? []).filter((n) => idx.border(pass.a, n) !== "pass")]);
@@ -51,8 +50,8 @@ function symbolsScene() {
   return { map, given, select: pass.a };
 }
 
-function benchScene(part: Exclude<Part, "redo">): { map: MapDef; given: ReturnType<typeof benchView>; select?: string } {
-  if (part === "symbols") return symbolsScene();
+function benchScene(part: Exclude<Part, "redo">, embervale: MapDef | null): { map: MapDef; given: ReturnType<typeof benchView>; select?: string } | null {
+  if (part === "symbols") return embervale ? symbolsScene(embervale) : null;
   if (part === "houses") {
     const map = houseGridMap(HOUSES.map((h) => h.name));
     const cols = GROUNDS.length;
@@ -170,7 +169,9 @@ function Bench() {
   const [part, setPart] = useState<Part>((PARAMS.get("part") as Part) ?? "houses");
   const [opts, setOpts] = useState<PreviewOptions>({ players: 2, capitals: true, names: true, chokes: false, tactical: false });
   const preview = useRef<MapPreviewHandle>(null);
-  const scene = useMemo(() => (part === "redo" ? null : benchScene(part)), [part]);
+  // Embervale, for the map symbols (only this map comes with the bench, which loads only when opened).
+  const embervale = useMemo(() => MapDef.parse(embervaleJson), []);
+  const scene = useMemo(() => (part === "redo" ? null : benchScene(part, embervale)), [part, embervale]);
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     q.set("part", part);
@@ -209,7 +210,7 @@ function Bench() {
         )}
       </header>
       <p className="bench-note">{info.note}</p>
-      <main className="bench-main">{scene ? <MapPreview key={part} ref={preview} map={scene.map} given={scene.given} select={scene.select ?? null} options={opts} /> : <RedoSheet />}</main>
+      <main className="bench-main">{scene ? <MapPreview key={part} ref={preview} map={scene.map} given={scene.given} select={scene.select ?? null} options={opts} /> : part === "redo" ? <RedoSheet /> : null}</main>
     </div>
   );
 }

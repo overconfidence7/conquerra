@@ -8,7 +8,7 @@ import type { GameHost, LobbySettings } from "../src/host/protocol";
 import { actionBarState, incomeEstimate, nearestRecruitSite } from "../src/logic/actions";
 import { isMine, justEnough, moveTargets, planQueue } from "../src/logic/orders";
 import { groupReport } from "../src/logic/report";
-import { namer } from "../src/logic/text";
+import { mapChoiceLabel, namer } from "../src/logic/text";
 import { setHostFactory, useGame } from "../src/store";
 
 const ctx: GameContext = { map: maps.embervale!, rules: defaultRules };
@@ -16,7 +16,7 @@ const ctx: GameContext = { map: maps.embervale!, rules: defaultRules };
 function inProcessHost(seed: string): GameHost {
   let game: LocalGame | null = null;
   return {
-    start: async (s: LobbySettings) => (game = new LocalGame(s, seed)).start(),
+    start: async (s: LobbySettings) => (game = new LocalGame(maps[s.mapId]!, s, seed)).start(),
     lockIn: async (orders, turn) => game!.lockIn(orders, turn),
     saveOrders: (orders, turn) => game?.saveOrders(orders, turn),
     onAutoLock: () => {},
@@ -191,5 +191,25 @@ describe("Recruit panel", () => {
     expect(g().selected).toBe(cap);
     g().remove(g().queue[0]!.id);
     expect(g().recruit).toBeNull();
+  });
+});
+
+describe("the lobby's map list", () => {
+  it("lists all eight official maps with their size and suggested players, and each one loads only when picked", async () => {
+    const { mapCatalog } = await import("@conquerra/content");
+    const { loadMap, loadableMaps } = await import("@conquerra/content/loadMap");
+    expect(mapCatalog.map(mapChoiceLabel)).toEqual([
+      "Embervale · 40 territories · suits 4–6 players",
+      "Greatmarch · 80 territories · suits 8–10 players",
+      "The Shattered Isles · 60 territories · suits 4–6 players",
+      "The Twin Realms · 80 territories · suits 4–8 players",
+      "The Moon Coast · 80 territories · suits 4–8 players",
+      "The Ringsea · 100 territories · suits 6–10 players",
+      "The Crownlands · 100 territories · suits 6–10 players",
+      "Wyrmland · 120 territories · suits 6–10 players",
+    ]);
+    expect(loadableMaps.sort()).toEqual(mapCatalog.map((m) => m.id).sort());
+    expect((await loadMap("wyrmland")).territories.length).toBe(120);
+    await expect(loadMap("atlantis")).rejects.toThrow(/Unknown map/);
   });
 });

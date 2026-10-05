@@ -61,4 +61,11 @@
 - **Mountains territories vs mountain ranges:** a *mountains* territory is passable land (mostly hills ground, a little rock). Bare rock and snow mostly mean an impassable range, so keep ranges visibly different (darker, with peaks).
 - **The biome grid is coarse** (about 10 units a square). Blend or dither between squares, and clip land textures with the territory and water outlines for crisp coasts.
 - **Island and lake names** and the province name lines are suggestions; it's fine to hide some at Far zoom.
-- **Sizes:** each map file is 350–680 KB (mostly outlines and decorations). The worker loads it; the page never bundles it.
+- **Sizes:** each map file is 350 KB to 1.2 MB (mostly outlines and decorations). The worker loads it; the page never bundles it.
+
+## The eight official maps (session 11)
+- Embervale (40), Greatmarch (80), and the six session 10 candidates made official on Oct 5: the Shattered Isles (60), the Twin Realms (80), the Moon Coast (80), the Ringsea (100), the Crownlands (100) and Wyrmland (120). Their recipes are in `packages/mapgen/src/configs.ts`, exactly as in `docs/maps/candidates.md`; Wyrmland suggests 6–10 players.
+- **Each map loads only when a game on it starts.** `loadMap(id)` (`@conquerra/content/loadMap`) fetches that one map's file in the game's worker, so the start-up bundle doesn't grow with the number of maps (442.6 KB before the six new maps, 443.3 KB after). Node (tests, the simulator) still uses `maps` from `@conquerra/content/maps`, which has every map.
+- **Offline:** Embervale and Greatmarch are cached for offline play when the game is installed, as before; the newer maps are cached the first time a game on them starts, so a phone's first visit doesn't download all eight (about 6 MB).
+- **Adding an official map** now needs one line in `packages/content/src/maps.ts` and one in `packages/content/src/loadMap.ts` (a test checks they list the same maps as the lobby).
+- **The Crownlands has no rivers:** its recipe asks for 5, but the crown's land never gives a river a long enough downhill run. The map passes every check; it's just drier.

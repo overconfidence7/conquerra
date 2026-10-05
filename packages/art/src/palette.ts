@@ -30,7 +30,7 @@ export const GROUND_TARGETS: Record<string, ColourTarget> = {
 /** Sprite families: every member is nudged toward the same look. Matched by name prefix. */
 export const SPRITE_FAMILIES: { family: string; prefixes: string[]; target: ColourTarget }[] = [
   { family: "trees", prefixes: ["tree-"], target: { colour: "#3e5a2e", contrast: 40, strength: 0.45 } },
-  { family: "mountains", prefixes: ["mountain-"], target: { colour: "#8b8681", contrast: 46, strength: 0.4 } },
+  { family: "mountains", prefixes: ["mountain-", "ridge-"], target: { colour: "#8b8681", contrast: 46, strength: 0.4 } },
   { family: "hills", prefixes: ["hill-"], target: { colour: "#7b7a46", contrast: 30, strength: 0.4 } },
   { family: "settlements", prefixes: ["village-", "town-", "capital-"], target: { colour: "#8c7a63", contrast: 48, strength: 0.3 } },
   // Clouds are cool white; Gemini's came out cream-pink from the magenta around them.

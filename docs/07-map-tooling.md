@@ -119,7 +119,7 @@ Moved from session 9 to 10, because Nate's play-test fixes come first. Nate's di
 1. In the lab, find a map you like (the gallery helps) and make sure every check passes and "Sim this map" looks right at the player counts it suits.
 2. Give it a name and an id under "All settings" (the id is lower case, like `stormcoast`).
 3. Press **Copy recipe** and paste it into `MAP_CONFIGS` in `packages/mapgen/src/configs.ts` (inside the `[ ... ]`, after the last map, with a comma).
-4. Run `pnpm build-maps`. It writes the map into `packages/content/data/maps/<id>.json` and a picture into `docs/maps/`, and the map appears in the lobby (`catalog.json`). The import line in `packages/content/src/maps.ts` needs adding once per new map.
+4. Run `pnpm build-maps`. It writes the map into `packages/content/data/maps/<id>.json` and a picture into `docs/maps/`, and the map appears in the lobby (`catalog.json`). Two lines need adding once per new map: the import in `packages/content/src/maps.ts` (for tests and the simulator) and the loader in `packages/content/src/loadMap.ts` (the game fetches each map only when a game on it starts).
 5. Optionally rename places in `packages/mapgen/names/<id>.json`, then run `pnpm build-maps` again.
 6. Run `pnpm test`: it checks the committed map is exactly what the recipe makes and that it passes every check.
 7. Commit. From then on the map never changes unless its recipe or the map maker does (the test catches that).

@@ -376,6 +376,9 @@ export class MarkerLayer {
     this.place(cam, z);
   }
 
+  /** The screen size (px), so plaques near the map's edge stay on screen (the renderer keeps it current). */
+  screen = { width: 0, height: 0 };
+
   /** Move markers with the camera (no re-layout; for panning). */
   place(cam: Camera, z: ZoomDetail) {
     this.leaders.clear();
@@ -389,9 +392,15 @@ export class MarkerLayer {
         this.leaders.circle(x, y, 2.2).fill({ color: 0xf3ead2, alpha: 0.9 });
       }
     }
+    // A plaque by the map's edge slides in to stay whole on screen (a province on the far left of the map would
+    // otherwise hang off the screen when the whole map is in view).
+    const sw = this.screen.width, sh = this.screen.height;
     for (const pl of this.plaques.values()) {
       const [x, y] = toScreen(cam, pl.anchor[0], pl.anchor[1]);
-      pl.root.position.set(Math.round(x + pl.offset[0]), Math.round(y + pl.offset[1]));
+      let px = x + pl.offset[0], py = y + pl.offset[1];
+      if (sw > pl.w + 8) px = Math.max(pl.w / 2 + 4, Math.min(sw - pl.w / 2 - 4, px));
+      if (sh > pl.h + 8) py = Math.max(pl.h / 2 + 4, Math.min(sh - pl.h / 2 - 4, py));
+      pl.root.position.set(Math.round(px), Math.round(py));
     }
     if (!this.scene) return;
     for (const b of this.badges.children) {

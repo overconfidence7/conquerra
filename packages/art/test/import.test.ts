@@ -27,7 +27,7 @@ describe("art file names", () => {
   it("knows every name in the prompt pack, exactly", () => {
     for (const name of ["terrain-grass", "tree-conifer-3", "mountain-4", "capital-2", "figure-army", "banner-flag", "cloud-1", "icon-healers", "leader-10", "vista-harbor"])
       expect(matchFileName(`${name}.png`)).toMatchObject({ kind: "ok", spec: { name } });
-    expect(ASSETS.filter((a) => a.tier === 1)).toHaveLength(10 + 3 + 3 + 4 + 3 + 3 + 2 + 2 + 4 + 6 + 1 + 1 + 1 + 3);
+    expect(ASSETS.filter((a) => a.tier === 1)).toHaveLength(10 + 3 + 3 + 4 + 3 + 3 + 2 + 2 + 4 + 6 + 1 + 1 + 1 + 3 + /* batch 3 */ 3 + 3 + 1 + 1 + 1 + 4);
   });
 
   it("forgives case, spaces, underscores and a missing dash before the number", () => {
@@ -187,7 +187,8 @@ describe("session 6: Nate's whole art list", () => {
   /** Every file name the art list (docs/art/asset-list-and-prompts.md) asks for, with its "…" ranges expanded. */
   const namesInArtList = () => {
     const doc = readFileSync(join(__dirname, "../../../docs/art/asset-list-and-prompts.md"), "utf8");
-    const tiers = doc.slice(doc.indexOf("## Tier 1"), doc.indexOf("## Tier 3"));
+    // Tiers 1 and 2, and batch 3 (whose dragon outline is a map shape, not art: it goes through the mask script).
+    const tiers = doc.slice(doc.indexOf("## Tier 1"), doc.indexOf("## Tier 3")) + doc.slice(doc.indexOf("## Batch 3")).replace("`mask-dragon.png`", "");
     const names = new Set<string>();
     // "`tree-conifer-1.png` … `-3.png`" and "`leader-01.png` … `leader-10.png`"
     for (const m of tiers.matchAll(/`([a-z-]+?)-(\d+)\.png`\s*…\s*`(?:[a-z-]*?)-?(\d+)\.png`/g)) {
@@ -203,7 +204,7 @@ describe("session 6: Nate's whole art list", () => {
     const names = namesInArtList();
     expect(names.length).toBe(ASSETS.length);
     for (const n of names) expect(matchFileName(`${n}.png`)).toMatchObject({ kind: "ok", spec: { name: n } });
-    for (const n of ["figure-healers", "ship", "bridge", "cloud-3", "shield-base", "banner-base", "icon-watchtower", "emblem", "seal", "frame-corner", "leader-07", "vista-mountain"])
+    for (const n of ["ridge-3", "cliff-1", "pass-gate", "scaffold", "bridge-wood", "landmark-windmill", "frame-plaque", "figure-healers", "ship", "bridge", "cloud-3", "shield-base", "banner-base", "icon-watchtower", "emblem", "seal", "frame-corner", "leader-07", "vista-mountain"])
       expect(names).toContain(n);
   });
 

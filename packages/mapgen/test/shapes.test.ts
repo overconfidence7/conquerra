@@ -88,7 +88,7 @@ describe("land shapes", () => {
     expect(a.insideShare).toBeLessThan(0.6);
   });
 
-  it("the built-in maps keep the original continent (no shape set)", () => {
-    for (const c of MAP_CONFIGS) expect(c.shape ?? "continent").toBe("continent");
+  it("Embervale and Greatmarch keep the original continent (no shape set)", () => {
+    for (const c of MAP_CONFIGS.slice(0, 2)) expect(c.shape ?? "continent").toBe("continent");
   });
 });

@@ -191,3 +191,8 @@ export function narrateTurn(ctx: GameContext, events: readonly ReplayEvent[], n:
   }
   return lines;
 }
+
+/** One line per map in the lobby's map list: "The Ringsea · 100 territories · suits 6–10 players". */
+export function mapChoiceLabel(m: { name: string; territories: number; recommendedPlayers: { min: number; max: number } }): string {
+  return `${m.name} · ${m.territories} territories · suits ${m.recommendedPlayers.min}–${m.recommendedPlayers.max} players`;
+}

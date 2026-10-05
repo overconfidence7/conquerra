@@ -1,12 +1,25 @@
+import crownlandsJson from "../data/maps/crownlands.json";
 import embervaleJson from "../data/maps/embervale.json";
 import greatmarchJson from "../data/maps/greatmarch.json";
+import moonCoastJson from "../data/maps/moon-coast.json";
+import ringseaJson from "../data/maps/ringsea.json";
+import shatteredIslesJson from "../data/maps/shattered-isles.json";
+import twinRealmsJson from "../data/maps/twin-realms.json";
+import wyrmlandJson from "../data/maps/wyrmland.json";
 import { MapDef } from "./schemas";
 
 /**
- * The full built-in maps, drawing data included (several hundred KB each). Import from "@conquerra/content/maps"
- * only where a game is actually hosted or simulated; the page's lobby uses the small `mapCatalog` instead.
+ * Every built-in map in full, drawing data included (up to about 1 MB each). For Node only (tests, the simulator):
+ * the game itself loads one map at a time with `loadMap` from "@conquerra/content/loadMap", and the lobby uses the
+ * small `mapCatalog`.
  */
 export const maps: Record<string, MapDef> = {
   embervale: MapDef.parse(embervaleJson),
   greatmarch: MapDef.parse(greatmarchJson),
+  "shattered-isles": MapDef.parse(shatteredIslesJson),
+  "twin-realms": MapDef.parse(twinRealmsJson),
+  "moon-coast": MapDef.parse(moonCoastJson),
+  ringsea: MapDef.parse(ringseaJson),
+  crownlands: MapDef.parse(crownlandsJson),
+  wyrmland: MapDef.parse(wyrmlandJson),
 };
