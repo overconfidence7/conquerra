@@ -53,3 +53,28 @@ Nate chose a player feature from the start. What that adds on top of the shared 
 - **Undo**, and a layout that works on a laptop first. Phone editing can come later; playing a player map works everywhere.
 - **Light moderation:** map and place names go through a word filter, with a way to report a map.
 - The map lab (session 9) is still the first step: its preview, checks panel and seed gallery become the builder's core.
+
+## Session 10 scope (planned Oct 4): the map lab, bigger maps, new shapes
+Moved from session 9 to 10, because Nate's play-test fixes come first. Nate's direction (Oct 4): maps should be **bigger** and **more imaginative**, not one big round landmass, with clear provinces.
+- **Map lab** at `?lab=maps` on the private preview, behind Access, loaded only when opened, never linked from the lobby.
+  - **Recipe panel:** seed plus every `MapGenOptions` knob.
+  - **Generate in a worker:** shows its attempts and why each failed.
+  - **Preview:** the real renderer, with name, choke-point and capital toggles.
+  - **Checks panel and fairness table**, and territory size spread.
+  - **"Sim this map":** a few hundred Captain games in a worker, showing length, seat wins, runaways and pass/sea battles.
+  - **Gallery:** 12 seeds side by side.
+  - **Export:** "Copy recipe" and "Save image".
+  - Its pieces take a finished map as input, so the player map builder can reuse them.
+- **Land shapes:** a new knob for the overall shape:
+  - one continent (today)
+  - an archipelago (many islands joined by sea lanes)
+  - twin continents
+  - an inland sea
+  - a crescent
+  - a **shape mask**: a silhouette image, such as a dragon or a shield, that the land grows into
+- **Sizes:** keep Embervale (40) as the quick map; new maps of 60–120 territories, with provinces sized to match.
+- **Art test bench** at `?lab=bench` (as described above). The session 11 visual upgrade is judged on it.
+- **Candidate maps:**
+  - several new maps in different shapes and sizes, each with checks, a quick sim and a screenshot, in `docs/maps/candidates.md`
+  - Nate picks which become official
+  - Also check whether map shape changes 10-player game length (Captains on Greatmarch average about 40 turns).

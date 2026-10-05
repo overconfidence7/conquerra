@@ -88,14 +88,16 @@ Research, outline v0.1, v0.2 additions, and decisions.
 - Exit: Nate plays full games against bots on phone and laptop.
 
 ### M3: Depth + balance
-- **Session order (agreed Oct 4, revised the same evening):**
-  - **8:** the fog lifts during the replay (step-by-step vision, sightings go into "last seen"), plus smarter bots (a new default level; Recruit stays as the easy level)
-  - **9:** the map lab and the art test bench (on the private preview at `?lab=maps`), plus a few candidate maps
-  - **10:** generals (Leader standing instructions), captured generals, the Fallen; Captains and generals gang up on a runaway leader
-  - **11:** Spoils and Fate decks
-  - **12:** preset diplomacy
-  - **13:** spies and culture unlocks
-  - **14:** balance pass (runaways, 10-player game length, seat fairness)
+- **Session order (agreed Oct 4, revised again after Nate's play test that evening):**
+  - **8 ✅:** the fog lifts during the replay; the Captain bot
+  - **9:** play-test fixes: the combat bug, recruiting (capital, barracks or a full province; choose how many), culture as "loyal land", map clarity (no hairline borders, wider passes, neighbour marks, province borders and plaques), buildings that stand on the map, plain-words reports, "Save this game"
+  - **10:** the map lab, bigger maps (60–120 territories) and new land shapes, the art test bench (`docs/07-map-tooling.md`)
+  - **11:** the big visual upgrade with a new art batch (`docs/08-visual-upgrade-plan.md`)
+  - **12:** generals (Leader standing instructions), captured generals, the Fallen; Captains and generals gang up on a runaway leader
+  - **13:** Spoils and Fate decks
+  - **14:** preset diplomacy
+  - **15:** spies and culture unlocks
+  - **16:** balance pass (runaways, 10-player game length, seat fairness)
 - A fresh orchestrator prompt is due after session 9.
 - Leader-as-general (standing instructions) and captured generals.
 - Spoils and Fate decks (events and missions).

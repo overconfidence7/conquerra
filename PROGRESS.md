@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance, sessions 8–14). Session 8 is done: the fog lifts during the replay, and the smarter Captain bot is the default. Next: session 9, the map lab and art test bench.**
+**Phase: M3 (depth and balance). Session 8 is done. Next: session 9 fixes what Nate's play test found (a combat bug, recruiting, culture, map clarity, buildings), then 10 the map lab and bigger maps, then 11 a big visual upgrade.**
 
 Claude Code sessions completed: **8** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
@@ -309,5 +309,26 @@ Claude Code sessions completed: **8** (a new orchestrator prompt is due after se
   - **Runaways:** Captain bots made early runaways more common (6 players: 27% → 46% of games with one player on half the map by turn 10). The fix is in the bots, not the rules: in session 10, Captains (and generals, which use the same brain) gang up on whoever is running away with the map, as people do. Rule brakes stay on file for the balance pass.
   - The smarter bot keeps the name **Captain**.
   - **The map lab lives on the private preview** (only Nate can sign in), so he can use it from his laptop. It's hidden at public launch.
-- Still to come: Nate's play test of session 8 (Captain bots, a chain into the fog).
-- Next prompt: `docs/prompts/claude-code-session-09.md` (run it locally): the map lab and the art test bench. After session 9, a fresh orchestrator prompt is due.
+
+### Oct 4: Nate's play test of session 8, and a new plan
+Nate played a full game (against Recruit bots; Captains next). What he found, and what the orchestrator dug up:
+- **An attack of 35 against 1 failed. That's a real bug.** The game worked out "about 1 loss" for the defender before rolling the luck, so a hopeless defender could survive by rounding. In 300 bot games, about 1 in 20 attacks with 8 times the troops or more failed. It's fixed first thing in session 9, with a test that a "guaranteed" attack always wins.
+- **Recruits only landed in the capital or one other place.** That was the rule: recruit at your capital or a barracks. **Nate's call:** also anywhere in a province you hold completely. And you choose how many (All, 3/4, 1/2, 1/4 or an exact number).
+- **Culture didn't seem to matter.** It didn't: a market earns about 4 times more per gold, and culture's other effects were invisible. **Nate's call: "loyal land".** Each level makes that territory defend about 5% better, on top of the protection and specialist unlocks, and the game shows and explains it.
+- **You can't tell what's connected.** Some neighbours share only a sliver of border (Embervale has 8, Greatmarch 13, one almost a single point), and passes are drawn very narrow. Session 9 makes the map maker stop doing that, rebuilds both maps, and marks every neighbour when you select a territory.
+- **Provinces aren't clear.** They get their own border style and a plaque: "Pinemark +3 · you hold 3 of 5".
+- **Buildings look like ghosts.** They were drawn small, and see-through while being built. They'll be twice the size and stand on the ground like the capital.
+- **Maps should be bigger and more imaginative** (islands, twin continents, a fantasy-shaped land), not one round blob. **Nate's call:** keep a 40-territory quick map; new maps of 60–120.
+- **"The visuals need to be cleaned up and improved."** The orchestrator's review and the three-step plan are in `docs/08-visual-upgrade-plan.md`.
+
+**New session order (Nate's call):**
+- 9: play-test fixes and clarity
+- 10: map lab, bigger maps and new shapes, art test bench
+- 11: big visual upgrade (with a new art batch from Nate)
+- 12: generals, the Fallen, and bots ganging up on a runaway leader
+- 13: card decks
+- 14: diplomacy
+- 15: spies and culture unlocks
+- 16: balance pass
+
+Next prompt: `docs/prompts/claude-code-session-09.md` (run it locally). A fresh orchestrator prompt comes after session 9.
