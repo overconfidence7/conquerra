@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–9 are done. Next: session 10, bigger maps in new shapes and the map lab; then 11, the big visual upgrade.**
+**Phase: M3 (depth and balance). Sessions 7–10 are done. Next: session 11, the big visual upgrade (judged on the new art test bench); Nate picks the official new maps from `docs/maps/candidates.md`.**
 
-Claude Code sessions completed: **9** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
+Claude Code sessions completed: **10** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
 ---
 
@@ -389,5 +389,48 @@ Session 9 stopped at the usage limit after the combat fix, plain-words "called o
 - Nine Claude Code sessions are done, so there's a fresh orchestrator prompt: `docs/prompts/orchestrator-04.md`.
 - Next prompt: `docs/prompts/claude-code-session-10.md` (run it locally): bigger maps in new shapes, the map lab, the art test bench, candidate maps.
 
-### Oct 5: Claude Code session 10, in progress (checkpoint)
-- Parts 1–3 are done and pushed: land shapes and maps up to 120 territories (`b2f1dc5`), the map lab at `?lab=maps` (`079065f`), the art test bench at `?lab=bench` (`928bc78`). Next: Part 4 (candidate maps in `docs/maps/candidates.md`), then the deploy, docs and Nate's check. A full entry replaces this one when the session ends.
+### Oct 5: Claude Code session 10 (M3: bigger maps in new shapes, the map lab, the art test bench)
+No new art had arrived and Nate's session 9 play test isn't in yet, so there was nothing to fix first. All four parts are done, each committed and pushed.
+- **New land shapes** (map maker): one continent (as before, and still the default), an **archipelago** (every island joined by a sea lane), **twin continents** (with sea lanes and sometimes a narrow land bridge), land ringing an **inland sea**, a **crescent**, and a **silhouette**: the land grows inside a drawn outline. Three come built in: a dragon, a shield and a crown. Nate can add his own by drawing a black-and-white picture (`pnpm --filter @conquerra/mapgen mask picture.png wolf "The Wolf"`).
+  - **Sizes 40 to 120 territories**, with provinces scaled to match (about 4.5 territories each) and fair capitals for every player count a map claims.
+  - **Embervale and Greatmarch are exactly the same** (a test checks, byte for byte).
+  - Two fixes along the way: a stuck "hairline border" now joins the mountain range or becomes a cove, instead of throwing the map away (big maps hit this a lot); and the capital search does the same work in half the time.
+  - **Making a map:** 60 territories 0.5–3 s, 100 territories 1.5–5 s, 120 territories 1.5–20 s (crescents and big archipelagos need the most tries). The browser is about as fast as the command line.
+- **The map lab** at `conquerra.overconfidenceonline.com/?lab=maps` (behind the same sign-in, never linked from the lobby):
+  - pick a shape, size and seed, or start from Embervale or Greatmarch; every setting has a plain label
+  - it makes the map in the background, saying how long it took and why each earlier try failed
+  - it shows the map with the game's own painting, at Far, Mid and Near, with Tactical view and toggles for names, choke points and capitals (for any player count)
+  - the checks in plain words, a fair-capitals table, a territory-size chart
+  - **Sim this map**: a few hundred Captain games with a progress bar, showing length, seat wins, runaways and where the battles happen
+  - a **seed gallery** (12 at a time), and Copy recipe, Paste recipe and Save image
+  - A link to the lab always carries the full recipe, so it opens exactly the same map.
+  - **The game itself didn't get heavier:** what loads before the lobby went from 442.4 to 442.7 KB. The lab loads only when opened. For the public launch, build with `VITE_LABS=off` and the lab isn't in the game at all.
+  - The lab's pieces each take a finished map, ready for the player map builder after M4.
+- **Big maps on a phone** (emulated mid-range phone, CPU slowed 4x): a 120-territory map paints in 6.1–7.1 s (Greatmarch: 6.0 s measured the same way) and pans at 46–81 frames a second. It already paints at lower detail on big maps, so nothing needed changing.
+- **The art test bench** at `?lab=bench` (it replaces `?lab=houses`), drawn by the game's own renderer at true size:
+  - every House on every ground
+  - every pair of grounds meeting, plus coasts and a river through hills
+  - every tree, peak, hill, village, town, building (built and being built) and figure on every ground
+  - the map symbols (neighbour chevrons, pass gate, plaques, culture laurels)
+  - a "redo list" sheet: the rock, snow and hills textures with their big repeating shapes, and the pines that look like bushes
+  - `pnpm map-check bench` saved 20 "before" pictures for session 11 in `docs/art/screens/bench/`.
+- **Six candidate maps** for Nate (`docs/maps/candidates.md`, one Far picture each, 200 Captain games at each end of the suggested player range):
+  - The Shattered Isles (archipelago, 60, 4–6 players): 28 / 37 turns
+  - The Twin Realms (twin continents, 80, 4–8): 24 / 30
+  - The Moon Coast (crescent, 80, 4–8): 27 / 31
+  - The Ringsea (inland sea, 100, 6–10): 36 / 39
+  - The Crownlands (crown, 100, 6–10): 35 / 38
+  - Wyrmland (dragon, 120, 6–8): 32 / 37. Wyrmland needed 2 mountain ranges instead of 4; with 4 it ran 44–45 turns.
+  - All pass every check, and none is in the lobby until Nate picks.
+- **What shape does to length:**
+  - Mountain passes are the biggest lever: fewer passes, shorter games.
+  - Two halves or a long thin land end sooner (Twin Realms 9 turns shorter than a plain continent at 4 players).
+  - Islands make 6-player games much longer (+12 turns).
+  - At 10 players, 100-territory maps land inside 30–40 turns; 120-territory maps run 41–45.
+- The simulator's core is now shared by `pnpm sim`, the lab and the candidate script (`packages/simcore`). `pnpm sim` reports the new target (within 40 turns, and inside 30–40).
+- 337 automated tests pass (35 new). Deployed to the private preview (version `fcee6083`); the lock check passed, including `/?lab=maps` and `/?lab=bench`.
+- **Screenshots** (`docs/art/screens/`):
+  - the lab: `lab-overview.png`, `lab-checks.png`, `lab-gallery.png`, `lab-sim-running.png`, `lab-sim.png`
+  - one Far view per shape: `shape-continent.png`, `shape-archipelago.png`, `shape-twinContinents.png`, `shape-crescent.png`, `shape-inlandSea.png`, `shape-crown.png`, `shape-dragon.png`, `shape-shield.png`
+  - the bench set in `bench/`, and big-map phone numbers in `perf-big.json`
+- **Nate's check of the lab:** asked after the deploy (his notes and picks go below once he's tried it).
