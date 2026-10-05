@@ -35,7 +35,7 @@ import { ArtIcon, buildingIcon, specialistIcon } from "./ArtIcon";
 import { useGame } from "../store";
 import { nearestRecruitSite, RECRUIT_RULE } from "../logic/actions";
 import { colorOf } from "./colors";
-import { cultureLine, cultureNext } from "../map/card";
+import { cultureLine, cultureNext, placeFacts } from "../map/card";
 
 const CROSSING = { river: "🌊 Across a river", pass: "⛰ Through a mountain pass", sea: "⛵ Over a sea lane" } as const;
 
@@ -295,8 +295,6 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
   const idx = indexMap(ctx.map);
   const n = namer(ctx, view);
   const def = idx.byId.get(selected)!;
-  const province = ctx.map.provinces.find((p) => p.id === def.province)!;
-  const terrain = ctx.rules.terrain[def.terrain];
   const v = seen(view, selected);
   const mine = isMine(view, selected);
   const affordable = affordableTroops(ctx, plan);
@@ -313,9 +311,14 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
           </span>
         )}
       </div>
-      <p className="muted small">
-        {province.name} (+{province.bonus} if you hold it all) · {def.terrain}, defense ×{terrain.defenseMult}, +{terrain.income} gold
-      </p>
+      <ul className="chips" aria-label="About this place">
+        {placeFacts(ctx, view, selected).map((f) => (
+          <li key={f.key}>
+            {f.icon ? <ArtIcon name={f.icon} size={16} /> : <span aria-hidden>{TERRAIN_ICON[def.terrain]}</span>}
+            {f.text}
+          </li>
+        ))}
+      </ul>
       {plan.captured.has(selected) && (
         <p className="arriving">
           Your attack should take this: about {plan.arriving.get(selected) ?? 0} arrive. Tap a neighbour to push on from here.
@@ -334,8 +337,12 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
 
   const facts = (
     <ul className="facts">
-      <li>
-        <b>{v.troops}</b> {v.troops === 1 ? "troop" : "troops"}{mine && plan.free.get(selected) !== undefined ? ` (${plan.free.get(selected)} free to move)` : ""}
+      <li className="with-icon">
+        <ArtIcon name="icon-troops" size={18} />
+        <span>
+          <b>{v.troops}</b> {v.troops === 1 ? "troop" : "troops"}
+          {mine && plan.free.get(selected) !== undefined ? `, ${plan.free.get(selected)} can move` : ""}
+        </span>
       </li>
       {v.specialists.length > 0 && (
         <li>
@@ -355,8 +362,8 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
       )}
       {v.construction && (
         <li className="with-icon">
-          <ArtIcon name={buildingIcon(v.construction.building)} size={18} className="ghost" />
-          Building a {BUILDING_NAME[v.construction.building].toLowerCase()}
+          <ArtIcon name={buildingIcon(v.construction.building)} size={18} />
+          {BUILDING_NAME[v.construction.building]}: ⏳ ready next turn
         </li>
       )}
       {(v.culture > 0 || mine) && (

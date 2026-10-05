@@ -1,5 +1,6 @@
 import type { Line, MapDef } from "@conquerra/content";
-import { Container, Graphics, Sprite } from "pixi.js";
+import { ColorMatrixFilter, Container, Graphics, Sprite, Texture } from "pixi.js";
+import { canvas } from "../../art/paint";
 import { FIGURE_SPRITES } from "@conquerra/art";
 import { hexNum, houseOf, NEUTRAL_HOUSE } from "../../map/houses";
 import { groupOutlines, quadPoint } from "../../map/shapes";
@@ -18,8 +19,12 @@ import { glyphAlphas } from "../../map/layout";
  */
 
 const GOLD = 0xc9a45c, GOLD_HI = 0xe3c77e, ATTACK = 0xc2553f, MOVE = 0x3a72c4, INK = 0x1b1206;
-/** A building sprite's width, and a figure's, in map units. */
-const BUILDING_SIZE = 26, FIGURE_SIZE = 20;
+/** A building sprite's width (about twice session 8's 26, a touch bigger than a capital's castle), and a figure's, in map units. */
+const BUILDING_SIZE = 48, FIGURE_SIZE = 20;
+/** Roughly how far an army marker reaches from its territory's label point, in screen px (pill, banner, icons). */
+const PILL_REACH_X = 36, PILL_REACH_Y = 16;
+/** A building moves at most this far (map units) to clear the army marker. */
+const MAX_SITE_SHIFT = 60;
 
 const ring = (g: Graphics, r: Line, close = true) => g.poly(r as number[], close);
 
@@ -45,6 +50,9 @@ export class InfoLayer {
   private drawnScale = 0;
   private isTactical = false;
   private rings: Map<string, readonly Line[]>;
+  /** Building sprites with where they'd like to stand, so each zoom can step them clear of the army marker. */
+  private siteViews: { root: Container; site: { x: number; y: number }; label: { x: number; y: number } }[] = [];
+  private shadowTex: Texture | null = null;
   private labelOf: Map<string, { x: number; y: number; r: number }>;
 
   constructor(
@@ -133,9 +141,23 @@ export class InfoLayer {
     }
   }
 
+  /** The soft ground shadow the castles stand on (world.ts), made once. */
+  private groundShadow(): Texture {
+    if (this.shadowTex) return this.shadowTex;
+    const [c, ctx] = canvas(64, 32);
+    const grad = ctx.createRadialGradient(32, 16, 2, 32, 16, 30);
+    grad.addColorStop(0, "rgba(0,0,0,0.55)");
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.scale(1, 0.5);
+    ctx.fillRect(0, 0, 64, 64);
+    return (this.shadowTex = Texture.from(c));
+  }
+
   /** Building sprites at each site, and the figures shown at Near zoom. */
   private drawSites() {
-    for (const c of [...this.sites.removeChildren(), ...this.figures.removeChildren()]) c.destroy();
+    for (const c of [...this.sites.removeChildren(), ...this.figures.removeChildren()]) c.destroy({ children: true });
+    this.siteViews = [];
     const g = this.map.geometry!;
     const { view } = this.scene!;
     for (const t of g.territories) {
@@ -144,14 +166,31 @@ export class InfoLayer {
       if (b && !this.isTactical) {
         const tex = this.bank.get(`building-${b}`);
         if (tex) {
+          const root = new Container();
+          // Standing on the ground like the capital's castle: a soft shadow down and to the right.
+          const sh = new Sprite(this.groundShadow());
+          sh.anchor.set(0.5);
+          sh.width = BUILDING_SIZE * 0.95;
+          sh.height = BUILDING_SIZE * 0.34;
+          sh.alpha = 0.55;
+          sh.position.set(BUILDING_SIZE * 0.14, BUILDING_SIZE * 0.04);
           const sp = new Sprite(tex);
           sp.anchor.set(0.5, 0.88);
           sp.scale.set(BUILDING_SIZE / tex.width);
-          sp.position.set(t.site.x, t.site.y);
-          // Being built: a faint outline of it. Remembered (in the fog): greyed.
-          if (!s.building) sp.alpha = 0.45;
-          if (s.kind === "remembered") (sp.tint = 0x8a8a8a), (sp.alpha = 0.6);
-          this.sites.addChild(sp);
+          root.addChild(sh, sp);
+          if (s.kind === "remembered") {
+            // Remembered (in the fog): greyed.
+            sp.tint = 0x8a8a8a;
+            sp.alpha = 0.6;
+          } else if (!s.building) {
+            // Being built: the building, a little washed out, behind a wooden scaffold.
+            const wash = new ColorMatrixFilter();
+            wash.saturate(-0.55);
+            sp.filters = [wash];
+            root.addChild(scaffold(BUILDING_SIZE));
+          }
+          this.sites.addChild(root);
+          this.siteViews.push({ root, site: t.site, label: t.label });
         }
       }
       if (s.kind !== "seen" || !s.owner || s.troops <= 0) continue;
@@ -199,6 +238,25 @@ export class InfoLayer {
       this.drawnScale = scale;
       this.drawLines(scale);
       this.drawArrows(scale);
+      this.placeSites(scale);
+    }
+  }
+
+  /**
+   * Buildings never hide under the army marker: where a sprite would overlap the marker at this zoom, it steps
+   * sideways (toward the side its site is on) until it clears it, up to MAX_SITE_SHIFT map units.
+   */
+  private placeSites(scale: number) {
+    const reachX = PILL_REACH_X / scale, reachY = PILL_REACH_Y / scale, S = BUILDING_SIZE;
+    for (const v of this.siteViews) {
+      let x = v.site.x;
+      const top = v.site.y - 0.88 * S, bottom = v.site.y + 0.12 * S;
+      if (top < v.label.y + reachY && bottom > v.label.y - reachY) {
+        const side = v.site.x >= v.label.x ? 1 : -1;
+        const clear = v.label.x + side * (reachX + S * 0.45);
+        if ((clear - x) * side > 0) x = v.site.x + side * Math.min(MAX_SITE_SHIFT, (clear - x) * side);
+      }
+      v.root.position.set(x, v.site.y);
     }
   }
 
@@ -365,6 +423,7 @@ export class InfoLayer {
     this.labels.illustrated.destroy();
     this.labels.tactical.destroy();
     for (const c of [this.tactical, this.tint, this.lines, this.glow, this.links, this.sites, this.figures, this.arrows, this.names]) c.destroy({ children: true });
+    this.shadowTex?.destroy(true);
     this.realmLayer.destroy();
   }
 }
@@ -421,6 +480,25 @@ function drawGate(g: Graphics, x: number, y: number, roadAng: number, w: number,
   }
   pts.push(...at(leg, a));
   g.poly(pts, false).stroke({ width: t, color: 0xede6d6, alpha: 1, cap: "butt", join: "round" });
+}
+
+/** A wooden scaffold over a building being built (anchored like the sprite: x centred, y at its foot). */
+function scaffold(S: number): Graphics {
+  const g = new Graphics();
+  const poles = [-0.4, 0, 0.4].map((u) => u * S);
+  const top = -0.66 * S, foot = 0.06 * S;
+  const planks = [-0.18, -0.42].map((v) => v * S);
+  const wood = (draw: () => void, w: number) => {
+    draw();
+    g.stroke({ width: w + 1.4, color: 0x24170b, alpha: 0.85, cap: "round" });
+    draw();
+    g.stroke({ width: w, color: 0xa8773f, alpha: 1, cap: "round" });
+  };
+  for (const x of poles) wood(() => g.moveTo(x, foot).lineTo(x, top), 1.5);
+  for (const y of planks) wood(() => g.moveTo(-0.46 * S, y).lineTo(0.46 * S, y), 1.3);
+  // Cross braces between the poles.
+  for (let i = 0; i < poles.length - 1; i++) wood(() => g.moveTo(poles[i]!, planks[0]!).lineTo(poles[i + 1]!, planks[1]!), 0.9);
+  return g;
 }
 
 function mixHex(a: string, b: string, t: number): string {

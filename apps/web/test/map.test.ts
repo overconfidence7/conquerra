@@ -104,6 +104,21 @@ describe("army markers", () => {
     expect(out.get("rival")!.shifted).toBe(true);
   });
 
+  it("province plaques never cover an army: they step aside, or are dropped (never folded into a marker)", () => {
+    const army: MarkerBox = { id: "army", x: 200, y: 200, w: 60, h: 26, priority: 3 };
+    const plaque: MarkerBox = { id: "plaque", x: 200, y: 205, w: 120, h: 18, priority: -1, optional: true };
+    const out = layoutMarkers([plaque, army]);
+    expect(out.get("army")!.shifted).toBe(false);
+    const p = out.get("plaque")!;
+    expect(p.mergedInto).toBeNull();
+    if (!p.dropped) expect(Math.abs(p.y - 200) * 2).toBeGreaterThanOrEqual(26 + 18);
+    // Boxed in on every side: dropped, and no army gets a "+1".
+    const crowd: MarkerBox[] = Array.from({ length: 225 }, (_, i) => ({ id: `a${i}`, x: 200 + ((i % 15) - 7) * 30, y: 200 + (Math.floor(i / 15) - 7) * 20, w: 30, h: 20, priority: 2 }));
+    const out2 = layoutMarkers([...crowd, plaque]);
+    expect(out2.get("plaque")!.dropped).toBe(true);
+    expect(crowd.some((c) => out2.get(c.id)!.merged.includes("plaque"))).toBe(false);
+  });
+
   it("merge into a neighbour (\"+1\") when there's no room nearby", () => {
     // A tight crowd: far more markers than fit in the space they're allowed to move in.
     const boxes: MarkerBox[] = Array.from({ length: 30 }, (_, i) => ({ id: `t${i}`, x: 200 + (i % 5) * 3, y: 200 + Math.floor(i / 5) * 3, w: 50, h: 22, priority: i === 0 ? 5 : 1 }));
@@ -178,7 +193,7 @@ describe("the tap card", () => {
     expect(card.uncertain).toBe(true);
     expect(card.intel).toBe(seenAgo(view.turn, (remembered[1] as { lastSeen: { turn: number } }).lastSeen.turn));
     expect(card.intel).toMatch(/^Seen (last turn|\d+ turns ago)$/);
-    expect(card.lines.find((l) => l.label === "Troops")!.value).toMatch(/^\d+\?$/);
+    expect(card.lines.find((l) => l.label === "Troops")!.value).toMatch(/^\d+ troops?\?$/);
     expect(card.lines.find((l) => l.label === "Owner")!.value).toMatch(/\?$/);
     expect(card.lines.find((l) => l.label === "Building")!.value).toMatch(/\?$/);
 

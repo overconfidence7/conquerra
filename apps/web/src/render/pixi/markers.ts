@@ -50,6 +50,16 @@ function laurels(level: number, y: number): Graphics {
 }
 
 /** A province plaque: the bonus, and how much of the province you hold ("+3 · you hold 3 of 5"), under its name. */
+/** A small hourglass badge: a navy disc with gold sand glass. */
+function hourglass(x: number, y: number, size: number): Graphics {
+  const g = new Graphics();
+  const r = size / 2, w = r * 0.55, h = r * 0.62;
+  g.circle(x, y, r).fill({ color: NAVY, alpha: 0.95 }).stroke({ width: 1, color: GOLD });
+  g.poly([x - w, y - h, x + w, y - h, x, y, x + w, y + h, x - w, y + h, x, y]).fill(GOLD_HI);
+  g.moveTo(x - w * 1.2, y - h).lineTo(x + w * 1.2, y - h).moveTo(x - w * 1.2, y + h).lineTo(x + w * 1.2, y + h).stroke({ width: 1, color: PARCH });
+  return g;
+}
+
 interface PlaqueView {
   id: string;
   root: Container;
@@ -216,9 +226,9 @@ export class MarkerLayer {
         bi.anchor.set(0, 0.5);
         bi.scale.set(icon / bi.texture.height);
         bi.position.set(-x0 + 2, 0);
-        // Under construction: a ghostly outline of the icon.
-        if (!s.building) bi.alpha = 0.45;
         icons.addChild(bi);
+        // Under construction: the icon stays solid, with a small hourglass ("ready next turn").
+        if (!s.building) icons.addChild(hourglass(-x0 + 2 + icon * 0.95, -icon * 0.32, icon * 0.5));
       }
     }
     // ---- Culture: small gold laurels on a dark tab along the pill's lower edge (Mid and Near) ----

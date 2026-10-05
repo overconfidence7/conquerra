@@ -29,20 +29,17 @@ export function TerritoryCard({ ctx, view, id, compact = false }: { ctx: GameCon
       <div className="tcard-title">{info.title}</div>
       <div className="tcard-sub">{info.subtitle}</div>
       {info.intel && <div className="tcard-intel">{info.intel}</div>}
-      <dl>
+      {/* One plain sentence per row, each with its icon (the label is for screen readers). */}
+      <ul className="tcard-rows">
         {info.lines.map((l) => (
-          <div key={l.label}>
-            <dt>
-              {l.icon && <ArtIcon name={l.icon} size={16} />}
-              {l.label}
-            </dt>
-            <dd>
-              {l.color && <span className="swatch" style={{ background: l.color }} />}
-              {l.value}
-            </dd>
-          </div>
+          <li key={l.label} aria-label={`${l.label}: ${l.value}`}>
+            <span className="tcard-icon" aria-hidden>
+              {l.color ? <span className="swatch" style={{ background: l.color }} /> : l.icon ? <ArtIcon name={l.icon} size={16} /> : null}
+            </span>
+            <span>{l.value}</span>
+          </li>
         ))}
-      </dl>
+      </ul>
     </Frame>
   );
 }

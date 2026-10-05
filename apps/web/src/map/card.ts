@@ -110,27 +110,63 @@ export function cultureNext(ctx: GameContext, view: PlayerView, id: TerritoryId,
 const SPECIALISTS = ["cavalry", "scouts", "siege", "engineers", "healers"] as const;
 const listed = (xs: string[]) => (xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 
+/** One short fact about a place, with its icon: the panel shows these as a row of chips. */
+export interface PlaceFact {
+  key: "terrain" | "gold" | "province";
+  /** An illustrated icon (art name), or null for the terrain (the panel uses its own terrain sign). */
+  icon: string | null;
+  text: string;
+}
+
+/**
+ * Where a territory is and what it's worth, in plain words: "Forest, defends ×1.2", "+1 gold a turn",
+ * "Pinemark +3 if you hold all 5 · you hold 3".
+ */
+export function placeFacts(ctx: GameContext, view: PlayerView, id: TerritoryId): PlaceFact[] {
+  const def = ctx.map.territories.find((t) => t.id === id)!;
+  const province = ctx.map.provinces.find((p) => p.id === def.province);
+  const terrain = ctx.rules.terrain[def.terrain];
+  const facts: PlaceFact[] = [
+    { key: "terrain", icon: null, text: `${TERRAIN_NAME[def.terrain]}, defends ×${terrain.defenseMult}` },
+    { key: "gold", icon: "icon-gold", text: `+${terrain.income} gold a turn` },
+  ];
+  if (province) {
+    const members = ctx.map.territories.filter((t) => t.province === province.id);
+    const held = members.filter((t) => {
+      const v = view.territories[t.id];
+      return v?.detail === "full" && v.owner === view.me.id;
+    }).length;
+    const all = held === members.length;
+    facts.push({ key: "province", icon: "icon-crown", text: all ? `${province.name} +${province.bonus}: you hold all ${members.length}` : `${province.name} +${province.bonus} if you hold all ${members.length}${held ? ` · you hold ${held}` : ""}` });
+  }
+  return facts;
+}
+
 export function territoryCard(ctx: GameContext, view: PlayerView, id: TerritoryId): TerritoryCard {
   const def = ctx.map.territories.find((t) => t.id === id)!;
   const province = ctx.map.provinces.find((p) => p.id === def.province);
   const gold = ctx.rules.terrain[def.terrain].income;
   const v = view.territories[id]!;
   const playerName = (owner: string | null) => (owner ? (view.players.find((p) => p.id === owner)?.name ?? "Unknown") : "Nobody (neutral)");
+  /** Plain words for who holds it: "Yours", "Held by Lady Morwen", "Neutral land". */
+  const heldBy = (owner: string | null) => (owner === view.me.id ? "Yours" : owner ? `Held by ${playerName(owner)}` : "Neutral land");
   const where = `${province?.name ?? ""} · ${TERRAIN_NAME[def.terrain]}`;
-  const worth: CardLine = { label: "Gold", icon: "icon-gold", value: `+${gold} a turn${province ? ` · province +${province.bonus}` : ""}` };
+  const members = province ? ctx.map.territories.filter((t) => t.province === province.id).length : 0;
+  const worth: CardLine = { label: "Gold", icon: "icon-gold", value: `+${gold} gold a turn${province ? ` · ${province.name} +${province.bonus} if you hold all ${members}` : ""}` };
+  const troops = (n: number) => `${n} ${n === 1 ? "troop" : "troops"}`;
 
   if (v.detail === "full") {
     const capital = v.capitalOf ? (v.capitalOf === view.me.id ? "Your capital" : "Capital") : null;
-    const building = v.building ? BUILDING_NAME[v.building] : v.construction ? `${BUILDING_NAME[v.construction.building]} (being built)` : "None";
+    const building = v.building ? BUILDING_NAME[v.building] : v.construction ? `${BUILDING_NAME[v.construction.building]}, being built (ready next turn)` : "No building";
     const lines: CardLine[] = [
-      { label: "Owner", value: playerName(v.owner), color: houseOf(view, v.owner).color },
-      { label: "Troops", icon: "icon-troops", value: String(v.troops) },
+      { label: "Owner", value: heldBy(v.owner), color: houseOf(view, v.owner).color },
+      { label: "Troops", icon: "icon-troops", value: troops(v.troops) },
       { label: "Building", value: building, ...(v.building || v.construction ? { icon: `icon-${v.building ?? v.construction!.building}` } : {}) },
       { label: "Culture", icon: "icon-culture", value: cultureLine(ctx, view, id, v.culture) },
       worth,
-      { label: "Specialists", value: v.specialists.length ? v.specialists.map((s) => SPECIALIST_NAME[s.type]).join(", ") : "None" },
+      { label: "Specialists", value: v.specialists.length ? v.specialists.map((s) => SPECIALIST_NAME[s.type]).join(", ") : "No specialists", ...(v.specialists.length ? { icon: `icon-${v.specialists[0]!.type}` } : {}) },
     ];
-    if (v.leaders.length) lines.splice(2, 0, { label: "Leader", icon: "icon-crown", value: v.leaders.map((p) => (p === view.me.id ? "Yours" : playerName(p))).join(", ") });
+    if (v.leaders.length) lines.splice(2, 0, { label: "Leader", icon: "icon-crown", value: v.leaders.map((p) => (p === view.me.id ? "Your Leader is here" : `${playerName(p)}'s Leader is here`)).join(", ") });
     return { title: def.name, subtitle: capital ? `${capital} · ${where}` : where, lines, intel: null, uncertain: false };
   }
   if (v.lastSeen) {
@@ -139,9 +175,9 @@ export function territoryCard(ctx: GameContext, view: PlayerView, id: TerritoryI
       title: def.name,
       subtitle: where,
       lines: [
-        { label: "Owner", value: `${playerName(s.owner)}?`, color: houseOf(view, s.owner).color },
-        { label: "Troops", icon: "icon-troops", value: `${s.troops}?` },
-        { label: "Building", value: `${s.building ? BUILDING_NAME[s.building] : "None"}?` },
+        { label: "Owner", value: `${heldBy(s.owner)}?`, color: houseOf(view, s.owner).color },
+        { label: "Troops", icon: "icon-troops", value: `${troops(s.troops)}?` },
+        { label: "Building", value: `${s.building ? BUILDING_NAME[s.building] : "No building"}?`, ...(s.building ? { icon: `icon-${s.building}` } : {}) },
         worth,
       ],
       intel: seenAgo(view.turn, s.turn),
