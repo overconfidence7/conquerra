@@ -75,9 +75,10 @@ export const makeCaptainBot = (opts: CaptainOptions = { chainMargin: CAPTAIN_CHA
  *  8. Gangs up on a runaway leader: when one rival looks to hold about 40% of the land, or far more than anyone
  *     else (estimated from its own view and memory), that rival becomes its main target, its fronts with that rival
  *     come first and keep honest garrisons, and it stops attacking weaker rivals who are holding the leader off.
- *  9. Holds against a fast attacker: when last turn's replay showed a rival taking several territories along its
- *     border, it holds that front and its choke points (recruits there, keeps garrisons, marches nearby troops in)
- *     instead of carrying on with its own expansion close by.
+ *  9. Turns on a fast attacker: when last turn's replay showed a rival taking two or more of its territories, that
+ *     rival becomes its target (a chain is thinly held behind it), it recruits on that front, marches nearby troops
+ *     there, keeps the choke points facing it held, and stops grabbing neutral land near it. (Just digging in
+ *     instead was tried: it cut runaways too, but Recruit bots then beat it far more often.)
  */
 export const captainBot: Bot = makeCaptainBot();
 
@@ -91,8 +92,8 @@ const LOYAL_FIGHTS = 4;
 const RUNAWAY_SHARE = 0.4;
 const RUNAWAY_MIN_SHARE = 0.25;
 const RUNAWAY_LEAD = 1.75;
-/** A fast attacker (priority 9): it took at least this many territories next to our land (or ours) last turn. */
-const RAID_CAPTURES = 3;
+/** A fast attacker (priority 9): it took at least this many of our territories last turn. */
+const RAID_CAPTURES = 2;
 /** Armies this close (through our own land) to the raided front march there instead of attacking elsewhere. */
 const RAID_RADIUS = 2;
 
@@ -172,11 +173,12 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn
       }
     }
 
-  // 9. A rival chaining through our border: in last turn's replay (what we watched, nothing more) it took several
-  // territories next to our land, or ours. We hold that front and its choke points before expanding elsewhere.
+  // 9. A rival chaining through our border: in last turn's replay (what we watched, nothing more) it took several of
+  // our territories. Like a person, we turn on it: it becomes our target (its chain is thinly held), and we hold that
+  // front and its choke points before expanding elsewhere.
   const raids = new Map<PlayerId, number>();
   for (const e of lastTurn ?? [])
-    if (e.type === "battle" && e.captured && e.player !== me.id && (e.defender === me.id || idx.neighbors.get(e.to)!.some(owned))) raids.set(e.player, (raids.get(e.player) ?? 0) + 1);
+    if (e.type === "battle" && e.captured && e.player !== me.id && e.defender === me.id) raids.set(e.player, (raids.get(e.player) ?? 0) + 1);
   const raider = on("raider")
     ? ([...raids].filter(([p, k]) => k >= RAID_CAPTURES && facing.has(p)).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0]?.[0] ?? null)
     : null;
@@ -184,13 +186,16 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn
   const facesRaider = (t: TerritoryId) => !!raider && facesRival(t, raider);
 
   /**
-   * The rival we concentrate on: the runaway leader if we border it; otherwise a weakened neighbour, or in the
-   * endgame the weakest one we border (but never a weak rival that's holding off a runaway leader).
+   * The rival we concentrate on: the runaway leader if we border it; else a rival that just took several of our
+   * territories; else a weakened neighbour, or in the endgame the weakest one we border (but never a weak rival
+   * that's holding off a runaway leader).
    */
   const focus =
     runaway && facing.has(runaway)
       ? runaway
-      : on("focus") && weakest && (endgame || (knownLand.get(weakest) ?? 0) <= WEAK_RIVAL_LAND) && !shieldsLeader.has(weakest)
+      : raider
+        ? raider
+        : on("focus") && weakest && (endgame || (knownLand.get(weakest) ?? 0) <= WEAK_RIVAL_LAND) && !shieldsLeader.has(weakest)
         ? weakest
         : null;
   /** The focused rival's capital, if we've seen it, and how far every territory is from it. */
@@ -372,8 +377,8 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn
   const keep = (t: TerritoryId) => {
     if (t === capital && capThreatened) return holdNeed(t);
     if (chokeHolder(t)) return holdNeed(t);
-    // 8/9. Honest garrisons on the fronts with a runaway leader or a fast attacker.
-    if ((runaway && facesRival(t, runaway)) || facesRaider(t)) return Math.max(garrison, holdNeed(t));
+    // 8. Honest garrisons on the fronts with a runaway leader.
+    if (runaway && facesRival(t, runaway)) return Math.max(garrison, holdNeed(t));
     return garrison;
   };
   const free = new Map<TerritoryId, number>();
@@ -465,8 +470,8 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn
       const rival = tv.owner;
       // 8. Not a rival that's holding off the runaway leader (unless it's our own capital to take back).
       if (rival && shieldsLeader.has(rival) && to !== me.capital) continue;
-      // 9. Armies near a front a fast attacker is pushing through fight only that attacker.
-      if (nearRaid.has(from) && rival !== raider) continue;
+      // 9. Armies near a front a fast attacker is pushing through fight instead of grabbing neutral land.
+      if (nearRaid.has(from) && rival === null) continue;
       const offFocus = endgame && !!focus && rival !== null && rival !== focus;
       const value = valueOf(to);
       if (on("breakthrough") && crossing(from, to)) {

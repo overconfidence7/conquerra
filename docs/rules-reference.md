@@ -217,7 +217,7 @@ Bots play by exactly the same rules as people, and only from their own view (inc
   8. **Gangs up on a runaway leader.** When one rival looks to hold about **40% of the land**, or at least a quarter of it and **1.75 times anyone else's** (judged only from what the bot sees and remembers: nobody is shown land counts), with at least two rivals left:
      - that rival becomes its main target, and its fronts with that rival come first and keep honest garrisons
      - it stops attacking weaker rivals whose land touches the leader's (they're holding it off)
-  9. **Holds against a fast attacker.** If last turn's replay (exactly what that seat watched) showed one rival taking **3 or more territories** next to its land, it keeps honest garrisons on that front, sends troops and recruits there, and armies within two steps of it fight only that rival instead of expanding.
+  9. **Turns on a fast attacker.** If last turn's replay (exactly what that seat watched) showed one rival taking **2 or more of its territories**, that rival becomes its target (a chain is thinly held behind it): it recruits on that front, marches nearby troops there, keeps the choke points facing it held, and armies within two steps stop grabbing neutral land. (Just digging in was tried first: it cut runaways too, but Recruit bots then beat the Captain far more often.)
 - The same rules apply to every seat: nobody gangs up on you because you're human, only because you're ahead.
 - If a realm loses its capital and has no barracks, it builds one straight away.
 

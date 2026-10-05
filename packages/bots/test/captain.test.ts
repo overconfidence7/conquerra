@@ -1,6 +1,6 @@
 import { defaultRules, MapDef, type BorderType, type Terrain } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
-import { createGame, indexMap, isRecruitSiteIn, resolveTurn, viewFor, type GameContext, type GameState, type Order, type ReplayEvent } from "@conquerra/engine";
+import { createGame, indexMap, isRecruitSiteIn, replayFor, resolveTurn, viewFor, type GameContext, type GameState, type Order, type ReplayEvent } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { CAPTAIN_CHAIN_MARGIN, captainBot, makeCaptainBot, recruitBot, type Bot } from "../src";
 
@@ -162,12 +162,12 @@ describe("Captain bot: its priorities", () => {
     expect(orders).not.toContain("c");
   });
 
-  it("9. holds against a fast attacker: after watching a rival take several territories along its border, it reinforces that front instead of expanding next to it", () => {
+  it("9. turns on a fast attacker: after watching a rival take two of its territories, it reinforces that front instead of grabbing land next to it", () => {
     // p1: capital a, b, c (15 troops), d on the front with p2's big army at e. f is an empty neutral next to c.
     const sc = scenario({ line: "abcde", islands: "f", extra: [["c", "f"]], layout: { a: ["p1", 3], b: ["p1", 3], c: ["p1", 15], d: ["p1", 2], e: ["p2", 20] }, caps: ["a", "e"] });
     const view = viewFor(sc.ctx, sc.s, "p1");
-    // What p1 watched last turn: p2 took three territories next to its land.
-    const raid = [0, 1, 2].map((i) => ({ type: "battle", step: i, player: "p2", captured: true, to: "e", from: "x", defender: null }) as unknown as ReplayEvent);
+    // What p1 watched last turn: p2 took two of its territories.
+    const raid = [0, 1].map((i) => ({ type: "battle", step: i, player: "p2", captured: true, to: "e", from: "x", defender: "p1" }) as unknown as ReplayEvent);
     const calm = captainBot.plan(sc.ctx, view);
     expect(moves(calm).some((o) => o.from === "c" && o.to === "f")).toBe(true);
     const alarmed = captainBot.plan(sc.ctx, view, raid);
@@ -189,10 +189,13 @@ describe("Captain bot: fair play", () => {
     let s = createGame(ember, { gameId: seed, seed, players: Array.from({ length: players }, (_, i) => ({ id: `p${i + 1}`, name: `P${i + 1}` })) });
     const transcript: string[] = [];
     const illegal: string[] = [];
+    let watched = new Map<string, ReplayEvent[]>();
     while (!s.winner) {
       const st = s;
-      const orders = Object.fromEntries(st.players.filter((p) => p.eliminatedTurn === null).map((p) => [p.id, bots[st.players.indexOf(p) % bots.length]!.plan(ember, viewFor(ember, st, p.id))]));
+      const orders = Object.fromEntries(st.players.filter((p) => p.eliminatedTurn === null).map((p) => [p.id, bots[st.players.indexOf(p) % bots.length]!.plan(ember, viewFor(ember, st, p.id), watched.get(p.id))]));
       const r = resolveTurn(ember, st, orders);
+      // Each seat sees what it watched in the replay, as in a real game.
+      watched = new Map(r.state.players.map((p) => [p.id, replayFor(ember, st, r, p.id)]));
       for (const e of r.events) if (e.type === "fizzled" && /^(invalid|notConnected|badCount)$/.test(e.reason)) illegal.push(e.reason);
       transcript.push(JSON.stringify(r.events));
       s = r.state;
@@ -257,7 +260,7 @@ describe("Captain bot: fair play", () => {
 
   it("beats Recruit bots more often than its fair share (a quick check; the simulator does the real count)", () => {
     let wins = 0;
-    const games = 24;
+    const games = 60;
     for (let g = 0; g < games; g++) {
       // Rotate the Captain's seat.
       const bots: Bot[] = [recruitBot, recruitBot, recruitBot, recruitBot];
