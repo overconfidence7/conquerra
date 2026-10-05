@@ -118,6 +118,19 @@ File names: `vista-city.png` (castle city on a hill above fields), `vista-valley
 ## Tier 3: later
 Lobby and title background art, the game-over screen, faction-specific castles, extra building variants, seasonal textures and the marketing key art.
 
+### Ideas for batch 4 (from session 11)
+*Not a list to make yet: what session 11 found it could use, for the orchestrator to weigh. Batch 3 comes first.*
+| File | What it's for |
+|---|---|
+| `peak-narrow-1.png` … `-3.png` | Tall, narrow single peaks for ranges that run up and down the screen (ridges only suit ranges running across it, so steep stretches are stacked peaks today). |
+| `ridge-diag-1.png`, `-2.png` | Ridges running diagonally (about 30–45°), so slanting ranges read as one chain too. |
+| `cliff-side-1.png`, `-2.png` | Cliffs seen from the side, for coasts facing left or right (cliffs only go on coasts facing down the screen today). |
+| `fringe-bush-1.png` … `-3.png` | Small bushes and saplings for the edges of forests, so woods fade into fields instead of stopping. |
+| `glade-1.png`, `-2.png` | A small meadow with flowers and a fallen log, top-down, for the open glades inside forests. |
+| `paper-grain.png` | A seamless, neutral parchment grain (top-down, very flat), for the painted-atlas look at Far zoom (today it's made by the shader). |
+
+*(This section sits under Tier 3 on purpose: a test counts the file names in Tiers 1–2 and Batch 3 against the game's art list.)*
+
 ---
 
 ## Batch 3 (Oct 5): for session 11, the big visual upgrade
@@ -155,14 +168,3 @@ Lobby and title background art, the game-over screen, faction-specific castles, 
 | File | Prompt (after the style line) |
 |---|---|
 | `frame-plaque.png` | An empty ornate nameplate, front view: a wide horizontal plate of dark navy enamel, about four times wider than tall, with a thin polished gold rim and small scrolled gold end caps on the left and right. Completely empty in the middle, no text, every part fully solid. (The game writes the province name and bonus on it.) |
-
-## Ideas for batch 4 (from session 11)
-*Not a list to make yet: what session 11 found it could use, for the orchestrator to weigh. Batch 3 comes first.*
-| File | What it's for |
-|---|---|
-| `peak-narrow-1.png` … `-3.png` | Tall, narrow single peaks for ranges that run up and down the screen (ridges only suit ranges running across it, so steep stretches are stacked peaks today). |
-| `ridge-diag-1.png`, `-2.png` | Ridges running diagonally (about 30–45°), so slanting ranges read as one chain too. |
-| `cliff-side-1.png`, `-2.png` | Cliffs seen from the side, for coasts facing left or right (cliffs only go on coasts facing down the screen today). |
-| `fringe-bush-1.png` … `-3.png` | Small bushes and saplings for the edges of forests, so woods fade into fields instead of stopping. |
-| `glade-1.png`, `-2.png` | A small meadow with flowers and a fallen log, top-down, for the open glades inside forests. |
-| `paper-grain.png` | A seamless, neutral parchment grain (top-down, very flat), for the painted-atlas look at Far zoom (today it's made by the shader). |
