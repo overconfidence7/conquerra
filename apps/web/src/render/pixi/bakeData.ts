@@ -127,7 +127,7 @@ export interface AuxData {
   height: number;
   /** R land, G land blurred, B height. */
   aux1: HTMLCanvasElement;
-  /** R range mask, G range blurred. */
+  /** R range mask, G range blurred, B forest glades (painted as open grass). */
   aux2: HTMLCanvasElement;
 }
 
@@ -145,7 +145,7 @@ function pack(w: number, h: number, r: Float32Array, g: Float32Array, b: Float32
   return c;
 }
 
-export function auxCanvases(g: MapGeometry, ppu = 1): AuxData {
+export function auxCanvases(g: MapGeometry, ppu = 1, glades: readonly { x: number; y: number; r: number }[] = []): AuxData {
   const w = Math.ceil(g.width * ppu), h = Math.ceil(g.height * ppu);
   const land = rasterize([...g.territories.map((t) => t.rings), ...g.mountains.map((m) => m.rings)], w, h, ppu);
   const landBlur = boxBlur(land, w, h, Math.round(8 * ppu), 2);
@@ -168,5 +168,25 @@ export function auxCanvases(g: MapGeometry, ppu = 1): AuxData {
     }
   }
   const smooth = boxBlur(height, w, h, Math.max(1, Math.round(5 * ppu)), 2);
-  return { ppu, width: w, height: h, aux1: pack(w, h, land, landBlur, smooth), aux2: pack(w, h, range, rangeBlur, null) };
+  let glade: Float32Array | null = null;
+  if (glades.length) {
+    const c = makeCanvas(w, h);
+    const ctx = c.getContext("2d", { willReadFrequently: true })!;
+    ctx.scale(ppu, ppu);
+    ctx.fillStyle = "#fff";
+    for (const k of glades) {
+      // A ragged edge: a ring of slightly different radii.
+      ctx.beginPath();
+      for (let a = 0; a < 12; a++) {
+        const r = k.r * (0.85 + 0.3 * (((a * 7 + Math.round(k.x)) % 5) / 4));
+        ctx.lineTo(k.x + Math.cos((a * Math.PI) / 6) * r, k.y + Math.sin((a * Math.PI) / 6) * r);
+      }
+      ctx.fill();
+    }
+    const px = ctx.getImageData(0, 0, w, h).data;
+    glade = new Float32Array(w * h);
+    for (let i = 0; i < glade.length; i++) glade[i] = px[i * 4 + 3]! / 255;
+    glade = boxBlur(glade, w, h, Math.max(1, Math.round(3 * ppu)), 2);
+  }
+  return { ppu, width: w, height: h, aux1: pack(w, h, land, landBlur, smooth), aux2: pack(w, h, range, rangeBlur, glade) };
 }

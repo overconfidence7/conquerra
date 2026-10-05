@@ -37,6 +37,9 @@ export class InfoLayer {
   readonly sites = new Container();
   readonly figures = new Container();
   readonly arrows = new Graphics();
+  /** The pass gate symbols (info layer). With the painted gatehouse in, they show at Far and fade out by Mid. */
+  readonly gates = new Graphics();
+  private paintedGates: boolean;
   /** Neighbour link marks for the selected territory. */
   readonly links = new Graphics();
   private labels: { illustrated: MapLabels; tactical: MapLabels };
@@ -65,6 +68,7 @@ export class InfoLayer {
     this.labels = { illustrated: buildLabels(map, true), tactical: buildLabels(map, false) };
     this.names.addChild(this.labels.illustrated.provinces, this.labels.illustrated.places, this.labels.tactical.provinces, this.labels.tactical.places);
     this.figures.visible = false;
+    this.paintedGates = !!bank.get("pass-gate");
   }
 
   setScene(scene: MapScene, tactical: boolean) {
@@ -183,11 +187,17 @@ export class InfoLayer {
             sp.tint = 0x8a8a8a;
             sp.alpha = 0.6;
           } else if (!s.building) {
-            // Being built: the building, a little washed out, behind a wooden scaffold.
+            // Being built: the building, a little washed out, behind a wooden scaffold (Nate's art once it's in).
             const wash = new ColorMatrixFilter();
             wash.saturate(-0.55);
             sp.filters = [wash];
-            root.addChild(scaffold(BUILDING_SIZE));
+            const art = this.bank.get("scaffold");
+            if (art) {
+              const sc = new Sprite(art);
+              sc.anchor.set(0.5, 0.9);
+              sc.scale.set((BUILDING_SIZE * 1.04) / art.width);
+              root.addChild(sc);
+            } else root.addChild(scaffold(BUILDING_SIZE));
           }
           this.sites.addChild(root);
           this.siteViews.push({ root, site: t.site, label: t.label });
@@ -230,6 +240,9 @@ export class InfoLayer {
   /** Redraw lines and arrows when the zoom has changed enough; set fades. */
   setZoom(scale: number, mix: DetailMix) {
     this.tint.alpha = this.isTactical ? 1 : mix.tint;
+    // The gate symbol always shows at Far and in Tactical; with the painted gatehouse it gives way from Mid in.
+    // (Illustrated, `icons` is 1 - Far.)
+    this.gates.alpha = this.isTactical || !this.paintedGates ? 1 : 1 - mix.icons;
     this.names.alpha = mix.provinceNames;
     this.labels.illustrated.places.alpha = this.labels.tactical.places.alpha = Math.min(1, 0.4 + mix.provinceNames);
     this.figures.visible = !this.isTactical && mix.nearDetail > 0.02;
@@ -287,9 +300,10 @@ export class InfoLayer {
       }
     }
     // Passes: a small stone gate across the road, sized to read at Mid zoom.
+    this.gates.clear();
     for (const p of g.passes) {
       const a = this.labelOf.get(p.a)!, b = this.labelOf.get(p.b)!;
-      drawGate(L, p.x, p.y, Math.atan2(b.y - a.y, b.x - a.x), Math.min(Math.max(16, 24 * px), 32 * px), px);
+      drawGate(this.gates, p.x, p.y, Math.atan2(b.y - a.y, b.x - a.x), Math.min(Math.max(16, 24 * px), 32 * px), px);
     }
     // Realms: in Tactical, a dark line round everything each House holds. Illustrated: the House bands (realms.ts).
     if (this.isTactical) for (const outlines of this.realms.values()) for (const l of outlines) ring(G, l, false).stroke({ width: 2.6 * px, color: INK, alpha: 0.9, join: "round" });
@@ -422,7 +436,7 @@ export class InfoLayer {
   destroy() {
     this.labels.illustrated.destroy();
     this.labels.tactical.destroy();
-    for (const c of [this.tactical, this.tint, this.lines, this.glow, this.links, this.sites, this.figures, this.arrows, this.names]) c.destroy({ children: true });
+    for (const c of [this.tactical, this.tint, this.lines, this.gates, this.glow, this.links, this.sites, this.figures, this.arrows, this.names]) c.destroy({ children: true });
     this.shadowTex?.destroy(true);
     this.realmLayer.destroy();
   }

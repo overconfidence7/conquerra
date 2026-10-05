@@ -83,7 +83,11 @@ void main() {
   float fray = vnoise(p * 0.32) - 0.5;
   // Height above the sea (0 at the shore, 1 at the highest peaks), for rock and snow.
   float hAbove = clamp((texture(uAux1, p / uMap).b - uSea) / max(0.001, 1.0 - uSea), 0.0, 1.0);
-  vec2 rg = texture(uAux2, p / uMap).rg;
+  vec3 a2 = texture(uAux2, p / uMap).rgb;
+  vec2 rg = a2.rg;
+  // Forest glades: open grass inside big forests.
+  w[0] = max(w[0], a2.b * w[2]);
+  w[2] *= 1.0 - a2.b;
   // Rock and snow follow height inside mountain ranges: rock on the high slopes, snow on the tops.
   float hn = hAbove + na * 0.12 + fray * 0.05;
   w[4] = max(w[4], rg.x * smoothstep(0.42, 0.6, hn));
@@ -137,6 +141,10 @@ void main() {
   // Shore foam and a lighter ring of shallows.
   float foam = smoothstep(0.3, 0.46, near) * (0.55 + 0.45 * vnoise(p * 0.25));
   water = mix(water, vec3(0.82, 0.92, 0.9), foam * 0.32);
+  // Surf: a soft, broken white line where the waves meet the land, and a fainter swell a little way out.
+  float surf = smoothstep(0.37, 0.44, near) * (1.0 - smoothstep(0.48, 0.53, near)) * smoothstep(0.32, 0.62, vnoise(p * 0.16 + vec2(13.0, 7.0)));
+  float swell = smoothstep(0.25, 0.28, near) * (1.0 - smoothstep(0.29, 0.33, near)) * smoothstep(0.5, 0.78, vnoise(p * 0.1 + vec2(40.0, 3.0)));
+  water = mix(water, vec3(0.94, 0.97, 0.97), surf * 0.6 + swell * 0.28);
   float coast = smoothstep(0.42, 0.58, a1.r);
   float edge = smoothstep(0.08, 0.45, a1.r) * (1.0 - smoothstep(0.45, 0.9, a1.r));
   vec3 col = mix(water, land, coast);

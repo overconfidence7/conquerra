@@ -24,7 +24,7 @@ const PARTS: { id: Part; label: string; note: string }[] = [
   { id: "grounds", label: "Grounds", note: "Every pair of grounds meeting along a wavy line (names read 'left | right'), then a row of coasts and a river running down through hills to the sea." },
   { id: "sprites", label: "Sprites", note: "One row per ground. Columns: conifers, broadleaf trees, peaks, hills, villages, towns (every variant, left to right), the four buildings, the four buildings being built, then a capital with an army and every specialist (figures show at Near). Rows take turns at each House's colours." },
   { id: "symbols", label: "Map symbols", note: "Embervale, with a territory next to a pass selected: neighbour chevrons, the pass gate, sea lanes, province plaques, culture laurels (levels 1–5), buildings and a fort being built." },
-  { id: "redo", label: "Redo list & colours", note: "What session 11's new art should fix, shown big, plus the House colours as colour-blind players see them." },
+  { id: "redo", label: "Redo list & colours", note: "What session 11's new art should fix, shown big; every batch 3 piece at 3x on a ground it goes on (or a note while it isn't in yet); and the House colours as colour-blind players see them." },
 ];
 
 const PARAMS = new URLSearchParams(location.search);
@@ -89,7 +89,7 @@ function RedoSheet() {
       const c = document.createElement("canvas");
       c.id = "redo";
       c.width = W;
-      c.height = 1180;
+      c.height = 1600;
       const ctx = c.getContext("2d")!;
       ctx.fillStyle = "#0f1620";
       ctx.fillRect(0, 0, c.width, c.height);
@@ -151,6 +151,37 @@ function RedoSheet() {
         const s = 17 * 1.33;
         ctx.drawImage(img, 30 + k * 30, 1150 - s, s, s * (img.height / img.width));
       }
+      // 5. Batch 3 (session 11): every new piece at 3x game size on a ground it goes on, or a note while it's missing.
+      title("Batch 3 at 3x game size (ridges, cliffs, gatehouse, scaffold, wooden bridge, landmarks, plaque frame)", 20, 1200);
+      const B3: [name: string, ground: string, units: number][] = [
+        ["ridge-1", "terrain-rock", 50], ["ridge-2", "terrain-rock", 50], ["ridge-3", "terrain-rock", 50], ["cliff-1", "water-shallow", 34], ["cliff-2", "water-shallow", 34], ["cliff-3", "water-shallow", 34], ["pass-gate", "terrain-hills", 24],
+        ["scaffold", "terrain-grass", 48], ["bridge-wood", "water-shallow", 17], ["landmark-ruins", "terrain-grass", 26], ["landmark-stones", "terrain-hills", 26], ["landmark-lighthouse", "terrain-sand", 23], ["landmark-windmill", "terrain-farmland", 26], ["frame-plaque", "", 0],
+      ];
+      B3.forEach(([name, groundName, units], i) => {
+        const x = 20 + (i % 7) * 196, y = 1220 + Math.floor(i / 7) * 190;
+        const ground = groundName ? art.get(groundName) : null;
+        if (ground) ctx.drawImage(ground.image, x, y, 180, 150);
+        else (ctx.fillStyle = "#172231"), ctx.fillRect(x, y, 180, 150);
+        const a = art.get(name);
+        if (a) {
+          const img = a.image;
+          // Game size times 3 (1.6 px a map unit, as at Near), the plaque at 2x its on-screen size.
+          const w = name === "frame-plaque" ? 160 : units * 1.6 * 3 * 0.75;
+          const h = w * (img.height / img.width);
+          ctx.drawImage(img, x + 90 - w / 2, y + (name === "frame-plaque" ? 75 - h / 2 : 140 - h), w, h);
+        } else {
+          ctx.fillStyle = "rgba(15,22,32,0.82)";
+          ctx.fillRect(x + 4, y + 50, 150, 50);
+          ctx.font = "15px Spectral, Georgia, serif";
+          ctx.fillStyle = "#e0705a";
+          ctx.fillText("not in yet:", x + 10, y + 70);
+          ctx.fillText("today's drawing", x + 10, y + 90);
+        }
+        ctx.strokeStyle = a ? "rgba(201,164,92,0.5)" : "#e0705a";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, 180, 150);
+        note(name, x + 2, y + 168);
+      });
       el.append(c);
       const sw = document.createElement("div");
       sw.id = "houses";

@@ -1,4 +1,4 @@
-import type { MapGeometry } from "@conquerra/content";
+import type { MapDef, MapGeometry } from "@conquerra/content";
 import { TERRAIN_TEXTURES, WATER_TEXTURES } from "@conquerra/art";
 import { Container, Graphics, Matrix, Mesh, MeshGeometry, RenderTexture, Shader, Sprite, Texture, TilingSprite, UniformGroup, type Renderer } from "pixi.js";
 import type { ArtBook } from "../../art/book";
@@ -6,6 +6,7 @@ import { canvas } from "../../art/paint";
 import type { Camera, Viewport } from "../../map/camera";
 import { quadPoint } from "../../map/shapes";
 import { auxCanvases, biomeCanvases, type AuxData } from "./bakeData";
+import { sceneryFor, type Piece, type Scenery } from "./scenery";
 import { DISPLAY_FRAGMENT, GROUND_FRAGMENT, VERTEX } from "./shaders";
 
 /**
@@ -59,6 +60,9 @@ export class WorldLayer {
   private fogFade: { from: number; ms: number } | null = null;
   private fogDrawn = false;
   private aux: AuxData;
+  /** Ridges, cliffs, bridges, gates, landmarks and forest glades, placed from the map data (scenery.ts). */
+  readonly scenery: Scenery;
+  private g: MapGeometry;
   private auxTex: Texture;
   private disposables: { destroy(): void }[] = [];
   private tilesLayer = new Container();
@@ -74,14 +78,17 @@ export class WorldLayer {
 
   constructor(
     private renderer: Renderer,
-    private g: MapGeometry,
+    map: MapDef,
     private art: ArtBook,
     readonly opts: WorldOptions,
   ) {
     const t0 = performance.now();
+    const g = (this.g = map.geometry!);
+    this.scenery = sceneryFor(map);
+    let t = this.step("scenery", t0);
     // The masks are soft anyway: about a million pixels is plenty, so big maps use a little less than 1 per unit.
-    this.aux = auxCanvases(g, Math.min(1, Math.sqrt(1.1e6 / (g.width * g.height))));
-    let t = this.step("masks", t0);
+    this.aux = auxCanvases(g, Math.min(1, Math.sqrt(1.1e6 / (g.width * g.height))), this.scenery.clearings);
+    t = this.step("masks", t);
     this.auxTex = Texture.from(this.aux.aux1);
     this.display = new UniformGroup({
       uMap: { value: new Float32Array([g.width, g.height]), type: "vec2<f32>" },
@@ -264,15 +271,50 @@ export class WorldLayer {
       s.position.set(x, y);
       return s;
     };
-    for (const d of g.decorations) {
-      const kind = DECOR_ART[d.kind]!;
+    const sc = this.scenery;
+    g.decorations.forEach((d, i) => {
+      if (sc.hidden.has(i)) return;
+      const kind = DECOR_ART[sc.treeKind.get(i) ?? d.kind]!;
       const flip = ((d.x * 7 + d.y * 13) | 0) % 3 === 0 && d.kind !== "peak";
       const jitter = 0.88 + (((d.x * 31 + d.y * 17) | 0) % 25) / 100;
       const size = DECOR_SIZE[d.kind]! * jitter;
       // Shadows sort just before their own sprite.
       items.push({ y: d.y - 0.001, make: () => shadow(d.x, d.y, size) });
       items.push({ y: d.y, make: () => place(`${kind}-${d.v}`, d.x, d.y, size, flip) });
+    });
+    /** A scenery piece: real art turned and mirrored as placed, standing on a soft shadow. */
+    const piece = (name: string, p: Piece, anchorY = 0.88, withShadow = true) => {
+      if (withShadow) items.push({ y: p.y - 0.001, make: () => shadow(p.x, p.y, p.w) });
+      items.push({
+        y: p.y,
+        make: () => {
+          const s = place(name, p.x, p.y, p.w, p.flip);
+          s.anchor.set(0.5, anchorY);
+          s.rotation = p.rot;
+          return s;
+        },
+      });
+    };
+    const hasArt = (name: string) => !!art.get(name);
+    // Mountain ranges as chains: ridge art where it runs across the screen (until it arrives: three peaks in a
+    // row, tallest in the middle), single peaks where it's steep, at its ends and as fill.
+    for (const r of sc.ranges) {
+      if (r.kind === "peak") piece(`mountain-${r.v}`, r);
+      else if (hasArt(`ridge-${r.v}`)) piece(`ridge-${r.v}`, r);
+      else {
+        const c = Math.cos(r.rot), sn = Math.sin(r.rot), sx = r.flip ? -1 : 1;
+        const parts: [number, number, number][] = [[-0.3, 0.05, 0.5], [0.3, 0.07, 0.46], [0, 0, 0.66]];
+        parts.forEach(([u, dv, k], j) =>
+          piece(`mountain-${1 + ((r.v + j) % 4)}`, { x: r.x + u * r.w * c * sx, y: r.y + u * r.w * sn * sx + dv * r.w, w: r.w * k, rot: 0, flip: (j + r.v) % 2 === 0, v: 1 }),
+        );
+      }
     }
+    // Sea cliffs, landmarks and the pass gatehouses: only once their art has arrived.
+    if (hasArt("cliff-1")) for (const c of sc.cliffs) piece(`cliff-${c.v}`, c, 0.9, false);
+    for (const l of sc.landmarks) if (hasArt(`landmark-${l.kind}`)) piece(`landmark-${l.kind}`, l);
+    if (hasArt("pass-gate")) for (const p of sc.gates) piece("pass-gate", p, 0.8);
+    // Bridges where territories meet across a river: wooden on streams and farmland (stone until that art arrives).
+    for (const b of sc.bridges) piece(b.kind === "wood" && hasArt("bridge-wood") ? "bridge-wood" : "bridge", b, 0.55, false);
     g.territories.forEach((t, i) => {
       if (t.castle) {
         items.push({ y: t.castle.y - 0.001, make: () => shadow(t.castle!.x, t.castle!.y, CASTLE_SIZE) });

@@ -1,6 +1,6 @@
 import type { MapDef } from "@conquerra/content";
 import type { PlayerView } from "@conquerra/engine";
-import { Container, Graphics, Sprite, Text, type TextStyleOptions } from "pixi.js";
+import { Container, Graphics, NineSliceSprite, Sprite, Text, type TextStyleOptions } from "pixi.js";
 import { toScreen, type Camera } from "../../map/camera";
 import { labelCurve, quadPoint } from "../../map/shapes";
 import { hexNum, houseOf } from "../../map/houses";
@@ -157,9 +157,25 @@ export class MarkerLayer {
         new Text({ text: `+${prov.bonus}`, style: style(GOLD_HI), resolution: this.resolution }),
         ...(held ? [new Text({ text: ` · you hold ${held} of ${members.length}`, style: style(PARCH), resolution: this.resolution })] : []),
       ];
-      const w = parts.reduce((a, t) => a + t.width, 0) + 14, h = 18;
-      root.addChild(new Graphics().roundRect(-w / 2, -h / 2, w, h, h / 2).fill({ color: NAVY, alpha: 0.88 }).stroke({ width: 1.2, color: held === members.length ? GOLD_HI : GOLD }));
-      let x = -w / 2 + 7;
+      const textW = parts.reduce((a, t) => a + t.width, 0);
+      const all = held === members.length;
+      const frame = this.bank.get("frame-plaque");
+      let w = textW + 14, h = 18;
+      if (frame) {
+        // Nate's nameplate, stretched in the middle so its scrolled end caps keep their shape.
+        h = 24;
+        const k = h / frame.height, cap = frame.width * 0.14;
+        w = textW + 2 * cap * k + 6;
+        const ns = new NineSliceSprite({ texture: frame, leftWidth: cap, rightWidth: cap, topHeight: frame.height * 0.3, bottomHeight: frame.height * 0.3 });
+        ns.scale.set(k);
+        ns.width = w / k;
+        ns.height = frame.height;
+        ns.position.set(-w / 2, -h / 2);
+        // Held in full: a gold glow round it, as the drawn plaque's brighter rim does.
+        if (all) root.addChild(new Graphics().roundRect(-w / 2 - 1, -h / 2 + 2, w + 2, h - 4, (h - 4) / 2).stroke({ width: 3, color: GOLD_HI, alpha: 0.7 }));
+        root.addChild(ns);
+      } else root.addChild(new Graphics().roundRect(-w / 2, -h / 2, w, h, h / 2).fill({ color: NAVY, alpha: 0.88 }).stroke({ width: 1.2, color: all ? GOLD_HI : GOLD }));
+      let x = -textW / 2;
       for (const t of parts) {
         t.anchor.set(0, 0.5);
         t.position.set(x, 0);

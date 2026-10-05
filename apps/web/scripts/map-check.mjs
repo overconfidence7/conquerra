@@ -3,9 +3,11 @@
  *
  *   pnpm map-check screens   -> docs/art/screens/*.png
  *   pnpm map-check perf      -> performance numbers (phone emulation, CPU slowed down 4x), printed and saved
- *   pnpm map-check bench     -> the art test bench (?lab=bench) at Far, Mid and Near: docs/art/screens/bench/*.png
+ *   pnpm map-check bench     -> the art test bench (?lab=bench) at Far, Mid and Near: docs/art/screens/bench-after/*.png
  *                               (every House on every ground, every pair of grounds, every sprite, the map symbols,
  *                               the redo list and the House colours). "houses" does the same (it was folded in).
+ *                               Session 10's "before" set is in docs/art/screens/bench/ (BENCH_OUT=bench retakes it).
+ *                               BENCH_PARTS=symbols,sprites takes just those parts; BENCH_OUT=<folder> saves elsewhere.
  *   pnpm map-check lab       -> the map lab: lab-overview.png, lab-checks.png, lab-gallery.png, lab-sim.png, and one
  *                               Far view per land shape (shape-<shape>.png), using the maps in docs/maps/lab-shots.json
  *   pnpm map-check labperf   -> big maps on a phone (CPU slowed 4x): paint time and frame rates at Far, Mid and Near,
@@ -379,10 +381,13 @@ async function bench() {
   const page = await browser.newPage();
   await page.setViewport(DESKTOP);
   page.on("pageerror", (e) => console.log("page error:", e.message));
-  const dir = join(root, "docs/art/screens/bench");
+  const out = process.env.BENCH_OUT ?? "bench-after";
+  const dir = /[\/]/.test(out) ? out : join(root, "docs/art/screens", out);
   mkdirSync(dir, { recursive: true });
+  const only = process.env.BENCH_PARTS ? process.env.BENCH_PARTS.split(",") : null;
   const painted = () => page.waitForFunction(() => { const s = window.__conquerraMap?.stats?.(); return s && s.firstMapMs > 0 && s.tilesBaked === s.tileCount; }, { timeout: 120000, polling: 100 });
   for (const [part, shots] of Object.entries(BENCH_SHOTS)) {
+    if (only && !only.includes(part)) continue;
     await page.goto(`${URL}?lab=bench&part=${part}`, { waitUntil: "networkidle0" });
     await painted();
     for (const [file, px, name, dx = 0, dy = 0] of shots) {
@@ -401,9 +406,10 @@ async function bench() {
       await painted();
       await sleep(300);
       await (await page.$(".bench-main")).screenshot({ path: join(dir, file) });
-      console.log(`  saved docs/art/screens/bench/${file}`);
+      console.log(`  saved ${join(dir, file)}`);
     }
   }
+  if (only && !only.includes("redo")) return browser.close();
   // Tall enough that the whole redo sheet is on screen (the bench scrolls inside the window, and a screenshot of an
   // element only gets the part that's showing).
   await page.setViewport({ ...DESKTOP, height: 2400 });
@@ -412,7 +418,7 @@ async function bench() {
   await sleep(300);
   await (await page.$("#redo")).screenshot({ path: join(dir, "redo-list.png") });
   await (await page.$("#houses canvas")).screenshot({ path: join(dir, "house-colours.png") });
-  console.log("  saved docs/art/screens/bench/redo-list.png and house-colours.png");
+  console.log(`  saved ${dir}: redo-list.png and house-colours.png`);
   await browser.close();
 }
 
