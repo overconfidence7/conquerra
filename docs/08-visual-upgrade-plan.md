@@ -81,6 +81,6 @@
 - **Menus:**
   - a more compact desktop layout that gives the map more room (merge the territory card and army panel; a collapsible dock)
   - clearer type sizes
-- **Judged on the art test bench** (built in session 10) before and after, with screenshots side by side.
+- **Judged on the art test bench** (built in session 10) before and after, with screenshots side by side. The "before" set is in `docs/art/screens/bench/` (`pnpm map-check bench` retakes it; see `docs/07-map-tooling.md`, "The art test bench").
 
 **Guardrails still apply:** the painting never carries game state, the info layer reads at every zoom, and Tactical view is one tap away.

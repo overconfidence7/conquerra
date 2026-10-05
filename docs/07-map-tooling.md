@@ -103,6 +103,18 @@ Moved from session 9 to 10, because Nate's play-test fixes come first. Nate's di
 
 **Switching it off for the public launch:** build with `VITE_LABS=off` (for example `VITE_LABS=off pnpm build`, or set it in the launch deploy script). The switch in `apps/web/src/main.tsx` is then false when the game is built, so the map lab and the art test bench aren't in the build at all, and `?lab=...` just opens the lobby. Until then, the preview's Access sign-in keeps them private, and `pnpm check:preview` confirms `/?lab=maps` and `/?lab=bench` redirect to the sign-in.
 
+## The art test bench (built in session 10)
+**Where:** `?lab=bench` on the private preview (the old `?lab=houses` opens it too). Five parts, chosen at the top; Far / Mid / Near, ⤢ (fit), Tactical and Names work as in the lab.
+- **Houses on grounds:** one row per House (all 10), one column per ground (grass, farmland, forest, hills, rock, snow, swamp, sand). Each tile has that ground's usual trees, hills, peaks or village, a troop pill, House borders and tint; each row's first tile is the House's capital, and Azure's row (yours) shows culture laurels 0–5.
+- **Grounds:** all 28 pairs of grounds meeting along a wavy line (each tile is named "left | right"), then a row of coasts running down to a beach and the sea, with a river through hills.
+- **Sprites:** one row per ground, each row in a different House's colours. Columns: conifers, broadleaf trees, peaks, hills, villages and towns (every variant, left to right), the four buildings, the four being built (scaffold), and a capital with an army and all five specialists (the figures show at Near). Everything at true game size.
+- **Map symbols:** Embervale, with a territory next to a pass selected: the neighbour chevrons, the pass gate, a sea lane, province plaques, culture laurels (1–5), a market, barracks and watchtower, a fort being built, and two specialists.
+- **Redo list & colours:** the known redo items, big: the rock, snow and hills textures tiled as the game tiles them (their big built-in shapes repeat), the same at Mid, and the trees at 4x size (`tree-conifer-1` and `-2` read as round bushes, not pines). Then the House colours for normal and colour-blind vision (folded in from the old `?lab=houses`).
+
+**How it works:** the first three parts are made-up maps (plain map data built in `apps/web/src/lab/bench/benchMaps.ts` from a grid of tiles), drawn by the game's own renderer exactly like a real map, so new art is judged at true size and with the real blending, borders and markers. The renderer has no special cases for them.
+
+**Saving the set:** `pnpm build`, `pnpm --filter web preview`, then `pnpm map-check bench`. It saves 20 pictures to `docs/art/screens/bench/` (each part at Far, Mid and Near, close-ups of the trees, peaks, buildings, scaffolds, army, the river and coast, plus `redo-list.png` and `house-colours.png`). The set taken in session 10 is session 11's "before"; run it again after the new art and compare side by side.
+
 ## How to make a seed an official map
 1. In the lab, find a map you like (the gallery helps) and make sure every check passes and "Sim this map" looks right at the player counts it suits.
 2. Give it a name and an id under "All settings" (the id is lower case, like `stormcoast`).

@@ -1,0 +1,8 @@
+/* The art test bench: a full-screen map with a note on what it shows. */
+.bench { display: grid; grid-template-rows: auto auto 1fr; height: 100vh; overflow: hidden; font-size: 14px; }
+.bench button { min-height: 34px; padding: 4px 10px; font-size: 0.88rem; }
+.bench button.on { background: var(--gold); color: var(--navy); }
+.bench label.check { display: flex; align-items: center; gap: 4px; }
+.bench-note { margin: 0; padding: 6px 14px; color: var(--muted); border-bottom: 1px solid var(--line); background: #121b27; }
+.bench-main { position: relative; min-height: 0; overflow: auto; background: #173a5c; }
+.bench-redo { padding: 12px; background: var(--navy); display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }

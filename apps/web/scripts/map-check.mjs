@@ -3,7 +3,9 @@
  *
  *   pnpm map-check screens   -> docs/art/screens/*.png
  *   pnpm map-check perf      -> performance numbers (phone emulation, CPU slowed down 4x), printed and saved
- *   pnpm map-check houses    -> docs/art/screens/houses.png and house-on-ground.png
+ *   pnpm map-check bench     -> the art test bench (?lab=bench) at Far, Mid and Near: docs/art/screens/bench/*.png
+ *                               (every House on every ground, every pair of grounds, every sprite, the map symbols,
+ *                               the redo list and the House colours). "houses" does the same (it was folded in).
  *   pnpm map-check lab       -> the map lab: lab-overview.png, lab-checks.png, lab-gallery.png, lab-sim.png, and one
  *                               Far view per land shape (shape-<shape>.png), using the maps in docs/maps/lab-shots.json
  *   pnpm map-check labperf   -> big maps on a phone (CPU slowed 4x): paint time and frame rates at Far, Mid and Near,
@@ -359,4 +361,54 @@ async function labPerf() {
   writeFileSync(join(root, "docs/art/screens/perf-big.json"), JSON.stringify(results, null, 2) + "\n");
 }
 
-await (mode === "perf" ? perf() : mode === "houses" ? houses() : mode === "lab" ? lab() : mode === "labperf" ? labPerf() : screens());
+/**
+ * The art test bench at Far, Mid and Near: docs/art/screens/bench/ (session 11's "before" pictures).
+ * Each shot: [file, zoom (px a typical territory is wide), territory name to centre on (null: fit the map), dx, dy].
+ */
+const BENCH_SHOTS = {
+  houses: [["houses-far.png", null, null], ["houses-mid.png", ZOOM_PX.mid, "Or on hills"], ["houses-near.png", ZOOM_PX.near, "Gules on forest", 60, 0]],
+  grounds: [["grounds-far.png", null, null], ["grounds-mid.png", ZOOM_PX.mid, "Farmland | Rock"], ["grounds-near-forest-sand.png", ZOOM_PX.near, "Forest | Sand", 0, 40], ["grounds-near-rock-snow.png", ZOOM_PX.near, "Rock | Snow", 0, 40], ["grounds-near-river-coast.png", ZOOM_PX.near * 0.8, "River through hills", 0, 50]],
+  sprites: [["sprites-far.png", null, null], ["sprites-mid.png", ZOOM_PX.mid, "village on farmland", 0, 30], ["sprites-near-trees.png", ZOOM_PX.near, "tree-conifer on grass", 90, 50], ["sprites-near-peaks-hills.png", ZOOM_PX.near, "peak on rock", 90, 50], ["sprites-near-buildings.png", ZOOM_PX.near * 0.7, "market on grass", 0, 40], ["sprites-near-being-built.png", ZOOM_PX.near * 0.7, "market (being built) on grass", 0, 40], ["sprites-near-army.png", ZOOM_PX.near, "Army and specialists on forest", 0, 30]],
+  symbols: [["symbols-far.png", null, null], ["symbols-mid.png", ZOOM_PX.mid, "@pass"], ["symbols-near.png", ZOOM_PX.near, "@pass"]],
+};
+
+async function bench() {
+  const browser = await launch();
+  const page = await browser.newPage();
+  await page.setViewport(DESKTOP);
+  page.on("pageerror", (e) => console.log("page error:", e.message));
+  const dir = join(root, "docs/art/screens/bench");
+  mkdirSync(dir, { recursive: true });
+  const painted = () => page.waitForFunction(() => { const s = window.__conquerraMap?.stats?.(); return s && s.firstMapMs > 0 && s.tilesBaked === s.tileCount; }, { timeout: 120000, polling: 100 });
+  for (const [part, shots] of Object.entries(BENCH_SHOTS)) {
+    await page.goto(`${URL}?lab=bench&part=${part}`, { waitUntil: "networkidle0" });
+    await painted();
+    for (const [file, px, name, dx = 0, dy = 0] of shots) {
+      if (!name) await page.evaluate(() => window.__conquerraMap.fit(false));
+      else {
+        const at = await page.evaluate((name) => {
+          const m = window.__bench.map;
+          if (name === "@pass") return [m.geometry.passes[0].x, m.geometry.passes[0].y];
+          const id = m.territories.find((t) => t.name === name).id;
+          const l = m.geometry.territories.find((t) => t.id === id).label;
+          return [l.x, l.y];
+        }, name);
+        await zoomTo(page, px, [at[0] + dx, at[1] + dy]);
+      }
+      await sleep(400);
+      await painted();
+      await sleep(300);
+      await (await page.$(".bench-main")).screenshot({ path: join(dir, file) });
+      console.log(`  saved docs/art/screens/bench/${file}`);
+    }
+  }
+  await page.goto(`${URL}?lab=bench&part=redo`, { waitUntil: "networkidle0" });
+  await page.waitForFunction(() => document.body.dataset.ready === "1", { timeout: 60000 });
+  await sleep(300);
+  await (await page.$("#redo")).screenshot({ path: join(dir, "redo-list.png") });
+  await (await page.$("#houses canvas")).screenshot({ path: join(dir, "house-colours.png") });
+  console.log("  saved docs/art/screens/bench/redo-list.png and house-colours.png");
+  await browser.close();
+}
+
+await (mode === "perf" ? perf() : mode === "houses" || mode === "bench" ? bench() : mode === "lab" ? lab() : mode === "labperf" ? labPerf() : screens());

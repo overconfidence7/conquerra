@@ -1,5 +1,5 @@
 import { defaultRules, type MapDef } from "@conquerra/content";
-import type { TerritoryId } from "@conquerra/engine";
+import type { GameContext, PlayerView, TerritoryId } from "@conquerra/engine";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { scaleForPx, type ZoomLevel } from "../../map/zoom";
 import type { IllustratedRenderer } from "../../render/pixi/PixiMapRenderer";
@@ -30,20 +30,24 @@ interface Props {
   options: PreviewOptions;
   /** A tap on a territory (null: the sea). */
   onPick?(id: TerritoryId | null): void;
+  /** Show this view instead of a new game's (the art bench sets owners, buildings and culture itself). */
+  given?: { ctx: GameContext; view: PlayerView };
+  /** Start with this territory selected (its neighbours marked). */
+  select?: TerritoryId | null;
 }
 
 /**
  * A finished map, drawn by the game's own renderer (painting, info layer, provinces and plaques, Far / Mid / Near,
  * Tactical), as a new game would start. Takes any MapDef, so the player map builder can reuse it.
  */
-export const MapPreview = forwardRef<MapPreviewHandle, Props>(function MapPreview({ map, options, onPick }, ref) {
+export const MapPreview = forwardRef<MapPreviewHandle, Props>(function MapPreview({ map, options, onPick, given, select = null }, ref) {
   const host = useRef<HTMLDivElement>(null);
   const r = useRef<IllustratedRenderer | null>(null);
   const [ready, setReady] = useState(false);
-  const [selected, setSelected] = useState<TerritoryId | null>(null);
+  const [selected, setSelected] = useState<TerritoryId | null>(select);
   const pick = useRef(onPick);
   pick.current = onPick;
-  const { ctx, view } = useMemo(() => labView(map, defaultRules, options.players, options.capitals), [map, options.players, options.capitals]);
+  const { ctx, view } = useMemo(() => given ?? labView(map, defaultRules, options.players, options.capitals), [given, map, options.players, options.capitals]);
   const chokes = useMemo(() => chokeTerritories(map), [map]);
 
   useImperativeHandle(ref, () => ({
@@ -63,7 +67,7 @@ export const MapPreview = forwardRef<MapPreviewHandle, Props>(function MapPrevie
     let cancelled = false;
     let made: IllustratedRenderer | null = null;
     setReady(false);
-    setSelected(null);
+    setSelected(select);
     (async () => {
       const { createIllustratedRenderer } = await import("../../render/pixi/PixiMapRenderer");
       const rr = await createIllustratedRenderer({
