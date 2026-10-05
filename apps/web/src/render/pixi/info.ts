@@ -32,6 +32,8 @@ export class InfoLayer {
   readonly sites = new Container();
   readonly figures = new Container();
   readonly arrows = new Graphics();
+  /** Neighbour link marks for the selected territory. */
+  readonly links = new Graphics();
   private labels: { illustrated: MapLabels; tactical: MapLabels };
   readonly names = new Container();
   private scene: MapScene | null = null;
@@ -208,16 +210,28 @@ export class InfoLayer {
     const L = this.lines, G = this.glow;
     L.clear();
     G.clear();
-    // Every border: a thin pale line (dark in Tactical). Province borders: heavier.
+    // Every territory edge, at every zoom: a crisp ink line with a light halo, so it reads inside one House's land
+    // and between neutral lands too (Tactical: a plain dark line). Province borders: a gilded double line (gold,
+    // a dark rule, gold), distinct from both territory edges and the House bands.
     for (const b of g.borderLines) {
       const prov = province.get(b.a) !== province.get(b.b);
       for (const l of b.lines) {
-        if (this.isTactical) ring(L, l, false).stroke({ width: (prov ? 2.6 : 1) * px, color: INK, alpha: prov ? 0.85 : 0.45, join: "round" });
-        else if (prov) {
-          ring(L, l, false).stroke({ width: 3.4 * px, color: 0x2e2112, alpha: 0.5, join: "round", cap: "round" });
-          ring(L, l, false).stroke({ width: 1.2 * px, color: 0xf3ead2, alpha: 0.55, join: "round", cap: "round" });
-        } else ring(L, l, false).stroke({ width: 1.1 * px, color: 0xf3ead2, alpha: 0.42, join: "round", cap: "round" });
+        const st = (width: number, color: number, alpha: number) => ring(L, l, false).stroke({ width: width * px, color, alpha, join: "round", cap: "round" });
+        if (prov) {
+          st(6.4, INK, 0.38);
+          st(4.6, GOLD_HI, 0.92);
+          st(1.5, INK, 0.85);
+        } else if (this.isTactical) st(1.1, INK, 0.5);
+        else {
+          st(3.2, 0xf6efdc, 0.42);
+          st(1.15, INK, 0.78);
+        }
       }
+    }
+    // Passes: a small stone gate across the road, sized to read at Mid zoom.
+    for (const p of g.passes) {
+      const a = this.labelOf.get(p.a)!, b = this.labelOf.get(p.b)!;
+      drawGate(L, p.x, p.y, Math.atan2(b.y - a.y, b.x - a.x), Math.min(Math.max(16, 24 * px), 32 * px), px);
     }
     // Realms: in Tactical, a dark line round everything each House holds. Illustrated: the House bands (realms.ts).
     if (this.isTactical) for (const outlines of this.realms.values()) for (const l of outlines) ring(G, l, false).stroke({ width: 2.6 * px, color: INK, alpha: 0.9, join: "round" });
@@ -237,12 +251,73 @@ export class InfoLayer {
         ring(G, r).stroke({ width: 2.2 * px, color: 0xfff1c1, alpha: 0.95, join: "round" });
       }
     }
+    // What the selected territory is connected to: a chevron across each shared border (red core: you'd attack,
+    // blue: you'd move), with the border's kind marked (river ripples, a pass's arch); its sea lanes light up.
+    this.links.clear();
+    if (selected) this.drawLinks(selected, px);
     // Selection in Tactical: a gold outline (illustrated: the pulsing double rule in realms.ts).
     if (selected && this.isTactical)
       for (const r of this.rings.get(selected) ?? []) {
         ring(G, r).stroke({ width: 7 * px, color: GOLD_HI, alpha: 0.5, join: "round" });
         ring(G, r).stroke({ width: 2.6 * px, color: 0xfff1c1, alpha: 1, join: "round" });
       }
+  }
+
+  /** Neighbour link marks for the selected territory (see drawLines). */
+  private drawLinks(selected: string, px: number) {
+    const K = this.links;
+    const g = this.map.geometry!;
+    const { view } = this.scene!;
+    const me = view.me.id;
+    const size = 19 * px;
+    const from = this.labelOf.get(selected)!;
+    for (const b of this.map.borders) {
+      if (b.a !== selected && b.b !== selected) continue;
+      const other = b.a === selected ? b.b : b.a;
+      const ov = view.territories[other];
+      const mine = ov?.detail === "full" && ov.owner === me;
+      const core = mine ? MOVE : ATTACK;
+      const to = this.labelOf.get(other)!;
+      if (b.type === "sea") {
+        const lane = g.seaLanes.find((l) => (l.a === b.a && l.b === b.b) || (l.a === b.b && l.b === b.a));
+        if (!lane) continue;
+        const [x0, y0, x1, y1] = lane.path as [number, number, number, number];
+        const len = Math.hypot(x1 - x0, y1 - y0) || 1;
+        const bend = Math.min(30, len * 0.18);
+        const cx = (x0 + x1) / 2 + ((y1 - y0) / len) * bend, cy = (y0 + y1) / 2 - ((x1 - x0) / len) * bend;
+        for (const [w, c, a] of [[9, GOLD_HI, 0.28], [3.2, 0xfff1c1, 0.95]] as const) K.moveTo(x0, y0).quadraticCurveTo(cx, cy, x1, y1).stroke({ width: w * px, color: c, alpha: a, cap: "round" });
+        const [mx, my, ang] = quadPoint(x0, y0, cx, cy, x1, y1, 0.5);
+        const toward = Math.cos(ang) * (to.x - mx) + Math.sin(ang) * (to.y - my) >= 0 ? ang : ang + Math.PI;
+        chevron(K, mx, my, toward, size, core, px);
+        continue;
+      }
+      const line = g.borderLines.find((l) => (l.a === b.a && l.b === b.b) || (l.a === b.b && l.b === b.a));
+      if (!line) continue;
+      const longest = [...line.lines].sort((p, q) => lineLength(q) - lineLength(p))[0]!;
+      const [mx, my, tan] = lineMid(longest);
+      // Point across the border, toward the neighbour.
+      let ang = tan + Math.PI / 2;
+      if (Math.cos(ang) * (to.x - from.x) + Math.sin(ang) * (to.y - from.y) < 0) ang += Math.PI;
+      if (b.type === "river") {
+        // Blue ripples along the border, either side of the chevron.
+        for (const side of [-1, 1]) {
+          const ox = Math.cos(tan) * side * size * 1.25, oy = Math.sin(tan) * side * size * 1.25;
+          const pts: number[] = [];
+          for (let i = 0; i <= 8; i++) {
+            const t = (i / 8 - 0.5) * size * 1.1, w = Math.sin((i / 8) * Math.PI * 2) * size * 0.18;
+            pts.push(mx + ox + Math.cos(tan) * t - Math.sin(tan) * w, my + oy + Math.sin(tan) * t + Math.cos(tan) * w);
+          }
+          K.poly(pts, false).stroke({ width: 4 * px, color: INK, alpha: 0.45, cap: "round", join: "round" });
+          K.poly(pts, false).stroke({ width: 2.2 * px, color: 0x6cc0f0, alpha: 1, cap: "round", join: "round" });
+        }
+      }
+      if (b.type === "pass") {
+        // A stone arch around the chevron.
+        const r = size * 1.05, a0 = ang - Math.PI * 0.75, a1 = ang + Math.PI * 0.75;
+        for (const [w, c, al] of [[5, INK, 0.5], [3, 0xd9cdb0, 1]] as const) K.moveTo(mx + Math.cos(a0) * r, my + Math.sin(a0) * r).arc(mx, my, r, a0, a1).stroke({ width: w * px, color: c, alpha: al, cap: "round" });
+      }
+      chevron(K, mx, my, ang, size, core, px);
+    }
   }
 
   /** Gold-trimmed arrows for queued orders (and the one being drafted). */
@@ -289,9 +364,63 @@ export class InfoLayer {
   destroy() {
     this.labels.illustrated.destroy();
     this.labels.tactical.destroy();
-    for (const c of [this.tactical, this.tint, this.lines, this.glow, this.sites, this.figures, this.arrows, this.names]) c.destroy({ children: true });
+    for (const c of [this.tactical, this.tint, this.lines, this.glow, this.links, this.sites, this.figures, this.arrows, this.names]) c.destroy({ children: true });
     this.realmLayer.destroy();
   }
+}
+
+const lineLength = (l: Line) => {
+  let s = 0;
+  for (let i = 2; i < l.length; i += 2) s += Math.hypot(l[i]! - l[i - 2]!, l[i + 1]! - l[i - 1]!);
+  return s;
+};
+
+/** The point halfway along a line, and the line's direction there. */
+function lineMid(l: Line): [number, number, number] {
+  const half = lineLength(l) / 2;
+  let acc = 0;
+  for (let i = 2; i < l.length; i += 2) {
+    const x0 = l[i - 2]!, y0 = l[i - 1]!, x1 = l[i]!, y1 = l[i + 1]!;
+    const seg = Math.hypot(x1 - x0, y1 - y0);
+    if (acc + seg >= half && seg > 0) {
+      const t = (half - acc) / seg;
+      return [x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, Math.atan2(y1 - y0, x1 - x0)];
+    }
+    acc += seg;
+  }
+  return [l[0]!, l[1]!, 0];
+}
+
+/** A gilded chevron pointing along `ang`, with a coloured core. */
+function chevron(g: Graphics, x: number, y: number, ang: number, size: number, core: number, px: number) {
+  const c = Math.cos(ang), s = Math.sin(ang);
+  const at = (u: number, v: number) => [x + c * u - s * v, y + s * u + c * v];
+  const pts = [...at(size * 0.62, 0), ...at(-size * 0.45, size * 0.6), ...at(-size * 0.12, 0), ...at(-size * 0.45, -size * 0.6)];
+  g.poly(pts).stroke({ width: 4 * px, color: INK, alpha: 0.55, join: "round" });
+  g.poly(pts).fill({ color: core, alpha: 0.95 }).stroke({ width: 1.8 * px, color: GOLD_HI, alpha: 1, join: "round" });
+}
+
+/**
+ * A pass's gate, as a map symbol that reads on any ground and among the mountain sprites: a navy disc with a gold
+ * rim and a parchment stone arch, turned to face along the road. `w` is its diameter in map units.
+ */
+function drawGate(g: Graphics, x: number, y: number, roadAng: number, w: number, px: number) {
+  const r = w / 2;
+  g.circle(x, y, r + 1.5 * px).fill({ color: INK, alpha: 0.45 });
+  g.circle(x, y, r).fill({ color: 0x0f1620, alpha: 0.92 }).stroke({ width: 1.6 * px, color: GOLD, alpha: 1 });
+  // The arch faces across the road: its opening points along the road.
+  const c = Math.cos(roadAng), s = Math.sin(roadAng);
+  const at = (u: number, v: number): [number, number] => [x + c * u - s * v, y + s * u + c * v];
+  const a = r * 0.58, leg = r * 0.5, t = Math.max(1.6 * px, r * 0.2);
+  // Two pillars and the arch over them (u: along the road, v: across it).
+  const pts: number[] = [];
+  pts.push(...at(leg, -a), ...at(-leg * 0.15, -a));
+  for (let i = 0; i <= 12; i++) {
+    const th = Math.PI + (i / 12) * Math.PI;
+    pts.push(...at(-leg * 0.15 + Math.sin(th) * a * 0.9, Math.cos(th) * a));
+  }
+  pts.push(...at(leg, a));
+  g.poly(pts, false).stroke({ width: t, color: 0xede6d6, alpha: 1, cap: "butt", join: "round" });
 }
 
 function mixHex(a: string, b: string, t: number): string {

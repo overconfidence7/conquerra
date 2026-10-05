@@ -91,6 +91,8 @@ export interface MarkerBox {
   dy?: number;
   /** Higher wins the spot when two collide (your own land, then visible armies, then last-seen intel). */
   priority: number;
+  /** Optional labels (province plaques): with no room they're simply dropped, never folded into a marker. */
+  optional?: boolean;
 }
 
 export interface MarkerPlacement {
@@ -102,6 +104,8 @@ export interface MarkerPlacement {
   mergedInto: string | null;
   /** Markers folded into this one. */
   merged: string[];
+  /** An optional box with no room: not shown. */
+  dropped?: boolean;
 }
 
 const overlaps = (ax: number, ay: number, a: MarkerBox, bx: number, by: number, b: MarkerBox, gap: number) =>
@@ -147,6 +151,10 @@ export function layoutMarkers(boxes: readonly MarkerBox[], opts: { gap?: number;
       const gk = keyOf(Math.floor(spot[0] / cell), Math.floor(spot[1] / cell));
       grid.set(gk, [...(grid.get(gk) ?? []), idx]);
       out.set(b.id, { x: spot[0], y: spot[1], shifted: spot[0] !== b.x || spot[1] !== b.y, mergedInto: null, merged: [] });
+      continue;
+    }
+    if (b.optional) {
+      out.set(b.id, { x: b.x, y: b.y, shifted: false, mergedInto: null, merged: [], dropped: true });
       continue;
     }
     // No room: fold into whichever placed marker overlaps our own spot the most.

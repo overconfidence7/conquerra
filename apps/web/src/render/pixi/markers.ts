@@ -2,8 +2,9 @@ import type { MapDef } from "@conquerra/content";
 import type { PlayerView } from "@conquerra/engine";
 import { Container, Graphics, Sprite, Text, type TextStyleOptions } from "pixi.js";
 import { toScreen, type Camera } from "../../map/camera";
+import { labelCurve, quadPoint } from "../../map/shapes";
 import { hexNum, houseOf } from "../../map/houses";
-import { CULTURE_PIP_DROP, layoutMarkers, markerMetrics, pillHeight, type MarkerContent, type MarkerMetrics } from "../../map/layout";
+import { CULTURE_PIP_DROP, layoutMarkers, markerMetrics, type MarkerBox, pillHeight, type MarkerContent, type MarkerMetrics } from "../../map/layout";
 import { markerContent, markerPriority, territoryStatus, type TerritoryStatus } from "../../map/status";
 import type { DetailMix, ZoomDetail } from "../../map/zoom";
 import type { MapScene } from "../types";
@@ -48,6 +49,17 @@ function laurels(level: number, y: number): Graphics {
   return g;
 }
 
+/** A province plaque: the bonus, and how much of the province you hold ("+3 · you hold 3 of 5"), under its name. */
+interface PlaqueView {
+  id: string;
+  root: Container;
+  anchor: [number, number];
+  w: number;
+  h: number;
+  offset: [number, number];
+  hidden: boolean;
+}
+
 interface MarkerView {
   id: string;
   root: Container;
@@ -71,6 +83,10 @@ export class MarkerLayer {
   private layer = new Container();
   private badges = new Container();
   private markers = new Map<string, MarkerView>();
+  private plaques = new Map<string, PlaqueView>();
+  private plaqueLayer = new Container();
+  /** Plaques show at Far and Mid and fade out at Near. */
+  private plaqueAlpha = 1;
   private scene: MapScene | null = null;
   private key = "";
   private resolution: number;
@@ -83,7 +99,7 @@ export class MarkerLayer {
   ) {
     this.resolution = Math.max(2, resolution);
     this.labelOf = new Map(map.geometry!.territories.map((t) => [t.id, t.label]));
-    this.root.addChild(this.leaders, this.layer, this.badges);
+    this.root.addChild(this.plaqueLayer, this.leaders, this.layer, this.badges);
   }
 
   /** Rebuild when the scene changes, or the zoom crosses a level that changes what markers hold. */
@@ -107,7 +123,46 @@ export class MarkerLayer {
       this.layer.addChild(mv.root);
     }
     this.buildBadges(scene);
+    this.buildPlaques(scene);
     return true;
+  }
+
+  /** One plaque per province, under its painted name: "Pinemark +3 · you hold 3 of 5", or "Pinemark +3" if you hold none of it. */
+  private buildPlaques(scene: MapScene) {
+    for (const pl of this.plaques.values()) pl.root.destroy({ children: true });
+    this.plaques.clear();
+    const view = scene.view;
+    for (const label of this.map.geometry!.provinceLabels) {
+      const prov = this.map.provinces.find((p) => p.id === label.id);
+      if (!prov) continue;
+      const members = this.map.territories.filter((t) => t.province === prov.id);
+      const held = members.filter((t) => {
+        const v = view.territories[t.id];
+        return v?.detail === "full" && v.owner === view.me.id;
+      }).length;
+      const root = new Container();
+      const style = (fill: number): TextStyleOptions => ({ fontFamily: "Manrope, system-ui, sans-serif", fontWeight: "800", fontSize: 11, fill });
+      const parts = [
+        new Text({ text: `${prov.name} `, style: { fontFamily: "Cinzel, serif", fontWeight: "700", fontSize: 11, fill: PARCH }, resolution: this.resolution }),
+        new Text({ text: `+${prov.bonus}`, style: style(GOLD_HI), resolution: this.resolution }),
+        ...(held ? [new Text({ text: ` · you hold ${held} of ${members.length}`, style: style(PARCH), resolution: this.resolution })] : []),
+      ];
+      const w = parts.reduce((a, t) => a + t.width, 0) + 14, h = 18;
+      root.addChild(new Graphics().roundRect(-w / 2, -h / 2, w, h, h / 2).fill({ color: NAVY, alpha: 0.88 }).stroke({ width: 1.2, color: held === members.length ? GOLD_HI : GOLD }));
+      let x = -w / 2 + 7;
+      for (const t of parts) {
+        t.anchor.set(0, 0.5);
+        t.position.set(x, 0);
+        x += t.width;
+        root.addChild(t);
+      }
+      // Just under the painted name: the middle of its curve, one letter-height down (labels.ts sizes the letters).
+      const [x0, y0, cx, cy, x1, y1] = labelCurve(label.path);
+      const [mx, my] = quadPoint(x0, y0, cx, cy, x1, y1, 0.5);
+      const size = Math.max(13, Math.min(30, (Math.hypot(x1 - x0, y1 - y0) / Math.max(6, prov.name.length)) * 1.05));
+      this.plaques.set(prov.id, { id: `plaque:${prov.id}`, root, anchor: [mx, my + size * 0.95], w, h, offset: [0, 0], hidden: false });
+      this.plaqueLayer.addChild(root);
+    }
   }
 
   private build(view: PlayerView, s: TerritoryStatus, c: MarkerContent, m: MarkerMetrics, mix: DetailMix) {
@@ -276,14 +331,29 @@ export class MarkerLayer {
   /** Re-run collisions (after zooming or a rebuild). */
   layout(cam: Camera, z: ZoomDetail) {
     const k = pillHeight(z) / REF;
-    const boxes = [...this.markers.values()].map((m) => {
+    const boxes: (MarkerBox & { dy: number })[] = [...this.markers.values()].map((m) => {
       const [x, y] = toScreen(cam, m.anchor[0], m.anchor[1]);
       return { id: m.id, x, y, w: m.metrics.w * k, h: m.metrics.h * k, dy: m.metrics.dy * k, priority: m.priority };
     });
+    // Province plaques come last and never cover an army: with no room nearby, they're dropped.
+    for (const pl of this.plaques.values()) {
+      const [x, y] = toScreen(cam, pl.anchor[0], pl.anchor[1]);
+      boxes.push({ id: pl.id, x, y, w: pl.w, h: pl.h, dy: 0, priority: -1, optional: true });
+    }
     const placed = layoutMarkers(boxes);
+    this.plaqueAlpha = 1 - z.near;
+    for (const pl of this.plaques.values()) {
+      const at = placed.get(pl.id)!;
+      const [x, y] = toScreen(cam, pl.anchor[0], pl.anchor[1]);
+      pl.offset = [at.x - x, at.y - y];
+      pl.hidden = !!at.dropped || this.plaqueAlpha < 0.05;
+      pl.root.visible = !pl.hidden;
+      pl.root.alpha = this.plaqueAlpha;
+    }
     this.screenBoxes = [];
     for (const b of boxes) {
-      const m = this.markers.get(b.id)!;
+      const m = this.markers.get(b.id);
+      if (!m) continue;
       const p = placed.get(b.id)!;
       m.offset = [p.x - b.x, p.y - b.y];
       m.hidden = p.mergedInto !== null;
@@ -308,6 +378,10 @@ export class MarkerLayer {
         this.leaders.moveTo(x, y).lineTo(x + m.offset[0], y + m.offset[1]).stroke({ width: 1.2, color: 0xf3ead2, alpha: 0.7 });
         this.leaders.circle(x, y, 2.2).fill({ color: 0xf3ead2, alpha: 0.9 });
       }
+    }
+    for (const pl of this.plaques.values()) {
+      const [x, y] = toScreen(cam, pl.anchor[0], pl.anchor[1]);
+      pl.root.position.set(Math.round(x + pl.offset[0]), Math.round(y + pl.offset[1]));
     }
     if (!this.scene) return;
     for (const b of this.badges.children) {
