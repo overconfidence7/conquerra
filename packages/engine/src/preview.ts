@@ -36,3 +36,24 @@ export function previewAttack(ctx: GameContext, view: PlayerView, a: AttackPlan)
     luck: view.settings.luck,
   });
 }
+
+/**
+ * Recruit sites from a player's own view: the capital, any barracks, and any territory in a province they hold
+ * completely. Your own land is always in full view, so this matches the engine's rule exactly.
+ */
+export function isRecruitSiteIn(ctx: GameContext, view: PlayerView, t: TerritoryId): boolean {
+  const mine = (id: TerritoryId) => {
+    const v = view.territories[id];
+    return !!v && v.detail === "full" && v.owner === view.me.id;
+  };
+  if (!mine(t)) return false;
+  const v = view.territories[t]!;
+  if (t === view.me.capital || (v.detail === "full" && v.building === "barracks")) return true;
+  const idx = indexMap(ctx.map);
+  const members = idx.provinceMembers.get(idx.byId.get(t)?.province ?? "") ?? [];
+  return members.length > 0 && members.every(mine);
+}
+
+export function recruitSitesIn(ctx: GameContext, view: PlayerView): TerritoryId[] {
+  return indexMap(ctx.map).ids.filter((t) => isRecruitSiteIn(ctx, view, t));
+}

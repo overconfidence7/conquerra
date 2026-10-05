@@ -1,6 +1,6 @@
 import { defaultRules, MapDef, type BorderType, type Terrain } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
-import { createGame, indexMap, resolveTurn, viewFor, type GameContext, type GameState, type Order } from "@conquerra/engine";
+import { createGame, indexMap, isRecruitSiteIn, resolveTurn, viewFor, type GameContext, type GameState, type Order } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { captainBot, recruitBot, type Bot } from "../src";
 
@@ -173,7 +173,9 @@ describe("Captain bot: fair play", () => {
               expect(idx.neighbors.get(o.from)).toContain(o.to);
               heading.add(o.to);
             }
-            if (o.kind === "recruit" || o.kind === "hire") {
+            // Recruits at a recruit site (capital, barracks, or a province it holds completely); hires at the capital or a barracks.
+            if (o.kind === "recruit") expect(isRecruitSiteIn(ember, view, o.territory), `${p.id} recruits at ${o.territory}`).toBe(true);
+            if (o.kind === "hire") {
               const t = view.territories[o.territory]!;
               expect(t.detail === "full" && t.owner === p.id && (o.territory === view.me.capital || t.building === "barracks")).toBe(true);
             }

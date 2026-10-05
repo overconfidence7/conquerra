@@ -1,4 +1,4 @@
-import type { GameContext, Order, PlayerView } from "@conquerra/engine";
+import { recruitSitesIn, type GameContext, type Order, type PlayerView } from "@conquerra/engine";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { incomeEstimate } from "../logic/actions";
 import { planQueue, queueFor } from "../logic/orders";
@@ -29,6 +29,7 @@ import type { LayoutChoice } from "../logic/layout";
 
 /** One shared empty list: a new [] on every render made the map rebuild its whole info layer many times a second during the replay (and freeze on big realms). */
 const NO_ORDERS: readonly Order[] = [];
+const NO_GLOW: readonly string[] = [];
 
 
 /** Screen space the menus cover, so "fit map" uses the rest. */
@@ -193,14 +194,17 @@ export function GameScreen() {
   const plan = useMemo(() => (ctx && view ? planQueue(ctx, view, shownQueue) : null), [ctx, view, shownQueue]);
   const income = useMemo(() => (ctx && view ? incomeEstimate(ctx, view) : 0), [ctx, view]);
 
-  // On a phone, choosing a territory or drafting an attack opens the army sheet.
+  // On a phone, choosing a territory, drafting an attack or opening Recruit opens the army sheet.
+  const recruitOpen = !!g.recruit;
   useEffect(() => {
     if (!phone) return;
-    if (draft) {
+    if (draft || recruitOpen) {
       setTab("army");
       setSheet((s) => (s === "closed" ? "half" : s));
     }
-  }, [draft, phone]);
+  }, [draft, recruitOpen, phone]);
+  // Recruit sites glow while the Recruit panel is open.
+  const glow = useMemo(() => (ctx && view && recruitOpen ? recruitSitesIn(ctx, view) : NO_GLOW), [ctx, view, recruitOpen]);
   useEffect(() => setSpendOpen(false), [selected]);
 
   if (!ctx || !view || !plan) return null;
@@ -225,7 +229,8 @@ export function GameScreen() {
         queue={act ? shownQueue : NO_ORDERS}
         selected={act ? selected : null}
         draft={act ? draft : null}
-        showTargets={act && (plan.free.get(selected ?? "") ?? 0) > 0}
+        showTargets={act && !recruitOpen && (plan.free.get(selected ?? "") ?? 0) > 0}
+        glow={act ? glow : NO_GLOW}
         onTap={(t) => {
           if (!act) return;
           g.tap(t);

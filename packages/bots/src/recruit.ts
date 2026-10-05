@@ -3,6 +3,7 @@ import {
   fewestToTake,
   indexMap,
   investCost,
+  isRecruitSiteIn,
   previewAttack,
   Rng,
   seedRng,
@@ -78,7 +79,9 @@ function plan(ctx: GameContext, view: PlayerView, opts: RecruitOptions): Order[]
   let gold = me.gold;
 
   const frontier = mine.filter(isFrontier);
-  const recruitSites = mine.filter((t) => t === me.capital || seen(t)?.building === "barracks");
+  // Recruit at the capital, a barracks, or anywhere in a province we hold completely; hire only at the first two.
+  const recruitSites = mine.filter((t) => isRecruitSiteIn(ctx, view, t));
+  const hireSite = (t: TerritoryId) => t === me.capital || seen(t)?.building === "barracks";
   // A barracks on the busiest front once the realm has grown, so new troops start where the fighting is.
   // Build another whenever the front has moved more than a step away from every recruiting site.
   const hotFront = [...frontier].sort((a, b) => enemyPressure(b) - enemyPressure(a) || (a < b ? -1 : 1))[0];
@@ -99,24 +102,25 @@ function plan(ctx: GameContext, view: PlayerView, opts: RecruitOptions): Order[]
   }
 
   // Recruit where the threat is: the frontier site under most pressure, else the capital.
-  const site = [...recruitSites].sort(
-    (a, b) => Number(isFrontier(b)) - Number(isFrontier(a)) || enemyPressure(b) - enemyPressure(a) || (a < b ? -1 : 1),
-  )[0];
-  if (site) {
-    const here = seen(site)!;
+  const byPressure = (a: TerritoryId, b: TerritoryId) => Number(isFrontier(b)) - Number(isFrontier(a)) || enemyPressure(b) - enemyPressure(a) || (a < b ? -1 : 1);
+  const site = [...recruitSites].sort(byPressure)[0];
+  // Specialists: at the recruit site if we can hire there, else the busiest capital or barracks.
+  const hireAt = site && hireSite(site) ? site : recruitSites.filter(hireSite).sort(byPressure)[0];
+  if (hireAt) {
+    const here = seen(hireAt)!;
     const room = rules.specialists.maxPerArmy - here.specialists.length;
     const has = (t: SpecialistType) => here.specialists.some((s) => s.type === t);
-    const provinceCulture = (idx.provinceMembers.get(idx.byId.get(site)!.province) ?? [])
+    const provinceCulture = (idx.provinceMembers.get(idx.byId.get(hireAt)!.province) ?? [])
       .filter(owned)
       .reduce((a, t) => a + seen(t)!.culture, 0);
     const unlocked = (t: SpecialistType) => rules.specialists[t].cultureRequired <= provinceCulture;
-    const enemyFortNear = idx.neighbors.get(site)!.some((x) => enemy(x) && seen(x)!.building === "fort");
+    const enemyFortNear = idx.neighbors.get(hireAt)!.some((x) => enemy(x) && seen(x)!.building === "fort");
     let want: SpecialistType | null = null;
     if (enemyFortNear && !has("siege") && unlocked("siege")) want = "siege";
     else if (unlocked("healers") && !has("healers") && here.troops >= 15) want = "healers";
     else if (!has("cavalry") && here.troops >= 10 && rng.next() < 0.3) want = "cavalry";
     if (want && room > 0 && gold >= rules.specialists[want].cost + rules.troops.cost * 4) {
-      orders.push({ id: id(), kind: "hire", territory: site, specialist: want });
+      orders.push({ id: id(), kind: "hire", territory: hireAt, specialist: want });
       gold -= rules.specialists[want].cost;
     }
   }
@@ -138,7 +142,7 @@ function plan(ctx: GameContext, view: PlayerView, opts: RecruitOptions): Order[]
     gold -= count * rules.troops.cost;
   }
   // Plan with the troops we just recruited (they can act this turn).
-  const recruited = orders.reduce((a, o) => a + (o.kind === "recruit" ? o.count : 0), 0);
+  const recruited = orders.reduce((a, o) => a + (o.kind === "recruit" && typeof o.count === "number" ? o.count : 0), 0);
   const free = new Map<TerritoryId, number>();
   for (const t of mine) free.set(t, Math.max(0, troopsAt(t) - garrison + (t === site ? recruited : 0)));
   const specsAt = (t: TerritoryId): SpecialistType[] => seen(t)?.specialists.map((s) => s.type) ?? [];

@@ -1,5 +1,5 @@
 import type { BuildingType, SpecialistType, Terrain } from "@conquerra/content";
-import { amountLabel, explainFizzle, explainHold, fizzleIsQuiet, indexMap, PRESETS, type ArmySnapshot, type GameContext, type Order, type PlayerView, type ReplayEvent } from "@conquerra/engine";
+import { amountLabel, recruitLabel, explainFizzle, explainHold, fizzleIsQuiet, indexMap, PRESETS, type ArmySnapshot, type GameContext, type Order, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 
 export const SPECIALIST_ICON: Record<SpecialistType, string> = { cavalry: "🐎", siege: "🎯", scouts: "🔭", engineers: "🔨", healers: "⚕️" };
 export const SPECIALIST_NAME: Record<SpecialistType, string> = { cavalry: "Cavalry", siege: "Siege", scouts: "Scouts", engineers: "Engineers", healers: "Healers" };
@@ -48,11 +48,11 @@ const army = (a: ArmySnapshot) =>
 const presetName = (id: string) => PRESETS.find((p) => p.id === id)?.name ?? id;
 
 /** One line for an order in the queue. */
-/** `sending`: what a move sends, e.g. "about 9, 3/4" (defaults to its share, e.g. "3/4"). */
+/** `sending`: what a move sends, e.g. "about 9, 3/4" (defaults to its share, e.g. "3/4"), or what a recruit buys ("12, All"). */
 export function describeOrder(o: Order, n: Namer, attack: boolean, sending?: string): string {
   switch (o.kind) {
     case "recruit":
-      return `Recruit ${o.count} at ${n.place(o.territory)}`;
+      return `Recruit ${sending ?? recruitLabel(o.count)} at ${n.place(o.territory)}`;
     case "hire":
       return `Hire ${SPECIALIST_NAME[o.specialist].toLowerCase()} at ${n.place(o.territory)}`;
     case "build":

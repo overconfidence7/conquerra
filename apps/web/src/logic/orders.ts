@@ -4,9 +4,11 @@ import {
   fewestToTake,
   indexMap,
   investCost,
+  isRecruitSiteIn,
   isShare,
   PRESETS,
   previewAttack,
+  recruitCount,
   SHARES,
   troopsFor,
   type GameContext,
@@ -14,6 +16,7 @@ import {
   type PlayerView,
   type PresetId,
   type PresetInfo,
+  type RecruitAmount,
   type TerritoryDetail,
   type TerritoryId,
   type TroopAmount,
@@ -30,8 +33,10 @@ export const seen = (view: PlayerView, t: TerritoryId): Seen | null => {
   return v && v.detail === "full" ? v : null;
 };
 export const isMine = (view: PlayerView, t: TerritoryId) => seen(view, t)?.owner === view.me.id;
-export const isRecruitSite = (view: PlayerView, t: TerritoryId) =>
-  isMine(view, t) && (t === view.me.capital || seen(view, t)!.building === "barracks");
+/** Recruit sites: your capital, any barracks, and anywhere in a province you hold completely (the engine's rule). */
+export const isRecruitSite = (ctx: GameContext, view: PlayerView, t: TerritoryId) => isRecruitSiteIn(ctx, view, t);
+/** Hiring specialists: your capital or a barracks only. */
+export const isHireSite = (view: PlayerView, t: TerritoryId) => isMine(view, t) && (t === view.me.capital || seen(view, t)!.building === "barracks");
 
 // ---------- Walking the queue ----------
 
@@ -119,8 +124,9 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
     plan.hop.push(null);
     switch (o.kind) {
       case "recruit": {
-        const count = Math.min(o.count, Math.floor(gold / rules.troops.cost));
-        cost = Math.max(0, count) * rules.troops.cost;
+        // All, a share of the gold left by then, or an exact number (as many as you can afford).
+        const count = recruitCount(o.count, gold, rules.troops.cost);
+        cost = count * rules.troops.cost;
         if (count > 0) setArmy(o.territory, (plan.army.get(o.territory) ?? 0) + count);
         break;
       }
@@ -205,6 +211,13 @@ export function troopsOf(ctx: GameContext, view: PlayerView, plan: QueuePlan, d:
 
 /** How many troops a recruit order defaults to: as many as the gold left buys. */
 export const affordableTroops = (ctx: GameContext, plan: QueuePlan) => Math.max(0, Math.floor(plan.goldLeft / ctx.rules.troops.cost));
+
+/** Troops a queued recruit order should buy (its gold divided by the troop cost). */
+export const recruitedBy = (ctx: GameContext, plan: QueuePlan, i: number) => Math.round((plan.costs[i] ?? 0) / ctx.rules.troops.cost);
+
+/** The recruit chips: All, then 3/4, 1/2, 1/4 of your gold (an exact number lives under More). */
+export const RECRUIT_CHOICES: readonly RecruitAmount[] = ["all", ...SHARES.map((share) => ({ share }))];
+export const sameRecruit = (a: RecruitAmount, b: RecruitAmount) => (isShare(a) && isShare(b) ? a.share === b.share : a === b);
 
 // ---------- Moves and attacks ----------
 

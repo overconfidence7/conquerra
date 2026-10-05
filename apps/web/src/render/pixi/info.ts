@@ -202,7 +202,7 @@ export class InfoLayer {
 
   private drawLines(scale: number) {
     const g = this.map.geometry!;
-    const { view, selected, targets } = this.scene!;
+    const { view, selected, targets, glow } = this.scene!;
     const px = 1 / scale;
     const province = new Map(this.map.territories.map((t) => [t.id, t.province]));
     const L = this.lines, G = this.glow;
@@ -227,6 +227,14 @@ export class InfoLayer {
       for (const r of this.rings.get(id) ?? []) {
         ring(G, r).fill({ color: 0xffffff, alpha: 0.1 });
         ring(G, r).stroke({ width: 2.2 * px, color: 0xffffff, alpha: 0.8, join: "round" });
+      }
+    }
+    // Recruit sites while the Recruit panel is open: a gold glow.
+    for (const id of glow) {
+      for (const r of this.rings.get(id) ?? []) {
+        ring(G, r).fill({ color: GOLD_HI, alpha: 0.2 });
+        ring(G, r).stroke({ width: 6 * px, color: GOLD_HI, alpha: 0.35, join: "round" });
+        ring(G, r).stroke({ width: 2.2 * px, color: 0xfff1c1, alpha: 0.95, join: "round" });
       }
     }
     // Selection in Tactical: a gold outline (illustrated: the pulsing double rule in realms.ts).

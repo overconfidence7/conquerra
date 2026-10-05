@@ -5,6 +5,7 @@ import {
   fewestToTake,
   indexMap,
   investCost,
+  isRecruitSiteIn,
   previewAttack,
   Rng,
   seedRng,
@@ -203,7 +204,9 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
   }
 
   // A barracks near the front we care about most, once the realm has grown.
-  const recruitSites = mine.filter((t) => t === me.capital || seen(t)?.building === "barracks");
+  // Recruit at the capital, a barracks, or anywhere in a province we hold completely; hire only at the first two.
+  const recruitSites = mine.filter((t) => isRecruitSiteIn(ctx, view, t));
+  const hireSite = (t: TerritoryId) => t === me.capital || seen(t)?.building === "barracks";
   const facesFocus = (t: TerritoryId) => !!focus && idx.neighbors.get(t)!.some((x) => rivalAt(x) === focus);
   const frontRank = (t: TerritoryId) => (facesFocus(t) ? 1000 : 0) + enemyPressure(t);
   const hotFront = [...frontier].sort((a, b) => frontRank(b) - frontRank(a) || (a < b ? -1 : 1))[0];
@@ -229,23 +232,24 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions): Order[]
 
   // Recruit at the threatened capital, else at the site nearest the front we care about.
   // (Recruiting next to the endgame spearhead instead was tried: it made games about 4 turns longer.)
-  const site = capThreatened
-    ? capital!
-    : [...recruitSites].sort((a, b) => Number(isFrontier(b)) - Number(isFrontier(a)) || frontRank(b) - frontRank(a) || (a < b ? -1 : 1))[0];
-  if (site) {
-    const here = seen(site)!;
+  const byFront = (a: TerritoryId, b: TerritoryId) => Number(isFrontier(b)) - Number(isFrontier(a)) || frontRank(b) - frontRank(a) || (a < b ? -1 : 1);
+  const site = capThreatened ? capital! : [...recruitSites].sort(byFront)[0];
+  // Specialists: at the recruit site if we can hire there, else the capital or barracks nearest the front.
+  const hireAt = site && hireSite(site) ? site : recruitSites.filter(hireSite).sort(byFront)[0];
+  if (hireAt) {
+    const here = seen(hireAt)!;
     const room = rules.specialists.maxPerArmy - here.specialists.length;
     const has = (t: SpecialistType) => here.specialists.some((s) => s.type === t);
-    const provinceCulture = (idx.provinceMembers.get(idx.byId.get(site)!.province) ?? []).filter(owned).reduce((a, t) => a + seen(t)!.culture, 0);
+    const provinceCulture = (idx.provinceMembers.get(idx.byId.get(hireAt)!.province) ?? []).filter(owned).reduce((a, t) => a + seen(t)!.culture, 0);
     const unlocked = (t: SpecialistType) => rules.specialists[t].cultureRequired <= provinceCulture;
     // 2. Siege for a fort we'll have to break (next to the site, or across a crossing from it).
-    const fortAhead = idx.neighbors.get(site)!.some((x) => rivalAt(x) && seen(x)!.building === "fort");
+    const fortAhead = idx.neighbors.get(hireAt)!.some((x) => rivalAt(x) && seen(x)!.building === "fort");
     let want: SpecialistType | null = null;
     if (fortAhead && !has("siege") && unlocked("siege")) want = "siege";
     else if (unlocked("healers") && !has("healers") && here.troops >= 15) want = "healers";
     else if (!has("cavalry") && here.troops >= 10 && rng.next() < 0.3) want = "cavalry";
     if (want && room > 0 && gold >= rules.specialists[want].cost + rules.troops.cost * 4) {
-      orders.push({ id: id(), kind: "hire", territory: site, specialist: want });
+      orders.push({ id: id(), kind: "hire", territory: hireAt, specialist: want });
       gold -= rules.specialists[want].cost;
     }
   }

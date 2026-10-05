@@ -30,6 +30,8 @@ export interface MapScene {
   selected: TerritoryId | null;
   /** Territories the selected army can reach (highlighted). */
   targets: TerritoryId[];
+  /** Recruit sites, glowing gold while the Recruit panel is open. */
+  glow: TerritoryId[];
   arrows: OrderArrow[];
   /** Where queued orders should land armies this turn. */
   arriving: Arrival[];

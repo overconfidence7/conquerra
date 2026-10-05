@@ -48,6 +48,25 @@ export function provinceCulture(ctx: GameContext, state: GameState, player: Play
   return sum;
 }
 
+/** Does `player` hold every territory of the province `territory` is in? */
+export function holdsWholeProvince(ctx: GameContext, state: GameState, player: PlayerId, territory: TerritoryId): boolean {
+  const idx = indexMap(ctx.map);
+  const prov = idx.byId.get(territory)?.province;
+  const members = prov ? (idx.provinceMembers.get(prov) ?? []) : [];
+  return members.length > 0 && members.every((m) => state.territories[m]?.owner === player);
+}
+
+/**
+ * Recruit sites: your capital, any barracks, and any territory in a province you hold completely.
+ * (Hiring specialists stays at the capital and barracks.)
+ */
+export function canRecruitAt(ctx: GameContext, state: GameState, player: PlayerId, territory: TerritoryId): boolean {
+  const t = state.territories[territory];
+  if (!t || t.owner !== player) return false;
+  const p = state.players.find((x) => x.id === player);
+  return territory === p?.capital || t.building === "barracks" || holdsWholeProvince(ctx, state, player, territory);
+}
+
 export function specialistUnlocked(ctx: GameContext, state: GameState, player: PlayerId, territory: TerritoryId, type: SpecialistType): boolean {
   const need = ctx.rules.specialists[type].cultureRequired;
   return need <= 0 || provinceCulture(ctx, state, player, territory) >= need;

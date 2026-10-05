@@ -1,5 +1,5 @@
 import type { SpecialistType } from "@conquerra/content";
-import { amountLabel, indexMap, type GameContext, type Order, type PlayerView, type TerritoryId } from "@conquerra/engine";
+import { amountLabel, indexMap, recruitLabel, type GameContext, type Order, type PlayerView, type TerritoryId } from "@conquerra/engine";
 import { useEffect, useState } from "react";
 import {
   affordableTroops,
@@ -8,9 +8,14 @@ import {
   buildOptions,
   hireOptions,
   isAttack,
+  isHireSite,
   isHop,
   isMine,
   isRecruitSite,
+  planQueue,
+  RECRUIT_CHOICES,
+  recruitedBy,
+  sameRecruit,
   justEnough,
   leaderCanJoin,
   nextCultureCost,
@@ -28,6 +33,7 @@ import {
 import { BUILDING_HELP, BUILDING_NAME, SPECIALIST_HELP, SPECIALIST_NAME, TERRAIN_ICON, namer } from "../logic/text";
 import { ArtIcon, buildingIcon, specialistIcon } from "./ArtIcon";
 import { useGame } from "../store";
+import { nearestRecruitSite, RECRUIT_RULE } from "../logic/actions";
 import { colorOf } from "./colors";
 
 const CROSSING = { river: "🌊 Across a river", pass: "⛰ Through a mountain pass", sea: "⛵ Over a sea lane" } as const;
@@ -43,9 +49,11 @@ interface Props {
   spendOpen?: boolean;
 }
 
-/** The context panel: a draft move/attack if one is open, otherwise the selected territory. */
+/** The context panel: a draft move/attack if one is open, else the Recruit panel if it's open, else the selected territory. */
 export function Panel(props: Props) {
+  const recruit = useGame((s) => s.recruit);
   if (props.draft) return <DraftPanel {...props} draft={props.draft} />;
+  if (recruit) return <RecruitPanel {...props} order={recruit.order} />;
   if (props.selected) return <TerritoryPanel {...props} selected={props.selected} />;
   return (
     <div className="panel hint">
@@ -66,6 +74,92 @@ function Stepper({ value, min, max, onChange }: { value: number; min: number; ma
         +
       </button>
     </span>
+  );
+}
+
+/**
+ * The Recruit panel: how much of your gold to spend (All, 3/4, 1/2, 1/4, or an exact number under More) and where.
+ * Every recruit site glows on the map; tap one to recruit there instead. Split troops across sites with
+ * "Somewhere else too". With no recruit to edit, it says why the selected land can't recruit and offers the nearest site.
+ */
+function RecruitPanel({ ctx, view, queue, selected, order: orderId }: Props & { order: string | null }) {
+  const { recruitAt, setRecruitAmount, splitRecruit, closeRecruit, remove } = useGame();
+  const [more, setMore] = useState(false);
+  const n = namer(ctx, view);
+  const cost = ctx.rules.troops.cost;
+  const i = queue.findIndex((o) => o.id === orderId);
+  const order = i >= 0 ? queue[i]! : null;
+  const head = (title: string) => (
+    <div className="panel-head">
+      <h2>{title}</h2>
+      <button className="link" onClick={closeRecruit}>
+        Done
+      </button>
+    </div>
+  );
+  if (!order || order.kind !== "recruit") {
+    const cant = selected && !isRecruitSite(ctx, view, selected) ? selected : null;
+    const nearest = nearestRecruitSite(ctx, view, selected);
+    return (
+      <div className="panel recruit-panel">
+        {head("Recruit")}
+        {cant && (
+          <p className="warn">
+            {n.place(cant)} can't recruit. {RECRUIT_RULE}.
+          </p>
+        )}
+        {nearest && (
+          <button className="primary wide" onClick={() => recruitAt(nearest)}>
+            Recruit at {n.place(nearest)}
+            {cant ? " (nearest)" : ""}
+          </button>
+        )}
+        <p className="muted small">Or tap a glowing territory on the map.</p>
+      </div>
+    );
+  }
+  const plan = planQueue(ctx, view, queue);
+  const troops = recruitedBy(ctx, plan, i);
+  // An exact number can go up to what the gold left by then buys.
+  const max = Math.floor(planQueue(ctx, view, queue.slice(0, i)).goldLeft / cost);
+  const exact = typeof order.count === "number";
+  return (
+    <div className="panel recruit-panel">
+      {head(`Recruit at ${n.place(order.territory)}`)}
+      <div className="row send-row">
+        <span>Troops</span>
+        <span className="pill" aria-label="troops to recruit">
+          {troops} · {troops * cost}g
+        </span>
+      </div>
+      <div className="chips share-chips" role="radiogroup" aria-label="How much of your gold">
+        {RECRUIT_CHOICES.map((a) => (
+          <button key={recruitLabel(a)} role="radio" aria-checked={sameRecruit(order.count, a)} className={`chip ${sameRecruit(order.count, a) ? "on" : ""}`} onClick={() => setRecruitAmount(order.id, a)}>
+            {recruitLabel(a)}
+          </button>
+        ))}
+        <button className="chip" onClick={() => setMore((m) => !m)} aria-expanded={more}>
+          {more ? "Less" : "More…"}
+        </button>
+      </div>
+      <p className="muted small">Of your gold, {cost} gold a troop.</p>
+      {(more || exact) && max > 0 && (
+        <div className="row">
+          <span className="muted small">Exactly</span>
+          <Stepper value={exact ? Math.min(Number(order.count), max) : Math.max(1, troops)} min={1} max={max} onChange={(v) => setRecruitAmount(order.id, v)} />
+        </div>
+      )}
+      {troops === 0 && <p className="warn">No gold left for this one: the orders before it spend it all.</p>}
+      <p className="muted small">Tap a glowing territory to recruit there instead.</p>
+      <div className="row">
+        <button onClick={splitRecruit} title="Split your recruits: this one takes half, the next site you tap gets the rest">
+          + Somewhere else too
+        </button>
+        <button className="link" onClick={() => remove(order.id)}>
+          Remove
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -196,7 +290,7 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
 }
 
 function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { selected: TerritoryId }) {
-  const { add } = useGame();
+  const { add, recruitAt } = useGame();
   const idx = indexMap(ctx.map);
   const n = namer(ctx, view);
   const def = idx.byId.get(selected)!;
@@ -205,9 +299,6 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
   const v = seen(view, selected);
   const mine = isMine(view, selected);
   const affordable = affordableTroops(ctx, plan);
-  const [recruit, setRecruit] = useState(affordable);
-  // Default the recruit amount to "as many as you can afford" whenever that changes.
-  useEffect(() => setRecruit(affordable), [affordable, selected]);
 
   const header = (
     <>
@@ -284,7 +375,8 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
       </div>
     );
 
-  const site = isRecruitSite(view, selected);
+  const site = isRecruitSite(ctx, view, selected);
+  const hireHere = isHireSite(view, selected);
   const cultureCost = nextCultureCost(ctx, plan, selected);
   const hires = hireOptions(ctx, view, plan, selected);
   const hasOwnNeighbour = (idx.neighbors.get(selected) ?? []).some((t) => isMine(view, t));
@@ -297,16 +389,15 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
       {site && (
         <div className="action">
           <div className="row">
-            <button disabled={recruit < 1} onClick={() => add({ kind: "recruit", territory: selected, count: recruit })}>
-              Recruit {recruit}
+            <button disabled={affordable < 1} onClick={() => recruitAt(selected)}>
+              Recruit here ({affordable})
             </button>
-            <Stepper value={recruit} min={affordable > 0 ? 1 : 0} max={affordable} onChange={setRecruit} />
             <span className="muted small">{ctx.rules.troops.cost} gold each</span>
           </div>
         </div>
       )}
 
-      {spendOpen && site && (
+      {spendOpen && hireHere && (
         <div className="action">
           <h3>Hire a specialist</h3>
           <div className="grid-buttons">
@@ -324,7 +415,7 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
           </div>
         </div>
       )}
-      {spendOpen && !site && <p className="muted small">Specialists are hired at your capital or a barracks.</p>}
+      {spendOpen && !hireHere && <p className="muted small">Specialists are hired at your capital or a barracks.</p>}
 
       {spendOpen && !plan.building.has(selected) && (
         <div className="action">

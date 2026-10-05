@@ -1,12 +1,12 @@
 import { defaultRules, mapCatalog, suggestedMode } from "@conquerra/content";
 import { BOT_NAMES } from "./host/names";
-import type { GameContext, Order, PlayerView, TerritoryId } from "@conquerra/engine";
+import { isShare, type GameContext, type Order, type PlayerView, type RecruitAmount, type TerritoryId } from "@conquerra/engine";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
 import type { GameHost, HostUpdate, LobbySettings, TurnReport } from "./host/protocol";
 import { DEFAULT_TIMER, type TurnClock } from "./logic/timer";
 import { actionBarState } from "./logic/actions";
-import { draftToOrder, type NewOrder, planQueue, queueFor, removeOrder, shiftOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
+import { draftToOrder, isRecruitSite, type NewOrder, planQueue, queueFor, removeOrder, shiftOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
 
 export type Screen = "lobby" | "game" | "over";
 
@@ -21,6 +21,11 @@ interface GameStore {
   queue: Order[];
   selected: TerritoryId | null;
   draft: MoveDraft | null;
+  /**
+   * The Recruit panel, open while you choose where and how many: every recruit site glows, and tapping one moves the
+   * recruit there. `order` is the recruit being edited; null while picking a site for a new one.
+   */
+  recruit: { order: string | null } | null;
   report: TurnReport | null;
   showReport: boolean;
   fastForwarded: number;
@@ -45,8 +50,21 @@ interface GameStore {
   updateDraft(patch: Partial<MoveDraft>): void;
   addDraft(): void;
   add(order: NewOrder): void;
-  /** The action bar's Recruit: one tap recruits all you can afford (at the selected territory if it can, else the capital). */
+  /**
+   * The action bar's Recruit: one tap recruits all you can afford at the selected territory (the capital if nothing is
+   * selected) and opens the Recruit panel to change the amount or place. If the selected land can't recruit, the panel
+   * opens to say why and offer the nearest site.
+   */
   quickRecruit(): void;
+  /** Edit a queued recruit in the Recruit panel (null: pick a site for a new one). */
+  openRecruit(order: string | null): void;
+  closeRecruit(): void;
+  /** Recruit at `t`: moves the recruit being edited there, or adds a new one (All). */
+  recruitAt(t: TerritoryId): void;
+  /** Change a queued recruit's amount. */
+  setRecruitAmount(id: string, count: RecruitAmount): void;
+  /** "Recruit somewhere else too": an All recruit becomes 1/2, and the next site you tap gets the rest. */
+  splitRecruit(): void;
   remove(id: string): void;
   shift(id: string, dir: -1 | 1): void;
   lockIn(): Promise<void>;
@@ -106,6 +124,7 @@ export const useGame = create<GameStore>((set, get) => ({
   queue: [],
   selected: null,
   draft: null,
+  recruit: null,
   report: null,
   showReport: false,
   fastForwarded: 0,
@@ -148,6 +167,7 @@ export const useGame = create<GameStore>((set, get) => ({
         queue: [],
         selected: u.view.me.capital,
         draft: null,
+        recruit: null,
         report: null,
         showReport: false,
         fastForwarded: 0,
@@ -165,15 +185,20 @@ export const useGame = create<GameStore>((set, get) => ({
   },
 
   tap(t) {
-    const { ctx, view, queue, selected } = get();
+    const { ctx, view, queue, selected, recruit } = get();
     if (!ctx || !view) return;
+    // Recruit panel open: tapping a glowing site recruits there. Anything else closes the panel and taps as usual.
+    if (recruit) {
+      if (isRecruitSite(ctx, view, t)) return get().recruitAt(t);
+      set({ recruit: null });
+    }
     const action = tapTerritory(ctx, view, planQueue(ctx, view, queue), selected, t, queue);
     if (action.kind === "deselect") set({ selected: null, draft: null });
     else if (action.kind === "select") set({ selected: action.territory, draft: null });
     else set({ draft: action.draft });
   },
 
-  clearSelection: () => set({ selected: null, draft: null }),
+  clearSelection: () => set({ selected: null, draft: null, recruit: null }),
   select: (t) => set({ selected: t, draft: null }),
 
   updateDraft(patch) {
@@ -194,7 +219,7 @@ export const useGame = create<GameStore>((set, get) => ({
       if (o.kind === "move" && o.to === d.from && o.preset?.id === "followThrough") o = { ...o, preset: undefined };
       return o;
     });
-    set({ queue: [...queue, draftToOrder(d, nextOrderId())], draft: null, selected: d.from });
+    set({ queue: [...queue, draftToOrder(d, nextOrderId())], draft: null, selected: d.from, recruit: null });
   },
 
   add(order) {
@@ -204,13 +229,43 @@ export const useGame = create<GameStore>((set, get) => ({
   quickRecruit() {
     const { ctx, view, queue, selected } = get();
     if (!ctx || !view) return;
-    const plan = planQueue(ctx, view, queue);
-    const a = actionBarState(ctx, view, plan, selected).recruit;
-    if (a.ok && a.at) get().add({ kind: "recruit", territory: a.at, count: a.count });
+    const a = actionBarState(ctx, view, planQueue(ctx, view, queue), selected).recruit;
+    if (!a.ok) return;
+    set({ draft: null });
+    if (a.at) get().recruitAt(a.at);
+    else set({ recruit: { order: null } });
+  },
+
+  openRecruit(order) {
+    const o = get().queue.find((x) => x.id === order);
+    set({ recruit: { order }, draft: null, ...(o?.kind === "recruit" ? { selected: o.territory } : {}) });
+  },
+  closeRecruit: () => set({ recruit: null }),
+
+  recruitAt(t) {
+    const { queue, recruit } = get();
+    const editing = recruit?.order ? queue.find((o) => o.id === recruit.order && o.kind === "recruit") : undefined;
+    if (editing) {
+      set({ queue: queue.map((o) => (o.id === editing.id ? { ...o, territory: t } : o)), selected: t, draft: null });
+      return;
+    }
+    const id = nextOrderId();
+    set({ queue: [...queue, { id, kind: "recruit", territory: t, count: "all" }], recruit: { order: id }, selected: t, draft: null });
+  },
+
+  setRecruitAmount(id, count) {
+    set({ queue: get().queue.map((o) => (o.id === id && o.kind === "recruit" ? { ...o, count } : o)) });
+  },
+
+  splitRecruit() {
+    const { queue, recruit } = get();
+    const o = queue.find((x) => x.id === recruit?.order);
+    if (o?.kind === "recruit" && (o.count === "all" || (isShare(o.count) && o.count.share > 0.5))) get().setRecruitAmount(o.id, { share: 0.5 });
+    set({ recruit: { order: null } });
   },
 
   remove(id) {
-    set({ queue: removeOrder(get().queue, id) });
+    set({ queue: removeOrder(get().queue, id), ...(get().recruit?.order === id ? { recruit: null } : {}) });
   },
 
   shift(id, dir) {
@@ -283,12 +338,12 @@ export const useGame = create<GameStore>((set, get) => ({
     const { host } = get();
     if (!host) return;
     const orders = await host.suggest();
-    set({ queue: orders.map((o) => ({ ...o, id: nextOrderId() })), draft: null });
+    set({ queue: orders.map((o) => ({ ...o, id: nextOrderId() })), draft: null, recruit: null });
   },
 
   playAgain() {
     get().host?.dispose();
-    set({ screen: "lobby", host: null, view: null, ctx: null, queue: [], selected: null, draft: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null });
+    set({ screen: "lobby", host: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null });
   },
 }));
 
@@ -304,6 +359,7 @@ function applyTurn(u: HostUpdate, auto: boolean) {
     clock: u.clock,
     queue: [],
     draft: null,
+    recruit: null,
     selected: over || out ? null : u.view.me.capital,
     showReport: false,
     autoLocked: auto,

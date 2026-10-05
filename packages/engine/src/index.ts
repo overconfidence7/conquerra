@@ -8,8 +8,8 @@ export { replayFor, type ReplayEvent, type SurfaceEvent, type VisionEvent, type 
 export { TurnVision, recordTurnSightings, sightingOf, type VisionDelta } from "./sightings";
 export { PRESETS, expandPreset, type PresetInfo } from "./presets";
 export { expectBattle, rollLosses, healerReduction, type BattleExpectation, type BattleInput } from "./combat";
-export { SHARES, amountLabel, fewestToTake, isShare, troopsFor, type Share, type TroopAmount } from "./amounts";
-export { previewAttack, type AttackPlan } from "./preview";
+export { SHARES, amountLabel, fewestToTake, isShare, recruitCount, recruitLabel, troopsFor, type RecruitAmount, type Share, type TroopAmount } from "./amounts";
+export { previewAttack, recruitSitesIn, isRecruitSiteIn, type AttackPlan } from "./preview";
 export { explainFizzle, explainHold, describeFizzledOrder, fizzleIsQuiet, type PlaceNames, type ExplainOptions } from "./explain";
 export {
   incomeFor,
@@ -19,6 +19,8 @@ export {
   cultureProtection,
   provinceCulture,
   specialistUnlocked,
+  holdsWholeProvince,
+  canRecruitAt,
   type IncomeBreakdown,
 } from "./economy";
 export { seedCommitment, verifySeed } from "./fairness";

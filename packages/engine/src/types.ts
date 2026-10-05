@@ -1,5 +1,5 @@
 import type { BuildingType, MapDef, Rules, SpecialistType } from "@conquerra/content";
-import type { TroopAmount } from "./amounts";
+import type { RecruitAmount, TroopAmount } from "./amounts";
 import type { Intel } from "./intel";
 import type { RngState } from "./rng";
 
@@ -109,7 +109,8 @@ export interface PresetRef {
 }
 
 export type OrderBody =
-  | { kind: "recruit"; territory: TerritoryId; count: number }
+  /** `count`: All (the default), a share of the gold you have when it plays, or an exact number. */
+  | { kind: "recruit"; territory: TerritoryId; count: RecruitAmount }
   | { kind: "hire"; territory: TerritoryId; specialist: SpecialistType }
   | { kind: "build"; territory: TerritoryId; building: BuildingType }
   | { kind: "invest"; territory: TerritoryId }

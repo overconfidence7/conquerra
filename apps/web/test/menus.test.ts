@@ -5,7 +5,7 @@ import { recruitBot } from "@conquerra/bots";
 import { beforeEach, describe, expect, it } from "vitest";
 import { LocalGame } from "../src/host/localGame";
 import type { GameHost, LobbySettings } from "../src/host/protocol";
-import { actionBarState, incomeEstimate } from "../src/logic/actions";
+import { actionBarState, incomeEstimate, nearestRecruitSite } from "../src/logic/actions";
 import { isMine, justEnough, moveTargets, planQueue } from "../src/logic/orders";
 import { groupReport } from "../src/logic/report";
 import { namer } from "../src/logic/text";
@@ -94,13 +94,17 @@ describe("tap count: a typical turn takes 7 taps or fewer", () => {
 });
 
 describe("action bar", () => {
-  it("Recruit works from anywhere: at the selected territory if it can recruit, else the capital", () => {
+  it("Recruit goes to the selected territory if it can recruit (the capital when nothing is selected); otherwise the panel offers the nearest site", () => {
     const s = createGame(ctx, { gameId: "a", seed: "ab", players: [{ id: "p1", name: "A" }, { id: "p2", name: "B" }] });
     const view = viewFor(ctx, s, "p1");
     const plan = planQueue(ctx, view, []);
     const enemy = Object.keys(view.territories).find((t) => !isMine(view, t))!;
     const a = actionBarState(ctx, view, plan, enemy);
-    expect(a.recruit).toMatchObject({ ok: true, at: view.me.capital });
+    // Can't recruit there: Recruit still works, with no place yet (the panel explains and offers the capital).
+    expect(a.recruit).toMatchObject({ ok: true, at: null });
+    expect(nearestRecruitSite(ctx, view, enemy)).toBe(view.me.capital);
+    expect(actionBarState(ctx, view, plan, null).recruit).toMatchObject({ ok: true, at: view.me.capital });
+    expect(actionBarState(ctx, view, plan, view.me.capital).recruit).toMatchObject({ ok: true, at: view.me.capital });
     expect(a.recruit.count).toBe(Math.floor(view.me.gold / ctx.rules.troops.cost));
     expect(a.spend.ok).toBe(false);
     expect(actionBarState(ctx, view, plan, view.me.capital).spend.ok).toBe(true);
@@ -134,5 +138,58 @@ describe("turn report", () => {
     expect(r.yours.map((l) => l.text)).toEqual([expect.stringMatching(/^Bob attacked .* and took it/), expect.stringMatching(/^You recruited 3/), expect.stringMatching(/^Income/)]);
     expect(r.seen.map((l) => l.text)).toEqual([expect.stringMatching(/^Bob recruited 2/)]);
     expect(r.fog).toEqual([{ text: `Battles in ${ctx.map.provinces[0]!.name} (2)`, tone: "quiet" }]);
+  });
+});
+
+describe("Recruit panel", () => {
+  beforeEach(() => {
+    setHostFactory(() => inProcessHost("recruit-panel"));
+    useGame.getState().playAgain();
+  });
+
+  it("one tap recruits All at the selected site and opens the panel; chips change the amount; splitting sends the rest elsewhere", async () => {
+    await useGame.getState().start();
+    const g = () => useGame.getState();
+    const cap = g().view!.me.capital;
+    g().quickRecruit();
+    expect(g().queue).toMatchObject([{ kind: "recruit", territory: cap, count: "all" }]);
+    const id = g().queue[0]!.id;
+    expect(g().recruit).toEqual({ order: id });
+    g().setRecruitAmount(id, { share: 0.25 });
+    let plan = planQueue(g().ctx!, g().view!, g().queue);
+    expect(plan.costs[0]).toBe(Math.floor((g().view!.me.gold * 0.25) / 2) * 2);
+    g().setRecruitAmount(id, "all");
+    // Somewhere else too: this one becomes half, and the next site tapped gets the rest.
+    g().splitRecruit();
+    expect(g().queue[0]).toMatchObject({ count: { share: 0.5 } });
+    expect(g().recruit).toEqual({ order: null });
+    g().tap(cap);
+    expect(g().queue).toHaveLength(2);
+    expect(g().queue[1]).toMatchObject({ kind: "recruit", territory: cap, count: "all" });
+    plan = planQueue(g().ctx!, g().view!, g().queue);
+    expect(plan.goldLeft).toBeLessThan(2);
+    // Tapping land that can't recruit closes the panel and taps as usual.
+    const other = Object.keys(g().view!.territories).find((t) => !isMine(g().view!, t))!;
+    g().tap(other);
+    expect(g().recruit).toBeNull();
+  });
+
+  it("a recruit in the queue can be reopened and moved; selecting land that can't recruit offers the nearest site", async () => {
+    await useGame.getState().start();
+    const g = () => useGame.getState();
+    const cap = g().view!.me.capital;
+    const other = Object.keys(g().view!.territories).find((t) => !isMine(g().view!, t))!;
+    g().select(other);
+    g().quickRecruit();
+    // No order yet: the panel explains and offers the nearest site.
+    expect(g().queue).toHaveLength(0);
+    expect(g().recruit).toEqual({ order: null });
+    g().recruitAt(nearestRecruitSite(g().ctx!, g().view!, other)!);
+    expect(g().queue).toMatchObject([{ kind: "recruit", territory: cap }]);
+    g().closeRecruit();
+    g().openRecruit(g().queue[0]!.id);
+    expect(g().selected).toBe(cap);
+    g().remove(g().queue[0]!.id);
+    expect(g().recruit).toBeNull();
   });
 });

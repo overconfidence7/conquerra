@@ -1,5 +1,5 @@
-import type { GameContext, Order, PlayerView } from "@conquerra/engine";
-import { amountPill, isAttack, planQueue, type QueuePlan } from "../logic/orders";
+import { recruitLabel, type GameContext, type Order, type PlayerView } from "@conquerra/engine";
+import { amountPill, isAttack, planQueue, recruitedBy, type QueuePlan } from "../logic/orders";
 import { describeOrder, namer, orderTags } from "../logic/text";
 import { useGame } from "../store";
 import { Frame } from "./Frame";
@@ -7,7 +7,7 @@ import { moreCue } from "./moreCue";
 
 /** Your orders for this turn, in the order they'll run. Reorder or delete; gold left at the top. */
 export function OrderQueue({ ctx, view, plan, queue, bare = false }: { ctx: GameContext; view: PlayerView; plan: QueuePlan; queue: readonly Order[]; bare?: boolean }) {
-  const { remove, shift } = useGame();
+  const { remove, shift, openRecruit, recruit } = useGame();
   const n = namer(ctx, view);
   const body = (
     <>
@@ -17,12 +17,18 @@ export function OrderQueue({ ctx, view, plan, queue, bare = false }: { ctx: Game
           const before = o.kind === "move" ? planQueue(ctx, view, queue.slice(0, i)) : null;
           const hop = plan.hop[i];
           return (
-            <li key={o.id} className={`order-line ${hop && hop > 1 ? "hop" : ""}`}>
+            <li key={o.id} className={`order-line ${hop && hop > 1 ? "hop" : ""} ${recruit?.order === o.id ? "editing" : ""}`}>
               <span className="order-n">{i + 1}</span>
-              <span className="order-text">
+              <span
+                className={`order-text ${o.kind === "recruit" ? "editable" : ""}`}
+                // A recruit can be edited: tap it to change where and how many.
+                {...(o.kind === "recruit" ? { role: "button", tabIndex: 0, title: "Change where and how many", onClick: () => openRecruit(o.id) } : {})}
+              >
                 {o.kind === "move" && before
                   ? describeOrder(o, n, isAttack(view, o, before), amountPill(plan.sent[i] ?? 0, o.troops, before.estimated.has(o.from)))
-                  : describeOrder(o, n, false)}
+                  : o.kind === "recruit"
+                    ? describeOrder(o, n, false, typeof o.count === "number" ? String(recruitedBy(ctx, plan, i)) : `${recruitedBy(ctx, plan, i)}, ${recruitLabel(o.count)}`)
+                    : describeOrder(o, n, false)}
                 {hop !== null && hop !== undefined && <span className="tag hop">Hop {hop}</span>}
                 {plan.costs[i]! > 0 && <span className="cost">{plan.costs[i]}g</span>}
                 {orderTags(o).map((t) => (

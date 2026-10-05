@@ -9,6 +9,12 @@
 export type Share = 0.25 | 0.5 | 0.75;
 export type TroopAmount = number | "all" | "enough" | { share: Share };
 
+/**
+ * How many troops a recruit order buys: "all" the gold you have when it plays, a share of it, or an exact number
+ * (as many as you can afford, if fewer).
+ */
+export type RecruitAmount = number | "all" | { share: Share };
+
 /** The share chips, in the order the order screen shows them. */
 export const SHARES: readonly Share[] = [0.75, 0.5, 0.25];
 
@@ -54,3 +60,19 @@ export function troopsFor(a: TroopAmount, army: number, available: number, enoug
   else n = Math.floor(Number(a) || 0);
   return Math.max(0, Math.min(available, n));
 }
+
+/**
+ * Troops a recruit order buys with the gold you have when it plays. A share buys that share of your gold's worth
+ * (rounded down, but at least 1 if you can afford one). Anything unrecognised buys nothing (the order fizzles).
+ */
+export function recruitCount(a: RecruitAmount, gold: number, cost: number): number {
+  const affordable = Math.max(0, Math.floor(gold / cost));
+  if (affordable <= 0) return 0;
+  if (a === "all") return affordable;
+  if (isShare(a)) return SHARES.includes(a.share) ? Math.min(affordable, Math.max(1, Math.floor((gold * a.share) / cost))) : 0;
+  const n = Math.floor(Number(a) || 0);
+  return n >= 1 ? Math.min(affordable, n) : 0;
+}
+
+/** "All", "3/4", ... or the number, for a recruit order. */
+export const recruitLabel = (a: RecruitAmount): string => amountLabel(a);

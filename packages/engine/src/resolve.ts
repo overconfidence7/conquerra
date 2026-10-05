@@ -1,7 +1,7 @@
 import type { BorderType, SpecialistType } from "@conquerra/content";
-import { fewestToTake, troopsFor } from "./amounts";
+import { fewestToTake, recruitCount, troopsFor } from "./amounts";
 import { expectBattle, rollLosses, type BattleExpectation } from "./combat";
-import { cultureProtection, incomeFor, investCost, provinceCulture, scoreFor, specialistUnlocked } from "./economy";
+import { canRecruitAt, cultureProtection, incomeFor, investCost, provinceCulture, scoreFor, specialistUnlocked } from "./economy";
 import { updateIntel } from "./intel";
 import { indexMap, type MapIndex } from "./mapIndex";
 import { expandPreset } from "./presets";
@@ -287,7 +287,7 @@ class Turn {
   }
 
   canRecruitAt(p: PlayerState, t: TerritoryId): boolean {
-    return this.canHireAt(p, t);
+    return canRecruitAt(this.ctx, this.s, p.id, t);
   }
 
   /** Executes the order. Returns null on success, or the reason it couldn't happen (state untouched). */
@@ -299,9 +299,9 @@ class Turn {
         if (this.terr(o.territory)?.owner !== pid) return fz("notHeld", { territory: o.territory });
         if (!this.canRecruitAt(p, o.territory)) return fz("recruitSite", { territory: o.territory });
         const t = this.terr(o.territory)!;
-        // Ask for more than you can afford and you get as many as you can pay for.
-        const count = Math.min(Math.floor(o.count), Math.floor(p.gold / rules.troops.cost));
-        if (!(Math.floor(o.count) >= 1)) return fz("badCount");
+        // All, a share of the gold you have now, or a number (ask for more than you can afford and you get what you can pay for).
+        if (recruitCount(o.count, Number.MAX_SAFE_INTEGER, 1) < 1) return fz("badCount");
+        const count = recruitCount(o.count, p.gold, rules.troops.cost);
         if (count < 1) return fz("notEnoughGold", { gold: p.gold, cost: rules.troops.cost });
         const cost = count * rules.troops.cost;
         p.gold -= cost;

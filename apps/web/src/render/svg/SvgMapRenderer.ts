@@ -83,7 +83,7 @@ class SvgMapRenderer implements MapRenderer {
 
   setScene(scene: MapScene) {
     this.scene = scene;
-    const { view, selected, targets, arrows } = scene;
+    const { view, selected, targets, arrows, glow } = scene;
     const g = this.opts.ctx.map.geometry!;
     this.dynamic.replaceChildren();
     const k = 1 / Math.max(0.3, this.cam.cam.scale);
@@ -93,6 +93,7 @@ class SvgMapRenderer implements MapRenderer {
       el("path", { d: path(t.rings), fill, "fill-rule": "evenodd", stroke: "#1b1206", "stroke-opacity": 0.45, "stroke-width": 1, opacity: s.kind === "seen" ? 1 : 0.9 }, this.dynamic);
     }
     for (const id of targets) el("path", { d: path(g.territories.find((t) => t.id === id)!.rings), fill: "rgba(255,255,255,0.15)", stroke: "#fff", "stroke-width": 2.5 * k, "stroke-dasharray": "6 4" }, this.dynamic);
+    for (const id of glow) el("path", { d: path(g.territories.find((t) => t.id === id)!.rings), fill: "rgba(227,199,126,0.25)", stroke: "#fff1c1", "stroke-width": 2.5 * k }, this.dynamic);
     if (selected) el("path", { d: path(g.territories.find((t) => t.id === selected)!.rings), fill: "none", stroke: "#e3c77e", "stroke-width": 5 * k }, this.dynamic);
     const label = new Map(g.territories.map((t) => [t.id, t.label]));
     for (const a of arrows) {
