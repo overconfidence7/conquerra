@@ -71,7 +71,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
   - classic and conquest victory
 - Turn timer settings in the game config: 5-minute default, longer allowed. The engine doesn't keep time; it only stores the setting.
 - Bots: "Recruit" tier, updated for specialists and presets.
-- Sim reports game length. **Target: about 15–25 turns.**
+- Sim reports game length. **Target: about 15–25 turns** (M1). Revised Oct 5: games may run **up to 30–40 turns**.
 - Exit: tests green, 1,000+ bot games with no crashes, a plain-language rules reference (`docs/rules-reference.md`) for Nate to read.
 
 ### M2: Playable local alpha (browser, vs bots) ✅ Done (Oct 4)
@@ -90,15 +90,15 @@ Research, outline v0.1, v0.2 additions, and decisions.
 ### M3: Depth + balance
 - **Session order (agreed Oct 4, revised again after Nate's play test that evening):**
   - **8 ✅:** the fog lifts during the replay; the Captain bot
-  - **9 (finished by 9b after the usage limit):** play-test fixes: the combat bug, recruiting (capital, barracks or a full province; choose how many), culture as "loyal land", map clarity (no hairline borders, wider passes, neighbour marks, province borders and plaques), buildings that stand on the map, plain-words reports, "Save this game"
-  - **10:** the map lab, bigger maps (60–120 territories) and new land shapes, the art test bench (`docs/07-map-tooling.md`)
+  - **9 ✅ (finished by 9b after the usage limit):** play-test fixes: the combat bug, recruiting (capital, barracks or a full province; choose how many), culture as "loyal land", map clarity (no hairline borders, wider passes, neighbour marks, province borders and plaques), buildings that stand on the map, plain-words reports, "Save this game"
+  - **10:** bigger maps (60–120 territories) in new land shapes, the map lab, the art test bench, candidate maps (`docs/07-map-tooling.md`)
   - **11:** the big visual upgrade with a new art batch (`docs/08-visual-upgrade-plan.md`)
   - **12:** generals (Leader standing instructions), captured generals, the Fallen (the Captains' gang-up moved up to 9b; generals reuse it)
   - **13:** Spoils and Fate decks
   - **14:** preset diplomacy
   - **15:** spies and culture unlocks
-  - **16:** balance pass (runaways, 10-player game length, seat fairness)
-- A fresh orchestrator prompt is due after session 9.
+  - **16:** balance pass (runaways, game length up to 30–40 turns, seat fairness)
+- A fresh orchestrator prompt is due after session 12 (orchestrator-04 was written after session 9).
 - Leader-as-general (standing instructions) and captured generals.
 - Spoils and Fate decks (events and missions).
 - Preset-based diplomacy with counteroffers and the re-confirm rule.

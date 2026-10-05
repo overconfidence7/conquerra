@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Session 9 (Nate's play-test fixes) is done. Next: 10 the map lab and bigger maps, then 11 a big visual upgrade. A fresh orchestrator prompt is due now.**
+**Phase: M3 (depth and balance). Sessions 7–9 are done. Next: session 10, bigger maps in new shapes and the map lab; then 11, the big visual upgrade.**
 
 Claude Code sessions completed: **9** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
@@ -375,3 +375,16 @@ Session 9 stopped at the usage limit after the combat fix, plain-words "called o
 - **Deployed** to the private preview (version `7af998a7`); the lock check passed.
 - 302 automated tests pass. Screenshots (`docs/art/screens/`): `ui-recruit-sites.png` (+ `-phone`), `ui-culture-card.png`, `ui-culture-pips.png`, `ui-report-called-off.png`, `ui-links-pass.png`, `ui-links-sea.png`, `ui-provinces-mid.png`, `ui-provinces-far.png`, `ui-buildings-mid.png`, `ui-buildings-near.png`, `ui-buildings-board-staged-mid.png` / `-near.png` (all four built and being built, staged by editing the page's view, since only forts are ever "being built" between turns), `ui-army-panel.png` (+ `-phone`), `ui-territory-card.png` (+ `-phone`), `ui-tactical.png`, `embervale-tactical.png`, and the map previews `docs/maps/embervale.png`, `greatmarch.png`. `pnpm ui-check clarity` retakes them.
 - **Nate's play test:** asked to play after the deploy (results below once he has).
+
+### Oct 5: Orchestrator review of session 9
+- Checked the work: GitHub's checks pass, all five parts landed, and the screenshots look right:
+  - province plaques with "you hold 4 of 6"
+  - chevrons on every neighbour, with pass gates
+  - buildings standing on the map
+  - a truly flat Tactical view
+- **Nate's calls:**
+  - The rebuilt Embervale's closer start (4-player capitals 3 borders apart, was 4) is fine: it's the quick map, and the bigger maps give more room.
+  - **Game length is measured in turns, not minutes** (minutes are hard to judge with bots), and **games may run up to 30–40 turns**. This replaces the 15–25 target.
+- Still to come: Nate's play test of session 9.
+- Nine Claude Code sessions are done, so there's a fresh orchestrator prompt: `docs/prompts/orchestrator-04.md`.
+- Next prompt: `docs/prompts/claude-code-session-10.md` (run it locally): bigger maps in new shapes, the map lab, the art test bench, candidate maps.
