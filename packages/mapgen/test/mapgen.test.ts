@@ -4,7 +4,7 @@ import { indexMap } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import embervaleNames from "../names/embervale.json";
 import greatmarchNames from "../names/greatmarch.json";
-import { applyRenames, checkMap, DECORATION_BIOMES, fromBase64, generateMap, insideRings, LABEL_CLEAR, MAP_CONFIGS, TERRAIN_BIOMES } from "../src";
+import { applyRenames, borderLengths, checkMap, DECORATION_BIOMES, MIN_BORDER_CHECK, MIN_PASS_CHECK, fromBase64, generateMap, insideRings, LABEL_CLEAR, MAP_CONFIGS, TERRAIN_BIOMES } from "../src";
 
 const byCode = new Map(Object.entries(BIOME_CODES).map(([b, c]) => [c, b as Biome]));
 const biomeAt = (m: MapDef, x: number, y: number): Biome => {
@@ -62,6 +62,29 @@ describe.each(testMaps.map((m) => [m.id, m] as const))("map %s", (id, map) => {
     const c = config(id);
     const res = checkMap(map, defaultRules, { minChokePoints: c.minChokePoints!, minSeaLanes: c.minSeaLanes });
     expect(res.problems).toEqual([]);
+  });
+
+  it("has no hairline borders, and every pass is wide enough to see at Mid zoom", () => {
+    const lengths = borderLengths(map);
+    for (const b of map.borders) {
+      if (b.type === "sea") continue;
+      const l = lengths.get(`${b.a}|${b.b}`)!;
+      expect(l, `${b.a}|${b.b} (${b.type})`).toBeGreaterThanOrEqual(b.type === "pass" ? MIN_PASS_CHECK : MIN_BORDER_CHECK);
+    }
+  });
+
+  it("the checks catch a hairline border and a narrow pass", () => {
+    const c = config(id);
+    const limits = { minChokePoints: c.minChokePoints!, minSeaLanes: c.minSeaLanes };
+    const shrink = (type: "pass" | "normal") => {
+      const b = map.borders.find((x) => x.type === type)!;
+      const broken = structuredClone(map);
+      const line = broken.geometry!.borderLines.find((l) => l.a === b.a && l.b === b.b)!;
+      line.lines = [line.lines[0]!.slice(0, 4).map((v, i) => (i < 2 ? v : line.lines[0]![i - 2]! + 1))];
+      return checkMap(broken, defaultRules, limits).problems.join("; ");
+    };
+    expect(shrink("normal")).toMatch(/hairline border/);
+    expect(shrink("pass")).toMatch(/the pass between .* is only/);
   });
 
   it("keeps the territory count close to the old hand-made map", () => {

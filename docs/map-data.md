@@ -9,8 +9,17 @@
   Then run `pnpm build-maps`; it warns about any old name it can't find.
 - The page gets the map from the game host when a game starts (`HostStart.map`), never by importing it. Blackout fog (M5) can then send a trimmed copy.
 
+## Map maker v2 (session 9): no hairlines, wide passes
+- **Hairline borders are gone.** The orchestrator measured (v1) 8 land borders on Embervale and 13 on Greatmarch under a quarter of the usual length (shortest 4.4 and 0.6 map units, against a typical 88). In v2, every land border is at least 22 units (`MIN_BORDER_CHECK`; the maker aims for 24, `MIN_BORDER`).
+  - **How:** `fixHairlines` (`packages/mapgen/src/contacts.ts`) works one cell at a time. Where two territories meet at a corner, it hands the meeting cell to a third territory that already surrounds it, so the two simply stop touching (the eye reads a corner as "not touching" anyway). Where that isn't possible, it widens the contact: a third territory's cell next to both sides joins one of them, or, at a narrow neck of land between two waters, a shallow water cell beside the neck becomes land. Every move must leave fewer hairlines overall; if it gets stuck, the maker tries the next seed.
+  - **Why mostly "not neighbours" rather than "widen":** it keeps the shapes the land already has, and removes exactly the links players couldn't see.
+- **Passes are wide.** v1 passes were 9–31 units wide (one or two mesh edges). v2 keeps the middle of the range crossing open until it's 38 units wide where the border allows (`MIN_PASS`), and picks, for each pass, the widest border near its spot. The check (`MIN_PASS_CHECK`) is 28: about 17 px at the far edge of Mid zoom and 45 px in the middle of it, with a road and a gate drawn across.
+- **Both are `checkMap` checks**, so no future map can bring them back.
+- **Numbers after the rebuild:** Embervale: shortest land border 24.0 (was 4.4), none under a quarter of typical, passes 36, 42, 45 (were 12, 23). Greatmarch: shortest 22.9 (was 0.6), passes 29–50 (were 9–31).
+- **Same seeds, same land:** both maps keep their coasts, lakes, islands and ranges (Embervale's config now names the seed its v1 map came from, `embervale#2`). Place names changed, and now come from their own random sequence, so later changes to shapes won't rename places again.
+
 ## Coordinates
-- Map units, origin top-left, y down. `geometry.width` × `geometry.height` (Embervale 1133 × 781, Greatmarch 1602 × 1105).
+- Map units, origin top-left, y down. `geometry.width` × `geometry.height` (Embervale 1133 × 781, Greatmarch 1577 × 1088).
 - Lines and outlines are flat number lists `[x0, y0, x1, y1, …]`, rounded to 0.1.
 - Outlines are smoothed once and shared: neighbouring territories, coasts and mountain edges use exactly the same points, so there are no gaps or overlaps.
 

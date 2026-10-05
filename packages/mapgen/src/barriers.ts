@@ -1,6 +1,7 @@
 import type { Rng } from "@conquerra/engine";
 import type { Mesh } from "./mesh";
 import { components } from "./land";
+import { contactEdges, edgeLength } from "./contacts";
 import { dist, pointSegDist, randomDirection } from "./util";
 
 /** Key for an unordered pair of territories. */
@@ -168,7 +169,13 @@ export function planBarriers(
     cut.sort((p, q) => p.along - q.along || p.k - q.k);
     const opens = kind === "rock" ? Math.max(1, Math.round(cut.length / 5)) : 1;
     const open = new Set<number>();
-    for (let i = 0; i < opens; i++) open.add(cut[Math.floor(((i + 0.5) * cut.length) / opens)]!.k);
+    // Spread the passes along the range, each at the widest border near its spot (so the pass can be wide).
+    const width = (k: number) => touch.get(k)!.length;
+    for (let i = 0; i < opens; i++) {
+      const at = Math.floor(((i + 0.5) * cut.length) / opens);
+      const near = [at - 1, at, at + 1].filter((j) => j >= 0 && j < cut.length && !open.has(cut[j]!.k));
+      open.add(cut[near.sort((x, y) => width(cut[y]!.k) - width(cut[x]!.k) || x - y)[0] ?? at]!.k);
+    }
     return { kind, cut: cut.map((p) => p.k).filter((k) => !open.has(k)), open: [...open] };
   };
 
@@ -233,8 +240,8 @@ export function planBarriers(
 
 /**
  * Turn the plan into land changes: the cells along each cut border become rock (ranges, numbered 1, 2, ...) or water (straits).
- * Open pairs keep a two-cell gap in the middle of their border, which is the pass or the land bridge.
- * Returns the gap cells of each open pair.
+ * Open pairs keep a gap in the middle of their border, at least `minGap` map units wide where the border is that
+ * long (so a pass reads at Mid zoom), which is the pass or the land bridge. Returns the gap cells of each open pair.
  */
 export function applyBarriers(
   mesh: Mesh,
@@ -242,8 +249,10 @@ export function applyBarriers(
   barriers: Barrier[],
   rock: Uint8Array,
   water: Uint8Array,
+  minGap: number,
 ): Map<number, number[]> {
   const touch = touching(mesh, owner);
+  const edges = contactEdges(mesh, owner); // the same edges as `touch`, in the same order
   const protectedCells = new Set<number>();
   const gaps = new Map<number, number[]>();
   for (const b of barriers)
@@ -254,12 +263,19 @@ export function applyBarriers(
       for (const [ca, cb] of cells) (mx += mesh.x[ca]! + mesh.x[cb]!), (my += mesh.y[ca]! + mesh.y[cb]!);
       mx /= 2 * cells.length;
       my /= 2 * cells.length;
-      const byMid = [...cells].sort(
+      const byMid = cells.map((pair, i) => ({ pair, len: edgeLength(mesh, edges.get(k)![i]!) })).sort(
         (p, q) =>
-          dist(mesh.x[p[0]]!, mesh.y[p[0]]!, mx, my) + dist(mesh.x[p[1]]!, mesh.y[p[1]]!, mx, my) -
-            (dist(mesh.x[q[0]]!, mesh.y[q[0]]!, mx, my) + dist(mesh.x[q[1]]!, mesh.y[q[1]]!, mx, my)) || p[0] - q[0],
+          dist(mesh.x[p.pair[0]]!, mesh.y[p.pair[0]]!, mx, my) + dist(mesh.x[p.pair[1]]!, mesh.y[p.pair[1]]!, mx, my) -
+            (dist(mesh.x[q.pair[0]]!, mesh.y[q.pair[0]]!, mx, my) + dist(mesh.x[q.pair[1]]!, mesh.y[q.pair[1]]!, mx, my)) || p.pair[0] - q.pair[0],
       );
-      const keep = byMid.slice(0, 2).flat();
+      // Keep the middle of the border open, widening out until the opening is `minGap` long (at least two edges).
+      const keep: number[] = [];
+      let open = 0;
+      for (const [i, { pair, len }] of byMid.entries()) {
+        if (i >= 2 && open >= minGap) break;
+        keep.push(...pair);
+        open += len;
+      }
       for (const c of keep) protectedCells.add(c);
       gaps.set(k, [...new Set(keep)]);
     }

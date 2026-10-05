@@ -5,7 +5,8 @@ export const MAP_CONFIGS: MapGenOptions[] = [
   {
     id: "embervale",
     name: "Embervale",
-    seed: "embervale",
+    // Map maker v1 took the second try of "embervale"; v2 starts from that seed so the island keeps its shape.
+    seed: "embervale#2",
     territories: 40,
     provinces: 8,
     players: { min: 2, max: 6, recommended: { min: 4, max: 6 } },

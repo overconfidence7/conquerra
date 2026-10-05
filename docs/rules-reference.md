@@ -191,17 +191,20 @@ Engineers make any of these ready immediately. A building under construction giv
 Maps are made by the **map maker** (same seed, same map) and look like a real place, not a grid.
 
 - **Territories** have natural, irregular shapes of about the same size. Two territories border each other only where they actually touch (or where a sea lane joins them).
+- **No hairline borders** (map maker v2, session 9): two neighbours always share a border you can see, at least a quarter of a typical one. Where two territories would only have touched at a corner, the corner goes to a third neighbour, so they simply aren't neighbours.
+- **Selecting a territory shows what it's connected to:** a small gilded chevron across each shared border (blue water ripples for a river, a cairn for a pass), and its sea lanes light up.
 - **Seas and lakes** are never territories. You can't stand on water, and you can only cross it by a **sea lane**.
 - **Sea lanes** are the dashed lines drawn across water. They join two coastal territories as if they bordered each other, but attacking across one is hard: attack strength ×0.75 (an army landing from boats). Every island has at least one.
-- **Mountain ranges** (grey bands) are impassable. The only way through is a **pass**, marked on the map. Attacking through a pass: ×0.85.
+- **Mountain ranges** (grey bands) are impassable. The only way through is a **pass**: an opening at least about a third of a territory wide, with a road and a stone gate drawn across it. Attacking through a pass: ×0.85.
 - **Mountains territories** are different: they're ordinary land you can hold, just very easy to defend (defense ×1.6).
 - **Rivers** run from high ground down to a sea or lake, along the borders between territories. Attacking across a river: ×0.8.
 - The attack panel tells you when an attack crosses a river, a pass or a sea lane, and the odds already include it.
 - **Choke points:** every map has a few places where a small army can hold off a big one: passes, sea lanes, and narrow land bridges. A fort on a pass or a sea-lane landing (defense ×1.6, and the attacker pays the crossing penalty too) is very hard to break without siege.
 - **Provinces** don't straddle mountain ranges or seas, so a range is often a province's natural wall.
 - **Our test maps** (both made by the map maker):
-  - **Embervale**: 40 territories, 8 provinces, suits 4–6 players. 2 passes, 3 sea lanes.
-  - **Greatmarch**: 80 territories, 20 provinces, suits 8–10 players. 7 passes, 3 sea lanes.
+  - **Embervale**: 40 territories, 8 provinces, suits 4–6 players. 3 passes, 3 sea lanes.
+  - **Greatmarch**: 80 territories, 20 provinces, suits 8–10 players. 8 passes, 3 sea lanes.
+  - Both were rebuilt in session 9 (map maker v2) from the same seeds: same coasts, lakes, islands and ranges, but no hairline borders, wider passes, and new place names.
 
 ## 13. Bots
 Bots play by exactly the same rules as people, and only from their own view (including their "last seen" memory). They never peek.

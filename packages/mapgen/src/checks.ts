@@ -148,6 +148,22 @@ export function chokePoints(map: MapDef): ChokeCount {
   return { passes, seaLanes, landBridges, total: passes + seaLanes + landBridges };
 }
 
+/** No hairline borders: every land border is at least this long (map units; a typical one is about 90). */
+export const MIN_BORDER_CHECK = 22;
+/** Every pass is at least this wide (map units), so it reads at Mid zoom. */
+export const MIN_PASS_CHECK = 28;
+
+const lineLength = (l: readonly number[]) => {
+  let s = 0;
+  for (let i = 2; i < l.length; i += 2) s += Math.hypot(l[i]! - l[i - 2]!, l[i + 1]! - l[i - 1]!);
+  return s;
+};
+
+/** How long each land border is, as drawn (map units), keyed "a|b". */
+export function borderLengths(map: MapDef): Map<string, number> {
+  return new Map((map.geometry?.borderLines ?? []).map((b) => [`${b.a}|${b.b}`, b.lines.reduce((a, l) => a + lineLength(l), 0)]));
+}
+
 export interface CheckLimits {
   minChokePoints: number;
   /** At least this many sea lanes (default 0). */
@@ -166,7 +182,8 @@ export interface CheckResult {
  *  - no slivers or giant blobs (area 40%–220% of average, and room for a banner);
  *  - provinces of sensible size, each in one piece;
  *  - fair capital layouts for every player count;
- *  - enough choke points and sea lanes.
+ *  - enough choke points and sea lanes;
+ *  - no hairline borders, and passes wide enough to see.
  */
 export function checkMap(map: MapDef, rules: Rules, limits: CheckLimits): CheckResult {
   const problems: string[] = [];
@@ -204,6 +221,16 @@ export function checkMap(map: MapDef, rules: Rules, limits: CheckLimits): CheckR
       continue;
     }
     if (!fairness(layout.slots, dists, income).fair) problems.push(`capitals for ${n} players aren't fair`);
+  }
+
+  if (geo) {
+    const lengths = borderLengths(map);
+    for (const b of map.borders) {
+      if (b.type === "sea") continue;
+      const l = lengths.get(`${b.a}|${b.b}`) ?? 0;
+      if (b.type === "pass" && l < MIN_PASS_CHECK) problems.push(`the pass between ${b.a} and ${b.b} is only ${l.toFixed(1)} wide (want ${MIN_PASS_CHECK})`);
+      if (b.type !== "pass" && l < MIN_BORDER_CHECK) problems.push(`${b.a} and ${b.b} share a hairline border (${l.toFixed(1)}; want ${MIN_BORDER_CHECK})`);
+    }
   }
 
   const chokes = chokePoints(map);

@@ -5,6 +5,7 @@ import { findLayout } from "./capitals";
 import { allDistances, checkMap, fairnessOf, fairnessTable, territoryIncome, type CheckResult } from "./checks";
 import { bfsSteps, components, makeLand } from "./land";
 import { makeSeaLanes } from "./lanes";
+import { fixHairlines } from "./contacts";
 import { buildMesh } from "./mesh";
 import { Namer } from "./names";
 import { buildArcs, ringsOf, tidy } from "./outline";
@@ -15,7 +16,7 @@ import { makeTerritories } from "./territories";
 import { assignBiomes, assignTerrain, buildGrids, carveRivers, cellHeights, toBase64 } from "./terrain";
 import { dist, r1 } from "./util";
 
-export { checkMap, chokePoints, shapeArea, fairness, allDistances, territoryIncome } from "./checks";
+export { checkMap, borderLengths, MIN_BORDER_CHECK, MIN_PASS_CHECK, chokePoints, shapeArea, fairness, allDistances, territoryIncome } from "./checks";
 export { fromBase64, TERRAIN_BIOMES } from "./terrain";
 export { DECORATION_BIOMES, LABEL_CLEAR } from "./places";
 export { insideRings } from "./util";
@@ -24,7 +25,15 @@ export { MAP_CONFIGS } from "./configs";
 export { applyRenames, type NameFile } from "./renames";
 
 /** Bump when a change to the map maker would change its output. */
-export const MAPGEN_VERSION = 1;
+export const MAPGEN_VERSION = 2;
+
+/**
+ * Shared borders shorter than this (map units) are hairlines: the two territories stop touching (see contacts.ts).
+ * A typical border is about 90; the check allows a little for smoothing.
+ */
+export const MIN_BORDER = 24;
+/** A pass is kept open at least this wide (map units; about 22 px at the start of Mid zoom), where its border allows. */
+export const MIN_PASS = 38;
 
 export interface MapGenOptions {
   id: string;
@@ -138,7 +147,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
     length: 0.6,
   });
   o.log?.("barriers", barriers.map((b) => `${b.kind} cut ${b.cut.length} open ${b.open.length}`));
-  const gaps = applyBarriers(mesh, owner, barriers, rock, water);
+  const gaps = applyBarriers(mesh, owner, barriers, rock, water, MIN_PASS);
 
   // Pieces of a territory cut off by a barrier join the neighbour they touch most (or become rock / water).
   for (let t = 0; t < T; t++) {
@@ -159,6 +168,11 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
       }
     }
   }
+
+  // No hairline borders: territories that barely touch stop touching (pass openings stay as they are).
+  const openPairs = new Set(barriers.flatMap((b) => b.open));
+  const shallows = { canFill: (c: number) => water[c] === 1 && !rock[c] && !mesh.cellEdges[c]!.some((e) => mesh.edgeCellB[e] === -1), fill: (c: number) => (water[c] = 0), unfill: (c: number) => (water[c] = 1) };
+  if (!fixHairlines(mesh, owner, new Set([...gaps.values()].flat()), MIN_BORDER, (k) => openPairs.has(k), shallows, o.log)) throw new Rejected("a hairline border couldn't be fixed");
 
   o.log?.("step", "4. Water bodies");
   // 4. Water bodies (seas and lakes) and mountain ranges as regions.
@@ -242,6 +256,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
     if (type === "normal" || type === "river") innerAdj[a]!.push(b), innerAdj[b]!.push(a);
   }
   const province = makeProvinces(rng, T, innerAdj, allAdj, o.provinces);
+  if (province.some((x) => x < 0)) throw new Rejected("a territory was left with no border to join a province by");
   const provinceCount = Math.max(...province) + 1;
 
   o.log?.("step", "9. Outlines, labe");
@@ -257,7 +272,8 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
   const newIndex = new Array<number>(T);
   order.forEach((t, i) => (newIndex[t] = i));
   const tid = (t: number) => `t${String(newIndex[t]).padStart(2, "0")}`;
-  const namer = new Namer(rng);
+  // Names have their own random sequence, so a change to the shapes doesn't rename every place.
+  const namer = new Namer(new Rng(seedRng(`${seed}|names`)));
   const tName = order.map(() => namer.territory());
   const provOrder = Array.from({ length: provinceCount }, (_, p) => p).sort(
     (a, b) => Math.min(...order.map((t, i) => (province[t] === a ? i : 1e9))) - Math.min(...order.map((t, i) => (province[t] === b ? i : 1e9))),
