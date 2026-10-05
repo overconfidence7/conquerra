@@ -44,9 +44,18 @@ function App() {
 // For the perf / screenshot script (scripts/map-check.ts): drive the game from outside.
 (window as unknown as { __conquerraStore?: typeof useGame }).__conquerraStore = useGame;
 
-if (new URLSearchParams(location.search).get("lab") === "houses") void import("./lab/houseLab").then((m) => m.runHouseLab(document.getElementById("root")!));
+/**
+ * Check pages for making maps and judging art (docs/07-map-tooling.md). They live on the private preview only,
+ * load only when opened, and are never linked from the lobby. For the public launch, build with VITE_LABS=off:
+ * this switch is then false when the game is built, and none of their code is in the build at all.
+ */
+const LABS = import.meta.env.VITE_LABS !== "off";
+const lab = LABS ? new URLSearchParams(location.search).get("lab") : null;
+const root = document.getElementById("root")!;
+if (LABS && lab === "maps") void import("./lab/maps/MapLab").then((m) => m.runMapLab(root));
+else if (LABS && lab === "houses") void import("./lab/houseLab").then((m) => m.runHouseLab(root));
 else
-  createRoot(document.getElementById("root")!).render(
+  createRoot(root).render(
     <StrictMode>
       <App />
     </StrictMode>,

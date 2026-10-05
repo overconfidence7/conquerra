@@ -1,0 +1,146 @@
+[
+  {
+    "map": "greatmarch",
+    "steps": {
+      "webgl": 121,
+      "artAndFonts": 208,
+      "world": 688,
+      "labels": 333,
+      "far": 2182,
+      "masks": 594,
+      "textures": 3,
+      "scene": 86,
+      "farPaint": 2173
+    },
+    "territories": 80,
+    "makeMsUnthrottled": 1060,
+    "firstMapMs": 4543,
+    "allPaintedMs": 5957,
+    "paintMs": 2920,
+    "textureMB": 47.4,
+    "ppu": 2.16,
+    "tiles": 12,
+    "pan": {
+      "far": {
+        "fps": 83.2,
+        "p95ms": 30.3
+      },
+      "mid": {
+        "fps": 67.5,
+        "p95ms": 42.1
+      },
+      "near": {
+        "fps": 61.1,
+        "p95ms": 42.4
+      }
+    }
+  },
+  {
+    "map": "mask 120 (dragon-1)",
+    "steps": {
+      "webgl": 320,
+      "artAndFonts": 603,
+      "world": 976,
+      "labels": 873,
+      "far": 510,
+      "masks": 768,
+      "textures": 2,
+      "scene": 204,
+      "farPaint": 504
+    },
+    "territories": 120,
+    "makeMsUnthrottled": 9124,
+    "firstMapMs": 6924,
+    "allPaintedMs": 7094,
+    "paintMs": 1544,
+    "textureMB": 46.9,
+    "ppu": 1.12,
+    "tiles": 12,
+    "pan": {
+      "far": {
+        "fps": 77.8,
+        "p95ms": 34.3
+      },
+      "mid": {
+        "fps": 71.3,
+        "p95ms": 34.5
+      },
+      "near": {
+        "fps": 77.8,
+        "p95ms": 33.2
+      }
+    }
+  },
+  {
+    "map": "archipelago 120 (archipelago-120-1)",
+    "steps": {
+      "webgl": 228,
+      "artAndFonts": 628,
+      "world": 1070,
+      "labels": 838,
+      "far": 343,
+      "masks": 880,
+      "textures": 13,
+      "scene": 172,
+      "farPaint": 341
+    },
+    "territories": 120,
+    "makeMsUnthrottled": 21232,
+    "firstMapMs": 4446,
+    "allPaintedMs": 6642,
+    "paintMs": 1443,
+    "textureMB": 47.4,
+    "ppu": 1.27,
+    "tiles": 12,
+    "pan": {
+      "far": {
+        "fps": 64.6,
+        "p95ms": 43.6
+      },
+      "mid": {
+        "fps": 46.5,
+        "p95ms": 46.3
+      },
+      "near": {
+        "fps": 61.1,
+        "p95ms": 46.7
+      }
+    }
+  },
+  {
+    "map": "continent 120 (continent-120-1)",
+    "steps": {
+      "webgl": 311,
+      "artAndFonts": 643,
+      "world": 802,
+      "labels": 785,
+      "far": 424,
+      "masks": 643,
+      "textures": 2,
+      "scene": 149,
+      "farPaint": 422
+    },
+    "territories": 120,
+    "makeMsUnthrottled": 7158,
+    "firstMapMs": 5886,
+    "allPaintedMs": 6143,
+    "paintMs": 1277,
+    "textureMB": 47.4,
+    "ppu": 1.75,
+    "tiles": 12,
+    "pan": {
+      "far": {
+        "fps": 77.4,
+        "p95ms": 34
+      },
+      "mid": {
+        "fps": 64.7,
+        "p95ms": 37.2
+      },
+      "near": {
+        "fps": 81.1,
+        "p95ms": 32.2
+      }
+    }
+  }
+]

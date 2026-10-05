@@ -1,0 +1,80 @@
+/* The map lab: a laptop-first tool page in the game's Gilded Atlas colours. */
+.lab {
+  display: grid;
+  grid-template-columns: 290px 1fr 380px;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  overflow: hidden;
+  font-size: 14px;
+}
+.lab button { min-height: 34px; padding: 4px 10px; font-size: 0.88rem; }
+.lab button.on { background: var(--gold); color: var(--navy); }
+.lab select, .lab input { min-height: 32px; padding: 4px 6px; font: 14px var(--font-body); border-radius: 6px; border: 1px solid rgba(201, 164, 92, 0.5); background: var(--raised); color: var(--parch); }
+.lab input[type="number"] { width: 78px; font-family: var(--font-num); }
+.lab input[type="checkbox"] { min-height: 0; }
+.lab .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.lab .good { color: var(--good); }
+.lab .bad, .lab tr.bad td { color: var(--bad); }
+.lab .muted { color: var(--muted); }
+.lab small { display: block; color: var(--muted); font-size: 0.78rem; line-height: 1.25; }
+.lab code { font-family: var(--font-num); font-size: 0.8rem; color: var(--gold-hi); }
+.lab-top { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--raised); }
+.lab-top h1 { font-size: 1.15rem; }
+.lab-top nav { display: flex; gap: 4px; }
+.lab-status { flex: 1; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lab-actions { display: flex; gap: 6px; }
+.lab-recipe, .lab-side { overflow-y: auto; padding: 10px 12px 40px; background: #121b27; min-height: 0; }
+.lab-recipe { border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.lab-side { border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.lab-recipe label { display: flex; flex-direction: column; gap: 3px; color: var(--parch); }
+.lab-recipe label.check, .lab-toolbar label.check { flex-direction: row; align-items: center; gap: 6px; }
+.lab-recipe label.knob { flex-direction: row; justify-content: space-between; align-items: center; gap: 8px; }
+.lab-recipe details > * + * { margin-top: 8px; }
+.lab-recipe summary { cursor: pointer; font-family: var(--font-head); color: var(--gold-hi); }
+.lab-recipe input:not([type]) { flex: 1; min-width: 0; }
+.lab-players { display: flex; flex-direction: column; gap: 4px; }
+.lab-start { color: var(--muted); }
+.lab-note { margin: 2px 0; color: var(--muted); font-size: 0.8rem; }
+.lab-main { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: #173a5c; }
+.lab-main.gallery { overflow-y: auto; background: var(--navy); padding: 10px; }
+.lab-preview { position: absolute; inset: 0; }
+.lab-toolbar { position: absolute; top: 8px; left: 8px; right: 8px; display: flex; gap: 10px; flex-wrap: wrap; pointer-events: none; }
+.lab-toolbar .group { display: flex; gap: 6px; align-items: center; padding: 4px 8px; border-radius: 10px; background: rgba(15, 22, 32, 0.85); border: 1px solid var(--line); pointer-events: auto; }
+.lab-picked { position: absolute; left: 8px; bottom: 8px; max-width: calc(100% - 16px); padding: 6px 10px; border-radius: 8px; background: rgba(15, 22, 32, 0.9); border: 1px solid var(--line); }
+.lab-empty { padding: 40px; color: var(--muted); text-align: center; }
+.lab-card { padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); }
+.lab-card h3 { margin-bottom: 6px; }
+.lab-checks { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 5px; }
+.lab-checks li { display: flex; gap: 8px; }
+.lab-checks .mark { font-weight: 700; width: 1em; flex: none; }
+.lab-checks li.ok .mark { color: var(--good); }
+.lab-checks li.fail .mark { color: var(--bad); }
+.lab-attempts { margin: 4px 0; padding-left: 20px; max-height: 160px; overflow-y: auto; font-size: 0.8rem; }
+.lab-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.lab-table th, .lab-table td { text-align: left; padding: 3px 4px; border-bottom: 1px solid rgba(201, 164, 92, 0.15); vertical-align: top; }
+.lab-table th { color: var(--gold-hi); font-weight: 600; }
+.lab-bars { display: flex; gap: 6px; align-items: flex-end; height: 104px; margin-top: 6px; }
+.lab-bars .bar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; font-size: 0.75rem; }
+.lab-bars i { display: block; width: 100%; background: var(--gold); border-radius: 3px 3px 0 0; }
+.lab-progress { position: relative; height: 22px; margin-top: 8px; border-radius: 6px; background: var(--navy); border: 1px solid var(--line); overflow: hidden; }
+.lab-progress i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(#e3c77e, #c9a45c); transition: width 0.2s; }
+.lab-progress span { position: relative; display: block; text-align: center; font-size: 0.8rem; line-height: 20px; color: var(--parch); text-shadow: 0 1px 2px #000; }
+.lab-sim-results { margin-top: 8px; }
+.lab-sim-results p { margin: 0 0 6px; }
+.lab-gallery-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+.lab-gallery-bar span { flex: 1; color: var(--muted); }
+.lab-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 8px; }
+.lab .lab-thumb { display: flex; flex-direction: column; gap: 4px; padding: 6px; text-align: left; background: var(--raised); min-height: 0; }
+.lab-thumb canvas { width: 100%; height: auto; border-radius: 6px; background: #2c5a88; }
+.lab-thumb-empty { aspect-ratio: 1.45; display: grid; place-items: center; color: var(--muted); background: var(--navy); border-radius: 6px; }
+.lab-thumb-seed { font-family: var(--font-num); font-size: 0.82rem; }
+.lab-badge { font-weight: 700; }
+.lab-badge small { display: inline; margin-left: 6px; font-weight: 400; }
+.lab-badge.pass { color: var(--good); }
+.lab-badge.retry { color: var(--gold-hi); }
+.lab-badge.fail { color: var(--bad); }
+.lab-toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); padding: 8px 14px; border-radius: 8px; background: var(--raised-2); border: 1px solid var(--gold); z-index: 10; }
+/* full=1: only the map. */
+.lab.full { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+.lab.full .lab-top, .lab.full .lab-recipe, .lab.full .lab-side, .lab.full .lab-toolbar, .lab.full .lab-picked { display: none; }
+.lab-thumb > small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

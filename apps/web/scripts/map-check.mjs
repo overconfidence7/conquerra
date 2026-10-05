@@ -4,11 +4,15 @@
  *   pnpm map-check screens   -> docs/art/screens/*.png
  *   pnpm map-check perf      -> performance numbers (phone emulation, CPU slowed down 4x), printed and saved
  *   pnpm map-check houses    -> docs/art/screens/houses.png and house-on-ground.png
+ *   pnpm map-check lab       -> the map lab: lab-overview.png, lab-checks.png, lab-gallery.png, lab-sim.png, and one
+ *                               Far view per land shape (shape-<shape>.png), using the maps in docs/maps/lab-shots.json
+ *   pnpm map-check labperf   -> big maps on a phone (CPU slowed 4x): paint time and frame rates at Far, Mid and Near,
+ *                               plus how long the map maker took on the laptop; saved to docs/art/screens/perf-big.json
  *
  * It needs the built game running: `pnpm build` then `pnpm --filter web preview` (http://localhost:4173),
  * or pass another address as MAP_URL.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import puppeteer from "puppeteer-core";
@@ -240,4 +244,119 @@ async function houses() {
   await browser.close();
 }
 
-await (mode === "perf" ? perf() : mode === "houses" ? houses() : screens());
+/** The map lab's address for a recipe. */
+const labUrl = (r, extra = "") => r.preset ? `${URL}?lab=maps&preset=${r.preset}${extra}` : `${URL}?lab=maps&shape=${r.shape}&size=${r.size}&seed=${encodeURIComponent(r.seed)}${r.mask ? `&mask=${r.mask}` : ""}${extra}`;
+
+/** Wait until the lab has made its map and (unless held) painted every tile. */
+async function labReady(page, painted = true) {
+  await page.waitForFunction(() => window.__labMade, { timeout: 600000, polling: 200 });
+  if (painted)
+    await page.waitForFunction(() => { const s = window.__conquerraMap?.stats?.(); return s && s.firstMapMs > 0 && s.tilesBaked === s.tileCount; }, { timeout: 600000, polling: 100 });
+  return page.evaluate(() => ({ ms: Math.round(window.__labMade.ms), attempt: window.__labMade.attempt, fingerprint: window.__labMade.fingerprint, ok: !!window.__labMade.map }));
+}
+
+const clickText = (page, text) => page.evaluate((t) => [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === t).click(), text);
+
+/** Which maps the lab shots use (written in session 10, Part 4, from the candidates). */
+function labShots() {
+  try {
+    return JSON.parse(readFileSync(join(root, "docs/maps/lab-shots.json"), "utf8"));
+  } catch {
+    return {
+      overview: { shape: "inlandSea", size: 100, seed: "inland-1" },
+      shapes: [
+        { shape: "continent", size: 80, seed: "continent-1" },
+        { shape: "archipelago", size: 60, seed: "archipelago-60-2" },
+        { shape: "twinContinents", size: 80, seed: "twins-1" },
+        { shape: "inlandSea", size: 100, seed: "inland-1" },
+        { shape: "crescent", size: 80, seed: "crescent-1" },
+        { shape: "mask", size: 120, seed: "dragon-1", mask: "dragon" },
+      ],
+      perf: [{ shape: "mask", size: 120, seed: "dragon-1", mask: "dragon" }],
+    };
+  }
+}
+
+async function lab() {
+  const shots = labShots();
+  const browser = await launch();
+  const page = await browser.newPage();
+  await page.setViewport(DESKTOP);
+  page.on("pageerror", (e) => console.log("page error:", e.message));
+  mkdirSync(join(root, "docs/art/screens"), { recursive: true });
+  const out = (f) => join(root, "docs/art/screens", f);
+  if (!process.env.ONLY_SHAPES) {
+    await page.goto(labUrl(shots.overview), { waitUntil: "networkidle0" });
+    const made = await labReady(page);
+    console.log(`  overview map: ${JSON.stringify(made)}`);
+    await sleep(600);
+    await page.screenshot({ path: out("lab-overview.png") });
+    await (await page.$(".lab-side")).screenshot({ path: out("lab-checks.png") });
+    console.log("  saved lab-overview.png, lab-checks.png");
+    // Sim this map: 100 games at the map's suggested top player count.
+    await page.evaluate(() => {
+      const sel = document.querySelector('select[aria-label="Games"]');
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set.call(sel, "100");
+      sel.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await sleep(200);
+    await clickText(page, "Sim this map");
+    await sleep(2500);
+    await (await page.$("[data-panel=sim]")).screenshot({ path: out("lab-sim-running.png") });
+    await page.waitForSelector("[data-panel=sim-results]", { timeout: 900000 });
+    await page.evaluate(() => document.querySelector("[data-panel=sim]").scrollIntoView());
+    await sleep(300);
+    await (await page.$("[data-panel=sim]")).screenshot({ path: out("lab-sim.png") });
+    console.log("  saved lab-sim-running.png, lab-sim.png:", (await page.$eval("[data-panel=sim-results]", (e) => e.innerText)).replace(/\n/g, " | "));
+    await clickText(page, "Seed gallery");
+    await page.waitForFunction(() => document.querySelectorAll(".lab-badge").length === 12, { timeout: 900000, polling: 500 });
+    await sleep(500);
+    await page.screenshot({ path: out("lab-gallery.png") });
+    console.log("  saved lab-gallery.png");
+  }
+  for (const r of shots.shapes) {
+    await page.goto(labUrl(r, "&full=1"), { waitUntil: "networkidle0" });
+    const m = await labReady(page);
+    await page.evaluate(() => window.__conquerraMap.fit(false));
+    await sleep(900);
+    const level = await page.evaluate(() => window.__conquerraMap.stats().level);
+    const file = `shape-${r.shape === "mask" ? (r.mask ?? "mask") : r.shape}.png`;
+    await (await page.$(".lab-preview")).screenshot({ path: out(file) });
+    console.log(`  saved ${file} (${r.size} territories, seed ${r.seed}, made in ${m.ms} ms on try ${m.attempt}, fingerprint ${m.fingerprint}, zoom ${level})`);
+  }
+  await browser.close();
+}
+
+async function labPerf() {
+  const browser = await launch();
+  const results = [];
+  for (const r of labShots().perf) {
+    const page = await browser.newPage();
+    await page.emulate({ viewport: PHONE, userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Mobile Safari/537.36" });
+    page.on("pageerror", (e) => console.log("page error:", e.message));
+    // Make the map at full speed first, then slow the CPU 4x and paint it.
+    await page.goto(labUrl(r, "&full=1&hold=1"), { waitUntil: "networkidle0" });
+    const made = await labReady(page, false);
+    const cdp = await page.createCDPSession();
+    await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+    const t0 = await page.evaluate(() => ((window.__t0 = performance.now()), window.__labGo(), window.__t0));
+    await page.waitForFunction(() => window.__conquerraMap?.stats && window.__conquerraMap.stats().firstMapMs > 0, { timeout: 300000, polling: 16 });
+    const firstMap = await page.evaluate((t) => performance.now() - t, t0);
+    await page.waitForFunction(() => { const s = window.__conquerraMap.stats(); return s.tilesBaked === s.tileCount; }, { timeout: 300000, polling: 50 });
+    const allPainted = await page.evaluate((t) => performance.now() - t, t0);
+    const stats = await page.evaluate(() => window.__conquerraMap.stats());
+    const row = { map: r.preset ?? `${r.shape} ${r.size} (${r.seed})`, steps: stats.steps, territories: r.size, makeMsUnthrottled: made.ms, firstMapMs: Math.round(firstMap), allPaintedMs: Math.round(allPainted), paintMs: stats.bakeMs, textureMB: stats.textureMB, ppu: stats.ppu, tiles: stats.tileCount, pan: {} };
+    for (const level of ["far", "mid", "near"]) {
+      await zoomTo(page, ZOOM_PX[level]);
+      await panFps(page, 600);
+      row.pan[level] = await panFps(page, 3000);
+    }
+    results.push(row);
+    console.log(JSON.stringify(row));
+    await page.close();
+  }
+  await browser.close();
+  writeFileSync(join(root, "docs/art/screens/perf-big.json"), JSON.stringify(results, null, 2) + "\n");
+}
+
+await (mode === "perf" ? perf() : mode === "houses" ? houses() : mode === "lab" ? lab() : mode === "labperf" ? labPerf() : screens());

@@ -3,7 +3,8 @@
  * game. Runs at the end of `pnpm deploy:preview`, and on its own with `pnpm check:preview`.
  */
 const SITE = process.env.PREVIEW_URL ?? "https://conquerra.overconfidenceonline.com/";
-const paths = ["", "index.html", "manifest.webmanifest", "sw.js", "art/manifest.json"];
+// "?lab=maps" and "?lab=bench": the map lab and the art test bench are on the preview only, behind the same sign-in.
+const paths = ["", "index.html", "manifest.webmanifest", "sw.js", "art/manifest.json", "?lab=maps", "?lab=bench"];
 let ok = true;
 for (const p of paths) {
   const url = new URL(p, SITE).toString();

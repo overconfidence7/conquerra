@@ -15,8 +15,9 @@
     "art:import": "pnpm --filter @conquerra/art run art-import",
     "map-check": "node apps/web/scripts/map-check.mjs",
     "ui-check": "node apps/web/scripts/ui-check.mjs",
-    "deploy:preview": "pnpm test && pnpm build && wrangler deploy --config apps/web/wrangler.jsonc && node apps/web/scripts/check-preview.mjs",
-    "check:preview": "node apps/web/scripts/check-preview.mjs"
+    "deploy:preview": "pnpm test && pnpm build && node apps/web/scripts/bundle-size.mjs && wrangler deploy --config apps/web/wrangler.jsonc && node apps/web/scripts/check-preview.mjs",
+    "check:preview": "node apps/web/scripts/check-preview.mjs",
+    "bundle-size": "node apps/web/scripts/bundle-size.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

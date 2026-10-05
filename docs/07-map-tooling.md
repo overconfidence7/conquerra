@@ -78,3 +78,40 @@ Moved from session 9 to 10, because Nate's play-test fixes come first. Nate's di
   - several new maps in different shapes and sizes, each with checks, a quick sim and a screenshot, in `docs/maps/candidates.md`
   - Nate picks which become official
   - Also check whether map shape changes 10-player game length (Captains on Greatmarch average about 40 turns).
+
+
+## The map lab (built in session 10)
+**Where:** `conquerra.overconfidenceonline.com/?lab=maps`, behind the same Access sign-in as the rest of the preview. It's never linked from the lobby. Locally: `pnpm build`, `pnpm --filter web preview`, then `http://localhost:4173/?lab=maps`.
+
+**In three lines:**
+1. On the left, pick a **shape**, a **size** and a **seed** (or 🎲), then **Make this map**. Every other knob is under "All settings", with a plain label.
+2. The middle shows the map exactly as the game draws it. Use Far / Mid / Near, Tactical, and the Names, Choke points and Capitals toggles (and how many players). Click a territory to see its neighbours.
+3. On the right: why earlier tries failed, the checks, fair capitals for every player count, territory sizes, and **Sim this map** (pick players and games). **Seed gallery** shows 12 seeds side by side; click one to open it.
+
+**What each part does:**
+- **Making a map** happens in a background worker, so the page never freezes. It shows how long it took, which try passed, and why each earlier try was rejected. The **fingerprint** is a short code for the whole map: the same recipe always gives the same fingerprint, here or in `pnpm try-maps` (a test checks this).
+- **Checks:** `checkMap`, one plain line per rule (connected, even sizes, room for banners, provinces, fair capitals, no hairlines, wide passes, sea lanes, choke points), with the numbers behind each.
+- **Fair capitals:** for each player count, how many borders apart the capitals are and how even the gold near each one is.
+- **Sim this map:** a few hundred all-Captain games in a worker (the same code as `pnpm sim`, now in `packages/simcore`), with a progress bar. It shows average length and the share of games within 40 turns and inside 30–40, seat wins, the three runaway measures, and how many battles go through passes and across sea lanes.
+- **Seed gallery:** the next 12 seeds with this recipe (each allowed 8 tries), with a pass / "passes on try N" / fail badge. "Next 12" and "Previous 12" page through.
+- **Copy recipe** puts the recipe on the clipboard as JSON, ready for `configs.ts`. **Paste recipe** reads one back. **Save image** downloads a picture of the map as it's shown.
+- The address keeps the shape, size and seed, so a link opens the same map. Extras for scripts and screenshots: `full=1` (just the map), `capitals=0`, `names=0`, `chokes=1`, `tactical=1`, `players=6`, `preset=greatmarch`, `tab=gallery`.
+
+**Ready for the player map builder:** the preview (`MapPreview`), the checks panel, the fairness table, the size chart and the gallery each take a finished map, not a recipe (`apps/web/src/lab/maps/`). The plain-words checks, fairness rows and size spread are pure functions in `packages/mapgen/src/report.ts`. The builder (after M4) can show all of them for a map drawn by hand. Nothing in the lab edits a map yet.
+
+**Kept out of the game's start-up:** the lab is only loaded when `?lab=maps` is opened. The page the game loads first was 442.4 KB (136.9 KB compressed) before the lab and is 442.7 KB (137.1 KB) after: only the few lines that pick the page. The lab itself is a separate 44 KB file plus a 192 KB worker. A test follows every import from the game's entry and fails if any lab or map-maker code is reached; `pnpm bundle-size` (run by `pnpm deploy:preview`) checks the built files the same way.
+
+**Switching it off for the public launch:** build with `VITE_LABS=off` (for example `VITE_LABS=off pnpm build`, or set it in the launch deploy script). The switch in `apps/web/src/main.tsx` is then false when the game is built, so the map lab and the art test bench aren't in the build at all, and `?lab=...` just opens the lobby. Until then, the preview's Access sign-in keeps them private, and `pnpm check:preview` confirms `/?lab=maps` and `/?lab=bench` redirect to the sign-in.
+
+## How to make a seed an official map
+1. In the lab, find a map you like (the gallery helps) and make sure every check passes and "Sim this map" looks right at the player counts it suits.
+2. Give it a name and an id under "All settings" (the id is lower case, like `stormcoast`).
+3. Press **Copy recipe** and paste it into `MAP_CONFIGS` in `packages/mapgen/src/configs.ts` (inside the `[ ... ]`, after the last map, with a comma).
+4. Run `pnpm build-maps`. It writes the map into `packages/content/data/maps/<id>.json` and a picture into `docs/maps/`, and the map appears in the lobby (`catalog.json`). The import line in `packages/content/src/maps.ts` needs adding once per new map.
+5. Optionally rename places in `packages/mapgen/names/<id>.json`, then run `pnpm build-maps` again.
+6. Run `pnpm test`: it checks the committed map is exactly what the recipe makes and that it passes every check.
+7. Commit. From then on the map never changes unless its recipe or the map maker does (the test catches that).
+
+**How long things take** (Nate's laptop, Chrome): making a 60-territory map 1–3 s, a 100-territory one about 1.5–5 s, a 120-territory one 3–20 s (big archipelagos and crescents need the most tries; Node is about twice as fast). "Sim this map": 100 ten-player games on a 100-territory map in about 20 s. The gallery: about 2 s a map at 100 territories.
+
+**Big maps on a phone** (emulated mid-range phone, CPU slowed 4x, `pnpm map-check labperf`, `docs/art/screens/perf-big.json`): a 120-territory map shows its first picture in 4.4–6.9 s and is fully painted in 6.1–7.1 s, against 4.5 and 6.0 s for Greatmarch measured the same way. Panning runs at 46–81 frames a second. The painting resolution already drops on big maps to keep memory near 47 MB (1.1–1.75 pixels per map unit instead of 2.2 on Greatmarch), so no change was needed.

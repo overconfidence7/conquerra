@@ -1,7 +1,10 @@
 import { BIOME_CODES, defaultRules, type Biome, type MapDef } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { indexMap } from "@conquerra/engine";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+
+// Map making is a few seconds of solid work: let the test runner catch up before each test.
+beforeEach(() => new Promise((r) => setTimeout(r, 0)));
 import embervaleNames from "../names/embervale.json";
 import greatmarchNames from "../names/greatmarch.json";
 import { applyRenames, borderLengths, checkMap, DECORATION_BIOMES, MIN_BORDER_CHECK, MIN_PASS_CHECK, fromBase64, generateMap, insideRings, LABEL_CLEAR, MAP_CONFIGS, TERRAIN_BIOMES } from "../src";

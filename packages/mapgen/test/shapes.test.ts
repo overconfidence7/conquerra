@@ -1,12 +1,15 @@
 import { defaultRules } from "@conquerra/content";
 import { createHash } from "node:crypto";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { checkMap, generateMap, LAND_SHAPES, MAP_CONFIGS, MASKS, recipeFor, type LandShape } from "../src";
 import { maskInside, type MaskDef } from "../src/masks";
 import { makeShapeField } from "../src/shapes";
 import { Rng, seedRng } from "@conquerra/engine";
 
 const hash = (x: unknown) => createHash("sha256").update(JSON.stringify(x)).digest("hex").slice(0, 16);
+/** Each map takes a few seconds of solid work: let the test runner catch up before each one. */
+beforeEach(() => new Promise((r) => setTimeout(r, 0)));
+const firstBuild = new Map<string, string>();
 
 describe("land shapes", () => {
   // Every shape, several seeds, at the smallest new size (fast); the big sizes are covered by `pnpm try-maps`.
@@ -15,6 +18,7 @@ describe("land shapes", () => {
     it.each([1, 2])("builds a map that passes every check, with the size and provinces asked for (seed %i)", (i) => {
       const recipe = recipeFor(shape, 60, `test-${shape}-${i}`);
       const { map, check } = generateMap(recipe, defaultRules);
+      if (i === 1) firstBuild.set(shape, hash(map));
       expect(check.problems, `${recipe.seed}`).toEqual([]);
       expect(map.territories.length).toBe(60);
       expect(map.provinces.length).toBe(recipe.provinces);
@@ -25,8 +29,7 @@ describe("land shapes", () => {
     }, 120_000);
 
     it("the same seed gives the same map", () => {
-      const recipe = recipeFor(shape, 60, `same-${shape}`);
-      expect(hash(generateMap(recipe, defaultRules).map)).toBe(hash(generateMap(recipe, defaultRules).map));
+      expect(hash(generateMap(recipeFor(shape, 60, `test-${shape}-1`), defaultRules).map)).toBe(firstBuild.get(shape));
     }, 60_000);
   });
 

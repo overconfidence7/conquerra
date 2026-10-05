@@ -27,6 +27,19 @@ export function findLayout(rng: Rng, n: number, candidateIds: readonly string[],
     const gapGoal = Math.max(2, Math.min(...fairnessOf(slots, tbl).nearest) - 1);
     const score = (f: Fairness) => (f.fair ? 1000 : 0) + Math.min(gapGoal, Math.min(...f.nearest)) * 100 + f.score * 0.01 + (f.income.length ? (Math.min(...f.income) / Math.max(1e-9, Math.max(...f.income))) * 80 : 0) - (Math.max(...f.nearest) - Math.min(...f.nearest)) * 40;
     let f = fairnessOf(slots, tbl);
+    let fScore = score(f);
+    // The best `score` a layout with these gaps could reach (perfectly even income). A swap whose best can't beat
+    // the current layout is skipped without working out incomes: same choices, much less work on big maps.
+    const near = new Array<number>(n);
+    const ceiling = () => {
+      for (let a = 0; a < n; a++) {
+        let m = 99;
+        for (let b = 0; b < n; b++) if (b !== a) m = Math.min(m, tbl.dist[slots[a]! * T + slots[b]!]!);
+        near[a] = m;
+      }
+      const lo = Math.min(...near), spread = Math.max(...near) - lo;
+      return (spread <= 1 ? 1000 : 0) + Math.min(gapGoal, lo) * 100 + (lo * 100 - spread * 40 + 60) * 0.01 + 80 - spread * 40;
+    };
     for (let pass = 0; pass < 3; pass++) {
       let improved = false;
       for (let i = 0; i < n; i++)
@@ -34,8 +47,13 @@ export function findLayout(rng: Rng, n: number, candidateIds: readonly string[],
           if (slots.includes(c)) continue;
           const old = slots[i]!;
           slots[i] = c;
+          if (ceiling() <= fScore) {
+            slots[i] = old;
+            continue;
+          }
           const tf = fairnessOf(slots, tbl);
-          if (score(tf) > score(f)) (f = tf), (improved = true);
+          const s = score(tf);
+          if (s > fScore) (f = tf), (fScore = s), (improved = true);
           else slots[i] = old;
         }
       if (!improved) break;

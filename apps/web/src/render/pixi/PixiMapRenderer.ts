@@ -320,6 +320,17 @@ class PixiMapRenderer implements MapRenderer {
     };
   }
 
+  /** Show or hide place and province names (the map lab's toggle). */
+  setNamesVisible(on: boolean) {
+    if (this.info) this.info.names.visible = on;
+  }
+
+  /** A PNG of the map as it looks now (the map lab's "Save image"). */
+  snapshot(): string {
+    this.app.render();
+    return this.app.canvas.toDataURL("image/png");
+  }
+
   /** For the perf script and screenshots: drive the camera directly. */
   get camera() {
     return this.cam;
@@ -346,7 +357,9 @@ class PixiMapRenderer implements MapRenderer {
   }
 }
 
-export async function createIllustratedRenderer(opts: RendererOptions): Promise<MapRenderer & { stats(): MapStats }> {
+export type IllustratedRenderer = MapRenderer & { stats(): MapStats; setNamesVisible(on: boolean): void; snapshot(): string; readonly camera: CameraController };
+
+export async function createIllustratedRenderer(opts: RendererOptions): Promise<IllustratedRenderer> {
   const r = new PixiMapRenderer(opts, opts.events);
   await r.init();
   return r;
