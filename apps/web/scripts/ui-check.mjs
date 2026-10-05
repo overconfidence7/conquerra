@@ -378,6 +378,13 @@ async function clarity() {
   };
   const zoom = (px, at) => g(({ px, at }) => { const cam = window.__conquerraMap.camera; cam.centreOn(at.x, at.y, px / cam.territorySize); }, { px, at });
   const labelOf = (id) => g((id) => window.__conquerraStore.getState().ctx.map.geometry.territories.find((t) => t.id === id).label, id);
+  /** Your capital if you still hold it, else any land of yours (null if you're out). */
+  const home = () =>
+    g(() => {
+      const v = window.__conquerraStore.getState().view;
+      const mine = Object.entries(v.territories).filter(([, t]) => t.detail === "full" && t.owner === v.me.id).map(([id]) => id);
+      return mine.includes(v.me.capital) ? v.me.capital : (mine[0] ?? null);
+    });
   const mapShot = async (file) => {
     await sleep(700);
     await (await page.$(".map-host")).screenshot({ path: out(file) });
@@ -388,81 +395,55 @@ async function clarity() {
     await page.screenshot({ path: out(file) });
     console.log("  saved " + file);
   };
+  const tacticalToggle = async () => {
+    await page.click('button[aria-label="Settings"]');
+    await sleep(300);
+    await page.evaluate(() => [...document.querySelectorAll(".menu-item")].find((b) => b.textContent.includes("Tactical view"))?.click());
+    await page.evaluate(() => [...document.querySelectorAll(".popover button.link")].find((b) => b.textContent.trim() === "Close")?.click());
+  };
 
-  for (let i = 0; i < 4; i++) await turn();
-  /** The bot plans the armies; its spending (recruits, hires, builds, culture) is dropped so ours can be added. */
-  const armiesOnly = () =>
-    g(async () => {
-      await window.__conquerraStore.getState().autoPlan();
-      const st = window.__conquerraStore;
-      st.setState({ queue: st.getState().queue.filter((o) => o.kind === "move" || o.kind === "retreat" || o.kind === "advance") });
-    });
-
-  // ---- Buildings: order all four, plus culture at the capital ----
-  await armiesOnly();
-  const built = await g(() => {
-    const s = window.__conquerraStore.getState();
-    const v = s.view;
-    const cap = v.me.capital;
-    const mine = Object.entries(v.territories).filter(([id, t]) => t.detail === "full" && t.owner === v.me.id && !t.building && !t.construction && id !== cap).map(([id]) => id);
-    const kinds = ["fort", "market", "barracks", "watchtower"];
-    const at = {};
-    kinds.forEach((b, i) => { if (mine[i]) { s.add({ kind: "build", territory: mine[i], building: b }); at[b] = mine[i]; } });
-    s.add({ kind: "invest", territory: cap });
-    return { at, gold: v.me.gold, cap };
-  });
-  console.log(`  ordered buildings ${JSON.stringify(built.at)} with ${built.gold} gold`);
-  await turn({ auto: false });
-  // The fort is being built now; the others are finished.
-  const fortAt = await labelOf(built.at.fort ?? built.cap);
-  await zoom(120, fortAt);
-  await mapShot("ui-buildings-mid.png");
-  await zoom(260, fortAt);
-  await mapShot("ui-buildings-near.png");
-  await armiesOnly();
-  await g((cap) => window.__conquerraStore.getState().add({ kind: "invest", territory: cap }), built.cap);
-  await turn({ auto: false });
-
-  // ---- Culture: the card and the laurels (the capital is at culture 2 now) ----
-  await g((cap) => window.__conquerraStore.getState().select(cap), built.cap);
-  const cap = await labelOf(built.cap);
-  await zoom(150, cap);
-  await sleep(600);
-  const card = await page.$(".rightcol .tcard");
-  if (card) await card.screenshot({ path: out("ui-culture-card.png") });
-  await mapShot("ui-culture-pips.png");
-  await pageShot("ui-army-panel.png");
-  if (card) await (await page.$(".rightcol .tcard")).screenshot({ path: out("ui-territory-card.png") });
+  for (let i = 0; i < 3; i++) await turn();
 
   // ---- A turn report with a "called off" line: a 1-troop attack on a stronger army, "Only if still stronger" ----
-  await g(async () => {
-    await window.__conquerraStore.getState().autoPlan();
-    const s = window.__conquerraStore.getState();
-    const v = s.view;
-    for (const b of s.ctx.map.borders) {
-      for (const [from, to] of [[b.a, b.b], [b.b, b.a]]) {
-        const f = v.territories[from], t = v.territories[to];
-        if (f.detail === "full" && f.owner === v.me.id && f.troops >= 2 && t.detail === "full" && t.owner !== v.me.id && t.troops >= 3) {
-          s.add({ kind: "move", from, to, troops: 1, preset: { id: "onlyIfStronger" } });
-          return;
+  let said = [];
+  for (let tries = 0; tries < 4 && !said.length; tries++) {
+    await g(() => window.__conquerraStore.getState().setShowReport(false));
+    await g(async () => {
+      await window.__conquerraStore.getState().autoPlan();
+      const s = window.__conquerraStore.getState();
+      const v = s.view;
+      for (const b of s.ctx.map.borders)
+        for (const [from, to] of [[b.a, b.b], [b.b, b.a]]) {
+          const f = v.territories[from], t = v.territories[to];
+          if (f.detail === "full" && f.owner === v.me.id && f.troops >= 2 && t.detail === "full" && t.owner !== v.me.id && t.troops >= 3) {
+            s.add({ kind: "move", from, to, troops: 1, preset: { id: "onlyIfStronger" } });
+            return;
+          }
         }
-      }
-    }
-  });
-  await turn({ auto: false, report: true });
-  const said = await g(() => [...document.querySelectorAll(".report-group li, .report-group p")].map((e) => e.textContent).filter((t) => /called off/.test(t)));
+    });
+    await turn({ auto: false, report: true });
+    said = await g(() => [...document.querySelectorAll(".report-group li, .report-group p")].map((e) => e.textContent).filter((t) => /called off/.test(t)));
+  }
   console.log(`  report: ${said[0] ?? "(no called-off line this time)"}`);
   await pageShot("ui-report-called-off.png");
   await g(() => window.__conquerraStore.getState().setShowReport(false));
 
   // ---- Recruit: every site glows ----
-  await g(() => window.__conquerraStore.getState().select(window.__conquerraStore.getState().view.me.capital));
-  await zoom(80, cap);
-  await page.evaluate(() => [...document.querySelectorAll("button.round")].find((b) => b.textContent.includes("Recruit")).click());
-  await pageShot("ui-recruit-sites.png");
+  const at0 = await home();
+  if (at0) {
+    await g((id) => window.__conquerraStore.getState().select(id), at0);
+    await zoom(80, await labelOf(at0));
+  }
+  const recruited = await page.evaluate(() => {
+    const b = [...document.querySelectorAll("button.round")].find((x) => x.textContent.includes("Recruit") && !x.disabled);
+    b?.click();
+    return !!b;
+  });
+  if (recruited) await pageShot("ui-recruit-sites.png");
+  else console.log("  (no gold or nowhere to recruit this time; skipped ui-recruit-sites.png)");
   await g(() => window.__conquerraStore.getState().clearSelection());
 
-  // ---- Neighbour links: a territory by a pass, and one with a long sea lane ----
+  // ---- Neighbour links: a territory by a pass, and one with the longest sea lane ----
   const pick = await g(() => {
     const map = window.__conquerraStore.getState().ctx.map;
     const pass = map.borders.find((b) => b.type === "pass");
@@ -475,26 +456,63 @@ async function clarity() {
     await mapShot(`ui-links-${what}.png`);
   }
 
-  // ---- Provinces at Mid and Far ----
+  // ---- Provinces at Mid and Far, then Tactical view (Settings → Tactical view) ----
   await g(() => window.__conquerraStore.getState().clearSelection());
-  await zoom(110, cap);
+  const centre = await labelOf((await home()) ?? pick.pass);
+  await zoom(110, centre);
   await mapShot("ui-provinces-mid.png");
-  await g(() => window.__conquerraMap.fit(false));
-  await zoom(50, cap);
+  await zoom(50, centre);
   await mapShot("ui-provinces-far.png");
-
-  // ---- Tactical view (Settings → Tactical view) ----
-  await zoom(110, cap);
-  await page.click('button[aria-label="Settings"]');
-  await sleep(300);
-  await page.evaluate(() => [...document.querySelectorAll(".menu-item")].find((b) => b.textContent.includes("Tactical view")).click());
-  await page.evaluate(() => [...document.querySelectorAll(".popover button.link")].find((b) => b.textContent.trim() === "Close")?.click());
+  await zoom(110, centre);
+  await tacticalToggle();
   await mapShot("ui-tactical.png");
   await mapShot("embervale-tactical.png");
-  await page.click('button[aria-label="Settings"]');
-  await sleep(300);
-  await page.evaluate(() => [...document.querySelectorAll(".menu-item")].find((b) => b.textContent.includes("Tactical view")).click());
-  await page.evaluate(() => [...document.querySelectorAll(".popover button.link")].find((b) => b.textContent.trim() === "Close")?.click());
+  await tacticalToggle();
+
+  // ---- Buildings: the bot moves the armies; we spend on all four buildings and culture at home ----
+  const armiesOnly = () =>
+    g(async () => {
+      await window.__conquerraStore.getState().autoPlan();
+      const st = window.__conquerraStore;
+      st.setState({ queue: st.getState().queue.filter((o) => o.kind === "move" || o.kind === "retreat" || o.kind === "advance") });
+    });
+  await armiesOnly();
+  const built = await g(() => {
+    const s = window.__conquerraStore.getState();
+    const v = s.view;
+    const mine = Object.entries(v.territories).filter(([, t]) => t.detail === "full" && t.owner === v.me.id).map(([id]) => id);
+    const homeId = mine.includes(v.me.capital) ? v.me.capital : mine[0];
+    const free = mine.filter((id) => !v.territories[id].building && !v.territories[id].construction && id !== homeId);
+    const kinds = ["fort", "market", "barracks", "watchtower"];
+    const at = {};
+    kinds.forEach((b, i) => { if (free[i]) { s.add({ kind: "build", territory: free[i], building: b }); at[b] = free[i]; } });
+    s.add({ kind: "invest", territory: homeId });
+    return { at, gold: v.me.gold, home: homeId };
+  });
+  console.log(`  ordered buildings ${JSON.stringify(built.at)} with ${built.gold} gold`);
+  await turn({ auto: false });
+  // The fort is being built now; the others are finished.
+  const fortAt = await labelOf(built.at.fort ?? built.home);
+  await zoom(120, fortAt);
+  await mapShot("ui-buildings-mid.png");
+  await zoom(260, fortAt);
+  await mapShot("ui-buildings-near.png");
+  await armiesOnly();
+  await g((id) => window.__conquerraStore.getState().add({ kind: "invest", territory: id }), built.home);
+  await turn({ auto: false });
+
+  // ---- Culture (level 2 at home now): the card, the laurels, and the reworded panel and card ----
+  await g((id) => window.__conquerraStore.getState().select(id), built.home);
+  await zoom(150, await labelOf(built.home));
+  await sleep(600);
+  const card = await page.$(".rightcol .tcard");
+  if (card) {
+    await card.screenshot({ path: out("ui-culture-card.png") });
+    await card.screenshot({ path: out("ui-territory-card.png") });
+    console.log("  saved ui-culture-card.png, ui-territory-card.png");
+  }
+  await mapShot("ui-culture-pips.png");
+  await pageShot("ui-army-panel.png");
 
   // ---- Staged board: all four buildings, finished and being built, side by side (the page's view only) ----
   const at = await g(() => {
@@ -525,7 +543,7 @@ async function clarity() {
   await phone.setViewport({ width: 384, height: 832, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   await phone.goto(URL, { waitUntil: "networkidle0" });
   await start(phone, { bots: 3, botLevel: "captain" });
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 3; i++) {
     await phone.evaluate(async () => {
       const s = window.__conquerraStore.getState();
       await s.autoPlan();
@@ -535,16 +553,22 @@ async function clarity() {
     });
     await sleep(300);
   }
-  await phone.evaluate(() => window.__conquerraStore.getState().select(window.__conquerraStore.getState().view.me.capital));
-  await phone.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.getAttribute("aria-label") === "Attack").click());
+  await phone.evaluate(() => {
+    const s = window.__conquerraStore.getState();
+    const v = s.view;
+    const mine = Object.entries(v.territories).filter(([, t]) => t.detail === "full" && t.owner === v.me.id).map(([id]) => id);
+    s.select(mine.includes(v.me.capital) ? v.me.capital : mine[0]);
+  });
+  await phone.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.getAttribute("aria-label") === "Attack")?.click());
   await sleep(700);
   await phone.screenshot({ path: out("ui-army-panel-phone.png") });
-  await phone.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === "Card").click());
+  await phone.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === "Card")?.click());
   await sleep(600);
   await phone.screenshot({ path: out("ui-territory-card-phone.png") });
-  await phone.evaluate(() => [...document.querySelectorAll("button.round")].find((b) => b.textContent.includes("Recruit")).click());
-  await sleep(700);
-  await phone.screenshot({ path: out("ui-recruit-sites-phone.png") });
+  if (await phone.evaluate(() => { const b = [...document.querySelectorAll("button.round")].find((x) => x.textContent.includes("Recruit") && !x.disabled); b?.click(); return !!b; })) {
+    await sleep(700);
+    await phone.screenshot({ path: out("ui-recruit-sites-phone.png") });
+  }
   console.log("  saved ui-army-panel-phone.png, ui-territory-card-phone.png, ui-recruit-sites-phone.png");
   await browser.close();
 }
