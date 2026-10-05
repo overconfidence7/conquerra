@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–11 are done. Next: art batch 3 in Gemini (`docs/prompts/gemini-art-session-03.md`; it hadn't been made by session 11, and every piece is ready to drop in), Nate's play test of session 11, then session 12: generals, captured generals, the Fallen.**
+**Phase: M3 (depth and balance). Sessions 7–11 are done. Next: art batch 3 in Gemini (`docs/prompts/gemini-art-session-03.md`), then session 12 (`docs/prompts/claude-code-session-12.md`): the art in, then generals, captured generals and the Fallen.**
 
 Claude Code sessions completed: **11** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
@@ -481,4 +481,22 @@ No new art had arrived and Nate's session 9 play test isn't in yet, so there was
   - the dragon: `shape-dragon.png` (still today's dragon)
 - 432 automated tests pass. Deployed to the private preview (version `2fda17a7`); the lock check passed.
 - **Asked Nate to play on the preview** (Ringsea on his phone, Twin Realms on his laptop, the lobby's eight maps, one game on Wyrmland). His notes go below once he's played.
+
+### Oct 5: Orchestrator review of session 11
+- **Checked the work:**
+  - All five parts landed, the engine and bots didn't change, and Embervale and Greatmarch are unchanged.
+  - Re-ran 10-player games on Wyrmland: 40.9 turns (session 11 said 39.7), and about 6% reach the 60-turn cap. It matches.
+  - Looked at the before/after pictures: gold no longer turns mustard on grass, the map has more room on desktop, and the Far view is a little softer. Without batch 3 the change is modest.
+  - **A failing test on `main`:** session 11's "Ideas for batch 4" list at the end of the art file was counted by a test that checks the art list against the game, so GitHub's checks failed. The list moved under "Tier 3: later" in the same file, and all 432 tests pass again. (Two other red marks were GitHub failing to start, not real failures.)
+- **For Nate to look at when he plays:** at Mid zoom a House's colour now shows mostly along the edges of its land (the whole land is filled at Far), and the new desktop panel's last row sits right at the bottom of the window.
+- **Nate's calls:**
+  - **Session 12:** art batch 3 first, then **generals, captured generals and the Fallen**, as planned. If it runs short, the Fallen moves to session 13.
+  - **Generals:** Nate likes both ideas. Session 12 builds **a general that leads one army** with a standing instruction (Hold here, Defend this border, Push toward, Raid a rival). **"Govern this province"** (keep a share of its income to build it up) is on file as a later instruction, planned for session 15.
+  - **Captured generals command only:** no +20% fighting bonus, and you keep at most 2.
+  - **The Crownlands gets another try for rivers:** new seeds of the same crown, shown to Nate before it changes.
+  - The desktop dock keeps today's behaviour (starts open, remembers your choice).
+- **Still to come:** Nate's play tests of sessions 9 and 11, his look at the map lab, and art batch 3.
+- **Next:**
+  1. Art batch 3 in Gemini (`docs/prompts/gemini-art-session-03.md`). **Do this before session 12.**
+  2. Session 12 (`docs/prompts/claude-code-session-12.md`, run it locally).
 

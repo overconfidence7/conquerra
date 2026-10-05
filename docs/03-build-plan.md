@@ -92,11 +92,11 @@ Research, outline v0.1, v0.2 additions, and decisions.
   - **8 ✅:** the fog lifts during the replay; the Captain bot
   - **9 ✅ (finished by 9b after the usage limit):** play-test fixes: the combat bug, recruiting (capital, barracks or a full province; choose how many), culture as "loyal land", map clarity (no hairline borders, wider passes, neighbour marks, province borders and plaques), buildings that stand on the map, plain-words reports, "Save this game"
   - **10 ✅:** bigger maps (60–120 territories) in new land shapes, the map lab, the art test bench, candidate maps (`docs/07-map-tooling.md`)
-  - **11:** the big visual upgrade with art batch 3 (`docs/08-visual-upgrade-plan.md`), and the six new maps made official
-  - **12:** generals (Leader standing instructions), captured generals, the Fallen (the Captains' gang-up moved up to 9b; generals reuse it)
+  - **11 ✅:** the visual upgrade's code (scenery rules, House tint, forests, softer Far view, roomier desktop) and the six new maps made official. Art batch 3 wasn't made yet, so it lands in 12.
+  - **12:** art batch 3 in (and Wyrmland's new dragon, the Crownlands' rivers), then generals (Leader standing instructions), captured generals and the Fallen (the Captains' gang-up moved up to 9b; generals reuse it). If short, the Fallen moves to 13.
   - **13:** Spoils and Fate decks
   - **14:** preset diplomacy
-  - **15:** spies and culture unlocks
+  - **15:** spies and culture unlocks, and the "Govern this province" general instruction (`04-design-additions.md` §4)
   - **16:** balance pass (runaways, game length up to 30–40 turns, seat fairness)
 - A fresh orchestrator prompt is due after session 12 (orchestrator-04 was written after session 9).
 - Leader-as-general (standing instructions) and captured generals.

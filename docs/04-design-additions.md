@@ -56,6 +56,17 @@
   - You can order your Leader's army directly, or hand it a standing instruction and let it command itself.
   - Capturing other players (or their capitals) adds their leaders to your roster as generals.
 - **DECIDED (Oct 2): Leaders don't stay dead.** A fallen Leader comes back for free at the start of its owner's next turn, at the capital (or the strongest territory if the capital is lost). Eliminating a player adds their Leader to your pool as a general.
+- **DECIDED (Oct 5, Nate): the first version of generals (session 12).**
+  - **A general leads one army:** the troops in the territory where it stands, wherever they go. It has four standing instructions:
+    - **Hold here**
+    - **Defend this border** (toward a rival or a place)
+    - **Push toward** a place
+    - **Raid** a rival
+  - It writes that army's orders each turn with the Captain bot's brain, judging only from your view.
+  - **One treasury:** generals never spend gold. You still recruit, build and raise culture yourself.
+  - **Your Leader is your first general:** order it directly, or hand it an instruction (one tap to take control back).
+  - **Captured generals:** knocking a player out gives you their Leader as a general. **Captured generals command only:** they don't add the +20% fighting bonus (only your own Leader does). **You keep at most 2**; when a third comes, you choose which to keep.
+- **ON FILE (Oct 5, Nate likes both): "Govern this province".** A general that runs a province and keeps a share of its income to build it up, sending the rest home (the original "send me 10% of its income" idea). It comes after the army general has been played, as a fifth instruction, and must not add a second gold pot the player has to track: the province's share is spent by the general on that province and shown as one line.
 
 ## 5. Military vs. culture
 - Income can go to **military** (troops, forts) or **culture**.
