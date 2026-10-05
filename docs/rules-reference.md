@@ -207,6 +207,7 @@ Maps are made by the **map maker** (same seed, same map) and look like a real pl
   - **Embervale**: 40 territories, 8 provinces, suits 4–6 players. 3 passes, 3 sea lanes.
   - **Greatmarch**: 80 territories, 20 provinces, suits 8–10 players. 8 passes, 3 sea lanes.
   - Both were rebuilt in session 9 (map maker v2) from the same seeds: same coasts, lakes, islands and ranges, but no hairline borders, wider passes, and new place names.
+- **Map shapes and sizes (session 10):** the map maker can now make island chains (every island joined by sea lanes), twin continents, land ringing an inland sea, a crescent, or land in a silhouette (a dragon, a shield, a crown), from 40 to 120 territories, with provinces sized to match and fair capitals for every player count a map claims. Candidates are in `docs/maps/candidates.md`; none is in the lobby until Nate picks.
 
 ## 13. Bots
 Bots play by exactly the same rules as people, and only from their own view (including their "last seen" memory). They never peek.

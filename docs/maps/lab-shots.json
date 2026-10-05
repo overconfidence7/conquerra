@@ -1,10 +1,255 @@
 {
-  "overview": { "shape": "inlandSea", "size": 100, "seed": "inland-1" },
-  "shapes": [],
-  "perf": [
-    { "preset": "greatmarch", "size": 80 },
-    { "shape": "mask", "size": 120, "seed": "dragon-1", "mask": "dragon" },
-    { "shape": "archipelago", "size": 120, "seed": "archipelago-120-1" },
-    { "shape": "continent", "size": 120, "seed": "continent-120-1" }
-  ]
+ "overview": {
+  "shape": "inlandSea",
+  "size": 100,
+  "seed": "inlandSea-100-6",
+  "recipe": {
+   "id": "ringsea",
+   "name": "The Ringsea",
+   "seed": "inlandSea-100-6",
+   "shape": "inlandSea",
+   "territories": 100,
+   "provinces": 22,
+   "players": {
+    "min": 2,
+    "max": 10,
+    "recommended": {
+     "min": 6,
+     "max": 10
+    }
+   },
+   "seas": 0,
+   "lakes": 3,
+   "islandChains": 0,
+   "mountainRanges": 3,
+   "seaLanes": 4,
+   "minSeaLanes": 2,
+   "rivers": 5,
+   "minChokePoints": 8,
+   "roughness": 0.6,
+   "laneReach": 20
+  }
+ },
+ "shapes": [
+  {
+   "shape": "continent",
+   "size": 80,
+   "seed": "continent-80-1"
+  },
+  {
+   "shape": "archipelago",
+   "size": 60,
+   "seed": "archipelago-60-5",
+   "recipe": {
+    "id": "shattered-isles",
+    "name": "The Shattered Isles",
+    "seed": "archipelago-60-5",
+    "shape": "archipelago",
+    "territories": 60,
+    "provinces": 13,
+    "players": {
+     "min": 2,
+     "max": 6,
+     "recommended": {
+      "min": 4,
+      "max": 6
+     }
+    },
+    "seas": 0,
+    "lakes": 0,
+    "islandChains": 0,
+    "mountainRanges": 1,
+    "seaLanes": 5,
+    "minSeaLanes": 8,
+    "rivers": 3,
+    "minChokePoints": 5,
+    "roughness": 0.6,
+    "islands": 9
+   }
+  },
+  {
+   "shape": "twinContinents",
+   "size": 80,
+   "seed": "twinContinents-80-2",
+   "recipe": {
+    "id": "twin-realms",
+    "name": "The Twin Realms",
+    "seed": "twinContinents-80-2",
+    "shape": "twinContinents",
+    "territories": 80,
+    "provinces": 18,
+    "players": {
+     "min": 2,
+     "max": 8,
+     "recommended": {
+      "min": 4,
+      "max": 8
+     }
+    },
+    "seas": 0,
+    "lakes": 2,
+    "islandChains": 1,
+    "mountainRanges": 3,
+    "seaLanes": 3,
+    "minSeaLanes": 2,
+    "rivers": 4,
+    "minChokePoints": 7,
+    "roughness": 0.6
+   }
+  },
+  {
+   "shape": "crescent",
+   "size": 80,
+   "seed": "crescent-80-2",
+   "recipe": {
+    "id": "moon-coast",
+    "name": "The Moon Coast",
+    "seed": "crescent-80-2",
+    "shape": "crescent",
+    "territories": 80,
+    "provinces": 18,
+    "players": {
+     "min": 2,
+     "max": 8,
+     "recommended": {
+      "min": 4,
+      "max": 8
+     }
+    },
+    "seas": 0,
+    "lakes": 2,
+    "islandChains": 0,
+    "mountainRanges": 3,
+    "seaLanes": 3,
+    "minSeaLanes": 2,
+    "rivers": 4,
+    "minChokePoints": 7,
+    "roughness": 0.6,
+    "laneReach": 20
+   }
+  },
+  {
+   "shape": "inlandSea",
+   "size": 100,
+   "seed": "inlandSea-100-6",
+   "recipe": {
+    "id": "ringsea",
+    "name": "The Ringsea",
+    "seed": "inlandSea-100-6",
+    "shape": "inlandSea",
+    "territories": 100,
+    "provinces": 22,
+    "players": {
+     "min": 2,
+     "max": 10,
+     "recommended": {
+      "min": 6,
+      "max": 10
+     }
+    },
+    "seas": 0,
+    "lakes": 3,
+    "islandChains": 0,
+    "mountainRanges": 3,
+    "seaLanes": 4,
+    "minSeaLanes": 2,
+    "rivers": 5,
+    "minChokePoints": 8,
+    "roughness": 0.6,
+    "laneReach": 20
+   }
+  },
+  {
+   "shape": "mask",
+   "size": 100,
+   "seed": "mask-100-5",
+   "mask": "crown",
+   "recipe": {
+    "id": "crownlands",
+    "name": "The Crownlands",
+    "seed": "mask-100-5",
+    "shape": "mask",
+    "territories": 100,
+    "provinces": 22,
+    "players": {
+     "min": 2,
+     "max": 10,
+     "recommended": {
+      "min": 6,
+      "max": 10
+     }
+    },
+    "seas": 0,
+    "lakes": 3,
+    "islandChains": 1,
+    "mountainRanges": 3,
+    "seaLanes": 4,
+    "minSeaLanes": 2,
+    "rivers": 5,
+    "minChokePoints": 8,
+    "roughness": 0.38,
+    "mask": "crown"
+   }
+  },
+  {
+   "shape": "mask",
+   "size": 120,
+   "seed": "mask-120-2",
+   "mask": "dragon",
+   "recipe": {
+    "id": "wyrmland",
+    "name": "Wyrmland",
+    "seed": "mask-120-2",
+    "shape": "mask",
+    "territories": 120,
+    "provinces": 27,
+    "players": {
+     "min": 2,
+     "max": 10,
+     "recommended": {
+      "min": 6,
+      "max": 8
+     }
+    },
+    "seas": 0,
+    "lakes": 3,
+    "islandChains": 1,
+    "mountainRanges": 2,
+    "seaLanes": 5,
+    "minSeaLanes": 2,
+    "rivers": 6,
+    "minChokePoints": 10,
+    "roughness": 0.38,
+    "mask": "dragon"
+   }
+  },
+  {
+   "shape": "mask",
+   "size": 80,
+   "seed": "mask-80-1",
+   "mask": "shield"
+  }
+ ],
+ "perf": [
+  {
+   "preset": "greatmarch",
+   "size": 80
+  },
+  {
+   "shape": "mask",
+   "size": 120,
+   "seed": "dragon-1",
+   "mask": "dragon"
+  },
+  {
+   "shape": "archipelago",
+   "size": 120,
+   "seed": "archipelago-120-1"
+  },
+  {
+   "shape": "continent",
+   "size": 120,
+   "seed": "continent-120-1"
+  }
+ ]
 }

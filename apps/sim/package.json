@@ -9,6 +9,10 @@
     "@conquerra/content": "workspace:*",
     "@conquerra/engine": "workspace:*",
     "@conquerra/bots": "workspace:*",
-    "@conquerra/simcore": "workspace:*"
+    "@conquerra/simcore": "workspace:*",
+    "@conquerra/mapgen": "workspace:*"
+  },
+  "scripts": {
+    "candidates": "tsx src/candidates.ts"
   }
 }

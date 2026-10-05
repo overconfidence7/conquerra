@@ -41,6 +41,9 @@ importers:
       '@conquerra/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@conquerra/mapgen':
+        specifier: workspace:*
+        version: link:../../packages/mapgen
       '@conquerra/simcore':
         specifier: workspace:*
         version: link:../../packages/simcore

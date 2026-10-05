@@ -48,6 +48,14 @@ function readStart(): Recipe {
   // `preset=embervale`: a built-in map's own recipe.
   const preset = PRESETS.find((p) => p.id === q.get("preset"));
   if (preset) return structuredClone(preset.recipe);
+  // `recipe=<JSON>`: a whole recipe (the candidate links in docs/maps/candidates.md use this).
+  const json = q.get("recipe");
+  if (json)
+    try {
+      return recipeFromJson(json);
+    } catch {
+      // Not a recipe: fall back to shape, size and seed.
+    }
   const shape = (q.get("shape") ?? "continent") as LandShape;
   const size = Number(q.get("size") ?? 60);
   return recipeFor(LAND_SHAPES.includes(shape) ? shape : "continent", size, q.get("seed") ?? "lab-1", q.get("mask") ? { mask: q.get("mask")! } : {});
@@ -276,6 +284,9 @@ function MapLab() {
     if (m.map && !PARAMS.has("players")) setOpts((o) => ({ ...o, players: Math.max(m.map!.minPlayers, Math.min(m.map!.maxPlayers, m.map!.recommendedPlayers.max)) }));
     // So Nate can share or reload exactly this map.
     const q = new URLSearchParams(location.search);
+    // The whole recipe too, so a copied link opens exactly this map (shape, size and seed are just easier to read).
+    q.delete("preset");
+    q.set("recipe", JSON.stringify(r));
     q.set("shape", r.shape ?? "continent");
     q.set("size", String(r.territories));
     q.set("seed", r.seed);

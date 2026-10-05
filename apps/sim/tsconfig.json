@@ -2,5 +2,5 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "rootDir": ".", "outDir": "dist", "lib": ["ES2022"], "types": ["node"] },
   "include": ["src", "test", "data"],
-  "references": [ { "path": "../../packages/content" }, { "path": "../../packages/engine" }, { "path": "../../packages/bots" }, { "path": "../../packages/simcore" } ]
+  "references": [ { "path": "../../packages/content" }, { "path": "../../packages/engine" }, { "path": "../../packages/bots" }, { "path": "../../packages/simcore" }, { "path": "../../packages/mapgen" } ]
 }

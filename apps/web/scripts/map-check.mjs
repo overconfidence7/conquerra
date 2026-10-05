@@ -247,7 +247,7 @@ async function houses() {
 }
 
 /** The map lab's address for a recipe. */
-const labUrl = (r, extra = "") => r.preset ? `${URL}?lab=maps&preset=${r.preset}${extra}` : `${URL}?lab=maps&shape=${r.shape}&size=${r.size}&seed=${encodeURIComponent(r.seed)}${r.mask ? `&mask=${r.mask}` : ""}${extra}`;
+const labUrl = (r, extra = "") => r.recipe ? `${URL}?lab=maps&recipe=${encodeURIComponent(JSON.stringify(r.recipe))}${extra}` : r.preset ? `${URL}?lab=maps&preset=${r.preset}${extra}` : `${URL}?lab=maps&shape=${r.shape}&size=${r.size}&seed=${encodeURIComponent(r.seed)}${r.mask ? `&mask=${r.mask}` : ""}${extra}`;
 
 /** Wait until the lab has made its map and (unless held) painted every tile. */
 async function labReady(page, painted = true) {
@@ -316,6 +316,8 @@ async function lab() {
     await page.screenshot({ path: out("lab-gallery.png") });
     console.log("  saved lab-gallery.png");
   }
+  // A smaller window, so even a 60-territory map shows at Far detail when it's all on screen.
+  await page.setViewport({ width: 1000, height: 640, deviceScaleFactor: 1.5 });
   for (const r of shots.shapes) {
     await page.goto(labUrl(r, "&full=1"), { waitUntil: "networkidle0" });
     const m = await labReady(page);

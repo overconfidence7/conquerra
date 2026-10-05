@@ -132,7 +132,8 @@ for (const players of playerCounts) {
   for (const g of results) reasons.set(String(g.endReason), (reasons.get(String(g.endReason)) ?? 0) + 1);
   const decided = results.filter((g) => g.decidedTurn !== null);
   const turns = results.map((g) => g.turns).sort((a, b) => a - b);
-  const inBand = results.filter((g) => g.turns >= 15 && g.turns <= 25).length;
+  // Nate's target (Oct 5): games may run up to 30–40 turns.
+  const upTo40 = results.filter((g) => g.turns <= 40).length, in30to40 = results.filter((g) => g.turns >= 30 && g.turns <= 40).length;
   const resolve = stats(results.flatMap((g) => g.resolveMs));
   const plan = stats(results.flatMap((g) => g.planMs));
   const total = stats(results.flatMap((g) => g.resolveMs.map((r, i) => r + g.planMs[i]!)));
@@ -149,7 +150,7 @@ for (const players of playerCounts) {
   for (const g of results) for (const [k, v] of Object.entries(g.planMsByBot)) perBot.set(k, [...(perBot.get(k) ?? []), ...v]);
   console.log(`Planning time per bot per turn: ${[...perBot].map(([k, v]) => { const st = stats(v); return `${k} avg ${ms(st.avg)}, p95 ${ms(st.p95)}, worst ${ms(st.max)}`; }).join(" | ")}`);
   console.log(`How games ended: ${[...reasons.entries()].map(([k, v]) => `${k} ${pct(v)}`).join(", ")}`);
-  console.log(`Game length (turns): avg ${avg((g) => g.turns).toFixed(1)}, median ${turns[Math.floor(turns.length / 2)] ?? "-"}, min ${turns[0] ?? "-"}, max ${turns[turns.length - 1] ?? "-"}; ${pct(inBand)} within 15–25`);
+  console.log(`Game length (turns): avg ${avg((g) => g.turns).toFixed(1)}, median ${turns[Math.floor(turns.length / 2)] ?? "-"}, min ${turns[0] ?? "-"}, max ${turns[turns.length - 1] ?? "-"}; ${pct(upTo40)} within 40, ${pct(in30to40)} in 30–40`);
   // Real time, roughly: a typical single-player turn takes about 1.5 minutes to plan plus about half a minute of
   // replay; a live online game with the 5-minute timer, about 5.5 minutes a turn if people use most of the timer.
   const t = avg((g) => g.turns);

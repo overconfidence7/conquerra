@@ -1,0 +1,2484 @@
+{
+ "games": 200,
+ "made": "2026-10-05",
+ "candidates": [
+  {
+   "key": "shattered-isles",
+   "why": "Nine islands of different sizes and one islet, every crossing a sea lane: a naval map for 4–6.",
+   "recipe": {
+    "id": "shattered-isles",
+    "name": "The Shattered Isles",
+    "seed": "archipelago-60-5",
+    "shape": "archipelago",
+    "territories": 60,
+    "provinces": 13,
+    "players": {
+     "min": 2,
+     "max": 6,
+     "recommended": {
+      "min": 4,
+      "max": 6
+     }
+    },
+    "seas": 0,
+    "lakes": 0,
+    "islandChains": 0,
+    "mountainRanges": 1,
+    "seaLanes": 5,
+    "minSeaLanes": 8,
+    "rivers": 3,
+    "minChokePoints": 5,
+    "roughness": 0.6,
+    "islands": 9
+   },
+   "attempt": 1,
+   "makeMs": 493,
+   "fingerprint": "896719dbf3fe2549",
+   "territories": 60,
+   "provinces": 13,
+   "provinceSizes": [
+    8,
+    5,
+    5,
+    4,
+    5,
+    5,
+    4,
+    5,
+    7,
+    2,
+    2,
+    5,
+    3
+   ],
+   "borders": {
+    "normal": 97,
+    "sea": 9,
+    "pass": 1,
+    "river": 7
+   },
+   "chokePoints": {
+    "passes": 1,
+    "seaLanes": 9,
+    "landBridges": 0,
+    "total": 10
+   },
+   "checks": [
+    {
+     "label": "Every territory can reach every other (by land, pass or sea lane)",
+     "ok": true,
+     "detail": "60 territories"
+    },
+    {
+     "label": "Territories are about the same size (40%–220% of average)",
+     "ok": true,
+     "detail": "smallest 83%, biggest 113% of average"
+    },
+    {
+     "label": "Every territory has room for its banner",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "label": "Provinces have 2–8 territories and are each in one piece",
+     "ok": true,
+     "detail": "13 provinces of 2–8"
+    },
+    {
+     "label": "Capitals are fair for 2–6 players",
+     "ok": true,
+     "detail": "5 layouts"
+    },
+    {
+     "label": "No hairline borders (neighbours share a border you can see)",
+     "ok": true,
+     "detail": "shortest 23.4; at least 22"
+    },
+    {
+     "label": "Passes are wide enough to see",
+     "ok": true,
+     "detail": "1 passes, narrowest 40.1; at least 28"
+    },
+    {
+     "label": "Enough sea lanes",
+     "ok": true,
+     "detail": "9; at least 8"
+    },
+    {
+     "label": "Enough choke points (passes, sea lanes, land bridges)",
+     "ok": true,
+     "detail": "1 passes + 9 sea lanes + 0 land bridges = 10; at least 5"
+    }
+   ],
+   "fairness": [
+    {
+     "players": 2,
+     "gap": {
+      "min": 14,
+      "max": 14
+     },
+     "income": {
+      "min": 8,
+      "max": 8,
+      "ratio": 1
+     },
+     "fair": true
+    },
+    {
+     "players": 3,
+     "gap": {
+      "min": 9,
+      "max": 9
+     },
+     "income": {
+      "min": 12,
+      "max": 14,
+      "ratio": 0.8571428571428571
+     },
+     "fair": true
+    },
+    {
+     "players": 4,
+     "gap": {
+      "min": 5,
+      "max": 5
+     },
+     "income": {
+      "min": 13,
+      "max": 15,
+      "ratio": 0.8666666666666667
+     },
+     "fair": true
+    },
+    {
+     "players": 5,
+     "gap": {
+      "min": 4,
+      "max": 4
+     },
+     "income": {
+      "min": 12,
+      "max": 14.5,
+      "ratio": 0.8275862068965517
+     },
+     "fair": true
+    },
+    {
+     "players": 6,
+     "gap": {
+      "min": 3,
+      "max": 4
+     },
+     "income": {
+      "min": 10,
+      "max": 14,
+      "ratio": 0.7142857142857143
+     },
+     "fair": true
+    }
+   ],
+   "sizes": {
+    "min": 83,
+    "max": 113,
+    "bands": [
+     {
+      "from": 0,
+      "to": 60,
+      "count": 0
+     },
+     {
+      "from": 60,
+      "to": 80,
+      "count": 0
+     },
+     {
+      "from": 80,
+      "to": 100,
+      "count": 23
+     },
+     {
+      "from": 100,
+      "to": 120,
+      "count": 37
+     },
+     {
+      "from": 120,
+      "to": 140,
+      "count": 0
+     },
+     {
+      "from": 140,
+      "to": 170,
+      "count": 0
+     },
+     {
+      "from": 170,
+      "to": 1000,
+      "count": 0
+     }
+    ]
+   },
+   "sims": [
+    {
+     "games": 200,
+     "players": 4,
+     "turns": {
+      "avg": 28.16,
+      "median": 25,
+      "min": 13,
+      "max": 60
+     },
+     "upTo40": 0.89,
+     "in30to40": 0.215,
+     "seatWins": [
+      0.26,
+      0.23,
+      0.2,
+      0.31
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0.24,
+      "halfwayLeaderWins": 0.77,
+      "comebacks": 0.37
+     },
+     "battles": {
+      "perGame": 273.32,
+      "byBorder": {
+       "normal": 233.155,
+       "river": 16.145,
+       "pass": 1.495,
+       "sea": 22.525
+      },
+      "passShare": 0.00546977901361042,
+      "seaShare": 0.08241255671008342
+     }
+    },
+    {
+     "games": 200,
+     "players": 6,
+     "turns": {
+      "avg": 36.925,
+      "median": 35,
+      "min": 18,
+      "max": 60
+     },
+     "upTo40": 0.7,
+     "in30to40": 0.41,
+     "seatWins": [
+      0.17,
+      0.16,
+      0.23,
+      0.13,
+      0.135,
+      0.175
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0.15,
+      "halfwayLeaderWins": 0.82,
+      "comebacks": 0.405
+     },
+     "battles": {
+      "perGame": 432.37,
+      "byBorder": {
+       "normal": 364.6,
+       "river": 34.605,
+       "pass": 2.85,
+       "sea": 30.315
+      },
+      "passShare": 0.006591576658880126,
+      "seaShare": 0.07011356014524597
+     }
+    }
+   ],
+   "continent": [
+    {
+     "games": 200,
+     "players": 4,
+     "turns": {
+      "avg": 27.16,
+      "median": 26,
+      "min": 15,
+      "max": 60
+     },
+     "upTo40": 0.9,
+     "in30to40": 0.185,
+     "seatWins": [
+      0.225,
+      0.275,
+      0.27,
+      0.23
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0.08,
+      "halfwayLeaderWins": 0.845,
+      "comebacks": 0.305
+     },
+     "battles": {
+      "perGame": 323.955,
+      "byBorder": {
+       "normal": 260.355,
+       "river": 49.915,
+       "pass": 8.225,
+       "sea": 5.46
+      },
+      "passShare": 0.02538932876479758,
+      "seaShare": 0.016854192711950735
+     }
+    },
+    {
+     "games": 200,
+     "players": 6,
+     "turns": {
+      "avg": 25.155,
+      "median": 24,
+      "min": 13,
+      "max": 60
+     },
+     "upTo40": 0.955,
+     "in30to40": 0.19,
+     "seatWins": [
+      0.12,
+      0.165,
+      0.155,
+      0.18,
+      0.21,
+      0.17
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0.195,
+      "halfwayLeaderWins": 0.86,
+      "comebacks": 0.21
+     },
+     "battles": {
+      "perGame": 358.81,
+      "byBorder": {
+       "normal": 305.13,
+       "river": 42.1,
+       "pass": 5.695,
+       "sea": 5.885
+      },
+      "passShare": 0.01587190992447256,
+      "seaShare": 0.016401438087009838
+     }
+    }
+   ]
+  },
+  {
+   "key": "twin-realms",
+   "why": "Two big continents joined by one narrow land bridge and two sea lanes: a natural front line for 4–8.",
+   "recipe": {
+    "id": "twin-realms",
+    "name": "The Twin Realms",
+    "seed": "twinContinents-80-2",
+    "shape": "twinContinents",
+    "territories": 80,
+    "provinces": 18,
+    "players": {
+     "min": 2,
+     "max": 8,
+     "recommended": {
+      "min": 4,
+      "max": 8
+     }
+    },
+    "seas": 0,
+    "lakes": 2,
+    "islandChains": 1,
+    "mountainRanges": 3,
+    "seaLanes": 3,
+    "minSeaLanes": 2,
+    "rivers": 4,
+    "minChokePoints": 7,
+    "roughness": 0.6
+   },
+   "attempt": 2,
+   "makeMs": 2942,
+   "fingerprint": "498302f01c883d9c",
+   "territories": 80,
+   "provinces": 18,
+   "provinceSizes": [
+    6,
+    6,
+    5,
+    5,
+    3,
+    4,
+    5,
+    6,
+    4,
+    3,
+    3,
+    5,
+    4,
+    5,
+    4,
+    3,
+    5,
+    4
+   ],
+   "borders": {
+    "normal": 155,
+    "sea": 2,
+    "pass": 5,
+    "river": 16
+   },
+   "chokePoints": {
+    "passes": 5,
+    "seaLanes": 2,
+    "landBridges": 1,
+    "total": 8
+   },
+   "checks": [
+    {
+     "label": "Every territory can reach every other (by land, pass or sea lane)",
+     "ok": true,
+     "detail": "80 territories"
+    },
+    {
+     "label": "Territories are about the same size (40%–220% of average)",
+     "ok": true,
+     "detail": "smallest 77%, biggest 117% of average"
+    },
+    {
+     "label": "Every territory has room for its banner",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "label": "Provinces have 2–8 territories and are each in one piece",
+     "ok": true,
+     "detail": "18 provinces of 3–6"
+    },
+    {
+     "label": "Capitals are fair for 2–8 players",
+     "ok": true,
+     "detail": "7 layouts"
+    },
+    {
+     "label": "No hairline borders (neighbours share a border you can see)",
+     "ok": true,
+     "detail": "shortest 25.1; at least 22"
+    },
+    {
+     "label": "Passes are wide enough to see",
+     "ok": true,
+     "detail": "5 passes, narrowest 37.6; at least 28"
+    },
+    {
+     "label": "Enough sea lanes",
+     "ok": true,
+     "detail": "2; at least 2"
+    },
+    {
+     "label": "Enough choke points (passes, sea lanes, land bridges)",
+     "ok": true,
+     "detail": "5 passes + 2 sea lanes + 1 land bridges = 8; at least 7"
+    }
+   ],
+   "fairness": [
+    {
+     "players": 2,
+     "gap": {
+      "min": 13,
+      "max": 13
+     },
+     "income": {
+      "min": 18,
+      "max": 20,
+      "ratio": 0.9
+     },
+     "fair": true
+    },
+    {
+     "players": 3,
+     "gap": {
+      "min": 7,
+      "max": 7
+     },
+     "income": {
+      "min": 17,
+      "max": 20,
+      "ratio": 0.85
+     },
+     "fair": true
+    },
+    {
+     "players": 4,
+     "gap": {
+      "min": 6,
+      "max": 6
+     },
+     "income": {
+      "min": 16,
+      "max": 22,
+      "ratio": 0.7272727272727273
+     },
+     "fair": true
+    },
+    {
+     "players": 5,
+     "gap": {
+      "min": 5,
+      "max": 5
+     },
+     "income": {
+      "min": 16,
+      "max": 19,
+      "ratio": 0.8421052631578947
+     },
+     "fair": true
+    },
+    {
+     "players": 6,
+     "gap": {
+      "min": 4,
+      "max": 4
+     },
+     "income": {
+      "min": 16.5,
+      "max": 19.5,
+      "ratio": 0.8461538461538461
+     },
+     "fair": true
+    },
+    {
+     "players": 7,
+     "gap": {
+      "min": 3,
+      "max": 4
+     },
+     "income": {
+      "min": 13.5,
+      "max": 16,
+      "ratio": 0.84375
+     },
+     "fair": true
+    },
+    {
+     "players": 8,
+     "gap": {
+      "min": 3,
+      "max": 3
+     },
+     "income": {
+      "min": 13,
+      "max": 17,
+      "ratio": 0.7647058823529411
+     },
+     "fair": true
+    }
+   ],
+   "sizes": {
+    "min": 77,
+    "max": 117,
+    "bands": [
+     {
+      "from": 0,
+      "to": 60,
+      "count": 0
+     },
+     {
+      "from": 60,
+      "to": 80,
+      "count": 2
+     },
+     {
+      "from": 80,
+      "to": 100,
+      "count": 29
+     },
+     {
+      "from": 100,
+      "to": 120,
+      "count": 49
+     },
+     {
+      "from": 120,
+      "to": 140,
+      "count": 0
+     },
+     {
+      "from": 140,
+      "to": 170,
+      "count": 0
+     },
+     {
+      "from": 170,
+      "to": 1000,
+      "count": 0
+     }
+    ]
+   },
+   "sims": [
+    {
+     "games": 200,
+     "players": 4,
+     "turns": {
+      "avg": 24.385,
+      "median": 24,
+      "min": 13,
+      "max": 60
+     },
+     "upTo40": 0.98,
+     "in30to40": 0.115,
+     "seatWins": [
+      0.26,
+      0.265,
+      0.225,
+      0.25
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0.07,
+      "halfwayLeaderWins": 0.875,
+      "comebacks": 0.225
+     },
+     "battles": {
+      "perGame": 336.5,
+      "byBorder": {
+       "normal": 312.465,
+       "river": 16.315,
+       "pass": 6.29,
+       "sea": 1.43
+      },
+      "passShare": 0.018692421991084694,
+      "seaShare": 0.00424962852897474
+     }
+    },
+    {
+     "games": 200,
+     "players": 8,
+     "turns": {
+      "avg": 29.75,
+      "median": 28,
+      "min": 17,
+      "max": 60
+     },
+     "upTo40": 0.915,
+     "in30to40": 0.33,
+     "seatWins": [
+      0.07,
+      0.14,
+      0.125,
+      0.1,
+      0.13,
+      0.15,
+      0.14,
+      0.145
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0.005,
+      "halfwayLeaderWins": 0.815,
+      "comebacks": 0.355
+     },
+     "battles": {
+      "perGame": 606.2,
+      "byBorder": {
+       "normal": 551.75,
+       "river": 42.33,
+       "pass": 9.795,
+       "sea": 2.325
+      },
+      "passShare": 0.01615803365225998,
+      "seaShare": 0.00383536786539096
+     }
+    }
+   ],
+   "continent": [
+    {
+     "games": 200,
+     "players": 4,
+     "turns": {
+      "avg": 33.785,
+      "median": 32,
+      "min": 17,
+      "max": 60
+     },
+     "upTo40": 0.765,
+     "in30to40": 0.355,
+     "seatWins": [
+      0.275,
+      0.21,
+      0.265,
+      0.25
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0.02,
+      "halfwayLeaderWins": 0.805,
+      "comebacks": 0.375
+     },
+     "battles": {
+      "perGame": 479.9,
+      "byBorder": {
+       "normal": 405.255,
+       "river": 60.28,
+       "pass": 10.665,
+       "sea": 3.7
+      },
+      "passShare": 0.022223379870806418,
+      "seaShare": 0.007709939570743905
+     }
+    },
+    {
+     "games": 200,
+     "players": 8,
+     "turns": {
+      "avg": 32.89,
+      "median": 30,
+      "min": 18,
+      "max": 60
+     },
+     "upTo40": 0.77,
+     "in30to40": 0.275,
+     "seatWins": [
+      0.125,
+      0.17,
+      0.125,
+      0.1,
+      0.14,
+      0.125,
+      0.13,
+      0.085
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0.055,
+      "halfwayLeaderWins": 0.87,
+      "comebacks": 0.245
+     },
+     "battles": {
+      "perGame": 609.935,
+      "byBorder": {
+       "normal": 532.035,
+       "river": 47.505,
+       "pass": 16.405,
+       "sea": 13.99
+      },
+      "passShare": 0.026896308623049998,
+      "seaShare": 0.022936870322247453
+     }
+    }
+   ]
+  },
+  {
+   "key": "moon-coast",
+   "why": "A long crescent round a bay with two isles in it: short fronts and long marches for 4–8.",
+   "recipe": {
+    "id": "moon-coast",
+    "name": "The Moon Coast",
+    "seed": "crescent-80-2",
+    "shape": "crescent",
+    "territories": 80,
+    "provinces": 18,
+    "players": {
+     "min": 2,
+     "max": 8,
+     "recommended": {
+      "min": 4,
+      "max": 8
+     }
+    },
+    "seas": 0,
+    "lakes": 2,
+    "islandChains": 0,
+    "mountainRanges": 3,
+    "seaLanes": 3,
+    "minSeaLanes": 2,
+    "rivers": 4,
+    "minChokePoints": 7,
+    "roughness": 0.6,
+    "laneReach": 20
+   },
+   "attempt": 8,
+   "makeMs": 12258,
+   "fingerprint": "82f216413b50908b",
+   "territories": 80,
+   "provinces": 18,
+   "provinceSizes": [
+    3,
+    6,
+    4,
+    3,
+    6,
+    6,
+    5,
+    4,
+    4,
+    6,
+    5,
+    5,
+    4,
+    4,
+    4,
+    3,
+    4,
+    4
+   ],
+   "borders": {
+    "sea": 4,
+    "normal": 126,
+    "river": 17,
+    "pass": 7
+   },
+   "chokePoints": {
+    "passes": 7,
+    "seaLanes": 4,
+    "landBridges": 1,
+    "total": 12
+   },
+   "checks": [
+    {
+     "label": "Every territory can reach every other (by land, pass or sea lane)",
+     "ok": true,
+     "detail": "80 territories"
+    },
+    {
+     "label": "Territories are about the same size (40%–220% of average)",
+     "ok": true,
+     "detail": "smallest 67%, biggest 120% of average"
+    },
+    {
+     "label": "Every territory has room for its banner",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "label": "Provinces have 2–8 territories and are each in one piece",
+     "ok": true,
+     "detail": "18 provinces of 3–6"
+    },
+    {
+     "label": "Capitals are fair for 2–8 players",
+     "ok": true,
+     "detail": "7 layouts"
+    },
+    {
+     "label": "No hairline borders (neighbours share a border you can see)",
+     "ok": true,
+     "detail": "shortest 23.9; at least 22"
+    },
+    {
+     "label": "Passes are wide enough to see",
+     "ok": true,
+     "detail": "7 passes, narrowest 37.3; at least 28"
+    },
+    {
+     "label": "Enough sea lanes",
+     "ok": true,
+     "detail": "4; at least 2"
+    },
+    {
+     "label": "Enough choke points (passes, sea lanes, land bridges)",
+     "ok": true,
+     "detail": "7 passes + 4 sea lanes + 1 land bridges = 12; at least 7"
+    }
+   ],
+   "fairness": [
+    {
+     "players": 2,
+     "gap": {
+      "min": 16,
+      "max": 16
+     },
+     "income": {
+      "min": 15,
+      "max": 18,
+      "ratio": 0.8333333333333334
+     },
+     "fair": true
+    },
+    {
+     "players": 3,
+     "gap": {
+      "min": 8,
+      "max": 8
+     },
+     "income": {
+      "min": 15,
+      "max": 18,
+      "ratio": 0.8333333333333334
+     },
+     "fair": true
+    },
+    {
+     "players": 4,
+     "gap": {
+      "min": 6,
+      "max": 6
+     },
+     "income": {
+      "min": 12,
+      "max": 16,
+      "ratio": 0.75
+     },
+     "fair": true
+    },
+    {
+     "players": 5,
+     "gap": {
+      "min": 5,
+      "max": 5
+     },
+     "income": {
+      "min": 14,
+      "max": 17,
+      "ratio": 0.8235294117647058
+     },
+     "fair": true
+    },
+    {
+     "players": 6,
+     "gap": {
+      "min": 4,
+      "max": 4
+     },
+     "income": {
+      "min": 12.5,
+      "max": 15,
+      "ratio": 0.8333333333333334
+     },
+     "fair": true
+    },
+    {
+     "players": 7,
+     "gap": {
+      "min": 3,
+      "max": 3
+     },
+     "income": {
+      "min": 11,
+      "max": 14.5,
+      "ratio": 0.7586206896551724
+     },
+     "fair": true
+    },
+    {
+     "players": 8,
+     "gap": {
+      "min": 3,
+      "max": 3
+     },
+     "income": {
+      "min": 11,
+      "max": 13.5,
+      "ratio": 0.8148148148148148
+     },
+     "fair": true
+    }
+   ],
+   "sizes": {
+    "min": 67,
+    "max": 120,
+    "bands": [
+     {
+      "from": 0,
+      "to": 60,
+      "count": 0
+     },
+     {
+      "from": 60,
+      "to": 80,
+      "count": 6
+     },
+     {
+      "from": 80,
+      "to": 100,
+      "count": 26
+     },
+     {
+      "from": 100,
+      "to": 120,
+      "count": 47
+     },
+     {
+      "from": 120,
+      "to": 140,
+      "count": 1
+     },
+     {
+      "from": 140,
+      "to": 170,
+      "count": 0
+     },
+     {
+      "from": 170,
+      "to": 1000,
+      "count": 0
+     }
+    ]
+   },
+   "sims": [
+    {
+     "games": 200,
+     "players": 4,
+     "turns": {
+      "avg": 27.035,
+      "median": 25,
+      "min": 15,
+      "max": 60
+     },
+     "upTo40": 0.935,
+     "in30to40": 0.2,
+     "seatWins": [
+      0.195,
+      0.275,
+      0.29,
+      0.24
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0.12,
+      "halfwayLeaderWins": 0.855,
+      "comebacks": 0.2
+     },
+     "battles": {
+      "perGame": 326.99,
+      "byBorder": {
+       "normal": 253.65,
+       "river": 46.085,
+       "pass": 20.41,
+       "sea": 6.845
+      },
+      "passShare": 0.06241781094223065,
+      "seaShare": 0.020933361876509984
+     }
+    },
+    {
+     "games": 200,
+     "players": 8,
+     "turns": {
+      "avg": 31.245,
+      "median": 30,
+      "min": 17,
+      "max": 60
+     },
+     "upTo40": 0.88,
+     "in30to40": 0.38,
+     "seatWins": [
+      0.11,
+      0.14,
+      0.165,
+      0.12,
+      0.09,
+      0.155,
+      0.12,
+      0.1
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0,
+      "halfwayLeaderWins": 0.635,
+      "comebacks": 0.525
+     },
+     "battles": {
+      "perGame": 484.105,
+      "byBorder": {
+       "normal": 404.01,
+       "river": 49.43,
+       "pass": 20.82,
+       "sea": 9.845
+      },
+      "passShare": 0.04300719885148883,
+      "seaShare": 0.02033649724749796
+     }
+    }
+   ],
+   "continent": [
+    {
+     "games": 200,
+     "players": 4,
+     "turns": {
+      "avg": 33.785,
+      "median": 32,
+      "min": 17,
+      "max": 60
+     },
+     "upTo40": 0.765,
+     "in30to40": 0.355,
+     "seatWins": [
+      0.275,
+      0.21,
+      0.265,
+      0.25
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0.02,
+      "halfwayLeaderWins": 0.805,
+      "comebacks": 0.375
+     },
+     "battles": {
+      "perGame": 479.9,
+      "byBorder": {
+       "normal": 405.255,
+       "river": 60.28,
+       "pass": 10.665,
+       "sea": 3.7
+      },
+      "passShare": 0.022223379870806418,
+      "seaShare": 0.007709939570743905
+     }
+    },
+    {
+     "games": 200,
+     "players": 8,
+     "turns": {
+      "avg": 32.89,
+      "median": 30,
+      "min": 18,
+      "max": 60
+     },
+     "upTo40": 0.77,
+     "in30to40": 0.275,
+     "seatWins": [
+      0.125,
+      0.17,
+      0.125,
+      0.1,
+      0.14,
+      0.125,
+      0.13,
+      0.085
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0.055,
+      "halfwayLeaderWins": 0.87,
+      "comebacks": 0.245
+     },
+     "battles": {
+      "perGame": 609.935,
+      "byBorder": {
+       "normal": 532.035,
+       "river": 47.505,
+       "pass": 16.405,
+       "sea": 13.99
+      },
+      "passShare": 0.026896308623049998,
+      "seaShare": 0.022936870322247453
+     }
+    }
+   ]
+  },
+  {
+   "key": "ringsea",
+   "why": "Land in a ring round an inland sea with an island in the middle that every shore can reach: for 6–10.",
+   "recipe": {
+    "id": "ringsea",
+    "name": "The Ringsea",
+    "seed": "inlandSea-100-6",
+    "shape": "inlandSea",
+    "territories": 100,
+    "provinces": 22,
+    "players": {
+     "min": 2,
+     "max": 10,
+     "recommended": {
+      "min": 6,
+      "max": 10
+     }
+    },
+    "seas": 0,
+    "lakes": 3,
+    "islandChains": 0,
+    "mountainRanges": 3,
+    "seaLanes": 4,
+    "minSeaLanes": 2,
+    "rivers": 5,
+    "minChokePoints": 8,
+    "roughness": 0.6,
+    "laneReach": 20
+   },
+   "attempt": 1,
+   "makeMs": 3075,
+   "fingerprint": "6166718dea5872fd",
+   "territories": 100,
+   "provinces": 22,
+   "provinceSizes": [
+    3,
+    4,
+    4,
+    4,
+    5,
+    5,
+    5,
+    4,
+    4,
+    5,
+    4,
+    3,
+    3,
+    5,
+    5,
+    4,
+    6,
+    6,
+    5,
+    5,
+    6,
+    5
+   ],
+   "borders": {
+    "normal": 181,
+    "pass": 5,
+    "river": 21,
+    "sea": 4
+   },
+   "chokePoints": {
+    "passes": 5,
+    "seaLanes": 4,
+    "landBridges": 0,
+    "total": 9
+   },
+   "checks": [
+    {
+     "label": "Every territory can reach every other (by land, pass or sea lane)",
+     "ok": true,
+     "detail": "100 territories"
+    },
+    {
+     "label": "Territories are about the same size (40%–220% of average)",
+     "ok": true,
+     "detail": "smallest 75%, biggest 115% of average"
+    },
+    {
+     "label": "Every territory has room for its banner",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "label": "Provinces have 2–8 territories and are each in one piece",
+     "ok": true,
+     "detail": "22 provinces of 3–6"
+    },
+    {
+     "label": "Capitals are fair for 2–10 players",
+     "ok": true,
+     "detail": "9 layouts"
+    },
+    {
+     "label": "No hairline borders (neighbours share a border you can see)",
+     "ok": true,
+     "detail": "shortest 24.2; at least 22"
+    },
+    {
+     "label": "Passes are wide enough to see",
+     "ok": true,
+     "detail": "5 passes, narrowest 37.5; at least 28"
+    },
+    {
+     "label": "Enough sea lanes",
+     "ok": true,
+     "detail": "4; at least 2"
+    },
+    {
+     "label": "Enough choke points (passes, sea lanes, land bridges)",
+     "ok": true,
+     "detail": "5 passes + 4 sea lanes + 0 land bridges = 9; at least 8"
+    }
+   ],
+   "fairness": [
+    {
+     "players": 2,
+     "gap": {
+      "min": 15,
+      "max": 15
+     },
+     "income": {
+      "min": 16,
+      "max": 16,
+      "ratio": 1
+     },
+     "fair": true
+    },
+    {
+     "players": 3,
+     "gap": {
+      "min": 10,
+      "max": 10
+     },
+     "income": {
+      "min": 15,
+      "max": 21,
+      "ratio": 0.7142857142857143
+     },
+     "fair": true
+    },
+    {
+     "players": 4,
+     "gap": {
+      "min": 7,
+      "max": 7
+     },
+     "income": {
+      "min": 17,
+      "max": 24,
+      "ratio": 0.7083333333333334
+     },
+     "fair": true
+    },
+    {
+     "players": 5,
+     "gap": {
+      "min": 6,
+      "max": 6
+     },
+     "income": {
+      "min": 15,
+      "max": 21,
+      "ratio": 0.7142857142857143
+     },
+     "fair": true
+    },
+    {
+     "players": 6,
+     "gap": {
+      "min": 5,
+      "max": 5
+     },
+     "income": {
+      "min": 15,
+      "max": 19,
+      "ratio": 0.7894736842105263
+     },
+     "fair": true
+    },
+    {
+     "players": 7,
+     "gap": {
+      "min": 5,
+      "max": 5
+     },
+     "income": {
+      "min": 15,
+      "max": 20,
+      "ratio": 0.75
+     },
+     "fair": true
+    },
+    {
+     "players": 8,
+     "gap": {
+      "min": 4,
+      "max": 4
+     },
+     "income": {
+      "min": 13.5,
+      "max": 17,
+      "ratio": 0.7941176470588235
+     },
+     "fair": true
+    },
+    {
+     "players": 9,
+     "gap": {
+      "min": 3,
+      "max": 3
+     },
+     "income": {
+      "min": 10,
+      "max": 13.7,
+      "ratio": 0.7299270072992701
+     },
+     "fair": true
+    },
+    {
+     "players": 10,
+     "gap": {
+      "min": 3,
+      "max": 4
+     },
+     "income": {
+      "min": 11,
+      "max": 14.3,
+      "ratio": 0.7692307692307692
+     },
+     "fair": true
+    }
+   ],
+   "sizes": {
+    "min": 75,
+    "max": 115,
+    "bands": [
+     {
+      "from": 0,
+      "to": 60,
+      "count": 0
+     },
+     {
+      "from": 60,
+      "to": 80,
+      "count": 2
+     },
+     {
+      "from": 80,
+      "to": 100,
+      "count": 36
+     },
+     {
+      "from": 100,
+      "to": 120,
+      "count": 62
+     },
+     {
+      "from": 120,
+      "to": 140,
+      "count": 0
+     },
+     {
+      "from": 140,
+      "to": 170,
+      "count": 0
+     },
+     {
+      "from": 170,
+      "to": 1000,
+      "count": 0
+     }
+    ]
+   },
+   "sims": [
+    {
+     "games": 200,
+     "players": 6,
+     "turns": {
+      "avg": 35.93,
+      "median": 35,
+      "min": 19,
+      "max": 60
+     },
+     "upTo40": 0.74,
+     "in30to40": 0.5,
+     "seatWins": [
+      0.17,
+      0.17,
+      0.155,
+      0.11,
+      0.23,
+      0.165
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0.005,
+      "halfwayLeaderWins": 0.77,
+      "comebacks": 0.415
+     },
+     "battles": {
+      "perGame": 625.79,
+      "byBorder": {
+       "normal": 556.565,
+       "river": 41.445,
+       "pass": 11.47,
+       "sea": 16.31
+      },
+      "passShare": 0.01832883235590214,
+      "seaShare": 0.026063056296840793
+     }
+    },
+    {
+     "games": 200,
+     "players": 10,
+     "turns": {
+      "avg": 38.56,
+      "median": 37,
+      "min": 23,
+      "max": 60
+     },
+     "upTo40": 0.625,
+     "in30to40": 0.48,
+     "seatWins": [
+      0.105,
+      0.09,
+      0.08,
+      0.055,
+      0.11,
+      0.12,
+      0.085,
+      0.105,
+      0.14,
+      0.11
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0,
+      "halfwayLeaderWins": 0.785,
+      "comebacks": 0.435
+     },
+     "battles": {
+      "perGame": 813.94,
+      "byBorder": {
+       "normal": 733.555,
+       "river": 43.635,
+       "pass": 17.18,
+       "sea": 19.57
+      },
+      "passShare": 0.02110720691942895,
+      "seaShare": 0.024043541292969997
+     }
+    }
+   ],
+   "continent": [
+    {
+     "games": 200,
+     "players": 6,
+     "turns": {
+      "avg": 37.175,
+      "median": 35,
+      "min": 18,
+      "max": 60
+     },
+     "upTo40": 0.695,
+     "in30to40": 0.42,
+     "seatWins": [
+      0.15,
+      0.15,
+      0.175,
+      0.155,
+      0.21,
+      0.16
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0,
+      "halfwayLeaderWins": 0.735,
+      "comebacks": 0.49
+     },
+     "battles": {
+      "perGame": 735.445,
+      "byBorder": {
+       "normal": 620.225,
+       "river": 79.695,
+       "pass": 23.57,
+       "sea": 11.955
+      },
+      "passShare": 0.03204862362243268,
+      "seaShare": 0.016255464378709488
+     }
+    },
+    {
+     "games": 200,
+     "players": 10,
+     "turns": {
+      "avg": 42.345,
+      "median": 41,
+      "min": 23,
+      "max": 60
+     },
+     "upTo40": 0.475,
+     "in30to40": 0.4,
+     "seatWins": [
+      0.115,
+      0.12,
+      0.06,
+      0.105,
+      0.08,
+      0.12,
+      0.07,
+      0.115,
+      0.14,
+      0.075
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0,
+      "halfwayLeaderWins": 0.745,
+      "comebacks": 0.6
+     },
+     "battles": {
+      "perGame": 881.765,
+      "byBorder": {
+       "normal": 732.39,
+       "river": 105.67,
+       "pass": 32.115,
+       "sea": 11.59
+      },
+      "passShare": 0.036421268705380684,
+      "seaShare": 0.013144091679755944
+     }
+    }
+   ]
+  },
+  {
+   "key": "crownlands",
+   "why": "My extra: a crown-shaped land with five peninsula points, each a natural stronghold, for 6–10.",
+   "recipe": {
+    "id": "crownlands",
+    "name": "The Crownlands",
+    "seed": "mask-100-5",
+    "shape": "mask",
+    "territories": 100,
+    "provinces": 22,
+    "players": {
+     "min": 2,
+     "max": 10,
+     "recommended": {
+      "min": 6,
+      "max": 10
+     }
+    },
+    "seas": 0,
+    "lakes": 3,
+    "islandChains": 1,
+    "mountainRanges": 3,
+    "seaLanes": 4,
+    "minSeaLanes": 2,
+    "rivers": 5,
+    "minChokePoints": 8,
+    "roughness": 0.38,
+    "mask": "crown"
+   },
+   "attempt": 1,
+   "makeMs": 2934,
+   "fingerprint": "a3ef6768acd2ee7c",
+   "territories": 100,
+   "provinces": 22,
+   "provinceSizes": [
+    5,
+    2,
+    2,
+    5,
+    5,
+    6,
+    4,
+    3,
+    5,
+    3,
+    5,
+    5,
+    5,
+    5,
+    5,
+    4,
+    5,
+    4,
+    6,
+    6,
+    5,
+    5
+   ],
+   "borders": {
+    "sea": 5,
+    "normal": 207,
+    "pass": 5
+   },
+   "chokePoints": {
+    "passes": 5,
+    "seaLanes": 5,
+    "landBridges": 0,
+    "total": 10
+   },
+   "checks": [
+    {
+     "label": "Every territory can reach every other (by land, pass or sea lane)",
+     "ok": true,
+     "detail": "100 territories"
+    },
+    {
+     "label": "Territories are about the same size (40%–220% of average)",
+     "ok": true,
+     "detail": "smallest 72%, biggest 116% of average"
+    },
+    {
+     "label": "Every territory has room for its banner",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "label": "Provinces have 2–8 territories and are each in one piece",
+     "ok": true,
+     "detail": "22 provinces of 2–6"
+    },
+    {
+     "label": "Capitals are fair for 2–10 players",
+     "ok": true,
+     "detail": "9 layouts"
+    },
+    {
+     "label": "No hairline borders (neighbours share a border you can see)",
+     "ok": true,
+     "detail": "shortest 23.4; at least 22"
+    },
+    {
+     "label": "Passes are wide enough to see",
+     "ok": true,
+     "detail": "5 passes, narrowest 37.1; at least 28"
+    },
+    {
+     "label": "Enough sea lanes",
+     "ok": true,
+     "detail": "5; at least 2"
+    },
+    {
+     "label": "Enough choke points (passes, sea lanes, land bridges)",
+     "ok": true,
+     "detail": "5 passes + 5 sea lanes + 0 land bridges = 10; at least 8"
+    }
+   ],
+   "fairness": [
+    {
+     "players": 2,
+     "gap": {
+      "min": 16,
+      "max": 16
+     },
+     "income": {
+      "min": 9,
+      "max": 10,
+      "ratio": 0.9
+     },
+     "fair": true
+    },
+    {
+     "players": 3,
+     "gap": {
+      "min": 9,
+      "max": 10
+     },
+     "income": {
+      "min": 9,
+      "max": 10,
+      "ratio": 0.9
+     },
+     "fair": true
+    },
+    {
+     "players": 4,
+     "gap": {
+      "min": 7,
+      "max": 7
+     },
+     "income": {
+      "min": 14,
+      "max": 14,
+      "ratio": 1
+     },
+     "fair": true
+    },
+    {
+     "players": 5,
+     "gap": {
+      "min": 7,
+      "max": 7
+     },
+     "income": {
+      "min": 14,
+      "max": 20,
+      "ratio": 0.7
+     },
+     "fair": true
+    },
+    {
+     "players": 6,
+     "gap": {
+      "min": 5,
+      "max": 5
+     },
+     "income": {
+      "min": 12,
+      "max": 16,
+      "ratio": 0.75
+     },
+     "fair": true
+    },
+    {
+     "players": 7,
+     "gap": {
+      "min": 4,
+      "max": 4
+     },
+     "income": {
+      "min": 15,
+      "max": 20.5,
+      "ratio": 0.7317073170731707
+     },
+     "fair": true
+    },
+    {
+     "players": 8,
+     "gap": {
+      "min": 4,
+      "max": 5
+     },
+     "income": {
+      "min": 14,
+      "max": 20,
+      "ratio": 0.7
+     },
+     "fair": true
+    },
+    {
+     "players": 9,
+     "gap": {
+      "min": 3,
+      "max": 3
+     },
+     "income": {
+      "min": 13,
+      "max": 17,
+      "ratio": 0.7647058823529411
+     },
+     "fair": true
+    },
+    {
+     "players": 10,
+     "gap": {
+      "min": 2,
+      "max": 3
+     },
+     "income": {
+      "min": 12.2,
+      "max": 17,
+      "ratio": 0.7176470588235294
+     },
+     "fair": true
+    }
+   ],
+   "sizes": {
+    "min": 72,
+    "max": 116,
+    "bands": [
+     {
+      "from": 0,
+      "to": 60,
+      "count": 0
+     },
+     {
+      "from": 60,
+      "to": 80,
+      "count": 4
+     },
+     {
+      "from": 80,
+      "to": 100,
+      "count": 39
+     },
+     {
+      "from": 100,
+      "to": 120,
+      "count": 57
+     },
+     {
+      "from": 120,
+      "to": 140,
+      "count": 0
+     },
+     {
+      "from": 140,
+      "to": 170,
+      "count": 0
+     },
+     {
+      "from": 170,
+      "to": 1000,
+      "count": 0
+     }
+    ]
+   },
+   "sims": [
+    {
+     "games": 200,
+     "players": 6,
+     "turns": {
+      "avg": 35.035,
+      "median": 34,
+      "min": 18,
+      "max": 60
+     },
+     "upTo40": 0.8,
+     "in30to40": 0.56,
+     "seatWins": [
+      0.135,
+      0.18,
+      0.175,
+      0.135,
+      0.17,
+      0.205
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0.01,
+      "halfwayLeaderWins": 0.755,
+      "comebacks": 0.52
+     },
+     "battles": {
+      "perGame": 651.885,
+      "byBorder": {
+       "normal": 621.28,
+       "river": 0,
+       "pass": 18.235,
+       "sea": 12.37
+      },
+      "passShare": 0.02797272525061936,
+      "seaShare": 0.018975739585969917
+     }
+    },
+    {
+     "games": 200,
+     "players": 10,
+     "turns": {
+      "avg": 38.365,
+      "median": 36,
+      "min": 23,
+      "max": 60
+     },
+     "upTo40": 0.66,
+     "in30to40": 0.485,
+     "seatWins": [
+      0.08,
+      0.085,
+      0.105,
+      0.185,
+      0.075,
+      0.085,
+      0.12,
+      0.115,
+      0.085,
+      0.065
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0,
+      "halfwayLeaderWins": 0.87,
+      "comebacks": 0.505
+     },
+     "battles": {
+      "perGame": 916.105,
+      "byBorder": {
+       "normal": 888.59,
+       "river": 0,
+       "pass": 15.455,
+       "sea": 12.06
+      },
+      "passShare": 0.016870336915528243,
+      "seaShare": 0.013164429841557463
+     }
+    }
+   ],
+   "continent": [
+    {
+     "games": 200,
+     "players": 6,
+     "turns": {
+      "avg": 37.175,
+      "median": 35,
+      "min": 18,
+      "max": 60
+     },
+     "upTo40": 0.695,
+     "in30to40": 0.42,
+     "seatWins": [
+      0.15,
+      0.15,
+      0.175,
+      0.155,
+      0.21,
+      0.16
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0,
+      "halfwayLeaderWins": 0.735,
+      "comebacks": 0.49
+     },
+     "battles": {
+      "perGame": 735.445,
+      "byBorder": {
+       "normal": 620.225,
+       "river": 79.695,
+       "pass": 23.57,
+       "sea": 11.955
+      },
+      "passShare": 0.03204862362243268,
+      "seaShare": 0.016255464378709488
+     }
+    },
+    {
+     "games": 200,
+     "players": 10,
+     "turns": {
+      "avg": 42.345,
+      "median": 41,
+      "min": 23,
+      "max": 60
+     },
+     "upTo40": 0.475,
+     "in30to40": 0.4,
+     "seatWins": [
+      0.115,
+      0.12,
+      0.06,
+      0.105,
+      0.08,
+      0.12,
+      0.07,
+      0.115,
+      0.14,
+      0.075
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0,
+      "halfwayLeaderWins": 0.745,
+      "comebacks": 0.6
+     },
+     "battles": {
+      "perGame": 881.765,
+      "byBorder": {
+       "normal": 732.39,
+       "river": 105.67,
+       "pass": 32.115,
+       "sea": 11.59
+      },
+      "passShare": 0.036421268705380684,
+      "seaShare": 0.013144091679755944
+     }
+    }
+   ]
+  },
+  {
+   "key": "wyrmland",
+   "why": "The biggest: a dragon-shaped land (head, neck, wing, legs, and its tail curled into an island) for 6–8 with room to spare.",
+   "recipe": {
+    "id": "wyrmland",
+    "name": "Wyrmland",
+    "seed": "mask-120-2",
+    "shape": "mask",
+    "territories": 120,
+    "provinces": 27,
+    "players": {
+     "min": 2,
+     "max": 10,
+     "recommended": {
+      "min": 6,
+      "max": 8
+     }
+    },
+    "seas": 0,
+    "lakes": 3,
+    "islandChains": 1,
+    "mountainRanges": 2,
+    "seaLanes": 5,
+    "minSeaLanes": 2,
+    "rivers": 6,
+    "minChokePoints": 10,
+    "roughness": 0.38,
+    "mask": "dragon"
+   },
+   "attempt": 1,
+   "makeMs": 1363,
+   "fingerprint": "d1fa9c8e3d77d8ae",
+   "territories": 120,
+   "provinces": 27,
+   "provinceSizes": [
+    4,
+    4,
+    3,
+    6,
+    4,
+    3,
+    4,
+    6,
+    4,
+    4,
+    4,
+    4,
+    6,
+    5,
+    3,
+    4,
+    5,
+    5,
+    5,
+    5,
+    5,
+    7,
+    4,
+    5,
+    4,
+    3,
+    4
+   ],
+   "borders": {
+    "normal": 222,
+    "pass": 4,
+    "river": 37,
+    "sea": 6
+   },
+   "chokePoints": {
+    "passes": 4,
+    "seaLanes": 6,
+    "landBridges": 0,
+    "total": 10
+   },
+   "checks": [
+    {
+     "label": "Every territory can reach every other (by land, pass or sea lane)",
+     "ok": true,
+     "detail": "120 territories"
+    },
+    {
+     "label": "Territories are about the same size (40%–220% of average)",
+     "ok": true,
+     "detail": "smallest 46%, biggest 117% of average"
+    },
+    {
+     "label": "Every territory has room for its banner",
+     "ok": true,
+     "detail": ""
+    },
+    {
+     "label": "Provinces have 2–8 territories and are each in one piece",
+     "ok": true,
+     "detail": "27 provinces of 3–7"
+    },
+    {
+     "label": "Capitals are fair for 2–10 players",
+     "ok": true,
+     "detail": "9 layouts"
+    },
+    {
+     "label": "No hairline borders (neighbours share a border you can see)",
+     "ok": true,
+     "detail": "shortest 23.0; at least 22"
+    },
+    {
+     "label": "Passes are wide enough to see",
+     "ok": true,
+     "detail": "4 passes, narrowest 44.4; at least 28"
+    },
+    {
+     "label": "Enough sea lanes",
+     "ok": true,
+     "detail": "6; at least 2"
+    },
+    {
+     "label": "Enough choke points (passes, sea lanes, land bridges)",
+     "ok": true,
+     "detail": "4 passes + 6 sea lanes + 0 land bridges = 10; at least 10"
+    }
+   ],
+   "fairness": [
+    {
+     "players": 2,
+     "gap": {
+      "min": 20,
+      "max": 20
+     },
+     "income": {
+      "min": 14,
+      "max": 14,
+      "ratio": 1
+     },
+     "fair": true
+    },
+    {
+     "players": 3,
+     "gap": {
+      "min": 12,
+      "max": 12
+     },
+     "income": {
+      "min": 11,
+      "max": 14,
+      "ratio": 0.7857142857142857
+     },
+     "fair": true
+    },
+    {
+     "players": 4,
+     "gap": {
+      "min": 10,
+      "max": 10
+     },
+     "income": {
+      "min": 12,
+      "max": 17,
+      "ratio": 0.7058823529411765
+     },
+     "fair": true
+    },
+    {
+     "players": 5,
+     "gap": {
+      "min": 6,
+      "max": 6
+     },
+     "income": {
+      "min": 20,
+      "max": 24,
+      "ratio": 0.8333333333333334
+     },
+     "fair": true
+    },
+    {
+     "players": 6,
+     "gap": {
+      "min": 4,
+      "max": 4
+     },
+     "income": {
+      "min": 17.5,
+      "max": 22,
+      "ratio": 0.7954545454545454
+     },
+     "fair": true
+    },
+    {
+     "players": 7,
+     "gap": {
+      "min": 4,
+      "max": 4
+     },
+     "income": {
+      "min": 19,
+      "max": 23.5,
+      "ratio": 0.8085106382978723
+     },
+     "fair": true
+    },
+    {
+     "players": 8,
+     "gap": {
+      "min": 4,
+      "max": 4
+     },
+     "income": {
+      "min": 15.5,
+      "max": 21.5,
+      "ratio": 0.7209302325581395
+     },
+     "fair": true
+    },
+    {
+     "players": 9,
+     "gap": {
+      "min": 3,
+      "max": 3
+     },
+     "income": {
+      "min": 15.5,
+      "max": 19.5,
+      "ratio": 0.7948717948717948
+     },
+     "fair": true
+    },
+    {
+     "players": 10,
+     "gap": {
+      "min": 3,
+      "max": 3
+     },
+     "income": {
+      "min": 14,
+      "max": 18.5,
+      "ratio": 0.7567567567567568
+     },
+     "fair": true
+    }
+   ],
+   "sizes": {
+    "min": 46,
+    "max": 117,
+    "bands": [
+     {
+      "from": 0,
+      "to": 60,
+      "count": 2
+     },
+     {
+      "from": 60,
+      "to": 80,
+      "count": 0
+     },
+     {
+      "from": 80,
+      "to": 100,
+      "count": 53
+     },
+     {
+      "from": 100,
+      "to": 120,
+      "count": 65
+     },
+     {
+      "from": 120,
+      "to": 140,
+      "count": 0
+     },
+     {
+      "from": 140,
+      "to": 170,
+      "count": 0
+     },
+     {
+      "from": 170,
+      "to": 1000,
+      "count": 0
+     }
+    ]
+   },
+   "sims": [
+    {
+     "games": 200,
+     "players": 6,
+     "turns": {
+      "avg": 31.91,
+      "median": 30,
+      "min": 16,
+      "max": 60
+     },
+     "upTo40": 0.865,
+     "in30to40": 0.395,
+     "seatWins": [
+      0.175,
+      0.16,
+      0.125,
+      0.195,
+      0.17,
+      0.175
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0.01,
+      "halfwayLeaderWins": 0.885,
+      "comebacks": 0.32
+     },
+     "battles": {
+      "perGame": 596.86,
+      "byBorder": {
+       "normal": 502.43,
+       "river": 78.98,
+       "pass": 8.555,
+       "sea": 6.895
+      },
+      "passShare": 0.014333344502898502,
+      "seaShare": 0.011552122775860336
+     }
+    },
+    {
+     "games": 200,
+     "players": 8,
+     "turns": {
+      "avg": 36.495,
+      "median": 35,
+      "min": 25,
+      "max": 60
+     },
+     "upTo40": 0.755,
+     "in30to40": 0.585,
+     "seatWins": [
+      0.12,
+      0.125,
+      0.125,
+      0.09,
+      0.11,
+      0.175,
+      0.12,
+      0.135
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0,
+      "halfwayLeaderWins": 0.815,
+      "comebacks": 0.47
+     },
+     "battles": {
+      "perGame": 890.28,
+      "byBorder": {
+       "normal": 743.105,
+       "river": 121.975,
+       "pass": 12.6,
+       "sea": 12.6
+      },
+      "passShare": 0.014152850788515973,
+      "seaShare": 0.014152850788515973
+     }
+    }
+   ],
+   "continent": [
+    {
+     "games": 200,
+     "players": 6,
+     "turns": {
+      "avg": 37.78,
+      "median": 36,
+      "min": 23,
+      "max": 60
+     },
+     "upTo40": 0.69,
+     "in30to40": 0.515,
+     "seatWins": [
+      0.135,
+      0.165,
+      0.135,
+      0.22,
+      0.19,
+      0.155
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0,
+      "halfwayLeaderWins": 0.82,
+      "comebacks": 0.525
+     },
+     "battles": {
+      "perGame": 710.465,
+      "byBorder": {
+       "normal": 632.485,
+       "river": 38.555,
+       "pass": 32.155,
+       "sea": 7.27
+      },
+      "passShare": 0.045259090877101615,
+      "seaShare": 0.010232734898974616
+     }
+    },
+    {
+     "games": 200,
+     "players": 8,
+     "turns": {
+      "avg": 39.625,
+      "median": 37,
+      "min": 24,
+      "max": 60
+     },
+     "upTo40": 0.64,
+     "in30to40": 0.53,
+     "seatWins": [
+      0.1,
+      0.125,
+      0.085,
+      0.17,
+      0.11,
+      0.155,
+      0.15,
+      0.105
+     ],
+     "draws": 0,
+     "runaway": {
+      "halfMapByTurn10": 0,
+      "halfwayLeaderWins": 0.825,
+      "comebacks": 0.375
+     },
+     "battles": {
+      "perGame": 839.36,
+      "byBorder": {
+       "normal": 739.465,
+       "river": 50.21,
+       "pass": 42.12,
+       "sea": 7.565
+      },
+      "passShare": 0.050181090354555855,
+      "seaShare": 0.009012819290888296
+     }
+    }
+   ]
+  }
+ ]
+}
