@@ -29,6 +29,10 @@ else
 await sleep(700);
 await page.waitForFunction(() => { const s = window.__conquerraMap.stats(); return s.tilesBaked === s.tileCount; }, { timeout: 120000, polling: 100 });
 await sleep(300);
+// SELECT=1: select your capital first (to see its panel). FOLD=1: fold the desktop dock.
+if (process.env.SELECT) await page.evaluate(() => { const s = window.__conquerraStore.getState(); s.select(s.view.me.capital); });
+if (process.env.FOLD) await page.click(".queue-extra .fold").catch(() => {});
+if (process.env.SELECT || process.env.FOLD) await sleep(700);
 // NOUI=1: just the map (every menu hidden), for close-ups.
 if (process.env.NOUI) await page.addStyleTag({ content: "* { visibility: hidden !important } canvas { visibility: visible !important }" });
 await page.screenshot({ path: out });

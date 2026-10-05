@@ -28,6 +28,16 @@ export function TerritoryCard({ ctx, view, id, compact = false }: { ctx: GameCon
       {!compact && <div className="tcard-vista" style={vista ? { backgroundImage: `url(${vista})` } : undefined} />}
       <div className="tcard-title">{info.title}</div>
       <div className="tcard-sub">{info.subtitle}</div>
+      <CardRows ctx={ctx} view={view} id={id} />
+    </Frame>
+  );
+}
+
+/** The card's rows: last-seen intel (if any), then one plain sentence per row with its icon. */
+export function CardRows({ ctx, view, id }: { ctx: GameContext; view: PlayerView; id: TerritoryId }) {
+  const info = territoryCard(ctx, view, id);
+  return (
+    <div className={info.uncertain ? "tcard uncertain" : "tcard"}>
       {info.intel && <div className="tcard-intel">{info.intel}</div>}
       {/* One plain sentence per row, each with its icon (the label is for screen readers). */}
       <ul className="tcard-rows">
@@ -40,6 +50,6 @@ export function TerritoryCard({ ctx, view, id, compact = false }: { ctx: GameCon
           </li>
         ))}
       </ul>
-    </Frame>
+    </div>
   );
 }

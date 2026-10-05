@@ -95,8 +95,20 @@ async function screens() {
   await sleep(600);
   await page.screenshot({ path: out("ui-desktop.png") });
   await (await page.$(".rightcol .frame")).screenshot({ path: out("ui-players.png") });
-  const card = await page.$(".rightcol .tcard");
-  if (card) await card.screenshot({ path: out("ui-territory-card.png") });
+  // Session 11: the merged panel for the selected territory (your capital), and the dock folded down.
+  await store(page, () => {
+    const s = window.__conquerraStore.getState();
+    s.select(s.view.me.capital);
+  });
+  await sleep(600);
+  await page.screenshot({ path: out("ui-desktop-selected.png") });
+  await (await page.$(".selcell .sel")).screenshot({ path: out("ui-selected-panel.png") });
+  await page.click(".queue-extra .fold");
+  await sleep(700);
+  await page.screenshot({ path: out("ui-desktop-folded.png") });
+  await page.click(".dock-bar");
+  await sleep(400);
+  console.log("  saved ui-desktop-selected.png, ui-selected-panel.png, ui-desktop-folded.png");
   // The replay, caught mid-battle.
   await planAndLock(page);
   const caught = await waitFor(page, () => page.evaluate(() => (window.__conquerraReplay?.clashes ?? []).some((c) => c.progress > 0.25 && c.progress < 0.55)), 30000);
@@ -178,7 +190,7 @@ async function chain() {
         s.getState().tap(g.ctx.map.borders.flatMap((b) => (b.a === cap ? [b.b] : b.b === cap ? [b.a] : []))[0]);
       }, path[0]);
       await sleep(700);
-      await (await page.$(".army-cell .army")).screenshot({ path: out("ui-share-chips.png") });
+      await (await page.$(".selcell .sel")).screenshot({ path: out("ui-share-chips.png") });
     } else {
       // A fourth hop: the estimate pill and the odds marked as an estimate.
       await store(page, (t) => window.__conquerraStore.getState().tap(t), path[4]);
@@ -505,11 +517,11 @@ async function clarity() {
   await g((id) => window.__conquerraStore.getState().select(id), built.home);
   await zoom(150, await labelOf(built.home));
   await sleep(600);
-  const card = await page.$(".rightcol .tcard");
+  // The territory card is part of the selected territory's panel on desktop since session 11.
+  const card = await page.$(".selcell .sel");
   if (card) {
     await card.screenshot({ path: out("ui-culture-card.png") });
-    await card.screenshot({ path: out("ui-territory-card.png") });
-    console.log("  saved ui-culture-card.png, ui-territory-card.png");
+    console.log("  saved ui-culture-card.png");
   }
   await mapShot("ui-culture-pips.png");
   await pageShot("ui-army-panel.png");

@@ -17,7 +17,8 @@ import { Minimap, type ViewRect } from "./Minimap";
 import { OrderQueue } from "./OrderQueue";
 import { Panel } from "./Panel";
 import { PlayersPanel } from "./PlayersPanel";
-import { TerritoryCard } from "./TerritoryCard";
+import { TerritoryCard, vistaFor } from "./TerritoryCard";
+import { useArtUrl } from "./art";
 import { Toasts, type ShownToast } from "./Toasts";
 import { TopBar } from "./TopBar";
 import { ReportBody, TurnReportDialog } from "./TurnReport";
@@ -33,7 +34,17 @@ const NO_GLOW: readonly string[] = [];
 
 
 /** Screen space the menus cover, so "fit map" uses the rest. */
-const DESKTOP_INSETS: Insets = { top: 72, right: 336, bottom: 216, left: 8 };
+/** Desktop: the right column (players, your Leader) and the bottom pieces; the folded dock leaves the map more room. */
+const DESKTOP_INSETS: Insets = { top: 72, right: 300, bottom: 224, left: 8 };
+const DESKTOP_INSETS_FOLDED: Insets = { ...DESKTOP_INSETS, bottom: 128 };
+const DOCK_KEY = "conquerra.dock";
+const readDockOpen = () => {
+  try {
+    return localStorage.getItem(DOCK_KEY) !== "folded";
+  } catch {
+    return true;
+  }
+};
 const PHONE_INSETS: Insets = { top: 56, right: 0, bottom: 84, left: 0 };
 
 /** Shown once when you're knocked out while the game goes on. */
@@ -163,6 +174,15 @@ export function GameScreen() {
   const [tab, setTab] = useState("army");
   const [playersOn, setPlayersOn] = useState(false);
   const [minimapOn, setMinimapOn] = useState(false);
+  const [dockOpen, setDockOpenState] = useState(readDockOpen);
+  const setDockOpen = (open: boolean) => {
+    setDockOpenState(open);
+    try {
+      localStorage.setItem(DOCK_KEY, open ? "open" : "folded");
+    } catch {
+      // Private window: it just won't be remembered.
+    }
+  };
   const [rect, setRect] = useState<ViewRect | null>(null);
   const [toasts, setToasts] = useState<ShownToast[]>([]);
 
@@ -213,7 +233,7 @@ export function GameScreen() {
   const shownView = rp.view ?? view;
   // On a phone the open sheet covers the lower part of the map: the map keeps what you're looking at above it.
   const sheetPx = !phone || replaying || out || sheet === "closed" ? 0 : Math.round(window.innerHeight * (sheet === "half" ? 0.46 : 0.86));
-  const insets = phone ? { ...PHONE_INSETS, bottom: PHONE_INSETS.bottom + sheetPx } : DESKTOP_INSETS;
+  const insets = phone ? { ...PHONE_INSETS, bottom: PHONE_INSETS.bottom + sheetPx } : dockOpen ? DESKTOP_INSETS : DESKTOP_INSETS_FOLDED;
   const toggleTactical = () =>
     setTactical((t) => {
       saveTactical(!t);
@@ -375,8 +395,10 @@ export function GameScreen() {
     );
   }
 
+  // The vista for the selected territory: a slim strip at the top of its panel.
+  const vista = selected && act && !draft && !recruitOpen ? <SelectedVista ctx={ctx} id={selected} /> : null;
   return (
-    <div className="game desktop">
+    <div className={`game desktop ${dockOpen ? "dock-open" : "dock-folded"}`}>
       {map}
       {topbar}
       <div className="map-tools" style={{ top: DESKTOP_INSETS.top + 4, right: DESKTOP_INSETS.right + 4 }}>
@@ -392,7 +414,6 @@ export function GameScreen() {
       </div>
       <aside className="rightcol" ref={moreCue}>
         <PlayersPanel view={view} />
-        {selected && act && <TerritoryCard ctx={ctx} view={view} id={selected} />}
         {!out && <LeaderCard ctx={ctx} view={view} queue={queue} />}
       </aside>
       {settingsMenu}
@@ -401,19 +422,40 @@ export function GameScreen() {
       {out ? (
         watching && <WatchPanel ctx={ctx} view={view} replaying={replaying} />
       ) : (
-        <div className="dock">
-          <Frame className="slim">{minimap}</Frame>
-          <div className="army-cell">
-            <Frame className="army slim" boxRef={moreCue}>
+        <>
+          {/* One panel for the selected territory: the round action buttons, then who holds it, troops, chips,
+              buildings and culture, then what you can do there. It's only as tall as what's in it. */}
+          <div className="selcell">
+            <Frame className="sel slim" boxRef={moreCue}>
               {actions}
+              {vista}
               {army}
             </Frame>
           </div>
-          <OrderQueue ctx={ctx} view={view} plan={plan} queue={shownQueue} />
-          <div className="seal-wrap">{seal}</div>
-        </div>
+          <div className={`dock ${dockOpen ? "open" : "folded"}`}>
+            {dockOpen ? (
+              <>
+                <Frame className="slim mini">{minimap}</Frame>
+                <OrderQueue ctx={ctx} view={view} plan={plan} queue={shownQueue} onFold={() => setDockOpen(false)} />
+              </>
+            ) : (
+              <button className="dock-bar" onClick={() => setDockOpen(true)} aria-label="Show the order queue and minimap" aria-expanded={false}>
+                <span className="dock-caret" aria-hidden>
+                  ▴
+                </span>
+                Orders ({queue.length})<span className="cost">{plan.goldLeft}g left</span>
+              </button>
+            )}
+            <div className="seal-wrap">{seal}</div>
+          </div>
+        </>
       )}
       {overlays}
     </div>
   );
+}
+
+function SelectedVista({ ctx, id }: { ctx: GameContext; id: string }) {
+  const url = useArtUrl(vistaFor(ctx, id));
+  return url ? <div className="sel-vista" style={{ backgroundImage: `url(${url})` }} aria-hidden /> : null;
 }

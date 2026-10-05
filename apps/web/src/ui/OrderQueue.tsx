@@ -6,7 +6,7 @@ import { Frame } from "./Frame";
 import { moreCue } from "./moreCue";
 
 /** Your orders for this turn, in the order they'll run. Reorder or delete; gold left at the top. */
-export function OrderQueue({ ctx, view, plan, queue, bare = false }: { ctx: GameContext; view: PlayerView; plan: QueuePlan; queue: readonly Order[]; bare?: boolean }) {
+export function OrderQueue({ ctx, view, plan, queue, bare = false, onFold }: { ctx: GameContext; view: PlayerView; plan: QueuePlan; queue: readonly Order[]; bare?: boolean; /** Desktop: fold the dock down to a slim bar. */ onFold?: () => void }) {
   const { remove, shift, openRecruit, recruit } = useGame();
   const n = namer(ctx, view);
   const body = (
@@ -53,7 +53,20 @@ export function OrderQueue({ ctx, view, plan, queue, bare = false }: { ctx: Game
   );
   if (bare) return <div className="queue">{body}</div>;
   return (
-    <Frame className="queue" title={`Orders (${queue.length})`} extra={<span className="cost">{plan.goldLeft}g left</span>}>
+    <Frame
+      className="queue"
+      title={`Orders (${queue.length})`}
+      extra={
+        <span className="queue-extra">
+          <span className="cost">{plan.goldLeft}g left</span>
+          {onFold && (
+            <button className="fold" onClick={onFold} aria-label="Fold the order queue and minimap down" aria-expanded>
+              ▾
+            </button>
+          )}
+        </span>
+      }
+    >
       {body}
     </Frame>
   );

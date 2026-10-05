@@ -36,6 +36,7 @@ import { useGame } from "../store";
 import { nearestRecruitSite, RECRUIT_RULE } from "../logic/actions";
 import { colorOf } from "./colors";
 import { cultureLine, cultureNext, placeFacts } from "../map/card";
+import { CardRows } from "./TerritoryCard";
 
 const CROSSING = { river: "🌊 Across a river", pass: "⛰ Through a mountain pass", sea: "⛵ Over a sea lane" } as const;
 
@@ -331,7 +332,8 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
     return (
       <div className="panel">
         {header}
-        <p className="muted">Hidden by fog. You can see the land, but not who holds it or how many troops are there.</p>
+        {/* What you last saw there (with "?" and how long ago), as on the territory card. */}
+        <CardRows ctx={ctx} view={view} id={selected} />
       </div>
     );
 
