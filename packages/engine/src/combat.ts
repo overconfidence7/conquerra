@@ -36,6 +36,8 @@ export interface BattleExpectation {
   captureLikely: boolean;
   /** Attacker cannot take it even with the best luck. */
   captureImpossible: boolean;
+  /** A finished fort added to the defense (siege can cancel it). */
+  fortCounted: boolean;
 }
 
 const count = (list: readonly SpecialistType[], t: SpecialistType) => list.filter((s) => s === t).length;
@@ -81,6 +83,7 @@ export function expectBattle(rules: Rules, b: BattleInput): BattleExpectation {
     captureGuaranteed: defenderLossRange[0] >= b.defenders && attackerLossRange[1] < b.attackers,
     captureLikely: eDef >= b.defenders && eAtk < b.attackers,
     captureImpossible: defenderLossRange[1] < b.defenders || attackerLossRange[0] >= b.attackers,
+    fortCounted: fortMult > 1,
   };
 }
 

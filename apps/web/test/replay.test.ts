@@ -22,6 +22,7 @@ const battle = (step: number, from: string, to: string, captured: boolean): Repl
   result: { attackStrength: 10, defenseStrength: 4, expectedDefenderLosses: 4, expectedAttackerLosses: 2, defenderLosses: 4, attackerLosses: 2 },
   captured,
   specialistsLost: [],
+  defense: { fort: false, culture: 0, leader: false },
 });
 const t = (i: number) => ctx.map.territories[i]!.id;
 

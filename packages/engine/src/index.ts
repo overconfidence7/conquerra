@@ -10,6 +10,7 @@ export { PRESETS, expandPreset, type PresetInfo } from "./presets";
 export { expectBattle, rollLosses, healerReduction, type BattleExpectation, type BattleInput } from "./combat";
 export { SHARES, amountLabel, fewestToTake, isShare, troopsFor, type Share, type TroopAmount } from "./amounts";
 export { previewAttack, type AttackPlan } from "./preview";
+export { explainFizzle, explainHold, describeFizzledOrder, fizzleIsQuiet, type PlaceNames, type ExplainOptions } from "./explain";
 export {
   incomeFor,
   upkeepFor,
@@ -21,5 +22,6 @@ export {
   type IncomeBreakdown,
 } from "./economy";
 export { seedCommitment, verifySeed } from "./fairness";
+export { saveGame, replaySavedGame, stateFingerprint, type SavedGame } from "./saved";
 export { indexMap, distancesFrom, type MapIndex } from "./mapIndex";
 export { Rng, seedRng, type RngState } from "./rng";

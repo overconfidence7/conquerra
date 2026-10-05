@@ -3,6 +3,7 @@ import type { TurnReport as Report } from "../host/protocol";
 import { groupReport } from "../logic/report";
 import type { LogLine } from "../logic/text";
 import { namer } from "../logic/text";
+import { useGame } from "../store";
 import { Frame } from "./Frame";
 
 function Lines({ lines }: { lines: LogLine[] }) {
@@ -19,7 +20,9 @@ function Lines({ lines }: { lines: LogLine[] }) {
 
 /** The turn report, grouped: your gains and losses, then what you saw, then the fog. */
 export function ReportBody({ ctx, view, report }: { ctx: GameContext; view: PlayerView; report: Report }) {
-  const g = groupReport(ctx, report.events, namer(ctx, view));
+  // Your view while you planned this turn, so a called-off attack can say what you planned for.
+  const before = useGame((s) => s.lastBefore);
+  const g = groupReport(ctx, report.events, namer(ctx, view, before?.turn === report.turn ? before : null));
   return (
     <>
       <section className="report-group">

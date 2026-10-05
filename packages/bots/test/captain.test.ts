@@ -145,7 +145,7 @@ describe("Captain bot: fair play", () => {
       const st = s;
       const orders = Object.fromEntries(st.players.filter((p) => p.eliminatedTurn === null).map((p) => [p.id, bots[st.players.indexOf(p) % bots.length]!.plan(ember, viewFor(ember, st, p.id))]));
       const r = resolveTurn(ember, st, orders);
-      for (const e of r.events) if (e.type === "fizzled" && /not adjacent|unknown|same territory|path is not connected|count must|unknown building|unknown specialist/.test(e.reason)) illegal.push(e.reason);
+      for (const e of r.events) if (e.type === "fizzled" && /^(invalid|notConnected|badCount)$/.test(e.reason)) illegal.push(e.reason);
       transcript.push(JSON.stringify(r.events));
       s = r.state;
     }

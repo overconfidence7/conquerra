@@ -53,7 +53,7 @@ describe("the fog lifts during the replay (on screen)", () => {
       {
         type: "battle", step: 4, player: "p1", orderId: "a", from: ctx.map.territories[1]!.id, to: ctx.map.territories[2]!.id, defender: null,
         attackers: { troops: 9, specialists: [] }, withLeader: false, defenders: { troops: 1, specialists: [] },
-        result: { attackStrength: 9, defenseStrength: 1, expectedDefenderLosses: 1, expectedAttackerLosses: 0, defenderLosses: 1, attackerLosses: 0 }, captured: true, specialistsLost: [],
+        result: { attackStrength: 9, defenseStrength: 1, expectedDefenderLosses: 1, expectedAttackerLosses: 0, defenderLosses: 1, attackerLosses: 0 }, captured: true, specialistsLost: [], defense: { fort: false, culture: 0, leader: false },
       },
       vision,
     ];
@@ -162,7 +162,7 @@ describe("the replay camera follows a chain", () => {
   const hop = (step: number, from: string, to: string): ReplayEvent => ({
     type: "battle", step, player: "p1", orderId: `h${step}`, from, to, defender: null,
     attackers: { troops: 20, specialists: [] }, withLeader: false, defenders: { troops: 1, specialists: [] },
-    result: { attackStrength: 20, defenseStrength: 1, expectedDefenderLosses: 1, expectedAttackerLosses: 0, defenderLosses: 1, attackerLosses: 0 }, captured: true, specialistsLost: [],
+    result: { attackStrength: 20, defenseStrength: 1, expectedDefenderLosses: 1, expectedAttackerLosses: 0, defenderLosses: 1, attackerLosses: 0 }, captured: true, specialistsLost: [], defense: { fort: false, culture: 0, leader: false },
   });
 
   it("keeps a chain that runs off screen in view, hop by hop, even on a busy (squeezed) turn", () => {

@@ -1,4 +1,4 @@
-import type { Order } from "@conquerra/engine";
+import type { Order, SavedGame } from "@conquerra/engine";
 import type { GameHost, HostRequest, HostResponse, HostStart, HostUpdate, LobbySettings } from "./protocol";
 
 /** A fresh secret seed for the game's dice (the engine itself never makes randomness). */
@@ -25,7 +25,7 @@ export function createLocalHost(): GameHost {
     if (!p) return;
     pending.delete(res.id);
     if (!res.ok) p.reject(new Error(res.error));
-    else p.resolve("orders" in res ? res.orders : res.update);
+    else p.resolve("orders" in res ? res.orders : "save" in res ? res.save : res.update);
   };
   // If the engine's worker stops (it crashed, or the browser killed it), say so instead of waiting forever.
   const failAll = (why: string) => {
@@ -51,6 +51,7 @@ export function createLocalHost(): GameHost {
     watchNext: () => send({ type: "watchNext" }),
     finish: () => send({ type: "finish" }),
     suggest: () => send<Order[]>({ type: "suggest" }),
+    save: (notes) => send<SavedGame>({ type: "save", ...(notes ? { notes } : {}) }),
     dispose: () => worker.terminate(),
   };
 }

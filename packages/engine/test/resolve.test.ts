@@ -106,7 +106,7 @@ describe("turn resolution", () => {
     const { events } = resolveTurn(ctx, s, {
       p1: [mv("a", "b", "all"), mv("a", "b", "all", { id: "second" }), { id: "third", kind: "build", territory: "a", building: "watchtower" }],
     });
-    expect(find(events, "fizzled")).toMatchObject({ orderId: "second", reason: "no troops available to move" });
+    expect(find(events, "fizzled")).toMatchObject({ orderId: "second", reason: "garrisonOnly", detail: { territory: "a" } });
     expect(find(events, "built")).toBeTruthy();
   });
 

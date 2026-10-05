@@ -36,6 +36,7 @@ const battle = (step: number, to: string): ReplayEvent => ({
   result: { attackStrength: 10, defenseStrength: 4, expectedDefenderLosses: 4, expectedAttackerLosses: 2, defenderLosses: 4, attackerLosses: 2 },
   captured: true,
   specialistsLost: [],
+  defense: { fort: false, culture: 0, leader: false },
 });
 const recruit = (step: number, territory: string): ReplayEvent => ({ type: "recruited", step, player: "p1", orderId: "r", territory, count: 3, cost: 6 });
 const intro: ReplayEvent = { type: "turnStart", step: 0, turn: 2, seats: ["p1", "p2"] };

@@ -1,5 +1,5 @@
 import type { MapDef, Rules } from "@conquerra/content";
-import type { GameMode, Order, PlayerView, ReplayEvent } from "@conquerra/engine";
+import type { GameMode, Order, PlayerView, ReplayEvent, SavedGame } from "@conquerra/engine";
 import type { TurnClock } from "../logic/timer";
 
 /**
@@ -70,6 +70,8 @@ export interface GameHost {
   finish(): Promise<HostUpdate>;
   /** What a bot of this game's level would order for you this turn (for testing; maybe an "auto-orders" button later). */
   suggest(): Promise<Order[]>;
+  /** "Save this game": everything needed to replay it exactly (single player only). */
+  save(notes?: Record<string, string>): Promise<SavedGame>;
   dispose(): void;
 }
 
@@ -80,11 +82,13 @@ export type HostRequest =
   | { id: number; type: "saveOrders"; orders: Order[]; turn: number }
   | { id: number; type: "watchNext" }
   | { id: number; type: "finish" }
-  | { id: number; type: "suggest" };
+  | { id: number; type: "suggest" }
+  | { id: number; type: "save"; notes?: Record<string, string> };
 
 export type HostResponse =
   | { id: number; ok: true; update: HostUpdate | HostStart }
   /** Not an answer: the timer ran out and the host locked your orders in (id is 0). */
   | { id: 0; ok: true; pushed: HostUpdate }
   | { id: number; ok: true; orders: Order[] }
+  | { id: number; ok: true; save: SavedGame }
   | { id: number; ok: false; error: string };

@@ -32,6 +32,10 @@ scope.onmessage = (e) => {
         scope.postMessage({ id: req.id, ok: true, orders: game.suggest() });
         return;
       }
+      if (req.type === "save") {
+        scope.postMessage({ id: req.id, ok: true, save: game.save(req.notes) });
+        return;
+      }
       if (req.type === "saveOrders") {
         game.saveOrders(req.orders, req.turn);
         return;

@@ -162,10 +162,67 @@ export interface ArmySnapshot {
   specialists: SpecialistType[];
 }
 
+/** Why an order didn't happen. Every code has a plain-words sentence (explain.ts); a test checks each one. */
+export const FIZZLE_CODES = [
+  "eliminated",
+  "condition",
+  "notEnoughGold",
+  "notHeld",
+  "recruitSite",
+  "hireSite",
+  "badCount",
+  "invalid",
+  "armyFull",
+  "noTroopsForSpecialist",
+  "cultureLocked",
+  "hasBuilding",
+  "cultureMax",
+  "lostStart",
+  "notConnected",
+  "pathBlocked",
+  "needsCavalry",
+  "resting",
+  "garrisonOnly",
+  "nowhereToRetreat",
+  "noTarget",
+  "manualHopFirst",
+] as const;
+export type FizzleCode = (typeof FIZZLE_CODES)[number];
+
+/** The live facts behind a fizzle, as they were when the order came up (only ever the player's own order). */
+export interface FizzleDetail {
+  /** The territory the reason is about. */
+  territory?: TerritoryId;
+  /** "condition": which one failed ("not" conditions report the inner kind with `negated`), and whether fog hid it. */
+  condition?: Exclude<Condition["kind"], "not">;
+  negated?: boolean;
+  fogged?: boolean;
+  /** Troops there when the order came up (the target's army for an attack). */
+  troops?: number;
+  /** The army that would have gone. */
+  attackers?: number;
+  /** Gold you had, and what the order needed. */
+  gold?: number;
+  cost?: number;
+  /** A number the order needed and what there was (culture in the province, a condition's count). */
+  need?: number;
+  have?: number;
+  /** Enemy troops next door at the start of the turn and when the order came up ("Hold if threatened"). */
+  before?: number;
+  now?: number;
+}
+
+/** The order that fizzled, as written (without its backup), so the report can name it. */
+export type FizzledOrder = OrderBody & {
+  preset?: PresetId;
+  /** A move into land you didn't hold when it came up. */
+  attack?: boolean;
+};
+
 export type GameEvent =
   | { type: "turnStart"; turn: number; seats: PlayerId[] }
   | { type: "initiative"; player: PlayerId; timing: "first" | "last"; orderId: string }
-  | { type: "fizzled"; player: PlayerId; orderId: string; reason: string; usedFallback: boolean }
+  | { type: "fizzled"; player: PlayerId; orderId: string; reason: FizzleCode; detail: FizzleDetail; order: FizzledOrder; usedFallback: boolean }
   | { type: "recruited"; player: PlayerId; orderId: string; territory: TerritoryId; count: number; cost: number }
   | { type: "hired"; player: PlayerId; orderId: string; territory: TerritoryId; specialist: SpecialistType; cost: number }
   | { type: "built"; player: PlayerId; orderId: string; territory: TerritoryId; building: BuildingType; cost: number; /** null = ready now (engineers). */ doneAtEndOfTurn: number | null }
@@ -187,6 +244,8 @@ export type GameEvent =
       captured: boolean;
       /** Specialists that were lost with a destroyed army. */
       specialistsLost: SpecialistType[];
+      /** What helped the defenders, beyond terrain and the border (both come from the map): for "They held: hills and a fort". */
+      defense: { fort: boolean; culture: number; leader: boolean };
     }
   | { type: "leaderKilled"; player: PlayerId; territory: TerritoryId }
   /** A fallen Leader comes back for free at the end of the turn: at the capital, or the strongest territory if the capital is lost. */

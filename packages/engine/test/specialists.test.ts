@@ -33,7 +33,7 @@ describe("specialists", () => {
     board(s, { a: ["p1", 5], e: ["p2", 5] });
     player(s, "p1").gold = 100;
     const no = resolveTurn(ctx, s, { p1: [hire("a", "siege")] });
-    expect(find(no.events, "fizzled")!.reason).toMatch(/culture/);
+    expect(find(no.events, "fizzled")!.reason).toBe("cultureLocked");
     board(s, { a: ["p1", 5, [], { culture: 1 }], b: ["p1", 1, [], { culture: 1 }], e: ["p2", 5] });
     const yes = resolveTurn(ctx, s, { p1: [hire("a", "siege")] });
     expect(find(yes.events, "hired")).toBeTruthy();
@@ -67,7 +67,7 @@ describe("specialists", () => {
     expect(ok.events.some((e) => e.type === "battle" && e.to === "c")).toBe(true);
     board(s, { a: ["p1", 10], b: ["p1", 1], c: [null, 2], e: ["p2", 3] });
     const bad = resolveTurn(ctx, s, { p1: [mv("a", "c", "all", { via: "b" })] });
-    expect(find(bad.events, "fizzled")!.reason).toMatch(/cavalry/);
+    expect(find(bad.events, "fizzled")!.reason).toBe("needsCavalry");
   });
 
   it("siege breaks forts", () => {

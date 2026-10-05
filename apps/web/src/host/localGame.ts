@@ -5,11 +5,14 @@ import {
   createGame,
   replayFor,
   resolveTurn,
+  saveGame,
   viewFor,
   type GameContext,
   type GameState,
+  type NewGameOptions,
   type Order,
   type OrdersByPlayer,
+  type SavedGame,
 } from "@conquerra/engine";
 import { buildTimeline } from "../replay/timeline";
 import { BOT_NAMES } from "./names";
@@ -39,6 +42,9 @@ export class LocalGame {
   /** Your orders as you build them (the page keeps sending them), locked in when time runs out. */
   private saved: Order[] = [];
   private bot: Bot;
+  /** How the game was set up and every turn's orders, for "Save this game". */
+  private readonly setup: NewGameOptions;
+  private readonly history: OrdersByPlayer[] = [];
 
   constructor(
     settings: LobbySettings,
@@ -55,7 +61,7 @@ export class LocalGame {
       { id: HUMAN_ID, name: "You" },
       ...BOT_NAMES.slice(0, bots).map((name, i) => ({ id: `bot${i + 1}`, name })),
     ];
-    this.state = createGame(this.ctx, {
+    this.setup = {
       gameId: `local-${seed.slice(0, 8)}`,
       seed,
       players,
@@ -66,7 +72,8 @@ export class LocalGame {
         // The engine just stores the timer; "No timer" is stored as the longest allowed.
         turnTimerSeconds: settings.turnSeconds ?? defaultRules.game.turnTimerSecondsMax,
       },
-    });
+    };
+    this.state = createGame(this.ctx, this.setup);
     this.turnMs = settings.turnSeconds === null || settings.turnSeconds === undefined ? null : settings.turnSeconds * 1000;
     this.startClock(0);
   }
@@ -107,6 +114,7 @@ export class LocalGame {
     const before = this.state;
     const orders = humanOrders ? { ...this.botOrders(), [HUMAN_ID]: humanOrders } : this.botOrders();
     const result = resolveTurn(this.ctx, before, orders);
+    this.history.push(orders);
     this.state = result.state;
     const report = { turn: before.turn, events: replayFor(this.ctx, before, result, HUMAN_ID) };
     this.startClock(buildTimeline(report.events).total);
@@ -145,6 +153,14 @@ export class LocalGame {
     if (this.state.winner) throw new Error("The game is over");
     if (!this.knockedOut) throw new Error("You're still in the game");
     return this.update(this.play(null));
+  }
+
+  /**
+   * "Save this game": the setup, the seed and every turn's orders, so `pnpm sim --replay` can play it again exactly.
+   * Single player only (it holds the secret seed and everyone's orders).
+   */
+  save(notes?: Record<string, string>): SavedGame {
+    return saveGame(this.ctx, this.setup, this.history, this.state, { bots: this.bot.id, ...notes });
   }
 
   /** A bot's orders for you this turn (the game's level), planned from your own view only. */

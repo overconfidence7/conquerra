@@ -74,7 +74,7 @@ describe("chained attacks", () => {
     expect(events.find((e) => e.type === "battle" && e.orderId === "h1" && e.captured)).toBeTruthy();
     expect(events.find((e) => e.type === "battle" && e.orderId === "counter" && e.captured)).toBeTruthy();
     const fizzle = events.find((e) => e.type === "fizzled" && e.orderId === "h2") as Extract<StepEvent, { type: "fizzled" }>;
-    expect(fizzle.reason).toMatch(/no longer hold/);
+    expect(fizzle.reason).toBe("lostStart");
     expect(state.territories.b!.owner).toBe("p2");
   });
 
@@ -99,7 +99,7 @@ describe("chained attacks", () => {
     expect(state.territories.b!.troops).toBe(1 + survivors);
     const h3 = events.find((e) => e.type === "fizzled" && e.orderId === "h3") as Extract<StepEvent, { type: "fizzled" }>;
     expect(h3.usedFallback).toBe(false);
-    expect(h3.reason).toMatch(/no longer hold/);
+    expect(h3.reason).toBe("lostStart");
     expect(events.find((e) => e.type === "fizzled" && e.orderId === "h4")).toMatchObject({ usedFallback: true });
     expect(events.find((e) => e.type === "recruited" && e.orderId === "h4b")).toBeTruthy();
   });
@@ -132,7 +132,7 @@ describe("chained attacks", () => {
       p1: [mv("a", "b", "all", { id: "ft", preset: { id: "followThrough", next: "c" } }), mv("b", "c", { share: 0.5 }, { id: "manual" })],
     });
     const skip = events.find((e) => e.type === "fizzled" && e.orderId === "ft:next") as Extract<StepEvent, { type: "fizzled" }>;
-    expect(skip.reason).toMatch(/own next order/);
+    expect(skip.reason).toBe("manualHopFirst");
     const manual = events.find((e) => e.type === "battle" && e.orderId === "manual") as Extract<StepEvent, { type: "battle" }>;
     expect(manual).toBeTruthy();
     // Half of the army that arrived at b went on; the rest stayed.
@@ -199,7 +199,7 @@ describe("fog and chains", () => {
     const { events } = resolveTurn(ctx, s, {
       p1: [mv("a", "b", "all"), mv("b", "c", "all", { id: "peek", conditions: [{ kind: "maxTroops", territory: "e", count: 99 }] })],
     });
-    expect(events.find((e) => e.type === "fizzled" && e.orderId === "peek")).toMatchObject({ reason: "condition not met: maxTroops" });
+    expect(events.find((e) => e.type === "fizzled" && e.orderId === "peek")).toMatchObject({ reason: "condition", detail: { condition: "maxTroops", fogged: true } });
   });
 });
 

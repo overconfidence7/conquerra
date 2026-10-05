@@ -23,6 +23,7 @@ function inProcessHost(seed: string): GameHost {
     watchNext: async () => game!.watchNext(),
     finish: async () => game!.finish(),
     suggest: async () => game!.suggest(),
+    save: async (notes) => game!.save(notes),
     dispose: () => {},
   };
 }
@@ -125,7 +126,7 @@ describe("turn report", () => {
       { type: "recruited", step: 1, player: "p2", orderId: "a", territory: t(3), count: 2, cost: 6 },
       { type: "surface", step: 2, what: "battle", province: ctx.map.provinces[0]!.id },
       { type: "surface", step: 3, what: "battle", province: ctx.map.provinces[0]!.id },
-      { type: "battle", step: 4, player: "p2", orderId: "b", from: t(1), to: t(2), defender: "p1", attackers: { troops: 5, specialists: [] }, withLeader: false, defenders: { troops: 1, specialists: [] }, result: { attackStrength: 5, defenseStrength: 1, expectedDefenderLosses: 1, expectedAttackerLosses: 0, defenderLosses: 1, attackerLosses: 0 }, captured: true, specialistsLost: [] },
+      { type: "battle", step: 4, player: "p2", orderId: "b", from: t(1), to: t(2), defender: "p1", attackers: { troops: 5, specialists: [] }, withLeader: false, defenders: { troops: 1, specialists: [] }, result: { attackStrength: 5, defenseStrength: 1, expectedDefenderLosses: 1, expectedAttackerLosses: 0, defenderLosses: 1, attackerLosses: 0 }, captured: true, specialistsLost: [], defense: { fort: false, culture: 0, leader: false } },
       { type: "income", step: 5, player: "p1", income: 9, upkeep: 0, goldAfter: 20, deserted: 0, deserters: [] },
       { type: "recruited", step: 0, player: "p1", orderId: "c", territory: t(0), count: 3, cost: 9 },
     ];

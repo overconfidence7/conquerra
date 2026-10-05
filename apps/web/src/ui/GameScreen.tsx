@@ -24,7 +24,7 @@ import { ReportBody, TurnReportDialog } from "./TurnReport";
 import { useReplay } from "./useReplay";
 import { moreCue } from "./moreCue";
 import { useLayout, useLayoutChoice } from "./useLayout";
-import { VersionLine } from "./Diagnostics";
+import { BUILD, VersionLine } from "./Diagnostics";
 import type { LayoutChoice } from "../logic/layout";
 
 /** One shared empty list: a new [] on every render made the map rebuild its whole info layer many times a second during the replay (and freeze on big realms). */
@@ -81,6 +81,24 @@ function WatchPanel({ ctx, view, replaying }: { ctx: GameContext; view: PlayerVi
   );
 }
 
+/**
+ * Settings → "Save this game": downloads a small file (the setup, the seed and every turn's orders) that
+ * `pnpm sim --replay <file>` plays back exactly. For bug reports: attach a strange game and we can see what happened.
+ */
+async function saveThisGame() {
+  const { host, view } = useGame.getState();
+  if (!host || !view) return;
+  const save = await host.save({ app: BUILD });
+  const url = URL.createObjectURL(new Blob([JSON.stringify(save)], { type: "application/json" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `conquerra-${save.setup.gameId}-turn${view.turn}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
 function Settings({ tactical, onTactical, onFit, onReport, onLeave, onClose }: { tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onLeave(): void; onClose(): void }) {
   return (
     <Frame className="popover" title="Settings" extra={<button className="link" onClick={onClose}>Close</button>}>
@@ -95,6 +113,9 @@ function Settings({ tactical, onTactical, onFit, onReport, onLeave, onClose }: {
           Last turn's report
         </button>
       )}
+      <button className="menu-item" onClick={() => void saveThisGame()}>
+        Save this game <span className="muted">for bug reports</span>
+      </button>
       <LayoutSetting />
       <hr className="rule" />
       <button className="menu-item" onClick={onLeave}>

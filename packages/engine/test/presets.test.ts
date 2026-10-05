@@ -27,7 +27,7 @@ describe("contingency presets", () => {
     expect(find(plain.events, "battle")).toBeTruthy();
     const careful = resolveTurn(ctx, s, { p1: [mv("b", "c", "all", { preset: { id: "onlyIfStronger" } })], p2: [reinforce] });
     expect(find(careful.events, "battle")).toBeUndefined();
-    expect(find(careful.events, "fizzled")).toMatchObject({ reason: "condition not met: odds" });
+    expect(find(careful.events, "fizzled")).toMatchObject({ reason: "condition", detail: { condition: "odds" } });
   });
 
   it("Hold if threatened: cancels the move if enemies next to the launch point grew", () => {

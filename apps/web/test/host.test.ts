@@ -1,4 +1,5 @@
 import { recruitBot } from "@conquerra/bots";
+import { replaySavedGame, type SavedGame } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { HUMAN_ID, LocalGame, REPORT_GRACE_MS } from "../src/host/localGame";
 import { formatClock, remainingMs, timerTone } from "../src/logic/timer";
@@ -159,5 +160,25 @@ describe("timer warnings", () => {
     expect(remainingMs(clock, 200_000)).toBe(0);
     expect(formatClock(299_100)).toBe("5:00");
     expect(formatClock(7_000)).toBe("0:07");
+  });
+});
+
+describe("Save this game", () => {
+  it("saves the setup, seed and every turn's orders, and the file plays back to exactly the same game", () => {
+    const g = new LocalGame(settings, "save-test");
+    let u = g.update();
+    for (let i = 0; i < 6 && !u.view.winner; i++) u = g.lockIn(recruitBot.plan(g.ctx, u.view));
+    const save = JSON.parse(JSON.stringify(g.save({ app: "test" }))) as SavedGame;
+    expect(save).toMatchObject({ format: "conquerra-save", mapId: "embervale", notes: { app: "test", bots: "captain" } });
+    expect(save.turns).toHaveLength(6);
+    expect(save.setup.seed).toBe("save-test");
+    const turns: number[] = [];
+    const { matches, state } = replaySavedGame({ map: g.ctx.map, rules: save.rules }, save, (r) => turns.push(r.events.length));
+    expect(matches).toBe(true);
+    expect(state.turn).toBe(u.view.turn);
+    expect(turns).toHaveLength(6);
+    // A tampered file is caught.
+    save.turns[2]![HUMAN_ID] = [];
+    expect(replaySavedGame({ map: g.ctx.map, rules: save.rules }, save).matches).toBe(false);
   });
 });

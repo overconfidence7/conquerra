@@ -1,16 +1,16 @@
-import type { ArmySnapshot, StepEvent } from "@conquerra/engine";
+import { explainFizzle, explainHold, type ArmySnapshot, type GameContext, type StepEvent } from "@conquerra/engine";
 
 const army = (a: ArmySnapshot) => `${a.troops} troops${a.specialists.length ? ` + ${a.specialists.join(", ")}` : ""}`;
 
 /** Plain-English line for each replay event (also a starting point for the in-game log). */
-export function narrate(e: StepEvent, name: (id: string | null) => string, place: (id: string) => string): string {
+export function narrate(ctx: GameContext, e: StepEvent, name: (id: string | null) => string, place: (id: string) => string): string {
   switch (e.type) {
     case "turnStart":
       return `── Turn ${e.turn} ── order: ${e.seats.map(name).join(" → ")}`;
     case "initiative":
       return `${name(e.player)} ${e.timing === "first" ? "seizes the initiative" : "lies in wait"}`;
     case "fizzled":
-      return `${name(e.player)}'s order fizzled (${e.reason})${e.usedFallback ? " → backup plan" : ""}`;
+      return `${name(e.player)}: ${explainFizzle(e, { place }).replace(/^Your /, "")}`;
     case "recruited":
       return `${name(e.player)} recruits ${e.count} troops at ${place(e.territory)} (${e.cost}g)`;
     case "hired":
@@ -24,7 +24,7 @@ export function narrate(e: StepEvent, name: (id: string | null) => string, place
     case "moved":
       return `${name(e.player)} ${e.retreat ? "retreats" : "moves"} ${army(e.army)} ${place(e.from)} → ${place(e.to)}${e.withLeader ? " with their leader" : ""}`;
     case "battle":
-      return `${name(e.player)} attacks ${place(e.to)} (${name(e.defender)}) from ${place(e.from)}: ${army(e.attackers)} vs ${army(e.defenders)} → loses ${e.result.attackerLosses}, kills ${e.result.defenderLosses}${e.captured ? " — CAPTURED" : " — held"}${e.specialistsLost.length ? ` (lost: ${e.specialistsLost.join(", ")})` : ""}`;
+      return `${name(e.player)} attacks ${place(e.to)} (${name(e.defender)}) from ${place(e.from)}: ${army(e.attackers)} vs ${army(e.defenders)} → loses ${e.result.attackerLosses}, kills ${e.result.defenderLosses}${e.captured ? " — CAPTURED" : ` — ${explainHold(ctx, e)}`}${e.specialistsLost.length ? ` (lost: ${e.specialistsLost.join(", ")})` : ""}`;
     case "leaderKilled":
       return `${name(e.player)}'s leader falls at ${place(e.territory)}`;
     case "leaderReturned":

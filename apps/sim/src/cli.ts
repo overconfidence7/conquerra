@@ -1,6 +1,7 @@
+import { readFileSync } from "node:fs";
 import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
-import { indexMap, type GameContext, type GameMode } from "@conquerra/engine";
+import { indexMap, replaySavedGame, type GameContext, type GameMode, type SavedGame } from "@conquerra/engine";
 import { CAPTAIN_CHAIN_MARGIN, makeCaptainBot, makeRecruitBot, type Bot, type CaptainFeature } from "@conquerra/bots";
 import { narrate } from "./narrate";
 import { runGame, type GameSummary } from "./runGame";
@@ -14,6 +15,7 @@ import { runGame, type GameSummary } from "./runGame";
  *   pnpm sim --bots recruit                    all-Recruit tables (the default is all-Captain, the lobby's default)
  *   pnpm sim --mix captain,recruit,recruit,recruit   mixed tables: one bot per seat, rotated each game so no bot
  *                                              keeps a lucky seat; prints each bot's win rate
+ *   pnpm sim --replay game.json                play a saved game (Settings → "Save this game") turn by turn
  * Options: --map embervale|greatmarch (default: Embervale up to 6 players, Greatmarch above),
  *          --luck 0.3, --mode classic|conquest, --turn-limit N, --fog on|off, --seed prefix,
  *          --chain-margin N (bots chain on when the arriving army is this many times what the next target needs;
@@ -53,13 +55,33 @@ function ctxFor(players: number): GameContext {
   return { map, rules: defaultRules };
 }
 
+if (arg("replay", "")) {
+  const save = JSON.parse(readFileSync(arg("replay", ""), "utf8")) as SavedGame;
+  if (save.format !== "conquerra-save") throw new Error("That file isn't a saved Conquerra game.");
+  const map = maps[save.mapId];
+  if (!map) throw new Error(`Unknown map ${save.mapId}`);
+  if ((map.generator?.version ?? null) !== save.mapVersion)
+    console.log(`Warning: this game was played on ${map.name} made by map maker v${save.mapVersion}; this copy is v${map.generator?.version}. The replay will go differently.`);
+  const ctx: GameContext = { map, rules: save.rules };
+  const idx = indexMap(map);
+  const names = new Map(save.setup.players.map((p) => [p.id, p.name]));
+  const name = (id: string | null) => (id ? (names.get(id) ?? id) : "neutral");
+  const place = (id: string) => idx.byId.get(id)?.name ?? id;
+  console.log(`Replaying ${save.setup.gameId} on ${map.name}: ${save.setup.players.map((p) => p.name).join(", ")}; ${save.turns.length} turns${save.notes ? ` (${Object.entries(save.notes).map(([k, v]) => `${k} ${v}`).join(", ")})` : ""}`);
+  const { matches, state } = replaySavedGame(ctx, save, (r) => {
+    for (const e of r.events) console.log(narrate(ctx, e, name, place));
+  });
+  console.log(matches ? `\nThe replay matches the saved game exactly (turn ${state.turn}).` : `\nThe replay ended somewhere different from the saved game (the rules or the engine have changed since).`);
+  process.exit(matches ? 0 : 1);
+}
+
 if (flag("watch")) {
   const ctx = ctxFor(playerCounts[0]!);
   const g = runGame(ctx, seedPrefix, playerCounts[0]!, settings, true, makeBot(botKind));
   const idx = indexMap(ctx.map);
   const name = (id: string | null) => (id ? `Bot ${id.slice(1)}` : "neutral");
   const place = (id: string) => idx.byId.get(id)?.name ?? id;
-  for (const turn of g.log ?? []) for (const e of turn) console.log(narrate(e, name, place));
+  for (const turn of g.log ?? []) for (const e of turn) console.log(narrate(ctx, e, name, place));
   process.exit(0);
 }
 

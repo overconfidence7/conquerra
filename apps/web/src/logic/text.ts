@@ -1,5 +1,5 @@
 import type { BuildingType, SpecialistType, Terrain } from "@conquerra/content";
-import { amountLabel, indexMap, PRESETS, type ArmySnapshot, type GameContext, type Order, type PlayerView, type ReplayEvent } from "@conquerra/engine";
+import { amountLabel, explainFizzle, explainHold, fizzleIsQuiet, indexMap, PRESETS, type ArmySnapshot, type GameContext, type Order, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 
 export const SPECIALIST_ICON: Record<SpecialistType, string> = { cavalry: "🐎", siege: "🎯", scouts: "🔭", engineers: "🔨", healers: "⚕️" };
 export const SPECIALIST_NAME: Record<SpecialistType, string> = { cavalry: "Cavalry", siege: "Siege", scouts: "Scouts", engineers: "Engineers", healers: "Healers" };
@@ -25,14 +25,21 @@ export interface Namer {
   who(id: string | null): string;
   place(id: string): string;
   isMe(id: string | null): boolean;
+  /** The army you saw on a territory while planning the turn (for "you planned for 1"), if you saw one. */
+  planned?(id: string): number | undefined;
 }
 
-export function namer(ctx: GameContext, view: PlayerView): Namer {
+/** `before`: your view while you planned the turn being reported, so the report can say what you planned for. */
+export function namer(ctx: GameContext, view: PlayerView, before?: PlayerView | null): Namer {
   const idx = indexMap(ctx.map);
   return {
     who: (id) => (id === null ? "neutral" : id === view.me.id ? "You" : (view.players.find((p) => p.id === id)?.name ?? id)),
     place: (id) => idx.byId.get(id)?.name ?? id,
     isMe: (id) => id === view.me.id,
+    planned: (id) => {
+      const t = before?.territories[id];
+      return !t ? undefined : t.detail === "full" ? t.troops : t.lastSeen?.troops;
+    },
   };
 }
 
@@ -93,11 +100,13 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
     }
     case "initiative":
       return { text: e.timing === "first" ? "You seized the initiative." : "You lay in wait.", tone: "info" };
-    case "fizzled":
+    case "fizzled": {
+      const target = e.order.kind === "move" ? e.order.to : undefined;
       return {
-        text: `Your order didn't happen: ${e.reason}${e.usedFallback ? " (backup plan used)" : ""}.`,
-        tone: e.usedFallback ? "info" : "bad",
+        text: explainFizzle(e, n, { plannedTroops: target ? n.planned?.(target) : undefined }),
+        tone: fizzleIsQuiet(e) ? "info" : "bad",
       };
+    }
     case "recruited":
       return { text: `${who(e.player)} recruited ${e.count} at ${place(e.territory)}.`, tone: isMe(e.player) ? "info" : "quiet" };
     case "hired":
@@ -119,12 +128,16 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
     case "battle": {
       const mine = isMe(e.player);
       const vsMe = isMe(e.defender);
-      const head = `${who(e.player)} attacked ${place(e.to)}${e.defender && !vsMe ? ` (${who(e.defender)})` : e.defender ? " (yours)" : " (neutral)"}`;
-      const result = e.captured ? "and took it" : verb(e.player, "but were driven back", "but was driven back");
-      const losses = `lost ${e.result.attackerLosses}, killed ${e.result.defenderLosses}`;
+      // Both armies and both sides' losses: "You attacked Ashfell (Gules, 8 troops) with 10 troops and took it: you lost 3, they lost 8."
+      const defenders = `${vsMe ? "yours" : e.defender ? who(e.defender) : "neutral"}, ${army(e.defenders)}`;
+      const head = `${who(e.player)} attacked ${place(e.to)} (${defenders}) with ${army(e.attackers)}`;
+      const result = e.captured ? "and took it" : verb(e.player, "and were driven back", "and was driven back");
+      const lossA = `${mine ? "you" : vsMe ? "they" : who(e.player)} lost ${e.result.attackerLosses}`;
+      const lossD = `${vsMe ? "you" : mine ? "they" : "the defenders"} lost ${e.result.defenderLosses}`;
+      const held = explainHold(ctx, e, vsMe);
       const lostSpecs = e.specialistsLost.length ? ` Specialists lost: ${e.specialistsLost.map((s) => SPECIALIST_NAME[s].toLowerCase()).join(", ")}.` : "";
       const tone: Tone = mine ? (e.captured ? "good" : "bad") : vsMe ? (e.captured ? "bad" : "good") : "quiet";
-      return { text: `${head} with ${army(e.attackers)} ${result} (${losses}).${lostSpecs}`, tone };
+      return { text: `${head} ${result}: ${lossA}, ${lossD}.${held ? ` ${held}` : ""}${lostSpecs}`, tone };
     }
     case "leaderKilled":
       return { text: `${isMe(e.player) ? "Your" : `${who(e.player)}'s`} Leader fell at ${place(e.territory)}.`, tone: isMe(e.player) ? "bad" : "good" };

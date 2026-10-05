@@ -1,7 +1,7 @@
 import type { BorderType, SpecialistType } from "@conquerra/content";
 import { fewestToTake, troopsFor } from "./amounts";
 import { expectBattle, rollLosses, type BattleExpectation } from "./combat";
-import { cultureProtection, incomeFor, investCost, scoreFor, specialistUnlocked } from "./economy";
+import { cultureProtection, incomeFor, investCost, provinceCulture, scoreFor, specialistUnlocked } from "./economy";
 import { updateIntel } from "./intel";
 import { indexMap, type MapIndex } from "./mapIndex";
 import { expandPreset } from "./presets";
@@ -9,6 +9,9 @@ import { Rng } from "./rng";
 import type {
   ArmySnapshot,
   Condition,
+  FizzleCode,
+  FizzleDetail,
+  FizzledOrder,
   GameContext,
   GameEvent,
   GameState,
@@ -52,6 +55,13 @@ interface Queued {
 
 /** The territory an order sends troops out of (moves, retreats and follow-through advances). */
 const launchesFrom = (o: Order): TerritoryId | null => (o.kind === "move" || o.kind === "retreat" || o.kind === "advance" ? o.from : null);
+
+/** Why an order couldn't happen (null = it did). */
+interface Fizzle {
+  code: FizzleCode;
+  detail?: FizzleDetail;
+}
+const fz = (code: FizzleCode, detail: FizzleDetail = {}): Fizzle => ({ code, detail });
 
 const snapshot = (troops: number, specialists: readonly Specialist[]): ArmySnapshot => ({
   troops,
@@ -178,7 +188,7 @@ class Turn {
         const target = terr(order.to);
         if (!target || target.owner === pid) return true; // not an attack
         const plan = this.planMove(pid, order);
-        if (typeof plan === "string") return true; // let the order itself report why it can't run
+        if (isFizzle(plan)) return true; // let the order itself report why it can't run
         const e = this.expect(pid, order.to, plan);
         return c.atLeast === "guaranteed" ? e.captureGuaranteed : e.captureLikely;
       }
@@ -193,17 +203,69 @@ class Turn {
     }
   }
 
+  /** The live facts behind a failed condition, for the turn report ("Ashfell held 14 troops"). */
+  conditionDetail(pid: PlayerId, c: Condition, order: Order, negated = false): FizzleDetail {
+    if (c.kind === "not") return this.conditionDetail(pid, c.condition, order, !negated);
+    const d: FizzleDetail = { condition: c.kind, ...(negated ? { negated } : {}) };
+    if ("territory" in c) {
+      d.territory = c.territory;
+      if (!this.sees(pid, c.territory)) return { ...d, fogged: true };
+    }
+    const troopsAt = (t: TerritoryId) => this.terr(t)?.troops ?? 0;
+    switch (c.kind) {
+      case "odds":
+        if (order.kind === "move") {
+          d.territory = order.to;
+          d.troops = troopsAt(order.to);
+          const plan = this.planMove(pid, order);
+          if (!isFizzle(plan)) d.attackers = plan.troops;
+        }
+        break;
+      case "minTroops":
+      case "maxTroops":
+        d.troops = troopsAt(c.territory);
+        d.need = c.count;
+        break;
+      case "goldAtLeast":
+        d.gold = this.player(pid).gold;
+        d.need = c.amount;
+        break;
+      case "enemyNotGrown":
+        d.before = this.enemyTroopsNear(this.start, c.territory, pid);
+        d.now = this.enemyTroopsNear(this.s, c.territory, pid);
+        break;
+      case "outnumbered":
+        d.troops = this.biggestEnemyNear(this.s, c.territory, pid);
+        d.attackers = troopsAt(c.territory);
+        break;
+    }
+    return d;
+  }
+
+  /** The order as written (without its backup or follow-up), for the fizzle event. */
+  fizzledOrder(pid: PlayerId, o: Order): FizzledOrder {
+    const { id: _id, conditions: _c, fallback: _f, then: _t, timing: _ti, preset, ...body } = o;
+    const out = { ...body } as FizzledOrder;
+    if (preset) out.preset = preset.id;
+    if (o.kind === "move") out.attack = this.terr(o.to)?.owner !== pid;
+    return out;
+  }
+
+  emitFizzle(pid: PlayerId, order: Order, f: Fizzle, usedFallback: boolean) {
+    this.emit({ type: "fizzled", player: pid, orderId: order.id, reason: f.code, detail: f.detail ?? {}, order: this.fizzledOrder(pid, order), usedFallback });
+  }
+
   // ---------- running an order ----------
   /** Runs an order (and its fallbacks). Returns a follow-up to queue if it captured and has `then`. */
   run(pid: PlayerId, q: Queued, depth = 0): Queued | null {
     const order = q.order;
     if (!this.alive(pid)) {
-      this.emit({ type: "fizzled", player: pid, orderId: order.id, reason: "player eliminated", usedFallback: false });
+      this.emitFizzle(pid, order, fz("eliminated"), false);
       return null;
     }
     this.lastCapture = null;
     const failed = (order.conditions ?? []).find((c) => !this.check(pid, c, order));
-    const reason = failed ? `condition not met: ${failed.kind}` : this.apply(pid, order);
+    const reason = failed ? fz("condition", this.conditionDetail(pid, failed, order)) : this.apply(pid, order);
     if (reason === null) {
       const chainDepth = (q.chainDepth ?? 0) + 1;
       if (order.then && this.lastCapture && chainDepth <= MAX_CHAIN_DEPTH)
@@ -211,30 +273,36 @@ class Turn {
       return null;
     }
     if (order.fallback && depth < MAX_FALLBACK_DEPTH) {
-      this.emit({ type: "fizzled", player: pid, orderId: order.id, reason, usedFallback: true });
+      this.emitFizzle(pid, order, reason, true);
       return this.run(pid, { order: order.fallback }, depth + 1);
     }
-    this.emit({ type: "fizzled", player: pid, orderId: order.id, reason, usedFallback: false });
+    this.emitFizzle(pid, order, reason, false);
     return null;
   }
 
-  canRecruitAt(p: PlayerState, t: TerritoryId): boolean {
+  /** Hiring specialists: your capital or a barracks. */
+  canHireAt(p: PlayerState, t: TerritoryId): boolean {
     const terr = this.terr(t);
     return !!terr && terr.owner === p.id && (t === p.capital || terr.building === "barracks");
   }
 
+  canRecruitAt(p: PlayerState, t: TerritoryId): boolean {
+    return this.canHireAt(p, t);
+  }
+
   /** Executes the order. Returns null on success, or the reason it couldn't happen (state untouched). */
-  apply(pid: PlayerId, o: Order): string | null {
+  apply(pid: PlayerId, o: Order): Fizzle | null {
     const { rules } = this.ctx;
     const p = this.player(pid);
     switch (o.kind) {
       case "recruit": {
-        if (!this.canRecruitAt(p, o.territory)) return "recruit only at your capital or a barracks";
+        if (this.terr(o.territory)?.owner !== pid) return fz("notHeld", { territory: o.territory });
+        if (!this.canRecruitAt(p, o.territory)) return fz("recruitSite", { territory: o.territory });
         const t = this.terr(o.territory)!;
         // Ask for more than you can afford and you get as many as you can pay for.
         const count = Math.min(Math.floor(o.count), Math.floor(p.gold / rules.troops.cost));
-        if (!(Math.floor(o.count) >= 1)) return "count must be at least 1";
-        if (count < 1) return "not enough gold";
+        if (!(Math.floor(o.count) >= 1)) return fz("badCount");
+        if (count < 1) return fz("notEnoughGold", { gold: p.gold, cost: rules.troops.cost });
         const cost = count * rules.troops.cost;
         p.gold -= cost;
         t.troops += count;
@@ -242,14 +310,16 @@ class Turn {
         return null;
       }
       case "hire": {
-        if (!this.canRecruitAt(p, o.territory)) return "hire only at your capital or a barracks";
+        if (this.terr(o.territory)?.owner !== pid) return fz("notHeld", { territory: o.territory });
+        if (!this.canHireAt(p, o.territory)) return fz("hireSite", { territory: o.territory });
         const t = this.terr(o.territory)!;
         const def = rules.specialists[o.specialist];
-        if (!def) return "unknown specialist";
-        if (t.specialists.length >= rules.specialists.maxPerArmy) return "this army already has the most specialists it can carry";
-        if (t.troops < 1) return "specialists need troops to travel with";
-        if (!specialistUnlocked(this.ctx, this.s, pid, o.territory, o.specialist)) return "not enough culture in this province";
-        if (p.gold < def.cost) return "not enough gold";
+        if (!def) return fz("invalid");
+        if (t.specialists.length >= rules.specialists.maxPerArmy) return fz("armyFull", { territory: o.territory });
+        if (t.troops < 1) return fz("noTroopsForSpecialist", { territory: o.territory });
+        if (!specialistUnlocked(this.ctx, this.s, pid, o.territory, o.specialist))
+          return fz("cultureLocked", { territory: o.territory, need: def.cultureRequired, have: provinceCulture(this.ctx, this.s, pid, o.territory) });
+        if (p.gold < def.cost) return fz("notEnoughGold", { gold: p.gold, cost: def.cost });
         p.gold -= def.cost;
         t.specialists.push({ id: `s${this.s.nextId++}`, type: o.specialist });
         if (o.specialist === "scouts") this.visionChanged();
@@ -258,11 +328,11 @@ class Turn {
       }
       case "build": {
         const t = this.terr(o.territory);
-        if (!t || t.owner !== pid) return "you don't hold that territory";
-        if (t.building || t.construction) return "territory already has a building";
+        if (!t || t.owner !== pid) return fz("notHeld", { territory: o.territory });
+        if (t.building || t.construction) return fz("hasBuilding", { territory: o.territory });
         const def = rules.buildings[o.building];
-        if (!def) return "unknown building";
-        if (p.gold < def.cost) return "not enough gold";
+        if (!def) return fz("invalid");
+        if (p.gold < def.cost) return fz("notEnoughGold", { gold: p.gold, cost: def.cost });
         p.gold -= def.cost;
         // Engineers finish any building on the spot.
         const turns = t.specialists.some((s) => s.type === "engineers") ? 0 : def.buildTurns;
@@ -276,10 +346,10 @@ class Turn {
       }
       case "invest": {
         const t = this.terr(o.territory);
-        if (!t || t.owner !== pid) return "you don't hold that territory";
+        if (!t || t.owner !== pid) return fz("notHeld", { territory: o.territory });
         const cost = investCost(rules, t.culture);
-        if (cost === null) return "culture is already at its highest";
-        if (p.gold < cost) return "not enough gold";
+        if (cost === null) return fz("cultureMax", { territory: o.territory });
+        if (p.gold < cost) return fz("notEnoughGold", { gold: p.gold, cost });
         p.gold -= cost;
         t.culture += 1;
         this.emit({ type: "invested", player: pid, orderId: o.id, territory: o.territory, culture: t.culture, cost });
@@ -292,25 +362,25 @@ class Turn {
       case "advance":
         return this.advance(pid, o.from, o.id);
     }
-    return "unknown order";
+    return fz("invalid");
   }
 
-  planMove(pid: PlayerId, o: MoveOrder): MovePlan | string {
+  planMove(pid: PlayerId, o: MoveOrder): MovePlan | Fizzle {
     const { rules } = this.ctx;
     const p = this.player(pid);
     const from = this.terr(o.from);
     const to = this.terr(o.to);
-    if (!from || !to) return "unknown territory";
-    if (from.owner !== pid) return "you no longer hold the starting territory";
-    if (o.from === o.to) return "can't move to the same territory";
+    if (!from || !to) return fz("invalid");
+    if (from.owner !== pid) return fz("lostStart", { territory: o.from });
+    if (o.from === o.to) return fz("invalid");
 
     const adjacent = (a: TerritoryId, b: TerritoryId) => this.idx.neighbors.get(a)?.includes(b) ?? false;
     let border = this.idx.border(o.from, o.to);
     if (o.via) {
-      if (!adjacent(o.from, o.via) || !adjacent(o.via, o.to)) return "path is not connected";
-      if (this.terr(o.via)?.owner !== pid) return "path is blocked (you don't hold the middle territory)";
+      if (!adjacent(o.from, o.via) || !adjacent(o.via, o.to)) return fz("notConnected");
+      if (this.terr(o.via)?.owner !== pid) return fz("pathBlocked", { territory: o.via });
       border = this.idx.border(o.via, o.to);
-    } else if (!adjacent(o.from, o.to)) return "territories are not adjacent";
+    } else if (!adjacent(o.from, o.to)) return fz("notConnected");
 
     // Specialists travel with the stack: all fresh ones by default, or the listed types.
     const freshSpecs = from.specialists.filter((s) => !this.spentSpecialists.has(s.id));
@@ -326,7 +396,7 @@ class Turn {
     }
     // Moving into your own army: only as many as fit; the rest stay behind.
     if (to.owner === pid) specialists = specialists.slice(0, Math.max(0, rules.specialists.maxPerArmy - to.specialists.length));
-    if (o.via && !specialists.some((s) => s.type === "cavalry")) return "only armies with cavalry can move two territories";
+    if (o.via && !specialists.some((s) => s.type === "cavalry")) return fz("needsCavalry", { territory: o.from });
 
     const leaderGoes = !!o.withLeader && p.leader.alive && p.leader.territory === o.from;
 
@@ -337,7 +407,11 @@ class Turn {
     const draft: MovePlan = { troops: 0, specialists, leaderGoes, border: border ?? "normal" };
     const enough = () => (attack ? fewestToTake((n) => this.expect(pid, o.to, { ...draft, troops: n }).captureLikely, available) : available);
     const troops = troopsFor(o.troops, fresh, available, enough);
-    if (troops <= 0) return "no troops available to move";
+    if (troops <= 0) {
+      // Everyone but the garrison is resting after a failed attack, or only the garrison is there.
+      const resting = (this.spentTroops.get(o.from) ?? 0) > 0 && from.troops > rules.setup.minGarrison;
+      return fz(resting ? "resting" : "garrisonOnly", { territory: o.from, troops: from.troops });
+    }
     return { ...draft, troops };
   }
 
@@ -359,9 +433,9 @@ class Turn {
     });
   }
 
-  move(pid: PlayerId, o: MoveOrder, orderId: string, retreat: boolean): string | null {
+  move(pid: PlayerId, o: MoveOrder, orderId: string, retreat: boolean): Fizzle | null {
     const plan = this.planMove(pid, o);
-    if (typeof plan === "string") return plan;
+    if (isFizzle(plan)) return plan;
     const p = this.player(pid);
     const from = this.terr(o.from)!;
     const to = this.terr(o.to)!;
@@ -443,6 +517,7 @@ class Turn {
       },
       captured,
       specialistsLost,
+      defense: { fort: exp.fortCounted, culture: to.culture, leader: defenderLeader },
     });
     for (const f of fallen) {
       f.leader = { alive: false, territory: null };
@@ -453,32 +528,32 @@ class Turn {
   }
 
   /** Pull the army back to the neighbouring territory you hold that is least threatened. */
-  retreat(pid: PlayerId, fromId: TerritoryId, orderId: string): string | null {
+  retreat(pid: PlayerId, fromId: TerritoryId, orderId: string): Fizzle | null {
     const from = this.terr(fromId);
-    if (!from || from.owner !== pid) return "you no longer hold that territory";
+    if (!from || from.owner !== pid) return fz("lostStart", { territory: fromId });
     const options = (this.idx.neighbors.get(fromId) ?? []).filter((n) => this.terr(n)?.owner === pid);
-    if (!options.length) return "nowhere safe to retreat to";
+    if (!options.length) return fz("nowhereToRetreat", { territory: fromId });
     const danger = (n: TerritoryId) => this.biggestEnemyNear(this.s, n, pid) - this.terr(n)!.troops;
     const best = [...options].sort((a, b) => danger(a) - danger(b) || (a < b ? -1 : 1))[0]!;
     return this.move(pid, { kind: "move", from: fromId, to: best, troops: "all" }, orderId, true);
   }
 
   /** Attack the neighbour of `fromId` this army is most likely to take (used by "Follow through"). */
-  advance(pid: PlayerId, fromId: TerritoryId, orderId: string): string | null {
+  advance(pid: PlayerId, fromId: TerritoryId, orderId: string): Fizzle | null {
     const from = this.terr(fromId);
-    if (!from || from.owner !== pid) return "you no longer hold that territory";
+    if (!from || from.owner !== pid) return fz("lostStart", { territory: fromId });
     let best: { to: TerritoryId; margin: number } | null = null;
     for (const n of this.idx.neighbors.get(fromId) ?? []) {
       if (this.terr(n)!.owner === pid) continue;
       const order: MoveOrder = { kind: "move", from: fromId, to: n, troops: "all" };
       const plan = this.planMove(pid, order);
-      if (typeof plan === "string") return plan;
+      if (isFizzle(plan)) return plan;
       const e = this.expect(pid, n, plan);
       if (!e.captureLikely) continue;
       const margin = e.expectedDefenderLosses - this.terr(n)!.troops + (plan.troops - e.expectedAttackerLosses);
       if (!best || margin > best.margin) best = { to: n, margin };
     }
-    if (!best) return "no neighbour the army can likely take";
+    if (!best) return fz("noTarget", { territory: fromId });
     return this.move(pid, { kind: "move", from: fromId, to: best.to, troops: "all" }, orderId, false);
   }
 
@@ -494,6 +569,7 @@ class Turn {
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
+const isFizzle = (x: MovePlan | Fizzle): x is Fizzle => "code" in x;
 
 /**
  * "Follow through" pushes on in the player's next slot, unless they queued their own next hop from the same place:
@@ -501,7 +577,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
  */
 function queueFollowThrough(T: Turn, pid: PlayerId, q: Queued[], next: Queued) {
   if (q.some((x) => launchesFrom(x.order) === next.chainFrom)) {
-    T.emit({ type: "fizzled", player: pid, orderId: next.order.id, reason: "your own next order from there goes instead", usedFallback: false });
+    T.emitFizzle(pid, next.order, fz("manualHopFirst", { territory: next.chainFrom }), false);
     return;
   }
   q.unshift(next);
