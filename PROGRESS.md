@@ -388,3 +388,6 @@ Session 9 stopped at the usage limit after the combat fix, plain-words "called o
 - Still to come: Nate's play test of session 9.
 - Nine Claude Code sessions are done, so there's a fresh orchestrator prompt: `docs/prompts/orchestrator-04.md`.
 - Next prompt: `docs/prompts/claude-code-session-10.md` (run it locally): bigger maps in new shapes, the map lab, the art test bench, candidate maps.
+
+### Oct 5: Claude Code session 10, in progress (checkpoint)
+- Parts 1–3 are done and pushed: land shapes and maps up to 120 territories (`b2f1dc5`), the map lab at `?lab=maps` (`079065f`), the art test bench at `?lab=bench` (`928bc78`). Next: Part 4 (candidate maps in `docs/maps/candidates.md`), then the deploy, docs and Nate's check. A full entry replaces this one when the session ends.
