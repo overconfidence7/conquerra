@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Session 9 (Nate's play-test fixes) is part done: 9b and 9c finish it. Then 10 the map lab and bigger maps, then 11 a big visual upgrade.**
+**Phase: M3 (depth and balance). Session 9 (Nate's play-test fixes) is part done: 9b finishes it. Then 10 the map lab and bigger maps, then 11 a big visual upgrade.**
 
 Claude Code sessions completed: **8** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
 
@@ -344,7 +344,5 @@ Next prompt: `docs/prompts/claude-code-session-09.md` (run it locally). A fresh 
 - **Nate's calls:**
   - Runaways are a **bot strategy** problem, not an engine or chaining one. The bots should account for a player pulling ahead. The "gang up on the leader" behaviour moves up into session 9b, along with bots defending against a fast attacker.
   - **Game length in real time:** his game against Recruit bots took about 30 minutes, which is too short. His targets are **single player 45–90 minutes** and **a live online game 2 hours or more**. No rule change now: cards, generals, diplomacy, bigger maps and smarter opponents will all lengthen games. The sim write-ups will start estimating real time.
-- **The rest of session 9 is split in two:**
-  - **9b:** finish culture (tune it, show it), bots gang up and defend, the sim write-up, deploy
-  - **9c:** map clarity and buildings
-- Next prompt: `docs/prompts/claude-code-session-09b.md`, then `claude-code-session-09c.md` (both run locally).
+- **The rest of session 9 is one session, 9b**, for Nate's next usage window (his call): finish culture, bots that handle a runaway, the sim write-up, map clarity, buildings, then one deploy. It commits after every part, so nothing is lost if it's cut off.
+- Next prompt: `docs/prompts/claude-code-session-09b.md` (run it locally).
