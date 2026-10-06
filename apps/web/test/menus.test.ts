@@ -207,7 +207,7 @@ describe("the lobby's map list", () => {
       "The Moon Coast · 80 territories · suits 4–8 players",
       "The Ringsea · 100 territories · suits 6–10 players",
       "The Crownlands · 100 territories · suits 6–10 players",
-      "Wyrmland · 120 territories · suits 6–10 players",
+      "Wyrmland · 120 territories · suits 6–8 players",
     ]);
     expect(loadableMaps.sort()).toEqual(mapCatalog.map((m) => m.id).sort());
     expect((await loadMap("wyrmland")).territories.length).toBe(120);
