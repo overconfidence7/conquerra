@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–13 are done. Next: session 14: preset diplomacy, with bots that judge treaties with strong, explainable logic.**
+**Phase: M3 (depth and balance). Sessions 7–13 are done. Next: session 14 (`docs/prompts/claude-code-session-14.md`): Nate's three calls on the decks and Continue, then preset diplomacy (truces, trades, joint wars, right of passage) with bots that judge deals for reasons they can explain.**
 
 Claude Code sessions completed: **13** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, ...)
 
@@ -628,3 +628,21 @@ All four parts are done, each committed and pushed. There were no play-test note
   - a Fate event in the replay and the report
 - **Tests and deploy:** 556 automated tests pass. Deployed to the private preview (version `78afdff9`); the lock check passed.
 - **Asked Nate to play on the preview** (laptop: pause, close, Continue, slots; phone: Spoils and a mission; do Fate events feel fair; how many turns). His notes go below once he's played.
+
+### Oct 6: Orchestrator review of session 13
+- **Checked the work:**
+  - GitHub's checks pass on all five session 13 commits, including the last one (`1f69398`).
+  - Re-ran 4 players with both decks (500 games): 22.9 turns, 97.6% within 40, "winner took the lead on a set turn" 28% vs 27% by chance, winner's good Fate events 58% vs 60% of the land. All match session 13's numbers exactly.
+  - The screenshots look right: Continue in the lobby, the save and load slots, the paused timer, the Spoils hand, a mission on the Leader card, Fate in the replay and the report.
+  - One small layout fault: on a phone, the "Save to a file" button squeezes its label into a narrow column next to its explanation. Fixed in session 14's Step 0.
+- **Nate's calls:**
+  - **Spoils go back to the bigger rewards:** three Swords 8 troops, three Towers a fort + 3 troops, one of each 4 troops + 6 gold (Laurels unchanged). Games run about 1–2 turns longer; the balance pass looks at length.
+  - **Continue keeps the orders you'd queued** but hadn't locked in, so a phone closing the tab doesn't cost a planned turn.
+  - **The first Fate draw comes later:** at the end of turn 3 (a number in `packages/content`), so the opening turns stay quiet.
+- **Nate's calls on diplomacy (session 14):**
+  - **All four kinds of deal in the first version:** truces (named borders, a province, or everywhere between you; for some turns or until a player is knocked out), trades (gold, land, or gold paid over several turns), joint wars ("you hit X, I hit Y") and right of passage.
+  - **Deals are public:** everyone sees who has a deal with whom; the terms of trades stay private.
+  - **Both kinds of promise:** handshake deals (free, breakable, with an Oathbreaker penalty) and binding pacts (cost gold up front; the game blocks the attack).
+- **Still to come:** Nate's play tests of sessions 11, 12 and 13.
+- **Next:** session 14 (`docs/prompts/claude-code-session-14.md`, run it locally). Right of passage is its last part; if the session runs short, it moves to session 15.
+

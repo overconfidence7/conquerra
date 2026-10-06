@@ -35,6 +35,35 @@
   - It remembers who broke a deal with it, and is slower to trust them again.
   - It never accepts something that helps a runaway leader, and it isn't a pushover or a wall: the sims check acceptance rates for good, bad and neutral offers.
   - Same brain for generals and bots.
+- **DECIDED (Nate, Oct 6), first version for session 14:**
+  - **All four kinds of deal:** truces, trades, joint wars and right of passage.
+  - **Deals are public:** everyone sees who has a deal with whom (the Players panel, and the map where you can see it). The terms of trades stay between the two sides.
+  - **Handshake deals and binding pacts both,** as decided Oct 1: handshake deals are free and can be broken (with a penalty that scales with the deal); binding pacts cost gold up front and the game blocks the attack.
+- **First version for session 14 (orchestrator's defaults, Oct 6; every number in `packages/content`; Nate can change any of them):**
+  - **Making a deal:** tap a player in the Players panel, then **Propose**. Pick a deal card; its terms come filled in with sensible defaults; change them if you like; choose Handshake or Binding; Send. A plain truce takes **4 taps or fewer**.
+  - **Answering:** **Accept**, **Counter** (the same card with its terms open to change, sent back) or **Decline**. Bots answer at once, with a one-line reason. An offer to you arrives as a small toast as planning starts; Accept is one tap once it's open.
+  - **When a deal starts (the re-confirm rule):** both sides must confirm during the same planning phase. The deal starts as the turn resolves, before any move. An offer nobody confirmed lapses when the turn resolves. Any attack between the two players during the replay voids every open offer between them.
+  - **The deal cards:**
+    - **Truce:** no attacks between you across the named borders, a whole province, or everywhere. For 2–8 turns (3 by default), or "until Player X is knocked out" (8 turns at most).
+    - **Trade:** gold now, gold each turn (5 turns at most), or land. Land must border the receiver's land; no capitals; at most 3 territories in one deal. The giver's troops there step back to its own neighbouring land (it must hold one); one of the receiver's troops moves in from its strongest neighbouring territory; buildings stay; culture goes as it does on conquest. A payment you can't make breaks the deal.
+    - **Joint war:** both sides name the same third player for 2–6 turns (4 by default). It includes a truce between the two partners while it lasts. Attacking your partner, or making a truce with the target, breaks it. A partner who never attacks the target hasn't broken it, but bots remember. Partners don't share what they see: fog stays.
+    - **Right of passage:** your armies may move through their land for 2–6 turns, but can't stop or fight there. A move through land that changed hands stops at your last territory before it.
+  - **Handshake and binding:**
+    - **Handshake:** free. **Breaking one** brings a public **Oathbreaker** mark (5 turns), a gold fine and unrest on your land next to the player you wronged (culture protects as usual), all scaled by the deal's size (how much land it covers, how long it runs, how much it trades; "until X is knocked out" counts as big).
+    - **Binding:** each side pays gold up front, more for longer and bigger deals. The game won't let you queue an attack across it, and calls off any that would cross it the turn it starts (with a report line). Gold owed each turn is taken automatically. A binding pact can't be broken; it runs until it ends.
+    - **Every deal expires** (8 turns at most). Between the same two players, one deal of each kind at a time. When a player is knocked out, their deals end; the Fallen don't make deals.
+  - **Public:** the Players panel shows a small mark between players for each deal (a seal on a binding one), and an Oathbreaker mark on anyone who broke one. The map shows truce borders and passage land to those who can see them. The target of a joint war is told who's coming. A trade shows as "Azure and Gules made a trade"; land that changes hands shows where it's seen.
+  - **Bots judge every offer from their own view,** for reasons they can say in one plain line:
+    - their fronts and where their armies are needed ("I need my army in the west")
+    - who's ahead, by the Captain's runaway rule ("You're running away with the map")
+    - what the deal frees up or costs (troops held on that border, gold)
+    - trust in the proposer ("You broke our truce at Old March")
+  - **Bots never accept a deal that helps a runaway leader** (a truce that frees it to grow, a trade that gives it land), and they're always open to a joint war against one. When an offer is close, a bot may counter once (more gold, a shorter truce), with its reason.
+  - **Trust:** each bot keeps a trust score for every player. It drops a lot when that player breaks a deal with it, a little when a joint war falls through, and climbs slowly with deals kept. An Oathbreaker mark lowers everyone's trust in that player.
+  - **Bots propose deals too:** a truce on the front they can't afford, a joint war against a runaway, a trade when they're short of gold or want land that completes a province. Bots also make deals with each other. The Recruit uses simpler rules: it takes a truce when it's weaker and refuses when it's stronger, and it never proposes trades.
+  - **Bots keep their word,** except that the Captain may break a handshake deal when the gain clearly outweighs the penalty (a capital it's sure to take, or the win), and it says so in its reason.
+  - **Generals respect every deal:** a general never attacks across a truce or breaks a deal, and "Raid a rival" can't name a partner.
+  - **The sims check the bots aren't pushovers or walls:** acceptance rates on a fixed set of good, neutral and bad offers; deals and breaks per game; and game length, runaways and seat fairness with diplomacy on and off.
 
 ## 3. Contingency presets
 - Order backups come from a short list of one-tap templates instead of being built by hand. Examples:
@@ -125,6 +154,9 @@ Nate's three ideas:
   - **Fate lands between turns:** you draw as the turn ends, so the card is in the report when you plan, and no event can make a "guaranteed" attack fail. Closed crossings (a flooded ford, a rockslide, squalls at sea) are closed for all of the next turn and everyone who can see them knows.
   - **14 events, 10 missions,** all in `rules.fate`. Missions sit on your Leader card; tap one to light its target.
   - Rules: `docs/rules-reference.md` §18–19. Numbers: `docs/sim-results-m3-cards.md`.
+- **Nate's calls after session 13 (Oct 6), built in session 14:**
+  - **Spoils go back to the bigger rewards:** three Swords 8 troops, three Towers a fort + 3 troops, one of each 4 troops + 6 gold (Laurels unchanged). Games run about 1–2 turns longer; the balance pass looks at length.
+  - **The first Fate draw comes at the end of turn 3** (`rules.fate`), so the opening turns stay quiet.
 
 ## 7. Troop types: the analysis Nate asked for (DECIDE)
 
