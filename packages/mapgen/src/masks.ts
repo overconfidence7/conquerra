@@ -1,4 +1,4 @@
-import wyrm from "../masks/wyrm.json";
+import dragon from "../masks/dragon.json";
 import { insideRings } from "./util";
 
 /**
@@ -6,7 +6,7 @@ import { insideRings } from "./util";
  * y from 0 (top) to 1 (bottom). The land fills the inside of the outline, roughened a little by the coast noise.
  *
  * Two ways to add one:
- *  - **An outline in code:** a list of points around the edge (`rings`), like the three below. Several rings
+ *  - **An outline in code:** a list of points around the edge (`rings`), like the two below. Several rings
  *    are fine (a ring inside another is a hole, a separate ring is an island).
  *  - **A black-and-white picture:** `pnpm --filter @conquerra/mapgen mask <picture.png> <id> "<Name>"` turns it into
  *    rows of `#` (land) and `.` (sea) in `masks/<id>.json`; add the file to `IMAGE_MASKS` below. Black is land.
@@ -29,22 +29,6 @@ export interface MaskDef {
 const ring = (...pts: number[]) => pts.map((v) => v / 100);
 
 export const MASKS: MaskDef[] = [
-  {
-    id: "dragon",
-    name: "The Dragon",
-    aspect: 1.5,
-    // A dragon facing left: head and horns, a curved neck, three-fingered wing, two legs, and a tail curling up.
-    rings: [
-      ring(
-        6, 33, 11, 24, 17, 19, 20, 8, 27, 17, 33, 20, 38, 28, 44, 38, 52, 45, 60, 45, // snout, horn, back of the head, neck
-        64, 26, 72, 6, 82, 16, 92, 4, 101, 17, 116, 6, 116, 24, 108, 40, 104, 47, // the wing: three fingers, a scalloped edge
-        116, 48, 129, 47, 140, 40, 145, 29, 140, 18, 129, 17, 125, 26, 133, 29, 134, 36, 127, 41, // tail, curling up
-        122, 52, 113, 63, 112, 82, 100, 84, 99, 68, 88, 70, // hind leg
-        78, 70, 74, 85, 62, 86, 63, 70, 54, 64, // foreleg and belly
-        44, 58, 36, 50, 29, 44, 20, 42, 12, 41, // throat and jaw
-      ),
-    ],
-  },
   {
     id: "shield",
     name: "The Shield",
@@ -77,10 +61,10 @@ export const MASKS: MaskDef[] = [
 ];
 
 /**
- * Masks made from Nate's pictures (`pnpm --filter @conquerra/mapgen mask ...`). `wyrm` is Gemini's dragon outline
- * from art batch 3 (session 12), for Wyrmland once Nate approves its seed.
+ * Masks made from Nate's pictures (`pnpm --filter @conquerra/mapgen mask ...`). The dragon (Wyrmland) is Gemini's
+ * outline from art batch 3 (session 12); it replaced a hand-drawn one that didn't read as a dragon at Far zoom.
  */
-export const IMAGE_MASKS: MaskDef[] = [wyrm];
+export const IMAGE_MASKS: MaskDef[] = [dragon];
 
 export const allMasks = (): MaskDef[] => [...MASKS, ...IMAGE_MASKS];
 

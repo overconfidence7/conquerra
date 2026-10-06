@@ -1,4 +1,4 @@
-# Conquerra Rules Reference (Milestone 3, session 8)
+# Conquerra Rules Reference (Milestone 3, session 12)
 
 *A 10-minute read. This is how the engine actually plays today. Numbers are the current balance settings from `packages/content/data/rules.json`; they will change as we tune.*
 
@@ -145,7 +145,7 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
 - If **both sides are wiped out**, the last defender holds on: the land keeps 1 troop. (Land is never left owned with 0 troops.)
 - A Leader in a captured territory, or in an attacking army that's wiped out, **falls**.
 - **Leaders come back for free.** At the end of the turn it fell, your Leader returns at your capital, or at your strongest territory (most troops) if you've lost the capital. So it's waiting for you when you plan your next turn. Seize the Initiative and Lie in Wait cooldowns carry on as before.
-- When a player is knocked out, the game records **who knocked them out**. (In Milestone 3 that player gets the loser's Leader as a general.)
+- When a player is knocked out, the game records **who knocked them out**, and that player gets the loser's Leader as a **captured general** (§15). The knocked-out player becomes one of **the Fallen** (§16).
 - **Odds preview:** before you commit, the game shows "guaranteed / likely / possible / impossible" from the same math the engine uses.
 - **Provably fair:** the game's secret random seed is fingerprinted when the game starts and revealed when it ends, so anyone can re-run the game and check every roll.
 
@@ -186,8 +186,9 @@ Engineers make any of these ready immediately. A building under construction giv
   - A battle in the fog shows only as a **surface detail**: "a battle in Northreach." No names, no numbers. The same goes for a Leader falling in the fog.
   - Quiet things in the fog (moves, recruiting, building, culture) don't show at all.
   - Eliminations and the end of the game are announced to everyone.
-- Eliminated players see the whole board. (In the turn you're knocked out, the fog lifts off everything as that turn's replay starts.)
-- With fog off, none of this applies: everyone sees everything, all the time. When you're knocked out you choose **Watch to the end** (the bots play on; you see every turn's report and can skip ahead) or **See the result**.
+- **Knocked-out players are the Fallen (§16) and see the political map:** who holds what everywhere, and the capitals, but no troop numbers, buildings or armies (so nothing about armies reaches a living friend). Their replay shows the public events and the world events, then who holds what at the end of the turn. In the turn you're knocked out you keep your own vision to the end, and the replay ends on the political map.
+- With the Fallen switched off (a setting, on by default), knocked-out players see the whole board, as before.
+- With fog off, none of this applies: everyone sees everything, all the time.
 
 ## 12. The map: water, mountains, passes, sea lanes and choke points
 Maps are made by the **map maker** (same seed, same map) and look like a real place, not a grid.
@@ -225,7 +226,65 @@ Bots play by exactly the same rules as people, and only from their own view (inc
      - it stops attacking weaker rivals whose land touches the leader's (they're holding it off)
   9. **Turns on a fast attacker.** If last turn's replay (exactly what that seat watched) showed one rival taking **2 or more of its territories**, that rival becomes its target (a chain is thinly held behind it): it recruits on that front, marches nearby troops there, keeps the choke points facing it held, and armies within two steps stop grabbing neutral land. (Just digging in was tried first: it cut runaways too, but Recruit bots then beat the Captain far more often.)
 - The same rules apply to every seat: nobody gangs up on you because you're human, only because you're ahead.
+- **Bots don't use generals** (they already plan every army). A bot that knocks someone out still gets a captured general; it just stands where it was placed, and goes if its land falls.
+- **Knocked-out bots are Fallen bots** (§16): they aim world events at whoever looks to be leading, by the same runaway rule as priority 8, judged from their political map. With fewer than three players left, they aim at the leader once it holds 1.25 times the land of the next. They pick, best first: an uprising in the leader's quietest land, a plague where it holds the most of a province, a famine, mercenaries next to its land that borders neutral land, a storm on its border with another player. Every Fallen bot judges the same way, so they often pool.
 - If a realm loses its capital and has no barracks, it builds one straight away.
 
+## 14. Generals (session 12)
+- **A general leads one army:** the troops in the territory where it stands. It goes with them when they move.
+- **Your Leader is your first general.** You can order its army yourself, as always, or hand it a **standing instruction**. It keeps its +20% (it goes along on its attacks) and its timing tricks either way: as a general it uses Seize the Initiative on its first attack on a rival when that's ready.
+- **The four instructions:**
+  - **Hold here:** keep this territory. If a rival army next door could take it, the general pulls spare troops in from your land next to it. It never attacks.
+  - **Defend this border:** toward a rival, or toward a place you pick. It marches to the most threatened stretch of that border through your own land and holds it like Hold here. It hits back at that rival's armies next door with troops it doesn't need there; the general itself stays at its post.
+  - **Push toward a place:** it marches toward the place and takes land along the way, with the Captain's odds and chaining, but every hop must get closer. It never stops next to a rival army that would throw it straight back out. Blocked, it waits and gathers spare troops from your quiet land behind it. If it's stranded somewhere it can't hold, it pulls back a step. Once there, it holds.
+  - **Raid a rival:** it takes that rival's weakly held land next to it and chains on through more of it. It never goes into land next to one of that rival's armies big enough to throw it out. Not touching that rival yet, it marches toward the rival's nearest land you know of, taking neutral land on the way (never a third player's).
+- **How it decides:**
+  - It writes its orders with the Captain bot's brain, judging only from your view (it can't see through fog), and the same view and instruction always give the same orders.
+  - **Its army is the troops with it when it plans:** it moves them by number, so troops you recruit there that turn stay behind.
+  - It never leaves a threatened capital bare.
+  - **It never spends gold:** you still recruit, build and raise culture yourself.
+- **When its orders are written:** as planning starts, from your view. They show at the top of your queue with the general's portrait, before you lock in, and you can delete any of them. If the timer runs out, they go in as they are.
+- **Taking control back:** give an order of your own to the general's army (anything out of the territory it stands in) and its orders all step aside for the turn. Its instruction is still there next turn. An order of yours out of a territory it meant to pull troops from just drops that one order. One tap ("You give the orders") switches the instruction off.
+- **On screen:**
+  - Select the territory where your Leader stands: the panel shows what it's doing and **Command**. Command, an instruction, then a rival or a place on the map: 3 taps at most. (On a phone, the sheet folds away while you pick a place, with a banner saying what to tap.)
+  - The Leader card says what it's doing ("Pushing toward Old March").
+  - The replay and the report tell its story ("Your Leader, pushing toward Old March, took Ashfell"; "Your Leader, holding Galeholt, drove back Lady Morwen's attack").
+
+## 15. Captured generals (session 12)
+- **Knock a player out and their Leader joins you** as a captured general. It appears at your capital (your strongest territory if you've lost it), with no army until troops are there or move with it.
+- It takes instructions exactly like your Leader, and goes with its army.
+- **Command only:** it adds no +20% fighting bonus and has no timing tricks.
+- **You keep at most 2** (`rules.generals.maxCaptured`). When a third arrives, you choose which to let go. If you don't choose, the two nearest your front stay (bots always keep those two).
+- **Gone for good** if its army is wiped out attacking, or the territory it stands in is taken. Only your own Leader comes back.
+- **On screen:** the knocked-out Leader's portrait on a gold ring above its army's marker, and a line under your Leader in the right column (click it to go there).
+
+## 16. The Fallen (session 12)
+- **When you're knocked out you become one of the Fallen.** You see the political map (§11) and choose **Watch to the end** or **Leave the game** (the others play on and you see who won).
+- **Influence:** each of the Fallen earns 1 Influence a turn, plus 0.5 for each other Fallen player. Several Fallen aiming the same event at the same place pool their Influence. Putting more than the cost toward an event makes it stronger, up to 1.5 times.
+- **Five world events, each aimed at a living player's land:**
+
+| Event | Cost | Rests for | What it does |
+|---|---|---|---|
+| **Plague** | 12 | 4 turns | 25% of the target's troops in one province die. |
+| **Storm** | 6 | 3 turns | One border is closed for the turn: no moves or attacks across it either way. An order that can't cross says so in the report. |
+| **Uprising** | 12 | 5 turns | 4 rebels rise against land held by 4 or fewer troops. If they're more, it turns neutral, held by the rebels. A Leader standing there falls. |
+| **Mercenaries** | 9 | 4 turns | 6 neutral troops appear in neutral land next to the target, blocking its way. |
+| **Famine** | 8 | 5 turns | The target loses 25% of this turn's income. |
+
+- **Caps, so events can't decide the game:**
+  - No event takes or aims at a capital, or knocks a player out: a plague never takes the last troop, and an uprising never takes a player's last territory.
+  - **At most one event lands on each living player per turn.**
+  - Each event rests for its cooldown after it's played, for all the Fallen.
+  - **Culture protects:** each level blocks 15% of the effect where the event lands (for a famine, the culture of the target's capital), as with unrest.
+- **When they land:** as the turn starts, before anyone's orders. An event that can't happen costs nothing, and its Fallen are told why.
+- **What the living see:** an event on your own land is always in your replay and report. Anyone else's shows only if you could see where it happened.
+- **On screen (the Fallen):**
+  - your Influence;
+  - the five events as cards (cost, what it does, ready or resting);
+  - tap a card, then the land (a storm takes a second tap, across the border);
+  - "Stronger" to put more toward it;
+  - Next turn.
+- **Numbers** are all in `rules.fallen` (`packages/content/data/rules.json`). The events are built so a Fate deck could draw them later (session 13 decides).
+
 ## Not in yet (later milestones)
-Spies, generals and standing instructions, Spoils and Fate decks, diplomacy, the Fallen, factions.
+Spies, Spoils and Fate decks, diplomacy, factions, and the "Govern this province" general instruction (session 15).

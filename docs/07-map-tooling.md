@@ -128,6 +128,19 @@ Moved from session 9 to 10, because Nate's play-test fixes come first. Nate's di
 4. **Wyrmland's dragon:** `pnpm --filter @conquerra/mapgen mask art/incoming/mask-dragon.png wyrm "The Wyrm"` (the path is from the repo root; the script now crops the picture to the drawing, so empty paper doesn't become sea), add it to `IMAGE_MASKS` in `packages/mapgen/src/masks.ts`, try seeds of Wyrmland's recipe until one reads as a dragon at Far and passes every check, show Nate the Far picture, then point Wyrmland's recipe at the new mask and seed in `configs.ts`, `pnpm build-maps`, and run 200-game sims at 6, 8 and 10 players.
 5. **Before/after pictures:** move the old `bench-after/` aside, `pnpm map-check bench`, then `pnpm --filter @conquerra/art exec tsx scripts/compare.ts <old folder> <new folder> <out folder> "Before" "After" bench-` (use full paths). For real maps: build once with the old art (`git stash` the art folder), take shots with `shot.mjs`, restore the new art, build, take the same shots, and compare the two folders.
 
+## Session 12: Wyrmland and the Crownlands re-seeded (Nate's OK, Oct 6)
+- **Wyrmland** now grows into Gemini's dragon outline (`masks/dragon.json`, made with the mask script; the hand-drawn dragon is gone), seed `mask-120-6`, suggested for 6–8 players. Out of 30 seeds every one read as a dragon. Seed 6 was the clearest at Far: a horned head, a gap between neck and wing, separate legs and a curled tail, no stray islets. It was also the shortest of the four best in 8-player games. It passes every check: 4 passes, 6 sea lanes, 11 choke points, 26 river borders.
+- **The Crownlands** now uses seed `mask-100-9`: a clean five-point crown with 5 rivers (21 river borders; the old seed had none), 7 passes, 4 sea lanes, 11 choke points. 34 of 40 seeds had 3 or more rivers; the old seed was simply unlucky.
+- Captain games, 200 each (the Fallen off, so only the map differs; `apps/sim/scripts/seed-sim.ts`):
+
+| Map | 6 players | 8 players | 10 players |
+|---|---|---|---|
+| Wyrmland, old → new | 33.0 → 37.3 turns | 36.7 → 38.5 | 39.2 → 41.9 (only 50% within 40) |
+| The Crownlands, old → new | 35.4 → 32.9 | n/a | 38.0 → 39.3 |
+
+  The new dragon's long neck and tail mean long marches, so Wyrmland now suggests 6–8 players.
+- The other six official maps are byte-for-byte unchanged (a test checks every official map against its recipe).
+
 ## Trying other seeds for an official map (session 12)
 `pnpm --filter @conquerra/mapgen try-seeds <mapId> <seed prefix> <first> <how many> --out <folder>` makes the map's exact recipe with other seeds (for example `crownlands mask-100- 1 40`) and prints, for each, which try passed the checks and how many rivers, passes, sea lanes and choke points it has, plus a debug picture. To see a seed the way the game draws it: `LAB=1 SEED=<seed> node apps/web/scripts/shot.mjs <mapId> out.png fit` (with the built game running).
 

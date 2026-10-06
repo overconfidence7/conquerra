@@ -22,6 +22,11 @@ const involvesMe = (e: ReplayEvent, n: Namer): boolean => {
       return n.isMe(e.player) || n.isMe(e.by);
     case "gameOver":
       return true;
+    // A world event on your land, or one you (one of the Fallen) put Influence toward.
+    case "worldEvent":
+      return n.isMe(e.against) || e.by.some((p) => n.isMe(p));
+    case "generalLost":
+      return n.isMe(e.player) || n.isMe(e.by);
     case "surface":
     case "turnStart":
     case "vision":
