@@ -7,6 +7,7 @@ export { recordSighting, updateIntel, type Intel, type LastSeen } from "./intel"
 export { visionFor, visibleTerritories, type Vision, type VisionSource } from "./vision";
 export { replayFor, type ReplayEvent, type SurfaceEvent, type VisionEvent, type SeenTerritory } from "./replay";
 export { TurnVision, recordTurnSightings, sightingOf, applyLand, type VisionDelta } from "./sightings";
+export { checkMissions, drawFate, type FateHost } from "./fate";
 export { SPOILS_MARKS, setsIn, withoutSet, homeOf, laurelLand, autoSpoils, turnInSpoils, spoilsEndOfTurn, type SpoilsHost } from "./spoils";
 export { PRESETS, expandPreset, type PresetInfo } from "./presets";
 export { expectBattle, rollLosses, healerReduction, cultureDefense, type BattleExpectation, type BattleInput } from "./combat";

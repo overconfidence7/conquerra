@@ -31,6 +31,7 @@ import {
   type QueuePlan,
 } from "../logic/orders";
 import { BUILDING_HELP, BUILDING_NAME, SPECIALIST_HELP, SPECIALIST_NAME, TERRAIN_ICON, namer } from "../logic/text";
+import { closedNow } from "../logic/cards";
 import { ArtIcon, buildingIcon, specialistIcon } from "./ArtIcon";
 import { useGame } from "../store";
 import { nearestRecruitSite, RECRUIT_RULE } from "../logic/actions";
@@ -228,6 +229,9 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
         </div>
       )}
       {odds && odds !== "unknown" && estimate && <p className="muted small">Its army depends on how the battle before it goes.</p>}
+      {closedNow(view, draft.via ?? draft.from, draft.to) && (
+        <p className="warn small">The way across is closed this turn (a flood or a rockslide): this order won't go.</p>
+      )}
       {attack && crossing !== "normal" && (
         <p className="muted small">
           {CROSSING[crossing]}: attack ×{ctx.rules.borders[crossing].attackMult}

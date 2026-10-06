@@ -5,6 +5,8 @@ import { LocalGame } from "../src/host/localGame";
 import type { LobbySettings } from "../src/host/protocol";
 import { planQueue } from "../src/logic/orders";
 import { dueTurnIn, handFull, setChoices, withTurnIn } from "../src/logic/spoils";
+import { closedNow, missionLine, missionTargets } from "../src/logic/cards";
+import { recruitBot } from "@conquerra/bots";
 import { namer } from "../src/logic/text";
 
 const settings: LobbySettings = { mapId: "embervale", bots: 3, botLevel: "captain", luck: 0.3, fog: true, mode: "classic", turnSeconds: 300 };
@@ -50,5 +52,41 @@ describe("the Spoils hand on screen", () => {
     // Not full: nothing is added. With the deck off: nothing either.
     view.me.spoils = ["laurel", "sword", "tower"];
     expect(dueTurnIn(ctx, view, [], n, "auto")).toEqual([]);
+  });
+});
+
+describe("Fate on screen", () => {
+  it("the lobby switch reaches the game: Fate off means no draws at all", () => {
+    for (const fate of [true, false]) {
+      const g = new LocalGame(maps.embervale!, { ...settings, fate }, "switch");
+      let u = g.update();
+      expect(u.view.settings.fate).toBe(fate);
+      let draws = 0;
+      for (let i = 0; i < 6; i++) {
+        u = g.lockIn(recruitBot.plan(g.ctx, u.view));
+        draws += u.report!.events.filter((e) => e.type === "fate" || e.type === "missionDrawn" || (e.type === "surface" && e.what === "fate")).length;
+      }
+      expect(draws > 0).toBe(fate);
+    }
+  });
+
+  it("a mission reads plainly and lights up its target on the map", () => {
+    const { ctx, view, n } = start();
+    const prov = ctx.map.territories.find((t) => t.id === view.me.capital)!.province;
+    const m = { id: "m1", card: "takeIn", kind: "takeIn" as const, deadline: 4, province: prov, reward: { gold: 8 } };
+    const name = ctx.map.provinces.find((p) => p.id === prov)!.name;
+    expect(missionLine(ctx, m, n)).toBe(`Take any territory in ${name} by the end of turn 4: +8 gold`);
+    const lit = missionTargets(ctx, view, m);
+    expect(lit.length).toBeGreaterThan(0);
+    expect(lit).not.toContain(view.me.capital);
+    expect(missionTargets(ctx, view, { ...m, kind: "hold", territory: view.me.capital })).toEqual([view.me.capital]);
+  });
+
+  it("a crossing a Fate event closed shows as closed only during its turn", () => {
+    const { view } = start();
+    view.closures = [{ a: "x", b: "y", turn: view.turn }];
+    expect(closedNow(view, "y", "x")).toBe(true);
+    view.closures = [{ a: "x", b: "y", turn: view.turn + 1 }];
+    expect(closedNow(view, "x", "y")).toBe(false);
   });
 });

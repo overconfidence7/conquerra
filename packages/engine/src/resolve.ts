@@ -30,6 +30,7 @@ import type {
 } from "./types";
 import { recordTurnSightings } from "./sightings";
 import { spoilsEndOfTurn, turnInSpoils } from "./spoils";
+import { checkMissions, drawFate } from "./fate";
 import { visibleTerritories } from "./vision";
 
 /** Called after every event with the live board (tests use it to check the replay against the real game). */
@@ -858,9 +859,6 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
   // ----- The Fallen earn Influence; event cooldowns run down -----
   fallenEndOfTurn(ctx, s);
 
-  // ----- The card decks: a set turned in for anyone at the hand limit, then Spoils earned -----
-  spoilsEndOfTurn(T, seats, T.tookLand);
-
   // ----- Victory -----
   const stillIn = s.players.filter((p) => p.eliminatedTurn === null);
   const finish = (reason: NonNullable<GameState["endReason"]>) => {
@@ -878,6 +876,14 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
   if (stillIn.length <= 1) finish("lastStanding");
   else if (s.settings.turnLimit !== null && s.turn >= s.settings.turnLimit) finish("turnLimit");
   else if (s.turn >= rules.game.maxTurnsHard) finish("turnCap");
+
+  // ----- The card decks, while the game goes on: missions checked, Spoils (a set turned in for anyone at the hand
+  // limit, then cards earned), then everyone's Fate draw for the coming turn -----
+  if (!s.winner) {
+    checkMissions(T);
+    spoilsEndOfTurn(T, seats, T.tookLand);
+    drawFate(T, seats);
+  }
 
   s.rng = T.rng.state;
   if (!s.winner) s.turn += 1;

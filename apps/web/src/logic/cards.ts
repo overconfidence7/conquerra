@@ -1,5 +1,5 @@
 import type { BorderType, FateEvent } from "@conquerra/content";
-import type { GameContext, Mission, ReplayEvent, SpoilsMark, SpoilsSet } from "@conquerra/engine";
+import { indexMap, type GameContext, type Mission, type PlayerView, type ReplayEvent, type SpoilsMark, type SpoilsSet, type TerritoryId } from "@conquerra/engine";
 import { BUILDING_NAME, SPECIALIST_NAME, type Namer } from "./text";
 
 /**
@@ -159,3 +159,43 @@ export const missionLine = (ctx: GameContext, m: Mission, n: Namer) => `${missio
 
 /** Turns left (0 = this is the last turn). */
 export const turnsLeft = (m: Mission, turn: number) => Math.max(0, m.deadline - turn);
+
+/**
+ * The land a mission is about, lit up on the map when you tap it: its territory; the province to take or complete; a
+ * rival's land next to yours; or your land on the right kind of crossing (and the land across it).
+ */
+export function missionTargets(ctx: GameContext, view: PlayerView, m: Mission): TerritoryId[] {
+  const idx = indexMap(ctx.map);
+  const mine = (t: TerritoryId) => {
+    const v = view.territories[t];
+    return v?.detail === "full" && v.owner === view.me.id;
+  };
+  const owner = (t: TerritoryId) => {
+    const v = view.territories[t];
+    return v?.detail === "full" ? v.owner : (v?.lastSeen?.owner ?? null);
+  };
+  if (m.territory && m.kind !== "culture") return [m.territory];
+  switch (m.kind) {
+    case "takeIn":
+    case "whole":
+      return (idx.provinceMembers.get(m.province ?? "") ?? []).filter((t) => !mine(t));
+    case "culture":
+      return (idx.provinceMembers.get(m.province ?? "") ?? []).filter(mine);
+    case "takeFrom":
+      return idx.ids.filter((t) => owner(t) === m.rival && (idx.neighbors.get(t) ?? []).some(mine));
+    case "cross": {
+      const out = new Set<TerritoryId>();
+      for (const t of idx.ids.filter(mine))
+        for (const n of idx.neighbors.get(t) ?? []) if (idx.border(t, n) === m.border && !mine(n)) (out.add(t), out.add(n));
+      return [...out];
+    }
+    case "spree":
+      return idx.ids.filter((t) => !mine(t) && (idx.neighbors.get(t) ?? []).some(mine));
+    case "noLoss":
+    default:
+      return idx.ids.filter((t) => mine(t) && (idx.neighbors.get(t) ?? []).some((n) => !mine(n)));
+  }
+}
+
+/** Is the way from `a` to `b` closed this turn (a flooded ford, a rockslide)? */
+export const closedNow = (view: PlayerView, a: TerritoryId, b: TerritoryId) => view.closures.some((c) => c.turn === view.turn && ((c.a === a && c.b === b) || (c.a === b && c.b === a)));

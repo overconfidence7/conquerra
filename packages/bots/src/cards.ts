@@ -65,3 +65,46 @@ export function recruitSpoils(view: PlayerView, frontier: readonly TerritoryId[]
   if (sets.includes("laurel") && home) return { set: "laurel", territory: home };
   return null;
 }
+
+/**
+ * Fate missions pull the Captain a little (session 13): an attack that would complete or advance an open mission
+ * scores this much higher. It's only a nudge on attacks it already judged likely to win, so it never chases a bad
+ * mission (one it can't win, or that would leave its land bare).
+ */
+export const MISSION_PULL = 1.3;
+
+export function missionPull(b: Board, from: TerritoryId, to: TerritoryId): number {
+  const { me, idx, rivalAt, border } = b;
+  let pull = 1;
+  for (const m of me.missions) {
+    const prov = idx.byId.get(to)!.province;
+    const helps =
+      (m.kind === "takeIn" && prov === m.province) ||
+      (m.kind === "whole" && prov === m.province) ||
+      (m.kind === "takeFrom" && rivalAt(to) === m.rival) ||
+      (m.kind === "cross" && border(from, to) === m.border) ||
+      m.kind === "spree";
+    if (helps) pull = Math.max(pull, m.kind === "spree" ? 1.1 : MISSION_PULL);
+  }
+  return pull;
+}
+
+/** A fort or culture mission the Captain can afford without going short: where to build or invest (else null). */
+export function missionSpend(b: Board, gold: number): { kind: "fort" | "invest"; territory: TerritoryId; cost: number } | null {
+  const { me, rules, seen, owned, idx } = b;
+  const reserve = rules.troops.cost * 4;
+  for (const m of me.missions) {
+    if (m.kind === "fort" && m.territory && owned(m.territory) && !seen(m.territory)?.building && !seen(m.territory)?.construction) {
+      const cost = rules.buildings.fort.cost;
+      if (gold >= cost + reserve) return { kind: "fort", territory: m.territory, cost };
+    }
+    if (m.kind === "culture" && m.province) {
+      const spot = (idx.provinceMembers.get(m.province) ?? [])
+        .filter((t) => owned(t) && seen(t)!.culture < rules.culture.max)
+        .sort((a, c) => seen(a)!.culture - seen(c)!.culture || (a < c ? -1 : 1))[0];
+      const cost = spot ? rules.culture.investCost[seen(spot)!.culture] : undefined;
+      if (spot && cost !== undefined && gold >= cost + reserve) return { kind: "invest", territory: spot, cost };
+    }
+  }
+  return null;
+}

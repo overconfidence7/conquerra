@@ -113,7 +113,7 @@ const WHY: Record<FizzleCode, (d: FizzleDetail, o: FizzledOrder, n: PlaceNames, 
   nowhereToRetreat: (d, _o, n) => `you held no land next to ${d.territory ? n.place(d.territory) : "it"} to fall back to`,
   noTarget: (d, _o, n) => `no neighbour of ${d.territory ? n.place(d.territory) : "it"} looked likely to fall`,
   manualHopFirst: (d, _o, n) => `your own next order from ${d.territory ? n.place(d.territory) : "there"} went instead`,
-  storm: (d, _o, n) => `a storm closed the border${d.territory ? ` into ${n.place(d.territory)}` : ""} this turn`,
+  storm: (d, _o, n) => `the way across${d.territory ? ` into ${n.place(d.territory)}` : ""} was closed this turn (a storm, a flood or a rockslide)`,
   noSet: () => "you no longer held that set of Spoils cards",
 };
 

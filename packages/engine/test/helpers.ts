@@ -49,7 +49,8 @@ export function lineGame(ctx: GameContext, settings: Partial<GameState["settings
       { id: "p1", name: "One" },
       { id: "p2", name: "Two" },
     ],
-    settings: { luck: 0, ...settings },
+    // The Fate deck stays out of these small rule tests unless one asks for it (its events would land anywhere).
+    settings: { luck: 0, fate: false, ...settings },
   });
 }
 

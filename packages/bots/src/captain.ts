@@ -2,7 +2,7 @@ import type { SpecialistType } from "@conquerra/content";
 import { investCost, isRecruitSiteIn, Rng, seedRng, type GameContext, type Order, type PlayerView, type ReplayEvent, type TerritoryId } from "@conquerra/engine";
 import { BREAKTHROUGH_MARGIN, CAPTAIN_CHAIN_MARGIN, chainOn, readBoard, type CaptainOptions } from "./board";
 import type { Bot } from "./recruit";
-import { captainSpoils, spoilsOrder } from "./cards";
+import { captainSpoils, missionPull, missionSpend, spoilsOrder } from "./cards";
 
 export { CAPTAIN_CHAIN_MARGIN, type CaptainFeature, type CaptainOptions } from "./board";
 
@@ -67,8 +67,15 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn
   const turnIn = spoilsOrder(view, id, captainSpoils(b));
   if (turnIn) orders.push(turnIn);
 
+  // A Fate mission to build a fort or raise culture, when it can afford it without going short.
+  const errand = missionSpend(b, gold);
+  if (errand) {
+    orders.push(errand.kind === "fort" ? { id: id(), kind: "build", territory: errand.territory, building: "fort" } : { id: id(), kind: "invest", territory: errand.territory });
+    gold -= errand.cost;
+  }
+
   // 1/5. A fort where it counts: the threatened capital, else a choke point we hold facing a rival army.
-  const fortBuilding = mine.some((t) => seen(t)!.construction?.building === "fort");
+  const fortBuilding = mine.some((t) => seen(t)!.construction?.building === "fort") || errand?.kind === "fort";
   const fortSpots = [...(capThreatened && capital ? [capital] : []), ...frontier.filter((t) => chokeHolder(t) && biggestEnemyNear(t) >= 4)].filter((t) => !building(t));
   const fortAt = fortSpots.sort((a, b) => (a === capital ? -1 : b === capital ? 1 : 0) || biggestEnemyNear(b) - biggestEnemyNear(a) || (a < b ? -1 : 1))[0];
   if (on("forts") && fortAt && !fortBuilding && gold >= rules.buildings.fort.cost + rules.troops.cost * 3) {
@@ -217,14 +224,15 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn
         const need = needFor(from, to, Math.max(avail, troopsAt(from) * 4));
         if (need === null) continue;
         const real = Math.ceil(need * BREAKTHROUGH_MARGIN);
-        if (avail >= real && !offFocus) candidates.push({ from, to, troops: avail, score: (value * 1.25) / real, vsPlayer: rival !== null, breakthrough: true });
+        if (avail >= real && !offFocus) candidates.push({ from, to, troops: avail, score: (value * 1.25 * missionPull(b, from, to)) / real, vsPlayer: rival !== null, breakthrough: true });
         else if (!offFocus && (rival === focus || rival === null || tv.troops <= 3)) staging.set(from, Math.max(staging.get(from) ?? 0, value));
         continue;
       }
       if (avail <= 0) continue;
       const need = needFor(from, to, avail);
       if (need === null) continue;
-      candidates.push({ from, to, troops: need, score: value / Math.max(1, need), vsPlayer: rival !== null, breakthrough: false });
+      // An open Fate mission nudges the attacks that would complete it (a modest pull, never a bad attack).
+      candidates.push({ from, to, troops: need, score: (value * missionPull(b, from, to)) / Math.max(1, need), vsPlayer: rival !== null, breakthrough: false });
     }
   }
   candidates.sort((a, b) => b.score - a.score || (a.to < b.to ? -1 : 1));

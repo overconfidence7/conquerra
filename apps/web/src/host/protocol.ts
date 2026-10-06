@@ -22,6 +22,8 @@ export interface LobbySettings {
   mode: GameMode;
   /** Turn timer in seconds (1, 3, 5 or 10 minutes), or null for No timer. */
   turnSeconds: number | null;
+  /** The Fate deck (one draw a turn: events and missions). On unless the host turns it off. */
+  fate?: boolean;
 }
 
 export interface TurnReport {

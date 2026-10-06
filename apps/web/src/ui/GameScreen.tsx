@@ -1,5 +1,6 @@
 import { recruitSitesIn, type GameContext, type Order, type PlayerView } from "@conquerra/engine";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { missionTargets } from "../logic/cards";
 import { incomeEstimate } from "../logic/actions";
 import { planQueue, queueFor } from "../logic/orders";
 import { asIfYouOrderFrom } from "../logic/generals";
@@ -249,8 +250,14 @@ export function GameScreen() {
   useEffect(() => {
     if (phone && picking) setSheet("closed");
   }, [phone, picking]);
-  // Recruit sites glow while the Recruit panel is open.
-  const glow = useMemo(() => (ctx && view && recruitOpen ? recruitSitesIn(ctx, view) : NO_GLOW), [ctx, view, recruitOpen]);
+  // Recruit sites glow while the Recruit panel is open; a mission you tapped lights up its target.
+  const missionId = g.mission;
+  const glow = useMemo(() => {
+    if (!ctx || !view) return NO_GLOW;
+    if (recruitOpen) return recruitSitesIn(ctx, view);
+    const m = missionId ? view.me.missions.find((x) => x.id === missionId) : undefined;
+    return m ? missionTargets(ctx, view, m) : NO_GLOW;
+  }, [ctx, view, recruitOpen, missionId]);
   useEffect(() => setSpendOpen(false), [selected]);
 
   if (!ctx || !view || !plan) return null;

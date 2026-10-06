@@ -333,6 +333,8 @@ export class TurnVision {
       case "missionDone":
         applyLand(b, e.land);
         player(e.player).gold += e.gold;
+        // A free specialist (a mission's reward) took the next id, as hiring does.
+        if (e.type === "missionDone" && e.mission.reward.specialist && e.land.some((l) => l.specialists)) b.nextId++;
         break;
       case "fate":
         applyLand(b, e.land);

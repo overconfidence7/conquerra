@@ -468,3 +468,10 @@ p.good { color: var(--good); margin: 0; }
 .missions { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .mission { width: 100%; display: flex; flex-direction: column; gap: 2px; text-align: left; }
 .cards-sheet details ul { margin: 4px 0 0; padding-left: 18px; }
+.mission-lines { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.mission-line { display: flex; gap: 6px; align-items: flex-start; width: 100%; text-align: left; padding: 4px 8px; min-height: 0; font: 600 var(--fs-small) var(--font-body); background: rgba(15, 22, 32, 0.45); border: 1px solid rgba(201, 164, 92, 0.3); }
+.mission-line.on { border-color: var(--gold-hi); background: rgba(201, 164, 92, 0.18); }
+.mission-line .mission-mark { color: var(--gold-hi); }
+.mission-line b { color: var(--good); font-weight: 700; }
+.mission-line .due { margin-left: 6px; font: 700 var(--fs-label) var(--font-head); color: var(--muted); }
+.mission-line .due.last { color: #ffb4a3; }

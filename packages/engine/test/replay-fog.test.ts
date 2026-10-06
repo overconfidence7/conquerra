@@ -365,8 +365,9 @@ describe("the step-by-step replay never leaks", () => {
     expect(hiddenLater).toBeGreaterThan(0);
     // The Fallen's world events were played and shown under the fog rules too.
     expect(worldEvents).toBeGreaterThan(5);
-    // (Fate events, once the deck is in: shown to the land's holder and those who see it, a surface detail otherwise.)
-    expect(fateShown + fateHidden).toBeGreaterThanOrEqual(0);
+    // Fate events: shown to the land's holder and those who see it, a surface detail otherwise.
+    expect(fateShown).toBeGreaterThan(5);
+    expect(fateHidden).toBeGreaterThan(5);
   }, 30000);
 
   it("works out vision from the event log without being told anything else (same result twice)", () => {

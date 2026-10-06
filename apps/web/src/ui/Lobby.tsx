@@ -123,6 +123,19 @@ export function Lobby() {
       </div>
 
       <div className="field">
+        <span className="field-name">Fate deck</span>
+        <span className="seg">
+          <button className={lobby.fate !== false ? "on" : ""} onClick={() => setLobby({ fate: true })}>
+            On
+          </button>
+          <button className={lobby.fate === false ? "on" : ""} onClick={() => setLobby({ fate: false })}>
+            Off
+          </button>
+        </span>
+        <span className="muted small">{lobby.fate === false ? "No Fate cards: less luck." : "Each turn everyone draws a Fate card: an event somewhere on the map, or a mission for you."}</span>
+      </div>
+
+      <div className="field">
         <span className="field-name">Victory</span>
         <span className="seg">
           <button className={lobby.mode === "classic" ? "on" : ""} onClick={() => setLobby({ mode: "classic" })}>

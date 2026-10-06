@@ -50,7 +50,7 @@ describe("local game host", () => {
   });
 
   it("once you're knocked out you choose: watch turn by turn as one of the Fallen (political map, each report) or skip to the result", () => {
-    const g = new LocalGame(maps[settings.mapId]!, { ...settings, bots: 3 }, "idle");
+    const g = new LocalGame(maps[settings.mapId]!, { ...settings, bots: 3 }, "idle-2");
     let u = g.update();
     // Do nothing until a bot knocks you out.
     for (let i = 0; i < 80 && !u.view.winner && !isOut(g, u); i++) u = g.lockIn([]);
