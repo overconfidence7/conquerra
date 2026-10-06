@@ -4,6 +4,9 @@ Paste this into a new Claude chat on Nate's computer, with the project folder an
 
 **Why this batch matters:** Nate wants Conquerra to look like a large team with a good budget made it. This batch feeds the polish pass (`docs/09-polish-and-effects-plan.md`): armies that march and kick up dust, battles in smoke and flame, banners raised over captured land, storms and plague on the map, a cinematic replay and real title and game-over art. Hold every image to that bar: rich, painterly, consistent with the art already in the game, never cartoonish or generic.
 
+## Before you start
+The batch 4 list and this prompt were pushed to GitHub on Oct 6. Check that `docs/art/asset-list-and-prompts.md` in the project folder has a "Batch 4" section under Tier 3. If it doesn't, ask Nate to update the folder first: open a terminal in the project folder and run `git pull` (or ask Claude Code to do it). Don't edit the docs yourself.
+
 ## Where things are
 - **Project folder** (on Nate's computer): `C:\Users\nkurt\Claude\Projects\Strategy Game`.
 - **What to make:** "Batch 4" under **Tier 3** in `docs/art/asset-list-and-prompts.md`, about 50 files in six numbered groups. That section has the exact file names, backgrounds and prompts. The top of the file has the **style line**, the angles, the magenta rule and the Gemini lessons (from batch 3 too). Read the whole file first, then `docs/09-polish-and-effects-plan.md` to see what each piece is for.
