@@ -45,6 +45,10 @@ export interface CapturedGeneral {
   instruction: Instruction | null;
 }
 
+/** The Fallen's world events (session 12). Built as data, so a Fate deck could draw them later. */
+export const WORLD_EVENT_KINDS = ["plague", "storm", "uprising", "mercenaries", "famine"] as const;
+export type WorldEventKind = (typeof WORLD_EVENT_KINDS)[number];
+
 export interface PlayerState {
   id: PlayerId;
   name: string;
@@ -61,6 +65,8 @@ export interface PlayerState {
   command: Instruction | null;
   /** Captured generals, at most `rules.generals.maxCaptured` (one more while you choose which to let go). */
   captured: CapturedGeneral[];
+  /** The Fallen: Influence to spend on world events (0 while you're still in). */
+  influence: number;
 }
 
 /** Each territory holds at most one army: a troop count plus up to `maxPerArmy` specialists. */
@@ -86,6 +92,8 @@ export interface GameSettings {
   fog: boolean;
   /** Order-phase length. Stored for the server; the engine never reads a clock. */
   turnTimerSeconds: number;
+  /** Knocked-out players become the Fallen: they earn Influence and spend it on world events (on by default). */
+  fallen: boolean;
 }
 
 export interface GameState {
@@ -104,6 +112,8 @@ export interface GameState {
   /** Each player's "last seen" memory of land they can't see right now (see intel.ts). Never sent whole to a client. */
   intel: Intel;
   endReason: "lastStanding" | "turnLimit" | "turnCap" | null;
+  /** Turns until each world event can be played again (0 = ready). Public. */
+  eventCooldowns: Record<WorldEventKind, number>;
 }
 
 // ---------- Orders ----------
@@ -169,6 +179,12 @@ export type OrderBody =
   | { kind: "instruct"; general: PlayerId; instruction: Instruction | null }
   /** Let a captured general go (when a third arrives, you choose which two to keep). Applied as the turn starts. */
   | { kind: "release"; general: PlayerId }
+  /**
+   * The Fallen: put `influence` toward a world event on `target` (a living player's territory; for a storm, the
+   * border between `target` and `across`). Pledges from several Fallen on the same event and place are pooled.
+   * Played as the turn starts, before anyone's orders.
+   */
+  | { kind: "worldEvent"; event: WorldEventKind; target: TerritoryId; across?: TerritoryId; influence: number }
   /** Attack the weakest neighbour of `from` that the army can likely take (used by followThrough). */
   | { kind: "advance"; from: TerritoryId };
 
@@ -230,6 +246,7 @@ export const FIZZLE_CODES = [
   "nowhereToRetreat",
   "noTarget",
   "manualHopFirst",
+  "storm",
 ] as const;
 export type FizzleCode = (typeof FIZZLE_CODES)[number];
 
@@ -318,6 +335,39 @@ export type GameEvent =
   | { type: "generalLost"; player: PlayerId; general: PlayerId; territory: TerritoryId; by: PlayerId | null }
   /** You let a captured general go (you may keep only so many). */
   | { type: "generalReleased"; player: PlayerId; general: PlayerId }
+  /**
+   * A world event the Fallen played on `against`'s land. `strength` is how much stronger than the base it was
+   * (pooled Influence beyond the cost), after culture's protection where it applies.
+   */
+  | {
+      type: "worldEvent";
+      event: WorldEventKind;
+      target: TerritoryId;
+      against: PlayerId;
+      by: PlayerId[];
+      spent: number;
+      /** Plague: troops lost per territory. */
+      losses?: { territory: TerritoryId; troops: number }[];
+      /** Storm: the border closed for the turn. */
+      border?: [TerritoryId, TerritoryId];
+      /** Uprising: rebels against the troops there, and whether the land turned neutral (held by the rebels). */
+      rebels?: number;
+      flipped?: boolean;
+      /** Mercenaries: where they appeared and how many. */
+      at?: TerritoryId;
+      troops?: number;
+      /** Famine: the share of this turn's income lost, and the gold. */
+      cut?: number;
+      gold?: number;
+    }
+  /** A world event you put Influence toward didn't happen (nothing was spent), and why. Only you see it. */
+  | {
+      type: "worldEventFailed";
+      player: PlayerId;
+      event: WorldEventKind;
+      target: TerritoryId;
+      reason: "cost" | "cooldown" | "alreadyHit" | "capital" | "invalid" | "lastLand" | "tooStrong" | "noRoom";
+    }
   | {
       type: "income";
       player: PlayerId;
@@ -325,6 +375,8 @@ export type GameEvent =
       upkeep: number;
       goldAfter: number;
       deserted: number;
+      /** Gold lost to a famine this turn. */
+      famine?: number;
       /** Where the deserters left from (so the turn can be replayed exactly from the event log). */
       deserters: { territory: TerritoryId; troops: number }[];
     }

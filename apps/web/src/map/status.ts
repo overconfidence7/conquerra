@@ -20,6 +20,8 @@ export interface TerritoryStatus {
   /** Captured generals standing here (whose Leader each was): their portraits go on the marker. */
   generals: string[];
   capital: boolean;
+  /** The Fallen's political map: who holds it, but no army (no troop pill). */
+  political?: boolean;
 }
 
 export function territoryStatus(view: PlayerView, id: TerritoryId): TerritoryStatus {
@@ -39,13 +41,15 @@ export function territoryStatus(view: PlayerView, id: TerritoryId): TerritorySta
       generals: v.generals ?? [],
       capital: v.capitalOf !== null,
     };
+  // The Fallen see who holds what everywhere (coloured and bordered like land in sight), but no armies.
+  if (v.lastSeen?.political) return { id, kind: "seen", owner: v.lastSeen.owner, troops: 0, building: null, ...blank, capital: !!v.lastSeen.capitalOf, political: true };
   if (v.lastSeen) return { id, kind: "remembered", owner: v.lastSeen.owner, troops: v.lastSeen.troops, building: v.lastSeen.building, ...blank };
   return { id, kind: "unknown", owner: null, troops: 0, building: null, ...blank };
 }
 
 /** The marker for a territory, or null when there's nothing to show (unexplored fog). */
 export function markerContent(map: MapDef, view: PlayerView, s: TerritoryStatus): MarkerContent | null {
-  if (s.kind === "unknown") return null;
+  if (s.kind === "unknown" || s.political) return null;
   const name = map.territories.find((t) => t.id === s.id)?.name ?? "";
   return {
     label: s.kind === "remembered" ? `${s.troops}?` : String(s.troops),

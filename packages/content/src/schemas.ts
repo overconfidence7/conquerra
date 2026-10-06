@@ -225,6 +225,29 @@ export const Rules = z.object({
   }),
   /** Generals (session 12): captured generals you may keep (when one more arrives, you choose which to let go). */
   generals: z.object({ maxCaptured: z.number().int().min(0) }),
+  /**
+   * The Fallen (session 12): knocked-out players earn Influence each turn (base, plus a little more for each other
+   * Fallen player) and spend it, alone or pooled, on capped world events aimed at a living player's land. Spending
+   * more than the cost makes the event stronger, up to `maxStrength` times. Each event kind then rests for its
+   * cooldown (turns, for everyone).
+   */
+  fallen: z.object({
+    influenceBase: z.number().min(0),
+    influencePerOtherFallen: z.number().min(0),
+    maxStrength: z.number().min(1),
+    events: z.object({
+      /** A share of the troops in the target's land in one province die (never below the garrison; capitals spared). */
+      plague: z.object({ cost: z.number().int().min(1), cooldown: z.number().int().min(0), share: z.number().min(0).max(1) }),
+      /** One border is closed for the turn: no moves or attacks across it either way. */
+      storm: z.object({ cost: z.number().int().min(1), cooldown: z.number().int().min(0) }),
+      /** A weakly held territory (at most `maxTroops`) rises: `rebels` against its troops; if they're more, it turns neutral, held by the rebels. */
+      uprising: z.object({ cost: z.number().int().min(1), cooldown: z.number().int().min(0), maxTroops: z.number().int().min(1), rebels: z.number().int().min(1) }),
+      /** A neutral army of `troops` appears in neutral land next to the target. */
+      mercenaries: z.object({ cost: z.number().int().min(1), cooldown: z.number().int().min(0), troops: z.number().int().min(1) }),
+      /** The target player's income is cut by `share` this turn. */
+      famine: z.object({ cost: z.number().int().min(1), cooldown: z.number().int().min(0), share: z.number().min(0).max(1) }),
+    }),
+  }),
   vision: z.object({ base: z.number().int().min(0) }),
   game: z.object({
     /** Order-phase timer. The engine only stores it; the server runs the clock. */

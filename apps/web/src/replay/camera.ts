@@ -58,6 +58,8 @@ export function focusOf(beat: Beat, spots: ReplaySpots): Spot | null {
     case "generalCaptured":
     case "generalLost":
       return spots.territory.get(e.territory) ?? null;
+    case "worldEvent":
+      return spots.territory.get(e.target) ?? null;
     case "surface":
       return spots.province.get(e.province) ?? null;
     default:

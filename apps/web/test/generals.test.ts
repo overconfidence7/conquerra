@@ -56,7 +56,7 @@ function inProcessHost(seed: string): GameHost {
     lockIn: async (orders, turn) => game!.lockIn(orders, turn),
     saveOrders: (orders, turn) => game?.saveOrders(orders, turn),
     onAutoLock: () => {},
-    watchNext: async () => game!.watchNext(),
+    watchNext: async (orders) => game!.watchNext(orders),
     finish: async () => game!.finish(),
     suggest: async () => game!.suggest(),
     planGenerals: async (instructions) => game!.generalOrders(instructions),

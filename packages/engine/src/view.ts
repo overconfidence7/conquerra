@@ -1,7 +1,7 @@
 import type { BuildingType } from "@conquerra/content";
 import type { LastSeen } from "./intel";
 import { indexMap } from "./mapIndex";
-import type { GameContext, GameSettings, GameState, PlayerId, PlayerState, Specialist, TerritoryId, TerritoryState } from "./types";
+import type { GameContext, GameSettings, GameState, PlayerId, PlayerState, Specialist, TerritoryId, TerritoryState, WorldEventKind } from "./types";
 import { visionFor, type VisionSource } from "./vision";
 
 /** What a player sees on a territory they have vision of. */
@@ -38,7 +38,28 @@ export interface PlayerView {
   settings: GameSettings;
   seedCommitment: string;
   winner: GameState["winner"];
+  /** Turns until each world event can be played again (public: the Fallen plan with it, the living can see it). */
+  eventCooldowns: Record<WorldEventKind, number>;
 }
+
+/**
+ * Is `player` one of the Fallen with the political map? Knocked out while the game goes on, with fog and the Fallen
+ * on: they see who holds what everywhere, but no troop numbers (so nothing about armies reaches living friends).
+ */
+export function seesPolitically(state: GameState, player: PlayerId): boolean {
+  const p = state.players.find((x) => x.id === player);
+  return !!p && p.eliminatedTurn !== null && state.settings.fallen && state.settings.fog && !state.winner;
+}
+
+/** The political map: every territory's owner now, as a "last seen" with no troop number. */
+export const politicalOf = (state: GameState, id: TerritoryId) => ({
+  owner: state.territories[id]!.owner,
+  troops: 0,
+  building: null,
+  turn: state.turn,
+  political: true,
+  capitalOf: state.players.find((p) => p.eliminatedTurn === null && p.capital === id && state.territories[id]!.owner === p.id)?.id ?? null,
+});
 
 /** The true detail of a territory. Spies' forged intel (M3) will be produced by an alternative to this. */
 export function trueDetail(state: GameState, id: TerritoryId): TerritoryDetail {
@@ -64,7 +85,12 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
   const vision = visionFor(ctx, state, player);
   const memory = state.intel[player] ?? {};
   const territories: Record<TerritoryId, TerritoryView> = {};
+  const political = seesPolitically(state, player);
   for (const id of idx.ids) {
+    if (political) {
+      territories[id] = { detail: "fogged", lastSeen: politicalOf(state, id) };
+      continue;
+    }
     const seenBy = vision.get(id);
     const last = memory[id];
     territories[id] = seenBy
@@ -83,5 +109,6 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
     settings: { ...state.settings },
     seedCommitment: state.seedCommitment,
     winner: state.winner,
+    eventCooldowns: { ...state.eventCooldowns },
   };
 }

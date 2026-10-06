@@ -2,7 +2,7 @@ import type { LastSeen } from "./intel";
 import { indexMap } from "./mapIndex";
 import { sightingOf, TurnVision } from "./sightings";
 import type { GameContext, GameState, PlayerId, StepEvent, TerritoryId, TurnResult } from "./types";
-import { trueDetail, type TerritoryView } from "./view";
+import { politicalOf, seesPolitically, trueDetail, type TerritoryView } from "./view";
 import { visionFor } from "./vision";
 
 /**
@@ -46,6 +46,8 @@ export type ReplayEvent = StepEvent | SurfaceEvent | VisionEvent;
  *  - after each step where their vision changes, a "vision" event says what came into view and what fogged over.
  */
 export function replayFor(ctx: GameContext, before: GameState, result: TurnResult, player: PlayerId): ReplayEvent[] {
+  // The Fallen (political map): the public events and the world events, then who holds what at the end. No battles.
+  if (seesPolitically(before, player) && !result.state.winner) return fallenReplay(ctx, result, player);
   const idx = indexMap(ctx.map);
   const tv = new TurnVision(ctx, before, result.events, [player]);
   const surface = (e: StepEvent, what: SurfaceEvent["what"], t: TerritoryId): SurfaceEvent => ({
@@ -98,10 +100,21 @@ export function replayFor(ctx: GameContext, before: GameState, result: TurnResul
         if (mine || e.by === player || sees(e.territory)) out.push(e);
         break;
       case "generalReleased":
+      case "worldEventFailed":
         if (mine) out.push(e);
+        break;
+      // Events on your own land always show; anyone else's only if you could see where it happened.
+      case "worldEvent":
+        if (e.against === player || placesSeen(e).some(sees)) out.push(e);
         break;
     }
     if (changes) out.push(visionEvent(ctx, tv.board, player, e.step, before.turn, changes));
+  }
+  // Knocked out this turn with the Fallen on: the replay ends on the political map you'll see from now on.
+  if (seesPolitically(result.state, player) && !seesPolitically(before, player)) {
+    const fogged: Record<TerritoryId, LastSeen> = {};
+    for (const id of idx.ids) fogged[id] = { ...politicalOf(result.state, id), turn: before.turn };
+    out.push({ type: "vision", step: result.events[result.events.length - 1]?.step ?? 0, revealed: {}, fogged });
   }
   return out;
 }
@@ -122,9 +135,26 @@ function placesSeen(e: StepEvent): TerritoryId[] {
     case "generalCaptured":
     case "generalLost":
       return [e.territory];
+    case "worldEvent":
+      return [e.target, ...(e.border ?? []), ...(e.at ? [e.at] : [])];
     default:
       return [];
   }
+}
+
+/** The Fallen's replay: what's public, every world event, and the political map as the turn ends. */
+function fallenReplay(ctx: GameContext, result: TurnResult, player: PlayerId): ReplayEvent[] {
+  const out: ReplayEvent[] = [];
+  for (const e of result.events) {
+    if (e.type === "turnStart" || e.type === "eliminated" || e.type === "gameOver" || e.type === "worldEvent") out.push(e);
+    else if (e.type === "worldEventFailed" && e.player === player) out.push(e);
+  }
+  const last = result.events[result.events.length - 1]?.step ?? 0;
+  const fogged: Record<TerritoryId, LastSeen> = {};
+  // (The turn has moved on in the result; the map is stamped with the turn just played, like any sighting.)
+  for (const id of indexMap(ctx.map).ids) fogged[id] = { ...politicalOf(result.state, id), turn: result.state.turn - 1 };
+  out.push({ type: "vision", step: last, revealed: {}, fogged });
+  return out;
 }
 
 function visionEvent(ctx: GameContext, board: GameState, player: PlayerId, step: number, turn: number, d: { revealed: TerritoryId[]; fogged: TerritoryId[] }): VisionEvent {

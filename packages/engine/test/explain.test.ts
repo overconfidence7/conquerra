@@ -39,6 +39,7 @@ const SAMPLE: Record<FizzleCode, FizzleDetail> = {
   nowhereToRetreat: { territory: "b" },
   noTarget: { territory: "b" },
   manualHopFirst: { territory: "c" },
+  storm: { territory: "c" },
 };
 
 const plain = (text: string) => {

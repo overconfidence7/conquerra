@@ -39,6 +39,10 @@ export function narrate(ctx: GameContext, e: StepEvent, name: (id: string | null
       return `${name(e.player)} loses captured general ${name(e.general)} at ${place(e.territory)}`;
     case "generalReleased":
       return `${name(e.player)} lets captured general ${name(e.general)} go`;
+    case "worldEvent":
+      return `☄ The Fallen (${e.by.map(name).join(", ")}, ${e.spent} influence): ${e.event} on ${place(e.target)} (${name(e.against)})${e.losses ? `, losses ${e.losses.map((l) => `${place(l.territory)} -${l.troops}`).join(", ")}` : ""}${e.flipped !== undefined ? `, ${e.rebels} rebels ${e.flipped ? "take it" : "fail"}` : ""}${e.at ? `, ${e.troops} mercenaries at ${place(e.at)}` : ""}${e.cut !== undefined ? `, income cut ${Math.round(e.cut * 100)}%` : ""}${e.border ? `, border ${place(e.border[0])}–${place(e.border[1])} closed` : ""}`;
+    case "worldEventFailed":
+      return `${name(e.player)}: ${e.event} on ${place(e.target)} didn't happen (${e.reason})`;
     case "gameOver":
       return `★ Game over (${e.reason}): ${e.winner === "draw" ? "draw" : `${name(e.winner)} wins`}`;
   }

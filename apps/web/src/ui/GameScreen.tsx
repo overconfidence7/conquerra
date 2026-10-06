@@ -14,6 +14,7 @@ import { Frame } from "./Frame";
 import { Icon } from "./icons";
 import { LeaderCard } from "./LeaderCard";
 import { KeepGenerals } from "./Command";
+import { FallenPanel } from "./Fallen";
 import { MapView, readTactical, saveTactical } from "./MapView";
 import { Minimap, type ViewRect } from "./Minimap";
 import { OrderQueue } from "./OrderQueue";
@@ -54,6 +55,28 @@ function KnockedOutChoice({ view }: { view: PlayerView }) {
   const { watch, seeResult, busy } = useGame();
   const me = view.players.find((p) => p.id === view.me.id)!;
   const by = me.eliminatedBy ? view.players.find((p) => p.id === me.eliminatedBy)?.name : null;
+  // One of the Fallen: you keep playing, with Influence.
+  const fallen = view.settings.fallen && view.settings.fog;
+  if (fallen)
+    return (
+      <div className="overlay">
+        <Frame className="dialog" role="dialog" label="You are one of the Fallen" title="You are one of the Fallen">
+          <p>Spend Influence to shake the living.</p>
+          <p className="muted small">
+            {by ? `${by} took your last territory` : "You lost your last territory"} on turn {me.eliminatedTurn}. You see who holds what, but not their armies. You earn Influence every turn (more the more Fallen there are) and spend it on plagues, storms, uprisings, mercenaries and famines.
+          </p>
+          <div className="choice">
+            <button className="primary wide" onClick={watch} disabled={busy} autoFocus>
+              Watch to the end
+            </button>
+            <button className="wide" onClick={seeResult} disabled={busy}>
+              {busy ? "The others are finishing the game…" : "Leave the game"}
+            </button>
+            <p className="muted small">Leaving: the others play on, and you see who won.</p>
+          </div>
+        </Frame>
+      </div>
+    );
   return (
     <div className="overlay">
       <Frame className="dialog" role="dialog" label="You have been knocked out" title="You've been knocked out">
@@ -262,6 +285,8 @@ export function GameScreen() {
         showTargets={act && !recruitOpen && (plan.free.get(selected ?? "") ?? 0) > 0}
         glow={act ? glow : NO_GLOW}
         onTap={(t) => {
+          // One of the Fallen, aiming a world event: a tap picks its target.
+          if (out && g.aiming && !replaying) return g.tap(t);
           if (!act) return;
           g.tap(t);
           if (phone) {
@@ -392,7 +417,7 @@ export function GameScreen() {
         {settingsMenu}
         <Toasts toasts={toasts} />
         {replayBar}
-        {out && watching && <WatchPanel ctx={ctx} view={view} replaying={replaying} />}
+        {out && watching && (view.settings.fallen && view.settings.fog ? <FallenPanel ctx={ctx} view={view} replaying={replaying} /> : <WatchPanel ctx={ctx} view={view} replaying={replaying} />)}
         {!out && (
           <BottomSheet size={replaying ? "closed" : sheet} onSize={setSheet} bottom={76} tabs={tabs} tab={tab} onTab={setTab}>
             {tab === "army" && army}
@@ -442,7 +467,7 @@ export function GameScreen() {
       <Toasts toasts={toasts} />
       {replayBar}
       {out ? (
-        watching && <WatchPanel ctx={ctx} view={view} replaying={replaying} />
+        watching && (view.settings.fallen && view.settings.fog ? <FallenPanel ctx={ctx} view={view} replaying={replaying} /> : <WatchPanel ctx={ctx} view={view} replaying={replaying} />)
       ) : (
         <>
           {/* One panel for the selected territory: the round action buttons, then who holds it, troops, chips,

@@ -1,4 +1,4 @@
-import { recruitBot, type Bot } from "@conquerra/bots";
+import { fallenBot, recruitBot, type Bot } from "@conquerra/bots";
 import {
   createGame,
   indexMap,
@@ -60,6 +60,12 @@ export interface GameSummary {
   planMs: number[];
   /** Planning time per bot per turn (ms), by bot id. */
   planMsByBot: Record<string, number[]>;
+  /** The Fallen: world events played, and how hard each player was hit (events, troops lost or flipped, gold). */
+  worldEvents: number;
+  worldEventsFailed: number;
+  hitBy: Record<string, { events: number; troops: number; land: number; gold: number }>;
+  /** Was the eventual winner the player the Fallen hit hardest (most events; ties by troops)? Null with no events. */
+  winnerHitHardest: boolean | null;
   log?: StepEvent[][];
 }
 
@@ -72,6 +78,7 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
   const sum: GameSummary = {
     seed, winner: "draw", winnerSeat: null, endReason: null, turns: 0, battles: 0, captures: 0, lopsided: 0, lopsidedFailed: 0, byBorder: {}, orders: 0, fizzles: 0, hops: 0, hopCaptures: 0,
     initiatives: 0, leadersKilled: 0, hires: 0, invests: 0, investsAt: { capital: 0, choke: 0, frontier: 0, interior: 0 }, recruitsAt: { capital: 0, barracks: 0, province: 0 }, presets: 0, decidedTurn: null, leadChanges: 0, topShareTurn10: null, leaderTurn10: null, leaderHalfway: null, resolveMs: [], planMs: [], planMsByBot: {}, winnerBot: null,
+    worldEvents: 0, worldEventsFailed: 0, hitBy: {}, winnerHitHardest: null,
   };
   const leaders: (string | null)[] = [];
   const log: StepEvent[][] = [];
@@ -89,7 +96,7 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
         orders[p.id] = o;
         sum.orders += o.length;
         sum.presets += o.filter((x) => x.preset).length;
-      }
+      } else if (s.settings.fallen) orders[p.id] = fallenBot.plan(ctx, viewFor(ctx, s, p.id));
     const p1 = performance.now();
     const before = s;
     const r = resolveTurn(ctx, s, orders);
@@ -122,6 +129,15 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
         if (e.captured) b.captures++;
       }
       if (e.type === "fizzled") sum.fizzles++;
+      if (e.type === "worldEventFailed") sum.worldEventsFailed++;
+      if (e.type === "worldEvent") {
+        sum.worldEvents++;
+        const h = (sum.hitBy[e.against] ??= { events: 0, troops: 0, land: 0, gold: 0 });
+        h.events++;
+        h.troops += (e.losses ?? []).reduce((a, l) => a + l.troops, 0) + (e.flipped ? before.territories[e.target]!.troops : 0);
+        if (e.flipped) h.land++;
+      }
+      if (e.type === "income" && e.famine) (sum.hitBy[e.player] ??= { events: 0, troops: 0, land: 0, gold: 0 }).gold += e.famine;
       if (e.type === "initiative") sum.initiatives++;
       if (e.type === "leaderKilled") sum.leadersKilled++;
       if (e.type === "hired") sum.hires++;
@@ -161,6 +177,8 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
   }
   sum.leaderTurn10 = leaders.length > 10 ? (leaders[9] ?? null) : null;
   sum.leaderHalfway = leaders[Math.ceil(leaders.length / 2) - 1] ?? null;
+  const hardest = Object.entries(sum.hitBy).sort((a, b) => b[1].events - a[1].events || b[1].troops - a[1].troops || (a[0] < b[0] ? -1 : 1))[0];
+  sum.winnerHitHardest = hardest && s.winner !== "draw" ? hardest[0] === s.winner : null;
   if (keepLog) sum.log = log;
   return sum;
 }

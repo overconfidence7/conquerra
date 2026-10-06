@@ -19,7 +19,8 @@ import { runGame, type GameSummary } from "./runGame";
  *   pnpm sim --replay game.json                play a saved game (Settings → "Save this game") turn by turn
  *   pnpm sim --mix general-push,captain,captain,captain   one seat's Leader runs on a standing instruction
  *                                              (general-hold, -defend, -push or -raid); the rest play as the Captain
- * Options: --map embervale|greatmarch (default: Embervale up to 6 players, Greatmarch above),
+ * Options: --fallen on|off (knocked-out seats play world events; on by default), --rules a.b=1,c.d=2 (any rule number),
+ *          --map embervale|greatmarch (default: Embervale up to 6 players, Greatmarch above),
  *          --luck 0.3, --mode classic|conquest, --turn-limit N, --fog on|off, --seed prefix,
  *          --chain-margin N (bots chain on when the arriving army is this many times what the next target needs;
  *          default 2 for Recruit, 1.25 for Captain; 1 = chain whenever the hop is likely to win)
@@ -37,8 +38,10 @@ const luck = Number(arg("luck", String(defaultRules.combat.luck)));
 const mode = arg("mode", "classic") as GameMode;
 const turnLimit = arg("turn-limit", "") ? Number(arg("turn-limit", "")) : null;
 const fog = arg("fog", "on") !== "off";
+/** The Fallen (session 12): knocked-out seats play world events (on by default; --fallen off to compare). */
+const fallen = arg("fallen", "on") !== "off";
 const seedPrefix = arg("seed", "sim");
-const settings = { luck, mode, fog, ...(turnLimit ? { turnLimit } : {}) };
+const settings = { luck, mode, fog, fallen, ...(turnLimit ? { turnLimit } : {}) };
 const botKind = arg("bots", "captain");
 const marginArg = arg("chain-margin", "");
 /** Tuning the Captain's runaway rule (priority 8): --runaway-share 0.4 --runaway-lead 1.75. */
@@ -61,6 +64,15 @@ const label = mix ? `mixed table (${mix.join(", ")})` : `${botKind === "captain"
 const rules = JSON.parse(JSON.stringify(defaultRules)) as typeof defaultRules;
 if (arg("culture-defense", "")) rules.culture.defensePerLevel = Number(arg("culture-defense", ""));
 if (arg("culture-costs", "")) rules.culture.investCost = arg("culture-costs", "").split(",").map(Number);
+/** Any number in the rules: --rules fallen.influenceBase=1,fallen.events.plague.cost=10 (for tuning; dots are the JSON path). */
+for (const kv of arg("rules", "").split(",").filter(Boolean)) {
+  const [path, value] = kv.split("=");
+  const keys = path!.split(".");
+  let o = rules as unknown as Record<string, unknown>;
+  for (const k of keys.slice(0, -1)) o = o[k] as Record<string, unknown>;
+  if (!(keys[keys.length - 1]! in o)) throw new Error(`No rule ${path}`);
+  o[keys[keys.length - 1]!] = Number(value);
+}
 const tuned = arg("culture-defense", "") || arg("culture-costs", "") ? `, culture +${Math.round(rules.culture.defensePerLevel * 100)}%/level costing ${rules.culture.investCost.join("/")}` : "";
 
 function ctxFor(players: number): GameContext {
@@ -143,7 +155,7 @@ for (const players of playerCounts) {
   const plan = stats(results.flatMap((g) => g.planMs));
   const total = stats(results.flatMap((g) => g.resolveMs.map((r, i) => r + g.planMs[i]!)));
 
-  console.log(`\n=== ${players} players — ${ctx.map.name}, ${label}, luck ${luck}, ${mode}${turnLimit ? ` (${turnLimit} turns)` : ""}, fog ${fog ? "on" : "off"}${tuned} ===`);
+  console.log(`\n=== ${players} players — ${ctx.map.name}, ${label}, luck ${luck}, ${mode}${turnLimit ? ` (${turnLimit} turns)` : ""}, fog ${fog ? "on" : "off"}, the Fallen ${fallen ? "on" : "off"}${tuned} ===`);
   console.log(`Games: ${results.length} finished, ${errors.length} crashed, in ${(wall / 1000).toFixed(1)}s`);
   console.log(`Win rate by seat (fair ≈ ${(100 / players).toFixed(1)}% each): ${wins.map((w) => pct(w)).join(" / ")}   draws ${pct(draws)}`);
   if (mix) {
@@ -181,6 +193,11 @@ for (const players of playerCounts) {
   const half = won.filter((g) => g.leaderHalfway !== null);
   const long = won.filter((g) => g.leaderTurn10 !== null);
   console.log(`Runaway, two clearer measures: the leader at the halfway point went on to win ${pct2(half.filter((g) => g.leaderHalfway === g.winner).length, half.length)} of games; comebacks (the winner was not the leader after turn 10) ${pct2(long.filter((g) => g.leaderTurn10 !== g.winner).length, long.length)} of games that went past turn 10`);
+  if (fallen) {
+    const withEvents = results.filter((g) => g.worldEvents > 0);
+    const judged = results.filter((g) => g.winnerHitHardest !== null);
+    console.log(`The Fallen: ${avg((g) => g.worldEvents).toFixed(1)} world events per game (${avg((g) => g.worldEventsFailed).toFixed(1)} pledges came to nothing); events in ${pct(withEvents.length)} of games; the eventual winner was the player hit hardest in ${pct2(judged.filter((g) => g.winnerHitHardest).length, judged.length)} of games with events`);
+  }
   console.log(`CPU per turn (this machine): resolve avg ${ms(resolve.avg)}, p95 ${ms(resolve.p95)}, worst ${ms(resolve.max)} | bots planning (all seats) avg ${ms(plan.avg)}, worst ${ms(plan.max)} | total avg ${ms(total.avg)}, worst ${ms(total.max)}`);
   if (errors.length) {
     console.log(`CRASHES (first 3):`);

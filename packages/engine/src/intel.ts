@@ -13,6 +13,10 @@ export interface LastSeen {
   building: BuildingType | null;
   /** The turn it was seen: the turn number the player was planning when they saw it. */
   turn: number;
+  /** The Fallen's political map: who holds it now, but no troop numbers (`troops` is 0 and means nothing). */
+  political?: boolean;
+  /** On the political map: whose capital it is (events can't touch capitals). */
+  capitalOf?: PlayerId | null;
 }
 
 /** Each player's memory, kept in the game state: player -> territory -> what they last saw there. */

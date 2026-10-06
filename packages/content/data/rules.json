@@ -135,6 +135,18 @@
   "generals": {
     "maxCaptured": 2
   },
+  "fallen": {
+    "influenceBase": 1,
+    "influencePerOtherFallen": 0.5,
+    "maxStrength": 1.5,
+    "events": {
+      "plague": { "cost": 12, "cooldown": 4, "share": 0.25 },
+      "storm": { "cost": 6, "cooldown": 3 },
+      "uprising": { "cost": 12, "cooldown": 5, "maxTroops": 4, "rebels": 4 },
+      "mercenaries": { "cost": 9, "cooldown": 4, "troops": 6 },
+      "famine": { "cost": 8, "cooldown": 5, "share": 0.25 }
+    }
+  },
   "vision": {
     "base": 1
   },

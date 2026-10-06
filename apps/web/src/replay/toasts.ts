@@ -40,6 +40,12 @@ export function toastFor(ctx: GameContext, view: Pick<PlayerView, "players" | "m
       return { text: `${me(e.player) ? "Your" : `${name(e.player)}'s`} Leader falls at ${place(e.territory)}`, tone: me(e.player) ? "bad" : "good", house: house(e.player)?.color ?? null };
     case "eliminated":
       return { text: me(e.player) ? "You have been knocked out" : `${name(e.player)} is knocked out`, tone: me(e.player) ? "bad" : me(e.by) ? "good" : "info", house: house(e.player)?.color ?? null };
+    case "worldEvent": {
+      const what = { plague: "A plague", storm: "A storm", uprising: "An uprising", mercenaries: "Mercenaries", famine: "A famine" }[e.event];
+      return { text: `${what} from the Fallen ${me(e.against) ? "strikes your land" : `strikes ${name(e.against)}`} at ${place(e.target)}`, tone: me(e.against) ? "bad" : "info", house: house(e.against)?.color ?? null };
+    }
+    case "generalCaptured":
+      return me(e.player) ? { text: `${view.players.find((p) => p.id === e.general)?.name ?? "A Leader"} joins you as a captured general`, tone: "good", house: house(e.general)?.color ?? null } : null;
     case "gameOver":
       return { text: e.winner === "draw" ? "The game ends in a draw" : me(e.winner) ? "You win!" : `${name(e.winner)} wins the game`, tone: me(e.winner) ? "good" : "info", house: e.winner === "draw" ? null : (house(e.winner)?.color ?? null) };
     default:

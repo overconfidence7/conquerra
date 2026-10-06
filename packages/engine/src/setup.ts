@@ -50,6 +50,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
     luck: opts.settings?.luck ?? rules.combat.luck,
     fog: opts.settings?.fog ?? true,
     turnTimerSeconds: opts.settings?.turnTimerSeconds ?? rules.game.turnTimerSecondsDefault,
+    fallen: opts.settings?.fallen ?? true,
   };
   if (settings.turnLimit !== null && !(Number.isInteger(settings.turnLimit) && settings.turnLimit >= 1))
     throw new Error("turnLimit must be a whole number of turns, at least 1");
@@ -80,6 +81,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
       cooldowns: { seize: 0, lie: 0 },
       command: null,
       captured: [],
+      influence: 0,
     };
   });
   // Keep the player list in the caller's order; seats are reshuffled every turn anyway.
@@ -99,6 +101,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
     winner: null,
     intel: Object.fromEntries(players.map((p) => [p.id, {}])),
     endReason: null,
+    eventCooldowns: { plague: 0, storm: 0, uprising: 0, mercenaries: 0, famine: 0 },
   };
   updateIntel(ctx, state);
   return state;

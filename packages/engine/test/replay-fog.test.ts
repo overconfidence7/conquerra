@@ -11,6 +11,7 @@ import {
   trueDetail,
   TurnVision,
   visionFor,
+  WORLD_EVENT_KINDS,
   type GameState,
   type Order,
   type OrdersByPlayer,
@@ -197,11 +198,28 @@ function randomOrders(s: GameState, pid: string, rng: Rng): Order[] {
 function playTurns(seed: string, players: number, turns: number, fog = true) {
   let s = createGame(ectx, { gameId: "leaks", seed, players: Array.from({ length: players }, (_, i) => ({ id: `p${i + 1}`, name: `P${i + 1}` })), settings: { fog } });
   for (const p of s.players) p.gold = 80;
+  // With three or more, the last player starts out already knocked out: one of the Fallen, playing world events.
+  if (players >= 3) {
+    const out = s.players[players - 1]!;
+    s.territories[out.capital] = { ...s.territories[out.capital]!, owner: null, troops: 1 };
+    out.eliminatedTurn = 0;
+    out.leader = { alive: false, territory: null };
+  }
   const rng = new Rng(seedRng(`${seed}-orders`));
   const played: { before: GameState; events: StepEvent[]; steps: GameState[]; result: ReturnType<typeof resolveTurn> }[] = [];
   for (let t = 0; t < turns && !s.winner; t++) {
     const orders: OrdersByPlayer = {};
     for (const p of s.players) if (p.eliminatedTurn === null) orders[p.id] = randomOrders(s, p.id, rng);
+    // The Fallen play random world events too (with plenty of Influence), so the replay covers them.
+    const ids = Object.keys(s.territories);
+    for (const p of s.players)
+      if (p.eliminatedTurn !== null) {
+        p.influence = Math.max(p.influence, 40);
+        const target = ids[rng.int(ids.length)]!;
+        const event = WORLD_EVENT_KINDS[rng.int(WORLD_EVENT_KINDS.length)]!;
+        const across = indexMap(ectx.map).neighbors.get(target)![0];
+        orders[p.id] = [{ id: `w${t}`, kind: "worldEvent", event, target, ...(across ? { across } : {}), influence: 5 + rng.int(20) }];
+      }
     const steps: GameState[] = [];
     const result = resolveTurn(ectx, s, orders, (_e, live) => steps.push(JSON.parse(JSON.stringify(live)) as GameState));
     played.push({ before: s, events: result.events, steps, result });
@@ -237,7 +255,7 @@ describe("the step-by-step replay never leaks", () => {
   }, 30000);
 
   it("every replay event and every vision snapshot matches the real game at that step, and only where the player could see", () => {
-    let checkedVision = 0, checkedRival = 0, hiddenLater = 0;
+    let checkedVision = 0, checkedRival = 0, hiddenLater = 0, worldEvents = 0;
     fc.assert(
       fc.property(fc.string(), fc.integer({ min: 2, max: 5 }), (seed, players) => {
         for (const turn of playTurns(seed, players, 10)) {
@@ -266,6 +284,12 @@ describe("the step-by-step replay never leaks", () => {
                   checkedVision++;
                 }
                 for (const [t, last] of Object.entries(e.fogged)) {
+                  // Knocked out with the Fallen on: the replay ends on the political map (true owners, no troops).
+                  if (last.political) {
+                    expect(out).toBe(true);
+                    expect({ ...last, capitalOf: undefined }).toEqual({ owner: after(turn, e.step).territories[t]!.owner, troops: 0, building: null, turn: turn.before.turn, political: true, capitalOf: undefined });
+                    continue;
+                  }
                   expect(sees(e.step - 1, t)).toBe(true);
                   expect(sees(e.step, t)).toBe(false);
                   const real = after(turn, e.step).territories[t]!;
@@ -285,8 +309,15 @@ describe("the step-by-step replay never leaks", () => {
               if (out || e.type === "turnStart" || e.type === "eliminated" || e.type === "gameOver") continue;
               if ("player" in e && e.player === p.id) continue;
               if (e.type === "battle" && e.defender === p.id) continue;
+              // A world event on your own land always shows.
+              if (e.type === "worldEvent" && e.against === p.id) {
+                worldEvents++;
+                continue;
+              }
               // Anyone else's event: the player could see one of its places just before or just after it.
-              const places = e.type === "battle" || e.type === "moved" ? [e.from, e.to] : "territory" in e ? [e.territory] : [];
+              const places =
+                e.type === "battle" || e.type === "moved" ? [e.from, e.to] : e.type === "worldEvent" ? [e.target, ...(e.border ?? []), ...(e.at ? [e.at] : [])] : "territory" in e ? [e.territory] : [];
+              if (e.type === "worldEvent") worldEvents++;
               expect(places.some((t) => sees(e.step - 1, t) || sees(e.step, t)), `${p.id} saw ${JSON.stringify(e)}`).toBe(true);
               checkedRival++;
             }
@@ -309,6 +340,8 @@ describe("the step-by-step replay never leaks", () => {
     expect(checkedVision).toBeGreaterThan(200);
     expect(checkedRival).toBeGreaterThan(50);
     expect(hiddenLater).toBeGreaterThan(0);
+    // The Fallen's world events were played and shown under the fog rules too.
+    expect(worldEvents).toBeGreaterThan(5);
   }, 30000);
 
   it("works out vision from the event log without being told anything else (same result twice)", () => {

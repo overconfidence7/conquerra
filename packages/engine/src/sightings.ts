@@ -78,6 +78,8 @@ function placesOf(e: StepEvent): TerritoryId[] {
       return [e.territory];
     case "income":
       return e.deserters.map((d) => d.territory);
+    case "worldEvent":
+      return [...(e.losses ?? []).map((l) => l.territory), ...(e.flipped ? [e.target] : []), ...(e.at ? [e.at] : [])];
     default:
       return [];
   }
@@ -111,8 +113,10 @@ export class TurnVision {
         this.all.add(pid);
         continue;
       }
-      // Knocked out this turn (or the game ends): you watch the whole turn, as a spectator would.
-      if (gameEnds || events.some((e) => e.type === "eliminated" && e.player === pid)) this.revealAtStart.add(pid);
+      // Knocked out this turn (or the game ends): you watch the whole turn, as a spectator would. (Not with the
+      // Fallen on: then you keep your own vision to the end of the turn, and see the political map from the next.)
+      const knockedOut = events.some((e) => e.type === "eliminated" && e.player === pid);
+      if (gameEnds || (knockedOut && !before.settings.fallen)) this.revealAtStart.add(pid);
       const c = new Map<TerritoryId, number>();
       this.cover.set(pid, c);
       for (const id of this.idx.ids) {
@@ -290,6 +294,16 @@ export class TurnVision {
       }
       case "generalCaptured":
         player(e.player).captured.push({ of: e.general, territory: e.territory, instruction: null });
+        break;
+      case "worldEvent":
+        for (const l of e.losses ?? []) terr(l.territory).troops -= l.troops;
+        if (e.flipped) {
+          const t = terr(e.target);
+          t.owner = null;
+          t.troops = e.rebels!;
+          t.specialists = [];
+        }
+        if (e.at) terr(e.at).troops += e.troops!;
         break;
       case "generalLost":
       case "generalReleased": {

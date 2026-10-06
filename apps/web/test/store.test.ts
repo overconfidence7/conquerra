@@ -12,7 +12,7 @@ function inProcessHost(seed: string): GameHost {
     lockIn: async (orders, turn) => game!.lockIn(orders, turn),
     saveOrders: (orders, turn) => game?.saveOrders(orders, turn),
     onAutoLock: () => {},
-    watchNext: async () => game!.watchNext(),
+    watchNext: async (orders) => game!.watchNext(orders),
     finish: async () => game!.finish(),
     suggest: async () => game!.suggest(),
     planGenerals: async (instructions) => game!.generalOrders(instructions),
@@ -55,7 +55,7 @@ describe("game screen state", () => {
     expect(useGame.getState().lobby.bots).toBe(3);
   });
 
-  it("knocked out: the choice shows; 'Watch to the end' plays on turn by turn on the full map", async () => {
+  it("knocked out: the choice shows; 'Watch to the end' plays on turn by turn on the Fallen's political map (who holds what, no troops)", async () => {
     await playUntilKnockedOut();
     let s = useGame.getState();
     expect(knockedOut(s.view!)).toBe(true);
@@ -73,12 +73,35 @@ describe("game screen state", () => {
     if (s.screen === "game") {
       expect(s.view!.turn).toBe(turn + 1);
       expect(s.report?.turn).toBe(turn);
-      expect(Object.values(s.view!.territories).every((t) => t.detail === "full")).toBe(true);
+      expect(Object.values(s.view!.territories).every((t) => t.detail === "fogged" && t.lastSeen?.political)).toBe(true);
       // The skip-ahead.
       await s.seeResult();
     }
     expect(useGame.getState().screen).toBe("over");
     expect(useGame.getState().view!.winner).not.toBeNull();
+  });
+
+  it("one of the Fallen: pick an event, tap the land to aim it, and it goes with Next turn (a storm takes two taps)", async () => {
+    await playUntilKnockedOut();
+    const s = useGame.getState();
+    if (s.view!.winner) return;
+    s.watch();
+    // (Pretend there's Influence to spend: the host checks the real amount when the turn plays.)
+    useGame.setState({ view: { ...s.view!, me: { ...s.view!.me, influence: 20 } } });
+    const v = useGame.getState().view!;
+    const ids = Object.keys(v.territories);
+    const theirs = ids.find((t) => { const x = v.territories[t]!; return x.detail === "fogged" && x.lastSeen?.owner && !x.lastSeen.capitalOf; })!;
+    useGame.getState().aimEvent("famine");
+    useGame.getState().tap(theirs);
+    expect(useGame.getState().fallenOrders).toEqual([expect.objectContaining({ kind: "worldEvent", event: "famine", target: theirs, influence: s.ctx!.rules.fallen.events.famine.cost })]);
+    expect(useGame.getState().aiming).toBeNull();
+    const nb = s.ctx!.map.borders.find((b) => b.a === theirs || b.b === theirs)!;
+    useGame.getState().aimEvent("storm");
+    useGame.getState().tap(theirs);
+    useGame.getState().tap(nb.a === theirs ? nb.b : nb.a);
+    expect(useGame.getState().fallenOrders[1]).toMatchObject({ event: "storm", target: theirs, across: nb.a === theirs ? nb.b : nb.a });
+    await useGame.getState().watchNext();
+    expect(useGame.getState().fallenOrders).toEqual([]);
   });
 
   it("after Lock in the replay plays first, then the report; Watch again replays it", async () => {

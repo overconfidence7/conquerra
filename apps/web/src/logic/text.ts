@@ -72,6 +72,43 @@ export function describeOrder(o: Order, n: Namer, attack: boolean, sending?: str
       return `${generalName(n, o.general)}: ${o.instruction ? instructionName(o.instruction, n) : "you give the orders"}`;
     case "release":
       return `Let ${generalName(n, o.general)} go`;
+    case "worldEvent":
+      return `${WORLD_EVENT_NAME[o.event]} on ${n.place(o.target)}${o.across ? ` and ${n.place(o.across)}` : ""} (${o.influence} influence)`;
+  }
+}
+
+export const WORLD_EVENT_NAME = { plague: "Plague", storm: "Storm", uprising: "Uprising", mercenaries: "Mercenaries", famine: "Famine" } as const;
+
+/** Why a world event didn't happen, in plain words. */
+const FAILED_WHY = {
+  cost: "not enough Influence put toward it",
+  cooldown: "that event is still resting",
+  alreadyHit: "that player was already hit by an event this turn",
+  capital: "events can't touch a capital",
+  invalid: "that isn't a living player's land",
+  lastLand: "it's that player's last territory",
+  tooStrong: "too many troops there for an uprising",
+  noRoom: "no neutral land next to it for mercenaries",
+} as const;
+
+/** One plain line for a world event the Fallen played (what it did, and to whom). */
+export function worldEventLine(e: Extract<ReplayEvent, { type: "worldEvent" }>, n: Namer): string {
+  const whose = n.isMe(e.against) ? "your" : `${n.who(e.against)}'s`;
+  switch (e.event) {
+    case "plague": {
+      const lost = (e.losses ?? []).reduce((a, l) => a + l.troops, 0);
+      return `The Fallen sent a plague on ${whose} land around ${n.place(e.target)}: ${lost} troop${lost === 1 ? "" : "s"} died.`;
+    }
+    case "storm":
+      return `The Fallen sent a storm: the border between ${n.place(e.border![0])} and ${n.place(e.border![1])} was closed this turn.`;
+    case "uprising":
+      return e.flipped
+        ? `The Fallen stirred an uprising in ${n.place(e.target)}: ${e.rebels} rebels threw ${n.isMe(e.against) ? "you" : n.who(e.against)} out, and hold it now.`
+        : `The Fallen stirred an uprising in ${n.place(e.target)}, but ${e.rebels ? `its ${e.rebels} rebels` : "the rebels"} couldn't take it.`;
+    case "mercenaries":
+      return `The Fallen hired ${e.troops} mercenaries: a neutral army now holds ${n.place(e.at!)}, next to ${whose} ${n.place(e.target)}.`;
+    case "famine":
+      return `The Fallen sent a famine on ${whose} land: ${Math.round((e.cut ?? 0) * 100)}% of this turn's income is lost.`;
   }
 }
 
@@ -227,9 +264,13 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
         : { text: `${who(e.player)}'s captured general ${who(e.general)} is gone for good, at ${place(e.territory)}.`, tone: isMe(e.by) ? "good" : "quiet" };
     case "generalReleased":
       return { text: `You let ${who(e.general)} go (you may keep two captured generals).`, tone: "info" };
+    case "worldEvent":
+      return { text: worldEventLine(e, n), tone: isMe(e.against) ? "bad" : e.by.some(isMe) ? "good" : "info" };
+    case "worldEventFailed":
+      return { text: `Your ${WORLD_EVENT_NAME[e.event].toLowerCase()} on ${place(e.target)} didn't happen (${FAILED_WHY[e.reason]}); your Influence wasn't spent.`, tone: "info" };
     case "income":
       return {
-        text: `Income +${e.income}, upkeep −${e.upkeep}: you now have ${e.goldAfter} gold.${e.deserted ? ` ${e.deserted} troops deserted (unpaid upkeep).` : ""}`,
+        text: `Income +${e.income}${e.famine ? `, famine −${e.famine}` : ""}, upkeep −${e.upkeep}: you now have ${e.goldAfter} gold.${e.deserted ? ` ${e.deserted} troops deserted (unpaid upkeep).` : ""}`,
         tone: e.deserted ? "bad" : "info",
       };
     case "gameOver":

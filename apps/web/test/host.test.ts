@@ -46,7 +46,7 @@ describe("local game host", () => {
     expect(u.report!.events.length).toBeGreaterThan(0);
   });
 
-  it("once you're knocked out you choose: watch turn by turn (whole map, each report) or skip to the result", () => {
+  it("once you're knocked out you choose: watch turn by turn as one of the Fallen (political map, each report) or skip to the result", () => {
     const g = new LocalGame(maps[settings.mapId]!, { ...settings, bots: 3 }, "idle");
     let u = g.update();
     // Do nothing until a bot knocks you out.
@@ -56,12 +56,12 @@ describe("local game host", () => {
     expect(u.fastForwarded).toBe(0);
     expect(() => g.lockIn([])).toThrow(/knocked out/);
 
-    // Watch: one turn at a time, seeing everything.
+    // Watch: one turn at a time, as one of the Fallen: who holds what, no troops.
     const before = u.view.turn;
     u = g.watchNext();
     expect(u.view.turn).toBe(before + 1);
     expect(u.report?.turn).toBe(before);
-    expect(Object.values(u.view.territories).every((t) => t.detail === "full")).toBe(true);
+    expect(Object.values(u.view.territories).every((t) => t.detail === "fogged" && t.lastSeen?.political)).toBe(true);
 
     // Skip ahead to the result.
     if (!u.view.winner) {

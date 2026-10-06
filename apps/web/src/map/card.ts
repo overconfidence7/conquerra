@@ -169,6 +169,16 @@ export function territoryCard(ctx: GameContext, view: PlayerView, id: TerritoryI
     if (v.leaders.length) lines.splice(2, 0, { label: "Leader", icon: "icon-crown", value: v.leaders.map((p) => (p === view.me.id ? "Your Leader is here" : `${playerName(p)}'s Leader is here`)).join(", ") });
     return { title: def.name, subtitle: capital ? `${capital} · ${where}` : where, lines, intel: null, uncertain: false };
   }
+  if (v.lastSeen?.political) {
+    const s = v.lastSeen;
+    return {
+      title: def.name,
+      subtitle: s.capitalOf ? `Capital · ${where}` : where,
+      lines: [{ label: "Owner", value: heldBy(s.owner), color: houseOf(view, s.owner).color }, worth],
+      intel: "You're one of the Fallen: you see who holds what, but not their armies.",
+      uncertain: false,
+    };
+  }
   if (v.lastSeen) {
     const s = v.lastSeen;
     return {

@@ -66,8 +66,8 @@ export interface GameHost {
   saveOrders(orders: Order[], turn: number): void;
   /** Called when the timer runs out and the host locks your saved orders in for you. */
   onAutoLock(listener: (update: HostUpdate) => void): void;
-  /** Once you're knocked out: the bots play one more turn, and you see the whole map and that turn's report. */
-  watchNext(): Promise<HostUpdate>;
+  /** Once you're knocked out: the bots play one more turn (with your world events, as one of the Fallen), and you see that turn's report. */
+  watchNext(orders?: Order[]): Promise<HostUpdate>;
   /** Once you're knocked out: the bots play on to the end. */
   finish(): Promise<HostUpdate>;
   /** Your generals' orders for this turn with these instructions (the ones you haven't changed keep theirs). */
@@ -84,7 +84,7 @@ export type HostRequest =
   | { id: number; type: "start"; settings: LobbySettings; seed: string }
   | { id: number; type: "lockIn"; orders: Order[]; turn: number }
   | { id: number; type: "saveOrders"; orders: Order[]; turn: number }
-  | { id: number; type: "watchNext" }
+  | { id: number; type: "watchNext"; orders?: Order[] }
   | { id: number; type: "finish" }
   | { id: number; type: "suggest" }
   | { id: number; type: "planGenerals"; instructions: Record<PlayerId, Instruction | null> }

@@ -35,13 +35,25 @@ describe("fog of war (v0.2 §8)", () => {
     expect(visionFor(ctx, s, "p1").get("c")).toEqual(["watchtower"]);
   });
 
-  it("shows everything when fog is off, and to eliminated players", () => {
+  it("shows everything when fog is off, and to eliminated players when the Fallen are switched off", () => {
     const ctx = embervaleCtx();
     const s = createGame(ctx, { gameId: "f", seed: "fog", players: [{ id: "p1", name: "A" }, { id: "p2", name: "B" }], settings: { fog: false } });
     expect(Object.values(viewFor(ctx, s, "p1").territories).every((t) => t.detail === "full")).toBe(true);
-    const s2 = createGame(ctx, { gameId: "f", seed: "fog", players: [{ id: "p1", name: "A" }, { id: "p2", name: "B" }] });
+    const s2 = createGame(ctx, { gameId: "f", seed: "fog", players: [{ id: "p1", name: "A" }, { id: "p2", name: "B" }], settings: { fallen: false } });
     s2.players[0]!.eliminatedTurn = 1;
     expect(Object.values(viewFor(ctx, s2, s2.players[0]!.id).territories).every((t) => t.detail === "full")).toBe(true);
+  });
+
+  it("the Fallen see who holds what everywhere, but no troop numbers", () => {
+    const ctx = embervaleCtx();
+    const s = createGame(ctx, { gameId: "f", seed: "fog", players: [{ id: "p1", name: "A" }, { id: "p2", name: "B" }, { id: "p3", name: "C" }] });
+    s.players[0]!.eliminatedTurn = 1;
+    const v = viewFor(ctx, s, "p1");
+    for (const [id, t] of Object.entries(v.territories)) {
+      expect(t.detail).toBe("fogged");
+      expect(t.detail === "fogged" && t.lastSeen).toMatchObject({ owner: s.territories[id]!.owner, troops: 0, political: true });
+    }
+    expect(JSON.stringify(v)).not.toContain('"troops":12');
   });
 });
 

@@ -48,7 +48,7 @@ export function createLocalHost(): GameHost {
     lockIn: (orders, turn) => send({ type: "lockIn", orders, turn }),
     saveOrders: (orders, turn) => worker.postMessage({ id: nextId++, type: "saveOrders", orders, turn } as HostRequest),
     onAutoLock: (f) => void autoLock.push(f),
-    watchNext: () => send({ type: "watchNext" }),
+    watchNext: (orders) => send({ type: "watchNext", ...(orders ? { orders } : {}) }),
     finish: () => send({ type: "finish" }),
     suggest: () => send<Order[]>({ type: "suggest" }),
     planGenerals: (instructions) => send<Order[]>({ type: "planGenerals", instructions }),

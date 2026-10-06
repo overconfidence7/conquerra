@@ -51,6 +51,9 @@ const EXTRA_MS: Partial<Record<BeatKind, number>> = { pop: 120, march: 380, puls
 export const TARGET_MAX_MS = 20000;
 const MIN_SHARE = 0.35;
 
+/** The word over the land a world event hit, in the replay. */
+const WORLD_EVENT_LABEL = { plague: "Plague", storm: "Storm", uprising: "Uprising", mercenaries: "Mercenaries", famine: "Famine" } as const;
+
 const kindOf = (e: ReplayEvent): BeatKind | null => {
   switch (e.type) {
     case "turnStart":
@@ -63,6 +66,7 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     case "leaderReturned":
     case "generalCaptured":
     case "generalLost":
+    case "worldEvent":
       return "pop";
     case "moved":
       return "march";
@@ -81,6 +85,7 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     case "initiative":
     case "fizzled":
     case "generalReleased":
+    case "worldEventFailed":
     // The fog lifting (or falling) rides on the beat of the step that caused it.
     case "vision":
       return null;
@@ -222,6 +227,7 @@ export function frameAt(tl: Timeline, t: number): ReplayFrame {
       else if (e.type === "leaderReturned") frame.pops.push({ at: e.territory, player: e.player, label: "Leader", progress: q });
       else if (e.type === "generalCaptured") frame.pops.push({ at: e.territory, player: e.player, label: "Captured general", progress: q });
       else if (e.type === "generalLost") frame.pops.push({ at: e.territory, player: e.player, label: "General lost", progress: q });
+      else if (e.type === "worldEvent") frame.pops.push({ at: e.target, player: e.against, label: WORLD_EVENT_LABEL[e.event], progress: q });
     });
     break;
   }
@@ -344,6 +350,11 @@ export function replayView(before: PlayerView, events: readonly ReplayEvent[], a
       }
       case "generalCaptured":
         moveGeneral(e.general, null, e.territory);
+        break;
+      case "worldEvent":
+        for (const l of e.losses ?? []) edit(l.territory, (t) => (t.troops -= l.troops));
+        if (e.flipped) edit(e.target, (t) => ((t.owner = null), (t.troops = e.rebels!), (t.specialists = []), (t.capitalOf = null)));
+        if (e.at) edit(e.at, (t) => (t.troops += e.troops!));
         break;
       case "generalLost":
         moveGeneral(e.general, e.territory, null);

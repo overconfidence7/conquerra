@@ -1,7 +1,8 @@
 export * from "./types";
 export { createGame, type NewGameOptions } from "./setup";
 export { resolveTurn, type TurnObserver } from "./resolve";
-export { viewFor, trueDetail, type PlayerView, type TerritoryView, type TerritoryDetail } from "./view";
+export { viewFor, trueDetail, seesPolitically, type PlayerView, type TerritoryView, type TerritoryDetail } from "./view";
+export { playWorldEvents, worldEventEffect, fallenEndOfTurn, borderKey, type WorldEventHost } from "./fallen";
 export { recordSighting, updateIntel, type Intel, type LastSeen } from "./intel";
 export { visionFor, visibleTerritories, type Vision, type VisionSource } from "./vision";
 export { replayFor, type ReplayEvent, type SurfaceEvent, type VisionEvent, type SeenTerritory } from "./replay";

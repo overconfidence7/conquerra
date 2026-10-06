@@ -49,6 +49,23 @@ const RUNAWAY_LEAD = 1.75;
 /** A fast attacker (priority 9): it took at least this many of our territories last turn. */
 const RAID_CAPTURES = 2;
 
+/** Land each living player holds as far as we know, most first (ties by id). */
+export function landEstimates(known: ReadonlyMap<PlayerId, number>, living: readonly PlayerId[]): [PlayerId, number][] {
+  const alive = new Set(living);
+  return [...known].filter(([p]) => alive.has(p)).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
+}
+
+/**
+ * Priority 8's judgement: a rival running away with the map looks to hold RUNAWAY_SHARE of the land, or at least
+ * RUNAWAY_MIN_SHARE and RUNAWAY_LEAD times anyone else (`ownLand`: the judge's own, 0 for the Fallen). Only with at
+ * least three players left. The Fallen bots use the same judgement to pick whom to shake.
+ */
+export function runawayLeader(estimates: readonly [PlayerId, number][], ownLand: number, total: number, aliveCount: number, opts: Pick<CaptainOptions, "runawayShare" | "runawayLead"> = {}): PlayerId | null {
+  const [top, topLand] = estimates[0] ?? [null, 0];
+  const runnerUp = Math.max(ownLand, estimates[1]?.[1] ?? 0);
+  return top && aliveCount >= 3 && (topLand >= (opts.runawayShare ?? RUNAWAY_SHARE) * total || (topLand >= RUNAWAY_MIN_SHARE * total && topLand >= (opts.runawayLead ?? RUNAWAY_LEAD) * runnerUp)) ? top : null;
+}
+
 /**
  * Everything the Captain works out from one seat's view before it decides anything: what it sees and remembers, who
  * it borders, who it's focused on, how many troops each place needs to hold, what an attack would cost and what land
@@ -109,13 +126,8 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
   // 8. A rival running away with the map. Nobody shows land counts, so we estimate from what we see and remember:
   // it looks to hold RUNAWAY_SHARE of the land, or far more than anyone else (us included). Only with at least two
   // rivals left (head to head, the other player is always the target anyway). The same rule for every seat.
-  const living = new Set(alive.map((p) => p.id));
-  const estimates = [...knownLand].filter(([p]) => living.has(p)).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
-  const [top, topLand] = estimates[0] ?? [null, 0];
-  const runnerUp = Math.max(mine.length, estimates[1]?.[1] ?? 0);
-  const total = idx.ids.length;
-  const runaway =
-    on("runaway") && top && alive.length >= 3 && (topLand >= (opts.runawayShare ?? RUNAWAY_SHARE) * total || (topLand >= RUNAWAY_MIN_SHARE * total && topLand >= (opts.runawayLead ?? RUNAWAY_LEAD) * runnerUp)) ? top : null;
+  const estimates = landEstimates(knownLand, alive.map((p) => p.id));
+  const runaway = on("runaway") ? runawayLeader(estimates, mine.length, idx.ids.length, alive.length, opts) : null;
   /** Rivals whose land touches the runaway's: they're holding it off, so weakening them only helps it. */
   const shieldsLeader = new Set<PlayerId>();
   if (runaway)

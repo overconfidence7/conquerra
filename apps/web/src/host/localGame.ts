@@ -1,4 +1,4 @@
-import { captainBot, generalsOf, planGeneral, recruitBot, type Bot } from "@conquerra/bots";
+import { captainBot, fallenBot, generalsOf, planGeneral, recruitBot, type Bot } from "@conquerra/bots";
 import { defaultRules, type MapDef } from "@conquerra/content";
 import {
   createGame,
@@ -122,8 +122,12 @@ export class LocalGame {
 
   private botOrders(): OrdersByPlayer {
     const orders: OrdersByPlayer = {};
-    for (const p of this.state.players)
-      if (p.id !== HUMAN_ID && p.eliminatedTurn === null) orders[p.id] = this.bot.plan(this.ctx, viewFor(this.ctx, this.state, p.id), this.lastTurn.get(p.id));
+    for (const p of this.state.players) {
+      if (p.id === HUMAN_ID) continue;
+      if (p.eliminatedTurn === null) orders[p.id] = this.bot.plan(this.ctx, viewFor(this.ctx, this.state, p.id), this.lastTurn.get(p.id));
+      // Knocked-out bots are the Fallen: they play world events against whoever leads.
+      else if (this.state.settings.fallen) orders[p.id] = fallenBot.plan(this.ctx, viewFor(this.ctx, this.state, p.id));
+    }
     return orders;
   }
 
@@ -168,11 +172,14 @@ export class LocalGame {
     return { ...this.update(this.play(this.saved)), autoLocked: true };
   }
 
-  /** Knocked out and watching: the bots play one turn. You see the whole board (the engine's spectator view). */
-  watchNext(): HostUpdate {
+  /**
+   * Knocked out and watching: the bots play one turn. As one of the Fallen you see the political map, and `orders`
+   * are your world events for the turn (Influence put toward them).
+   */
+  watchNext(orders: Order[] = []): HostUpdate {
     if (this.state.winner) throw new Error("The game is over");
     if (!this.knockedOut) throw new Error("You're still in the game");
-    return this.update(this.play(null));
+    return this.update(this.play(orders.filter((o) => o.kind === "worldEvent")));
   }
 
   /**

@@ -265,7 +265,11 @@ class PixiMapRenderer implements MapRenderer {
     if (!this.world) return;
     // The fog mask only changes when vision does (during the replay: as land comes into view or fogs over), and
     // then it eases across in FOG_FADE_MS rather than jumping.
-    const fogged = this.opts.ctx.map.geometry!.territories.filter((t) => scene.view.territories[t.id]?.detail !== "full");
+    // (The Fallen's political map isn't fogged: they see who holds what everywhere.)
+    const fogged = this.opts.ctx.map.geometry!.territories.filter((t) => {
+      const v = scene.view.territories[t.id];
+      return v?.detail !== "full" && !(v?.detail === "fogged" && v.lastSeen?.political);
+    });
     const fogKey = fogged.map((t) => t.id).join("|");
     if (fogKey !== this.fogKey) {
       this.world.setFog(fogged, this.fogKey === null ? 0 : FOG_FADE_MS);

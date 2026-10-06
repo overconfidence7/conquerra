@@ -410,3 +410,15 @@ select { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(
 .general-line.keep { width: 100%; border: 1px solid rgba(201, 164, 92, 0.4); border-radius: 8px; padding: 6px 8px; background: rgba(201, 164, 92, 0.06); }
 .general-line.keep.going { opacity: 0.6; border-style: dashed; }
 .link.general-line, .link.general-line:hover { text-decoration: none; color: inherit; }
+
+/* The Fallen (session 12): Influence, the five world events as cards, this turn's planned events. */
+.fallen-panel { max-height: min(78vh, 720px); overflow-y: auto; scrollbar-width: thin; }
+.game.phone .fallen-panel { bottom: 8px; max-height: 70vh; }
+.influence { font-size: var(--fs-body); }
+.influence b { font: 700 1.4rem var(--font-head); color: var(--gold-hi); margin-right: 4px; }
+.event-cards { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.event-cards li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.event-card { width: 100%; text-align: left; line-height: 1.25; padding: 6px 8px; }
+.event-name { font: 700 var(--fs-body) var(--font-head); display: flex; justify-content: space-between; color: var(--gold-hi); }
+.event-name .cost::after { content: " ⚜"; }
+.fallen-orders { padding: 0; margin: 0; list-style: none; }

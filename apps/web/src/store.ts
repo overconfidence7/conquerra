@@ -1,6 +1,6 @@
 import { defaultRules, mapCatalog, suggestedMode } from "@conquerra/content";
 import { BOT_NAMES } from "./host/names";
-import { isShare, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type RecruitAmount, type TerritoryId } from "@conquerra/engine";
+import { indexMap, isShare, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type RecruitAmount, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
 import { asIfYouOrderFrom, instructOrders, takeControl, withGeneralOrders } from "./logic/generals";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
@@ -50,6 +50,10 @@ interface GameStore {
   picking: { general: PlayerId; kind: "push" | "defend" } | null;
   /** Captured generals you chose to let go this turn (you may keep two). */
   releases: PlayerId[];
+  /** One of the Fallen: the world events you're putting Influence toward this turn (sent with Next turn). */
+  fallenOrders: Order[];
+  /** Aiming a world event: the next tap picks the land (a storm then takes a neighbour across the border). */
+  aiming: { event: WorldEventKind; target: TerritoryId | null } | null;
 
   setLobby(patch: Partial<LobbySettings>): void;
   start(): Promise<void>;
@@ -96,6 +100,11 @@ interface GameStore {
   cancelPick(): void;
   /** With a third captured general: let this one go (or keep it after all). */
   toggleRelease(general: PlayerId): void;
+  /** The Fallen: choose an event, then tap the land to aim it at. */
+  aimEvent(event: WorldEventKind | null): void;
+  /** The Fallen: change how much Influence goes toward a planned event (more makes it stronger, up to its limit). */
+  setPledge(id: string, influence: number): void;
+  removeFallenOrder(id: string): void;
   /** Everything that goes to the host for this turn: instruction changes, generals you let go, then the queue. */
   turnOrders(): Order[];
   /** Replace your orders with a bot's plan (the game's bot level; testing: the perf script plays whole games with it). */
@@ -157,6 +166,8 @@ export const useGame = create<GameStore>((set, get) => ({
   paused: [],
   picking: null,
   releases: [],
+  fallenOrders: [],
+  aiming: null,
 
   setLobby(patch) {
     const { lobby, modeTouched } = get();
@@ -211,8 +222,18 @@ export const useGame = create<GameStore>((set, get) => ({
   },
 
   tap(t) {
-    const { ctx, view, queue, selected, recruit, picking } = get();
+    const { ctx, view, queue, selected, recruit, picking, aiming } = get();
     if (!ctx || !view) return;
+    // One of the Fallen, aiming a world event: this tap is its target (a storm takes a second tap, across the border).
+    if (aiming) {
+      if (aiming.event === "storm" && !aiming.target) return set({ aiming: { ...aiming, target: t }, selected: t });
+      const across = aiming.event === "storm" ? t : undefined;
+      const target = aiming.event === "storm" ? aiming.target! : t;
+      if (across && !(indexMap(ctx.map).neighbors.get(target) ?? []).includes(across)) return set({ aiming: { ...aiming, target: t }, selected: t });
+      const cost = ctx.rules.fallen.events[aiming.event].cost;
+      const order = { id: nextOrderId(), kind: "worldEvent", event: aiming.event, target, ...(across ? { across } : {}), influence: Math.min(cost, Math.floor(view.me.influence)) } as Order;
+      return set({ fallenOrders: [...get().fallenOrders, order], aiming: null, selected: target });
+    }
     // Choosing a place for a general: this tap is it.
     if (picking) {
       set({ picking: null });
@@ -334,6 +355,10 @@ export const useGame = create<GameStore>((set, get) => ({
     set({ releases: r.includes(general) ? r.filter((g) => g !== general) : [...r, general] });
   },
 
+  aimEvent: (event) => set({ aiming: event ? { event, target: null } : null }),
+  setPledge: (id, influence) => set({ fallenOrders: get().fallenOrders.map((o) => (o.id === id && o.kind === "worldEvent" ? { ...o, influence } : o)) }),
+  removeFallenOrder: (id) => set({ fallenOrders: get().fallenOrders.filter((o) => o.id !== id) }),
+
   turnOrders() {
     const { view, queue, instructions, releases } = get();
     if (!view) return [...queue];
@@ -379,8 +404,8 @@ export const useGame = create<GameStore>((set, get) => ({
     set({ busy: true, error: null });
     try {
       const before = get().view!;
-      const u = await host.watchNext();
-      set({ view: u.view, report: u.report, lastBefore: before, replay: u.report ? { before, report: u.report, key: Date.now() } : null, clock: null });
+      const u = await host.watchNext(get().fallenOrders);
+      set({ view: u.view, report: u.report, lastBefore: before, replay: u.report ? { before, report: u.report, key: Date.now() } : null, clock: null, fallenOrders: [], aiming: null });
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
     } finally {
@@ -411,7 +436,7 @@ export const useGame = create<GameStore>((set, get) => ({
 
   playAgain() {
     get().host?.dispose();
-    set({ screen: "lobby", host: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, paused: [], picking: null, releases: [] });
+    set({ screen: "lobby", host: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null });
   },
 }));
 

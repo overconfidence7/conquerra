@@ -3,6 +3,7 @@ import { fewestToTake, recruitCount, troopsFor } from "./amounts";
 import { expectBattle, rollLosses, type BattleExpectation } from "./combat";
 import { canRecruitAt, cultureProtection, incomeFor, investCost, provinceCulture, scoreFor, specialistUnlocked } from "./economy";
 import { updateIntel } from "./intel";
+import { borderKey, fallenEndOfTurn, playWorldEvents } from "./fallen";
 import { distancesFrom, indexMap, type MapIndex } from "./mapIndex";
 import { expandPreset } from "./presets";
 import { Rng } from "./rng";
@@ -91,6 +92,10 @@ class Turn {
   lastCapture: TerritoryId | null = null;
   /** The general that wrote the order now running (for the replay and the report). */
   author: PlayerId | undefined;
+  /** Borders a storm closed this turn ("a|b", sorted). */
+  readonly closed = new Set<string>();
+  /** Income each player loses to a famine this turn (a share). */
+  readonly famine = new Map<PlayerId, number>();
   /** Vision cache; bumped whenever something that affects vision changes. */
   private visionEpoch = 0;
   private visionCache = new Map<PlayerId, { epoch: number; set: Set<TerritoryId> }>();
@@ -387,6 +392,8 @@ class Turn {
       if (this.terr(o.via)?.owner !== pid) return fz("pathBlocked", { territory: o.via });
       border = this.idx.border(o.via, o.to);
     } else if (!adjacent(o.from, o.to)) return fz("notConnected");
+    // A storm closed the border for the turn (either step of a two-territory move).
+    if (this.closed.has(borderKey(o.via ?? o.from, o.to)) || (o.via && this.closed.has(borderKey(o.from, o.via)))) return fz("storm", { territory: o.to });
 
     // Specialists travel with the stack: all fresh ones by default, or the listed types.
     const freshSpecs = from.specialists.filter((s) => !this.spentSpecialists.has(s.id));
@@ -565,7 +572,7 @@ class Turn {
   retreat(pid: PlayerId, fromId: TerritoryId, orderId: string): Fizzle | null {
     const from = this.terr(fromId);
     if (!from || from.owner !== pid) return fz("lostStart", { territory: fromId });
-    const options = (this.idx.neighbors.get(fromId) ?? []).filter((n) => this.terr(n)?.owner === pid);
+    const options = (this.idx.neighbors.get(fromId) ?? []).filter((n) => this.terr(n)?.owner === pid && !this.closed.has(borderKey(fromId, n)));
     if (!options.length) return fz("nowhereToRetreat", { territory: fromId });
     const danger = (n: TerritoryId) => this.biggestEnemyNear(this.s, n, pid) - this.terr(n)!.troops;
     const best = [...options].sort((a, b) => danger(a) - danger(b) || (a < b ? -1 : 1))[0]!;
@@ -578,7 +585,7 @@ class Turn {
     if (!from || from.owner !== pid) return fz("lostStart", { territory: fromId });
     let best: { to: TerritoryId; margin: number } | null = null;
     for (const n of this.idx.neighbors.get(fromId) ?? []) {
-      if (this.terr(n)!.owner === pid) continue;
+      if (this.terr(n)!.owner === pid || this.closed.has(borderKey(fromId, n))) continue;
       const order: MoveOrder = { kind: "move", from: fromId, to: n, troops: "all" };
       const plan = this.planMove(pid, order);
       if (isFizzle(plan)) return plan;
@@ -736,6 +743,9 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
     queues.set(pid, q);
   }
 
+  // The Fallen's world events land before anyone's orders.
+  playWorldEvents(T, orders);
+
   for (const pid of seats) {
     const o = firsts.get(pid);
     if (!o) continue;
@@ -799,7 +809,10 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
     const inc = incomeFor(ctx, s, pid);
     let deserted = 0;
     const deserters: { territory: TerritoryId; troops: number }[] = [];
-    p.gold += inc.net;
+    // A famine the Fallen sent cuts this turn's income (before upkeep).
+    const gross = inc.net + inc.upkeep + inc.specialistUpkeep;
+    const famine = Math.floor(Math.max(0, gross) * (T.famine.get(pid) ?? 0));
+    p.gold += inc.net - famine;
     if (p.gold < 0) {
       // Unrest: one troop deserts per gold short, lowest-culture land first. Culture talks some of them out of it.
       let short = -p.gold;
@@ -823,10 +836,13 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
         if (lose > 0) deserters.push({ territory: id, troops: lose });
       }
     }
-    T.emit({ type: "income", player: pid, income: inc.net + inc.upkeep + inc.specialistUpkeep, upkeep: inc.upkeep + inc.specialistUpkeep, goldAfter: p.gold, deserted, deserters });
+    T.emit({ type: "income", player: pid, income: gross, upkeep: inc.upkeep + inc.specialistUpkeep, goldAfter: p.gold, deserted, deserters, ...(famine ? { famine } : {}) });
     p.cooldowns.seize = Math.max(0, p.cooldowns.seize - 1);
     p.cooldowns.lie = Math.max(0, p.cooldowns.lie - 1);
   }
+
+  // ----- The Fallen earn Influence; event cooldowns run down -----
+  fallenEndOfTurn(ctx, s);
 
   // ----- Victory -----
   const stillIn = s.players.filter((p) => p.eliminatedTurn === null);

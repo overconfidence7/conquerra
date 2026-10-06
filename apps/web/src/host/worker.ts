@@ -46,7 +46,7 @@ scope.onmessage = async (e) => {
         game.saveOrders(req.orders, req.turn);
         return;
       }
-      const update = req.type === "lockIn" ? game.lockIn(req.orders, req.turn) : req.type === "watchNext" ? game.watchNext() : game.finish();
+      const update = req.type === "lockIn" ? game.lockIn(req.orders, req.turn) : req.type === "watchNext" ? game.watchNext(req.orders) : game.finish();
       scope.postMessage({ id: req.id, ok: true, update });
       armTimer();
     }
