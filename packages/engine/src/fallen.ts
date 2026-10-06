@@ -35,8 +35,8 @@ export const borderKey = (a: TerritoryId, b: TerritoryId) => (a < b ? `${a}|${b}
 
 type Failure = Extract<GameEvent, { type: "worldEventFailed" }>["reason"];
 type Effect = Omit<Extract<GameEvent, { type: "worldEvent" }>, "type" | "event" | "target" | "against" | "by" | "spent"> & {
-  /** What follows from it, announced right after the event (a Leader falling, a captured general lost). */
-  then?: GameEvent[];
+  /** What follows from it, done and announced right after the event (a Leader falling, a captured general lost). */
+  then?: (() => GameEvent)[];
 };
 
 /** A capital its living owner still holds. */
@@ -80,18 +80,23 @@ export function worldEventEffect(h: WorldEventHost, event: WorldEventKind, targe
       if (!idx.ids.some((id) => id !== target && s.territories[id]!.owner === against)) return "lastLand";
       const rebels = Math.round(cfg.uprising.rebels * strength * prot(t.culture));
       const flipped = rebels > t.troops;
-      const then: GameEvent[] = [];
+      const then: (() => GameEvent)[] = [];
       if (flipped) {
         t.owner = null;
         t.troops = rebels;
         t.specialists = [];
         const p = s.players.find((x) => x.id === against)!;
-        if (p.leader.alive && p.leader.territory === target) {
-          p.leader = { alive: false, territory: null };
-          then.push({ type: "leaderKilled", player: against, territory: target });
-        }
-        for (const g of p.captured.filter((g) => g.territory === target)) then.push({ type: "generalLost", player: against, general: g.of, territory: target, by: null });
-        p.captured = p.captured.filter((g) => g.territory !== target);
+        // (As in a battle: the Leader falls, and a captured general there is lost, once the event has been announced.)
+        if (p.leader.alive && p.leader.territory === target)
+          then.push(() => {
+            p.leader = { alive: false, territory: null };
+            return { type: "leaderKilled", player: against, territory: target };
+          });
+        for (const g of p.captured.filter((g) => g.territory === target))
+          then.push(() => {
+            p.captured = p.captured.filter((x) => x.of !== g.of);
+            return { type: "generalLost", player: against, general: g.of, territory: target, by: null };
+          });
         h.visionChanged();
       }
       return { rebels, flipped, ...(then.length ? { then } : {}) };
@@ -174,7 +179,7 @@ export function playWorldEvents(h: WorldEventHost, orders: OrdersByPlayer) {
       hit.add(owner);
       const { then, ...shown } = effect;
       h.emit({ type: "worldEvent", event: g.event, target: g.target, against: owner, by: g.pledges.map((x) => x.player), spent, ...shown });
-      for (const e of then ?? []) h.emit(e);
+      for (const f of then ?? []) h.emit(f());
     }
   }
 }
