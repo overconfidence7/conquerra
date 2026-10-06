@@ -472,4 +472,4 @@ Spies see deep behind the lines. They never fight and never change a battle: the
 - **The Recruit** doesn't use spies.
 
 ## Not in yet (later milestones)
- factions, pause by vote and deals between people in online games (M4), tutorials and scenarios (M5).
+Factions, pause by vote and deals between people in online games (M4), tutorials and scenarios (M5). Not planned: shared vision between partners, and spies that sabotage or affect combat.
