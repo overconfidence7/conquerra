@@ -1,4 +1,5 @@
 import type { SpecialistType } from "@conquerra/content";
+import { recruitSpoils, spoilsOrder } from "./cards";
 import {
   fewestToTake,
   indexMap,
@@ -85,6 +86,9 @@ function plan(ctx: GameContext, view: PlayerView, opts: RecruitOptions): Order[]
   let gold = me.gold;
 
   const frontier = mine.filter(isFrontier);
+  // Spoils: turn a set in as soon as there is one.
+  const turnIn = spoilsOrder(view, id, recruitSpoils(view, frontier, enemyPressure));
+  if (turnIn) orders.push(turnIn);
   // Recruit at the capital, a barracks, or anywhere in a province we hold completely; hire only at the first two.
   const recruitSites = mine.filter((t) => isRecruitSiteIn(ctx, view, t));
   const hireSite = (t: TerritoryId) => t === me.capital || seen(t)?.building === "barracks";

@@ -20,6 +20,7 @@ import { runGame, type GameSummary } from "./runGame";
  *   pnpm sim --mix general-push,captain,captain,captain   one seat's Leader runs on a standing instruction
  *                                              (general-hold, -defend, -push or -raid); the rest play as the Captain
  * Options: --fallen on|off (knocked-out seats play world events; on by default), --rules a.b=1,c.d=2 (any rule number),
+ *          --spoils on|off, --fate on|off (the card decks; both on by default),
  *          --map embervale|greatmarch (default: Embervale up to 6 players, Greatmarch above),
  *          --luck 0.3, --mode classic|conquest, --turn-limit N, --fog on|off, --seed prefix,
  *          --chain-margin N (bots chain on when the arriving army is this many times what the next target needs;
@@ -40,8 +41,11 @@ const turnLimit = arg("turn-limit", "") ? Number(arg("turn-limit", "")) : null;
 const fog = arg("fog", "on") !== "off";
 /** The Fallen (session 12): knocked-out seats play world events (on by default; --fallen off to compare). */
 const fallen = arg("fallen", "on") !== "off";
+/** The card decks (session 13): Spoils and Fate (both on by default; --spoils off / --fate off to compare). */
+const spoils = arg("spoils", "on") !== "off";
+const fate = arg("fate", "on") !== "off";
 const seedPrefix = arg("seed", "sim");
-const settings = { luck, mode, fog, fallen, ...(turnLimit ? { turnLimit } : {}) };
+const settings = { luck, mode, fog, fallen, spoils, fate, ...(turnLimit ? { turnLimit } : {}) };
 const botKind = arg("bots", "captain");
 const marginArg = arg("chain-margin", "");
 /** Tuning the Captain's runaway rule (priority 8): --runaway-share 0.4 --runaway-lead 1.75. */
@@ -167,7 +171,7 @@ for (const players of playerCounts) {
   const plan = stats(results.flatMap((g) => g.planMs));
   const total = stats(results.flatMap((g) => g.resolveMs.map((r, i) => r + g.planMs[i]!)));
 
-  console.log(`\n=== ${players} players — ${ctx.map.name}, ${label}, luck ${luck}, ${mode}${turnLimit ? ` (${turnLimit} turns)` : ""}, fog ${fog ? "on" : "off"}, the Fallen ${fallen ? "on" : "off"}${tuned} ===`);
+  console.log(`\n=== ${players} players — ${ctx.map.name}, ${label}, luck ${luck}, ${mode}${turnLimit ? ` (${turnLimit} turns)` : ""}, fog ${fog ? "on" : "off"}, the Fallen ${fallen ? "on" : "off"}, Spoils ${spoils ? "on" : "off"}, Fate ${fate ? "on" : "off"}${tuned} ===`);
   console.log(`Games: ${results.length} finished, ${errors.length} crashed, in ${(wall / 1000).toFixed(1)}s`);
   console.log(`Win rate by seat (fair ≈ ${(100 / players).toFixed(1)}% each): ${wins.map((w) => pct(w)).join(" / ")}   draws ${pct(draws)}`);
   if (mix) {

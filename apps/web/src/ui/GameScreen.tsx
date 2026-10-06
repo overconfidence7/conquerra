@@ -13,6 +13,7 @@ import { BottomSheet, type SheetSize } from "./BottomSheet";
 import { Frame } from "./Frame";
 import { Icon } from "./icons";
 import { LeaderCard } from "./LeaderCard";
+import { CardStack } from "./CardStack";
 import { KeepGenerals } from "./Command";
 import { FallenPanel, influencePerTurn } from "./Fallen";
 import { MapView, readTactical, saveTactical } from "./MapView";
@@ -33,6 +34,8 @@ import type { LayoutChoice } from "../logic/layout";
 
 /** Save game / Load game: loaded the first time it's opened (it isn't needed to play a turn). */
 const SavesDialog = lazy(() => import("./Saves"));
+/** Your cards (Spoils and missions): loaded the first time you open them. */
+const CardsSheet = lazy(() => import("./Cards"));
 
 /** One shared empty list: a new [] on every render made the map rebuild its whole info layer many times a second during the replay (and freeze on big realms). */
 const NO_ORDERS: readonly Order[] = [];
@@ -183,6 +186,7 @@ export function GameScreen() {
   const [tactical, setTactical] = useState(readTactical);
   const [settings, setSettings] = useState(false);
   const [saves, setSaves] = useState<"save" | "load" | null>(null);
+  const [cardsOpen, setCardsOpen] = useState(false);
   const [spendOpen, setSpendOpen] = useState(false);
   const [sheet, setSheet] = useState<SheetSize>("closed");
   const [tab, setTab] = useState("army");
@@ -391,6 +395,11 @@ export function GameScreen() {
           <SavesDialog mode={saves} inGame onClose={() => setSaves(null)} />
         </Suspense>
       )}
+      {cardsOpen && act && (
+        <Suspense fallback={null}>
+          <CardsSheet ctx={ctx} view={view} onClose={() => setCardsOpen(false)} onShowMission={(id) => (setCardsOpen(false), g.showMission(id))} />
+        </Suspense>
+      )}
     </>
   );
 
@@ -412,6 +421,7 @@ export function GameScreen() {
           <button className={`icon-btn ${playersOn ? "on" : ""}`} onClick={() => setPlayersOn((p) => !p)} aria-label="Players" aria-pressed={playersOn}>
             <Icon.people />
           </button>
+          {act && <CardStack ctx={ctx} view={view} onOpen={() => setCardsOpen(true)} compact />}
         </div>
         {minimapOn && <Frame className="mini-float slim">{minimap}</Frame>}
         {playersOn && (
@@ -428,7 +438,7 @@ export function GameScreen() {
             {tab === "army" && army}
             {tab === "orders" && <OrderQueue ctx={ctx} view={view} plan={plan} queue={shownQueue} bare />}
             {tab === "card" && (selected ? <TerritoryCard ctx={ctx} view={view} id={selected} /> : <p className="muted">Tap a territory to see its card. Tap and hold anywhere for a quick look.</p>)}
-            {tab === "card" && <LeaderCard ctx={ctx} view={view} queue={queue} />}
+            {tab === "card" && <LeaderCard ctx={ctx} view={view} queue={queue} onCards={() => setCardsOpen(true)} />}
             {tab === "report" && report && <ReportBody ctx={ctx} view={view} report={report} />}
             {tab === "report" && report && <button onClick={() => g.watchAgain()}>Watch again</button>}
           </BottomSheet>
@@ -466,7 +476,7 @@ export function GameScreen() {
       </div>
       <aside className="rightcol" ref={moreCue}>
         <PlayersPanel view={view} />
-        {!out && <LeaderCard ctx={ctx} view={view} queue={queue} />}
+        {!out && <LeaderCard ctx={ctx} view={view} queue={queue} onCards={() => setCardsOpen(true)} />}
       </aside>
       {settingsMenu}
       <Toasts toasts={toasts} />

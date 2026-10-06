@@ -1,4 +1,4 @@
-import type { BuildingType, MapDef, Rules, SpecialistType } from "@conquerra/content";
+import type { BorderType, BuildingType, MapDef, MissionKind, Rules, SpecialistType, SpoilsMark } from "@conquerra/content";
 import type { RecruitAmount, TroopAmount } from "./amounts";
 import type { Intel } from "./intel";
 import type { RngState } from "./rng";
@@ -49,6 +49,44 @@ export interface CapturedGeneral {
 export const WORLD_EVENT_KINDS = ["plague", "storm", "uprising", "mercenaries", "famine"] as const;
 export type WorldEventKind = (typeof WORLD_EVENT_KINDS)[number];
 
+/** A Spoils set to turn in: three alike, or one of each ("mixed"). */
+export type SpoilsSet = SpoilsMark | "mixed";
+export type { SpoilsMark, MissionKind };
+
+/** What a mission pays when it's done (copied from the rules when it's drawn, so it never changes underneath you). */
+export interface MissionReward {
+  gold?: number;
+  /** Troops at your capital (or where the mission's land is, for a land mission). */
+  troops?: number;
+  /** Culture levels on the mission's land (or your capital). */
+  culture?: number;
+  /** A free specialist with the army at your capital (gold instead if there's no room). */
+  specialist?: SpecialistType;
+}
+
+/**
+ * A Fate mission you drew (session 13): a goal with a deadline and a reward, checked from the game at the end of
+ * every turn. Only you see your missions.
+ */
+export interface Mission {
+  /** Unique within the game ("m12"). */
+  id: string;
+  /** Which mission card (rules.fate.missions[].id). */
+  card: string;
+  kind: MissionKind;
+  /** Done by the end of this turn, or it lapses. (For "hold" missions: held through the end of this turn.) */
+  deadline: number;
+  /** The place or rival it's about. */
+  territory?: TerritoryId;
+  province?: string;
+  rival?: PlayerId;
+  border?: BorderType;
+  /** How many it needs (territories to take), and how many so far. */
+  need?: number;
+  progress?: number;
+  reward: MissionReward;
+}
+
 export interface PlayerState {
   id: PlayerId;
   name: string;
@@ -67,6 +105,10 @@ export interface PlayerState {
   captured: CapturedGeneral[];
   /** The Fallen: Influence to spend on world events (0 while you're still in). */
   influence: number;
+  /** Your Spoils cards (session 13), in the order you earned them. Others only ever see how many. */
+  spoils: SpoilsMark[];
+  /** Your open Fate missions (at most rules.fate.maxMissions). Only you see them. */
+  missions: Mission[];
 }
 
 /** Each territory holds at most one army: a troop count plus up to `maxPerArmy` specialists. */
@@ -94,10 +136,14 @@ export interface GameSettings {
   turnTimerSeconds: number;
   /** Knocked-out players become the Fallen: they earn Influence and spend it on world events (on by default). */
   fallen: boolean;
+  /** The Spoils deck: a card for each turn you take land, turned in as sets for a windfall (on by default). */
+  spoils: boolean;
+  /** The Fate deck: everyone draws one card a turn, an event somewhere on the map or a mission (a lobby switch, on by default). */
+  fate: boolean;
 }
 
 export interface GameState {
-  version: 3;
+  version: 4;
   gameId: string;
   mapId: string;
   turn: number;
@@ -114,6 +160,15 @@ export interface GameState {
   endReason: "lastStanding" | "turnLimit" | "turnCap" | null;
   /** Turns until each world event can be played again (0 = ready). Public. */
   eventCooldowns: Record<WorldEventKind, number>;
+  /**
+   * The card decks' own seeded random numbers (from the game's seed, like the dice): Spoils marks and Fate draws.
+   * Separate from the dice, so turning a deck off doesn't change any battle's roll.
+   */
+  decks: { spoils: RngState; fate: RngState };
+  /** Borders a Fate event closed for a coming turn (a flooded ford, a rockslide): closed through all of `turn`. */
+  closures: { a: TerritoryId; b: TerritoryId; turn: number }[];
+  /** Counter for mission ids. */
+  nextMission: number;
 }
 
 // ---------- Orders ----------
@@ -186,7 +241,12 @@ export type OrderBody =
    */
   | { kind: "worldEvent"; event: WorldEventKind; target: TerritoryId; across?: TerritoryId; influence: number }
   /** Attack the weakest neighbour of `from` that the army can likely take (used by followThrough). */
-  | { kind: "advance"; from: TerritoryId };
+  | { kind: "advance"; from: TerritoryId }
+  /**
+   * Turn in a Spoils set for its windfall. `territory`: where a Tower set's fort goes, or the province a Laurel set
+   * raises culture in (default: your capital).
+   */
+  | { kind: "spoils"; set: SpoilsSet; territory?: TerritoryId };
 
 export type Order = OrderBody & {
   id: string;
@@ -247,6 +307,7 @@ export const FIZZLE_CODES = [
   "noTarget",
   "manualHopFirst",
   "storm",
+  "noSet",
 ] as const;
 export type FizzleCode = (typeof FIZZLE_CODES)[number];
 
@@ -380,7 +441,63 @@ export type GameEvent =
       /** Where the deserters left from (so the turn can be replayed exactly from the event log). */
       deserters: { territory: TerritoryId; troops: number }[];
     }
-  | { type: "gameOver"; winner: PlayerId | "draw"; reason: NonNullable<GameState["endReason"]>; scores: Record<PlayerId, number> };
+  | { type: "gameOver"; winner: PlayerId | "draw"; reason: NonNullable<GameState["endReason"]>; scores: Record<PlayerId, number> }
+  /** You took land this turn: a Spoils card (only you see its mark). */
+  | { type: "spoilsEarned"; player: PlayerId; mark: SpoilsMark; hand: number }
+  /**
+   * A Spoils set turned in: its windfall at `at`. `orderId` null: turned in for you at the hand limit. `land` is the
+   * land as it is afterwards (troops, a fort, culture).
+   */
+  | {
+      type: "spoilsTurnedIn";
+      player: PlayerId;
+      orderId: string | null;
+      set: SpoilsSet;
+      at: TerritoryId;
+      troops: number;
+      gold: number;
+      fort: boolean;
+      /** Territories that gained a level of culture. */
+      culture: TerritoryId[];
+      land: LandChange[];
+    }
+  /**
+   * A Fate event (drawn by `drawer`, landing anywhere on the map). `holder` held the land when it struck (null:
+   * neutral). `shrugged`: culture protected the land and nothing happened. `land` is the land afterwards; `gold` is
+   * the holder's gold change; `border` a crossing closed through turn `until`.
+   */
+  | {
+      type: "fate";
+      drawer: PlayerId;
+      card: string;
+      at: TerritoryId;
+      holder: PlayerId | null;
+      tone: "good" | "bad";
+      shrugged: boolean;
+      land: LandChange[];
+      /** The holder's gold change. */
+      gold?: number;
+      /** Troops that joined (+) or died (-), all told. */
+      troops?: number;
+      /** The building finished or burnt. */
+      building?: BuildingType;
+      /** The culture level it rose to. */
+      culture?: number;
+      /** An uprising: its rebels, and whether they took the land. */
+      rebels?: number;
+      flipped?: boolean;
+      border?: [TerritoryId, TerritoryId];
+      until?: number;
+    }
+  /** You drew a mission (only you see it). */
+  | { type: "missionDrawn"; player: PlayerId; mission: Mission }
+  /** Your mission is done: its reward, paid now. `land` is the land the reward changed. */
+  | { type: "missionDone"; player: PlayerId; mission: Mission; at: TerritoryId | null; gold: number; land: LandChange[] }
+  /** Your mission lapsed (the deadline passed, or the land you were to hold was lost). */
+  | { type: "missionFailed"; player: PlayerId; mission: Mission; why: "expired" | "lost" };
+
+/** A territory as it is right after a card's effect (only what changed), so the replay can show it exactly. */
+export type LandChange = { territory: TerritoryId } & Partial<Pick<TerritoryState, "owner" | "troops" | "specialists" | "building" | "construction" | "culture">>;
 
 export type StepEvent = GameEvent & { step: number };
 

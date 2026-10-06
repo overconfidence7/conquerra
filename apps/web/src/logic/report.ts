@@ -27,7 +27,12 @@ const involvesMe = (e: ReplayEvent, n: Namer): boolean => {
       return n.isMe(e.against) || e.by.some((p) => n.isMe(p));
     case "generalLost":
       return n.isMe(e.player) || n.isMe(e.by);
+    // A Fate event on your land, or one you drew.
+    case "fate":
+      return n.isMe(e.holder) || n.isMe(e.drawer);
+    // Your own Fate card, fallen in the fog.
     case "surface":
+      return !!e.yours;
     case "turnStart":
     case "vision":
       return false;
@@ -38,13 +43,14 @@ const involvesMe = (e: ReplayEvent, n: Namer): boolean => {
 
 export function groupReport(ctx: GameContext, events: readonly ReplayEvent[], n: Namer): GroupedReport {
   const out: GroupedReport = { yours: [], seen: [], fog: [] };
-  const fog = new Map<string, { battles: number; leaders: number }>();
+  const fog = new Map<string, { battles: number; leaders: number; stirs: number }>();
   out.fog.push(...revealedLines(ctx, events.filter((e): e is VisionEvent => e.type === "vision"), n));
   for (const e of events) {
     if (e.type === "turnStart" || e.type === "vision") continue;
-    if (e.type === "surface") {
-      const f = fog.get(e.province) ?? { battles: 0, leaders: 0 };
+    if (e.type === "surface" && !e.yours) {
+      const f = fog.get(e.province) ?? { battles: 0, leaders: 0, stirs: 0 };
       if (e.what === "battle") f.battles++;
+      else if (e.what === "fate") f.stirs++;
       else f.leaders++;
       fog.set(e.province, f);
       continue;
@@ -60,6 +66,7 @@ export function groupReport(ctx: GameContext, events: readonly ReplayEvent[], n:
     const name = ctx.map.provinces.find((p) => p.id === prov)?.name ?? "the fog";
     if (f.battles) out.fog.push({ text: f.battles > 1 ? `Battles in ${name} (${f.battles})` : `A battle in ${name}`, tone: "quiet" });
     if (f.leaders) out.fog.push({ text: `A Leader fell in ${name}`, tone: "quiet" });
+    if (f.stirs) out.fog.push({ text: `Something stirs in ${name}`, tone: "quiet" });
   }
   return out;
 }

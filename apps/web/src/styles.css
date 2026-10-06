@@ -442,3 +442,29 @@ p.good { color: var(--good); margin: 0; }
 .event-name { font: 700 var(--fs-body) var(--font-head); display: flex; justify-content: space-between; color: var(--gold-hi); }
 .event-name .cost::after { content: " ⚜"; }
 .fallen-orders { padding: 0; margin: 0; list-style: none; }
+
+/* ---------- Cards (session 13): the Spoils stack, the hand and missions ---------- */
+.card-stack { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px; padding: 6px 10px; text-align: left; background: rgba(15, 22, 32, 0.55); border: 1px solid rgba(201, 164, 92, 0.45); }
+.card-stack .fan { position: relative; width: 34px; height: 30px; flex: none; }
+.card-stack .stack-text { display: flex; flex-direction: column; gap: 1px; font: 600 var(--fs-small) var(--font-body); }
+.card-stack .stack-text b { font: 700 var(--fs-label) var(--font-head); color: var(--gold-hi); letter-spacing: 0.04em; }
+.mini-card { position: absolute; left: 8px; top: 2px; width: 18px; height: 26px; border-radius: 3px; display: grid; place-items: center; font-size: 12px; line-height: 1;
+  background: linear-gradient(#f3e6c4, #d9c393); color: #3a2a12; border: 1px solid #8a6a32; box-shadow: 0 1px 2px rgba(0,0,0,0.5); transform-origin: 50% 100%; }
+.mini-card.sword { color: #7a1f14; } .mini-card.tower { color: #24425e; } .mini-card.laurel { color: #2f5a22; }
+.card-stack.full { border-color: var(--danger); animation: pulse 1.4s ease-in-out infinite; }
+.card-stack.full .stack-text b { color: #ffb4a3; }
+.card-stack.compact { width: 44px; height: 44px; min-height: 44px; margin: 0; padding: 0; justify-content: center; position: relative; }
+.card-stack.compact .fan { width: 30px; }
+.card-stack.compact .count { position: absolute; right: -4px; top: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--gold); color: var(--navy); font: 800 0.7rem var(--font-num); display: grid; place-items: center; padding: 0 4px; }
+.card-stack.compact.full .count { background: var(--danger); color: #fff; }
+.cards-sheet h3 { margin: 0 0 6px; font: 700 var(--fs-title) var(--font-head); color: var(--gold-hi); }
+.cards-sheet section { display: flex; flex-direction: column; gap: 8px; }
+.hand { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; }
+.spoils-card { width: 64px; height: 88px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  background: linear-gradient(#f6ead0, #dcc697); color: #3a2a12; border: 1.5px solid #8a6a32; font: 700 var(--fs-label) var(--font-head); box-shadow: 0 2px 4px rgba(0,0,0,0.45); }
+.spoils-card .glyph { font-size: 28px; line-height: 1; }
+.spoils-card.sword .glyph { color: #7a1f14; } .spoils-card.tower .glyph { color: #24425e; } .spoils-card.laurel .glyph { color: #2f5a22; }
+.set-btn { text-align: left; }
+.missions { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.mission { width: 100%; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.cards-sheet details ul { margin: 4px 0 0; padding-left: 18px; }

@@ -179,6 +179,19 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
       case "retreat":
         plan.free.set(o.from, 0);
         break;
+      // A Spoils windfall: troops (and gold) at your capital, or a fort's garrison, from its slot on.
+      case "spoils": {
+        const sp = rules.spoils;
+        if (o.set === "sword" || o.set === "mixed") {
+          const home = view.me.capital;
+          if (plan.army.has(home)) setArmy(home, plan.army.get(home)! + (o.set === "sword" ? sp.sword.troops : sp.mixed.troops));
+          if (o.set === "mixed") gold += sp.mixed.gold;
+        } else if (o.set === "tower" && o.territory && plan.army.has(o.territory)) {
+          setArmy(o.territory, plan.army.get(o.territory)! + sp.tower.garrison);
+          plan.building.add(o.territory);
+        }
+        break;
+      }
     }
     if (cost > gold) cost = o.kind === "recruit" ? cost : 0; // the engine skips what you can't afford
     gold -= cost;

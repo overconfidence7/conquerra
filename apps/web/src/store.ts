@@ -1,11 +1,13 @@
 import { defaultRules, mapCatalog, suggestedMode } from "@conquerra/content";
 import { BOT_NAMES } from "./host/names";
-import { indexMap, isShare, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type RecruitAmount, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
+import { indexMap, isShare, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type RecruitAmount, type SpoilsSet, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
 import { asIfYouOrderFrom, instructOrders, takeControl, withGeneralOrders } from "./logic/generals";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
 import type { GameHost, HostStart, HostUpdate, LoadSource, LobbySettings, TurnReport } from "./host/protocol";
 import { listSlots, type SlotId, type SlotInfo } from "./host/saves";
+import { dueTurnIn, withTurnIn } from "./logic/spoils";
+import { namer } from "./logic/text";
 import { DEFAULT_TIMER, type TurnClock } from "./logic/timer";
 import { actionBarState } from "./logic/actions";
 import { draftToOrder, isRecruitSite, type NewOrder, planQueue, queueFor, removeOrder, shiftOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
@@ -73,6 +75,11 @@ interface GameStore {
   /** Pause or resume the turn timer (single player, with a timer on). */
   togglePause(): Promise<void>;
   dismissNotice(): void;
+  /** Turn a Spoils set in: it goes first in your queue (replacing any turn-in already there). */
+  turnInSpoils(set: SpoilsSet, territory?: TerritoryId): void;
+  /** A mission you tapped: its target lights up on the map (until you tap the map). */
+  mission: string | null;
+  showMission(id: string | null): void;
   tap(t: TerritoryId): void;
   clearSelection(): void;
   select(t: TerritoryId): void;
@@ -187,6 +194,7 @@ export const useGame = create<GameStore>((set, get) => ({
   slots: [],
   slotProblem: null,
   notice: null,
+  mission: null,
 
   setLobby(patch) {
     const { lobby, modeTouched } = get();
@@ -242,6 +250,12 @@ export const useGame = create<GameStore>((set, get) => ({
 
   dismissNotice: () => set({ notice: null }),
 
+  showMission: (id) => set({ mission: id }),
+
+  turnInSpoils(s, territory) {
+    set({ queue: withTurnIn(get().queue, { set: s, ...(territory ? { territory } : {}) }, nextOrderId()) });
+  },
+
   tap(t) {
     const { ctx, view, queue, selected, recruit, picking, aiming } = get();
     if (!ctx || !view) return;
@@ -274,7 +288,7 @@ export const useGame = create<GameStore>((set, get) => ({
     else set({ draft: action.draft });
   },
 
-  clearSelection: () => set({ selected: null, draft: null, recruit: null, picking: null }),
+  clearSelection: () => set({ selected: null, draft: null, recruit: null, picking: null, mission: null }),
   select: (t) => set({ selected: t, draft: null }),
 
   updateDraft(patch) {
@@ -489,7 +503,7 @@ async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: G
       // The map's geometry comes from the host, never from an import here.
       ctx: { map: u.map, rules: u.rules },
       view: u.view,
-      queue: u.generalOrders ?? [],
+      queue: openingQueue({ map: u.map, rules: u.rules }, u),
       instructions: {},
       paused: [],
       picking: null,
@@ -520,6 +534,13 @@ async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: G
   }
 }
 
+/** The queue a turn's planning starts with: your generals' orders, and a Spoils set if your hand is full. */
+function openingQueue(ctx: GameContext | null, u: HostUpdate): Order[] {
+  const q = u.generalOrders ?? [];
+  if (!ctx || u.view.winner || knockedOut(u.view)) return q;
+  return dueTurnIn(ctx, u.view, q, namer(ctx, u.view), nextOrderId());
+}
+
 /** A turn resolved (you locked in, or the timer did): play its replay, then the report. */
 function applyTurn(u: HostUpdate, auto: boolean) {
   const before = useGame.getState().view;
@@ -531,7 +552,7 @@ function applyTurn(u: HostUpdate, auto: boolean) {
     fastForwarded: u.fastForwarded,
     clock: u.clock,
     // A new turn: your generals have already written their orders, and every army is theirs again.
-    queue: u.generalOrders ?? [],
+    queue: openingQueue(useGame.getState().ctx, u),
     instructions: {},
     paused: [],
     picking: null,

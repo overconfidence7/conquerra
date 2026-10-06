@@ -2,6 +2,7 @@ import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils";
 import type { Rules } from "@conquerra/content";
 import { resolveTurn } from "./resolve";
+import { seedRng } from "./rng";
 import { createGame, type NewGameOptions } from "./setup";
 import type { GameContext, GameState, OrdersByPlayer, PlayerId, TurnResult } from "./types";
 
@@ -71,13 +72,30 @@ export interface SavedGameV1 {
 }
 
 /** The game state's current shape. Bump it (and add a migration below) whenever GameState changes. */
-export const STATE_VERSION: GameState["version"] = 3;
+export const STATE_VERSION: GameState["version"] = 4;
 
 /**
  * How to bring an older game state up to date, one version at a time: `STATE_MIGRATIONS[n]` turns a version-n
  * state into version n+1. Each is small and only adds what's new, with the value an old game would have had.
  */
-export const STATE_MIGRATIONS: Record<number, (s: Record<string, unknown>) => Record<string, unknown>> = {};
+export const STATE_MIGRATIONS: Record<number, (s: Record<string, unknown>) => Record<string, unknown>> = {
+  /**
+   * 3 -> 4 (session 13): the card decks. A game saved before them carries on without them (both switched off, as
+   * they were), with empty hands and their own random sequences (from the game's dice, since the seed isn't kept).
+   */
+  3: (s) => {
+    const players = (s.players as Record<string, unknown>[]).map((p) => ({ ...p, spoils: [], missions: [] }));
+    const from = `${String(s.gameId)}|${JSON.stringify(s.rng)}`;
+    return {
+      ...s,
+      players,
+      settings: { ...(s.settings as Record<string, unknown>), spoils: false, fate: false },
+      decks: { spoils: seedRng(`${from}|spoils`), fate: seedRng(`${from}|fate`) },
+      closures: [],
+      nextMission: 1,
+    };
+  },
+};
 
 export function stateFingerprint(s: GameState): string {
   return bytesToHex(sha256(utf8ToBytes(JSON.stringify(s)))).slice(0, 16);

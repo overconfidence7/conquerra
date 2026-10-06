@@ -43,6 +43,18 @@ export function narrate(ctx: GameContext, e: StepEvent, name: (id: string | null
       return `☄ The Fallen (${e.by.map(name).join(", ")}, ${e.spent} influence): ${e.event} on ${place(e.target)} (${name(e.against)})${e.losses ? `, losses ${e.losses.map((l) => `${place(l.territory)} -${l.troops}`).join(", ")}` : ""}${e.flipped !== undefined ? `, ${e.rebels} rebels ${e.flipped ? "take it" : "fail"}` : ""}${e.at ? `, ${e.troops} mercenaries at ${place(e.at)}` : ""}${e.cut !== undefined ? `, income cut ${Math.round(e.cut * 100)}%` : ""}${e.border ? `, border ${place(e.border[0])}–${place(e.border[1])} closed` : ""}`;
     case "worldEventFailed":
       return `${name(e.player)}: ${e.event} on ${place(e.target)} didn't happen (${e.reason})`;
+    case "spoilsEarned":
+      return `${name(e.player)} earns a Spoils card (${e.mark}; holds ${e.hand})`;
+    case "spoilsTurnedIn":
+      return `${name(e.player)} turns in Spoils (${e.set}${e.orderId === null ? ", at the hand limit" : ""}) at ${place(e.at)}: ${e.troops} troops${e.gold ? `, ${e.gold} gold` : ""}${e.fort ? ", a fort" : ""}${e.culture.length ? `, culture at ${e.culture.map(place).join(", ")}` : ""}`;
+    case "fate":
+      return `🂠 Fate (${name(e.drawer)}): ${e.card} at ${place(e.at)} (${name(e.holder)})${e.shrugged ? " — shrugged off" : ""}${e.gold ? `, gold ${e.gold > 0 ? "+" : ""}${e.gold}` : ""}${e.troops ? `, troops ${e.troops > 0 ? "+" : ""}${e.troops}` : ""}${e.border ? `, ${place(e.border[0])}–${place(e.border[1])} closed turn ${e.until}` : ""}${e.flipped ? ", rebels take it" : ""}`;
+    case "missionDrawn":
+      return `${name(e.player)} draws a mission: ${e.mission.card} (by turn ${e.mission.deadline})`;
+    case "missionDone":
+      return `${name(e.player)} completes mission ${e.mission.card}${e.gold ? ` (+${e.gold}g)` : ""}`;
+    case "missionFailed":
+      return `${name(e.player)}'s mission ${e.mission.card} ${e.why === "lost" ? "fails" : "lapses"}`;
     case "gameOver":
       return `★ Game over (${e.reason}): ${e.winner === "draw" ? "draw" : `${name(e.winner)} wins`}`;
   }

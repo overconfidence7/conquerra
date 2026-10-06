@@ -3,3 +3,4 @@ export { CAPTAIN_CHAIN_MARGIN, captainBot, makeCaptainBot, type CaptainFeature, 
 export { generalAt, generalsOf, launchesFrom, mergeGeneralOrders, planGeneral } from "./generals";
 export { chooseInstruction, makeGeneralSeat } from "./generalSeat";
 export { fallenBot, planFallen } from "./fallen";
+export { captainSpoils, recruitSpoils, spoilsOrder, type SpoilsChoice } from "./cards";

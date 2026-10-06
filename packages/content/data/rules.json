@@ -140,12 +140,256 @@
     "influencePerOtherFallen": 0.5,
     "maxStrength": 1.5,
     "events": {
-      "plague": { "cost": 12, "cooldown": 4, "share": 0.25 },
-      "storm": { "cost": 6, "cooldown": 3 },
-      "uprising": { "cost": 12, "cooldown": 5, "maxTroops": 4, "rebels": 4 },
-      "mercenaries": { "cost": 9, "cooldown": 4, "troops": 6 },
-      "famine": { "cost": 8, "cooldown": 5, "share": 0.25 }
+      "plague": {
+        "cost": 12,
+        "cooldown": 4,
+        "share": 0.25
+      },
+      "storm": {
+        "cost": 6,
+        "cooldown": 3
+      },
+      "uprising": {
+        "cost": 12,
+        "cooldown": 5,
+        "maxTroops": 4,
+        "rebels": 4
+      },
+      "mercenaries": {
+        "cost": 9,
+        "cooldown": 4,
+        "troops": 6
+      },
+      "famine": {
+        "cost": 8,
+        "cooldown": 5,
+        "share": 0.25
+      }
     }
+  },
+  "spoils": {
+    "handLimit": 5,
+    "marks": {
+      "sword": 1,
+      "tower": 1,
+      "laurel": 1
+    },
+    "sword": {
+      "troops": 8
+    },
+    "tower": {
+      "garrison": 3
+    },
+    "laurel": {
+      "culture": 1,
+      "territories": 3
+    },
+    "mixed": {
+      "troops": 4,
+      "gold": 6
+    }
+  },
+  "fate": {
+    "missionShare": 0.3,
+    "maxMissions": 2,
+    "events": [
+      {
+        "id": "harvest",
+        "weight": 12,
+        "tone": "good",
+        "effect": "gold",
+        "amount": 4
+      },
+      {
+        "id": "wanderers",
+        "weight": 10,
+        "tone": "good",
+        "effect": "troops",
+        "amount": 3,
+        "neutral": true
+      },
+      {
+        "id": "pilgrims",
+        "weight": 8,
+        "tone": "good",
+        "effect": "culture",
+        "amount": 1
+      },
+      {
+        "id": "masons",
+        "weight": 6,
+        "tone": "good",
+        "effect": "finishBuilding"
+      },
+      {
+        "id": "hoard",
+        "weight": 3,
+        "tone": "good",
+        "strong": true,
+        "effect": "gold",
+        "amount": 10
+      },
+      {
+        "id": "veterans",
+        "weight": 3,
+        "tone": "good",
+        "strong": true,
+        "effect": "troops",
+        "amount": 6
+      },
+      {
+        "id": "ford",
+        "weight": 8,
+        "tone": "bad",
+        "effect": "closeBorder",
+        "border": "river"
+      },
+      {
+        "id": "rockslide",
+        "weight": 4,
+        "tone": "bad",
+        "effect": "closeBorder",
+        "border": "pass"
+      },
+      {
+        "id": "squall",
+        "weight": 3,
+        "tone": "bad",
+        "effect": "closeBorder",
+        "border": "sea"
+      },
+      {
+        "id": "fire",
+        "weight": 5,
+        "tone": "bad",
+        "effect": "burnBuilding"
+      },
+      {
+        "id": "fever",
+        "weight": 9,
+        "tone": "bad",
+        "effect": "sickness",
+        "share": 0.25,
+        "minTroops": 4
+      },
+      {
+        "id": "blight",
+        "weight": 8,
+        "tone": "bad",
+        "effect": "gold",
+        "amount": -4
+      },
+      {
+        "id": "plague",
+        "weight": 2,
+        "tone": "bad",
+        "strong": true,
+        "effect": "plague",
+        "share": 0.25
+      },
+      {
+        "id": "uprising",
+        "weight": 2,
+        "tone": "bad",
+        "strong": true,
+        "effect": "uprising"
+      }
+    ],
+    "missions": [
+      {
+        "id": "takeIn",
+        "kind": "takeIn",
+        "weight": 4,
+        "turns": 3,
+        "reward": {
+          "gold": 8
+        }
+      },
+      {
+        "id": "takeFrom",
+        "kind": "takeFrom",
+        "weight": 3,
+        "turns": 3,
+        "reward": {
+          "troops": 5
+        }
+      },
+      {
+        "id": "spree",
+        "kind": "spree",
+        "weight": 2,
+        "turns": 3,
+        "need": 3,
+        "reward": {
+          "gold": 10
+        }
+      },
+      {
+        "id": "crossPass",
+        "kind": "cross",
+        "border": "pass",
+        "weight": 2,
+        "turns": 3,
+        "reward": {
+          "specialist": "siege"
+        }
+      },
+      {
+        "id": "crossRiver",
+        "kind": "cross",
+        "border": "river",
+        "weight": 2,
+        "turns": 3,
+        "reward": {
+          "gold": 6
+        }
+      },
+      {
+        "id": "hold",
+        "kind": "hold",
+        "weight": 3,
+        "turns": 2,
+        "reward": {
+          "culture": 1
+        }
+      },
+      {
+        "id": "noLoss",
+        "kind": "noLoss",
+        "weight": 3,
+        "turns": 2,
+        "reward": {
+          "gold": 6
+        }
+      },
+      {
+        "id": "whole",
+        "kind": "whole",
+        "weight": 2,
+        "turns": 4,
+        "reward": {
+          "gold": 10
+        }
+      },
+      {
+        "id": "fort",
+        "kind": "fort",
+        "weight": 2,
+        "turns": 3,
+        "reward": {
+          "troops": 4
+        }
+      },
+      {
+        "id": "culture",
+        "kind": "culture",
+        "weight": 2,
+        "turns": 3,
+        "reward": {
+          "culture": 1
+        }
+      }
+    ]
   },
   "vision": {
     "base": 1

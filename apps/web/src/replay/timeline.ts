@@ -1,5 +1,6 @@
 import type { SpecialistType } from "@conquerra/content";
-import type { PlayerView, ReplayEvent, TerritoryId, TerritoryView } from "@conquerra/engine";
+import type { LandChange, PlayerView, ReplayEvent, TerritoryId, TerritoryView } from "@conquerra/engine";
+import { FATE_LABEL } from "../logic/cards";
 
 /**
  * The animated replay's timing and sequencing (docs/04-design-additions.md §1, §8), kept out of the renderer so
@@ -67,6 +68,9 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     case "generalCaptured":
     case "generalLost":
     case "worldEvent":
+    case "spoilsTurnedIn":
+    case "fate":
+    case "missionDone":
       return "pop";
     case "moved":
       return "march";
@@ -86,6 +90,9 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     case "fizzled":
     case "generalReleased":
     case "worldEventFailed":
+    case "spoilsEarned":
+    case "missionDrawn":
+    case "missionFailed":
     // The fog lifting (or falling) rides on the beat of the step that caused it.
     case "vision":
       return null;
@@ -163,7 +170,7 @@ export interface PopAnim {
 
 export interface PulseAnim {
   province: string;
-  what: "battle" | "leaderFell";
+  what: "battle" | "leaderFell" | "fate";
   progress: number;
 }
 
@@ -228,6 +235,9 @@ export function frameAt(tl: Timeline, t: number): ReplayFrame {
       else if (e.type === "generalCaptured") frame.pops.push({ at: e.territory, player: e.player, label: "Captured general", progress: q });
       else if (e.type === "generalLost") frame.pops.push({ at: e.territory, player: e.player, label: "General lost", progress: q });
       else if (e.type === "worldEvent") frame.pops.push({ at: e.target, player: e.against, label: WORLD_EVENT_LABEL[e.event], progress: q });
+      else if (e.type === "spoilsTurnedIn") frame.pops.push({ at: e.at, player: e.player, label: "Spoils", progress: q });
+      else if (e.type === "fate") frame.pops.push({ at: e.at, player: e.holder ?? "", label: FATE_LABEL[e.card] ?? "Fate", progress: q });
+      else if (e.type === "missionDone" && e.at) frame.pops.push({ at: e.at, player: e.player, label: "Mission", progress: q });
     });
     break;
   }
@@ -283,6 +293,15 @@ export function replayView(before: PlayerView, events: readonly ReplayEvent[], a
   const moveGeneral = (general: string, from: TerritoryId | null, to: TerritoryId | null) => {
     if (from) edit(from, (t) => (t.generals = t.generals.filter((p) => p !== general)));
     if (to) edit(to, (t) => (t.generals = t.generals.includes(general) ? t.generals : [...t.generals, general]));
+  };
+  /** A card's effect: the land as it is afterwards (only land you can see changes). */
+  const applyLand = (land: readonly LandChange[]) => {
+    for (const { territory, ...change } of land)
+      edit(territory, (t) => {
+        Object.assign(t, change);
+        if (change.specialists) t.specialists = change.specialists.map((s) => ({ ...s }));
+        if (change.owner !== undefined && change.owner === null) t.capitalOf = null;
+      });
   };
   /** Where each House's Leader stands, as far as this view knows. */
   const leaderAt = (player: string) => Object.keys(territories).find((id) => {
@@ -358,6 +377,11 @@ export function replayView(before: PlayerView, events: readonly ReplayEvent[], a
         break;
       case "generalLost":
         moveGeneral(e.general, e.territory, null);
+        break;
+      case "spoilsTurnedIn":
+      case "fate":
+      case "missionDone":
+        applyLand(e.land);
         break;
       case "leaderKilled":
         moveLeader(e.player, leaderAt(e.player), null);

@@ -12,8 +12,11 @@ import { visionFor } from "./vision";
 export interface SurfaceEvent {
   type: "surface";
   step: number;
-  what: "battle" | "leaderFell";
+  /** "fate": a Fate event in the fog ("something stirs in Northreach"). */
+  what: "battle" | "leaderFell" | "fate";
   province: string;
+  /** A Fate card you drew, landing out of your sight. */
+  yours?: boolean;
 }
 
 export type SeenTerritory = Extract<TerritoryView, { detail: "full" }>;
@@ -101,7 +104,24 @@ export function replayFor(ctx: GameContext, before: GameState, result: TurnResul
         break;
       case "generalReleased":
       case "worldEventFailed":
+      case "spoilsEarned":
+      case "missionDrawn":
+      case "missionFailed":
         if (mine) out.push(e);
+        break;
+      // A mission's reward shows to whoever could see the land it changed (the mission itself only to its owner).
+      case "missionDone":
+        if (mine || placesSeen(e).some(sees)) out.push(e);
+        break;
+      // A Fate event: the holder of the land always sees it; anyone else in full only if they could see it, otherwise
+      // a surface detail ("something stirs in Northreach"), even for whoever drew it.
+      case "fate":
+        if (e.holder === player || placesSeen(e).some(sees)) out.push(e);
+        else out.push({ ...surface(e, "fate", e.at), ...(e.drawer === player ? { yours: true } : {}) });
+        break;
+      // A windfall shows to whoever could see the land it changed (the set itself only to its owner).
+      case "spoilsTurnedIn":
+        if (mine || placesSeen(e).some(sees)) out.push(e);
         break;
       // Events on your own land always show; anyone else's only if you could see where it happened.
       case "worldEvent":
@@ -137,6 +157,12 @@ function placesSeen(e: StepEvent): TerritoryId[] {
       return [e.territory];
     case "worldEvent":
       return [e.target, ...(e.border ?? []), ...(e.at ? [e.at] : [])];
+    case "spoilsTurnedIn":
+      return [e.at, ...e.land.map((l) => l.territory)];
+    case "fate":
+      return [e.at, ...(e.border ?? []), ...e.land.map((l) => l.territory)];
+    case "missionDone":
+      return e.land.map((l) => l.territory);
     default:
       return [];
   }

@@ -2,6 +2,7 @@ import type { SpecialistType } from "@conquerra/content";
 import { investCost, isRecruitSiteIn, Rng, seedRng, type GameContext, type Order, type PlayerView, type ReplayEvent, type TerritoryId } from "@conquerra/engine";
 import { BREAKTHROUGH_MARGIN, CAPTAIN_CHAIN_MARGIN, chainOn, readBoard, type CaptainOptions } from "./board";
 import type { Bot } from "./recruit";
+import { captainSpoils, spoilsOrder } from "./cards";
 
 export { CAPTAIN_CHAIN_MARGIN, type CaptainFeature, type CaptainOptions } from "./board";
 
@@ -61,6 +62,10 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn
   // ---------- Spending ----------
   let gold = me.gold;
   const building = (t: TerritoryId) => !!seen(t)!.building || !!seen(t)!.construction;
+
+  // Spoils: a set goes in as soon as we hold one (windfalls never grow), first thing, where it helps most.
+  const turnIn = spoilsOrder(view, id, captainSpoils(b));
+  if (turnIn) orders.push(turnIn);
 
   // 1/5. A fort where it counts: the threatened capital, else a choke point we hold facing a rival army.
   const fortBuilding = mine.some((t) => seen(t)!.construction?.building === "fort");

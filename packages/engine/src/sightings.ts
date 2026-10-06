@@ -2,7 +2,7 @@ import type { SpecialistType } from "@conquerra/content";
 import type { LastSeen } from "./intel";
 import { recordSighting } from "./intel";
 import { indexMap, type MapIndex } from "./mapIndex";
-import type { GameContext, GameState, PlayerId, Specialist, StepEvent, TerritoryId } from "./types";
+import type { GameContext, GameState, LandChange, PlayerId, Specialist, StepEvent, TerritoryId } from "./types";
 
 /**
  * Vision through the turn (decided Oct 4: "the fog lifts during the replay").
@@ -80,8 +80,22 @@ function placesOf(e: StepEvent): TerritoryId[] {
       return e.deserters.map((d) => d.territory);
     case "worldEvent":
       return [...(e.losses ?? []).map((l) => l.territory), ...(e.flipped ? [e.target] : []), ...(e.at ? [e.at] : [])];
+    case "spoilsTurnedIn":
+    case "fate":
+    case "missionDone":
+      return e.land.map((l) => l.territory);
     default:
       return [];
+  }
+}
+
+/** Put a card's land changes onto a board (the land as it is afterwards). */
+export function applyLand(b: GameState, land: readonly LandChange[]) {
+  for (const { territory, ...change } of land) {
+    const t = b.territories[territory]!;
+    if (change.specialists) change.specialists = change.specialists.map((x) => ({ ...x }));
+    if (change.construction) change.construction = { ...change.construction };
+    Object.assign(t, change);
   }
 }
 
@@ -314,6 +328,15 @@ export class TurnVision {
       case "income":
         player(e.player).gold = e.goldAfter;
         for (const d of e.deserters) terr(d.territory).troops -= d.troops;
+        break;
+      case "spoilsTurnedIn":
+      case "missionDone":
+        applyLand(b, e.land);
+        player(e.player).gold += e.gold;
+        break;
+      case "fate":
+        applyLand(b, e.land);
+        if (e.holder && e.gold) player(e.holder).gold += e.gold;
         break;
       case "gameOver":
         b.winner = e.winner;

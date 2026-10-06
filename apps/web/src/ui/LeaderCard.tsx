@@ -6,9 +6,10 @@ import { useArtUrl } from "./art";
 import { generalDoing, GeneralLines } from "./Command";
 import { Frame } from "./Frame";
 import { portraitOf } from "./PlayersPanel";
+import { CardStack } from "./CardStack";
 
 /** Your Leader: where it is, and whether it's leading an army this turn. */
-export function LeaderCard({ ctx, view, queue }: { ctx: GameContext; view: PlayerView; queue: readonly Order[] }) {
+export function LeaderCard({ ctx, view, queue, onCards }: { ctx: GameContext; view: PlayerView; queue: readonly Order[]; /** Open your cards (Spoils and missions). */ onCards(): void }) {
   const { instructions, paused, select } = useGame();
   const portrait = useArtUrl(portraitOf(Math.max(0, view.players.findIndex((p) => p.id === view.me.id))));
   const instruction = view.me.id in instructions ? instructions[view.me.id]! : standing(view, view.me.id);
@@ -38,6 +39,7 @@ export function LeaderCard({ ctx, view, queue }: { ctx: GameContext; view: Playe
           )}
         </div>
       </div>
+      <CardStack ctx={ctx} view={view} onOpen={onCards} />
       <GeneralLines ctx={ctx} view={view} onShow={select} />
     </Frame>
   );

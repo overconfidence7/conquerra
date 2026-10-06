@@ -29,6 +29,7 @@ import type {
   TurnResult,
 } from "./types";
 import { recordTurnSightings } from "./sightings";
+import { spoilsEndOfTurn, turnInSpoils } from "./spoils";
 import { visibleTerritories } from "./vision";
 
 /** Called after every event with the live board (tests use it to check the replay against the real game). */
@@ -92,8 +93,12 @@ class Turn {
   lastCapture: TerritoryId | null = null;
   /** The general that wrote the order now running (for the replay and the report). */
   author: PlayerId | undefined;
-  /** Borders a storm closed this turn ("a|b", sorted). */
+  /** Borders a storm (or a Fate event last turn) closed this turn ("a|b", sorted). */
   readonly closed = new Set<string>();
+  /** Players who took at least one territory this turn (each earns a Spoils card). */
+  readonly tookLand = new Set<PlayerId>();
+  /** Land each player took this turn, in order (for Fate missions). */
+  readonly taken = new Map<PlayerId, TerritoryId[]>();
   /** Income each player loses to a famine this turn (a share). */
   readonly famine = new Map<PlayerId, number>();
   /** Vision cache; bumped whenever something that affects vision changes. */
@@ -372,6 +377,11 @@ class Turn {
         return this.retreat(pid, o.from, o.id);
       case "advance":
         return this.advance(pid, o.from, o.id);
+      case "spoils": {
+        if (!this.s.settings.spoils) return fz("invalid");
+        const why = turnInSpoils(this, pid, o.set, o.territory, o.id);
+        return why ? fz(why.code, why.territory ? { territory: why.territory } : {}) : null;
+      }
     }
     return fz("invalid");
   }
@@ -518,6 +528,8 @@ class Turn {
       if (defender) for (const of of standing) lost.push({ owner: defender, of, by: pid });
       if (defenderId) this.lastCapturer.set(defenderId, pid);
       this.lastCapture = o.to;
+      this.tookLand.add(pid);
+      this.taken.set(pid, [...(this.taken.get(pid) ?? []), o.to]);
     } else {
       specialistsLost.push(...this.settle(to).map((s) => s.type));
       if (survivors > 0) {
@@ -723,6 +735,8 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
   const active = s.players.filter((p) => p.eliminatedTurn === null).map((p) => p.id);
   const seats = T.rng.shuffle(active);
   T.emit({ type: "turnStart", turn: s.turn, seats });
+  // Crossings a Fate event closed for this turn (everyone who could see them knew while planning).
+  for (const c of s.closures) if (c.turn === s.turn) T.closed.add(borderKey(c.a, c.b));
 
   const queues = new Map<PlayerId, Queued[]>();
   const firsts = new Map<PlayerId, Order>();
@@ -844,6 +858,9 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
   // ----- The Fallen earn Influence; event cooldowns run down -----
   fallenEndOfTurn(ctx, s);
 
+  // ----- The card decks: a set turned in for anyone at the hand limit, then Spoils earned -----
+  spoilsEndOfTurn(T, seats, T.tookLand);
+
   // ----- Victory -----
   const stillIn = s.players.filter((p) => p.eliminatedTurn === null);
   const finish = (reason: NonNullable<GameState["endReason"]>) => {
@@ -864,6 +881,7 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
 
   s.rng = T.rng.state;
   if (!s.winner) s.turn += 1;
+  s.closures = s.closures.filter((c) => c.turn >= s.turn);
   // Everything you saw during the turn goes into your memory, as it was when you saw it (land that came into view
   // as you advanced, land you watched fall). Worked out from the event log, the same way the replay is.
   if (s.settings.fog && !s.winner)

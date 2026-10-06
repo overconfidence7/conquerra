@@ -6,7 +6,8 @@ export { playWorldEvents, worldEventEffect, fallenEndOfTurn, borderKey, type Wor
 export { recordSighting, updateIntel, type Intel, type LastSeen } from "./intel";
 export { visionFor, visibleTerritories, type Vision, type VisionSource } from "./vision";
 export { replayFor, type ReplayEvent, type SurfaceEvent, type VisionEvent, type SeenTerritory } from "./replay";
-export { TurnVision, recordTurnSightings, sightingOf, type VisionDelta } from "./sightings";
+export { TurnVision, recordTurnSightings, sightingOf, applyLand, type VisionDelta } from "./sightings";
+export { SPOILS_MARKS, setsIn, withoutSet, homeOf, laurelLand, autoSpoils, turnInSpoils, spoilsEndOfTurn, type SpoilsHost } from "./spoils";
 export { PRESETS, expandPreset, type PresetInfo } from "./presets";
 export { expectBattle, rollLosses, healerReduction, cultureDefense, type BattleExpectation, type BattleInput } from "./combat";
 export { SHARES, amountLabel, fewestToTake, isShare, recruitCount, recruitLabel, troopsFor, type RecruitAmount, type Share, type TroopAmount } from "./amounts";

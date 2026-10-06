@@ -157,6 +157,70 @@ const specialistBase = {
   cultureRequired: z.number().int().min(0),
 };
 
+/** The three Spoils marks (session 13). */
+export const SpoilsMark = z.enum(["sword", "tower", "laurel"]);
+export type SpoilsMark = z.infer<typeof SpoilsMark>;
+
+/** What a Fate mission asks (each checked from the game at the end of every turn). */
+export const MissionKind = z.enum(["takeIn", "takeFrom", "spree", "cross", "hold", "noLoss", "whole", "fort", "culture"]);
+export type MissionKind = z.infer<typeof MissionKind>;
+
+const fateEventBase = {
+  /** Unique id; the game's text names it. */
+  id: z.string(),
+  /** How often it's drawn, relative to the others. */
+  weight: z.number().min(0),
+  tone: z.enum(["good", "bad"]),
+  /** One of the few strong cards (the rest are mild). */
+  strong: z.boolean().default(false),
+};
+/**
+ * A Fate event (session 13): one effect on one territory, built only from things the game already has. Bad effects
+ * are softened by culture's protection there (all-or-nothing ones are shrugged off with that chance). They never land
+ * on a capital, never take a player's last territory, and at most one lands on each territory a turn.
+ */
+export const FateEvent = z.discriminatedUnion("effect", [
+  /** The holder gains (or loses) gold. */
+  z.object({ ...fateEventBase, effect: z.literal("gold"), amount: z.number().int() }),
+  /** Troops join whoever holds the land (neutral land too, if `neutral`). */
+  z.object({ ...fateEventBase, effect: z.literal("troops"), amount: z.number().int().min(1), neutral: z.boolean().default(false) }),
+  /** Culture rises there. */
+  z.object({ ...fateEventBase, effect: z.literal("culture"), amount: z.number().int().min(1) }),
+  /** A building under construction there is finished at once. */
+  z.object({ ...fateEventBase, effect: z.literal("finishBuilding") }),
+  /** A building under construction there burns down (the gold is gone). */
+  z.object({ ...fateEventBase, effect: z.literal("burnBuilding") }),
+  /** A share of the troops there die (never the garrison). Only where at least `minTroops` stand. */
+  z.object({ ...fateEventBase, effect: z.literal("sickness"), share: z.number().min(0).max(1), minTroops: z.number().int().min(1) }),
+  /** A crossing of this kind there is closed for the whole of the next turn (everyone sees it coming). */
+  z.object({ ...fateEventBase, effect: z.literal("closeBorder"), border: z.enum(["river", "pass", "sea"]) }),
+  /** The Fallen's plague, at this share of the holder's troops in the province. */
+  z.object({ ...fateEventBase, effect: z.literal("plague"), share: z.number().min(0).max(1) }),
+  /** The Fallen's uprising (its rebels against land held by its few troops). */
+  z.object({ ...fateEventBase, effect: z.literal("uprising") }),
+]);
+export type FateEvent = z.infer<typeof FateEvent>;
+
+export const FateMission = z.object({
+  /** Unique id; the game's text names it. */
+  id: z.string(),
+  kind: MissionKind,
+  weight: z.number().min(0),
+  /** Turns you have (the deadline is this many turns after the one you're planning when it's drawn). */
+  turns: z.number().int().min(1),
+  /** "spree": how many territories to take. */
+  need: z.number().int().min(1).optional(),
+  /** "cross": the kind of crossing to win a battle across. */
+  border: z.enum(["river", "pass", "sea"]).optional(),
+  reward: z.object({
+    gold: z.number().int().min(0).optional(),
+    troops: z.number().int().min(0).optional(),
+    culture: z.number().int().min(0).optional(),
+    specialist: z.enum(["cavalry", "siege", "scouts", "engineers", "healers"]).optional(),
+  }),
+});
+export type FateMission = z.infer<typeof FateMission>;
+
 export const Rules = z.object({
   version: z.string(),
   troops: z.object({
@@ -248,6 +312,33 @@ export const Rules = z.object({
       famine: z.object({ cost: z.number().int().min(1), cooldown: z.number().int().min(0), share: z.number().min(0).max(1) }),
     }),
   }),
+  /**
+   * The Spoils deck (session 13): one card at the end of a turn you took land (at most one a turn), each with a mark.
+   * Three alike, or one of each, turn in for a windfall that never grows. At `handLimit` cards you must turn one in.
+   */
+  spoils: z.object({
+    handLimit: z.number().int().min(3),
+    /** How likely each mark is (relative). */
+    marks: z.object({ sword: z.number().min(0), tower: z.number().min(0), laurel: z.number().min(0) }),
+    /** Three Swords: troops at your capital. */
+    sword: z.object({ troops: z.number().int().min(0) }),
+    /** Three Towers: a finished fort on land you choose, with a small garrison. */
+    tower: z.object({ garrison: z.number().int().min(0) }),
+    /** Three Laurels: culture on up to `territories` of your territories in the province you choose. */
+    laurel: z.object({ culture: z.number().int().min(1), territories: z.number().int().min(1) }),
+    /** One of each: troops at your capital and gold. */
+    mixed: z.object({ troops: z.number().int().min(0), gold: z.number().int().min(0) }),
+  }),
+  /**
+   * The Fate deck (session 13): everyone draws one card a turn, as planning starts. An event (somewhere on the map)
+   * or, `missionShare` of the time, a mission for the drawer (at most `maxMissions` open; another becomes an event).
+   */
+  fate: z.object({
+    missionShare: z.number().min(0).max(1),
+    maxMissions: z.number().int().min(0),
+    events: z.array(FateEvent).min(1),
+    missions: z.array(FateMission).min(1),
+  }),
   vision: z.object({ base: z.number().int().min(0) }),
   game: z.object({
     /** Order-phase timer. The engine only stores it; the server runs the clock. */
@@ -266,5 +357,11 @@ export const Rules = z.object({
     ctx.addIssue({ code: "custom", message: "culture.investCost needs one entry per level up to culture.max" });
   if (r.game.turnTimerSecondsDefault < r.game.turnTimerSecondsMin || r.game.turnTimerSecondsDefault > r.game.turnTimerSecondsMax)
     ctx.addIssue({ code: "custom", message: "turn timer default must sit between min and max" });
+  for (const list of [r.fate.events, r.fate.missions])
+    if (new Set(list.map((x) => x.id)).size !== list.length) ctx.addIssue({ code: "custom", message: "Fate card ids must be unique" });
+  for (const m of r.fate.missions) {
+    if (m.kind === "spree" && !m.need) ctx.addIssue({ code: "custom", message: `mission ${m.id} needs "need"` });
+    if (m.kind === "cross" && !m.border) ctx.addIssue({ code: "custom", message: `mission ${m.id} needs "border"` });
+  }
 });
 export type Rules = z.infer<typeof Rules>;

@@ -51,6 +51,8 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
     fog: opts.settings?.fog ?? true,
     turnTimerSeconds: opts.settings?.turnTimerSeconds ?? rules.game.turnTimerSecondsDefault,
     fallen: opts.settings?.fallen ?? true,
+    spoils: opts.settings?.spoils ?? true,
+    fate: opts.settings?.fate ?? true,
   };
   if (settings.turnLimit !== null && !(Number.isInteger(settings.turnLimit) && settings.turnLimit >= 1))
     throw new Error("turnLimit must be a whole number of turns, at least 1");
@@ -82,13 +84,15 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
       command: null,
       captured: [],
       influence: 0,
+      spoils: [],
+      missions: [],
     };
   });
   // Keep the player list in the caller's order; seats are reshuffled every turn anyway.
   players.sort((a, b) => opts.players.findIndex((p) => p.id === a.id) - opts.players.findIndex((p) => p.id === b.id));
 
   const state: GameState = {
-    version: 3,
+    version: 4,
     gameId: opts.gameId,
     mapId: map.id,
     turn: 1,
@@ -102,6 +106,10 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
     intel: Object.fromEntries(players.map((p) => [p.id, {}])),
     endReason: null,
     eventCooldowns: { plague: 0, storm: 0, uprising: 0, mercenaries: 0, famine: 0 },
+    // The card decks draw from their own sequences of the same secret seed (so they're provably fair too).
+    decks: { spoils: seedRng(`${opts.seed}|spoils`), fate: seedRng(`${opts.seed}|fate`) },
+    closures: [],
+    nextMission: 1,
   };
   updateIntel(ctx, state);
   return state;

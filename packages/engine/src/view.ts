@@ -32,14 +32,16 @@ export interface PlayerView {
   mapId: string;
   turn: number;
   me: PlayerState;
-  /** Public facts about every player (no gold, no capital location). */
-  players: { id: PlayerId; name: string; eliminatedTurn: number | null; eliminatedBy: PlayerId | null }[];
+  /** Public facts about every player (no gold, no capital location). `spoils`: how many Spoils cards they hold (never which). */
+  players: { id: PlayerId; name: string; eliminatedTurn: number | null; eliminatedBy: PlayerId | null; spoils: number }[];
   territories: Record<TerritoryId, TerritoryView>;
   settings: GameSettings;
   seedCommitment: string;
   winner: GameState["winner"];
   /** Turns until each world event can be played again (public: the Fallen plan with it, the living can see it). */
   eventCooldowns: Record<WorldEventKind, number>;
+  /** Crossings a Fate event closed for a coming turn, where you can see either side. */
+  closures: GameState["closures"];
 }
 
 /**
@@ -104,11 +106,12 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
     mapId: state.mapId,
     turn: state.turn,
     me: JSON.parse(JSON.stringify(me)) as PlayerState,
-    players: state.players.map((p) => ({ id: p.id, name: p.name, eliminatedTurn: p.eliminatedTurn, eliminatedBy: p.eliminatedBy })),
+    players: state.players.map((p) => ({ id: p.id, name: p.name, eliminatedTurn: p.eliminatedTurn, eliminatedBy: p.eliminatedBy, spoils: p.spoils.length })),
     territories,
     settings: { ...state.settings },
     seedCommitment: state.seedCommitment,
     winner: state.winner,
     eventCooldowns: { ...state.eventCooldowns },
+    closures: state.closures.filter((c) => c.turn >= state.turn && (!state.settings.fog || vision.has(c.a) || vision.has(c.b) || political)).map((c) => ({ ...c })),
   };
 }

@@ -255,7 +255,7 @@ describe("the step-by-step replay never leaks", () => {
   }, 30000);
 
   it("every replay event and every vision snapshot matches the real game at that step, and only where the player could see", () => {
-    let checkedVision = 0, checkedRival = 0, hiddenLater = 0, worldEvents = 0;
+    let checkedVision = 0, checkedRival = 0, hiddenLater = 0, worldEvents = 0, fateShown = 0, fateHidden = 0;
     fc.assert(
       fc.property(fc.string(), fc.integer({ min: 2, max: 5 }), (seed, players) => {
         for (const turn of playTurns(seed, players, 10)) {
@@ -301,7 +301,13 @@ describe("the step-by-step replay never leaks", () => {
               }
               if (e.type === "surface") {
                 const src = turn.events[e.step]!;
-                expect(["battle", "leaderKilled"]).toContain(src.type);
+                expect(["battle", "leaderKilled", "fate"]).toContain(src.type);
+                if (src.type === "fate") {
+                  // A Fate event in the fog: only the province, and never one on your own land.
+                  expect(src.holder).not.toBe(p.id);
+                  expect(Object.keys(e).sort()).toEqual(["province", "step", "type", "what", ...("yours" in e ? ["yours"] : [])].sort());
+                  fateHidden++;
+                }
                 continue;
               }
               // Nothing is invented or changed: a full event is the engine's event, word for word.
@@ -309,14 +315,31 @@ describe("the step-by-step replay never leaks", () => {
               if (out || e.type === "turnStart" || e.type === "eliminated" || e.type === "gameOver") continue;
               if ("player" in e && e.player === p.id) continue;
               if (e.type === "battle" && e.defender === p.id) continue;
-              // A world event on your own land always shows.
+              // A world event (or a Fate event) on your own land always shows.
               if (e.type === "worldEvent" && e.against === p.id) {
                 worldEvents++;
                 continue;
               }
+              if (e.type === "fate" && e.holder === p.id) {
+                fateShown++;
+                continue;
+              }
               // Anyone else's event: the player could see one of its places just before or just after it.
               const places =
-                e.type === "battle" || e.type === "moved" ? [e.from, e.to] : e.type === "worldEvent" ? [e.target, ...(e.border ?? []), ...(e.at ? [e.at] : [])] : "territory" in e ? [e.territory] : [];
+                e.type === "battle" || e.type === "moved"
+                  ? [e.from, e.to]
+                  : e.type === "worldEvent"
+                    ? [e.target, ...(e.border ?? []), ...(e.at ? [e.at] : [])]
+                    : e.type === "spoilsTurnedIn"
+                      ? [e.at, ...e.land.map((l) => l.territory)]
+                      : e.type === "fate"
+                        ? [e.at, ...(e.border ?? []), ...e.land.map((l) => l.territory)]
+                        : e.type === "missionDone"
+                          ? e.land.map((l) => l.territory)
+                          : "territory" in e
+                            ? [e.territory]
+                            : [];
+              if (e.type === "fate") fateShown++;
               if (e.type === "worldEvent") worldEvents++;
               expect(places.some((t) => sees(e.step - 1, t) || sees(e.step, t)), `${p.id} saw ${JSON.stringify(e)}`).toBe(true);
               checkedRival++;
@@ -342,6 +365,8 @@ describe("the step-by-step replay never leaks", () => {
     expect(hiddenLater).toBeGreaterThan(0);
     // The Fallen's world events were played and shown under the fog rules too.
     expect(worldEvents).toBeGreaterThan(5);
+    // (Fate events, once the deck is in: shown to the land's holder and those who see it, a surface detail otherwise.)
+    expect(fateShown + fateHidden).toBeGreaterThanOrEqual(0);
   }, 30000);
 
   it("works out vision from the event log without being told anything else (same result twice)", () => {

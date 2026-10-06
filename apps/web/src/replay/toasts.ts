@@ -1,5 +1,6 @@
 import type { GameContext, PlayerView, ReplayEvent } from "@conquerra/engine";
 import { houseOf } from "../map/houses";
+import { fateName, MARK_NAME, SET_NAME } from "../logic/cards";
 
 export interface Toast {
   text: string;
@@ -21,8 +22,21 @@ export function toastFor(ctx: GameContext, view: Pick<PlayerView, "players" | "m
   switch (e.type) {
     case "surface": {
       const prov = ctx.map.provinces.find((p) => p.id === e.province)?.name ?? "the fog";
+      if (e.what === "fate") return { text: `Something stirs in ${prov}`, tone: "quiet", house: null };
       return { text: e.what === "battle" ? `A battle in ${prov}` : `A Leader fell in ${prov}`, tone: "quiet", house: null };
     }
+    case "fate":
+      return {
+        text: `${fateName(e.card)} ${e.shrugged ? "is seen off" : "strikes"} at ${place(e.at)}`,
+        tone: !me(e.holder) || e.shrugged ? "info" : e.tone === "good" ? "good" : "bad",
+        house: house(e.holder)?.color ?? null,
+      };
+    case "spoilsEarned":
+      return { text: `A Spoils card: ${MARK_NAME[e.mark]}`, tone: "good", house: house(e.player)?.color ?? null };
+    case "spoilsTurnedIn":
+      return { text: `${me(e.player) ? "Your" : `${name(e.player)}'s`} Spoils: ${SET_NAME[e.set].toLowerCase()}`, tone: me(e.player) ? "good" : "info", house: house(e.player)?.color ?? null };
+    case "missionDone":
+      return me(e.player) ? { text: "Mission done!", tone: "good", house: house(e.player)?.color ?? null } : null;
     case "battle": {
       if (e.captured)
         return {

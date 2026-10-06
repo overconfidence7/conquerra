@@ -1,5 +1,6 @@
 import type { BuildingType, SpecialistType, Terrain } from "@conquerra/content";
 import { amountLabel, recruitLabel, explainFizzle, explainHold, fizzleIsQuiet, indexMap, PRESETS, type ArmySnapshot, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type ReplayEvent } from "@conquerra/engine";
+import { fateLine, fateTone, MARK_NAME, missionLine, SET_NAME } from "./cards";
 
 export const SPECIALIST_ICON: Record<SpecialistType, string> = { cavalry: "🐎", siege: "🎯", scouts: "🔭", engineers: "🔨", healers: "⚕️" };
 export const SPECIALIST_NAME: Record<SpecialistType, string> = { cavalry: "Cavalry", siege: "Siege", scouts: "Scouts", engineers: "Engineers", healers: "Healers" };
@@ -74,6 +75,8 @@ export function describeOrder(o: Order, n: Namer, attack: boolean, sending?: str
       return `Let ${generalName(n, o.general)} go`;
     case "worldEvent":
       return `${WORLD_EVENT_NAME[o.event]} on ${n.place(o.target)}${o.across ? ` and ${n.place(o.across)}` : ""} (${o.influence} influence)`;
+    case "spoils":
+      return `Turn in Spoils: ${SET_NAME[o.set].toLowerCase()}${(o.set === "tower" || o.set === "laurel") && o.territory ? ` at ${n.place(o.territory)}` : ""}`;
   }
 }
 
@@ -188,6 +191,7 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       return { text: `Turn order: ${e.seats.map(who).join(" → ")}`, tone: "quiet" };
     case "surface": {
       const prov = ctx.map.provinces.find((p) => p.id === e.province)?.name ?? e.province;
+      if (e.what === "fate") return { text: e.yours ? `Your Fate card fell in the fog: something stirs in ${prov}.` : `Something stirs in ${prov}.`, tone: "quiet" };
       return { text: e.what === "battle" ? `Distant fighting somewhere in ${prov}.` : `A Leader fell somewhere in ${prov}.`, tone: "quiet" };
     }
     case "initiative":
@@ -268,6 +272,29 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       return { text: worldEventLine(e, n), tone: isMe(e.against) ? "bad" : e.by.some(isMe) ? "good" : "info" };
     case "worldEventFailed":
       return { text: `Your ${WORLD_EVENT_NAME[e.event].toLowerCase()} on ${place(e.target)} didn't happen (${FAILED_WHY[e.reason]}); your Influence wasn't spent.`, tone: "info" };
+    case "spoilsEarned":
+      return { text: `You earned a Spoils card: ${MARK_NAME[e.mark]} (you hold ${e.hand}).`, tone: "good" };
+    case "spoilsTurnedIn": {
+      const what = SET_NAME[e.set].toLowerCase();
+      const gave =
+        e.set === "tower"
+          ? `a fort and ${e.troops} troops at ${place(e.at)}`
+          : e.set === "laurel"
+            ? `culture rises at ${listPlaces(e.culture.map(place))}`
+            : `${e.troops} troops at ${place(e.at)}${e.gold ? ` and ${e.gold} gold` : ""}`;
+      if (!isMe(e.player)) return { text: `${who(e.player)} turned in Spoils (${what}): ${gave}.`, tone: "info" };
+      return { text: e.orderId === null ? `Your hand was full, so ${what} were turned in for you: ${gave}.` : `You turned in ${what}: ${gave}.`, tone: "good" };
+    }
+    case "fate":
+      return { text: fateLine(ctx, e, n), tone: fateTone(e, n) };
+    case "missionDrawn":
+      return { text: `Your Fate card is a mission: ${missionLine(ctx, e.mission, n)}.`, tone: "info" };
+    case "missionDone":
+      return isMe(e.player)
+        ? { text: `Mission done: ${missionLine(ctx, e.mission, n)}.`, tone: "good" }
+        : { text: `${who(e.player)} completed a mission${e.at ? ` (its reward came at ${place(e.at)})` : ""}.`, tone: "quiet" };
+    case "missionFailed":
+      return { text: `Mission ${e.why === "lost" ? "failed (you lost the land)" : "lapsed"}: ${missionLine(ctx, e.mission, n)}.`, tone: "info" };
     case "income":
       return {
         text: `Income +${e.income}${e.famine ? `, famine −${e.famine}` : ""}, upkeep −${e.upkeep}: you now have ${e.goldAfter} gold.${e.deserted ? ` ${e.deserted} troops deserted (unpaid upkeep).` : ""}`,
@@ -290,7 +317,7 @@ export function narrateTurn(ctx: GameContext, events: readonly ReplayEvent[], n:
   const fog = new Map<string, number>();
   let fallen = 0;
   for (const e of events) {
-    if (e.type === "surface") {
+    if (e.type === "surface" && e.what !== "fate") {
       if (e.what === "battle") fog.set(e.province, (fog.get(e.province) ?? 0) + 1);
       else fallen++;
       continue;
@@ -309,6 +336,8 @@ export function narrateTurn(ctx: GameContext, events: readonly ReplayEvent[], n:
   }
   return lines;
 }
+
+const listPlaces = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}` : (xs[0] ?? ""));
 
 /** One line per map in the lobby's map list: "The Ringsea · 100 territories · suits 6–10 players". */
 export function mapChoiceLabel(m: { name: string; territories: number; recommendedPlayers: { min: number; max: number } }): string {
