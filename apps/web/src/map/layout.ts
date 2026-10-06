@@ -16,6 +16,8 @@ export interface MarkerContent {
   /** Owned by a House (banner and pill colours); false for neutral land. */
   owned: boolean;
   crown: boolean;
+  /** Captured generals standing here: a portrait each above the pill (Mid and Near). */
+  generals?: number;
   building: boolean;
   specialists: number;
   culture: number;
@@ -59,6 +61,7 @@ export function markerMetrics(c: MarkerContent, z: Pick<ZoomDetail, "territoryPx
     if (c.culture) bottom += CULTURE_PIP_DROP; // laurel pips hang from the pill's lower edge (Mid and Near)
     if (c.building) w += icon + 2; // building icon on the right
     if (c.crown) top = Math.max(top, pillH / 2 + icon * 0.7);
+    if (c.generals) top = Math.max(top, pillH / 2 + pillH * 1.45);
   }
   if (mix.nearDetail > 0.5) {
     if (c.specialists) {

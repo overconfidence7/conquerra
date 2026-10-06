@@ -109,4 +109,12 @@ describe("giving your Leader an instruction (in a real game)", () => {
     expect(useGame.getState().turnOrders().some((o) => o.kind === "instruct" || o.general)).toBe(false);
     expect(useGame.getState().queue.some((o) => o.kind === "move" && !o.general)).toBe(true);
   });
+
+  it("letting a captured general go sends a release order with the turn", async () => {
+    await useGame.getState().start();
+    useGame.getState().toggleRelease("bot2");
+    expect(useGame.getState().turnOrders()[0]).toEqual({ id: "release-bot2", kind: "release", general: "bot2" });
+    useGame.getState().toggleRelease("bot2");
+    expect(useGame.getState().turnOrders().some((o) => o.kind === "release")).toBe(false);
+  });
 });

@@ -19,6 +19,11 @@ export class TextureBank {
     return this.byName.get(name)!;
   }
 
+  /** Drop cached textures (art that has just loaded replaces its placeholder). */
+  forget(names: readonly string[]) {
+    for (const n of names) this.byName.delete(n);
+  }
+
   /** The tintable part of a picture (white/grey), to colour with Sprite.tint. */
   mask(name: string): Texture | null {
     if (!this.masks.has(name)) {

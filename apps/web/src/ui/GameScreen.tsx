@@ -13,6 +13,7 @@ import { BottomSheet, type SheetSize } from "./BottomSheet";
 import { Frame } from "./Frame";
 import { Icon } from "./icons";
 import { LeaderCard } from "./LeaderCard";
+import { KeepGenerals } from "./Command";
 import { MapView, readTactical, saveTactical } from "./MapView";
 import { Minimap, type ViewRect } from "./Minimap";
 import { OrderQueue } from "./OrderQueue";
@@ -186,6 +187,8 @@ export function GameScreen() {
   };
   const [rect, setRect] = useState<ViewRect | null>(null);
   const [toasts, setToasts] = useState<ShownToast[]>([]);
+  /** The turn you closed the "keep two captured generals" choice on (it shows again next turn if still over). */
+  const [keptOn, setKeptOn] = useState(0);
 
   const pushToast = useCallback((t: Omit<ShownToast, "id">) => {
     const id = ++toastId;
@@ -350,6 +353,9 @@ export function GameScreen() {
         <TurnReportDialog ctx={ctx} view={view} report={report} autoLocked={autoLocked} onClose={() => g.setShowReport(false)} onWatchAgain={() => g.watchAgain()} />
       )}
       {out && !watching && !replaying && <KnockedOutChoice view={view} />}
+      {act && !showReport && view.me.captured.length > ctx.rules.generals.maxCaptured && keptOn !== view.turn && (
+        <KeepGenerals ctx={ctx} view={view} onDone={() => setKeptOn(view.turn)} />
+      )}
       {error && (
         <Frame className="slim" style={{ position: "absolute", zIndex: 40, left: 8, top: phone ? 60 : 72 }}>
           <p className="warn">{error}</p>

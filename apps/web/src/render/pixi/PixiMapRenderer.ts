@@ -249,6 +249,19 @@ class PixiMapRenderer implements MapRenderer {
 
   setScene(scene: MapScene) {
     this.scene = scene;
+    // Captured generals' portraits load the first time one shows on the map, then the markers redraw.
+    const portraits = new Set<string>();
+    for (const t of Object.values(scene.view.territories))
+      if (t.detail === "full")
+        for (const g of t.generals ?? []) portraits.add(`leader-${String((Math.max(0, scene.view.players.findIndex((p) => p.id === g)) % 10) + 1).padStart(2, "0")}`);
+    if (portraits.size)
+      void this.art.ensure([...portraits]).then((added) => {
+        if (!added || !this.scene) return;
+        this.bank.forget([...portraits]);
+        this.markers.update(this.scene, detailMix(this.detail, this.tactical), this.tactical, true);
+        this.laidOutScale = 0;
+        this.dirtyCam = true;
+      });
     if (!this.world) return;
     // The fog mask only changes when vision does (during the replay: as land comes into view or fogs over), and
     // then it eases across in FOG_FADE_MS rather than jumping.

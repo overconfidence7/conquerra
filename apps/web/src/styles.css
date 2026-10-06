@@ -406,3 +406,7 @@ select { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(
 .general-line { display: flex; gap: 8px; align-items: center; text-align: left; color: inherit; text-decoration: none; font-size: var(--fs-small); line-height: 1.25; }
 .pick-banner { position: absolute; z-index: 30; top: 64px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; align-items: center; font-size: var(--fs-body); white-space: nowrap; max-width: calc(100vw - 32px); }
 .game.desktop .pick-banner { top: 80px; }
+.keep-list { border-top: none; }
+.general-line.keep { width: 100%; border: 1px solid rgba(201, 164, 92, 0.4); border-radius: 8px; padding: 6px 8px; background: rgba(201, 164, 92, 0.06); }
+.general-line.keep.going { opacity: 0.6; border-style: dashed; }
+.link.general-line, .link.general-line:hover { text-decoration: none; color: inherit; }

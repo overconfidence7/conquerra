@@ -54,6 +54,27 @@ export class ArtBook {
     return new ArtBook(manifest, loaded);
   }
 
+  /**
+   * Load more real art now (portraits and vistas aren't loaded with the map): for a captured general's portrait on
+   * its army marker. True if anything new arrived.
+   */
+  async ensure(names: readonly string[], base: string = import.meta.env.BASE_URL): Promise<boolean> {
+    let added = false;
+    await Promise.all(
+      names.map(async (name) => {
+        const e = this.manifest.assets[name];
+        if (!e || this.loaded.has(name)) return;
+        try {
+          this.loaded.set(name, { image: await loadImage(`${base}art/${e.file}`), real: true });
+          added = true;
+        } catch (err) {
+          console.warn(`Art "${name}" failed to load`, err);
+        }
+      }),
+    );
+    return added;
+  }
+
   /** For tests and the no-art fallback. */
   static placeholdersOnly(): ArtBook {
     return new ArtBook(EMPTY_MANIFEST, new Map());

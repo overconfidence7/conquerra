@@ -173,3 +173,24 @@ describe("generals: taking control back", () => {
     expect(merged.find((o) => o.timing === "first")!.id).toBe("own");
   });
 });
+
+describe("captured generals", () => {
+  it("command like your Leader, but the general goes along without the Leader's bonus or timing tricks", () => {
+    const sc = scenario({ line: "abc", islands: "y", extra: [["a", "y"]], layout: { a: ["p1", 4], b: ["p2", 2], c: ["p2", 40], y: ["p2", 2] }, caps: ["a", "c"] });
+    sc.s.territories.y = { owner: "p1", troops: 20, specialists: [], building: null, construction: null, culture: 0 };
+    sc.s.territories.a!.troops = 4;
+    sc.s.players[0]!.captured = [{ of: "p9", territory: "y", instruction: null }];
+    // y (captured general, 20) - a (Leader, 4) - b (rival, 2) - c (rival, 40); y is next to a only.
+    sc.s.territories.b!.troops = 2;
+    const view = viewFor(sc.ctx, sc.s, "p1");
+    const orders = moves(planGeneral(sc.ctx, view, "p9", { kind: "push", territory: "b" }));
+    expect(orders[0]).toMatchObject({ from: "y", to: "a", withGeneral: "p9", general: "p9" });
+    expect(orders.every((o) => !o.withLeader && !o.timing)).toBe(true);
+  });
+
+  it("a captured general with no army (only the garrison) has nothing to write", () => {
+    const sc = scenario({ line: "abc", layout: { a: ["p1", 1], b: [null, 1], c: ["p2", 5] }, caps: ["a", "c"] });
+    sc.s.players[0]!.captured = [{ of: "p9", territory: "a", instruction: null }];
+    expect(planGeneral(sc.ctx, viewFor(sc.ctx, sc.s, "p1"), "p9", { kind: "push", territory: "c" })).toEqual([]);
+  });
+});

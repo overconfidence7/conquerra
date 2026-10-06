@@ -236,6 +236,24 @@ export class MarkerLayer {
         cr.position.set(x0 + pillH * 0.35, -pillH / 2 + 3);
         icons.addChild(cr);
       }
+      // A captured general here: its Leader's portrait on a gold ring, above the pill's right end.
+      s.generals.slice(0, 2).forEach((g, i) => {
+        const seat = Math.max(0, view.players.findIndex((p) => p.id === g));
+        const tex = this.bank.get(`leader-${String((seat % 10) + 1).padStart(2, "0")}`);
+        const r = pillH * 0.62;
+        const cx = -x0 - r * 0.4 - i * r * 1.5, cy = -pillH / 2 - r * 0.75;
+        const ring = new Graphics().circle(cx, cy, r + 1.5).fill({ color: 0x0b0f16 }).stroke({ width: 1.6, color: GOLD_HI });
+        icons.addChild(ring);
+        if (tex) {
+          const face = new Sprite(tex);
+          face.anchor.set(0.5);
+          face.scale.set((2 * r) / Math.min(tex.width, tex.height));
+          face.position.set(cx, cy);
+          const mask = new Graphics().circle(cx, cy, r).fill({ color: 0xffffff });
+          face.mask = mask;
+          icons.addChild(mask, face);
+        }
+      });
       const b = s.building ?? s.construction;
       if (b) {
         const bi = new Sprite(this.bank.get(`icon-${b}`)!);

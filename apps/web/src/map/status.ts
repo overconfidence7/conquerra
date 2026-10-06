@@ -17,12 +17,14 @@ export interface TerritoryStatus {
   specialists: SpecialistType[];
   culture: number;
   leader: boolean;
+  /** Captured generals standing here (whose Leader each was): their portraits go on the marker. */
+  generals: string[];
   capital: boolean;
 }
 
 export function territoryStatus(view: PlayerView, id: TerritoryId): TerritoryStatus {
   const v = view.territories[id]!;
-  const blank = { specialists: [], culture: 0, leader: false, capital: false, construction: null };
+  const blank = { specialists: [], culture: 0, leader: false, generals: [], capital: false, construction: null };
   if (v.detail === "full")
     return {
       id,
@@ -34,6 +36,7 @@ export function territoryStatus(view: PlayerView, id: TerritoryId): TerritorySta
       specialists: v.specialists.map((s) => s.type),
       culture: v.culture,
       leader: v.leaders.length > 0,
+      generals: v.generals ?? [],
       capital: v.capitalOf !== null,
     };
   if (v.lastSeen) return { id, kind: "remembered", owner: v.lastSeen.owner, troops: v.lastSeen.troops, building: v.lastSeen.building, ...blank };
@@ -48,6 +51,7 @@ export function markerContent(map: MapDef, view: PlayerView, s: TerritoryStatus)
     label: s.kind === "remembered" ? `${s.troops}?` : String(s.troops),
     owned: s.owner !== null,
     crown: s.leader,
+    ...(s.generals.length ? { generals: s.generals.length } : {}),
     building: s.building !== null || s.construction !== null,
     specialists: s.specialists.length,
     culture: s.culture,
