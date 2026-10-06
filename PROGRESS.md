@@ -626,4 +626,5 @@ All four parts are done, each committed and pushed. There were no play-test note
   - the Spoils hand with a set ready
   - a mission on the Leader card with its target lit
   - a Fate event in the replay and the report
+- **Tests and deploy:** 556 automated tests pass. Deployed to the private preview (version `78afdff9`); the lock check passed.
 - **Asked Nate to play on the preview** (laptop: pause, close, Continue, slots; phone: Spoils and a mission; do Fate events feel fair; how many turns). His notes go below once he's played.
