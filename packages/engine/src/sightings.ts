@@ -81,6 +81,7 @@ function placesOf(e: StepEvent): TerritoryId[] {
     case "worldEvent":
       return [...(e.losses ?? []).map((l) => l.territory), ...(e.flipped ? [e.target] : []), ...(e.at ? [e.at] : [])];
     case "spoilsTurnedIn":
+    case "governed":
     case "fate":
     case "missionDone":
     case "dealStarted":
@@ -356,6 +357,10 @@ export class TurnVision {
         applyLand(b, e.land);
         player(e.from).gold -= e.gold;
         player(e.to).gold += e.gold;
+        break;
+      // A governing general's purchases for its province (its gold is out of the turn's income, already counted).
+      case "governed":
+        applyLand(b, e.land);
         break;
       case "gameOver":
         b.winner = e.winner;

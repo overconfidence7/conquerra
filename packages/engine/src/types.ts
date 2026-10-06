@@ -24,13 +24,16 @@ export interface Specialist {
  *  - defend: hold the border toward a rival, or toward a chosen neighbouring place
  *  - push: march toward a place, taking land along the way
  *  - raid: take a rival's weakly held land, avoiding its strong armies
+ *  - govern (session 15): hold the province it stands in (one where you hold most of the land) and spend a share of
+ *    the province's income on it (govern.ts)
  */
 export type Instruction =
   | { kind: "hold" }
   | { kind: "defend"; player: PlayerId }
   | { kind: "defend"; territory: TerritoryId }
   | { kind: "push"; territory: TerritoryId }
-  | { kind: "raid"; player: PlayerId };
+  | { kind: "raid"; player: PlayerId }
+  | { kind: "govern" };
 export type InstructionKind = Instruction["kind"];
 
 /**
@@ -43,6 +46,26 @@ export interface CapturedGeneral {
   of: PlayerId;
   territory: TerritoryId;
   instruction: Instruction | null;
+}
+
+/** What a governing general buys next for its province, and its price. */
+export interface PurseGoal {
+  what: "fort" | "culture" | "troops";
+  territory: TerritoryId;
+  cost: number;
+}
+
+/**
+ * A governing general's progress toward its next purchase for the province (session 15): never a second gold total,
+ * only progress ("A fort at Pinemark: 5 of 8 gold"). Goes home if the general leaves, is lost, or stops governing.
+ */
+export interface Purse {
+  /** Whose Leader the general is (your own id for your Leader). */
+  general: PlayerId;
+  province: string;
+  saved: number;
+  /** What it's saving toward (worked out as the turn ends). */
+  goal: PurseGoal | null;
 }
 
 /** The Fallen's world events (session 12). Built as data, so a Fate deck could draw them later. */
@@ -193,6 +216,8 @@ export interface PlayerState {
   missions: Mission[];
   /** Oathbreaker (session 14): you broke a handshake deal; the public mark shows through this turn (0: none). */
   oathbreaker: number;
+  /** Governing generals' progress toward their next purchase (session 15). Only you see it. */
+  purse: Purse[];
 }
 
 // ---------- Spies (session 15) ----------
@@ -278,7 +303,7 @@ export interface GameSettings {
 }
 
 export interface GameState {
-  version: 6;
+  version: 7;
   gameId: string;
   mapId: string;
   turn: number;
@@ -533,6 +558,23 @@ export type GameEvent =
    * home when called ("home").
    */
   | { type: "spy"; player: PlayerId; spies: string[]; province: string; outcome: "in" | "blocked" | "killed" | "home"; territory: TerritoryId }
+  /**
+   * A governing general (session 15), as the turn's income came in: the share of the province's income it kept, what
+   * it bought there (`land`: the land afterwards), and what it's saving toward. Only its owner hears of it; the land
+   * changes show to whoever can see them.
+   */
+  | {
+      type: "governed";
+      player: PlayerId;
+      general: PlayerId;
+      province: string;
+      kept: number;
+      spent: { what: PurseGoal["what"]; territory: TerritoryId; gold: number; troops?: number }[];
+      toward: (PurseGoal & { saved: number }) | null;
+      land: LandChange[];
+    }
+  /** A governing general's progress went home (it left the province, was lost, or stopped governing). Only its owner sees it. */
+  | { type: "purseHome"; player: PlayerId; general: PlayerId; province: string; gold: number }
   /** A spy was caught in your province (only you see it; never who sent it, and never a spy that fooled you... you fooled it). */
   | { type: "spyCaught"; player: PlayerId; province: string; outcome: "blocked" | "killed"; spies: number }
   | { type: "built"; player: PlayerId; orderId: string; territory: TerritoryId; building: BuildingType; cost: number; /** null = ready now (engineers). */ doneAtEndOfTurn: number | null }

@@ -129,6 +129,7 @@
   - **No second pot:** what it can't spend yet is held toward its next purchase and shown only as progress on the province ("A fort at Pinemark: 5 of 10 gold"), never as a separate gold total. If the general leaves the province or is lost, that progress goes home.
   - One line on the Leader card and in the report: "Your Leader governs Old March: kept 3 gold, raised culture in Pinemark."
   - The Captain may use it for a captured general in a province it holds safely; its own play is otherwise unchanged.
+- **BUILT (session 15, Oct 6)** exactly as above. Details settled while building: the share is taken as the turn's income comes in (rounded down), and the general may buy more than one thing in a turn if the gold is there (a fort, then culture). It buys a fort only where a rival army stands next to the province's land; culture goes where the most rival troops stand next door (lowest culture breaking ties). A seat whose Leader governs all game wins about as often as one that holds (19% at 4 players, against Hold here's 21.5% in session 12): it parks the main army, so it's for a captured general or a quiet province. Rules: `docs/rules-reference.md` §14.
 
 ## 5. Military vs. culture
 - Income can go to **military** (troops, forts) or **culture**.

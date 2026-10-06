@@ -1,4 +1,4 @@
-import { dealLine, explainFizzle, explainHold, fizzleIsQuiet, spyLine, type GameContext, type PlayerId, type PlayerView, type ReplayEvent } from "@conquerra/engine";
+import { dealLine, explainFizzle, explainHold, fizzleIsQuiet, governLine, spyLine, type GameContext, type PlayerId, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 import { fateLine, fateTone, MARK_NAME, missionLine, SET_NAME, troopWord } from "./cards";
 import { army, BUILDING_NAME, dealNames, generalName, generalStatus, instructionDoing, SPECIALIST_NAME, WORLD_EVENT_NAME, type LogLine, type Namer, type Tone } from "./text";
 
@@ -191,6 +191,10 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       return { text: dealLine(e, dealNames(n))!, tone: "quiet" };
     case "tribute":
       return { text: dealLine(e, dealNames(n))!, tone: e.short ? "bad" : "info" };
+    // "Govern this province" (session 15): "Your Leader governs Old March: kept 3 gold, raised culture in Pinemark."
+    case "governed":
+    case "purseHome":
+      return { text: governLine(e, { general: (g) => generalName(n, g), place, province: (id) => ctx.map.provinces.find((p) => p.id === id)?.name ?? id }), tone: "info" };
     // Spies (session 15): only their owner hears of them (a fooled spy reads exactly like one that got in).
     case "spyHired":
     case "spy":

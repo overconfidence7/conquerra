@@ -35,6 +35,7 @@ import { checkMissions, drawFate } from "./fate";
 import { anyDealAcross, attackAcross, diplomacyEndOfTurn, diplomacyStart, partnersOf, passageFor } from "./diplomacy";
 import { visibleTerritories } from "./vision";
 import { hireSpy, spiesEndOfTurn, spyOrders, spyReports } from "./spies";
+import { canGovern, governEndOfTurn } from "./govern";
 
 /** Called after every event with the live board (tests use it to check the replay against the real game). */
 export type TurnObserver = (e: StepEvent, live: Readonly<GameState>) => void;
@@ -723,8 +724,11 @@ function queueFollowThrough(T: Turn, pid: PlayerId, q: Queued[], next: Queued) {
   q.unshift(next);
 }
 
-/** Is this a sensible instruction for `p` on this map (places exist, rivals are other players still in)? */
-function validInstruction(T: Turn, p: PlayerState, i: Instruction): boolean {
+/**
+ * Is this a sensible instruction for `p`'s general standing at `at` (places exist, rivals are other players still in,
+ * and it can only govern a province where `p` holds most of the land)?
+ */
+function validInstruction(T: Turn, p: PlayerState, i: Instruction, at: TerritoryId | null): boolean {
   const rival = (id: PlayerId) => id !== p.id && T.s.players.some((x) => x.id === id && x.eliminatedTurn === null);
   switch (i.kind) {
     case "hold":
@@ -736,6 +740,8 @@ function validInstruction(T: Turn, p: PlayerState, i: Instruction): boolean {
       return rival(i.player) && !partnersOf(T.s.deals, p.id).includes(i.player);
     case "defend":
       return "territory" in i ? T.idx.byId.has(i.territory) : rival(i.player);
+    case "govern":
+      return canGovern(T.idx, T.s, p.id, at);
   }
 }
 
@@ -767,7 +773,9 @@ function commandGenerals(T: Turn, p: PlayerState, list: readonly Order[]) {
     p.captured = p.captured.filter((g) => keep.has(g.of));
   }
   for (const o of list) {
-    if (o.kind !== "instruct" || (o.instruction && !validInstruction(T, p, o.instruction))) continue;
+    if (o.kind !== "instruct") continue;
+    const at = o.general === p.id ? (p.leader.alive ? p.leader.territory : null) : (T.generalOf(p, o.general)?.territory ?? null);
+    if (o.instruction && !validInstruction(T, p, o.instruction, at)) continue;
     if (o.general === p.id) p.command = o.instruction;
     else {
       const g = T.generalOf(p, o.general);
@@ -893,7 +901,9 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
     // A famine the Fallen sent cuts this turn's income (before upkeep).
     const gross = inc.net + inc.upkeep + inc.specialistUpkeep;
     const famine = Math.floor(Math.max(0, gross) * (T.famine.get(pid) ?? 0));
-    p.gold += inc.net - famine;
+    // Governing generals keep their share of their province's income and spend it there (session 15).
+    const governed = governEndOfTurn(T, p);
+    p.gold += inc.net - famine - governed;
     if (p.gold < 0) {
       // Unrest: one troop deserts per gold short, lowest-culture land first. Culture talks some of them out of it.
       let short = -p.gold;

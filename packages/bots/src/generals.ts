@@ -17,6 +17,9 @@ import { respectDeals } from "./diplomacy";
  *    every hop must get closer, and it never stops next to a rival army that would throw it straight back out).
  *    Blocked, it waits and gathers spare troops from your quiet land behind it, or, if a rival army next door could
  *    take the land it's waiting on, pulls back a step to land it can hold. Once there, it holds.
+ *  - Govern this province (session 15): hold the province it stands in, as Hold here does across all of it: troops go
+ *    where the province is short, the general's own spare troops first. (The engine has it keep and spend a share of
+ *    the province's income: govern.ts.)
  *  - Raid a rival: take that rival's weakly held land next to it, chaining on through more of it, but never into
  *    land next to one of its armies big enough to throw it straight back out. Not touching that rival yet, it
  *    marches toward the rival's nearest known land (taking neutral land on the way, never a third player's).
@@ -67,6 +70,9 @@ export function planGeneral(
       break;
     case "raid":
       g.raid(instruction.player);
+      break;
+    case "govern":
+      g.govern();
       break;
   }
   // A general honours every deal of its owner's (session 14).
@@ -145,6 +151,33 @@ class General {
     const { b, home } = this;
     const short = b.holdNeed(home) - b.troopsAt(home);
     if (short > 0) this.pullIn(home, short);
+  }
+
+  // ---------- Govern this province ----------
+  govern() {
+    const { b, home } = this;
+    const province = b.idx.byId.get(home)!.province;
+    const land = (b.idx.provinceMembers.get(province) ?? []).filter(b.owned);
+    const short = land
+      .map((t) => ({ t, need: b.holdNeed(t) - b.troopsAt(t) }))
+      .filter((x) => x.need > 0)
+      .sort((x, y) => Number(y.t === home) - Number(x.t === home) || y.need - x.need || (x.t < y.t ? -1 : 1));
+    let spareHere = b.troopsAt(home) - Math.max(this.keepHome, b.holdNeed(home));
+    for (const { t, need } of short) {
+      if (t === home) {
+        this.pullIn(home, need);
+        continue;
+      }
+      // The general's own spare troops go next door first (the general stays at its post).
+      let want = need;
+      if (spareHere > 0 && b.idx.neighbors.get(home)!.includes(t)) {
+        const send = Math.min(spareHere, want);
+        this.add({ kind: "move", from: home, to: t, troops: send });
+        spareHere -= send;
+        want -= send;
+      }
+      if (want > 0) this.pullIn(t, want);
+    }
   }
 
   // ---------- Defend this border ----------

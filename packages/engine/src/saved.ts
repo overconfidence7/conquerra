@@ -72,7 +72,7 @@ export interface SavedGameV1 {
 }
 
 /** The game state's current shape. Bump it (and add a migration below) whenever GameState changes. */
-export const STATE_VERSION: GameState["version"] = 6;
+export const STATE_VERSION: GameState["version"] = 7;
 
 /**
  * How to bring an older game state up to date, one version at a time: `STATE_MIGRATIONS[n]` turns a version-n
@@ -119,6 +119,8 @@ export const STATE_MIGRATIONS: Record<number, (s: Record<string, unknown>) => Re
     nextSpy: 1,
     spyIntel: {},
   }),
+  /** 6 -> 7 (session 15): "Govern this province". Nobody is governing yet: no progress saved. */
+  6: (s) => ({ ...s, players: (s.players as Record<string, unknown>[]).map((p) => ({ ...p, purse: [] })) }),
 };
 
 export function stateFingerprint(s: GameState): string {

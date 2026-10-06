@@ -292,7 +292,11 @@ export const Rules = z.object({
     lieInWaitCooldown: z.number().int().min(1),
   }),
   /** Generals (session 12): captured generals you may keep (when one more arrives, you choose which to let go). */
-  generals: z.object({ maxCaptured: z.number().int().min(0) }),
+  generals: z.object({
+    maxCaptured: z.number().int().min(0),
+    /** "Govern this province" (session 15): the share of the province's own income the general keeps to spend there. */
+    govern: z.object({ share: z.number().min(0).max(1) }),
+  }),
   /**
    * The Fallen (session 12): knocked-out players earn Influence each turn (base, plus a little more for each other
    * Fallen player) and spend it, alone or pooled, on capped world events aimed at a living player's land. Spending

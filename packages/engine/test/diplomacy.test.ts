@@ -442,13 +442,13 @@ describe("diplomacy: knocked-out players, fog, saves, determinism", () => {
     delete old.nextDeal;
     delete old.record;
     delete (old.settings as Record<string, unknown>).diplomacy;
-    for (const p of old.players as Record<string, unknown>[]) delete p.oathbreaker;
+    for (const p of old.players as Record<string, unknown>[]) (delete p.oathbreaker, delete p.purse);
     const save = { ...makeSave(ctx, s, "p1", 0), state: old };
     const read = readSave(JSON.parse(JSON.stringify(save)));
     expect(read.ok).toBe(true);
     if (!read.ok) return;
     const st = read.save.state;
-    expect([st.version, st.deals, st.nextDeal, st.record, st.settings.diplomacy]).toEqual([6, [], 1, [], true]);
+    expect([st.version, st.deals, st.nextDeal, st.record, st.settings.diplomacy]).toEqual([7, [], 1, [], true]);
     expect(st.players.every((p) => p.oathbreaker === 0)).toBe(true);
     // (Spies' own random sequence is made from the game's dice when an old save is brought up to date.)
     expect(stateFingerprint({ ...st, decks: { ...st.decks, spies: s.decks.spies } })).toBe(stateFingerprint(s));

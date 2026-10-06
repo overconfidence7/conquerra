@@ -78,3 +78,4 @@ export {
 } from "./saved";
 export { indexMap, distancesFrom, type MapIndex } from "./mapIndex";
 export { Rng, seedRng, type RngState } from "./rng";
+export { canGovern, goalLine, governLine, holdsMost, nextGoal, provinceIncome, type GovernNames } from "./govern";

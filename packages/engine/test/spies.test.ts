@@ -356,7 +356,7 @@ describe("spies: no effect on combat, saves and determinism", () => {
     expect(read.ok).toBe(true);
     if (!read.ok) return;
     const st = read.save.state;
-    expect([st.version, st.spies, st.nextSpy, st.spyIntel, st.settings.spies]).toEqual([6, [], 1, {}, true]);
+    expect([st.version, st.spies, st.nextSpy, st.spyIntel, st.settings.spies]).toEqual([7, [], 1, {}, true]);
     expect(st.decks.spies).toHaveLength(4);
     expect(of(resolveTurn(ctx, st, { p1: [hire("a")] }).events, "spyHired")).toHaveLength(1);
   });

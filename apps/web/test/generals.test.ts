@@ -3,7 +3,8 @@ import type { Order, PlayerView } from "@conquerra/engine";
 import { beforeEach, describe, expect, it } from "vitest";
 import { LocalGame } from "../src/host/localGame";
 import type { GameHost, LobbySettings } from "../src/host/protocol";
-import { generalIn, instructOrders, takeControl, withGeneralOrders } from "../src/logic/generals";
+import { canGovernHere, generalIn, instructOrders, INSTRUCTIONS, takeControl, withGeneralOrders } from "../src/logic/generals";
+import { generalDoing } from "../src/ui/Command";
 import { setHostFactory, useGame } from "../src/store";
 import { inProcessHost } from "./inProcessHost";
 
@@ -101,5 +102,37 @@ describe("giving your Leader an instruction (in a real game)", () => {
     expect(useGame.getState().turnOrders()[0]).toEqual({ id: "release-bot2", kind: "release", general: "bot2" });
     useGame.getState().toggleRelease("bot2");
     expect(useGame.getState().turnOrders().some((o) => o.kind === "release")).toBe(false);
+  });
+});
+
+describe("Govern this province on the page (session 15)", () => {
+  beforeEach(() => {
+    setHostFactory(() => inProcessHost("govern-page"));
+    useGame.getState().playAgain();
+  });
+
+  it("Command offers Govern only where you hold most of the province; the general's line shows its progress, never a gold total", async () => {
+    useGame.getState().setLobby({ mapId: "embervale", bots: 3, turnSeconds: null });
+    await useGame.getState().start();
+    const { ctx, view: v } = useGame.getState();
+    const cap = v!.me.capital;
+    // At the start you hold one territory of your capital's province: not most of it.
+    expect(canGovernHere(ctx!, v!, cap)).toBe(false);
+    // Hold most of it (as far as your view goes) and you can.
+    const province = ctx!.map.territories.find((t) => t.id === cap)!.province;
+    const members = ctx!.map.territories.filter((t) => t.province === province).map((t) => t.id);
+    const mine = structuredClone(v!) as PlayerView;
+    for (const t of members.slice(0, Math.floor(members.length / 2) + 1).concat(cap)) {
+      const x = mine.territories[t]!;
+      mine.territories[t] = { ...(x.detail === "full" ? x : { detail: "full", seenBy: ["own"], specialists: [], building: null, construction: null, culture: 0, leaders: [], generals: [], capitalOf: null, troops: 1 }), owner: mine.me.id } as typeof x;
+    }
+    expect(canGovernHere(ctx!, mine, cap)).toBe(true);
+    expect(INSTRUCTIONS.map((i) => i.name)).toContain("Govern this province");
+    // What it's doing, and what it's saving toward.
+    mine.me.command = { kind: "govern" };
+    mine.me.purse = [{ general: mine.me.id, province, saved: 5, goal: { what: "fort", territory: cap, cost: 8 } }];
+    const place = ctx!.map.territories.find((t) => t.id === cap)!.name;
+    const pname = ctx!.map.provinces.find((p) => p.id === province)!.name;
+    expect(generalDoing(ctx!, mine, mine.me.id, mine.me.command, false)).toBe(`Governing ${pname}. A fort at ${place}: 5 of 8 gold`);
   });
 });

@@ -1,4 +1,4 @@
-import type { GameContext, Instruction, PlayerId, PlayerView, TerritoryId } from "@conquerra/engine";
+import { goalLine, type GameContext, type Instruction, type PlayerId, type PlayerView, type TerritoryId } from "@conquerra/engine";
 import { lazy, Suspense, useState } from "react";
 import { generalAt, standing } from "../logic/generals";
 import { generalName, instructionDoing, namer } from "../logic/text";
@@ -22,6 +22,9 @@ export function generalDoing(ctx: GameContext, view: PlayerView, general: Player
   const doing = instructionDoing(instruction, n, at);
   if (paused) return `${doing}, but you gave its army an order: yours to command this turn.`;
   if (instruction.kind === "push" && at === instruction.territory) return `Holding ${n.place(at)}: it got there.`;
+  // Governing: what it's saving toward, as progress on the province (never a second gold total).
+  const purse = instruction.kind === "govern" ? view.me.purse?.find((p) => p.general === general) : undefined;
+  if (purse?.goal) return `${doing}. ${goalLine({ ...purse.goal, saved: purse.saved }, n)}`;
   return doing;
 }
 

@@ -72,6 +72,9 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     case "fate":
     case "missionDone":
       return "pop";
+    // A governing general's purchase pops on the map (only when it bought something).
+    case "governed":
+      return e.land.length ? "pop" : null;
     // Deals: a deal starting or broken gets a beat (its toast), with any land that changed hands or troops that
     // deserted popping on the map; a payment only if troops deserted for it.
     case "dealStarted":
@@ -103,6 +106,7 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     case "dealEnded":
     case "dealFailed":
     case "offerLapsed":
+    case "purseHome":
     // Spies report as the turn ends: in the turn report (their owner's eyes only).
     case "spyHired":
     case "spy":
@@ -248,6 +252,7 @@ export function frameAt(tl: Timeline, t: number): ReplayFrame {
       else if (e.type === "hired") frame.pops.push({ at: e.territory, player: e.player, label: "+1 specialist", progress: q });
       else if (e.type === "built" || e.type === "completed") frame.pops.push({ at: e.territory, player: e.player, label: e.building, progress: q });
       else if (e.type === "invested") frame.pops.push({ at: e.territory, player: e.player, label: "culture", progress: q });
+      else if (e.type === "governed" && e.land[0]) frame.pops.push({ at: e.land[0].territory, player: e.player, label: e.spent[0]?.what === "fort" ? "fort" : e.spent[0]?.what === "culture" ? "culture" : "troops", progress: q });
       else if (e.type === "leaderReturned") frame.pops.push({ at: e.territory, player: e.player, label: "Leader", progress: q });
       else if (e.type === "generalCaptured") frame.pops.push({ at: e.territory, player: e.player, label: "Captured general", progress: q });
       else if (e.type === "generalLost") frame.pops.push({ at: e.territory, player: e.player, label: "General lost", progress: q });

@@ -16,7 +16,7 @@ import {
   type ReplayEvent,
 } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
-import { agreedIn, captainBot, captainBreaks, judgeOffer, negotiate, planGeneral, proposeOffers, recruitBot, respectDeals, trustIn, withAgreed } from "../src";
+import { agreedIn, CAPTAIN_CHAIN_MARGIN, captainBot, makeCaptainBot, captainBreaks, judgeOffer, negotiate, planGeneral, proposeOffers, recruitBot, respectDeals, trustIn, withAgreed } from "../src";
 import { scenario } from "./scenario";
 
 const offer = (from: string, to: string, terms: DealTerms, bond: Offer["bond"] = "handshake", id = "x1"): Offer => ({ id, from, to, terms, bond });
@@ -298,7 +298,7 @@ describe("bots' diplomacy: keeping their word", () => {
 describe("bots' diplomacy: bots dealing with each other", () => {
   const ctx: GameContext = { map: maps.embervale!, rules: defaultRules };
   /** A whole 4-Captain game on Embervale, bots negotiating every turn (as the host and the simulator do). */
-  function play(seed: string, diplomacy = true, turns = 30, spies = true) {
+  function play(seed: string, diplomacy = true, turns = 30, spies = true, bot = captainBot) {
     let s = createGame(ctx, { gameId: "fp", seed, players: ["p1", "p2", "p3", "p4"].map((id) => ({ id, name: id })), settings: { diplomacy, spies } });
     let last = new Map<string, ReplayEvent[]>();
     const talks: string[] = [];
@@ -309,7 +309,7 @@ describe("bots' diplomacy: bots dealing with each other", () => {
       for (const t of talk?.talks ?? []) talks.push(`${t.offer.from}>${t.offer.to} ${t.offer.terms.kind}: ${t.answer?.reason}`);
       const agreed = talk ? agreedIn(talk.orders) : [];
       const orders: OrdersByPlayer = {};
-      for (const p of living) orders[p.id] = [...(talk?.orders[p.id] ?? []), ...captainBot.plan(ctx, withAgreed(views.get(p.id)!, agreed), last.get(p.id))];
+      for (const p of living) orders[p.id] = [...(talk?.orders[p.id] ?? []), ...bot.plan(ctx, withAgreed(views.get(p.id)!, agreed), last.get(p.id))];
       const before = s;
       const r = resolveTurn(ctx, s, orders);
       s = r.state;
@@ -327,11 +327,13 @@ describe("bots' diplomacy: bots dealing with each other", () => {
   });
 
   it("with diplomacy off, the Captain plays exactly as it did before diplomacy (its fingerprint)", () => {
-    // (With spies off too, and the game's new spy fields set aside, so the fingerprint is the one from session 14.)
-    const s = structuredClone(play("captain-fingerprint", false, 25, false).s) as unknown as Record<string, unknown>;
+    // (With spies off too, and the game's new fields (spies, governing) set aside, so the fingerprint is the one from session 14.)
+    // (And without session 15's governing captured generals, which changes how the Captain plays on purpose.)
+    const s = structuredClone(play("captain-fingerprint", false, 25, false, makeCaptainBot({ chainMargin: CAPTAIN_CHAIN_MARGIN, off: ["govern"] })).s) as unknown as Record<string, unknown>;
     for (const k of ["spies", "nextSpy", "spyIntel"]) delete s[k];
     delete (s.decks as Record<string, unknown>).spies;
     delete (s.settings as Record<string, unknown>).spies;
+    for (const p of s.players as Record<string, unknown>[]) delete p.purse;
     s.version = 5;
     expect(stateFingerprint(s as unknown as GameState)).toBe("b5a97ae9cff6ce38");
   });

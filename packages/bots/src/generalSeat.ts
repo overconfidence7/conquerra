@@ -90,6 +90,10 @@ export function chooseInstruction(b: Board, kind: InstructionKind, home: Territo
       const t = capital ?? nearest(null) ?? out;
       return t ? { kind: "push", territory: t } : null;
     }
+    case "govern": {
+      const members = idx.provinceMembers.get(idx.byId.get(home)!.province) ?? [];
+      return members.filter((t) => b.owned(t)).length * 2 > members.length ? { kind: "govern" } : null;
+    }
     case "raid": {
       if (current?.kind === "raid" && living(current.player) && knownLand.has(current.player)) return current;
       const r = [...facing.keys()].sort((x, y) => (knownLand.get(x) ?? 0) - (knownLand.get(y) ?? 0) || (x < y ? -1 : 1))[0] ?? nearestRival();

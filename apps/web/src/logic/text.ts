@@ -126,6 +126,8 @@ export function instructionName(i: Instruction, n: Namer): string {
       return `Push toward ${n.place(i.territory)}`;
     case "raid":
       return `Raid ${n.who(i.player)}`;
+    case "govern":
+      return "Govern this province";
   }
 }
 
@@ -140,6 +142,10 @@ export function instructionDoing(i: Instruction, n: Namer, at: string | null): s
       return `Pushing toward ${n.place(i.territory)}`;
     case "raid":
       return `Raiding ${n.who(i.player)}`;
+    case "govern": {
+      const province = at ? n.ctx?.map.provinces.find((p) => p.id === n.ctx?.map.territories.find((t) => t.id === at)?.province)?.name : null;
+      return province ? `Governing ${province}` : "Governing its province";
+    }
   }
 }
 

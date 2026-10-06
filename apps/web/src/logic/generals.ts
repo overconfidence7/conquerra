@@ -1,4 +1,4 @@
-import type { Instruction, InstructionKind, Order, PlayerId, PlayerView, TerritoryId } from "@conquerra/engine";
+import type { GameContext, Instruction, InstructionKind, Order, PlayerId, PlayerView, TerritoryId } from "@conquerra/engine";
 
 /**
  * Generals on the page (session 12). Small and pure, so the tap count and "taking control back" are tested without a
@@ -78,4 +78,22 @@ export const INSTRUCTIONS: { kind: InstructionKind; name: string; help: string; 
   { kind: "defend", name: "Defend this border", help: "Guard the border with a rival (or toward a place): hold it and hit back.", needs: "rivalOrPlace" },
   { kind: "push", name: "Push toward a place", help: "March toward a place you pick, taking land along the way.", needs: "place" },
   { kind: "raid", name: "Raid a rival", help: "Take a rival's weakly held land and keep clear of its big armies.", needs: "rival" },
+  {
+    kind: "govern",
+    name: "Govern this province",
+    help: "Hold the province, and spend a quarter of its income on it: a fort where it's threatened, else culture, else troops.",
+    needs: "nothing",
+  },
 ];
+
+/** Can this general govern where it stands: a province where you hold most of the land (from your view)? */
+export function canGovernHere(ctx: GameContext, view: PlayerView, at: TerritoryId | null): boolean {
+  if (!at) return false;
+  const province = ctx.map.territories.find((t) => t.id === at)?.province;
+  const members = ctx.map.territories.filter((t) => t.province === province);
+  const mine = members.filter((t) => {
+    const v = view.territories[t.id];
+    return v?.detail === "full" && v.owner === view.me.id;
+  });
+  return members.length > 0 && mine.length * 2 > members.length;
+}

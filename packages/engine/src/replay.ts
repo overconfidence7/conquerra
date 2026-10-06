@@ -125,6 +125,13 @@ export function replayFor(ctx: GameContext, before: GameState, result: TurnResul
         if (e.holder === player || placesSeen(e).some(sees)) out.push(e);
         else out.push({ ...surface(e, "fate", e.at), ...(e.drawer === player ? { yours: true } : {}) });
         break;
+      // A governing general's purchases: its owner, and anyone who could see the land it changed. Its gold going home: its owner.
+      case "governed":
+        if (mine || placesSeen(e).some(sees)) out.push(e);
+        break;
+      case "purseHome":
+        if (mine) out.push(e);
+        break;
       // A windfall shows to whoever could see the land it changed (the set itself only to its owner).
       case "spoilsTurnedIn":
         if (mine || placesSeen(e).some(sees)) out.push(e);
@@ -190,6 +197,7 @@ function placesSeen(e: StepEvent): TerritoryId[] {
     case "fate":
       return [e.at, ...(e.border ?? []), ...e.land.map((l) => l.territory)];
     case "missionDone":
+    case "governed":
     case "dealStarted":
     case "dealBroken":
     case "tribute":

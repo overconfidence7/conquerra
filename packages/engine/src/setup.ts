@@ -89,13 +89,14 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
       spoils: [],
       missions: [],
       oathbreaker: 0,
+      purse: [],
     };
   });
   // Keep the player list in the caller's order; seats are reshuffled every turn anyway.
   players.sort((a, b) => opts.players.findIndex((p) => p.id === a.id) - opts.players.findIndex((p) => p.id === b.id));
 
   const state: GameState = {
-    version: 6,
+    version: 7,
     gameId: opts.gameId,
     mapId: map.id,
     turn: 1,

@@ -727,7 +727,7 @@ Parts 1–4 are done, each committed and pushed. **Right of passage's moves (Par
 
 
 ### Oct 6: Claude Code session 15 (M3: Nate's diplomacy calls, right of passage, spies, the culture ladder)
-Parts 0–4 are done, each committed and pushed. There were no play-test notes from sessions 11–14 to fix first, and no new art in `art/incoming/`.
+All five parts are done, each committed and pushed, including Part 5 ("Govern this province"). There were no play-test notes from sessions 11–14 to fix first, and no new art in `art/incoming/`.
 - **Nate's calls (Step 0):**
   - **A harsher Oathbreaker:** fine 4 + 1.4 per size, unrest 0.8 per size (about double). A 3-turn truce everywhere now costs about 17 gold and 7 troops to break. The Captain uses the same numbers, so it now breaks mostly small deals.
   - **"Diplomacy: On/Off"** in the lobby, next to the Fate deck. Off: no Propose, no offers, no deals; the bots play exactly as with diplomacy off in the sim.
@@ -738,5 +738,6 @@ Parts 0–4 are done, each committed and pushed. There were no play-test notes f
 - **Sims (500 games, spies off → on):** length 28.0 → 27.1 turns (4 players), 36.2 → 36.1 (6), 46.4 → 44.9 (10); runaways and seat fairness about the same. Spy attempts per game 6.6 / 10.3 / 31.6, nearly all infiltrations, some blocked; bots never kill or fool each other (one spy each). Tuned the Captain to one spy: Captains with spies now win 47% / 51% against Captains without (was 40%). Rangers in 26% / 50% / 67% of games, Standard-bearers in 16% / 39% / 60%. Details: `docs/sim-results-m3-spies.md`.
 - **Taps (384 px phone):** a basic turn is still **6**; hire a spy 3, send a spy **3**; Command 3, propose a truce 4, accept 1.
 - **Start-up bundle:** 493.9 KB → **440.4 KB** (gzip 152.2 → 134.9): the game screen now loads when the game starts.
-- **Saves:** game state version 6 (spies), with a migration; the session 13 save and a new session 14 save both load.
+- **"Govern this province" (Part 5), as built:** a fifth instruction for a general in a province where you hold most of the land. Its army holds the province; it keeps a quarter of the province's own income and spends it there the same turn (a fort where it's threatened, else culture, else troops). No second pot: what it's saving shows only as progress ("A fort at Pinemark: 5 of 8 gold"), and goes home if the general leaves or is lost. The report says "Your Leader governs Old March: kept 3 gold, raised culture in Pinemark." The Captain uses it for a captured general in a province it holds safely.
+- **Saves:** game state version 7 (spies, then governing), with migrations; the session 13 save and a new session 14 save both load.
 - **Screenshots** (desktop and 384 px phone), in `docs/art/screens/s15-*.png`: the Diplomacy switch, passage land and a march through it, a spy on the move, an infiltrated province with its eye, the spy report lines, the Hire menu with Rangers and the Standard-bearer, the culture line on the card.
