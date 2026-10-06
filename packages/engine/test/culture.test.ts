@@ -38,13 +38,22 @@ describe("culture", () => {
     expect(cultured.provinces - plain.provinces).toBe(2); // average culture 2 x 1
   });
 
-  it("passes to whoever captures the territory", () => {
+  it("is lost when the land is captured (session 16); its buildings stay", () => {
     const ctx = ctxWith();
     const s = lineGame(ctx);
-    board(s, { a: ["p1", 30], b: ["p2", 2, [], { culture: 3 }], e: ["p2", 3] });
+    board(s, { a: ["p1", 30], b: ["p2", 2, [], { culture: 3, building: "fort" }], e: ["p2", 3] });
+    const { state, events } = resolveTurn(ctx, s, { p1: [mv("a", "b", "all")] });
+    expect(state.territories.b).toMatchObject({ owner: "p1", culture: 0, building: "fort" });
+    // The battle still says what defended the land as it was fought.
+    expect(events.find((e) => e.type === "battle")).toMatchObject({ captured: true, defense: { culture: 3 } });
+  });
+
+  it("is kept when an attack on it fails", () => {
+    const ctx = ctxWith();
+    const s = lineGame(ctx);
+    board(s, { a: ["p1", 3], b: ["p2", 20, [], { culture: 3 }], e: ["p2", 3] });
     const { state } = resolveTurn(ctx, s, { p1: [mv("a", "b", "all")] });
-    expect(state.territories.b!.owner).toBe("p1");
-    expect(state.territories.b!.culture).toBe(3);
+    expect(state.territories.b).toMatchObject({ owner: "p2", culture: 3 });
   });
 
   it("protects against unrest when upkeep can't be paid", () => {
@@ -120,11 +129,11 @@ describe("loyal land: culture defends", () => {
     expect(battle.defense.culture).toBe(4);
   });
 
-  it("a captured territory keeps its culture, and now defends its new owner", () => {
+  it("a captured territory starts again at culture 0 for its new owner (session 16)", () => {
     const ctx = ctxWith();
     const s = lineGame(ctx);
     board(s, { a: ["p1", 1], b: ["p1", 40], c: ["p2", 1, [], { culture: 3 }], e: ["p2", 1] });
     const { state } = resolveTurn(ctx, s, { p1: [mv("b", "c", "all")] });
-    expect(state.territories.c).toMatchObject({ owner: "p1", culture: 3 });
+    expect(state.territories.c).toMatchObject({ owner: "p1", culture: 0 });
   });
 });

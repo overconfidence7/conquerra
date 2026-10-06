@@ -9,6 +9,7 @@ import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
 import { VersionLine } from "./Diagnostics";
 import { savedWhen, slotLine } from "./saveText";
+import { DEFAULT_HOUSE, HOUSE_PLAIN, HOUSES } from "../map/houses";
 
 /** Load game: loaded the first time it's opened. */
 const SavesDialog = lazy(() => import("./Saves"));
@@ -84,6 +85,27 @@ export function Lobby() {
         </span>
         <span className="muted small">
           {players} players{players >= rec.min && players <= rec.max ? " · a good fit for this map" : ` · this map suits ${rec.min}–${rec.max}`}
+        </span>
+      </div>
+
+      <div className="field">
+        <span className="field-name">Your House</span>
+        <span className="houses" role="radiogroup" aria-label="Your House colour">
+          {HOUSES.map((h, i) => (
+            <button
+              key={h.name}
+              role="radio"
+              aria-checked={(lobby.house ?? DEFAULT_HOUSE) === i}
+              aria-label={`${h.name} (${HOUSE_PLAIN[i]})`}
+              title={`${h.name} (${HOUSE_PLAIN[i]})`}
+              className={`house-swatch ${(lobby.house ?? DEFAULT_HOUSE) === i ? "on" : ""}`}
+              style={{ background: h.color }}
+              onClick={() => setLobby({ house: i })}
+            />
+          ))}
+        </span>
+        <span className="muted small">
+          {HOUSES[lobby.house ?? DEFAULT_HOUSE]!.name} ({HOUSE_PLAIN[lobby.house ?? DEFAULT_HOUSE]}). The bots take the other colours.
         </span>
       </div>
 

@@ -105,12 +105,15 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       // Both armies and both sides' losses: "You attacked Ashfell (Gules, 8 troops) with 10 troops and took it: you lost 3, they lost 8."
       const defenders = `${vsMe ? "yours" : e.defender ? who(e.defender) : "neutral"}, ${army(e.defenders)}`;
       const way = e.through?.length ? `, marching through ${e.through.map(place).join(" and ")}` : "";
-      const head = `${who(e.player)} attacked ${place(e.to)} (${defenders}) with ${army(e.attackers)}${way}`;
+      const leader = e.withLeader ? (mine ? " and your Leader" : " and their Leader") : "";
+      const head = `${who(e.player)} attacked ${place(e.to)} (${defenders}) with ${army(e.attackers)}${leader}${way}`;
+      // Culture is lost when land changes hands (session 16).
+      const lostCulture = e.captured && e.defense.culture > (e.keptCulture ?? 0) ? ` Its culture (level ${e.defense.culture}) was lost.` : "";
       // A general's own fights read as its story: "Your Leader, pushing toward Old March, took Ashfell (...)".
       const g = mine && e.general ? generalPhrase(n.view, n, e.general) : null;
       if (g)
         return {
-          text: `${g} ${e.captured ? "took" : "attacked"} ${place(e.to)} (${defenders}) with ${army(e.attackers)}${e.captured ? "" : " and was driven back"}: you lost ${e.result.attackerLosses}, they lost ${e.result.defenderLosses}.`,
+          text: `${g} ${e.captured ? "took" : "attacked"} ${place(e.to)} (${defenders}) with ${army(e.attackers)}${e.captured ? "" : " and was driven back"}: you lost ${e.result.attackerLosses}, they lost ${e.result.defenderLosses}.${lostCulture}`,
           tone: e.captured ? "good" : "bad",
         };
       const guard = vsMe && !e.captured && e.defense.leader && n.view?.me.command ? generalPhrase(n.view, n, n.view.me.id, e.to) : null;
@@ -122,7 +125,7 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       const held = explainHold(ctx, e, vsMe);
       const lostSpecs = e.specialistsLost.length ? ` Specialists lost: ${e.specialistsLost.map((s) => SPECIALIST_NAME[s].toLowerCase()).join(", ")}.` : "";
       const tone: Tone = mine ? (e.captured ? "good" : "bad") : vsMe ? (e.captured ? "bad" : "good") : "quiet";
-      return { text: `${head} ${result}: ${lossA}, ${lossD}.${held ? ` ${held}` : ""}${lostSpecs}`, tone };
+      return { text: `${head} ${result}: ${lossA}, ${lossD}.${held ? ` ${held}` : ""}${lostSpecs}${lostCulture}`, tone };
     }
     case "leaderKilled":
       return { text: `${isMe(e.player) ? "Your" : `${who(e.player)}'s`} Leader fell at ${place(e.territory)}.`, tone: isMe(e.player) ? "bad" : "good" };

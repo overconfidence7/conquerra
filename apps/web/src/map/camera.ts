@@ -30,6 +30,41 @@ export interface MapSize {
   y?: number;
 }
 
+/** A box on the screen (px). */
+export interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * The biggest clear part of the screen for a frame of this shape (width / height), given the menus over the map
+ * (session 16): fully zoomed out, the whole map sits clear of every menu, and you can pan any edge of it into that
+ * clear part at every zoom. Tries every box whose edges are the screen's or a menu's (plus `gap`), keeps the ones no
+ * menu overlaps, and picks the one the frame fits largest in (then the biggest). Returned as insets.
+ */
+export function clearInsets(width: number, height: number, covered: readonly Rect[], aspect: number, gap = 6): Insets {
+  const boxes = covered.filter((r) => r.width > 0 && r.height > 0 && r.x < width && r.y < height && r.x + r.width > 0 && r.y + r.height > 0);
+  const clampTo = (v: number, max: number) => Math.max(0, Math.min(max, v));
+  const xs = [...new Set([0, width, ...boxes.flatMap((r) => [clampTo(r.x - gap, width), clampTo(r.x + r.width + gap, width)])])].sort((a, b) => a - b);
+  const ys = [...new Set([0, height, ...boxes.flatMap((r) => [clampTo(r.y - gap, height), clampTo(r.y + r.height + gap, height)])])].sort((a, b) => a - b);
+  const clear = (x0: number, y0: number, x1: number, y1: number) => boxes.every((r) => r.x >= x1 || r.x + r.width <= x0 || r.y >= y1 || r.y + r.height <= y0);
+  let best = { fit: -1, area: -1, x0: 0, y0: 0, x1: width, y1: height };
+  for (let a = 0; a < xs.length; a++)
+    for (let b = a + 1; b < xs.length; b++)
+      for (let c = 0; c < ys.length; c++)
+        for (let d = c + 1; d < ys.length; d++) {
+          const x0 = xs[a]!, x1 = xs[b]!, y0 = ys[c]!, y1 = ys[d]!;
+          // How big the frame would be in this box (its height), and the box's area to break ties.
+          const fit = Math.min((x1 - x0) / aspect, y1 - y0);
+          const area = (x1 - x0) * (y1 - y0);
+          if (fit < best.fit || (fit === best.fit && area <= best.area)) continue;
+          if (clear(x0, y0, x1, y1)) best = { fit, area, x0, y0, x1, y1 };
+        }
+  return { left: best.x0, top: best.y0, right: width - best.x1, bottom: height - best.y1 };
+}
+
 /** The screen area not covered by menus. */
 export function usable(vp: Viewport): { left: number; top: number; width: number; height: number } {
   const i = vp.insets ?? { top: 0, right: 0, bottom: 0, left: 0 };

@@ -92,3 +92,32 @@ describe("saved games: the snapshot format", () => {
     expect(readSave(old)).toEqual({ ok: false, why: SAVE_PROBLEMS.older });
   });
 });
+
+describe("Houses chosen in the lobby (session 16)", () => {
+  const two = (a?: number, b?: number) => [
+    { id: "a", name: "Ann", ...(a !== undefined ? { house: a } : {}) },
+    { id: "b", name: "Bo", ...(b !== undefined ? { house: b } : {}) },
+  ];
+  it("each player gets the House they chose; the rest take the first ones free, in order", () => {
+    expect(createGame(ctx, { gameId: "g", seed: "h", players: two() }).players.map((p) => p.house)).toEqual([0, 1]);
+    expect(createGame(ctx, { gameId: "g", seed: "h", players: two(1) }).players.map((p) => p.house)).toEqual([1, 0]);
+    expect(createGame(ctx, { gameId: "g", seed: "h", players: two(undefined, 0) }).players.map((p) => p.house)).toEqual([1, 0]);
+    expect(() => createGame(ctx, { gameId: "g", seed: "h", players: two(3, 3) })).toThrow(/different House/);
+  });
+  it("is public in every view, and never changes how the game plays", () => {
+    const red = createGame(ctx, { gameId: "g", seed: "h", players: two(1, 4) });
+    const plain = createGame(ctx, { gameId: "g", seed: "h", players: two() });
+    expect(viewFor(ctx, red, "a").players.map((p) => p.house)).toEqual([1, 4]);
+    const strip = (s: GameState) => ({ ...s, players: s.players.map((p) => ({ ...p, house: 0 })) });
+    expect(stateFingerprint(strip(resolveTurn(ctx, red, {}).state))).toBe(stateFingerprint(strip(resolveTurn(ctx, plain, {}).state)));
+  });
+  it("a game saved before it keeps the colours it had: one per seat, in order (state version 7 -> 8)", () => {
+    const s = createGame(ctx, { gameId: "g", seed: "h", players: two() });
+    const old = JSON.parse(JSON.stringify(s)) as Record<string, unknown>;
+    old.version = 7;
+    for (const p of old.players as Record<string, unknown>[]) delete p.house;
+    const read = readSave(JSON.parse(JSON.stringify({ ...makeSave(ctx, s, "a", 0), state: old })));
+    expect(read.ok).toBe(true);
+    if (read.ok) expect(stateFingerprint(read.save.state)).toBe(stateFingerprint(s));
+  });
+});

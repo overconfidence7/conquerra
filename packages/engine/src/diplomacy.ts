@@ -1,5 +1,5 @@
 import type { Rules } from "@conquerra/content";
-import { cultureProtection } from "./economy";
+import { cultureKept, cultureProtection } from "./economy";
 import { indexMap, type MapIndex } from "./mapIndex";
 import type {
   Deal,
@@ -344,15 +344,15 @@ function startDeal(h: DiplomacyHost, offer: Offer) {
 
 /**
  * Land changes hands by agreement: the giver's troops (and specialists) step back to its own strongest neighbouring
- * territory, one of the receiver's troops moves in from its strongest neighbouring army, and buildings and culture
- * stay with the land (as on a conquest). Returns the land as it is afterwards.
+ * territory, one of the receiver's troops moves in from its strongest neighbouring army, and buildings stay with the
+ * land while its culture is lost (as on a conquest, session 16). Returns the land as it is afterwards.
  */
 function handOver(h: DiplomacyHost, giver: PlayerId, receiver: PlayerId, land: readonly TerritoryId[]): LandChange[] {
   const { s, idx, ctx } = h;
   const out = new Map<TerritoryId, LandChange>();
   const note = (t: TerritoryId) => {
     const x = s.territories[t]!;
-    out.set(t, { territory: t, owner: x.owner, troops: x.troops, specialists: x.specialists.map((sp) => ({ ...sp })) });
+    out.set(t, { territory: t, owner: x.owner, troops: x.troops, specialists: x.specialists.map((sp) => ({ ...sp })), culture: x.culture });
   };
   for (const t of land) {
     const here = s.territories[t]!;
@@ -369,6 +369,7 @@ function handOver(h: DiplomacyHost, giver: PlayerId, receiver: PlayerId, land: r
     s.territories[from]!.troops -= 1;
     here.owner = receiver;
     here.troops = 1;
+    here.culture = cultureKept(ctx.rules, here.culture);
     here.specialists = [];
     for (const x of [t, back, from]) note(x);
   }

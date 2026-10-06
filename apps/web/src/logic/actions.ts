@@ -66,6 +66,7 @@ export function incomeEstimate(ctx: GameContext, view: PlayerView): number {
       ? { owner: v.owner, troops: v.troops, specialists: v.specialists, building: v.building, construction: v.construction, culture: v.culture }
       : { owner: null, troops: 0, specialists: [], building: null, construction: null, culture: 0 };
   }
-  const state = { territories, players: [view.me] } as unknown as GameState;
+  // Your spies (only yours are in your view) cost their upkeep while away.
+  const state = { territories, players: [view.me], spies: view.spies.map((x) => ({ ...x, owner: view.me.id })) } as unknown as GameState;
   return incomeFor(ctx, state, view.me.id).net;
 }

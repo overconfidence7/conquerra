@@ -45,11 +45,14 @@ export function expandPreset(order: Order): Order {
       add({ kind: "not", condition: { kind: "outnumbered", territory: o.from } });
       o.fallback = { id: `${o.id}:retreat`, kind: "retreat", from: o.from, ...(o.fallback ? { fallback: o.fallback } : {}) };
       break;
-    case "followThrough":
+    case "followThrough": {
+      // The Leader (or a captured general) that went with the attack goes on with its army (session 16).
+      const along = { ...(o.withLeader ? { withLeader: true } : {}), ...(o.withGeneral ? { withGeneral: o.withGeneral } : {}) };
       o.then = p.next
-        ? { id: `${o.id}:next`, kind: "move", from: o.to, to: p.next, troops: "all", conditions: [{ kind: "odds", atLeast: "likely" }] }
-        : { id: `${o.id}:next`, kind: "advance", from: o.to };
+        ? { id: `${o.id}:next`, kind: "move", from: o.to, to: p.next, troops: "all", ...along, conditions: [{ kind: "odds", atLeast: "likely" }] }
+        : { id: `${o.id}:next`, kind: "advance", from: o.to, ...along };
       break;
+    }
     case "reinforceIfHit":
       add({ kind: "attackedThisTurn", territory: o.to });
       break;

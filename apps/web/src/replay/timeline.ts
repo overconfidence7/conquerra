@@ -380,6 +380,7 @@ export function replayView(before: PlayerView, events: readonly ReplayEvent[], a
             t.owner = e.player;
             t.troops = survivors;
             t.specialists = specs;
+            t.culture = e.keptCulture ?? t.culture;
             // Taking back your own capital (or a rival's you've seen) makes it a capital again.
             t.capitalOf = capitals.get(e.to) === e.player ? e.player : null;
           } else {
@@ -396,7 +397,7 @@ export function replayView(before: PlayerView, events: readonly ReplayEvent[], a
         break;
       case "worldEvent":
         for (const l of e.losses ?? []) edit(l.territory, (t) => (t.troops -= l.troops));
-        if (e.flipped) edit(e.target, (t) => ((t.owner = null), (t.troops = e.rebels!), (t.specialists = []), (t.capitalOf = null)));
+        if (e.flipped) edit(e.target, (t) => ((t.owner = null), (t.troops = e.rebels!), (t.specialists = []), (t.culture = 0), (t.capitalOf = null)));
         if (e.at) edit(e.at, (t) => (t.troops += e.troops!));
         break;
       case "generalLost":

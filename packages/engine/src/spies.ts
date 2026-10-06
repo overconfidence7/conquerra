@@ -8,7 +8,8 @@ import { visionFor } from "./vision";
 /**
  * Spies (session 15, design additions §8, with Nate's Oct 6 decisions). Every number is in `rules.spies`.
  *
- *  - **A spy is its own piece**, hired at your capital or a barracks (8 gold, 1 gold upkeep, up to 5). Only its owner
+ *  - **A spy is its own piece**, hired at your capital or a barracks (8 gold, up to 5). Upkeep only while away: free in
+ *    your own land, 1 gold a turn while travelling or inside land you don't hold (session 16). Only its owner
  *    ever sees it.
  *  - **Spies act between turns.** Sending one (or calling it home) is an order that takes no slot; as the turn ends,
  *    after every army's move, called-home spies are back at the capital, the others travel 2 territories toward the

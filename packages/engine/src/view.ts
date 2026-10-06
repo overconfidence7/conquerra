@@ -53,7 +53,7 @@ export interface PlayerView {
    * Public facts about every player (no gold, no capital location). `spoils`: how many Spoils cards they hold (never
    * which). `oathbreaker`: the turn their Oathbreaker mark lasts through (0: none showing).
    */
-  players: { id: PlayerId; name: string; eliminatedTurn: number | null; eliminatedBy: PlayerId | null; spoils: number; oathbreaker: number }[];
+  players: { id: PlayerId; name: string; eliminatedTurn: number | null; eliminatedBy: PlayerId | null; spoils: number; oathbreaker: number; house: number }[];
   territories: Record<TerritoryId, TerritoryView>;
   settings: GameSettings;
   seedCommitment: string;
@@ -185,6 +185,7 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
       eliminatedBy: p.eliminatedBy,
       spoils: p.spoils.length,
       oathbreaker: (p.oathbreaker ?? 0) >= state.turn ? p.oathbreaker : 0,
+      house: p.house,
     })),
     territories,
     settings: { ...state.settings },

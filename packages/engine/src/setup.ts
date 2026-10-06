@@ -9,7 +9,8 @@ export interface NewGameOptions {
   gameId: string;
   /** Secret until the game ends. Use a long random string in production. */
   seed: string;
-  players: { id: string; name: string }[];
+  /** `house`: which House colour (an index into the ten; default: the first not taken, in this order). */
+  players: { id: string; name: string; house?: number }[];
   settings?: Partial<GameSettings>;
 }
 
@@ -63,6 +64,18 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   if (!Number.isInteger(settings.turnTimerSeconds) || settings.turnTimerSeconds < g.turnTimerSecondsMin || settings.turnTimerSeconds > g.turnTimerSecondsMax)
     throw new Error(`turnTimerSeconds must be between ${g.turnTimerSecondsMin} and ${g.turnTimerSecondsMax}`);
 
+  // Houses: as chosen, the rest the first ones not taken (in the caller's order).
+  const houses = new Map<string, number>();
+  for (const p of opts.players) if (p.house !== undefined) {
+    if (!Number.isInteger(p.house) || p.house < 0 || [...houses.values()].includes(p.house)) throw new Error("Each player needs a different House");
+    houses.set(p.id, p.house);
+  }
+  for (const p of opts.players) if (!houses.has(p.id)) {
+    let h = 0;
+    while ([...houses.values()].includes(h)) h++;
+    houses.set(p.id, h);
+  }
+
   const rng = new Rng(seedRng(opts.seed));
   const seats = rng.shuffle(opts.players);
   const capitals = pickCapitals(map, n, rng);
@@ -90,13 +103,14 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
       missions: [],
       oathbreaker: 0,
       purse: [],
+      house: houses.get(p.id)!,
     };
   });
   // Keep the player list in the caller's order; seats are reshuffled every turn anyway.
   players.sort((a, b) => opts.players.findIndex((p) => p.id === a.id) - opts.players.findIndex((p) => p.id === b.id));
 
   const state: GameState = {
-    version: 7,
+    version: 8,
     gameId: opts.gameId,
     mapId: map.id,
     turn: 1,

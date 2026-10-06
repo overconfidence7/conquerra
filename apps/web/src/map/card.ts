@@ -88,7 +88,9 @@ export function cultureLine(ctx: GameContext, view: PlayerView, id: TerritoryId,
     const cost = investCost(ctx.rules, 0);
     return (mine && cost !== null ? `No culture yet: raising it costs ${cost} gold` : "No culture yet") + ladder;
   }
-  return `Culture ${level}: ${cultureEffects(ctx, view, id, level, levels).slice(0, 3).join(", ")}${ladder}`;
+  // Culture is lost when land changes hands (session 16): on someone else's land, say so.
+  const lost = v?.detail === "full" && !mine && v.owner ? ". Lost if you take it" : "";
+  return `Culture ${level}: ${cultureEffects(ctx, view, id, level, levels).slice(0, 3).join(", ")}${lost}${ladder}`;
 }
 
 /**

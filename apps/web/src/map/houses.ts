@@ -21,7 +21,8 @@ export interface House {
 }
 
 /**
- * The ten House tinctures (docs/06-art-direction.md), in seat order: you are always the first (Azure).
+ * The ten House tinctures (docs/06-art-direction.md). You choose yours in the lobby (Gules, red, by default since
+ * session 16); the bots take the rest in this order.
  * Each also has its own pattern, so colourblind players can tell them apart.
  */
 export const HOUSES: readonly House[] = [
@@ -38,16 +39,23 @@ export const HOUSES: readonly House[] = [
   { name: "Sable", color: "#2a2b33", glow: "#9aa0b4", land: "#3d404c", ink: "#f2f2f2", pattern: "quarterly" },
 ];
 
+/** Your House unless you choose another in the lobby: Gules, red (session 16, Nate). */
+export const DEFAULT_HOUSE = 1;
+
+/** Each tincture in plain words, for the lobby's House choice. */
+export const HOUSE_PLAIN: readonly string[] = ["blue", "red", "gold", "green", "purple", "orange", "teal", "mulberry", "silver", "black"];
+
 /** Unowned land. */
 export const NEUTRAL_HOUSE: House = { name: "Neutral", color: "#d8cdb0", glow: "#f3ead2", land: "#d8cdb0", ink: "#2b2418", pattern: "plain" };
 
-/** Which House a player is: their seat in the player list. */
-export function houseIndex(view: Pick<PlayerView, "players">, owner: string | null): number {
+/** Which House a player is: the one chosen in the lobby (session 16; older views: their seat in the player list). */
+export function houseIndex(view: { players: readonly { id: string; house?: number }[] }, owner: string | null): number {
   if (!owner) return -1;
-  return view.players.findIndex((p) => p.id === owner);
+  const i = view.players.findIndex((p) => p.id === owner);
+  return i < 0 ? -1 : (view.players[i]!.house ?? i);
 }
 
-export function houseOf(view: Pick<PlayerView, "players">, owner: string | null): House {
+export function houseOf(view: { players: readonly { id: string; house?: number }[] }, owner: string | null): House {
   const i = houseIndex(view, owner);
   return i < 0 ? NEUTRAL_HOUSE : HOUSES[i % HOUSES.length]!;
 }

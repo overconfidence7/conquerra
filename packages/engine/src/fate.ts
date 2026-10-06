@@ -169,7 +169,7 @@ function strike(h: FateHost, rng: Rng, ev: FateEvent, at: TerritoryId, drawer: P
         hit.add(l.territory);
       }
       if (ev.effect === "plague" && !eff.losses?.length) return shrug();
-      if (eff.flipped) land.push({ territory: at, owner: null, troops: t.troops, specialists: [] });
+      if (eff.flipped) land.push({ territory: at, owner: null, troops: t.troops, specialists: [], culture: 0 });
       h.emit({
         ...base,
         shrugged: false,

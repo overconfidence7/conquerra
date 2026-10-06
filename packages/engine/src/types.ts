@@ -218,6 +218,11 @@ export interface PlayerState {
   oathbreaker: number;
   /** Governing generals' progress toward their next purchase (session 15). Only you see it. */
   purse: Purse[];
+  /**
+   * Which House you are (session 16): an index into the ten House colours and banners (0 Azure, 1 Gules, ...), chosen
+   * in the lobby. Only how the game looks: the rules never read it. Public.
+   */
+  house: number;
 }
 
 // ---------- Spies (session 15) ----------
@@ -303,7 +308,7 @@ export interface GameSettings {
 }
 
 export interface GameState {
-  version: 7;
+  version: 8;
   gameId: string;
   mapId: string;
   turn: number;
@@ -429,8 +434,11 @@ export type OrderBody =
    * Played as the turn starts, before anyone's orders.
    */
   | { kind: "worldEvent"; event: WorldEventKind; target: TerritoryId; across?: TerritoryId; influence: number }
-  /** Attack the weakest neighbour of `from` that the army can likely take (used by followThrough). */
-  | { kind: "advance"; from: TerritoryId }
+  /**
+   * Attack the weakest neighbour of `from` that the army can likely take (used by followThrough). The Leader or a
+   * captured general that went with the attack goes on with it (session 16).
+   */
+  | { kind: "advance"; from: TerritoryId; withLeader?: boolean; withGeneral?: PlayerId }
   /**
    * Turn in a Spoils set for its windfall. `territory`: where a Tower set's fort goes, or the province a Laurel set
    * raises culture in (default: your capital).
@@ -617,6 +625,8 @@ export type GameEvent =
       defenders: ArmySnapshot;
       result: CombatResult;
       captured: boolean;
+      /** On a capture: the culture the land keeps for its new owner (session 16: by default none). */
+      keptCulture?: number;
       /** Specialists that were lost with a destroyed army. */
       specialistsLost: SpecialistType[];
       /** What helped the defenders, beyond terrain and the border (both come from the map): for "They held: hills and a fort". */

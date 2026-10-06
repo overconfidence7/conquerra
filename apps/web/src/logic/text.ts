@@ -13,7 +13,7 @@ export const SPECIALIST_HELP: Record<SpecialistType, string> = {
   rangers: "Attacking, forest, hills and swamp defend like plains",
   standardBearer: "Attacks 10% stronger",
 };
-export const SPY_HELP = "Its own piece: send it to a province to see behind the lines, or guard one you hold whole (1 gold a turn)";
+export const SPY_HELP = "Its own piece: send it to a province to see behind the lines, or guard one you hold whole (free in your own land, 1 gold a turn while away)";
 export const BUILDING_ICON: Record<BuildingType, string> = { fort: "🏰", market: "💰", barracks: "⚔️", watchtower: "🗼" };
 export const BUILDING_NAME: Record<BuildingType, string> = { fort: "Fort", market: "Market", barracks: "Barracks", watchtower: "Watchtower" };
 export const BUILDING_HELP: Record<BuildingType, string> = {

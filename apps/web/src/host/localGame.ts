@@ -19,6 +19,7 @@ import {
 } from "@conquerra/engine";
 import { buildTimeline } from "../replay/timeline";
 import { BOT_NAMES } from "./names";
+import { DEFAULT_HOUSE } from "../map/houses";
 import type { BotLevel, HostStart, HostUpdate, LobbySettings } from "./protocol";
 import type { TurnClock } from "../logic/timer";
 
@@ -121,7 +122,8 @@ export class LocalGame {
       this.botLevel = settings.botLevel in BOTS ? settings.botLevel : "captain";
       const bots = Math.max(1, Math.min(map.maxPlayers - 1, BOT_NAMES.length, Math.floor(settings.bots)));
       const players = [
-        { id: HUMAN_ID, name: "You" },
+        // You are Gules (red) unless you chose another House; the bots take the rest in order.
+        { id: HUMAN_ID, name: "You", house: settings.house ?? DEFAULT_HOUSE },
         ...BOT_NAMES.slice(0, bots).map((name, i) => ({ id: `bot${i + 1}`, name })),
       ];
       const setup: NewGameOptions = {

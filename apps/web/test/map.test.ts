@@ -2,10 +2,10 @@ import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { createGame, resolveTurn, viewFor, type GameContext, type PlayerView } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
-import { clampCamera, fitCamera, toMap, toScreen, zoomAt } from "../src/map/camera";
+import { clampCamera, clearInsets, fitCamera, toMap, toScreen, zoomAt } from "../src/map/camera";
 import { cultureLine, cultureNext, ladderLine, seenAgo, territoryCard } from "../src/map/card";
 import { hireOptions, planQueue } from "../src/logic/orders";
-import { HOUSES, houseOf } from "../src/map/houses";
+import { DEFAULT_HOUSE, HOUSES, houseOf } from "../src/map/houses";
 import { layoutMarkers, markerMetrics, MIN_PILL_HEIGHT, pillHeight, type MarkerBox, type MarkerContent } from "../src/map/layout";
 import { groupOutlines, hitTester, insideRings } from "../src/map/shapes";
 import { markerContent, territoryStatus } from "../src/map/status";
@@ -299,5 +299,57 @@ describe("Houses", () => {
     const view = fogGame();
     expect(houseOf(view, view.me.id).name).toBe("Azure");
     expect(houseOf(view, null).name).toBe("Neutral");
+  });
+});
+
+describe("room at the map's edges (session 16)", () => {
+  it("fits the map into the biggest clear part of the screen, clear of every menu", () => {
+    // A desktop: top bar, right column, a bottom-left panel and a bottom-right dock.
+    const menus = [
+      { x: 8, y: 8, width: 1424, height: 58 },
+      { x: 1148, y: 72, width: 284, height: 453 },
+      { x: 8, y: 72, width: 452, height: 820 },
+      { x: 812, y: 676, width: 620, height: 216 },
+    ];
+    const ins = clearInsets(1440, 900, menus, 1.3);
+    const box = { x: ins.left, y: ins.top, width: 1440 - ins.left - ins.right, height: 900 - ins.top - ins.bottom };
+    for (const m of menus) expect(box.x >= m.x + m.width || box.x + box.width <= m.x || box.y >= m.y + m.height || box.y + box.height <= m.y).toBe(true);
+    // The whole map fits inside it, zoomed all the way out.
+    const map = { width: 1300, height: 1000 };
+    const vp = { width: 1440, height: 900, insets: ins };
+    const cam = fitCamera(map, vp);
+    const [x0, y0] = toScreen(cam, 0, 0);
+    const [x1, y1] = toScreen(cam, map.width, map.height);
+    expect(x0).toBeGreaterThanOrEqual(box.x);
+    expect(y0).toBeGreaterThanOrEqual(box.y);
+    expect(x1).toBeLessThanOrEqual(box.x + box.width);
+    expect(y1).toBeLessThanOrEqual(box.y + box.height);
+  });
+  it("with no menus, it's the whole screen; a tall map prefers a tall clear strip", () => {
+    expect(clearInsets(800, 600, [], 1.5)).toEqual({ left: 0, top: 0, right: 0, bottom: 0 });
+    // A menu across the top-right: a tall map takes the full-height strip to its left.
+    const ins = clearInsets(800, 600, [{ x: 400, y: 0, width: 400, height: 200 }], 0.5, 0);
+    expect(ins).toEqual({ left: 0, top: 0, right: 400, bottom: 0 });
+  });
+  it("lets you pan every edge of a zoomed-in map into the clear part", () => {
+    const ins = { left: 460, top: 70, right: 360, bottom: 230 };
+    const vp = { width: 1440, height: 900, insets: ins };
+    const map = { width: 1300, height: 1000 };
+    // Push far past each edge: the clamp stops with the map's edge inside the clear part.
+    const right = clampCamera({ x: -99999, y: 0, scale: 2 }, map, vp);
+    expect(toScreen(right, map.width, 0)[0]).toBeLessThanOrEqual(1440 - ins.right);
+    const left = clampCamera({ x: 99999, y: 0, scale: 2 }, map, vp);
+    expect(toScreen(left, 0, 0)[0]).toBeGreaterThanOrEqual(ins.left);
+    const bottom = clampCamera({ x: 0, y: -99999, scale: 2 }, map, vp);
+    expect(toScreen(bottom, 0, map.height)[1]).toBeLessThanOrEqual(900 - ins.bottom);
+  });
+});
+
+describe("House colours (session 16)", () => {
+  it("each player shows the House they chose; older views fall back to their seat", () => {
+    expect(houseOf({ players: [{ id: "you", house: 1 }, { id: "bot", house: 0 }] }, "you").name).toBe("Gules");
+    expect(houseOf({ players: [{ id: "you", house: 1 }, { id: "bot", house: 0 }] }, "bot").name).toBe("Azure");
+    expect(houseOf({ players: [{ id: "x" }, { id: "y" }] }, "y").name).toBe("Gules");
+    expect(HOUSES[DEFAULT_HOUSE]!.name).toBe("Gules");
   });
 });

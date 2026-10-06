@@ -46,6 +46,7 @@ const SpyRows = lazy(() => import("./Spies").then((m) => ({ default: m.SpyRows }
 const spyNews = (view: PlayerView, t: TerritoryId) => view.spies.some((s) => s.at === t) || ((v) => v?.detail === "full" && v.seenBy.includes("spy"))(view.territories[t]);
 import { CardRows } from "./TerritoryCard";
 import { CommandRow } from "./Command";
+import { HintButton } from "./HintButton";
 import { generalIn } from "../logic/generals";
 
 const CROSSING = { river: "🌊 Across a river", pass: "⛰ Through a mountain pass", sea: "⛵ Over a sea lane" } as const;
@@ -268,35 +269,43 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
         </button>
       </div>
 
-      {view.me.leader.alive && (more || draft.withLeader || draft.timing) && (
+      {/* Your Leader goes with an army leaving its land by default (session 16); one tap leaves it home. */}
+      {leaderCanJoin(view, draft.from, plan) && (
+        <div className="chips leader-choice" role="radiogroup" aria-label="Your Leader">
+          <button role="radio" aria-checked={draft.withLeader} className={`chip ${draft.withLeader ? "on" : ""}`} onClick={() => updateDraft({ withLeader: true })} title="Your Leader goes with this army (+20% strength) and carries on with it through a chain">
+            👑 Leader goes (+20%)
+          </button>
+          <button role="radio" aria-checked={!draft.withLeader} className={`chip ${!draft.withLeader ? "on" : ""}`} onClick={() => updateDraft({ withLeader: false })} title="Your Leader stays where it is">
+            Stays home
+          </button>
+        </div>
+      )}
+      {view.me.leader.alive && (more || draft.timing) && (timingAvailable(view, queue, "first") || timingAvailable(view, queue, "last") || draft.timing) && (
         <div className="chips">
-          {leaderCanJoin(view, draft.from) && (
-            <button className={`chip leader ${draft.withLeader ? "on" : ""}`} onClick={() => updateDraft({ withLeader: !draft.withLeader })} title="Your Leader goes with this army: +20% strength">
-              👑 Leader leads (+20%)
-            </button>
-          )}
           {(timingAvailable(view, queue, "first") || draft.timing === "first") && (
-            <button
-              className={`chip leader ${draft.timing === "first" ? "on" : ""}`}
+            <HintButton
+              className={`chip ${draft.timing === "first" ? "on" : ""}`}
+              aria-pressed={draft.timing === "first"}
               onClick={() => updateDraft({ timing: draft.timing === "first" ? null : "first" })}
-              title="This order goes before everyone else's. Then it rests for a few turns."
+              hint={`Seize the Initiative: this order goes before everyone else's. Your Leader can do it once every ${ctx.rules.leader.seizeInitiativeCooldown} turns.`}
             >
-              ⚡ Seize the Initiative
-            </button>
+              Initiative
+            </HintButton>
           )}
           {(timingAvailable(view, queue, "last") || draft.timing === "last") && (
-            <button
-              className={`chip leader ${draft.timing === "last" ? "on" : ""}`}
+            <HintButton
+              className={`chip ${draft.timing === "last" ? "on" : ""}`}
+              aria-pressed={draft.timing === "last"}
               onClick={() => updateDraft({ timing: draft.timing === "last" ? null : "last" })}
-              title="This order goes after everyone else's. Pairs well with Reinforce if hit."
+              hint={`Lie in Wait: this order goes after everyone else's, once you've seen where they struck. Pairs well with Reinforce if hit. Once every ${ctx.rules.leader.lieInWaitCooldown} turns.`}
             >
-              ⏳ Lie in Wait
-            </button>
+              Wait
+            </HintButton>
           )}
         </div>
       )}
 
-      {!more && !draft.withLeader && !draft.timing && <p className="muted small">More… has an exact number{view.me.leader.alive ? ", the Leader" : ""} and the other backup plans.</p>}
+      {!more && !draft.timing && <p className="muted small">More… has an exact number{view.me.leader.alive ? ", Initiative and Wait" : ""} and the other backup plans.</p>}
       <button className="primary wide" disabled={troops <= 0 || blocked} onClick={addDraft}>
         Add {attack ? "attack" : "move"}
       </button>

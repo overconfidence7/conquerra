@@ -1,5 +1,6 @@
 import { defaultRules, mapCatalog, suggestedMode } from "@conquerra/content";
 import { BOT_NAMES } from "./host/names";
+import { DEFAULT_HOUSE, HOUSES } from "./map/houses";
 import { indexMap, isShare, type DealKind, type GameContext, type Instruction, type Offer, type Order, type PlayerId, type PlayerView, type RecruitAmount, type SpoilsSet, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
 import { asIfYouOrderFrom, instructOrders, takeControl, withGeneralOrders } from "./logic/generals";
 import { create } from "zustand";
@@ -195,9 +196,20 @@ export const knockedOut = (view: PlayerView) => view.winner === null && view.pla
 let orderCounter = 0;
 const nextOrderId = () => `o${++orderCounter}`;
 
+/** Your House colour, remembered on this device (Gules, red, until you pick another). */
+const HOUSE_KEY = "conquerra.house";
+function rememberedHouse(): number {
+  try {
+    const n = Number(localStorage.getItem(HOUSE_KEY));
+    return localStorage.getItem(HOUSE_KEY) !== null && Number.isInteger(n) && n >= 0 && n < HOUSES.length ? n : DEFAULT_HOUSE;
+  } catch {
+    return DEFAULT_HOUSE;
+  }
+}
+
 const defaultLobby = (): LobbySettings => {
   const bots = 3;
-  return { mapId: "embervale", bots, botLevel: "captain", luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER, fate: true, diplomacy: true };
+  return { mapId: "embervale", bots, botLevel: "captain", luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER, fate: true, diplomacy: true, house: rememberedHouse() };
 };
 
 export const useGame = create<GameStore>((set, get) => ({
@@ -302,6 +314,12 @@ export const useGame = create<GameStore>((set, get) => ({
     const touched = modeTouched || patch.mode !== undefined;
     // Until the host picks a mode, follow the suggestion for the table size.
     if (!touched) next.mode = suggestedMode(next.bots + 1);
+    if (patch.house !== undefined)
+      try {
+        localStorage.setItem(HOUSE_KEY, String(patch.house));
+      } catch {
+        // A private window: it's remembered for this visit only.
+      }
     set({ lobby: next, modeTouched: touched });
   },
 

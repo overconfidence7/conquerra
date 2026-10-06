@@ -1,7 +1,7 @@
 import type { BorderType, SpecialistType } from "@conquerra/content";
 import { fewestToTake, recruitCount, troopsFor } from "./amounts";
 import { expectBattle, rollLosses, type BattleExpectation } from "./combat";
-import { canRecruitAt, cultureProtection, incomeFor, investCost, provinceCulture, scoreFor, specialistUnlocked } from "./economy";
+import { canRecruitAt, cultureKept, cultureProtection, incomeFor, investCost, provinceCulture, scoreFor, specialistUnlocked } from "./economy";
 import { updateIntel } from "./intel";
 import { borderKey, fallenEndOfTurn, playWorldEvents } from "./fallen";
 import { distancesFrom, indexMap, type MapIndex } from "./mapIndex";
@@ -389,7 +389,7 @@ class Turn {
       case "retreat":
         return this.retreat(pid, o.from, o.id);
       case "advance":
-        return this.advance(pid, o.from, o.id);
+        return this.advance(pid, o.from, o.id, { ...(o.withLeader ? { withLeader: true } : {}), ...(o.withGeneral ? { withGeneral: o.withGeneral } : {}) });
       case "hireSpy": {
         const why = hireSpy(this, p, o.territory, o.id);
         return why ? fz(why.code, { territory: o.territory, ...(why.cost !== undefined ? { gold: why.gold, cost: why.cost } : {}) }) : null;
@@ -568,15 +568,19 @@ class Turn {
     const specialistsLost: SpecialistType[] = [];
 
     const captured = to.troops === 0 && survivors > 0;
+    /** The defenders' culture as the battle was fought (for the report: it's lost if the land falls). */
+    const defCulture = to.culture;
     /** Leaders who fall in this battle. They're announced right after it, so the event log reads in order. */
     const fallen: PlayerState[] = [];
     /** Captured generals lost in this battle (the defender's on a capture; the attacker's if its army is wiped out). */
     const lost: { owner: PlayerState; of: PlayerId; by: PlayerId | null }[] = [];
     const standing = defender ? defender.captured.filter((g) => g.territory === o.to).map((g) => g.of) : [];
     if (captured) {
-      // The defending army is gone; its specialists are lost with it. Buildings and culture stay with the land.
+      // The defending army is gone; its specialists are lost with it. Buildings stay with the land; its culture is
+      // lost (session 16: culture is an investment in land you mean to keep).
       specialistsLost.push(...to.specialists.map((s) => s.type));
       to.owner = pid;
+      to.culture = cultureKept(this.ctx.rules, to.culture);
       to.troops = survivors;
       to.specialists = [...plan.specialists];
       // The winners can push on from here in a later order (chained attacks).
@@ -624,8 +628,9 @@ class Turn {
         attackerLosses: atkLoss,
       },
       captured,
+      ...(captured ? { keptCulture: to.culture } : {}),
       specialistsLost,
-      defense: { fort: exp.fortCounted, culture: to.culture, leader: defenderLeader, ...(standing.length ? { generals: standing } : {}) },
+      defense: { fort: exp.fortCounted, culture: defCulture, leader: defenderLeader, ...(standing.length ? { generals: standing } : {}) },
     });
     for (const f of fallen) {
       f.leader = { alive: false, territory: null };
@@ -652,13 +657,13 @@ class Turn {
   }
 
   /** Attack the neighbour of `fromId` this army is most likely to take (used by "Follow through"). */
-  advance(pid: PlayerId, fromId: TerritoryId, orderId: string): Fizzle | null {
+  advance(pid: PlayerId, fromId: TerritoryId, orderId: string, along: Pick<MoveOrder, "withLeader" | "withGeneral"> = {}): Fizzle | null {
     const from = this.terr(fromId);
     if (!from || from.owner !== pid) return fz("lostStart", { territory: fromId });
     let best: { to: TerritoryId; margin: number } | null = null;
     for (const n of this.idx.neighbors.get(fromId) ?? []) {
       if (this.terr(n)!.owner === pid || this.closed.has(borderKey(fromId, n)) || anyDealAcross(this, fromId, n)) continue;
-      const order: MoveOrder = { kind: "move", from: fromId, to: n, troops: "all" };
+      const order: MoveOrder = { kind: "move", from: fromId, to: n, troops: "all", ...along };
       const plan = this.planMove(pid, order);
       if (isFizzle(plan)) return plan;
       const e = this.expect(pid, n, plan);
@@ -667,7 +672,7 @@ class Turn {
       if (!best || margin > best.margin) best = { to: n, margin };
     }
     if (!best) return fz("noTarget", { territory: fromId });
-    return this.move(pid, { kind: "move", from: fromId, to: best.to, troops: "all" }, orderId, false);
+    return this.move(pid, { kind: "move", from: fromId, to: best.to, troops: "all", ...along }, orderId, false);
   }
 
   checkEliminated(pid: PlayerId) {

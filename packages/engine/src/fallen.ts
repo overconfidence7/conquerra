@@ -84,6 +84,7 @@ export function worldEventEffect(h: WorldEventHost, event: WorldEventKind, targe
       if (flipped) {
         t.owner = null;
         t.troops = rebels;
+        t.culture = 0;
         t.specialists = [];
         const p = s.players.find((x) => x.id === against)!;
         // (As in a battle: the Leader falls, and a captured general there is lost, once the event has been announced.)

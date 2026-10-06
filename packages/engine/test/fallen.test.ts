@@ -100,6 +100,12 @@ describe("the Fallen: every cap holds", () => {
     const r = resolveTurn(ctx, s, { p3: [ev("uprising", "e", 25)] });
     expect(find(r.events, "worldEvent")).toMatchObject({ event: "uprising", flipped: true });
     expect(r.state.territories.e!.owner).toBeNull();
+    // Land the rebels take loses its culture, as on any change of hands (session 16).
+    const cultured = game();
+    cultured.territories.e!.troops = 1;
+    cultured.territories.e!.culture = 1;
+    const rc = resolveTurn(ctx, cultured, { p3: [ev("uprising", "e", 25)] });
+    if (find(rc.events, "worldEvent")?.flipped) expect(rc.state.territories.e!.culture).toBe(0);
     const strong = game();
     strong.territories.e!.troops = cfg.events.uprising.maxTroops + 1;
     expect(find(resolveTurn(ctx, strong, { p3: [ev("uprising", "e", 25)] }).events, "worldEventFailed")).toMatchObject({ reason: "tooStrong" });

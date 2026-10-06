@@ -183,7 +183,8 @@ describe("tapping the map", () => {
   it("tap your territory to select it, then a neighbour to draft a move or attack", () => {
     expect(tapTerritory(ctx, view, plan, null, "a")).toEqual({ kind: "select", territory: "a" });
     const t = tapTerritory(ctx, view, plan, "a", "b");
-    expect(t).toMatchObject({ kind: "draft", draft: { from: "a", to: "b", amount: "enough", preset: "onlyIfStronger", withLeader: false, timing: null } });
+    // From where your Leader stands, it goes with the army by default (session 16).
+    expect(t).toMatchObject({ kind: "draft", draft: { from: "a", to: "b", amount: "enough", preset: "onlyIfStronger", withLeader: true, timing: null } });
   });
   it("attacks start with 'Only if still stronger' switched on; moves into your own land start with no preset", () => {
     const own = game({ a: ["you", 12], b: ["you", 2], e: ["bot", 10] });
@@ -275,5 +276,40 @@ describe("turn log", () => {
       "Income +10, upkeep −0: you now have 30 gold.",
     ]);
     expect(lines.join(" ")).not.toContain("bot");
+  });
+});
+
+describe("the Leader goes with the attack (session 16)", () => {
+  it("a draft from where your Leader stands takes it along; from anywhere else it can't", () => {
+    const s = game({ a: ["you", 20], b: ["you", 5], e: ["bot", 3] });
+    const v = viewOf(s);
+    const plan = planQueue(ctx, v, []);
+    expect(newDraft(ctx, v, plan, { from: "a", to: "b" }).withLeader).toBe(true);
+    expect(newDraft(ctx, v, plan, { from: "b", to: "c" }).withLeader).toBe(false);
+  });
+
+  it("each hop of a chain carries the Leader on, as long as it went with the step before", () => {
+    const s = game({ a: ["you", 30], e: ["bot", 3] });
+    const v = viewOf(s);
+    const first = (tapTerritory(ctx, v, planQueue(ctx, v, []), "a", "b") as { draft: MoveDraft }).draft;
+    expect(first.withLeader).toBe(true);
+    const q1 = [draftToOrder(first, "h1")];
+    const p1 = planQueue(ctx, v, q1);
+    expect(p1.leaderAt).toBe("b");
+    // With the army still selected, tap a neighbour of b: the hop takes the Leader on.
+    const hop = (tapTerritory(ctx, v, p1, "a", "c", q1) as { draft: MoveDraft }).draft;
+    expect(hop).toMatchObject({ from: "b", to: "c", withLeader: true });
+    // Left at home, it stays: the next hop can't take it.
+    const home = [draftToOrder({ ...first, withLeader: false }, "h1")];
+    const p2 = planQueue(ctx, v, home);
+    expect(p2.leaderAt).toBe("a");
+    expect((tapTerritory(ctx, v, p2, "a", "c", home) as { draft: MoveDraft }).draft.withLeader).toBe(false);
+  });
+
+  it("an attack expected to fail leaves the Leader where it was", () => {
+    const s = game({ a: ["you", 4], b: ["bot", 30], e: ["bot", 3] });
+    const v = viewOf(s);
+    const plan = planQueue(ctx, v, [o({ kind: "move", from: "a", to: "b", troops: "all", withLeader: true })]);
+    expect(plan.leaderAt).toBe("a");
   });
 });

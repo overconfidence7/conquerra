@@ -1,6 +1,7 @@
 import { defaultRules, MapDef, type Rules } from "@conquerra/content";
 import { describe, expect, it } from "vitest";
 import {
+  STATE_VERSION,
   bindingCost,
   createGame,
   dealLine,
@@ -247,13 +248,14 @@ describe("diplomacy: the deal cards", () => {
     expect(player(r2.state, "p2").oathbreaker).toBe(2 + ctx.rules.diplomacy.oathbreaker.markTurns);
   });
 
-  it("trade of land: the giver's troops step back, one of the receiver's moves in, buildings and culture stay", () => {
+  it("trade of land: the giver's troops step back, one of the receiver's moves in, buildings stay and culture is lost", () => {
     const s = game({ a2: ["p1", 5, 2], a1: ["p1", 4], a3: ["p2", 9] });
     s.territories.a2!.building = "market";
     const o = offer("p1", "p2", { kind: "trade", give: { land: ["a2"] }, get: { gold: 12 } });
     const r = resolveTurn(ctx, s, agreed(o));
     const t = r.state.territories;
-    expect(t.a2).toMatchObject({ owner: "p2", troops: 1, building: "market", culture: 2 });
+    // Culture is lost whenever land changes hands (session 16).
+    expect(t.a2).toMatchObject({ owner: "p2", troops: 1, building: "market", culture: 0 });
     // a2's 5 troops stepped back to p1's strongest neighbour (b1 had 6, a1 4... b1 isn't next to a2; a1 is).
     expect(t.a1!.troops).toBe(9);
     expect(t.a3!.troops).toBe(8);
@@ -442,13 +444,13 @@ describe("diplomacy: knocked-out players, fog, saves, determinism", () => {
     delete old.nextDeal;
     delete old.record;
     delete (old.settings as Record<string, unknown>).diplomacy;
-    for (const p of old.players as Record<string, unknown>[]) (delete p.oathbreaker, delete p.purse);
+    for (const p of old.players as Record<string, unknown>[]) (delete p.oathbreaker, delete p.purse, delete p.house);
     const save = { ...makeSave(ctx, s, "p1", 0), state: old };
     const read = readSave(JSON.parse(JSON.stringify(save)));
     expect(read.ok).toBe(true);
     if (!read.ok) return;
     const st = read.save.state;
-    expect([st.version, st.deals, st.nextDeal, st.record, st.settings.diplomacy]).toEqual([7, [], 1, [], true]);
+    expect([st.version, st.deals, st.nextDeal, st.record, st.settings.diplomacy]).toEqual([STATE_VERSION, [], 1, [], true]);
     expect(st.players.every((p) => p.oathbreaker === 0)).toBe(true);
     // (Spies' own random sequence is made from the game's dice when an old save is brought up to date.)
     expect(stateFingerprint({ ...st, decks: { ...st.decks, spies: s.decks.spies } })).toBe(stateFingerprint(s));

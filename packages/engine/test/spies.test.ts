@@ -2,6 +2,7 @@ import { defaultRules, MapDef, type Rules } from "@conquerra/content";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
+  STATE_VERSION,
   createGame,
   makeSave,
   readSave,
@@ -88,16 +89,26 @@ describe("spies: hiring, upkeep and the cap", () => {
     expect(of(resolveTurn(ctx, t, { p1: [hire("b")] }).events, "spyHired")).toHaveLength(1);
   });
 
-  it("up to 5 spies; each costs 1 gold a turn, and if you can't pay, troops desert as with any upkeep", () => {
+  it("up to 5 spies; each costs 1 gold a turn only while away (free at home), and if you can't pay, troops desert as with any upkeep", () => {
     const s = game();
     for (let i = 0; i < 5; i++) place(s, "p1", "a");
     expect(of(resolveTurn(ctx, s, { p1: [hire("a")] }).events, "fizzled")[0]!.reason).toBe("spyCap");
-    const without = resolveTurn(ctx, game(), {}).events.find((e) => e.type === "income" && e.player === "p1") as Extract<StepEvent, { type: "income" }>;
-    const withSpies = resolveTurn(ctx, s, {}).events.find((e) => e.type === "income" && e.player === "p1") as Extract<StepEvent, { type: "income" }>;
-    expect(withSpies.upkeep - without.upkeep).toBe(5);
-    // Broke: the spies' upkeep turns into unrest.
+    const upkeep = (st: GameState) => (resolveTurn(ctx, st, {}).events.find((e) => e.type === "income" && e.player === "p1") as Extract<StepEvent, { type: "income" }>).upkeep;
+    const without = upkeep(game());
+    // Session 16 (Nate): at home, or guarding land you hold, a spy costs nothing.
+    expect(upkeep(s) - without).toBe(0);
+    // Travelling (sent somewhere, even through your own land) or inside land you don't hold: 1 gold a turn each.
+    const away = game();
+    place(away, "p1", "a", { target: "P2" });
+    place(away, "p1", "i", { status: "in" });
+    place(away, "p1", "e");
+    place(away, "p1", "b");
+    expect(upkeep(away) - without).toBe(3);
+    expect(defaultRules.spies.upkeep).toBe(1);
+    expect(defaultRules.spies.upkeepAtHome).toBe(0);
+    // Broke: the spies' upkeep (while away) turns into unrest.
     const poor = game({ a: ["p1", 20] });
-    for (let i = 0; i < 5; i++) place(poor, "p1", "a");
+    for (let i = 0; i < 5; i++) place(poor, "p1", "i", { status: "in" });
     poor.players[0]!.gold = 0;
     const lean = ctxWith((r) => ((r.economy.capitalIncome = 0), (r.terrain.plains.income = 0)));
     const inc = resolveTurn(lean, poor, {}).events.find((e) => e.type === "income" && e.player === "p1") as Extract<StepEvent, { type: "income" }>;
@@ -356,7 +367,7 @@ describe("spies: no effect on combat, saves and determinism", () => {
     expect(read.ok).toBe(true);
     if (!read.ok) return;
     const st = read.save.state;
-    expect([st.version, st.spies, st.nextSpy, st.spyIntel, st.settings.spies]).toEqual([7, [], 1, {}, true]);
+    expect([st.version, st.spies, st.nextSpy, st.spyIntel, st.settings.spies]).toEqual([STATE_VERSION, [], 1, {}, true]);
     expect(st.decks.spies).toHaveLength(4);
     expect(of(resolveTurn(ctx, st, { p1: [hire("a")] }).events, "spyHired")).toHaveLength(1);
   });

@@ -167,7 +167,8 @@ function planMoves(ctx: GameContext, view: PlayerView, opts: RecruitOptions): Or
   const valueOf = (t: TerritoryId): number => {
     const v = seen(t)!;
     const def = idx.byId.get(t)!;
-    let val = 1 + rules.terrain[def.terrain].income + v.culture * 0.5;
+    // Culture is lost when land changes hands (session 16): taking it only denies the rival what it invested.
+    let val = 1 + rules.terrain[def.terrain].income + (v.owner && v.owner !== me.id ? v.culture * 0.25 : 0);
     const prov = ctx.map.provinces.find((p) => p.id === def.province)!;
     const missing = (idx.provinceMembers.get(prov.id) ?? []).filter((m) => !owned(m)).length;
     if (missing === 1) val += prov.bonus * 2;

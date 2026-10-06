@@ -14,6 +14,7 @@
 - Each player starts with a **capital**, **12 troops** there, **20 gold**, and their **Leader**.
 - Capitals come from the map's **fair layout** for that many players: every capital is about as far from its nearest rival as the others, has land around it worth about the same, and stands on plains (see §12).
 - Every other territory starts neutral with **1 troop**.
+- **Your House colour** (session 16): you are **Gules (red)** unless you pick another of the ten in the lobby (it's remembered on your device and kept in saves). The bots take the other colours. Colours never change how the game plays. (Online, each player picks: M4.)
 - The host also sets: the **turn timer** (see §3), an optional **turn limit**, the **luck level** (30% by default), **fog** (on by default), the **Fate deck** (on by default, §19), **diplomacy** (on by default, §20), and how the **bots** play: **Captain** (the default) or **Recruit** (easy).
 
 ## 3. A turn
@@ -41,6 +42,7 @@
 **Leader timing tricks** (only while your Leader is alive):
 - **Seize the Initiative**: one order goes before everyone else's. Then it rests for 3 turns.
 - **Lie in Wait**: one order goes after everyone else's. Then it rests for 2 turns.
+- **On screen** (session 16): two plain buttons on the attack panel (under More…), **Initiative** and **Wait**. Hover (desktop) or press and hold (phone) for the full explanation.
 
 ## 4. Orders
 | Order | What it does |
@@ -76,6 +78,7 @@ You don't type a number. You pick a **share of the army that's there when the or
   - If an earlier hop fails or fizzles, a later hop from land you **don't hold** when its turn comes **fizzles**, or runs its backup if it has one.
   - The survivors of a **failed attack** rest for the rest of the turn: they can't go again.
 - **Cavalry** still moves **2 territories inside one order** (the middle one must be yours), so a cavalry army covers more ground per hop.
+- **Your Leader goes with the army** (session 16). An attack or move from where your Leader stands takes it along **by default** (+20%); one tap on **Stays home**, right on the attack panel, leaves it behind. It **carries on through a chain**: each hop you add from where it should arrive takes it on too, and so does **Follow through**. If an attack fails, it falls back with the survivors; if the army is wiped out, it falls (and comes back next turn, §9). The report says "with N troops and your Leader".
 
 **Planning a chain on the map:** after you queue an attack on B, B shows a faint **"≈18" arriving marker**: the army expected to get there. Tap B, then one of its neighbours, to queue the next hop. Or save a tap: with your army still selected, tap a neighbour of B straight away. The arrows of a chain show their **hop numbers** (①②③) on gold. If the first attack was set to "Just enough", adding a hop raises it to All so there's an army to push on with (the order screen says so). A hop's odds are marked **"estimate"** because they depend on how the battle before it goes. A hop into land you can't see shows "Can't see": no peeking.
 
@@ -121,7 +124,7 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
   - **Holding bonus:** +0.5 gold per turn per level on that territory, and a full province's bonus grows by 0.5 per level of its average culture.
   - **Protection:** each level blocks 15% of bad effects there (up to 75%): **unrest** (§8), the Fallen's world events (§16) and bad **Fate events** (§19). An all-or-nothing event (a fire, a flooded ford) is shrugged off with that chance.
   - **Unlocks** the fancier specialists in that province (§6): **the culture ladder** below.
-- **Captured culture passes to the conqueror.** Investing in a border region is a gamble.
+- **Culture is lost when land changes hands** (session 16, Nate): a captured territory drops to **culture 0** for its new owner; so does land traded in a deal, or taken by rebels. **Buildings stay** (a fort keeps standing for the new owner). Culture is an investment in land you mean to keep. The territory card says so on someone else's land ("Lost if you take it"), and the report says when a capture wiped some out. (The share kept is `rules.culture.keptOnCapture`, 0.)
 
 **The culture ladder (session 15).** Culture still unlocks only specialists (no tree, no new resource). Each step uses the total culture you hold in the province:
 
@@ -393,7 +396,7 @@ Preset deals between two players. Every number is in `rules.diplomacy`.
 | Card | What it does |
 |---|---|
 | **Truce** | No attacks between you across the borders it covers: everywhere (the default), a whole province, or borders you pick on the map. For 2 to 8 turns (3 by default), or until a player you name is knocked out (8 turns at most). |
-| **Trade** | Gold now, gold each turn (for up to 5 turns), or land (up to 3 territories in a deal, never a capital or land with a Leader in it; it must border the other side's land). The giver's troops there step back to its own strongest neighbouring territory, one of the receiver's troops moves in from its strongest neighbouring army, and buildings and culture stay with the land. A trade with nothing paid each turn is done at once. |
+| **Trade** | Gold now, gold each turn (for up to 5 turns), or land (up to 3 territories in a deal, never a capital or land with a Leader in it; it must border the other side's land). The giver's troops there step back to its own strongest neighbouring territory, one of the receiver's troops moves in from its strongest neighbouring army, and buildings stay with the land (its culture is lost, §7). A trade with nothing paid each turn is done at once. |
 | **Joint war** | You both name the same rival for 2 to 6 turns (4 by default), with a truce everywhere between you while it lasts. Attacking your partner, or making a truce with the target, breaks it. It ends early if the target is knocked out. A partner who never attacks the target hasn't broken it, but bots remember. Partners don't share what they see. |
 | **Right of passage** | Your armies may march through their land (both ways if you pick **Both ways**) for 2 to 6 turns (4 by default). See below. |
 
@@ -432,7 +435,7 @@ Preset deals between two players. Every number is in `rules.diplomacy`.
 Spies see deep behind the lines. They never fight and never change a battle: they're only about information. Every number is in `rules.spies`.
 
 **Hiring**
-- **Hire** a spy at your capital or a barracks (in Spend, next to the specialists): **8 gold**, then **1 gold a turn** upkeep (paid with your specialists; if you can't pay, troops desert as with any upkeep). You may have **up to 5**.
+- **Hire** a spy at your capital or a barracks (in Spend, next to the specialists): **8 gold**. **Upkeep only while it's away** (session 16, Nate): nothing while it stays in your own land (at home, or guarding a province you hold), **1 gold a turn** while it's travelling (sent somewhere) or inside land you don't hold (paid with your specialists; if you can't pay, troops desert as with any upkeep; `rules.spies.upkeep` and `upkeepAtHome`). You may have **up to 5**.
 - A spy is its **own piece**, not part of an army. **Only you ever see your spies**: other players never see them on the map, and bots never learn of them.
 - With fog off there's nothing to spy on, so there are no spies.
 

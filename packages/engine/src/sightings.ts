@@ -283,6 +283,7 @@ export class TurnVision {
         if (e.captured) {
           to.owner = e.player;
           to.troops = survivors;
+          to.culture = e.keptCulture ?? to.culture;
           to.specialists = specs;
           if (e.withLeader) player(e.player).leader.territory = e.to;
           if (e.withGeneral) moveGeneral(e.player, e.withGeneral, e.to);
@@ -319,6 +320,7 @@ export class TurnVision {
           const t = terr(e.target);
           t.owner = null;
           t.troops = e.rebels!;
+          t.culture = 0;
           t.specialists = [];
         }
         if (e.at) terr(e.at).troops += e.troops!;

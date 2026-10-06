@@ -27,6 +27,8 @@ export interface LobbySettings {
   fate?: boolean;
   /** Diplomacy (deals between players). On unless the host turns it off: off means no Propose, no offers, no deals. */
   diplomacy?: boolean;
+  /** Your House colour (session 16): an index into the ten Houses; Gules (red) by default. The bots take the rest. */
+  house?: number;
 }
 
 export interface TurnReport {

@@ -6,7 +6,7 @@ import { colorOf } from "./colors";
 import { incomeEstimate } from "../logic/actions";
 import { planQueue, queueFor } from "../logic/orders";
 import { asIfYouOrderFrom } from "../logic/generals";
-import type { Insets } from "../map/camera";
+import { clearInsets, landFrame, type Insets, type Rect } from "../map/camera";
 import type { Beat } from "../replay/timeline";
 import { toastFor } from "../replay/toasts";
 import type { MapRenderer } from "../render/types";
@@ -66,6 +66,42 @@ const readDockOpen = () => {
   }
 };
 const PHONE_INSETS: Insets = { top: 56, right: 0, bottom: 84, left: 0 };
+
+/** The menus that sit over the map, by layout (measured on screen, session 16). */
+const COVERS_DESKTOP = ".game .topbar, .game > .map-tools, .game .rightcol, .game .dock";
+const COVERS_PHONE = ".game .topbar, .game > .map-tools, .game .phonebar";
+
+/**
+ * Where the menus sit over the map, measured on screen whenever they change size (session 16), so "fit map" and
+ * panning keep the whole map clear of them. On a desktop the selected territory's panel (bottom left) is kept clear
+ * at its full height whether or not it's showing much, so the map doesn't jump as you tap from place to place. On a
+ * phone the open sheet counts too.
+ */
+function useCovered(active: boolean, phone: boolean, reserveSelPanel: boolean, sheetPx: number, key: string): Rect[] | null {
+  const [covered, setCovered] = useState<Rect[] | null>(null);
+  useEffect(() => {
+    if (!active) return;
+    const measure = () => {
+      const els = [...document.querySelectorAll<HTMLElement>(phone ? COVERS_PHONE : COVERS_DESKTOP)];
+      const rects: Rect[] = els.map((el) => el.getBoundingClientRect()).map((r) => ({ x: r.left, y: r.top, width: r.width, height: r.height }));
+      const h = window.innerHeight, w = window.innerWidth;
+      const top = Math.max(0, ...rects.filter((r) => r.y < 20 && r.width > w / 2).map((r) => r.y + r.height));
+      const sel = document.querySelector<HTMLElement>(".game .selcell");
+      if (!phone && reserveSelPanel && sel) {
+        const r = sel.getBoundingClientRect();
+        rects.push({ x: r.left, y: top, width: r.width, height: h - top - 8 });
+      }
+      if (phone && sheetPx > 0) rects.push({ x: 0, y: h - PHONE_INSETS.bottom - sheetPx, width: w, height: sheetPx + PHONE_INSETS.bottom });
+      setCovered((old) => (old && JSON.stringify(old) === JSON.stringify(rects) ? old : rects));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    for (const el of document.querySelectorAll<HTMLElement>(phone ? COVERS_PHONE : COVERS_DESKTOP)) ro.observe(el);
+    window.addEventListener("resize", measure);
+    return () => (ro.disconnect(), window.removeEventListener("resize", measure));
+  }, [active, phone, reserveSelPanel, sheetPx, key]);
+  return covered;
+}
 
 function Settings({ tactical, onTactical, onFit, onReport, onSaves, onLeave, onClose }: { tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onClose(): void }) {
   return (
@@ -145,6 +181,11 @@ export function GameScreen() {
     }
   };
   const [rect, setRect] = useState<ViewRect | null>(null);
+  // The map's shape (its land, with a little sea), for fitting it into the clear part of the screen.
+  const aspect = useMemo(() => {
+    const f = ctx?.map.geometry ? landFrame(ctx.map.geometry) : null;
+    return f ? f.width / f.height : 1.4;
+  }, [ctx]);
   const [toasts, setToasts] = useState<ShownToast[]>([]);
   /** The turn you closed the "keep two captured generals" choice on (it shows again next turn if still over). */
   const [keptOn, setKeptOn] = useState(0);
@@ -187,11 +228,12 @@ export function GameScreen() {
       setSheet((s) => (s === "closed" ? "half" : s));
     }
   }, [draft, recruitOpen, phone]);
-  // Choosing a place for a general: on a phone the sheet folds away so the whole map can be tapped.
+  // Choosing a place for a general, or a province for a spy: on a phone the sheet folds away so the whole map can be tapped.
   const picking = g.picking;
+  const spyPicking = !!g.spyPick;
   useEffect(() => {
-    if (phone && picking) setSheet("closed");
-  }, [phone, picking]);
+    if (phone && (picking || spyPicking)) setSheet("closed");
+  }, [phone, picking, spyPicking]);
   // Recruit sites glow while the Recruit panel is open; a mission you tapped lights up its target.
   const missionId = g.mission;
   const glow = useMemo(() => {
@@ -208,14 +250,19 @@ export function GameScreen() {
   const passage = useMemo(() => (view ? passageLines(view, g.pageDeals()) : []), [view, diplomacy, answers, offers]); // eslint-disable-line react-hooks/exhaustive-deps
   const open = useMemo(() => (view ? passageNow(view, g.pageDeals()) : []), [view, diplomacy, answers, offers]); // eslint-disable-line react-hooks/exhaustive-deps
   const waiting = useMemo(() => waitingOffers(offers, diplomacy), [offers, diplomacy]);
-
-  if (!ctx || !view || !plan) return null;
-  const out = knockedOut(view);
+  const out = !!view && knockedOut(view);
   const replaying = !!replay;
-  const shownView = rp.view ?? view;
   // On a phone the open sheet covers the lower part of the map: the map keeps what you're looking at above it.
   const sheetPx = !phone || replaying || out || sheet === "closed" ? 0 : Math.round(window.innerHeight * (sheet === "half" ? 0.46 : 0.86));
-  const insets = phone ? { ...PHONE_INSETS, bottom: PHONE_INSETS.bottom + sheetPx } : dockOpen ? DESKTOP_INSETS : DESKTOP_INSETS_FOLDED;
+  // The menus over the map, measured (session 16): the map fits, and pans, within the biggest clear part of the screen.
+  const covered = useCovered(!!view, phone, !out, sheetPx, `${dockOpen}|${out}|${playersOn}`);
+  const insets = useMemo(
+    () => (covered ? clearInsets(window.innerWidth, window.innerHeight, covered, aspect) : phone ? { ...PHONE_INSETS, bottom: PHONE_INSETS.bottom + sheetPx } : dockOpen ? DESKTOP_INSETS : DESKTOP_INSETS_FOLDED),
+    [covered, aspect, phone, sheetPx, dockOpen],
+  );
+
+  if (!ctx || !view || !plan) return null;
+  const shownView = rp.view ?? view;
   const toggleTactical = () =>
     setTactical((t) => {
       saveTactical(!t);

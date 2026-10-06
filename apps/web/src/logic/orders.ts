@@ -76,6 +76,11 @@ export interface QueuePlan {
   hop: (number | null)[];
   /** Spies queued to be hired this turn (session 15). */
   spiesHired: number;
+  /**
+   * Where your Leader should be once the queued orders have run (null: it has fallen). A move that takes the Leader
+   * along carries it to where the army arrives, so each hop of a chain can carry it on (session 16).
+   */
+  leaderAt: TerritoryId | null;
 }
 
 /** Yours now, or should be by the time later orders run (captured earlier in the queue). */
@@ -107,6 +112,7 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
     sent: [],
     hop: [],
     spiesHired: 0,
+    leaderAt: view.me.leader.alive ? view.me.leader.territory : null,
   };
   /** Troops resting after a failed attack can't go again (they count in the army, not in what's free). */
   const resting = new Map<TerritoryId, number>();
@@ -159,6 +165,7 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
         const est = expectMove(ctx, view, plan, o);
         sent = est.troops;
         if (sent <= 0) break;
+        const leaderGoes = !!o.withLeader && plan.leaderAt === o.from;
         const specs = plan.armySpecs.get(o.from) ?? [];
         const estimate = plan.estimated.has(o.from);
         setArmy(o.from, (plan.army.get(o.from) ?? 0) - sent);
@@ -178,6 +185,7 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
           plan.arriving.set(o.to, est.arrives);
           chainAt.set(o.to, chain && plan.hop[i] !== null ? { root: chain.root, hops: plan.hop[i]! } : { root: i, hops: 1 });
           if (est.attack || estimate) plan.estimated.add(o.to);
+          if (leaderGoes) plan.leaderAt = o.to;
         } else if (est.attack) {
           // Expected to fail: the survivors fall back and rest.
           const back = Math.max(0, est.survivors);
@@ -214,7 +222,8 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
 
 /** How a queued move is expected to go: troops sent, and how many should arrive (0 if an attack is expected to fail). */
 function expectMove(ctx: GameContext, view: PlayerView, plan: QueuePlan, o: Extract<Order, { kind: "move" }>) {
-  const d: MoveDraft = { from: o.from, to: o.to, ...(o.via ? { via: o.via } : {}), ...(o.through?.length ? { through: o.through } : {}), amount: o.troops, preset: null, withLeader: !!o.withLeader, timing: null };
+  const withLeader = !!o.withLeader && plan.leaderAt === o.from;
+  const d: MoveDraft = { from: o.from, to: o.to, ...(o.via ? { via: o.via } : {}), ...(o.through?.length ? { through: o.through } : {}), amount: o.troops, preset: null, withLeader, timing: null };
   const troops = troopsOf(ctx, view, plan, d);
   const attack = isAttack(view, d, plan);
   if (!attack) return { troops, attack, arrives: troops, survivors: troops };
@@ -343,7 +352,9 @@ export const isHop = (plan: QueuePlan, from: TerritoryId) => plan.arrived.has(fr
 
 /**
  * A new move or attack with the defaults: a first attack sends Just enough (or All if even that wouldn't do);
- * a chained hop and a move send All. Attacks start with "Only if still stronger".
+ * a chained hop and a move send All. Attacks start with "Only if still stronger". From where your Leader is (or
+ * should be, after the queued orders), the Leader goes along by default (session 16: one tap leaves it home), so it
+ * carries on through a chain with its army.
  */
 export function newDraft(ctx: GameContext, view: PlayerView, plan: QueuePlan, target: MoveTarget & { from: TerritoryId }): MoveDraft {
   const d: MoveDraft = {
@@ -353,7 +364,7 @@ export function newDraft(ctx: GameContext, view: PlayerView, plan: QueuePlan, ta
     ...(target.through ? { through: target.through } : {}),
     amount: "all",
     preset: defaultPreset(view, target.to, plan),
-    withLeader: false,
+    withLeader: leaderCanJoin(view, target.from, plan),
     timing: null,
   };
   if (isAttack(view, d, plan) && !isHop(plan, d.from) && justEnough(ctx, view, plan, d) !== null) d.amount = "enough";
@@ -430,8 +441,9 @@ export function presetsFor(view: PlayerView, d: Pick<MoveDraft, "to">, plan: Que
   return ids.map((id) => PRESETS.find((p) => p.id === id)!);
 }
 
-/** Can the Leader go with this army? */
-export const leaderCanJoin = (view: PlayerView, from: TerritoryId) => view.me.leader.alive && view.me.leader.territory === from;
+/** Can the Leader go with this army (it's there now, or should be by then: it went along with an earlier order)? */
+export const leaderCanJoin = (view: PlayerView, from: TerritoryId, plan: QueuePlan | null = null) =>
+  view.me.leader.alive && (plan ? plan.leaderAt : view.me.leader.territory) === from;
 
 /** Leader timing tricks still available this turn (one order each, and only while they're off cooldown). */
 export function timingAvailable(view: PlayerView, queue: readonly Order[], timing: "first" | "last"): boolean {

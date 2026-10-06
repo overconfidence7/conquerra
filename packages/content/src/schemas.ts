@@ -272,6 +272,11 @@ export const Rules = z.object({
     maxProtection: z.number().min(0).max(1),
     /** "Loyal land": defense bonus per culture level on that territory (0.05 = +5% a level). Multiplies with terrain and forts. */
     defensePerLevel: z.number().min(0),
+    /**
+     * Share of a territory's culture that survives when the land changes hands, by conquest or a trade (rounded down;
+     * session 16, Nate: 0, all of it is lost). Buildings always stay. Land rebels take always loses it.
+     */
+    keptOnCapture: z.number().min(0).max(1),
   }),
   economy: z.object({
     startGold: z.number().int(),
@@ -414,7 +419,10 @@ export const Rules = z.object({
    */
   spies: z.object({
     cost: z.number().int().min(0),
+    /** Gold a turn while a spy is travelling or inside land its owner does not hold (session 16). */
     upkeep: z.number().int().min(0),
+    /** Gold a turn while it stays in its owner's own land: at home, or guarding a province (session 16: free). */
+    upkeepAtHome: z.number().int().min(0),
     /** How many spies one player may have at once. */
     max: z.number().int().min(0),
     travel: z.number().int().min(1),

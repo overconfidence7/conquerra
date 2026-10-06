@@ -57,6 +57,8 @@ export {
   specialistUnlocked,
   holdsWholeProvince,
   canRecruitAt,
+  spyUpkeep,
+  cultureKept,
   type IncomeBreakdown,
 } from "./economy";
 export { seedCommitment, verifySeed } from "./fairness";

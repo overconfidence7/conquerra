@@ -261,3 +261,48 @@ describe("amounts as shares", () => {
     expect(events.filter((e) => e.type === "fizzled").length).toBe(2);
   });
 });
+
+describe("the Leader goes along through a chain (session 16)", () => {
+  it("a chain whose every hop takes the Leader carries it to the last land taken, with its +20% at each step", () => {
+    const ctx = ctxWith();
+    const s = lineGame(ctx);
+    board(s, { a: ["p1", 30], b: [null, 1], c: [null, 1], d: [null, 1], e: ["p2", 5] });
+    const lead = { withLeader: true };
+    const { state, events } = resolveTurn(ctx, s, { p1: [mv("a", "b", "all", lead), mv("b", "c", "all", lead), mv("c", "d", "all", lead)] });
+    expect(player(state, "p1").leader).toEqual({ alive: true, territory: "d" });
+    const battles = events.filter((e): e is Extract<StepEvent, { type: "battle" }> => e.type === "battle");
+    expect(battles.map((b) => [b.to, b.withLeader])).toEqual([["b", true], ["c", true], ["d", true]]);
+  });
+
+  it("Follow through carries the Leader on with its army (to a chosen next place, or the weakest neighbour)", () => {
+    const ctx = ctxWith();
+    for (const next of ["c", undefined]) {
+      const s = lineGame(ctx);
+      board(s, { a: ["p1", 30], b: [null, 1], c: [null, 1], e: ["p2", 5] });
+      const { state, events } = resolveTurn(ctx, s, { p1: [mv("a", "b", "all", { withLeader: true, preset: { id: "followThrough", ...(next ? { next } : {}) } })] });
+      const hop = events.filter((e): e is Extract<StepEvent, { type: "battle" }> => e.type === "battle")[1]!;
+      expect(hop).toMatchObject({ from: "b", to: "c", withLeader: true, captured: true });
+      expect(player(state, "p1").leader.territory).toBe("c");
+    }
+  });
+
+  it("a Leader left at home stays there while the army chains on", () => {
+    const ctx = ctxWith();
+    const s = lineGame(ctx);
+    board(s, { a: ["p1", 30], b: [null, 1], c: [null, 1], e: ["p2", 5] });
+    const { state } = resolveTurn(ctx, s, { p1: [mv("a", "b", "all", { preset: { id: "followThrough" } })] });
+    expect(state.territories.c!.owner).toBe("p1");
+    expect(player(state, "p1").leader.territory).toBe("a");
+  });
+
+  it("the replay shows the Leader where it really is after every step of the chain", () => {
+    const ctx = ctxWith();
+    const s = lineGame(ctx, { fog: false });
+    board(s, { a: ["p1", 30], b: [null, 1], c: [null, 1], e: ["p2", 5] });
+    const r = resolveTurn(ctx, s, { p1: [mv("a", "b", "all", { withLeader: true, preset: { id: "followThrough" } })] });
+    const replay = replayFor(ctx, s, r, "p2");
+    const hops = replay.filter((e) => e.type === "battle");
+    expect(hops.every((e) => e.type === "battle" && e.withLeader)).toBe(true);
+    expect(viewFor(ctx, r.state, "p2").territories.c).toMatchObject({ leaders: ["p1"] });
+  });
+});

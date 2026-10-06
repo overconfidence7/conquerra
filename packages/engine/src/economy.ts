@@ -1,6 +1,6 @@
 import type { Rules, SpecialistType } from "@conquerra/content";
 import { indexMap } from "./mapIndex";
-import type { GameContext, GameState, PlayerId, TerritoryId } from "./types";
+import type { GameContext, GameState, PlayerId, Spy, TerritoryId } from "./types";
 
 export interface IncomeBreakdown {
   territories: number;
@@ -20,6 +20,18 @@ export function upkeepFor(ctx: GameContext, territoryCount: number): number {
 }
 
 // ---------- Culture ----------
+
+/**
+ * A spy's gold a turn (session 16, Nate): nothing while it stays in your own land (at home, or guarding a province you
+ * hold), `rules.spies.upkeep` while it's travelling (sent somewhere) or inside land you don't hold. Judged where it
+ * stands as the turn's income comes in.
+ */
+export function spyUpkeep(rules: Rules, s: Pick<GameState, "territories">, spy: Pick<Spy, "owner" | "at" | "target">): number {
+  return spy.target === null && s.territories[spy.at]?.owner === spy.owner ? rules.spies.upkeepAtHome : rules.spies.upkeep;
+}
+
+/** The culture a territory keeps when it changes hands (session 16: none, by default). */
+export const cultureKept = (rules: Rules, level: number) => Math.floor(level * rules.culture.keptOnCapture);
 
 /** Gold to raise a territory's culture from `level` to `level + 1`, or null if it's maxed. */
 export function investCost(rules: Rules, level: number): number | null {
@@ -87,8 +99,8 @@ export function incomeFor(ctx: GameContext, state: GameState, player: PlayerId):
     if (t.building === "market") buildings += rules.buildings.market.income;
     for (const s of t.specialists) specialistUpkeep += rules.specialists[s.type].upkeep;
   }
-  // Spies (session 15) are paid with the specialists.
-  for (const spy of state.spies ?? []) if (spy.owner === player) specialistUpkeep += rules.spies.upkeep;
+  // Spies (session 15) are paid with the specialists: only while away (session 16).
+  for (const spy of state.spies ?? []) if (spy.owner === player) specialistUpkeep += spyUpkeep(rules, state, spy);
   const p = state.players.find((x) => x.id === player)!;
   const capital = state.territories[p.capital]?.owner === player ? rules.economy.capitalIncome : 0;
   let provinces = 0;
