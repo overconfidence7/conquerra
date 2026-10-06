@@ -36,6 +36,18 @@
       "cultureRequired": 3,
       "lossReduction": 0.25,
       "maxLossReduction": 0.4
+    },
+    "rangers": {
+      "cost": 9,
+      "upkeep": 1,
+      "cultureRequired": 4,
+      "terrains": ["forest", "hills", "swamp"]
+    },
+    "standardBearer": {
+      "cost": 12,
+      "upkeep": 1,
+      "cultureRequired": 6,
+      "attackBonus": 0.1
     }
   },
   "buildings": {

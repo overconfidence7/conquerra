@@ -107,8 +107,10 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
 | **Siege** | 10 | 1 | 2 | **Cancels an enemy fort's bonus** when this army attacks it. |
 | **Engineers** | 8 | 1 | 2 | Any building in this army's territory is **finished instantly**. |
 | **Healers** | 10 | 1 | 3 | The army **loses 25% fewer troops** in battle (two healers: 40%, the cap). |
+| **Rangers** (session 15) | 9 | 1 | 4 | When this army **attacks**, forest, hills and swamp **defend like plains** (mountains still count). Siege's counterpart for terrain. |
+| **Standard-bearer** (session 15) | 12 | 1 | 6 | This army **attacks 10% stronger**. Two in one army don't stack. |
 
-**Culture needed** = the total culture you hold in that province (see §7). It's how culture "unlocks the fancier specialists" for now.
+**Culture needed** = the total culture you hold in that province (see §7). It's how culture "unlocks the fancier specialists". The odds preview counts Rangers and the Standard-bearer, exactly as the battle will.
 
 **What happens to specialists when their army is destroyed:** they're **lost**. That's true whether the army dies attacking or its territory is captured. They're never captured or handed to the winner. If an attack fails but some troops survive, the specialists come home with the survivors.
 
@@ -118,8 +120,21 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
   - **Defense:** each level makes that territory defend **6% better** (+30% at level 5). It multiplies with terrain and forts (§9).
   - **Holding bonus:** +0.5 gold per turn per level on that territory, and a full province's bonus grows by 0.5 per level of its average culture.
   - **Protection:** each level blocks 15% of bad effects there (up to 75%): **unrest** (§8), the Fallen's world events (§16) and bad **Fate events** (§19). An all-or-nothing event (a fire, a flooded ford) is shrugged off with that chance.
-  - **Unlocks** the fancier specialists in that province (§6).
+  - **Unlocks** the fancier specialists in that province (§6): **the culture ladder** below.
 - **Captured culture passes to the conqueror.** Investing in a border region is a gamble.
+
+**The culture ladder (session 15).** Culture still unlocks only specialists (no tree, no new resource). Each step uses the total culture you hold in the province:
+
+| Culture in the province | Unlocks |
+|---|---|
+| 0 | Cavalry, Scouts |
+| 2 | Siege, Engineers |
+| 3 | Healers |
+| 4 | **Rangers** |
+| 6 | **Standard-bearer** |
+
+- **On screen:** the territory card's culture line names the province's step and the next one: "Culture 2: defends +12%, shrugs off 30% of unrest, +1 gold. Culture 4 in Pinemark: Rangers. Next: Standard-bearer at 6". The Hire menu shows the locked specialists greyed, with the culture they need ("Needs 6 culture in this province"). Before you raise culture, the panel says what the next level newly unlocks.
+- **The Captain** hires them with its existing judgement: Rangers when a rival army stands on forest, hills or swamp next to where it hires, a Standard-bearer for a big army (20 or more).
 - **On screen:** small gold laurels on the troop pill (one per level, at Mid and Near zoom). The territory card says what it does in one line, for example "Culture 2: defends +12%, shrugs off 30% of unrest, +1 gold, unlocks Siege and Engineers in Pinemark", or "No culture yet: raising it costs 3 gold". Before you tap Culture, the panel (and the button's tooltip) says what the next level adds.
 - **Where it pays:** where you mean to hold and a rival army is next door, with a real garrison (the bonus is a share of the defenders). The Captain bot buys it at its capital and choke points on those terms.
 - No culture victory, no culture tree. Military first.

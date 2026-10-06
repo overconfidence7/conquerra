@@ -223,3 +223,22 @@ describe("Captain bot: fair play", () => {
     expect(wins / games).toBeGreaterThan(0.25);
   }, 30000);
 });
+
+describe("the Captain and the culture ladder (session 15)", () => {
+  it("hires Rangers for a forest or hill front once its province has culture 4, and a Standard-bearer for a big push at 6", () => {
+    const sc = scenario({ line: "abc", layout: { a: ["p1", 12], b: ["p2", 6], c: ["p2", 6] }, terrain: { b: "forest" }, caps: ["a", "c"], gold: 60 });
+    sc.s.territories.a!.culture = 4;
+    expect(sc.plan().some((o) => o.kind === "hire" && o.specialist === "rangers")).toBe(true);
+    // Not on open ground, and not without the culture.
+    const open = scenario({ line: "abc", layout: { a: ["p1", 12], b: ["p2", 6], c: ["p2", 6] }, caps: ["a", "c"], gold: 60 });
+    open.s.territories.a!.culture = 4;
+    expect(open.plan().some((o) => o.kind === "hire" && o.specialist === "rangers")).toBe(false);
+    sc.s.territories.a!.culture = 3;
+    expect(sc.plan().some((o) => o.kind === "hire" && o.specialist === "rangers")).toBe(false);
+    // A big army at culture 6 (the province's total): a Standard-bearer.
+    const big = scenario({ line: "abcd", layout: { a: ["p1", 30], b: ["p1", 2], c: ["p2", 6], d: ["p2", 6] }, caps: ["a", "d"], gold: 60 });
+    big.s.territories.a!.culture = 4;
+    big.s.territories.b!.culture = 2;
+    expect(big.plan().some((o) => o.kind === "hire" && o.specialist === "standardBearer")).toBe(true);
+  });
+});

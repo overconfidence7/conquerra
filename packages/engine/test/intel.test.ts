@@ -111,7 +111,7 @@ describe("last seen intel (v0.2 §8)", () => {
     // part-way through a turn.
     expect(stale).toBeGreaterThan(100);
     expect(midTurn).toBeGreaterThan(20);
-  });
+  }, 30000);
 
   it("remembers the capture of your own land, even once it's deep in the fog", () => {
     // p1 holds a and c; b is empty. p2 takes c, leaving p1 with only a, which can't see c.

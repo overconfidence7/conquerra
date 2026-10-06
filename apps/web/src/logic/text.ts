@@ -2,14 +2,16 @@ import type { BuildingType, SpecialistType, Terrain } from "@conquerra/content";
 import { amountLabel, recruitLabel, indexMap, PRESETS, DEAL_NAME, type ArmySnapshot, type DealNames, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView } from "@conquerra/engine";
 import { SET_NAME } from "./cards";
 
-export const SPECIALIST_ICON: Record<SpecialistType, string> = { cavalry: "🐎", siege: "🎯", scouts: "🔭", engineers: "🔨", healers: "⚕️" };
-export const SPECIALIST_NAME: Record<SpecialistType, string> = { cavalry: "Cavalry", siege: "Siege", scouts: "Scouts", engineers: "Engineers", healers: "Healers" };
+export const SPECIALIST_ICON: Record<SpecialistType, string> = { cavalry: "🐎", siege: "🎯", scouts: "🔭", engineers: "🔨", healers: "⚕️", rangers: "🏹", standardBearer: "🚩" };
+export const SPECIALIST_NAME: Record<SpecialistType, string> = { cavalry: "Cavalry", siege: "Siege", scouts: "Scouts", engineers: "Engineers", healers: "Healers", rangers: "Rangers", standardBearer: "Standard-bearer" };
 export const SPECIALIST_HELP: Record<SpecialistType, string> = {
   cavalry: "Moves 2 territories (through your own land)",
   siege: "Cancels enemy forts when attacking",
   scouts: "Sees 1 territory further",
   engineers: "Finishes buildings here instantly",
   healers: "Loses 25% fewer troops",
+  rangers: "Attacking, forest, hills and swamp defend like plains",
+  standardBearer: "Attacks 10% stronger",
 };
 export const SPY_HELP = "Its own piece: send it to a province to see behind the lines, or guard one you hold whole (1 gold a turn)";
 export const BUILDING_ICON: Record<BuildingType, string> = { fort: "🏰", market: "💰", barracks: "⚔️", watchtower: "🗼" };

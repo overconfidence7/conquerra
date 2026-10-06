@@ -3,7 +3,8 @@ import { maps } from "@conquerra/content/maps";
 import { createGame, resolveTurn, viewFor, type GameContext, type PlayerView } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { clampCamera, fitCamera, toMap, toScreen, zoomAt } from "../src/map/camera";
-import { cultureLine, cultureNext, seenAgo, territoryCard } from "../src/map/card";
+import { cultureLine, cultureNext, ladderLine, seenAgo, territoryCard } from "../src/map/card";
+import { hireOptions, planQueue } from "../src/logic/orders";
 import { HOUSES, houseOf } from "../src/map/houses";
 import { layoutMarkers, markerMetrics, MIN_PILL_HEIGHT, pillHeight, type MarkerBox, type MarkerContent } from "../src/map/layout";
 import { groupOutlines, hitTester, insideRings } from "../src/map/shapes";
@@ -216,14 +217,37 @@ describe("the tap card", () => {
     const view = fogGame();
     const cap = view.me.capital;
     const r = ctx.rules;
-    expect(territoryCard(ctx, view, cap).lines.find((l) => l.label === "Culture")!.value).toBe(`No culture yet: raising it costs ${r.culture.investCost[0]} gold`);
     const province = ctx.map.provinces.find((p) => p.id === ctx.map.territories.find((t) => t.id === cap)!.province)!;
+    expect(territoryCard(ctx, view, cap).lines.find((l) => l.label === "Culture")!.value).toBe(`No culture yet: raising it costs ${r.culture.investCost[0]} gold. Culture 0 in ${province.name}: Cavalry and Scouts. Next: Siege and Engineers at 2`);
     const v = view.territories[cap] as Extract<PlayerView["territories"][string], { detail: "full" }>;
     v.culture = 2;
     const step = Math.round(100 * r.culture.defensePerLevel);
-    expect(cultureLine(ctx, view, cap, 2)).toBe(`Culture 2: defends +${2 * step}%, shrugs off 30% of unrest, +1 gold, unlocks Siege and Engineers in ${province.name}`);
+    expect(cultureLine(ctx, view, cap, 2)).toBe(`Culture 2: defends +${2 * step}%, shrugs off 30% of unrest, +1 gold. Culture 2 in ${province.name}: Siege and Engineers. Next: Healers at 3`);
     expect(cultureNext(ctx, view, cap, 2)).toBe(`Culture 3 for ${r.culture.investCost[2]} gold: defends +${3 * step}% (was +${2 * step}%), shrugs off 45% of unrest, +1½ gold, newly unlocks Healers in ${province.name}`);
     expect(cultureNext(ctx, view, cap, r.culture.max)).toBeNull();
+  });
+
+  it("the culture ladder (session 15): the card names what the province's culture has unlocked and the next step", () => {
+    const view = fogGame();
+    const cap = view.me.capital;
+    const province = ctx.map.provinces.find((p) => p.id === ctx.map.territories.find((t) => t.id === cap)!.province)!;
+    expect(ladderLine(ctx, view, cap, 4)).toBe(`Culture 4 in ${province.name}: Rangers. Next: Standard-bearer at 6`);
+    expect(ladderLine(ctx, view, cap, 5)).toBe(`Culture 5 in ${province.name}: Rangers. Next: Standard-bearer at 6`);
+    // Two territories' culture adds up in a province (another of yours there, at 2, plus 4 here).
+    const other = ctx.map.territories.find((t) => t.province === province.id && t.id !== cap)!;
+    const v = view.territories[other.id]!;
+    view.territories[other.id] = { ...(v.detail === "full" ? v : { detail: "full", seenBy: ["own"], specialists: [], building: null, construction: null, leaders: [], generals: [], capitalOf: null, troops: 1 }), owner: view.me.id, culture: 2 } as typeof v;
+    expect(ladderLine(ctx, view, cap, 4)).toBe(`Culture 6 in ${province.name}: Standard-bearer, the top of the ladder`);
+    expect(cultureNext(ctx, view, cap, 3)).toContain("newly unlocks Standard-bearer");
+  });
+
+  it("the Hire menu shows the locked specialists with the culture they need", () => {
+    const view = fogGame();
+    const cap = view.me.capital;
+    const hires = hireOptions(ctx, { ...view, me: { ...view.me, gold: 100 } }, planQueue(ctx, { ...view, me: { ...view.me, gold: 100 } }, []), cap);
+    expect(hires.map((h) => h.specialist)).toEqual(["cavalry", "scouts", "siege", "engineers", "healers", "rangers", "standardBearer"]);
+    expect(hires.find((h) => h.specialist === "rangers")).toMatchObject({ cost: 9, ok: false, why: "Needs 4 culture in this province" });
+    expect(hires.find((h) => h.specialist === "standardBearer")).toMatchObject({ cost: 12, ok: false, why: "Needs 6 culture in this province" });
   });
 });
 

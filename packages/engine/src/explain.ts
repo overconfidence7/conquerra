@@ -1,3 +1,4 @@
+import { terrainDefense } from "./combat";
 import { indexMap } from "./mapIndex";
 import { PRESETS } from "./presets";
 import type { FizzleCode, FizzleDetail, FizzledOrder, GameContext, GameEvent, PlayerId, PresetId, TerritoryId } from "./types";
@@ -156,7 +157,7 @@ export function explainHold(ctx: GameContext, e: BattleEvent, defenderIsYou = fa
   const idx = indexMap(ctx.map);
   const reasons: string[] = [];
   const terrain = idx.byId.get(e.to)?.terrain;
-  if (terrain && (ctx.rules.terrain[terrain]?.defenseMult ?? 1) > 1 && TERRAIN_WORD[terrain]) reasons.push(TERRAIN_WORD[terrain]!);
+  if (terrain && terrainDefense(ctx.rules, terrain, e.attackers.specialists) > 1 && TERRAIN_WORD[terrain]) reasons.push(TERRAIN_WORD[terrain]!);
   if (e.defense?.fort) reasons.push("a fort");
   const border = idx.border(e.from, e.to);
   if (border && BORDER_WORD[border]) reasons.push(BORDER_WORD[border]!);

@@ -919,6 +919,58 @@ const ICONS: Record<string, () => HTMLCanvasElement> = {
       ctx.closePath();
       iconStroke(ctx, "#4f9a5a");
     }),
+  // The culture ladder (session 15): placeholders until the art comes (docs/art/asset-list-and-prompts.md, Tier 3).
+  "icon-rangers": () =>
+    icon((ctx, s) => {
+      // A bow and an arrow.
+      ctx.beginPath();
+      ctx.arc(s * 0.36, s * 0.5, s * 0.36, -Math.PI / 2.6, Math.PI / 2.6);
+      ctx.strokeStyle = "#1b1206";
+      ctx.lineWidth = 10;
+      ctx.stroke();
+      ctx.strokeStyle = "#7a5a32";
+      ctx.lineWidth = 6;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(s * 0.6, s * 0.2);
+      ctx.lineTo(s * 0.6, s * 0.8);
+      ctx.strokeStyle = "#efe6d2";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(s * 0.12, s * 0.5);
+      ctx.lineTo(s * 0.88, s * 0.5);
+      ctx.strokeStyle = "#1b1206";
+      ctx.lineWidth = 5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(s * 0.9, s * 0.5);
+      ctx.lineTo(s * 0.76, s * 0.42);
+      ctx.lineTo(s * 0.76, s * 0.58);
+      ctx.closePath();
+      iconStroke(ctx, "#9aa0aa");
+    }),
+  "icon-standard-bearer": () =>
+    icon((ctx, s) => {
+      // A pole and a swallow-tailed banner.
+      ctx.beginPath();
+      ctx.moveTo(s * 0.28, s * 0.1);
+      ctx.lineTo(s * 0.28, s * 0.9);
+      ctx.strokeStyle = "#1b1206";
+      ctx.lineWidth = 9;
+      ctx.stroke();
+      ctx.strokeStyle = "#a07a4a";
+      ctx.lineWidth = 5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(s * 0.3, s * 0.14);
+      ctx.lineTo(s * 0.86, s * 0.2);
+      ctx.lineTo(s * 0.7, s * 0.34);
+      ctx.lineTo(s * 0.86, s * 0.48);
+      ctx.lineTo(s * 0.3, s * 0.5);
+      ctx.closePath();
+      iconStroke(ctx, "#b0302a");
+    }),
   emblem: () =>
     icon((ctx, s) => {
       ctx.beginPath();

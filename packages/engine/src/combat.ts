@@ -56,11 +56,25 @@ export function cultureDefense(rules: Rules, culture: number): number {
 }
 
 /** Pure math: what should happen on average. Used for previews, bots, presets and resolution. */
+/**
+ * The terrain's defense against this army (the culture ladder, session 15): Rangers make forest, hills and swamp defend
+ * like plains when they attack (mountains still count).
+ */
+export function terrainDefense(rules: Rules, terrain: Terrain, attackerSpecialists: readonly SpecialistType[]): number {
+  const r = rules.specialists.rangers;
+  return r && attackerSpecialists.includes("rangers") && r.terrains.includes(terrain) ? rules.terrain.plains.defenseMult : rules.terrain[terrain].defenseMult;
+}
+
+/** The Standard-bearer: this army attacks stronger (two don't stack). */
+export function bannerBonus(rules: Rules, attackerSpecialists: readonly SpecialistType[]): number {
+  return attackerSpecialists.includes("standardBearer") ? 1 + (rules.specialists.standardBearer?.attackBonus ?? 0) : 1;
+}
+
 export function expectBattle(rules: Rules, b: BattleInput): BattleExpectation {
   const borderMult = rules.borders[b.border].attackMult;
   const leaderA = b.attackerLeader ? 1 + rules.leader.strengthBonus : 1;
   const leaderD = b.defenderLeader ? 1 + rules.leader.strengthBonus : 1;
-  const attackStrength = b.attackers * rules.troops.attack * borderMult * leaderA;
+  const attackStrength = b.attackers * rules.troops.attack * borderMult * leaderA * bannerBonus(rules, b.attackerSpecialists);
 
   // Forts multiply defense; each siege specialist cancels part of the fort's bonus.
   let fortMult = 1;
@@ -69,7 +83,7 @@ export function expectBattle(rules: Rules, b: BattleInput): BattleExpectation {
     const broken = count(b.attackerSpecialists, "siege") * rules.specialists.siege.fortBreak;
     fortMult = 1 + Math.max(0, bonus * (1 - broken));
   }
-  const defenseStrength = b.defenders * rules.troops.defense * rules.terrain[b.terrain].defenseMult * fortMult * cultureDefense(rules, b.culture) * leaderD;
+  const defenseStrength = b.defenders * rules.troops.defense * terrainDefense(rules, b.terrain, b.attackerSpecialists) * fortMult * cultureDefense(rules, b.culture) * leaderD;
 
   const eDef = attackStrength * rules.combat.attackKillRate * (1 - healerReduction(rules, b.defenderSpecialists));
   const eAtk = defenseStrength * rules.combat.defenseKillRate * (1 - healerReduction(rules, b.attackerSpecialists));

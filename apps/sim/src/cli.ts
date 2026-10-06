@@ -195,6 +195,9 @@ for (const players of playerCounts) {
   const t = avg((g) => g.turns);
   console.log(`Real time, roughly: single player about ${Math.round(t * (SOLO_TURN_MIN + REPLAY_MIN))} minutes (${SOLO_TURN_MIN} min a turn + ${REPLAY_MIN} min replay); live online with the 5-minute timer up to about ${((t * (ONLINE_TURN_MIN + REPLAY_MIN)) / 60).toFixed(1)} hours`);
   console.log(`Per game: ${avg((g) => g.battles).toFixed(1)} battles, ${avg((g) => g.captures).toFixed(1)} captures, ${avg((g) => g.hires).toFixed(1)} specialists hired, ${avg((g) => g.invests).toFixed(1)} culture raises, ${avg((g) => g.leadersKilled).toFixed(1)} leaders killed`);
+  // The culture ladder (session 15): how often each specialist is hired, and in how many games.
+  const specKinds = ["cavalry", "scouts", "siege", "engineers", "healers", "rangers", "standardBearer"];
+  console.log(`Specialists hired per game: ${specKinds.map((k) => `${k} ${avg((g) => g.hiresByType[k] ?? 0).toFixed(2)} (${pct(results.filter((g) => (g.hiresByType[k] ?? 0) > 0).length)} of games)`).join(", ")}`);
   const inv = (k: keyof GameSummary["investsAt"]) => results.reduce((a, g) => a + g.investsAt[k], 0);
   const invTotal = results.reduce((a, g) => a + g.invests, 0);
   console.log(`Culture: bought in ${pct(results.filter((g) => g.invests > 0).length)} of games; raises went to the capital ${pct2(inv("capital"), invTotal)}, choke points ${pct2(inv("choke"), invTotal)}, other frontier ${pct2(inv("frontier"), invTotal)}, interior ${pct2(inv("interior"), invTotal)}`);

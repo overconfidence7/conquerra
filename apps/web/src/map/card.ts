@@ -75,14 +75,36 @@ export function cultureEffects(ctx: GameContext, view: PlayerView, id: Territory
   return parts;
 }
 
-/** The card's culture line: "Culture 2: defends +12%, shrugs off 30% of unrest, +1 gold, unlocks Siege in Pinemark", or "No culture yet: raising it costs 3 gold". */
+/**
+ * The card's culture line: what this territory's culture does, then (on your own land) the province's step on the
+ * culture ladder: "Culture 2: defends +12%, shrugs off 30% of unrest, +1 gold. Culture 4 in Pinemark: Rangers. Next:
+ * Standard-bearer at 6", or "No culture yet: raising it costs 3 gold. ...".
+ */
 export function cultureLine(ctx: GameContext, view: PlayerView, id: TerritoryId, level: number, levels?: ReadonlyMap<TerritoryId, number>): string {
+  const v = view.territories[id];
+  const mine = v?.detail === "full" && v.owner === view.me.id;
+  const ladder = mine ? `. ${ladderLine(ctx, view, id, level, levels)}` : "";
   if (level <= 0) {
     const cost = investCost(ctx.rules, 0);
-    const v = view.territories[id];
-    return v?.detail === "full" && v.owner === view.me.id && cost !== null ? `No culture yet: raising it costs ${cost} gold` : "No culture yet";
+    return (mine && cost !== null ? `No culture yet: raising it costs ${cost} gold` : "No culture yet") + ladder;
   }
-  return `Culture ${level}: ${cultureEffects(ctx, view, id, level, levels).join(", ")}`;
+  return `Culture ${level}: ${cultureEffects(ctx, view, id, level, levels).slice(0, 3).join(", ")}${ladder}`;
+}
+
+/**
+ * The culture ladder (session 15) for your land's province: what its culture has unlocked most recently, and the next
+ * step. "Culture 4 in Pinemark: Rangers. Next: Standard-bearer at 6"; at the top: "Culture 6 in Pinemark: Standard-
+ * bearer, the top of the ladder".
+ */
+export function ladderLine(ctx: GameContext, view: PlayerView, id: TerritoryId, level: number, levels?: ReadonlyMap<TerritoryId, number>): string {
+  const r = ctx.rules.specialists;
+  const total = provinceCultureFor(ctx, view, id, level, levels);
+  const province = ctx.map.provinces.find((p) => p.id === ctx.map.territories.find((t) => t.id === id)!.province)?.name ?? "this province";
+  const steps = [...new Set(SPECIALISTS.map((s) => r[s].cultureRequired))].sort((a, b) => a - b);
+  const reached = steps.filter((c) => c <= total).at(-1) ?? 0;
+  const next = steps.find((c) => c > total);
+  const at = (c: number) => listed(SPECIALISTS.filter((s) => r[s].cultureRequired === c).map((s) => SPECIALIST_NAME[s]));
+  return `Culture ${total} in ${province}: ${at(reached)}${next === undefined ? ", the top of the ladder" : `. Next: ${at(next)} at ${next}`}`;
 }
 
 /**
@@ -107,7 +129,7 @@ export function cultureNext(ctx: GameContext, view: PlayerView, id: TerritoryId,
   return `Culture ${level + 1} for ${cost} gold: ${parts.join(", ")}`;
 }
 
-const SPECIALISTS = ["cavalry", "scouts", "siege", "engineers", "healers"] as const;
+const SPECIALISTS = ["cavalry", "scouts", "siege", "engineers", "healers", "rangers", "standardBearer"] as const;
 const listed = (xs: string[]) => (xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 
 /** One short fact about a place, with its icon: the panel shows these as a row of chips. */

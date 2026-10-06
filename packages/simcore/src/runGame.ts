@@ -39,6 +39,8 @@ export interface GameSummary {
   initiatives: number;
   leadersKilled: number;
   hires: number;
+  /** Specialists hired, by kind (the culture ladder's Rangers and Standard-bearers among them, session 15). */
+  hiresByType: Record<string, number>;
   invests: number;
   /** Culture raises by where they went: the capital, a choke point (facing a rival across a pass or sea lane), other frontier land, or interior land. */
   investsAt: Record<"capital" | "choke" | "frontier" | "interior", number>;
@@ -130,7 +132,7 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
   const idx = indexMap(ctx.map);
   const sum: GameSummary = {
     seed, winner: "draw", winnerSeat: null, endReason: null, turns: 0, battles: 0, captures: 0, lopsided: 0, lopsidedFailed: 0, byBorder: {}, orders: 0, fizzles: 0, hops: 0, hopCaptures: 0,
-    initiatives: 0, leadersKilled: 0, hires: 0, invests: 0, investsAt: { capital: 0, choke: 0, frontier: 0, interior: 0 }, recruitsAt: { capital: 0, barracks: 0, province: 0 }, presets: 0, decidedTurn: null, leadChanges: 0, topShareTurn10: null, leaderTurn10: null, leaderHalfway: null, resolveMs: [], planMs: [], planMsByBot: {}, winnerBot: null,
+    initiatives: 0, leadersKilled: 0, hires: 0, hiresByType: {}, invests: 0, investsAt: { capital: 0, choke: 0, frontier: 0, interior: 0 }, recruitsAt: { capital: 0, barracks: 0, province: 0 }, presets: 0, decidedTurn: null, leadChanges: 0, topShareTurn10: null, leaderTurn10: null, leaderHalfway: null, resolveMs: [], planMs: [], planMsByBot: {}, winnerBot: null,
     worldEvents: 0, worldEventsFailed: 0, hitBy: {}, winnerHitHardest: null,
     spoilsSets: 0, spoilsAuto: 0, winnerLeadOnSet: null, winnerSetTurnShare: null,
     fateEvents: 0, fateGood: 0, fateBad: 0, fateStrong: 0, missionsDrawn: 0, missionsDone: 0, fateNet: {}, winnerGoodShare: null, winnerLandShare: null, winnerLuck: null, winnerLuckiest: null, winnerMissions: 0, othersMissions: 0,
@@ -259,7 +261,10 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
       if (e.type === "missionDone") (sum.missionsDone++, missionsBy.set(e.player, (missionsBy.get(e.player) ?? 0) + 1));
       if (e.type === "initiative") sum.initiatives++;
       if (e.type === "leaderKilled") sum.leadersKilled++;
-      if (e.type === "hired") sum.hires++;
+      if (e.type === "hired") {
+        sum.hires++;
+        sum.hiresByType[e.specialist] = (sum.hiresByType[e.specialist] ?? 0) + 1;
+      }
       if (e.type === "invested") {
         sum.invests++;
         const owner = (t: string) => before.territories[t]!.owner;

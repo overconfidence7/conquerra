@@ -538,7 +538,7 @@ export function hireOptions(ctx: GameContext, view: PlayerView, plan: QueuePlan,
   const idx = indexMap(ctx.map);
   const province = idx.byId.get(t)!.province;
   const provinceCulture = (idx.provinceMembers.get(province) ?? []).reduce((a, m) => a + (isMine(view, m) ? (plan.culture.get(m) ?? 0) : 0), 0);
-  const types: SpecialistType[] = ["cavalry", "scouts", "siege", "engineers", "healers"];
+  const types: SpecialistType[] = ["cavalry", "scouts", "siege", "engineers", "healers", "rangers", "standardBearer"];
   return types.map((specialist) => {
     const def = rules.specialists[specialist];
     let why: string | undefined;

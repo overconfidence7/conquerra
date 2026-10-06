@@ -134,8 +134,14 @@ function planMoves(ctx: GameContext, view: PlayerView, opts: CaptainOptions, las
     const unlocked = (t: SpecialistType) => rules.specialists[t].cultureRequired <= provinceCulture;
     // 2. Siege for a fort we'll have to break (next to the site, or across a crossing from it).
     const fortAhead = idx.neighbors.get(hireAt)!.some((x) => rivalAt(x) && seen(x)!.building === "fort");
+    // The culture ladder (session 15): Rangers for a forest, hill or swamp front (those defend like plains against
+    // them), a Standard-bearer for a big push.
+    const rough = rules.specialists.rangers.terrains;
+    const roughFront = idx.neighbors.get(hireAt)!.some((x) => !!rivalAt(x) && rough.includes(idx.byId.get(x)!.terrain) && troopsAt(x) >= 3);
     let want: SpecialistType | null = null;
     if (fortAhead && !has("siege") && unlocked("siege")) want = "siege";
+    else if (roughFront && !has("rangers") && unlocked("rangers") && here.troops >= 8) want = "rangers";
+    else if (!has("standardBearer") && unlocked("standardBearer") && here.troops >= 20) want = "standardBearer";
     else if (unlocked("healers") && !has("healers") && here.troops >= 15) want = "healers";
     else if (!has("cavalry") && here.troops >= 10 && rng.next() < 0.3) want = "cavalry";
     if (want && room > 0 && gold >= rules.specialists[want].cost + rules.troops.cost * 4) {

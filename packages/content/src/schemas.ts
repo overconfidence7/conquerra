@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 /** Specialists: one-off attachments an army can carry (max 2 per army). */
-export const SpecialistType = z.enum(["cavalry", "siege", "scouts", "engineers", "healers"]);
+export const SpecialistType = z.enum(["cavalry", "siege", "scouts", "engineers", "healers", "rangers", "standardBearer"]);
 export type SpecialistType = z.infer<typeof SpecialistType>;
-export const SPECIALIST_TYPES: readonly SpecialistType[] = ["cavalry", "siege", "scouts", "engineers", "healers"] as const;
+export const SPECIALIST_TYPES: readonly SpecialistType[] = ["cavalry", "siege", "scouts", "engineers", "healers", "rangers", "standardBearer"] as const;
 
 export const BuildingType = z.enum(["fort", "market", "barracks", "watchtower"]);
 export type BuildingType = z.infer<typeof BuildingType>;
@@ -216,7 +216,7 @@ export const FateMission = z.object({
     gold: z.number().int().min(0).optional(),
     troops: z.number().int().min(0).optional(),
     culture: z.number().int().min(0).optional(),
-    specialist: z.enum(["cavalry", "siege", "scouts", "engineers", "healers"]).optional(),
+    specialist: SpecialistType.optional(),
   }),
 });
 export type FateMission = z.infer<typeof FateMission>;
@@ -237,6 +237,10 @@ export const Rules = z.object({
     scouts: z.object({ ...specialistBase, /** Extra vision radius around the army. */ vision: z.number().int().min(0) }),
     engineers: z.object({ ...specialistBase }),
     healers: z.object({ ...specialistBase, /** Share of the army's losses prevented (each healer; capped by maxLossReduction). */ lossReduction: z.number().min(0).max(1), maxLossReduction: z.number().min(0).max(1) }),
+    /** The culture ladder (session 15). Rangers: when this army attacks, these terrains defend like plains (Siege's counterpart for terrain). */
+    rangers: z.object({ ...specialistBase, terrains: z.array(z.enum(["plains", "forest", "hills", "mountains", "swamp"])) }),
+    /** The Standard-bearer: this army attacks this much stronger. Two in one army don't stack. */
+    standardBearer: z.object({ ...specialistBase, attackBonus: z.number().min(0) }),
   }),
   buildings: z.object({
     fort: z.object({ cost: z.number().int(), buildTurns: z.number().int().min(0), defenseMult: z.number() }),

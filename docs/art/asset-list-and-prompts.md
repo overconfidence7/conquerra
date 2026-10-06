@@ -146,6 +146,13 @@ Lobby and title background art, the game-over screen, faction-specific castles, 
 | `scaffold.png` | It's a tall tower, so it's drawn by height to match a building and covers most of the half-built building behind it. A lower, wider scaffold (about as tall as it is wide) with more open gaps would show the building through it. |
 | `bridge-wood.png` | Fine, but small and dark at Mid: a lighter, slightly longer plank bridge would read better. |
 
+### Specialist icons for the culture ladder (session 15)
+*The game draws placeholders for these today, in the same style as the other specialist icons (`icon-cavalry.png` and the rest): a square icon, dark outline, on a transparent background.*
+| File | What it's for |
+|---|---|
+| `icon-rangers.png` | **Rangers** (unlocked at culture 4 in a province): woodland skirmishers. A longbow with an arrow nocked, a sprig of leaves at its grip. |
+| `icon-standard-bearer.png` | **Standard-bearer** (unlocked at culture 6): a tall pole with a swallow-tailed war banner streaming from it. |
+
 *(This section sits under Tier 3 on purpose: a test counts the file names in Tiers 1–2 and Batch 3 against the game's art list.)*
 
 ---
