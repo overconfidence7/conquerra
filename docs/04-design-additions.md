@@ -29,6 +29,12 @@
 - **Anti-exploit rule (Nate's):** if a turn resolves while a deal is still pending, both sides must re-confirm before it takes effect. You can't accept an offer *after* attacking someone so they can't hit back.
   - Planner's version: a deal only takes effect if both sides confirm during the same order phase. Any attack between the two players during the replay voids every pending offer between them.
 - Binding vs. handshake deals and scaled break penalties carry over from v0.1.
+- **Bots and treaties (Nate, Oct 6): strong logic behind every yes and no.**
+  - A bot accepts or declines a deal for reasons it could explain in one plain line ("I need my army in the west", "you're the one running away with the map").
+  - It judges only from its own view: its fronts, who's ahead, and what the deal frees up or costs.
+  - It remembers who broke a deal with it, and is slower to trust them again.
+  - It never accepts something that helps a runaway leader, and it isn't a pushover or a wall: the sims check acceptance rates for good, bad and neutral offers.
+  - Same brain for generals and bots.
 
 ## 3. Contingency presets
 - Order backups come from a short list of one-tap templates instead of being built by hand. Examples:
@@ -101,6 +107,19 @@ Nate's three ideas:
 - **Fate draw (DECIDED):** every player draws one card per turn.
   - **Events** land on a completely random spot on the board, not necessarily near the player who drew them. Most are mildly good or bad; a few are very good or very bad. Players under fog see only surface details.
   - **Missions** go to the player who drew them.
+- **First version for session 13 (orchestrator's defaults, Oct 6; every number in `packages/content`; Nate can change any of them):**
+  - **Spoils:**
+    - **Earning:** at the end of any turn you took at least one territory, you earn one Spoils card (at most one a turn). Each card shows one of three marks: Sword, Tower or Laurel.
+    - **Turning in:** three cards make a set. Three alike give a big windfall of that kind (Sword: troops at your capital; Tower: a free fort with a small garrison; Laurel: culture in a province you hold). One of each gives troops and gold.
+    - **Windfalls don't grow** with each set turned in (unlike Risk), so they can't feed a runaway.
+    - **Hand limit:** at 5 cards you must turn in a set.
+    - **On screen:** a small card stack on your Leader card. Turning in is 2 taps, and nothing changes a basic turn.
+  - **Fate:**
+    - **Drawing:** every player draws one card each turn, automatically at the start of planning, shown as a line in the turn report (no extra tap).
+    - **About 7 in 10 are events.** They land on a random spot (seeded, provably fair) and use the same event engine as the Fallen's world events, with culture's protection. Most are mild, good or bad (a bountiful harvest, a flooded ford, a wandering band that joins whoever holds the land); a few are strong. No event takes a capital or knocks anyone out. Under fog you see only a surface detail.
+    - **About 3 in 10 are missions,** for the player who drew them, with a deadline and a reward: offensive, defensive or culture. For example: "Take any territory in Old March within 3 turns: +8 gold", or "Hold Ravencrest for 2 turns: +1 culture there". At most 2 missions open at once; a third becomes an event instead.
+    - **A lobby switch** ("Fate deck: on/off", on by default) for players who want less luck.
+  - **The Fallen keep their own event menu (Nate, Oct 6).** Fate events reuse the same engine; Influence doesn't move into Fate draws.
 
 ## 7. Troop types: the analysis Nate asked for (DECIDE)
 
@@ -179,3 +198,17 @@ It matches "simple at first, deep later" and the 5-minute turn, and it plugs nea
 - **Later, with the big game modes (M5):**
   - **Random maps** generated when the game starts.
   - **Blackout fog** (a lobby option, likely for massive games): anything not next to your land is completely hidden, including the map itself, until you explore it. Standard fog, which shows the geography but not who holds it, stays the default. (Look: standard fog is desaturated land with drifting mist; blackout fog is thick painted clouds. See `docs/06-art-direction.md`.)
+
+## 10. Pause, saved games, tutorials and scenarios (from Nate, Oct 6)
+- **Single player: pause and saved games (session 13).**
+  - Pause stops the turn timer.
+  - The game saves itself at the start of every turn, so closing the tab is safe, and the lobby's **Continue** button picks it up.
+  - A few named save slots, plus "Save to a file" / "Load a file" (today's "Save this game" grows into this).
+  - Saves stay on the device. A save from an older version either loads or says plainly why it can't.
+- **Multiplayer: pause by vote (M4).** One player asks for a pause; everyone else confirms or declines. The pause starts only if all agree, and it has a limit (how long, how many times).
+- **Tutorials (before the public launch, M5).**
+  - A tutorial is a short game already in progress: a saved game with goals and hints, played out over a couple of turns to teach one thing.
+  - Subjects: chaining attacks, recruiting, culture, buildings, cards, treaties, generals.
+  - Built on saved games, once the rules have settled.
+- **Scenarios (M5 or later):** set-piece games (a fixed map, starting positions and goals), on the same saved-game format.
+

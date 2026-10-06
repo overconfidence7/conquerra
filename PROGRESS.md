@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–12 are done: art batch 3 is in, Wyrmland and the Crownlands are re-seeded, and generals, captured generals and the Fallen are playable on the preview. Next: Nate's play test of session 12, the orchestrator's review (a new orchestrator prompt is due), then session 13 (Spoils and Fate decks).**
+**Phase: M3 (depth and balance). Sessions 7–12 are done. Next: session 13 (`docs/prompts/claude-code-session-13.md`): single-player pause and saved games, then the Spoils and Fate decks.**
 
 Claude Code sessions completed: **12** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, ...)
 
@@ -566,3 +566,23 @@ All five parts are done, each committed and pushed. There were no play-test note
   - how many turns each game took
 
   His notes go below once he's played.
+
+### Oct 6: Orchestrator review of session 12
+- **Checked the work:**
+  - GitHub's checks pass on the last commit (two in-between failures were fixed within the session).
+  - Re-ran the Fallen at 6 players: 27.9 → 29.7 turns, matching session 12's 27.7 → 29.8.
+  - The pictures look right: real pines, Wyrmland clearly a dragon (especially on the minimap), the Crownlands with 5 rivers, and clean Command, queue and Fallen screens.
+  - A small polish item: the Fallen screen still shows gold in the top bar.
+- **Nate's new ideas (captured in `docs/04-design-additions.md` §2 and §10, and slotted into the plan):**
+  - **Single-player pause and saved games:** the first part of session 13.
+  - **Multiplayer pause by vote** (one asks, the rest agree or decline): M4.
+  - **Tutorials** (short games already in progress that teach one thing: chaining, recruiting, culture, buildings, cards, treaties) and **scenarios:** before the public launch (M5), built on saved games.
+  - **Bots with strong logic for accepting or declining treaties:** a requirement for session 14.
+- **Nate's calls:**
+  - The Fallen stay as tuned (about +3 turns at 10 players, for more comebacks); revisit in the balance pass.
+  - The Fallen keep their own event menu; Fate events reuse the same engine.
+  - Wyrmland is suggested for 6–8 players.
+- **Twelve Claude Code sessions are done,** so there's a fresh orchestrator prompt: `docs/prompts/orchestrator-05.md`.
+- **Still to come:** Nate's play tests of sessions 11 and 12 (generals, captured generals, the Fallen, the new art).
+- **Next:** session 13 (`docs/prompts/claude-code-session-13.md`, run it locally).
+

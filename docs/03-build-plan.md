@@ -93,12 +93,12 @@ Research, outline v0.1, v0.2 additions, and decisions.
   - **9 ✅ (finished by 9b after the usage limit):** play-test fixes: the combat bug, recruiting (capital, barracks or a full province; choose how many), culture as "loyal land", map clarity (no hairline borders, wider passes, neighbour marks, province borders and plaques), buildings that stand on the map, plain-words reports, "Save this game"
   - **10 ✅:** bigger maps (60–120 territories) in new land shapes, the map lab, the art test bench, candidate maps (`docs/07-map-tooling.md`)
   - **11 ✅:** the visual upgrade's code (scenery rules, House tint, forests, softer Far view, roomier desktop) and the six new maps made official. Art batch 3 wasn't made yet, so it lands in 12.
-  - **12:** art batch 3 in (and Wyrmland's new dragon, the Crownlands' rivers), then generals (Leader standing instructions), captured generals and the Fallen (the Captains' gang-up moved up to 9b; generals reuse it). If short, the Fallen moves to 13.
-  - **13:** Spoils and Fate decks
-  - **14:** preset diplomacy
+  - **12 ✅:** art batch 3, Wyrmland's dragon and the Crownlands' rivers, generals, captured generals, the Fallen
+  - **13:** single-player pause and saved games (Nate, Oct 6), then the Spoils and Fate decks
+  - **14:** preset diplomacy, with bots that accept or decline for clear reasons (`04-design-additions.md` §2)
   - **15:** spies and culture unlocks, and the "Govern this province" general instruction (`04-design-additions.md` §4)
   - **16:** balance pass (runaways, game length up to 30–40 turns, seat fairness)
-- A fresh orchestrator prompt is due after session 12 (orchestrator-04 was written after session 9).
+- A fresh orchestrator prompt is due after session 15 (orchestrator-05 was written after session 12).
 - Leader-as-general (standing instructions) and captured generals.
 - Spoils and Fate decks (events and missions).
 - Preset-based diplomacy with counteroffers and the re-confirm rule.
@@ -115,6 +115,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
 - Google sign-in via the existing Cloudflare Access setup (Google login already configured), invite links.
 - Upgrade to Workers Paid ($5/month) at the start of M4, because turn resolution likely exceeds the Free plan's 10 ms of CPU per request.
 - Deploy from GitHub with Cloudflare's built-in Git integration.
+- Pause by vote: one player asks, everyone else confirms or declines (`04-design-additions.md` §10).
 - Resources to create: Worker `conquerra`, Durable Object `GameRoom`, D1 `conquerra_db`, R2 `conquerra-replays`, Access app "Conquerra". Full details in `docs/infra-cloudflare.md`.
 - Bot takeover for quitters; notifications.
 
@@ -122,7 +123,8 @@ Research, outline v0.1, v0.2 additions, and decisions.
 - Public Google sign-in, matchmaking and ratings.
 - 50-player battle royale, asymmetric factions, secret objectives, team games.
 - Random maps generated on the spot, and the "blackout" fog option (`04-design-additions.md` §9). First split the map maker into stages with their own random streams and pins (`docs/07-map-tooling.md`), so the map builder can reuse it.
-- Anti-collusion, tutorial, one-time purchase.
+- Anti-collusion, one-time purchase.
+- **Tutorials:** short games already in progress (saved games with goals and hints) that teach one thing each: chaining, recruiting, culture, buildings, cards, treaties, generals (`04-design-additions.md` §10). Scenarios on the same format, here or later.
 
 ### M6: Native apps + later
 - iOS and Android apps, cosmetics.
