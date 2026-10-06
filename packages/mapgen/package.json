@@ -8,7 +8,8 @@
   "scripts": {
     "build-maps": "tsx scripts/build-maps.ts",
     "try-maps": "tsx scripts/try-maps.ts",
-    "mask": "tsx scripts/mask.ts"
+    "mask": "tsx scripts/mask.ts",
+    "try-seeds": "tsx scripts/try-seeds.ts"
   },
   "dependencies": {
     "@conquerra/content": "workspace:*",

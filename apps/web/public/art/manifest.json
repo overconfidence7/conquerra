@@ -13,6 +13,11 @@
       "height": 256,
       "tintMask": "banner-flag.tint.webp"
     },
+    "bridge-wood": {
+      "file": "bridge-wood.webp",
+      "width": 192,
+      "height": 159
+    },
     "bridge": {
       "file": "bridge.webp",
       "width": 192,
@@ -47,6 +52,21 @@
       "file": "capital-2.webp",
       "width": 384,
       "height": 366
+    },
+    "cliff-1": {
+      "file": "cliff-1.webp",
+      "width": 384,
+      "height": 94
+    },
+    "cliff-2": {
+      "file": "cliff-2.webp",
+      "width": 384,
+      "height": 111
+    },
+    "cliff-3": {
+      "file": "cliff-3.webp",
+      "width": 384,
+      "height": 99
     },
     "cloud-1": {
       "file": "cloud-1.webp",
@@ -108,6 +128,11 @@
       "file": "frame-corner.webp",
       "width": 255,
       "height": 256
+    },
+    "frame-plaque": {
+      "file": "frame-plaque.webp",
+      "width": 512,
+      "height": 106
     },
     "hill-1": {
       "file": "hill-1.webp",
@@ -189,6 +214,26 @@
       "width": 41,
       "height": 128
     },
+    "landmark-lighthouse": {
+      "file": "landmark-lighthouse.webp",
+      "width": 156,
+      "height": 256
+    },
+    "landmark-ruins": {
+      "file": "landmark-ruins.webp",
+      "width": 256,
+      "height": 195
+    },
+    "landmark-stones": {
+      "file": "landmark-stones.webp",
+      "width": 256,
+      "height": 216
+    },
+    "landmark-windmill": {
+      "file": "landmark-windmill.webp",
+      "width": 210,
+      "height": 256
+    },
     "leader-01": {
       "file": "leader-01.webp",
       "width": 512,
@@ -258,6 +303,31 @@
       "file": "mountain-4.webp",
       "width": 256,
       "height": 212
+    },
+    "pass-gate": {
+      "file": "pass-gate.webp",
+      "width": 256,
+      "height": 250
+    },
+    "ridge-1": {
+      "file": "ridge-1.webp",
+      "width": 384,
+      "height": 156
+    },
+    "ridge-2": {
+      "file": "ridge-2.webp",
+      "width": 384,
+      "height": 128
+    },
+    "ridge-3": {
+      "file": "ridge-3.webp",
+      "width": 384,
+      "height": 132
+    },
+    "scaffold": {
+      "file": "scaffold.webp",
+      "width": 208,
+      "height": 256
     },
     "seal": {
       "file": "seal.webp",
@@ -342,12 +412,12 @@
     },
     "tree-conifer-1": {
       "file": "tree-conifer-1.webp",
-      "width": 192,
-      "height": 188
+      "width": 147,
+      "height": 192
     },
     "tree-conifer-2": {
       "file": "tree-conifer-2.webp",
-      "width": 192,
+      "width": 156,
       "height": 192
     },
     "tree-conifer-3": {

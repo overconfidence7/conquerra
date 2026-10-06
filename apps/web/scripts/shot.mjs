@@ -2,7 +2,7 @@
  * Quick look at a real map in the game (dev helper): start a game, zoom, save a screenshot.
  *   node apps/web/scripts/shot.mjs <mapId> <out.png> [far|mid|near|<px>] [x,y] [fog on|off] [tactical]
  * LAB=1: draw the map's recipe (packages/mapgen/src/configs.ts) in the map lab instead of starting a game (for a
- * build that doesn't have the map in its lobby yet). Capitals for 6 players.
+ * build that doesn't have the map in its lobby yet). Capitals for 6 players. With LAB=1, SEED=<seed> tries another seed.
  * Needs the built game running (`pnpm build`, `pnpm --filter web preview`), or MAP_URL.
  */
 import puppeteer from "puppeteer-core";
@@ -21,6 +21,8 @@ if (process.env.LAB) {
   const src = readFileSync(new globalThis.URL("../../../packages/mapgen/src/configs.ts", import.meta.url), "utf8");
   const line = src.split(/\r?\n/).find((l) => l.includes(`id: "${mapId}"`));
   const recipe = Function(`return (${line.trim().replace(/,$/, "")})`)();
+  // SEED=<seed>: the same recipe with another seed (to compare seeds before making one official).
+  if (process.env.SEED) recipe.seed = process.env.SEED;
   await page.goto(`${URL}?lab=maps&recipe=${encodeURIComponent(JSON.stringify(recipe))}&full=1`, { waitUntil: "networkidle0" });
   await page.waitForFunction(() => window.__labMade, { timeout: 600000, polling: 200 });
 } else {

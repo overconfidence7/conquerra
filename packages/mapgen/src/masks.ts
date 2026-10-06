@@ -1,3 +1,4 @@
+import wyrm from "../masks/wyrm.json";
 import { insideRings } from "./util";
 
 /**
@@ -75,8 +76,11 @@ export const MASKS: MaskDef[] = [
   },
 ];
 
-/** Masks made from Nate's pictures (`pnpm --filter @conquerra/mapgen mask ...`). */
-export const IMAGE_MASKS: MaskDef[] = [];
+/**
+ * Masks made from Nate's pictures (`pnpm --filter @conquerra/mapgen mask ...`). `wyrm` is Gemini's dragon outline
+ * from art batch 3 (session 12), for Wyrmland once Nate approves its seed.
+ */
+export const IMAGE_MASKS: MaskDef[] = [wyrm];
 
 export const allMasks = (): MaskDef[] => [...MASKS, ...IMAGE_MASKS];
 

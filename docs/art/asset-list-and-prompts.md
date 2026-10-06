@@ -138,6 +138,14 @@ Lobby and title background art, the game-over screen, faction-specific castles, 
 | `glade-1.png`, `-2.png` | A small meadow with flowers and a fallen log, top-down, for the open glades inside forests. |
 | `paper-grain.png` | A seamless, neutral parchment grain (top-down, very flat), for the painted-atlas look at Far zoom (today it's made by the shader). |
 
+**From session 12 (batch 3 on the bench):** every batch 3 piece went in; nothing kept today's drawing. These are worth another go:
+| File | Why |
+|---|---|
+| `terrain-hills.png` | Reads as even ground now (the repeat is gone), but at Near it looks like brown dirt in places rather than grassy hills. Ask for a greener, grassier upland with fewer bare patches. |
+| `tree-conifer-1.png`, `-2.png` | They read as pines at last, but they're bluer and darker than the broadleaf trees, so mixed forests look two-tone. Ask for a warmer green, or nudge the trees' colour target in `packages/art/src/palette.ts`. |
+| `scaffold.png` | It's a tall tower, so it's drawn by height to match a building and covers most of the half-built building behind it. A lower, wider scaffold (about as tall as it is wide) with more open gaps would show the building through it. |
+| `bridge-wood.png` | Fine, but small and dark at Mid: a lighter, slightly longer plank bridge would read better. |
+
 *(This section sits under Tier 3 on purpose: a test counts the file names in Tiers 1–2 and Batch 3 against the game's art list.)*
 
 ---

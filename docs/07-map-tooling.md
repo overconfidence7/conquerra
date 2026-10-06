@@ -121,11 +121,15 @@ Moved from session 9 to 10, because Nate's play-test fixes come first. Nate's di
 - `node apps/web/scripts/shot.mjs <map> <out.png> [far|mid|near|<px>] [x,y]` takes a quick look at a real map in a game (`NOUI=1` hides the menus, `SELECT=1` selects your capital, `FOLD=1` folds the desktop dock, `LAB=1` draws the map's recipe in the lab instead).
 - `node apps/web/scripts/tap-count.mjs` counts the taps for a basic turn on a 384 px phone.
 
-## When art batch 3 arrives (it hadn't by session 11)
+## When art batch 3 arrives (it arrived for session 12; kept as the recipe for the next batch)
 1. Nate runs `docs/prompts/gemini-art-session-03.md`; the files land in `art/incoming/` (old versions of redone files in `art/incoming/_old/`).
 2. `pnpm art:import`. The report should list no unknown files except `mask-dragon.png` (the dragon outline is a map shape, not art).
 3. `pnpm build`, `pnpm --filter web preview`, then `pnpm map-check bench`: every new piece shows up on the bench's redo sheet and in place on the map. Nothing else needs changing: each piece already has its placement rule and falls back to today's drawing until it arrives.
-4. **Wyrmland's dragon:** `pnpm --filter @conquerra/mapgen mask ../../art/incoming/mask-dragon.png dragon "Dragon"`, then swap the hand-drawn `dragon` in `packages/mapgen/src/masks.ts` for the new one, try seeds for Wyrmland's recipe in the lab (shape Silhouette, 120 territories, 2 ranges) until it reads as a dragon at Far and passes every check, show Nate the Far picture, then update its `seed` in `configs.ts`, `pnpm build-maps`, and run 200-game sims at 6, 8 and 10 players.
+4. **Wyrmland's dragon:** `pnpm --filter @conquerra/mapgen mask art/incoming/mask-dragon.png wyrm "The Wyrm"` (the path is from the repo root; the script now crops the picture to the drawing, so empty paper doesn't become sea), add it to `IMAGE_MASKS` in `packages/mapgen/src/masks.ts`, try seeds of Wyrmland's recipe until one reads as a dragon at Far and passes every check, show Nate the Far picture, then point Wyrmland's recipe at the new mask and seed in `configs.ts`, `pnpm build-maps`, and run 200-game sims at 6, 8 and 10 players.
+5. **Before/after pictures:** move the old `bench-after/` aside, `pnpm map-check bench`, then `pnpm --filter @conquerra/art exec tsx scripts/compare.ts <old folder> <new folder> <out folder> "Before" "After" bench-` (use full paths). For real maps: build once with the old art (`git stash` the art folder), take shots with `shot.mjs`, restore the new art, build, take the same shots, and compare the two folders.
+
+## Trying other seeds for an official map (session 12)
+`pnpm --filter @conquerra/mapgen try-seeds <mapId> <seed prefix> <first> <how many> --out <folder>` makes the map's exact recipe with other seeds (for example `crownlands mask-100- 1 40`) and prints, for each, which try passed the checks and how many rivers, passes, sea lanes and choke points it has, plus a debug picture. To see a seed the way the game draws it: `LAB=1 SEED=<seed> node apps/web/scripts/shot.mjs <mapId> out.png fit` (with the built game running).
 
 ## How to make a seed an official map
 1. In the lab, find a map you like (the gallery helps) and make sure every check passes and "Sim this map" looks right at the player counts it suits.

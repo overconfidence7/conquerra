@@ -1,7 +1,7 @@
 import { defaultRules } from "@conquerra/content";
 import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
-import { checkMap, generateMap, LAND_SHAPES, MAP_CONFIGS, MASKS, recipeFor, type LandShape } from "../src";
+import { allMasks, checkMap, generateMap, LAND_SHAPES, MAP_CONFIGS, recipeFor, type LandShape } from "../src";
 import { maskInside, type MaskDef } from "../src/masks";
 import { makeShapeField } from "../src/shapes";
 import { Rng, seedRng } from "@conquerra/engine";
@@ -64,7 +64,7 @@ describe("land shapes", () => {
     for (const isle of islands) expect(lanes.some((l) => isle.includes(l.a) !== isle.includes(l.b))).toBe(true);
   }, 60_000);
 
-  it.each(MASKS.map((m) => [m.id]))("the %s silhouette builds", (id) => {
+  it.each(allMasks().map((m) => [m.id]))("the %s silhouette builds", (id) => {
     const { check } = generateMap(recipeFor("mask", 60, `test-${id}`, { mask: id }), defaultRules);
     expect(check.problems, id).toEqual([]);
   }, 120_000);

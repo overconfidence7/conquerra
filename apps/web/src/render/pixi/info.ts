@@ -190,7 +190,8 @@ export class InfoLayer {
             if (art) {
               const sc = new Sprite(art);
               sc.anchor.set(0.5, 0.9);
-              sc.scale.set((BUILDING_SIZE * 1.04) / art.width);
+              // Sized by height to just over the building's (the art is a tall tower; by width it stood over a capital).
+              sc.scale.set((sp.height * 1.05) / art.height);
               root.addChild(sc);
             } else root.addChild(scaffold(BUILDING_SIZE));
           }

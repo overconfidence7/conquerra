@@ -104,7 +104,7 @@ function RedoSheet() {
         ctx.fillText(t, x, y);
       };
       // 1. Ground textures at Far zoom (a texture repeats every 170 map units; a typical territory is 48 px wide at Far).
-      title("Ground textures, tiled as at Far zoom (redo: rock, snow and hills have big built-in shapes that repeat)", 20, 34);
+      title("Ground textures, tiled as at Far zoom (rock, snow and hills redone in batch 3: check for repeating shapes)", 20, 34);
       const far = 48 / 90; // px per map unit at Far
       const grounds = ["terrain-rock", "terrain-snow", "terrain-hills", "terrain-grass"] as const;
       grounds.forEach((name, i) => {
@@ -116,10 +116,10 @@ function RedoSheet() {
         ctx.clip();
         for (let ty = 0; ty < h; ty += tile) for (let tx = 0; tx < w; tx += tile) ctx.drawImage(img, x + tx, y + ty, tile, tile);
         ctx.restore();
-        ctx.strokeStyle = name === "terrain-grass" ? "#6fbf73" : "#e0705a";
+        ctx.strokeStyle = name === "terrain-grass" ? "rgba(201,164,92,0.5)" : "#6fbf73";
         ctx.lineWidth = 3;
         ctx.strokeRect(x, y, w, h);
-        note(`${name.replace("terrain-", "")}${name === "terrain-grass" ? " (for comparison: reads as even ground)" : ": redo"}`, x, y + h + 22);
+        note(`${name.replace("terrain-", "")}${name === "terrain-grass" ? " (for comparison: reads as even ground)" : ": new in batch 3"}`, x, y + h + 22);
       });
       // 2. The same four at Mid zoom (one repeat is 227 px).
       title("The same at Mid zoom (one repeat)", 20, 370);
@@ -128,7 +128,7 @@ function RedoSheet() {
         ctx.drawImage(img, 20 + i * 340, 386, 320, 320);
       });
       // 3. Trees, big: the pines read as round bushes next to the broadleaf trees.
-      title("Trees at 4x game size (redo: tree-conifer-1 and -2 read as round bushes, not pines)", 20, 760);
+      title("Trees at 4x game size (tree-conifer-1 and -2 redone in batch 3 as pines)", 20, 760);
       const trees = ["tree-conifer-1", "tree-conifer-2", "tree-conifer-3", "tree-broadleaf-1", "tree-broadleaf-2", "tree-broadleaf-3"];
       trees.forEach((name, i) => {
         const img = art.get(name)!.image;
@@ -137,11 +137,11 @@ function RedoSheet() {
         ctx.fillStyle = "#4f6b3a";
         ctx.fillRect(x - 10, y - 10, 200, 230);
         ctx.drawImage(img, x + 100 - size / 2, y + 200 - size, size, size * (img.height / img.width));
-        const redo = name === "tree-conifer-1" || name === "tree-conifer-2";
-        ctx.strokeStyle = redo ? "#e0705a" : "rgba(201,164,92,0.5)";
-        ctx.lineWidth = redo ? 3 : 1;
+        const redone = name === "tree-conifer-1" || name === "tree-conifer-2";
+        ctx.strokeStyle = redone ? "#6fbf73" : "rgba(201,164,92,0.5)";
+        ctx.lineWidth = redone ? 3 : 1;
         ctx.strokeRect(x - 10, y - 10, 200, 230);
-        note(`${name}${redo ? ": redo" : ""}`, x - 6, y + 245);
+        note(`${name}${redone ? ": new in batch 3" : ""}`, x - 6, y + 245);
       });
       // 4. The same trees at true game size, in a row (as they stand in a forest at Mid zoom).
       title("…and at true size at Mid zoom", 20, 1090);
@@ -166,7 +166,8 @@ function RedoSheet() {
         if (a) {
           const img = a.image;
           // Game size times 3 (1.6 px a map unit, as at Near), the plaque at 2x its on-screen size.
-          const w = name === "frame-plaque" ? 160 : units * 1.6 * 3 * 0.75;
+          // (The scaffold is sized by height to just over a building's, as in the game.)
+          const w = name === "frame-plaque" ? 160 : name === "scaffold" ? units * 1.6 * 3 * 0.75 * (245 / 256) * 1.05 * (img.width / img.height) : units * 1.6 * 3 * 0.75;
           const h = w * (img.height / img.width);
           ctx.drawImage(img, x + 90 - w / 2, y + (name === "frame-plaque" ? 75 - h / 2 : 140 - h), w, h);
         } else {

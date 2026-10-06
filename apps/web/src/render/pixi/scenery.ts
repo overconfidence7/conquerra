@@ -538,6 +538,11 @@ function landmarks(map: MapDef, gr: Ground, ko: Keepout, coast: CoastPoint[][], 
     !ko.passes.some((p) => dist(p.x, p.y, x, y) < 56) &&
     !ko.laneEnds.some((e) => dist(e.x, e.y, x, y) < 34) &&
     !nearRiver(x, y);
+  // Its footprint inside one territory, so it never stands on a border line or where three meet.
+  const insideOneTerritory = (x: number, y: number) => {
+    const t = g.territories.find((t) => insideRings(t.rings, x, y));
+    return !!t && [[-W * 0.6, 2], [W * 0.6, 2], [0, -W * 0.7], [-W * 0.4, -W * 0.5], [W * 0.4, -W * 0.5]].every(([dx, dy]) => insideRings(t.rings, x + dx!, y + dy!));
+  };
   // Spread them out: about the spacing of `want` points over the land, at most.
   let landCells = 0;
   for (const ch of g.biome.data) if (ch !== "o" && ch !== "O") landCells++;
@@ -559,7 +564,8 @@ function landmarks(map: MapDef, gr: Ground, ko: Keepout, coast: CoastPoint[][], 
         clear(p.x, p.y) &&
         // Its whole footprint on land, not just its foot.
         [[-W / 2, 0], [W / 2, 0], [0, -W * 0.6]].every(([dx, dy]) => !gr.water(p.x + dx!, p.y + dy!)) &&
-        out.every((o) => dist(o.x, o.y, p.x, p.y) >= spacing),
+        out.every((o) => dist(o.x, o.y, p.x, p.y) >= spacing) &&
+        insideOneTerritory(p.x, p.y),
     );
     if (!at) continue;
     out.push({ kind, x: Math.round(at.x * 10) / 10, y: Math.round(at.y * 10) / 10, w: W * (kind === "lighthouse" ? 0.9 : 1), rot: 0, flip: rng.next() < 0.5, v: 1 });
