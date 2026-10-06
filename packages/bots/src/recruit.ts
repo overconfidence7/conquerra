@@ -15,6 +15,7 @@ import {
   type TerritoryDetail,
   type TerritoryId,
 } from "@conquerra/engine";
+import { respectDeals } from "./diplomacy";
 
 export interface Bot {
   id: string;
@@ -56,6 +57,11 @@ export const makeRecruitBot = (opts: RecruitOptions = { chainMargin: 2 }): Bot =
 export const recruitBot: Bot = makeRecruitBot();
 
 function plan(ctx: GameContext, view: PlayerView, opts: RecruitOptions): Order[] {
+  // It honours every deal (session 14): no attack across a truce of its own.
+  return respectDeals(ctx, view, planMoves(ctx, view, opts));
+}
+
+function planMoves(ctx: GameContext, view: PlayerView, opts: RecruitOptions): Order[] {
   const { rules } = ctx;
   const idx = indexMap(ctx.map);
   const me = view.me;

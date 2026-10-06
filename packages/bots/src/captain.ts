@@ -3,6 +3,7 @@ import { investCost, isRecruitSiteIn, Rng, seedRng, type GameContext, type Order
 import { BREAKTHROUGH_MARGIN, CAPTAIN_CHAIN_MARGIN, chainOn, readBoard, type CaptainOptions } from "./board";
 import type { Bot } from "./recruit";
 import { captainSpoils, missionPull, missionSpend, spoilsOrder } from "./cards";
+import { captainBreaks, respectDeals, withoutDeals } from "./diplomacy";
 
 export { CAPTAIN_CHAIN_MARGIN, type CaptainFeature, type CaptainOptions } from "./board";
 
@@ -49,7 +50,15 @@ const LOYAL_FIGHTS = 4;
 /** Armies this close (through our own land) to the raided front march there instead of attacking elsewhere. */
 const RAID_RADIUS = 2;
 
-function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn?: readonly ReplayEvent[]): Order[] {
+function plan(ctx: GameContext, dealt: PlayerView, opts: CaptainOptions, lastTurn?: readonly ReplayEvent[]): Order[] {
+  // Deals (session 14): it keeps its word, unless breaking a handshake deal clearly pays (and it says why); then it
+  // plans as if that deal were gone, and every order honours the rest.
+  const breaks = captainBreaks(ctx, dealt, lastTurn);
+  const view = withoutDeals(dealt, breaks.map((o) => (o.kind === "break" ? o.deal : "")));
+  return [...breaks, ...respectDeals(ctx, view, planMoves(ctx, view, opts, lastTurn))];
+}
+
+function planMoves(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn?: readonly ReplayEvent[]): Order[] {
   const b = readBoard(ctx, view, opts, lastTurn);
   if (!b) return [];
   const { rules, idx, me, garrison, on, seen, owned, rivalAt, troopsAt, specsAt, mine, crossing, isFrontier, frontier, enemyPressure, biggestEnemyNear } = b;
@@ -215,6 +224,8 @@ function plan(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn
       const rival = tv.owner;
       // 8. Not a rival that's holding off the runaway leader (unless it's our own capital to take back).
       if (rival && shieldsLeader.has(rival) && to !== me.capital) continue;
+      // Never across a truce of ours.
+      if (b.blocked(from, to)) continue;
       // 9. Armies near a front a fast attacker is pushing through fight instead of grabbing neutral land.
       if (nearRaid.has(from) && rival === null) continue;
       const offFocus = endgame && !!focus && rival !== null && rival !== focus;

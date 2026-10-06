@@ -1,4 +1,4 @@
-import { fallenBot, recruitBot, type Bot } from "@conquerra/bots";
+import { agreedIn, fallenBot, negotiate, recruitBot, withAgreed, type Bot, type Talk } from "@conquerra/bots";
 import {
   createGame,
   indexMap,
@@ -93,6 +93,20 @@ export interface GameSummary {
   /** Missions the winner completed, and everyone else's average. */
   winnerMissions: number;
   othersMissions: number;
+  /**
+   * Diplomacy (session 14): offers between bots and how they were answered, deals that started (by kind, and how many
+   * binding), deals broken, joint wars aimed at the player then holding the most land, and a few of the bots' reason
+   * lines from this game.
+   */
+  offers: number;
+  accepted: number;
+  countered: number;
+  dealsMade: number;
+  dealsBinding: number;
+  dealsByKind: Record<string, number>;
+  dealsBroken: number;
+  warsVsLeader: number;
+  reasons: string[];
   log?: StepEvent[][];
 }
 
@@ -108,7 +122,10 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
     worldEvents: 0, worldEventsFailed: 0, hitBy: {}, winnerHitHardest: null,
     spoilsSets: 0, spoilsAuto: 0, winnerLeadOnSet: null, winnerSetTurnShare: null,
     fateEvents: 0, fateGood: 0, fateBad: 0, fateStrong: 0, missionsDrawn: 0, missionsDone: 0, fateNet: {}, winnerGoodShare: null, winnerLandShare: null, winnerLuck: null, winnerLuckiest: null, winnerMissions: 0, othersMissions: 0,
+    offers: 0, accepted: 0, countered: 0, dealsMade: 0, dealsBinding: 0, dealsByKind: {}, dealsBroken: 0, warsVsLeader: 0, reasons: [],
   };
+  const level = (b: Bot) => (b.id === "recruit" ? ("recruit" as const) : ("captain" as const));
+  const name = (id: string) => players.find((p) => p.id === id)?.name ?? id;
   /** Turns (1-based) on which each player turned in a set; missions each completed; good Fate events each received. */
   const setTurns = new Map<string, Set<number>>();
   const missionsBy = new Map<string, number>();
@@ -122,12 +139,19 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
   while (!s.winner) {
     const orders: OrdersByPlayer = {};
     const p0 = performance.now();
+    // Diplomacy: the bots negotiate as planning starts (in seat order), then plan their moves knowing what they agreed.
+    const views = new Map(s.players.filter((p) => p.eliminatedTurn === null).map((p) => [p.id, viewFor(ctx, s, p.id)]));
+    const talk = s.settings.diplomacy
+      ? negotiate(ctx, s.players.flatMap((p, seat) => (p.eliminatedTurn === null ? [{ id: p.id, level: level(seatBot(seat)) }] : [])), (id) => views.get(id)!, (id) => lastTurn.get(id), null)
+      : null;
+    const agreed = talk ? agreedIn(talk.orders) : [];
+    if (talk) noteTalks(talk.talks);
     for (const [seat, p] of s.players.entries())
       if (p.eliminatedTurn === null) {
         const b = seatBot(seat);
-        const v = viewFor(ctx, s, p.id);
+        const v = withAgreed(views.get(p.id)!, agreed);
         const b0 = performance.now();
-        const o = b.plan(ctx, v, lastTurn.get(p.id));
+        const o = [...(talk?.orders[p.id] ?? []), ...b.plan(ctx, v, lastTurn.get(p.id))];
         (sum.planMsByBot[b.id] ??= []).push(performance.now() - b0);
         orders[p.id] = o;
         sum.orders += o.length;
@@ -135,10 +159,15 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
       } else if (s.settings.fallen) orders[p.id] = fallenBot.plan(ctx, viewFor(ctx, s, p.id));
     const p1 = performance.now();
     const before = s;
+    const held = new Map<string, number>();
     for (const id of idx.ids) {
       const o = s.territories[id]!.owner;
-      if (o) landTurns.set(o, (landTurns.get(o) ?? 0) + 1);
+      if (o) {
+        landTurns.set(o, (landTurns.get(o) ?? 0) + 1);
+        held.set(o, (held.get(o) ?? 0) + 1);
+      }
     }
+    const landLeader = [...held].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0]?.[0] ?? null;
     const r = resolveTurn(ctx, s, orders);
     const p2 = performance.now();
     sum.planMs.push(p1 - p0);
@@ -169,6 +198,16 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
         if (e.captured) b.captures++;
       }
       if (e.type === "fizzled") sum.fizzles++;
+      if (e.type === "dealStarted") {
+        sum.dealsMade++;
+        sum.dealsByKind[e.deal.terms.kind] = (sum.dealsByKind[e.deal.terms.kind] ?? 0) + 1;
+        if (e.deal.bond === "binding") sum.dealsBinding++;
+        if (e.deal.terms.kind === "war" && e.deal.terms.target === landLeader) sum.warsVsLeader++;
+      }
+      if (e.type === "dealBroken") {
+        sum.dealsBroken++;
+        if (e.note && sum.reasons.length < 12) sum.reasons.push(`${name(e.by)} breaks its ${e.kind} with ${name(e.by === e.a ? e.b : e.a)}: "${e.note}"`);
+      }
       if (e.type === "worldEventFailed") sum.worldEventsFailed++;
       if (e.type === "worldEvent") {
         sum.worldEvents++;
@@ -259,4 +298,16 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
   sum.winnerHitHardest = hardest && s.winner !== "draw" ? hardest[0] === s.winner : null;
   if (keepLog) sum.log = log;
   return sum;
+
+  /** Count the bots' offers and answers, and keep a few of their reason lines. */
+  function noteTalks(talks: readonly Talk[]) {
+    for (const t of talks) {
+      if (!t.answer) continue;
+      sum.offers++;
+      if (t.answer.accept) sum.accepted++;
+      if (t.answer.counter) sum.countered++;
+      if (sum.reasons.length < 12 && (sum.offers % 7 === 1 || t.answer.counter))
+        sum.reasons.push(`${name(t.offer.from)} → ${name(t.offer.to)}, ${t.offer.terms.kind}: ${t.answer.accept ? "yes" : t.answer.counter ? "counter" : "no"}, "${t.answer.reason}"`);
+    }
+  }
 }

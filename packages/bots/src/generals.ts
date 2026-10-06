@@ -1,5 +1,6 @@
 import { distancesFrom, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type ReplayEvent, type TerritoryId } from "@conquerra/engine";
 import { BREAKTHROUGH_MARGIN, CAPTAIN_CHAIN_MARGIN, chainOn, readBoard, type Board, type CaptainOptions } from "./board";
+import { respectDeals } from "./diplomacy";
 
 /**
  * Generals (session 12): a general leads one army, the troops in the territory where it stands, and goes with them
@@ -68,7 +69,8 @@ export function planGeneral(
       g.raid(instruction.player);
       break;
   }
-  return g.orders;
+  // A general honours every deal of its owner's (session 14).
+  return respectDeals(ctx, view, g.orders);
 }
 
 /** Above this share of a front stack's own needs, spare troops may be pulled in (never what it needs to hold). */
@@ -185,7 +187,7 @@ class General {
       .get(home)!
       .filter((x) => {
         const r = b.rivalAt(x);
-        return !!r && (rival ? r === rival : x === place || b.idx.neighbors.get(x)!.includes(place!));
+        return !!r && !b.blocked(home, x) && (rival ? r === rival : x === place || b.idx.neighbors.get(x)!.includes(place!));
       })
       .map((x) => ({ x, need: spare > 0 ? b.needFor(home, x, spare) : null }))
       .filter((c): c is { x: TerritoryId; need: number } => c.need !== null && (!b.crossing(home, c.x) || spare >= c.need * BREAKTHROUGH_MARGIN))
@@ -215,7 +217,7 @@ class General {
       const specs = b.specsAt(home);
       const targets = b.idx.neighbors
         .get(home)!
-        .filter((x) => b.rivalAt(x) === rival)
+        .filter((x) => b.rivalAt(x) === rival && !b.blocked(home, x))
         .flatMap((x) => {
           const need = b.needFor(home, x, avail, specs, this.isLeader);
           if (need === null || (b.crossing(home, x) && avail < need * BREAKTHROUGH_MARGIN)) return [];
@@ -249,7 +251,7 @@ class General {
     const specs = b.specsAt(home);
     const steps = b.idx.neighbors.get(home)!.filter((x) => (dist.get(x) ?? 1e9) < here);
     const attacks = steps
-      .filter((x) => !b.owned(x) && mayAttack(x))
+      .filter((x) => !b.owned(x) && mayAttack(x) && !b.blocked(home, x))
       .flatMap((x) => {
         const need = b.needFor(home, x, avail, specs, this.isLeader);
         if (need === null || (b.crossing(home, x) && avail < need * BREAKTHROUGH_MARGIN)) return [];

@@ -20,7 +20,8 @@ import { runGame, type GameSummary } from "./runGame";
  *   pnpm sim --mix general-push,captain,captain,captain   one seat's Leader runs on a standing instruction
  *                                              (general-hold, -defend, -push or -raid); the rest play as the Captain
  * Options: --fallen on|off (knocked-out seats play world events; on by default), --rules a.b=1,c.d=2 (any rule number),
- *          --spoils on|off, --fate on|off (the card decks; both on by default),
+ *          --spoils on|off, --fate on|off (the card decks; both on by default), --diplomacy on|off (deals; on by default),
+ *          --reasons N (print N of the bots' reason lines from the games),
  *          --map embervale|greatmarch (default: Embervale up to 6 players, Greatmarch above),
  *          --luck 0.3, --mode classic|conquest, --turn-limit N, --fog on|off, --seed prefix,
  *          --chain-margin N (bots chain on when the arriving army is this many times what the next target needs;
@@ -44,8 +45,10 @@ const fallen = arg("fallen", "on") !== "off";
 /** The card decks (session 13): Spoils and Fate (both on by default; --spoils off / --fate off to compare). */
 const spoils = arg("spoils", "on") !== "off";
 const fate = arg("fate", "on") !== "off";
+/** Diplomacy (session 14): the bots make deals with each other (on by default; --diplomacy off to compare). */
+const diplomacy = arg("diplomacy", "on") !== "off";
 const seedPrefix = arg("seed", "sim");
-const settings = { luck, mode, fog, fallen, spoils, fate, ...(turnLimit ? { turnLimit } : {}) };
+const settings = { luck, mode, fog, fallen, spoils, fate, diplomacy, ...(turnLimit ? { turnLimit } : {}) };
 const botKind = arg("bots", "captain");
 const marginArg = arg("chain-margin", "");
 /** Tuning the Captain's runaway rule (priority 8): --runaway-share 0.4 --runaway-lead 1.75. */
@@ -171,7 +174,7 @@ for (const players of playerCounts) {
   const plan = stats(results.flatMap((g) => g.planMs));
   const total = stats(results.flatMap((g) => g.resolveMs.map((r, i) => r + g.planMs[i]!)));
 
-  console.log(`\n=== ${players} players — ${ctx.map.name}, ${label}, luck ${luck}, ${mode}${turnLimit ? ` (${turnLimit} turns)` : ""}, fog ${fog ? "on" : "off"}, the Fallen ${fallen ? "on" : "off"}, Spoils ${spoils ? "on" : "off"}, Fate ${fate ? "on" : "off"}${tuned} ===`);
+  console.log(`\n=== ${players} players — ${ctx.map.name}, ${label}, luck ${luck}, ${mode}${turnLimit ? ` (${turnLimit} turns)` : ""}, fog ${fog ? "on" : "off"}, the Fallen ${fallen ? "on" : "off"}, Spoils ${spoils ? "on" : "off"}, Fate ${fate ? "on" : "off"}, diplomacy ${diplomacy ? "on" : "off"}${tuned} ===`);
   console.log(`Games: ${results.length} finished, ${errors.length} crashed, in ${(wall / 1000).toFixed(1)}s`);
   console.log(`Win rate by seat (fair ≈ ${(100 / players).toFixed(1)}% each): ${wins.map((w) => pct(w)).join(" / ")}   draws ${pct(draws)}`);
   if (mix) {
@@ -235,6 +238,20 @@ for (const players of playerCounts) {
       console.log(
         `Fate and the winner: the winner got ${share((g) => g.winnerGoodShare!)}% of the good events, against ${share((g) => g.winnerLandShare!)}% of the land they could land on (its fair share); its luck beyond its land: ${(luck.reduce((a, g) => a + g.winnerLuck!, 0) / Math.max(1, luck.length)).toFixed(2)} events a game; it was the luckiest player in ${pct2(lucky.filter((g) => g.winnerLuckiest).length, lucky.length)} of games (by chance ${(100 / players).toFixed(0)}%); missions done: the winner ${fmt(won.reduce((a, g) => a + g.winnerMissions, 0) / Math.max(1, won.length))}, the others ${fmt(won.reduce((a, g) => a + g.othersMissions, 0) / Math.max(1, won.length))} each`,
       );
+    }
+  }
+  if (diplomacy) {
+    const sum = (f: (g: GameSummary) => number) => results.reduce((a, g) => a + f(g), 0);
+    const offers = sum((g) => g.offers);
+    const kinds = ["truce", "trade", "war", "passage"].map((k) => `${k} ${(sum((g) => g.dealsByKind[k] ?? 0) / Math.max(1, results.length)).toFixed(1)}`).join(", ");
+    console.log(
+      `Diplomacy: ${avg((g) => g.offers).toFixed(1)} offers between bots per game, ${pct2(sum((g) => g.accepted), offers)} accepted, ${pct2(sum((g) => g.countered), offers)} countered; ${avg((g) => g.dealsMade).toFixed(1)} deals made per game (${kinds}; ${avg((g) => g.dealsBinding).toFixed(1)} binding), ${avg((g) => g.dealsBroken).toFixed(2)} broken; joint wars against the player then holding the most land: ${avg((g) => g.warsVsLeader).toFixed(2)} per game`,
+    );
+    const want = Number(arg("reasons", "0"));
+    if (want > 0) {
+      const lines = results.flatMap((g) => g.reasons.map((r) => `  [${g.seed}] ${r}`));
+      const step = Math.max(1, Math.floor(lines.length / want));
+      console.log(["Sample reason lines:", ...lines.filter((_, i) => i % step === 0).slice(0, want)].join("\n"));
     }
   }
   console.log(`CPU per turn (this machine): resolve avg ${ms(resolve.avg)}, p95 ${ms(resolve.p95)}, worst ${ms(resolve.max)} | bots planning (all seats) avg ${ms(plan.avg)}, worst ${ms(plan.max)} | total avg ${ms(total.avg)}, worst ${ms(total.max)}`);

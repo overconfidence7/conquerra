@@ -1,5 +1,6 @@
 import type { BorderType, SpecialistType } from "@conquerra/content";
 import {
+  covers,
   distancesFrom,
   expectBattle,
   fewestToTake,
@@ -314,8 +315,12 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
   const needFor = (from: TerritoryId, to: TerritoryId, avail: number, specs = specsAt(from), withLeader = false) =>
     fewestToTake((troops) => previewAttack(ctx, view, { from, to, troops, specialists: specs, ...(withLeader ? { withLeader } : {}) })?.captureLikely ?? false, avail);
 
+  // Deals (session 14): an attack across a truce (or a joint war's truce) of ours, as far as we know who holds what.
+  const ours = (view.deals ?? []).filter((d) => d.terms && (d.kind === "truce" || d.kind === "war"));
+  const blocked = (from: TerritoryId, to: TerritoryId) => ours.length > 0 && ours.some((d) => covers(idx, d as Parameters<typeof covers>[1], from, to, look0));
+
   return {
-    ctx, view, rules, idx, me, garrison, on,
+    ctx, view, rules, idx, me, garrison, on, blocked,
     seen, owned, rivalAt, troopsAt, specsAt, mine, border, crossing, isFrontier, frontier, enemyPressure, biggestEnemyNear,
     alive, look0, knownLand, facing, endgame, runaway, shieldsLeader, raider, facesRival, facesRaider,
     focus, toFocusCapital, spearhead, holdNeed, chokeHolder, capital, capThreatened, look, expectAt, valueOf, needFor, exposed,
@@ -367,7 +372,7 @@ export function chainOn(
     let best: { to: TerritoryId; value: number } | null = null;
     for (const nb of idx.neighbors.get(from)!) {
       const owner = look(nb).owner;
-      if (owned(nb) || owner === me.id || targeted.has(nb) || (owner && shieldsLeader.has(owner))) continue;
+      if (owned(nb) || owner === me.id || targeted.has(nb) || (owner && shieldsLeader.has(owner)) || b.blocked(from, nb)) continue;
       if (pick.allowed && !pick.allowed(from, nb)) continue;
       const need = fewestToTake((troops) => expectAt(from, nb, troops, specs, pick.leader).captureLikely, avail);
       const m = crossing(from, nb) ? Math.max(margin, BREAKTHROUGH_MARGIN) : margin;
