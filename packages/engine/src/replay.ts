@@ -1,7 +1,8 @@
 import type { LastSeen } from "./intel";
 import { indexMap } from "./mapIndex";
 import { sightingOf, TurnVision } from "./sightings";
-import type { GameContext, GameState, PlayerId, StepEvent, TerritoryId, TurnResult } from "./types";
+import { isParty } from "./diplomacy";
+import type { DealTerms, GameContext, GameState, PlayerId, StepEvent, TerritoryId, TurnResult } from "./types";
 import { politicalOf, seesPolitically, trueDetail, type TerritoryView } from "./view";
 import { visionFor } from "./vision";
 
@@ -127,6 +128,24 @@ export function replayFor(ctx: GameContext, before: GameState, result: TurnResul
       case "worldEvent":
         if (e.against === player || placesSeen(e).some(sees)) out.push(e);
         break;
+      // Diplomacy: who made a deal with whom is public. A trade's terms, gold and land reach only its two sides (land
+      // also whoever could see it); a truce's named borders only where you could see both sides.
+      case "dealStarted":
+        out.push(dealStartedFor(e, player, sees));
+        break;
+      case "dealEnded":
+        out.push(e);
+        break;
+      case "dealBroken":
+        out.push(isParty(e, player) ? e : { ...e, land: e.land.filter((l) => sees(l.territory)) });
+        break;
+      case "dealFailed":
+      case "offerLapsed":
+        if (e.offer.from === player || e.offer.to === player) out.push(e);
+        break;
+      case "tribute":
+        if (e.from === player || e.to === player) out.push(e);
+        break;
     }
     if (changes) out.push(visionEvent(ctx, tv.board, player, e.step, before.turn, changes));
   }
@@ -162,10 +181,27 @@ function placesSeen(e: StepEvent): TerritoryId[] {
     case "fate":
       return [e.at, ...(e.border ?? []), ...e.land.map((l) => l.territory)];
     case "missionDone":
+    case "dealStarted":
+    case "dealBroken":
+    case "tribute":
       return e.land.map((l) => l.territory);
     default:
       return [];
   }
+}
+
+type DealStarted = Extract<StepEvent, { type: "dealStarted" }>;
+/** A deal starting, as someone outside it sees it: who and what (no trade terms, no gold), and land only where seen. */
+function dealStartedFor(e: DealStarted, player: PlayerId, sees: (t: TerritoryId) => boolean): DealStarted {
+  if (isParty(e.deal, player)) return e;
+  const t = e.deal.terms;
+  const terms: DealTerms =
+    t.kind === "trade"
+      ? { kind: "trade", give: {}, get: {} }
+      : t.kind === "truce" && t.scope.kind === "borders"
+        ? { ...t, scope: { kind: "borders", borders: t.scope.borders.filter(([x, y]) => sees(x) && sees(y)) } }
+        : t;
+  return { ...e, deal: { ...e.deal, terms, size: 0 }, paid: {}, gold: {}, land: e.land.filter((l) => sees(l.territory)) };
 }
 
 /** The Fallen's replay: what's public, every world event, and the political map as the turn ends. */
@@ -174,6 +210,10 @@ function fallenReplay(ctx: GameContext, result: TurnResult, player: PlayerId): R
   for (const e of result.events) {
     if (e.type === "turnStart" || e.type === "eliminated" || e.type === "gameOver" || e.type === "worldEvent") out.push(e);
     else if (e.type === "worldEventFailed" && e.player === player) out.push(e);
+    // Deals are public: who and what (the land shows on the political map as the turn ends).
+    else if (e.type === "dealEnded") out.push(e);
+    else if (e.type === "dealStarted") out.push(dealStartedFor(e, player, () => false));
+    else if (e.type === "dealBroken") out.push({ ...e, land: [] });
   }
   const last = result.events[result.events.length - 1]?.step ?? 0;
   const fogged: Record<TerritoryId, LastSeen> = {};

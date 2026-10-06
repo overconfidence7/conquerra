@@ -1,7 +1,8 @@
 import type { BuildingType } from "@conquerra/content";
 import type { LastSeen } from "./intel";
 import { indexMap } from "./mapIndex";
-import type { GameContext, GameSettings, GameState, PlayerId, PlayerState, Specialist, TerritoryId, TerritoryState, WorldEventKind } from "./types";
+import { coveredBorders, isParty } from "./diplomacy";
+import type { Bond, Deal, DealKind, DealRecord, DealTerms, GameContext, GameSettings, GameState, PlayerId, PlayerState, Specialist, TerritoryId, TerritoryState, WorldEventKind } from "./types";
 import { visionFor, type VisionSource } from "./vision";
 
 /** What a player sees on a territory they have vision of. */
@@ -27,13 +28,43 @@ export interface TerritoryDetail {
  */
 export type TerritoryView = ({ detail: "full"; seenBy: VisionSource[] } & TerritoryDetail) | { detail: "fogged"; lastSeen?: LastSeen };
 
+/**
+ * A deal as one player sees it (session 14). Everyone knows who has which deal with whom, for how long, and a joint
+ * war's target; the two sides also see the terms (a trade's terms reach nobody else). `borders`: the borders a truce
+ * (or a joint war's truce) covers right now, only where this player can see both sides.
+ */
+export interface DealView {
+  id: string;
+  kind: DealKind;
+  bond: Bond;
+  a: PlayerId;
+  b: PlayerId;
+  start: number;
+  last: number;
+  /** A truce until this player is knocked out. */
+  until?: PlayerId;
+  /** A joint war's target. */
+  target?: PlayerId;
+  /** A truce's scope, without its named borders (those are in `borders`, where you can see them). */
+  scope?: "all" | "province" | "borders";
+  province?: string;
+  /** The full terms, for the two sides only. */
+  terms?: DealTerms;
+  /** How big it is (the two sides only): what breaking it would cost. */
+  size?: number;
+  borders: [TerritoryId, TerritoryId][];
+}
+
 export interface PlayerView {
   gameId: string;
   mapId: string;
   turn: number;
   me: PlayerState;
-  /** Public facts about every player (no gold, no capital location). `spoils`: how many Spoils cards they hold (never which). */
-  players: { id: PlayerId; name: string; eliminatedTurn: number | null; eliminatedBy: PlayerId | null; spoils: number }[];
+  /**
+   * Public facts about every player (no gold, no capital location). `spoils`: how many Spoils cards they hold (never
+   * which). `oathbreaker`: the turn their Oathbreaker mark lasts through (0: none showing).
+   */
+  players: { id: PlayerId; name: string; eliminatedTurn: number | null; eliminatedBy: PlayerId | null; spoils: number; oathbreaker: number }[];
   territories: Record<TerritoryId, TerritoryView>;
   settings: GameSettings;
   seedCommitment: string;
@@ -42,6 +73,32 @@ export interface PlayerView {
   eventCooldowns: Record<WorldEventKind, number>;
   /** Crossings a Fate event closed for a coming turn, where you can see either side. */
   closures: GameState["closures"];
+  /** Every deal in force (public), with its terms only for its two sides. */
+  deals: DealView[];
+  /** How past deals ended: your own, and every broken one (Oathbreakers are public). */
+  record: DealRecord[];
+}
+
+/** One deal as `player` sees it, given what they can see. */
+export function dealView(ctx: GameContext, state: GameState, d: Deal, player: PlayerId, sees: (t: TerritoryId) => boolean): DealView {
+  const idx = indexMap(ctx.map);
+  const mine = isParty(d, player);
+  const t = d.terms;
+  const borders = coveredBorders(idx, d, (x) => state.territories[x]?.owner ?? null).filter(([x, y]) => mine || (sees(x) && sees(y)));
+  return {
+    id: d.id,
+    kind: t.kind,
+    bond: d.bond,
+    a: d.a,
+    b: d.b,
+    start: d.start,
+    last: d.last,
+    ...(t.kind === "truce" && t.until ? { until: t.until } : {}),
+    ...(t.kind === "war" ? { target: t.target } : {}),
+    ...(t.kind === "truce" ? { scope: t.scope.kind, ...(t.scope.kind === "province" ? { province: t.scope.province } : {}) } : {}),
+    ...(mine ? { terms: JSON.parse(JSON.stringify(t)) as DealTerms, size: d.size } : {}),
+    borders,
+  };
 }
 
 /**
@@ -106,12 +163,21 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
     mapId: state.mapId,
     turn: state.turn,
     me: JSON.parse(JSON.stringify(me)) as PlayerState,
-    players: state.players.map((p) => ({ id: p.id, name: p.name, eliminatedTurn: p.eliminatedTurn, eliminatedBy: p.eliminatedBy, spoils: p.spoils.length })),
+    players: state.players.map((p) => ({
+      id: p.id,
+      name: p.name,
+      eliminatedTurn: p.eliminatedTurn,
+      eliminatedBy: p.eliminatedBy,
+      spoils: p.spoils.length,
+      oathbreaker: (p.oathbreaker ?? 0) >= state.turn ? p.oathbreaker : 0,
+    })),
     territories,
     settings: { ...state.settings },
     seedCommitment: state.seedCommitment,
     winner: state.winner,
     eventCooldowns: { ...state.eventCooldowns },
     closures: state.closures.filter((c) => c.turn >= state.turn && (!state.settings.fog || vision.has(c.a) || vision.has(c.b) || political)).map((c) => ({ ...c })),
+    deals: (state.deals ?? []).map((d) => dealView(ctx, state, d, player, (t) => !state.settings.fog || political || vision.has(t))),
+    record: (state.record ?? []).filter((r) => r.how === "broken" || isParty(r, player)).map((r) => ({ ...r })),
   };
 }

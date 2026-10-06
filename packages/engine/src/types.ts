@@ -87,6 +87,85 @@ export interface Mission {
   reward: MissionReward;
 }
 
+// ---------- Diplomacy (session 14) ----------
+
+/** The four deal cards. */
+export const DEAL_KINDS = ["truce", "trade", "war", "passage"] as const;
+export type DealKind = (typeof DEAL_KINDS)[number];
+/** A handshake deal is free and can be broken (Oathbreaker); a binding pact costs gold up front and can't be. */
+export type Bond = "handshake" | "binding";
+
+/** Where a truce holds: everywhere between you, a whole province, or named borders (pairs of territories). */
+export type TruceScope = { kind: "all" } | { kind: "province"; province: string } | { kind: "borders"; borders: [TerritoryId, TerritoryId][] };
+
+/** One side of a trade: gold now, gold each turn (for the deal's `turns`), and land. */
+export interface TradeSide {
+  gold?: number;
+  perTurn?: number;
+  land?: TerritoryId[];
+}
+
+/**
+ * A deal card's terms. Sides are the proposer (`a`) and the one it's offered to (`b`).
+ *  - truce: no attacks between you where the scope says, for `turns` (or until `until` is knocked out, `turns` at most)
+ *  - trade: `give` goes from the proposer to the other side, `get` the other way; gold each turn runs for `turns`
+ *  - war: a joint war on `target` for `turns`, with a truce between the partners while it lasts
+ *  - passage: the proposer's armies may move through the other's land (both ways if `mutual`); its moves come later
+ */
+export type DealTerms =
+  | { kind: "truce"; scope: TruceScope; turns: number; until?: PlayerId }
+  | { kind: "trade"; give: TradeSide; get: TradeSide; turns?: number }
+  | { kind: "war"; target: PlayerId; turns: number }
+  | { kind: "passage"; turns: number; mutual: boolean };
+
+/** An offer, made during planning. It starts a deal only if the other side accepts it in the same planning phase. */
+export interface Offer {
+  /** Unique among the proposer's offers this turn. */
+  id: string;
+  from: PlayerId;
+  to: PlayerId;
+  terms: DealTerms;
+  bond: Bond;
+  /** A counteroffer: the offer (of the other side's) it answers. */
+  counterTo?: string;
+}
+
+/** A deal in force. */
+export interface Deal {
+  id: string;
+  /** The proposer and the one who accepted. */
+  a: PlayerId;
+  b: PlayerId;
+  terms: DealTerms;
+  bond: Bond;
+  /** The turn it started (it covers that turn's moves), and the last turn it's in force (it ends as that turn ends). */
+  start: number;
+  last: number;
+  /** How much it covers (scales the Oathbreaker penalty and a binding pact's price). */
+  size: number;
+  /** A joint war: the partners who have attacked the target so far. */
+  struck?: PlayerId[];
+}
+
+/** How a deal ended, kept for the bots' trust and the report ("You broke our truce at Old March"). */
+export interface DealRecord {
+  deal: string;
+  kind: DealKind;
+  bond: Bond;
+  a: PlayerId;
+  b: PlayerId;
+  start: number;
+  /** The turn it ended. */
+  end: number;
+  /** "kept": it ran its course (or its goal was met); "broken": someone broke it; "ended": a side was knocked out. */
+  how: "kept" | "broken" | "ended";
+  /** Who broke it, and where (the land attacked), if it was broken. */
+  by?: PlayerId;
+  at?: TerritoryId;
+  /** A joint war: partners who never attacked the target. */
+  idle?: PlayerId[];
+}
+
 export interface PlayerState {
   id: PlayerId;
   name: string;
@@ -109,6 +188,8 @@ export interface PlayerState {
   spoils: SpoilsMark[];
   /** Your open Fate missions (at most rules.fate.maxMissions). Only you see them. */
   missions: Mission[];
+  /** Oathbreaker (session 14): you broke a handshake deal; the public mark shows through this turn (0: none). */
+  oathbreaker: number;
 }
 
 /** Each territory holds at most one army: a troop count plus up to `maxPerArmy` specialists. */
@@ -140,10 +221,12 @@ export interface GameSettings {
   spoils: boolean;
   /** The Fate deck: everyone draws one card a turn, an event somewhere on the map or a mission (a lobby switch, on by default). */
   fate: boolean;
+  /** Diplomacy: deals between players (on by default; the simulator compares with it off). */
+  diplomacy: boolean;
 }
 
 export interface GameState {
-  version: 4;
+  version: 5;
   gameId: string;
   mapId: string;
   turn: number;
@@ -169,6 +252,12 @@ export interface GameState {
   closures: { a: TerritoryId; b: TerritoryId; turn: number }[];
   /** Counter for mission ids. */
   nextMission: number;
+  /** Deals in force (session 14). Public who-and-what; a trade's terms only reach its two sides (view.ts). */
+  deals: Deal[];
+  /** Counter for deal ids. */
+  nextDeal: number;
+  /** How past deals ended (kept, broken, ended): the bots' trust is worked out from it. */
+  record: DealRecord[];
 }
 
 // ---------- Orders ----------
@@ -246,7 +335,16 @@ export type OrderBody =
    * Turn in a Spoils set for its windfall. `territory`: where a Tower set's fort goes, or the province a Laurel set
    * raises culture in (default: your capital).
    */
-  | { kind: "spoils"; set: SpoilsSet; territory?: TerritoryId };
+  | { kind: "spoils"; set: SpoilsSet; territory?: TerritoryId }
+  /**
+   * Diplomacy (session 14). None of these takes a slot: they're applied as the turn starts, before any move.
+   * propose: make an offer (`offer.from` is you). answer: accept or decline an offer made to you this planning phase
+   * (a deal starts only if both sides confirm in the same planning phase). break: renounce a handshake deal of yours
+   * (Oathbreaker); `note` is a line for the report (the Captain says why).
+   */
+  | { kind: "propose"; offer: Offer }
+  | { kind: "answer"; from: PlayerId; offer: string; accept: boolean }
+  | { kind: "break"; deal: string; note?: string };
 
 export type Order = OrderBody & {
   id: string;
@@ -308,6 +406,7 @@ export const FIZZLE_CODES = [
   "manualHopFirst",
   "storm",
   "noSet",
+  "pact",
 ] as const;
 export type FizzleCode = (typeof FIZZLE_CODES)[number];
 
@@ -332,6 +431,8 @@ export interface FizzleDetail {
   /** Enemy troops next door at the start of the turn and when the order came up ("Hold if threatened"). */
   before?: number;
   now?: number;
+  /** "pact": who the binding pact is with. */
+  player?: PlayerId;
 }
 
 /** The order that fizzled, as written (without its backup), so the report can name it. */
@@ -494,7 +595,48 @@ export type GameEvent =
   /** Your mission is done: its reward, paid now. `land` is the land the reward changed. */
   | { type: "missionDone"; player: PlayerId; mission: Mission; at: TerritoryId | null; gold: number; land: LandChange[] }
   /** Your mission lapsed (the deadline passed, or the land you were to hold was lost). */
-  | { type: "missionFailed"; player: PlayerId; mission: Mission; why: "expired" | "lost" };
+  | { type: "missionFailed"; player: PlayerId; mission: Mission; why: "expired" | "lost" }
+  /**
+   * A deal starts (both sides confirmed this planning phase), before any move. Public: who and what. `paid`: gold each
+   * side paid for a binding pact; `gold`: gold that changed hands now (+ received, - given); `land`: traded land as it
+   * is afterwards (troops stepped back and in). A trade's terms, gold and land only reach its two sides (and land
+   * whoever can see it).
+   */
+  | { type: "dealStarted"; deal: Deal; paid: Record<PlayerId, number>; gold: Record<PlayerId, number>; land: LandChange[] }
+  /** An offer that was accepted but couldn't start (now invalid, a side couldn't pay, ...). Only the two sides see it. */
+  | { type: "dealFailed"; offer: Offer; why: DealProblem }
+  /** An offer nobody confirmed lapses as the turn resolves; one between two players who fought this turn is voided. Only the two sides see it. */
+  | { type: "offerLapsed"; offer: Offer; why: "unanswered" | "declined" | "voided" }
+  /** A deal ran its course (or its goal was met: the joint war's target is out), or ended because a side was knocked out. Public. */
+  | { type: "dealEnded"; deal: string; kind: DealKind; a: PlayerId; b: PlayerId; why: "expired" | "goal" | "knockedOut"; idle?: PlayerId[] }
+  /**
+   * A handshake deal broken by `by` (an attack across it at `at`, a payment missed, renounced, or a truce with a joint
+   * war's target). Public: the Oathbreaker mark (through turn `mark`), the fine, and the unrest (troops that deserted
+   * on `by`'s land next to the wronged player, `land` as it is afterwards; land only to whoever can see it).
+   */
+  | {
+      type: "dealBroken";
+      deal: string;
+      kind: DealKind;
+      a: PlayerId;
+      b: PlayerId;
+      by: PlayerId;
+      how: "attack" | "payment" | "renounced" | "truceWithTarget";
+      at?: TerritoryId;
+      note?: string;
+      mark: number;
+      fine: number;
+      unrest: number;
+      land: LandChange[];
+    }
+  /**
+   * Gold owed each turn under a trade, paid as the turn ends (after income). A binding pact takes it automatically;
+   * anything short becomes unrest (troops desert, as with upkeep), in `land`. Only the two sides see it.
+   */
+  | { type: "tribute"; deal: string; from: PlayerId; to: PlayerId; gold: number; short: number; land: LandChange[] };
+
+/** Why an accepted offer couldn't start. */
+export type DealProblem = "invalid" | "gone" | "exists" | "gold" | "land" | "target" | "pact";
 
 /** A territory as it is right after a card's effect (only what changed), so the replay can show it exactly. */
 export type LandChange = { territory: TerritoryId } & Partial<Pick<TerritoryState, "owner" | "troops" | "specialists" | "building" | "construction" | "culture">>;

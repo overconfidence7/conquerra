@@ -1,4 +1,4 @@
-import { explainFizzle, explainHold, type ArmySnapshot, type GameContext, type StepEvent } from "@conquerra/engine";
+import { dealLine, explainFizzle, explainHold, type ArmySnapshot, type GameContext, type StepEvent } from "@conquerra/engine";
 
 const army = (a: ArmySnapshot) => `${a.troops} troops${a.specialists.length ? ` + ${a.specialists.join(", ")}` : ""}`;
 
@@ -57,5 +57,12 @@ export function narrate(ctx: GameContext, e: StepEvent, name: (id: string | null
       return `${name(e.player)}'s mission ${e.mission.card} ${e.why === "lost" ? "fails" : "lapses"}`;
     case "gameOver":
       return `★ Game over (${e.reason}): ${e.winner === "draw" ? "draw" : `${name(e.winner)} wins`}`;
+    case "dealStarted":
+    case "dealEnded":
+    case "dealBroken":
+    case "dealFailed":
+    case "offerLapsed":
+    case "tribute":
+      return `🤝 ${dealLine(e, { you: null, player: (id) => name(id), place, province: (id) => ctx.map.provinces.find((p) => p.id === id)?.name ?? id }) ?? e.type}`;
   }
 }

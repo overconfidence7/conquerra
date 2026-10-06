@@ -1,7 +1,37 @@
 export * from "./types";
 export { createGame, type NewGameOptions } from "./setup";
 export { resolveTurn, type TurnObserver } from "./resolve";
-export { viewFor, trueDetail, seesPolitically, type PlayerView, type TerritoryView, type TerritoryDetail } from "./view";
+export { viewFor, trueDetail, seesPolitically, dealView, type PlayerView, type TerritoryView, type TerritoryDetail, type DealView } from "./view";
+export {
+  anyDealAcross,
+  attackAcross,
+  between,
+  bindingCost,
+  breakDeal,
+  coveredBorders,
+  covers,
+  dealAcross,
+  dealProblem,
+  dealSize,
+  dealTurns,
+  defaultTerms,
+  desert,
+  diplomacyEndOfTurn,
+  diplomacyStart,
+  isParty,
+  landProblem,
+  oathPenalty,
+  otherSide,
+  pairKey,
+  partnersOf,
+  scopeHas,
+  termsProblem,
+  tradeTotals,
+  type DealBoard,
+  type DiplomacyHost,
+  type OwnerOf,
+} from "./diplomacy";
+export { DEAL_NAME, dealLine, dealProblemWords, describeTerms, type DealNames } from "./dealText";
 export { playWorldEvents, worldEventEffect, fallenEndOfTurn, borderKey, type WorldEventHost } from "./fallen";
 export { recordSighting, updateIntel, type Intel, type LastSeen } from "./intel";
 export { visionFor, visibleTerritories, type Vision, type VisionSource } from "./vision";

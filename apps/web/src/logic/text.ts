@@ -1,5 +1,5 @@
 import type { BuildingType, SpecialistType, Terrain } from "@conquerra/content";
-import { amountLabel, recruitLabel, explainFizzle, explainHold, fizzleIsQuiet, indexMap, PRESETS, type ArmySnapshot, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type ReplayEvent } from "@conquerra/engine";
+import { amountLabel, recruitLabel, dealLine, describeTerms, explainFizzle, explainHold, fizzleIsQuiet, indexMap, PRESETS, DEAL_NAME, type ArmySnapshot, type DealNames, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 import { fateLine, fateTone, MARK_NAME, missionLine, SET_NAME, troopWord } from "./cards";
 
 export const SPECIALIST_ICON: Record<SpecialistType, string> = { cavalry: "🐎", siege: "🎯", scouts: "🔭", engineers: "🔨", healers: "⚕️" };
@@ -25,6 +25,8 @@ export const TERRAIN_ICON: Record<Terrain, string> = { plains: "", forest: "🌲
 export interface Namer {
   /** Your own view, for lines about your generals. */
   view?: PlayerView;
+  /** The game's map and rules (province names for deal lines). */
+  ctx?: GameContext;
   who(id: string | null): string;
   place(id: string): string;
   isMe(id: string | null): boolean;
@@ -37,6 +39,7 @@ export function namer(ctx: GameContext, view: PlayerView, before?: PlayerView | 
   const idx = indexMap(ctx.map);
   return {
     view,
+    ctx,
     who: (id) => (id === null ? "neutral" : id === view.me.id ? "You" : (view.players.find((p) => p.id === id)?.name ?? id)),
     place: (id) => idx.byId.get(id)?.name ?? id,
     isMe: (id) => id === view.me.id,
@@ -77,7 +80,25 @@ export function describeOrder(o: Order, n: Namer, attack: boolean, sending?: str
       return `${WORLD_EVENT_NAME[o.event]} on ${n.place(o.target)}${o.across ? ` and ${n.place(o.across)}` : ""} (${o.influence} influence)`;
     case "spoils":
       return `Turn in Spoils: ${SET_NAME[o.set].toLowerCase()}${(o.set === "tower" || o.set === "laurel") && o.territory ? ` at ${n.place(o.territory)}` : ""}`;
+    case "propose":
+      return `Offer ${n.who(o.offer.to)} ${describeTerms(o.offer.terms, o.offer.from, o.offer.to, dealNames(n))}${o.offer.bond === "binding" ? " (binding)" : ""}`;
+    case "answer":
+      return `${o.accept ? "Accept" : "Decline"} ${n.who(o.from)}'s offer`;
+    case "break": {
+      const d = n.view?.deals.find((x) => x.id === o.deal);
+      return d ? `Break your ${DEAL_NAME[d.kind]} with ${n.who(d.a === n.view!.me.id ? d.b : d.a)}` : "Break a deal";
+    }
   }
+}
+
+/** The engine's deal wording, with this page's names (yours is "you"). */
+export function dealNames(n: Namer): DealNames {
+  return {
+    you: n.view?.me.id ?? null,
+    player: (id) => n.view?.players.find((p) => p.id === id)?.name ?? n.who(id),
+    place: n.place,
+    province: (id) => n.ctx?.map.provinces.find((p) => p.id === id)?.name ?? id,
+  };
 }
 
 export const WORLD_EVENT_NAME = { plague: "Plague", storm: "Storm", uprising: "Uprising", mercenaries: "Mercenaries", famine: "Famine" } as const;
@@ -302,6 +323,18 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       };
     case "gameOver":
       return { text: e.winner === "draw" ? "The game ends in a draw." : `${who(e.winner)} ${verb(e.winner, "win", "wins")} the game!`, tone: isMe(e.winner) ? "good" : "info" };
+    // Diplomacy (session 14): the engine's own wording.
+    case "dealStarted":
+      return { text: dealLine(e, dealNames(n))!, tone: isMe(e.deal.a) || isMe(e.deal.b) ? "good" : "info" };
+    case "dealEnded":
+      return { text: dealLine(e, dealNames(n))!, tone: "info" };
+    case "dealBroken":
+      return { text: dealLine(e, dealNames(n))!, tone: isMe(e.by) || isMe(e.a) || isMe(e.b) ? "bad" : "info" };
+    case "dealFailed":
+    case "offerLapsed":
+      return { text: dealLine(e, dealNames(n))!, tone: "quiet" };
+    case "tribute":
+      return { text: dealLine(e, dealNames(n))!, tone: e.short ? "bad" : "info" };
     // What came into view goes in its own part of the report (logic/report.ts).
     case "vision":
       return null;

@@ -41,6 +41,7 @@ const SAMPLE: Record<FizzleCode, FizzleDetail> = {
   manualHopFirst: { territory: "c" },
   storm: { territory: "c" },
   noSet: {},
+  pact: { territory: "c", player: "p2" },
 };
 
 const plain = (text: string) => {

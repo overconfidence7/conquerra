@@ -83,6 +83,9 @@ function placesOf(e: StepEvent): TerritoryId[] {
     case "spoilsTurnedIn":
     case "fate":
     case "missionDone":
+    case "dealStarted":
+    case "dealBroken":
+    case "tribute":
       return e.land.map((l) => l.territory);
     default:
       return [];
@@ -339,6 +342,20 @@ export class TurnVision {
       case "fate":
         applyLand(b, e.land);
         if (e.holder && e.gold) player(e.holder).gold += e.gold;
+        break;
+      // Diplomacy: traded land (troops stepped back and in), gold paid and traded, fines, unrest, payments.
+      case "dealStarted":
+        applyLand(b, e.land);
+        for (const p of b.players) p.gold += (e.gold[p.id] ?? 0) - (e.paid[p.id] ?? 0);
+        break;
+      case "dealBroken":
+        applyLand(b, e.land);
+        player(e.by).gold -= e.fine;
+        break;
+      case "tribute":
+        applyLand(b, e.land);
+        player(e.from).gold -= e.gold;
+        player(e.to).gold += e.gold;
         break;
       case "gameOver":
         b.winner = e.winner;

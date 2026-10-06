@@ -303,7 +303,7 @@ class General {
       allowed,
       ...(value ? { value } : {}),
       leader: this.isLeader,
-      extra: { ...this.goes, ...this.tag },
+      extra: { ...this.goes, ...this.tag } as Partial<Order>,
       safe: (t, arriving) => !b.exposed(t, arriving),
     });
   }

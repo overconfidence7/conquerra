@@ -72,7 +72,7 @@ export interface SavedGameV1 {
 }
 
 /** The game state's current shape. Bump it (and add a migration below) whenever GameState changes. */
-export const STATE_VERSION: GameState["version"] = 4;
+export const STATE_VERSION: GameState["version"] = 5;
 
 /**
  * How to bring an older game state up to date, one version at a time: `STATE_MIGRATIONS[n]` turns a version-n
@@ -95,6 +95,18 @@ export const STATE_MIGRATIONS: Record<number, (s: Record<string, unknown>) => Re
       nextMission: 1,
     };
   },
+  /**
+   * 4 -> 5 (session 14): diplomacy. A game saved before it carries on with no deals, nobody marked an Oathbreaker,
+   * and deals possible from now on.
+   */
+  4: (s) => ({
+    ...s,
+    players: (s.players as Record<string, unknown>[]).map((p) => ({ ...p, oathbreaker: 0 })),
+    settings: { ...(s.settings as Record<string, unknown>), diplomacy: true },
+    deals: [],
+    nextDeal: 1,
+    record: [],
+  }),
 };
 
 export function stateFingerprint(s: GameState): string {

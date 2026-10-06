@@ -392,6 +392,29 @@
       }
     ]
   },
+  "diplomacy": {
+    "maxTurns": 8,
+    "truce": { "minTurns": 2, "maxTurns": 8, "defaultTurns": 3 },
+    "trade": { "maxPerTurnTurns": 5, "maxLand": 3 },
+    "war": { "minTurns": 2, "maxTurns": 6, "defaultTurns": 4 },
+    "passage": { "minTurns": 2, "maxTurns": 6, "defaultTurns": 4 },
+    "size": { "perTerritory": 1, "perTurn": 1, "perGold": 0.25, "perLand": 2, "war": 6, "passage": 4, "untilKnockedOut": 8 },
+    "oathbreaker": { "markTurns": 5, "fineBase": 2, "finePerSize": 0.7, "unrestPerSize": 0.4 },
+    "binding": { "costBase": 3, "costPerSize": 0.5 },
+    "bots": {
+      "offersPerTurn": 1,
+      "offersToYouPerTurn": 1,
+      "trustStart": 50,
+      "trustBroken": 40,
+      "trustWarIdle": 10,
+      "trustKept": 5,
+      "trustOathbreaker": 15,
+      "trustMin": 25,
+      "acceptMargin": 0,
+      "counterMargin": 3,
+      "breakGain": 2
+    }
+  },
   "vision": {
     "base": 1
   },

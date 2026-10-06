@@ -72,6 +72,11 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     case "fate":
     case "missionDone":
       return "pop";
+    // Deals: land that changed hands by agreement, and troops that deserted, pop on the map.
+    case "dealStarted":
+    case "dealBroken":
+    case "tribute":
+      return e.land.length ? "pop" : null;
     case "moved":
       return "march";
     case "battle":
@@ -93,6 +98,9 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     case "spoilsEarned":
     case "missionDrawn":
     case "missionFailed":
+    case "dealEnded":
+    case "dealFailed":
+    case "offerLapsed":
     // The fog lifting (or falling) rides on the beat of the step that caused it.
     case "vision":
       return null;
@@ -239,6 +247,8 @@ export function frameAt(tl: Timeline, t: number): ReplayFrame {
       else if (e.type === "spoilsTurnedIn") frame.pops.push({ at: e.at, player: e.player, label: "Spoils", progress: q });
       else if (e.type === "fate") frame.pops.push({ at: e.at, player: e.holder ?? "", label: FATE_LABEL[e.card] ?? "Fate", progress: q });
       else if (e.type === "missionDone" && e.at) frame.pops.push({ at: e.at, player: e.player, label: "Mission", progress: q });
+      else if (e.type === "dealStarted" && e.land[0]) frame.pops.push({ at: e.land[0].territory, player: e.land[0].owner ?? "", label: "Traded", progress: q });
+      else if ((e.type === "dealBroken" || e.type === "tribute") && e.land[0]) frame.pops.push({ at: e.land[0].territory, player: e.type === "dealBroken" ? e.by : e.from, label: "Unrest", progress: q });
     });
     break;
   }
@@ -382,6 +392,9 @@ export function replayView(before: PlayerView, events: readonly ReplayEvent[], a
       case "spoilsTurnedIn":
       case "fate":
       case "missionDone":
+      case "dealStarted":
+      case "dealBroken":
+      case "tribute":
         applyLand(e.land);
         break;
       case "leaderKilled":

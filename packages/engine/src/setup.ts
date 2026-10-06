@@ -53,6 +53,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
     fallen: opts.settings?.fallen ?? true,
     spoils: opts.settings?.spoils ?? true,
     fate: opts.settings?.fate ?? true,
+    diplomacy: opts.settings?.diplomacy ?? true,
   };
   if (settings.turnLimit !== null && !(Number.isInteger(settings.turnLimit) && settings.turnLimit >= 1))
     throw new Error("turnLimit must be a whole number of turns, at least 1");
@@ -86,13 +87,14 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
       influence: 0,
       spoils: [],
       missions: [],
+      oathbreaker: 0,
     };
   });
   // Keep the player list in the caller's order; seats are reshuffled every turn anyway.
   players.sort((a, b) => opts.players.findIndex((p) => p.id === a.id) - opts.players.findIndex((p) => p.id === b.id));
 
   const state: GameState = {
-    version: 4,
+    version: 5,
     gameId: opts.gameId,
     mapId: map.id,
     turn: 1,
@@ -110,6 +112,9 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
     decks: { spoils: seedRng(`${opts.seed}|spoils`), fate: seedRng(`${opts.seed}|fate`) },
     closures: [],
     nextMission: 1,
+    deals: [],
+    nextDeal: 1,
+    record: [],
   };
   updateIntel(ctx, state);
   return state;

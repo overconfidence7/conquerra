@@ -341,6 +341,60 @@ export const Rules = z.object({
     events: z.array(FateEvent).min(1),
     missions: z.array(FateMission).min(1),
   }),
+  /**
+   * Diplomacy (session 14, design additions §2): preset deals between two players. Both sides confirm in the same
+   * planning phase and the deal starts as the turn resolves. Every deal expires. A handshake deal is free and can be
+   * broken (Oathbreaker: a public mark, a fine and unrest, scaled by the deal's size); a binding pact costs gold up
+   * front and the game blocks attacks across it. Missing here (an old save's rules): no deals.
+   */
+  diplomacy: z.object({
+    /** Every deal ends after at most this many turns. */
+    maxTurns: z.number().int().min(1),
+    truce: z.object({ minTurns: z.number().int().min(1), maxTurns: z.number().int().min(1), defaultTurns: z.number().int().min(1) }),
+    /** Gold each turn for at most `maxPerTurnTurns` turns; at most `maxLand` territories in one deal. */
+    trade: z.object({ maxPerTurnTurns: z.number().int().min(1), maxLand: z.number().int().min(0) }),
+    war: z.object({ minTurns: z.number().int().min(1), maxTurns: z.number().int().min(1), defaultTurns: z.number().int().min(1) }),
+    passage: z.object({ minTurns: z.number().int().min(1), maxTurns: z.number().int().min(1), defaultTurns: z.number().int().min(1) }),
+    /**
+     * A deal's size (how much it covers), which scales the Oathbreaker penalty and a binding pact's price: each
+     * territory a truce covers, each turn it runs, each gold traded, each territory of land traded, plus a joint war's
+     * or passage's own weight, and "until X is knocked out" counts as big.
+     */
+    size: z.object({
+      perTerritory: z.number().min(0),
+      perTurn: z.number().min(0),
+      perGold: z.number().min(0),
+      perLand: z.number().min(0),
+      war: z.number().min(0),
+      passage: z.number().min(0),
+      untilKnockedOut: z.number().min(0),
+    }),
+    /** Breaking a handshake deal: the public mark's length, and the fine and unrest (troops) per point of size. */
+    oathbreaker: z.object({ markTurns: z.number().int().min(1), fineBase: z.number().min(0), finePerSize: z.number().min(0), unrestPerSize: z.number().min(0) }),
+    /** A binding pact's price for each side: base + perSize x size. */
+    binding: z.object({ costBase: z.number().min(0), costPerSize: z.number().min(0) }),
+    /**
+     * The bots' judgement (packages/bots, diplomacy.ts). Trust starts at `trustStart` (0 to 100) and moves with
+     * what a player did; a bot proposes at most `offersPerTurn` deals a turn, and the human gets at most
+     * `offersToYouPerTurn` offers a turn from all the bots together.
+     */
+    bots: z.object({
+      offersPerTurn: z.number().int().min(0),
+      offersToYouPerTurn: z.number().int().min(0),
+      trustStart: z.number().min(0).max(100),
+      trustBroken: z.number().min(0),
+      trustWarIdle: z.number().min(0),
+      trustKept: z.number().min(0),
+      trustOathbreaker: z.number().min(0),
+      /** Below this trust a bot won't take a handshake deal (a binding pact still works: the game enforces it). */
+      trustMin: z.number().min(0).max(100),
+      /** How much better than neutral a deal must look before a bot takes it, and how close counts as "close" for a counter. */
+      acceptMargin: z.number(),
+      counterMargin: z.number().min(0),
+      /** The Captain breaks a handshake deal only when the gain is at least this many times the penalty. */
+      breakGain: z.number().min(1),
+    }),
+  }),
   vision: z.object({ base: z.number().int().min(0) }),
   game: z.object({
     /** Order-phase timer. The engine only stores it; the server runs the clock. */

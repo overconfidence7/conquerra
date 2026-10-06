@@ -19,6 +19,7 @@ import type {
   Instruction,
   Order,
   OrderBody,
+  Offer,
   OrdersByPlayer,
   PlayerId,
   PlayerState,
@@ -31,6 +32,7 @@ import type {
 import { recordTurnSightings } from "./sightings";
 import { spoilsEndOfTurn, turnInSpoils } from "./spoils";
 import { checkMissions, drawFate } from "./fate";
+import { anyDealAcross, attackAcross, diplomacyEndOfTurn, diplomacyStart, partnersOf } from "./diplomacy";
 import { visibleTerritories } from "./vision";
 
 /** Called after every event with the live board (tests use it to check the replay against the real game). */
@@ -102,6 +104,10 @@ class Turn {
   readonly taken = new Map<PlayerId, TerritoryId[]>();
   /** Income each player loses to a famine this turn (a share). */
   readonly famine = new Map<PlayerId, number>();
+  /** Pairs of players who attacked each other this turn: it voids the offers between them. */
+  readonly fought = new Set<string>();
+  /** This turn's offers that didn't start a deal (they lapse as the turn ends). */
+  readonly offers: { offer: Offer; declined: boolean }[] = [];
   /** Vision cache; bumped whenever something that affects vision changes. */
   private visionEpoch = 0;
   private visionCache = new Map<PlayerId, { epoch: number; set: Set<TerritoryId> }>();
@@ -466,6 +472,11 @@ class Turn {
     const p = this.player(pid);
     const from = this.terr(o.from)!;
     const to = this.terr(o.to)!;
+    // An attack across a deal: a binding pact calls it off; a handshake deal breaks (Oathbreaker) and it goes on.
+    if (to.owner !== pid) {
+      const pact = attackAcross(this, pid, o.via ?? o.from, o.to);
+      if (pact) return fz("pact", { territory: o.to, player: to.owner! });
+    }
     const sendIds = new Set(plan.specialists.map((s) => s.id));
     from.troops -= plan.troops;
     from.specialists = from.specialists.filter((s) => !sendIds.has(s.id));
@@ -598,7 +609,7 @@ class Turn {
     if (!from || from.owner !== pid) return fz("lostStart", { territory: fromId });
     let best: { to: TerritoryId; margin: number } | null = null;
     for (const n of this.idx.neighbors.get(fromId) ?? []) {
-      if (this.terr(n)!.owner === pid || this.closed.has(borderKey(fromId, n))) continue;
+      if (this.terr(n)!.owner === pid || this.closed.has(borderKey(fromId, n)) || anyDealAcross(this, fromId, n)) continue;
       const order: MoveOrder = { kind: "move", from: fromId, to: n, troops: "all" };
       const plan = this.planMove(pid, order);
       if (isFizzle(plan)) return plan;
@@ -672,7 +683,8 @@ function validInstruction(T: Turn, p: PlayerState, i: Instruction): boolean {
     case "push":
       return T.idx.byId.has(i.territory);
     case "raid":
-      return rival(i.player);
+      // Never a player you have a truce or a joint war with.
+      return rival(i.player) && !partnersOf(T.s.deals, p.id).includes(i.player);
     case "defend":
       return "territory" in i ? T.idx.byId.has(i.territory) : rival(i.player);
   }
@@ -749,7 +761,7 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
     // Generals first: who to let go, then standing instructions. Neither takes a slot.
     commandGenerals(T, p, list);
     for (const raw of list) {
-      if (raw.kind === "instruct" || raw.kind === "release") continue;
+      if (raw.kind === "instruct" || raw.kind === "release" || raw.kind === "propose" || raw.kind === "answer" || raw.kind === "break") continue;
       const o = expandPreset(raw);
       if (o.timing === "first" && !firsts.has(pid) && p.leader.alive && p.cooldowns.seize === 0) firsts.set(pid, o);
       else if (o.timing === "last" && !lasts.has(pid) && p.leader.alive && p.cooldowns.lie === 0) lasts.set(pid, o);
@@ -757,6 +769,9 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
     }
     queues.set(pid, q);
   }
+
+  // Deals agreed this planning phase start now, before any move (and handshake deals renounced end).
+  diplomacyStart(T, seats, orders);
 
   // The Fallen's world events land before anyone's orders.
   playWorldEvents(T, orders);
@@ -855,6 +870,9 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
     p.cooldowns.seize = Math.max(0, p.cooldowns.seize - 1);
     p.cooldowns.lie = Math.max(0, p.cooldowns.lie - 1);
   }
+
+  // ----- Diplomacy: gold owed each turn, deals that end, offers that lapse -----
+  diplomacyEndOfTurn(T);
 
   // ----- The Fallen earn Influence; event cooldowns run down -----
   fallenEndOfTurn(ctx, s);

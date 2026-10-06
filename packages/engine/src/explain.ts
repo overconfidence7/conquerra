@@ -1,6 +1,6 @@
 import { indexMap } from "./mapIndex";
 import { PRESETS } from "./presets";
-import type { FizzleCode, FizzleDetail, FizzledOrder, GameContext, GameEvent, PresetId, TerritoryId } from "./types";
+import type { FizzleCode, FizzleDetail, FizzledOrder, GameContext, GameEvent, PlayerId, PresetId, TerritoryId } from "./types";
 
 /**
  * Plain words for the turn report: why an order didn't happen, and why a defence held.
@@ -12,6 +12,8 @@ type BattleEvent = Extract<GameEvent, { type: "battle" }>;
 
 export interface PlaceNames {
   place(id: TerritoryId): string;
+  /** A player's name ("Lady Morwen"); "you" for the reader. Optional: without it, "them". */
+  player?(id: PlayerId): string;
 }
 
 const troops = (n: number) => `${n} troop${n === 1 ? "" : "s"}`;
@@ -115,6 +117,7 @@ const WHY: Record<FizzleCode, (d: FizzleDetail, o: FizzledOrder, n: PlaceNames, 
   manualHopFirst: (d, _o, n) => `your own next order from ${d.territory ? n.place(d.territory) : "there"} went instead`,
   storm: (d, _o, n) => `the way across${d.territory ? ` into ${n.place(d.territory)}` : ""} was closed this turn (a storm, a flood or a rockslide)`,
   noSet: () => "you no longer held that set of Spoils cards",
+  pact: (d, _o, n) => `you have a binding pact with ${d.player ? (n.player?.(d.player) ?? "them") : "them"} across that border, and the game holds both sides to it`,
 };
 
 /**

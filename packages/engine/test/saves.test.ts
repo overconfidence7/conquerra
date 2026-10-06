@@ -24,6 +24,9 @@ describe("saved games: the snapshot format", () => {
     const s = read.save.state as GameState;
     expect(s.version).toBe(STATE_VERSION);
     expect(read.save.summary).toMatchObject({ mapName: "Embervale", turn: 5 });
+    // Saved before diplomacy (session 14): it carries on with no deals and nobody marked.
+    expect([s.deals, s.record, s.settings.diplomacy]).toEqual([[], [], true]);
+    expect(s.players.every((p) => p.oathbreaker === 0)).toBe(true);
     // It plays on: a turn resolves from it, and everyone's view works.
     const next = resolveTurn(ctx, s, {});
     expect(next.state.turn).toBe(6);

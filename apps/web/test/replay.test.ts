@@ -110,7 +110,7 @@ describe("replay timeline", () => {
 });
 
 describe("fogged events in the replay", () => {
-  const view = { me: { id: "p1" } as never, players: [{ id: "p1", name: "A", eliminatedTurn: null, eliminatedBy: null, spoils: 0 }, { id: "p2", name: "B", eliminatedTurn: null, eliminatedBy: null, spoils: 0 }] };
+  const view = { me: { id: "p1" } as never, players: [{ id: "p1", name: "A", eliminatedTurn: null, eliminatedBy: null, spoils: 0, oathbreaker: 0 }, { id: "p2", name: "B", eliminatedTurn: null, eliminatedBy: null, spoils: 0, oathbreaker: 0 }] };
   it("never reveal names or numbers: only the kind of thing and the province", () => {
     const prov = ctx.map.provinces[2]!;
     for (const what of ["battle", "leaderFell", "fate"] as const) {
