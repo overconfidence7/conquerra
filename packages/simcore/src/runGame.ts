@@ -106,6 +106,8 @@ export interface GameSummary {
   dealsByKind: Record<string, number>;
   dealsBroken: number;
   warsVsLeader: number;
+  /** Right of passage (session 15): moves and attacks that marched through a partner's land. */
+  marchesThrough: number;
   reasons: string[];
   log?: StepEvent[][];
 }
@@ -122,7 +124,7 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
     worldEvents: 0, worldEventsFailed: 0, hitBy: {}, winnerHitHardest: null,
     spoilsSets: 0, spoilsAuto: 0, winnerLeadOnSet: null, winnerSetTurnShare: null,
     fateEvents: 0, fateGood: 0, fateBad: 0, fateStrong: 0, missionsDrawn: 0, missionsDone: 0, fateNet: {}, winnerGoodShare: null, winnerLandShare: null, winnerLuck: null, winnerLuckiest: null, winnerMissions: 0, othersMissions: 0,
-    offers: 0, accepted: 0, countered: 0, dealsMade: 0, dealsBinding: 0, dealsByKind: {}, dealsBroken: 0, warsVsLeader: 0, reasons: [],
+    offers: 0, accepted: 0, countered: 0, dealsMade: 0, dealsBinding: 0, dealsByKind: {}, dealsBroken: 0, warsVsLeader: 0, marchesThrough: 0, reasons: [],
   };
   const level = (b: Bot) => (b.id === "recruit" ? ("recruit" as const) : ("captain" as const));
   const name = (id: string) => players.find((p) => p.id === id)?.name ?? id;
@@ -192,12 +194,13 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
           sum.lopsided++;
           if (!e.captured) sum.lopsidedFailed++;
         }
-        const kind = idx.border(e.from, e.to) ?? "normal";
+        const kind = idx.border(e.through?.[e.through.length - 1] ?? e.from, e.to) ?? "normal";
         const b = (sum.byBorder[kind] ??= { battles: 0, captures: 0 });
         b.battles++;
         if (e.captured) b.captures++;
       }
       if (e.type === "fizzled") sum.fizzles++;
+      if ((e.type === "moved" || e.type === "battle") && e.through?.length) sum.marchesThrough++;
       if (e.type === "dealStarted") {
         sum.dealsMade++;
         sum.dealsByKind[e.deal.terms.kind] = (sum.dealsByKind[e.deal.terms.kind] ?? 0) + 1;

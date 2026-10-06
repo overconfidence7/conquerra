@@ -442,8 +442,9 @@ export class MarkerLayer {
       if (kind === "arrow") {
         const a = this.scene.arrows.find((x) => x.key === id);
         if (!a) continue;
-        const p0 = this.labelOf.get(a.via ?? a.from)!, p1 = this.labelOf.get(a.to)!;
-        const [x, y] = toScreen(cam, a.via ? p0.x : (this.labelOf.get(a.from)!.x + p1.x) / 2, a.via ? p0.y : (this.labelOf.get(a.from)!.y + p1.y) / 2);
+        const mid = a.via ?? a.through?.[Math.floor((a.through.length - 1) / 2)];
+        const p0 = this.labelOf.get(mid ?? a.from)!, p1 = this.labelOf.get(a.to)!;
+        const [x, y] = toScreen(cam, mid ? p0.x : (this.labelOf.get(a.from)!.x + p1.x) / 2, mid ? p0.y : (this.labelOf.get(a.from)!.y + p1.y) / 2);
         b.position.set(x, y);
       } else if (kind === "arrive") {
         const m = this.markers.get(id);

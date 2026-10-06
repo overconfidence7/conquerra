@@ -1,7 +1,7 @@
 import type { BuildingType } from "@conquerra/content";
 import type { LastSeen } from "./intel";
 import { indexMap } from "./mapIndex";
-import { coveredBorders, isParty } from "./diplomacy";
+import { coveredBorders, isParty, passageFor } from "./diplomacy";
 import type { Bond, Deal, DealKind, DealRecord, DealTerms, GameContext, GameSettings, GameState, PlayerId, PlayerState, Specialist, TerritoryId, TerritoryState, WorldEventKind } from "./types";
 import { visionFor, type VisionSource } from "./vision";
 
@@ -48,6 +48,10 @@ export interface DealView {
   /** A truce's scope, without its named borders (those are in `borders`, where you can see them). */
   scope?: "all" | "province" | "borders";
   province?: string;
+  /** Right of passage both ways (public, like the rest of who-and-what). */
+  mutual?: boolean;
+  /** Right of passage: the land an army may pass through under it, only where this player can see it. */
+  passage?: TerritoryId[];
   /** The full terms, for the two sides only. */
   terms?: DealTerms;
   /** How big it is (the two sides only): what breaking it would cost. */
@@ -96,9 +100,16 @@ export function dealView(ctx: GameContext, state: GameState, d: Deal, player: Pl
     ...(t.kind === "truce" && t.until ? { until: t.until } : {}),
     ...(t.kind === "war" ? { target: t.target } : {}),
     ...(t.kind === "truce" ? { scope: t.scope.kind, ...(t.scope.kind === "province" ? { province: t.scope.province } : {}) } : {}),
+    ...(t.kind === "passage" ? { mutual: t.mutual, passage: passageLand(idx, state, d, sees) } : {}),
     ...(mine ? { terms: JSON.parse(JSON.stringify(t)) as DealTerms, size: d.size } : {}),
     borders,
   };
+}
+
+/** The land armies may pass through under a passage deal (the grantor's land, both sides' if mutual), where seen. */
+function passageLand(idx: ReturnType<typeof indexMap>, state: GameState, d: Deal, sees: (t: TerritoryId) => boolean): TerritoryId[] {
+  const grantors = new Set([...passageFor([d], d.a), ...passageFor([d], d.b)]);
+  return idx.ids.filter((t) => sees(t) && grantors.has(state.territories[t]?.owner ?? ""));
 }
 
 /**

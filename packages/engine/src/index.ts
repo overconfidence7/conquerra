@@ -24,6 +24,7 @@ export {
   otherSide,
   pairKey,
   partnersOf,
+  passageFor,
   scopeHas,
   termsProblem,
   tradeTotals,

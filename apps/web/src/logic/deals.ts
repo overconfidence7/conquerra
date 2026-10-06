@@ -11,6 +11,7 @@ import {
   isParty,
   oathPenalty,
   otherSide,
+  passageFor,
   type Bond,
   type DealKind,
   type DealTerms,
@@ -95,9 +96,44 @@ export function dealsNow(ctx: GameContext, view: PlayerView, agreed: readonly Of
     terms: o.terms,
     size: dealSize(ctx.rules, idx, o.terms, o.from, o.to, owner),
     borders: coveredBorders(idx, { a: o.from, b: o.to, terms: o.terms }, owner),
+    ...(o.terms.kind === "passage" ? { mutual: o.terms.mutual, passage: passageLandSeen(view, o.from, o.to, o.terms.mutual) } : {}),
     pending: true,
   }));
   return [...view.deals, ...pending];
+}
+
+/** The land you can see that armies may pass through under a passage deal between `a` (who asked) and `b`. */
+function passageLandSeen(view: PlayerView, a: PlayerId, b: PlayerId, mutual: boolean): TerritoryId[] {
+  const grantors = mutual ? [a, b] : [b];
+  return Object.entries(view.territories)
+    .filter(([, v]) => v.detail === "full" && !!v.owner && grantors.includes(v.owner))
+    .map(([t]) => t);
+}
+
+/** Whose land you may march through right now: deals in force and the ones agreed this turn (they start before any move). */
+export const passageNow = (view: PlayerView, deals: readonly PageDeal[]): PlayerId[] =>
+  passageFor(
+    deals.filter((d) => d.terms).map((d) => ({ a: d.a, b: d.b, terms: d.terms! })),
+    view.me.id,
+  );
+
+/**
+ * Passage land on the map (session 15): every territory an army may pass through under a passage deal, where you can
+ * see it. `open`: you may pass through it yourself. `pending`: agreed this turn.
+ */
+export function passageLines(view: PlayerView, deals: readonly PageDeal[]): { territory: TerritoryId; open: boolean; pending: boolean }[] {
+  const open = new Set(passageNow(view, deals));
+  const out = new Map<TerritoryId, { territory: TerritoryId; open: boolean; pending: boolean }>();
+  for (const d of deals) {
+    if (d.kind !== "passage") continue;
+    for (const t of d.passage ?? []) {
+      const v = view.territories[t];
+      const mine = v?.detail === "full" && !!v.owner && open.has(v.owner);
+      const prev = out.get(t);
+      out.set(t, { territory: t, open: mine || !!prev?.open, pending: !!d.pending && (prev?.pending ?? true) });
+    }
+  }
+  return [...out.values()];
 }
 
 export type AttackCheck = { block: string } | { warn: string } | null;
@@ -160,6 +196,7 @@ export function changedTerms(from: Offer, to: Offer): Set<string> {
   if ("turns" in a && "turns" in b && a.turns !== b.turns) out.add("turns");
   if (a.kind === "truce" && b.kind === "truce" && (JSON.stringify(a.scope) !== JSON.stringify(b.scope) || a.until !== b.until)) out.add("scope");
   if (a.kind === "war" && b.kind === "war" && a.target !== b.target) out.add("target");
+  if (a.kind === "passage" && b.kind === "passage" && a.mutual !== b.mutual) out.add("scope");
   if (a.kind === "trade" && b.kind === "trade") {
     // A counter comes from the other side: their "give" is what the first offer called "get".
     const same = from.from === to.from;

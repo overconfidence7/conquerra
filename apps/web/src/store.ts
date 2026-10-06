@@ -11,7 +11,7 @@ import { namer } from "./logic/text";
 import { DEFAULT_TIMER, type TurnClock } from "./logic/timer";
 import { actionBarState } from "./logic/actions";
 import type { Answer } from "@conquerra/bots";
-import { agreedThisTurn, attackCheck, counterFrom, dealsNow, newOffer, type PageDeal } from "./logic/deals";
+import { agreedThisTurn, attackCheck, counterFrom, dealsNow, newOffer, passageNow, type PageDeal } from "./logic/deals";
 import { draftToOrder, isRecruitSite, type NewOrder, planQueue, queueFor, removeOrder, shiftOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
 
 export type Screen = "lobby" | "game" | "over";
@@ -373,7 +373,7 @@ export const useGame = create<GameStore>((set, get) => ({
     }
     // From a general's territory, its army counts as yours to order (giving it an order takes control back).
     const mineFirst = asIfYouOrderFrom(view, queue, selected);
-    const action = tapTerritory(ctx, view, planQueue(ctx, view, mineFirst), selected, t, mineFirst);
+    const action = tapTerritory(ctx, view, planQueue(ctx, view, mineFirst), selected, t, mineFirst, passageNow(view, get().pageDeals()));
     if (action.kind === "deselect") set({ selected: null, draft: null });
     else if (action.kind === "select") set({ selected: action.territory, draft: null });
     else set({ draft: action.draft });
@@ -391,7 +391,7 @@ export const useGame = create<GameStore>((set, get) => ({
     const { draft: d, ctx, view } = get();
     if (!d || !ctx || !view) return;
     // An attack across a binding pact can't be queued (the panel says why).
-    const check = attackCheck(ctx, view, get().pageDeals(), d.via ?? d.from, d.to);
+    const check = attackCheck(ctx, view, get().pageDeals(), d.through?.[d.through.length - 1] ?? d.via ?? d.from, d.to);
     if (check && "block" in check) return;
     // An order of your own for a general's army takes control of it back for the turn (its orders step aside).
     const taken = takeControl(view, get().queue, { id: "draft", kind: "move", from: d.from, to: d.to, troops: "all" }, get().paused);

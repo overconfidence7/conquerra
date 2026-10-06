@@ -59,18 +59,26 @@ export class ReplayLayer {
     };
 
     for (const m of frame.marches) {
-      const [x0, y0] = scr(m.from), [x1, y1] = scr(m.to);
-      const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy) || 1;
-      const bend = Math.min(len * 0.16, 40);
-      const cx = (x0 + x1) / 2 + (-dy / len) * bend, cy = (y0 + y1) / 2 + (dx / len) * bend;
+      // A march through a partner's land follows the way, one gentle curve per border crossed.
+      const stops = [m.from, ...(m.through ?? []), m.to].map(scr);
+      const legs = stops.slice(1).map(([x1, y1], i) => {
+        const [x0, y0] = stops[i]!;
+        const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy) || 1;
+        const bend = Math.min(len * 0.16, 40);
+        return [x0, y0, (x0 + x1) / 2 + (-dy / len) * bend, (y0 + y1) / 2 + (dx / len) * bend, x1, y1] as const;
+      });
+      const along = (t: number) => {
+        const k = Math.min(legs.length - 1, Math.floor(t * legs.length));
+        return quadPoint(...legs[k]!, t * legs.length - k);
+      };
       const col = hexNum(houseOf(view, m.player).color);
       // The trail so far, then the army token.
-      for (let k = 0; k < 14; k++) {
-        const t = (k / 14) * m.progress;
-        const [px, py] = quadPoint(x0, y0, cx, cy, x1, y1, t);
-        g.circle(px, py, 2.2).fill({ color: col, alpha: 0.35 + 0.4 * (k / 14) });
+      const dots = 14 * legs.length;
+      for (let k = 0; k < dots; k++) {
+        const [px, py] = along((k / dots) * m.progress);
+        g.circle(px, py, 2.2).fill({ color: col, alpha: 0.35 + 0.4 * (k / dots) });
       }
-      const [x, y] = quadPoint(x0, y0, cx, cy, x1, y1, m.progress);
+      const [x, y] = along(m.progress);
       g.circle(x, y, 15).fill({ color: col }).stroke({ width: 2.5, color: GOLD });
       g.circle(x, y, 18).stroke({ width: 1.2, color: INK, alpha: 0.6 });
       this.text(ti++, String(m.troops), 13, PARCH).position.set(x, y);

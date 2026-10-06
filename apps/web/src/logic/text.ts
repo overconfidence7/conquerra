@@ -71,7 +71,7 @@ export function describeOrder(o: Order, n: Namer, attack: boolean, sending?: str
     case "advance":
       return `Advance from ${n.place(o.from)}`;
     case "move":
-      return `${attack ? "Attack" : "Move"} ${n.place(o.to)} from ${n.place(o.from)}${o.via ? ` via ${n.place(o.via)}` : ""} with ${sending ?? amountLabel(o.troops)}`;
+      return `${attack ? "Attack" : "Move"} ${n.place(o.to)} from ${n.place(o.from)}${o.via ? ` via ${n.place(o.via)}` : ""}${o.through?.length ? ` through ${o.through.map((t) => n.place(t)).join(", ")}` : ""} with ${sending ?? amountLabel(o.troops)}`;
     case "instruct":
       return `${generalName(n, o.general)}: ${o.instruction ? instructionName(o.instruction, n) : "you give the orders"}`;
     case "release":

@@ -86,6 +86,13 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
     case "invested":
       return { text: `${who(e.player)} raised culture at ${place(e.territory)} to ${e.culture}.`, tone: "quiet" };
     case "moved":
+      // Right of passage: "You marched 8 troops from Ashfell through Galeholt and Pinemark to Oakcrest." (Land on the
+      // way that changed hands: it stopped short, and says where it meant to go.)
+      if (e.through?.length || e.stopped) {
+        const way = e.through?.length ? ` through ${e.through.map(place).join(" and ")}` : "";
+        const short = e.stopped ? `, stopping there: land on the way to ${place(e.stopped)} had changed hands` : "";
+        return { text: `${who(e.player)} marched ${army(e.army)} from ${place(e.from)}${way} to ${place(e.to)}${short}.`, tone: e.stopped && isMe(e.player) ? "info" : "quiet" };
+      }
       if (e.general && isMe(e.player))
         return { text: `${generalPhrase(n.view, n, e.general)} ${e.retreat ? "pulled back" : "moved"} ${army(e.army)} from ${place(e.from)} to ${place(e.to)}.`, tone: "info" };
       return {
@@ -97,7 +104,8 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       const vsMe = isMe(e.defender);
       // Both armies and both sides' losses: "You attacked Ashfell (Gules, 8 troops) with 10 troops and took it: you lost 3, they lost 8."
       const defenders = `${vsMe ? "yours" : e.defender ? who(e.defender) : "neutral"}, ${army(e.defenders)}`;
-      const head = `${who(e.player)} attacked ${place(e.to)} (${defenders}) with ${army(e.attackers)}`;
+      const way = e.through?.length ? `, marching through ${e.through.map(place).join(" and ")}` : "";
+      const head = `${who(e.player)} attacked ${place(e.to)} (${defenders}) with ${army(e.attackers)}${way}`;
       // A general's own fights read as its story: "Your Leader, pushing toward Old March, took Ashfell (...)".
       const g = mine && e.general ? generalPhrase(n.view, n, e.general) : null;
       if (g)

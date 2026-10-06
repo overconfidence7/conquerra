@@ -1,5 +1,5 @@
 import type { SpecialistType } from "@conquerra/content";
-import { investCost, isRecruitSiteIn, Rng, seedRng, type GameContext, type Order, type PlayerView, type ReplayEvent, type TerritoryId } from "@conquerra/engine";
+import { fewestToTake, investCost, isRecruitSiteIn, passageFor, Rng, seedRng, type GameContext, type Order, type PlayerId, type PlayerView, type ReplayEvent, type TerritoryId } from "@conquerra/engine";
 import { BREAKTHROUGH_MARGIN, CAPTAIN_CHAIN_MARGIN, chainOn, readBoard, type CaptainOptions } from "./board";
 import type { Bot } from "./recruit";
 import { captainSpoils, missionPull, missionSpend, spoilsOrder } from "./cards";
@@ -212,7 +212,7 @@ function planMoves(ctx: GameContext, view: PlayerView, opts: CaptainOptions, las
     }
   }
 
-  type Plan = { from: TerritoryId; to: TerritoryId; troops: number; score: number; vsPlayer: boolean; breakthrough: boolean };
+  type Plan = { from: TerritoryId; to: TerritoryId; troops: number; score: number; vsPlayer: boolean; breakthrough: boolean; through?: TerritoryId[] };
   const candidates: Plan[] = [];
   /** Crossings we'd like to break through but can't yet: gather troops there (the staging point). */
   const staging = new Map<TerritoryId, number>();
@@ -246,6 +246,36 @@ function planMoves(ctx: GameContext, view: PlayerView, opts: CaptainOptions, las
       candidates.push({ from, to, troops: need, score: (value * missionPull(b, from, to)) / Math.max(1, need), vsPlayer: rival !== null, breakthrough: false });
     }
   }
+  // Right of passage (session 15): through a partner's land to a front we want (the runaway leader, our target, a fast
+  // attacker), on our best guess of what's there; "Only if still stronger" checks the real odds when it plays.
+  const open = passageFor(view.deals.filter((d) => d.terms).map((d) => ({ a: d.a, b: d.b, terms: d.terms! })), me.id);
+  if (open.length) {
+    const wanted = (p: PlayerId | null) => !!p && !open.includes(p) && b.wantsFront(p);
+    const max = rules.diplomacy.passage.maxThrough;
+    for (const from of mine) {
+      const avail = free.get(from)!;
+      if (avail <= 0) continue;
+      // The partner's land we can reach from here, with the way there.
+      const ways = new Map<TerritoryId, TerritoryId[]>();
+      const q: TerritoryId[] = [];
+      for (const x of idx.neighbors.get(from)!) if (open.includes(b.look0(x) ?? "")) (ways.set(x, [x]), q.push(x));
+      while (q.length) {
+        const t = q.shift()!;
+        const way = ways.get(t)!;
+        for (const to of idx.neighbors.get(t)!) {
+          const owner = b.look0(to);
+          if (open.includes(owner ?? "")) {
+            if (way.length < max && !ways.has(to) && to !== from) (ways.set(to, [...way, to]), q.push(to));
+            continue;
+          }
+          if (owned(to) || !wanted(owner) || b.blocked(t, to)) continue;
+          const need = fewestToTake((troops) => b.expectAt(t, to, troops, specsAt(from)).captureLikely, avail);
+          if (need === null) continue;
+          candidates.push({ from, to, troops: need, score: (valueOf(to) * 0.9) / Math.max(1, need), vsPlayer: true, breakthrough: false, through: way });
+        }
+      }
+    }
+  }
   candidates.sort((a, b) => b.score - a.score || (a.to < b.to ? -1 : 1));
   const targeted = new Set<TerritoryId>();
   const attackedFrom = new Set<TerritoryId>();
@@ -261,13 +291,14 @@ function planMoves(ctx: GameContext, view: PlayerView, opts: CaptainOptions, las
     free.set(c.from, avail - send);
     targeted.add(c.to);
     attackedFrom.add(c.from);
-    const o: Order = { id: id(), kind: "move", from: c.from, to: c.to, troops: send, preset: { id: "onlyIfStronger" } };
+    const o: Order = { id: id(), kind: "move", from: c.from, to: c.to, troops: send, preset: { id: "onlyIfStronger" }, ...(c.through ? { through: c.through } : {}) };
     if (!usedInitiative && c.vsPlayer && me.leader.alive && me.cooldowns.seize === 0) {
       o.timing = "first";
       usedInitiative = true;
     }
     orders.push(o);
-    queued.push({ order: o, from: c.from, to: c.to, troops: send });
+    // (A march through a partner's land chains on like any other attack, from the land it takes.)
+    queued.push({ order: o, from: c.from, to: c.to, troops: send, ...(c.through ? { attackFrom: c.through[c.through.length - 1]! } : {}) });
     staging.delete(c.from);
   }
 

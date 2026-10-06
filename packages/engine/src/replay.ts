@@ -81,11 +81,12 @@ export function replayFor(ctx: GameContext, before: GameState, result: TurnResul
         if (mine) out.push(e);
         break;
       case "battle":
-        if (mine || e.defender === player || sees(e.from) || sees(e.to)) out.push(e);
+        if (mine || e.defender === player || where.some(sees)) out.push(e);
         else out.push(surface(e, "battle", e.to));
         break;
+      // A march through a partner's land shows to anyone who could see any of the way (the partner always can).
       case "moved":
-        if (mine || sees(e.from) || sees(e.to)) out.push(e);
+        if (mine || where.some(sees)) out.push(e);
         break;
       case "leaderKilled":
         out.push(mine || sees(e.territory) ? e : surface(e, "leaderFell", e.territory));
@@ -163,7 +164,7 @@ function placesSeen(e: StepEvent): TerritoryId[] {
   switch (e.type) {
     case "moved":
     case "battle":
-      return [e.from, e.to];
+      return [e.from, ...(e.through ?? []), e.to];
     case "leaderKilled":
     case "recruited":
     case "hired":

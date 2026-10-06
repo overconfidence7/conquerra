@@ -496,6 +496,20 @@ export function diplomacyEndOfTurn(h: DiplomacyHost) {
     h.emit({ type: "offerLapsed", offer, why: h.fought.has(pairKey(offer.from, offer.to)) ? "voided" : declined ? "declined" : "unanswered" });
 }
 
+/**
+ * Right of passage (session 15): the players whose land `p` may move through. A passage deal lets its proposer (`a`)
+ * through the other side's land, and both ways if it's mutual.
+ */
+export function passageFor(deals: readonly Pick<Deal, "a" | "b" | "terms">[], p: PlayerId): PlayerId[] {
+  const out: PlayerId[] = [];
+  for (const d of deals) {
+    if (d.terms.kind !== "passage") continue;
+    if (d.a === p) out.push(d.b);
+    else if (d.b === p && d.terms.mutual) out.push(d.a);
+  }
+  return out;
+}
+
 /** Players this player has a truce with (or a joint war alongside): the ones a general may not raid. */
 export function partnersOf(deals: readonly Pick<Deal, "a" | "b" | "terms">[], p: PlayerId): PlayerId[] {
   return deals.filter((d) => isParty(d, p) && (d.terms.kind === "truce" || d.terms.kind === "war")).map((d) => otherSide(d, p));

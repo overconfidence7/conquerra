@@ -351,6 +351,16 @@ export class InfoLayer {
           if (t.bond === "binding") studs(G, l, 28 * px, 3.4 * px, GOLD_HI);
         }
     }
+    // Passage land (session 15): territories armies may pass through under right of passage, where you can see them:
+    // a gold dashed ring just inside the outline (brighter where you may pass yourself). Screen-pixel widths, so it
+    // reads at every zoom. Agreed this turn: fainter.
+    for (const p of this.scene!.passage ?? []) {
+      const fade = p.pending ? 0.6 : 1;
+      for (const r of this.rings.get(p.territory) ?? []) {
+        ring(G, r).stroke({ width: 7 * px, color: INK, alpha: 0.28 * fade, join: "round" });
+        stitches(G, r, 10 * px, 6 * px, 3.2 * px, p.open ? GOLD_HI : 0xf6efdc, (p.open ? 0.95 : 0.6) * fade);
+      }
+    }
     // Passes: a small stone gate across the road, sized to read at Mid zoom.
     this.gates.clear();
     for (const p of g.passes) {
@@ -450,7 +460,7 @@ export class InfoLayer {
     A.clear();
     const px = 1 / scale;
     for (const a of this.scene!.arrows) {
-      const pts = [a.from, ...(a.via ? [a.via] : []), a.to].map((id) => this.labelOf.get(id)!);
+      const pts = [a.from, ...(a.via ? [a.via] : []), ...(a.through ?? []), a.to].map((id) => this.labelOf.get(id)!);
       const color = a.attack ? ATTACK : MOVE;
       const alpha = a.draft ? 0.8 : 1;
       for (let i = 1; i < pts.length; i++) {
@@ -480,8 +490,9 @@ export class InfoLayer {
 
   /** Where an order's number badge goes (the middle of its arrow), in map units. */
   arrowMid(a: MapScene["arrows"][number]): [number, number] {
-    const p0 = this.labelOf.get(a.via ?? a.from)!, p1 = this.labelOf.get(a.to)!;
-    const p = a.via ? this.labelOf.get(a.via)! : { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
+    const mid = a.via ?? a.through?.[Math.floor((a.through.length - 1) / 2)];
+    const p0 = this.labelOf.get(a.from)!, p1 = this.labelOf.get(a.to)!;
+    const p = mid ? this.labelOf.get(mid)! : { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
     return [p.x, p.y];
   }
 

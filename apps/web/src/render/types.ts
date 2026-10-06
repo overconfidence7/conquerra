@@ -10,6 +10,8 @@ export interface OrderArrow {
   from: TerritoryId;
   to: TerritoryId;
   via?: TerritoryId;
+  /** Right of passage: the partner's land it marches through (the arrow follows the way). */
+  through?: TerritoryId[];
   /** Position in the order list (0 for the draft). */
   n: number;
   /** For a chain of hops (an army pushing on from where it arrived): this arrow's hop number. Null otherwise. */
@@ -42,6 +44,11 @@ export interface MapScene {
    * layer only: the painting never carries game state. `pending`: agreed this turn, starts as it plays.
    */
   truces?: { a: TerritoryId; b: TerritoryId; bond: "handshake" | "binding"; pending: boolean }[];
+  /**
+   * Passage land (session 15): territories armies may pass through under right of passage, where you can see them.
+   * `open`: you may pass through it yourself. Info layer only.
+   */
+  passage?: { territory: TerritoryId; open: boolean; pending: boolean }[];
 }
 
 export interface MapEvents {

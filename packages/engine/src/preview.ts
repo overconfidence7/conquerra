@@ -11,6 +11,8 @@ export interface AttackPlan {
   specialists?: readonly SpecialistType[];
   withLeader?: boolean;
   via?: TerritoryId;
+  /** Right of passage: the partner's land passed through on the way (the attack comes from the last of it). */
+  through?: readonly TerritoryId[];
 }
 
 /**
@@ -22,7 +24,7 @@ export function previewAttack(ctx: GameContext, view: PlayerView, a: AttackPlan)
   if (!target || target.detail !== "full") return null;
   const idx = indexMap(ctx.map);
   const def = idx.byId.get(a.to)!;
-  const border = idx.border(a.via ?? a.from, a.to) ?? "normal";
+  const border = idx.border(a.through?.[a.through.length - 1] ?? a.via ?? a.from, a.to) ?? "normal";
   return expectBattle(ctx.rules, {
     attackers: a.troops,
     attackerSpecialists: a.specialists ?? [],

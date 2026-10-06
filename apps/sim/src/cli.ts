@@ -245,7 +245,7 @@ for (const players of playerCounts) {
     const offers = sum((g) => g.offers);
     const kinds = ["truce", "trade", "war", "passage"].map((k) => `${k} ${(sum((g) => g.dealsByKind[k] ?? 0) / Math.max(1, results.length)).toFixed(1)}`).join(", ");
     console.log(
-      `Diplomacy: ${avg((g) => g.offers).toFixed(1)} offers between bots per game, ${pct2(sum((g) => g.accepted), offers)} accepted, ${pct2(sum((g) => g.countered), offers)} countered; ${avg((g) => g.dealsMade).toFixed(1)} deals made per game (${kinds}; ${avg((g) => g.dealsBinding).toFixed(1)} binding), ${avg((g) => g.dealsBroken).toFixed(2)} broken; joint wars against the player then holding the most land: ${avg((g) => g.warsVsLeader).toFixed(2)} per game`,
+      `Diplomacy: ${avg((g) => g.offers).toFixed(1)} offers between bots per game, ${pct2(sum((g) => g.accepted), offers)} accepted, ${pct2(sum((g) => g.countered), offers)} countered; ${avg((g) => g.dealsMade).toFixed(1)} deals made per game (${kinds}; ${avg((g) => g.dealsBinding).toFixed(1)} binding), ${avg((g) => g.dealsBroken).toFixed(2)} broken; joint wars against the player then holding the most land: ${avg((g) => g.warsVsLeader).toFixed(2)} per game; marches through a partner's land: ${avg((g) => g.marchesThrough).toFixed(2)} per game`,
     );
     const want = Number(arg("reasons", "0"));
     if (want > 0) {

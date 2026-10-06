@@ -5,6 +5,7 @@ import {
   indexMap,
   investCost,
   isRecruitSiteIn,
+  passageFor,
   isShare,
   PRESETS,
   previewAttack,
@@ -13,6 +14,7 @@ import {
   troopsFor,
   type GameContext,
   type Order,
+  type PlayerId,
   type PlayerView,
   type PresetId,
   type PresetInfo,
@@ -204,7 +206,7 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
 
 /** How a queued move is expected to go: troops sent, and how many should arrive (0 if an attack is expected to fail). */
 function expectMove(ctx: GameContext, view: PlayerView, plan: QueuePlan, o: Extract<Order, { kind: "move" }>) {
-  const d: MoveDraft = { from: o.from, to: o.to, ...(o.via ? { via: o.via } : {}), amount: o.troops, preset: null, withLeader: !!o.withLeader, timing: null };
+  const d: MoveDraft = { from: o.from, to: o.to, ...(o.via ? { via: o.via } : {}), ...(o.through?.length ? { through: o.through } : {}), amount: o.troops, preset: null, withLeader: !!o.withLeader, timing: null };
   const troops = troopsOf(ctx, view, plan, d);
   const attack = isAttack(view, d, plan);
   if (!attack) return { troops, attack, arrives: troops, survivors: troops };
@@ -238,16 +240,53 @@ export interface MoveTarget {
   to: TerritoryId;
   /** Middle step for a two-territory cavalry move. */
   via?: TerritoryId;
+  /** Right of passage: the partner's land it marches through on the way. */
+  through?: TerritoryId[];
 }
 
+/** Players whose land you may march through (right of passage), from the deals you see. */
+export const passageOpen = (view: PlayerView): PlayerId[] =>
+  passageFor(
+    view.deals.filter((d) => d.terms).map((d) => ({ a: d.a, b: d.b, terms: d.terms! })),
+    view.me.id,
+  );
+
 /**
- * Where an army can go: every neighbour, plus two steps through your own land if it has cavalry. Works from land an
- * earlier order should capture too (a chained hop).
+ * Where an army can go: every neighbour, plus two steps through your own land if it has cavalry, plus (with right of
+ * passage) land beyond a partner's land you can see, up to `rules.diplomacy.passage.maxThrough` of it on the way.
+ * Works from land an earlier order should capture too (a chained hop). `open`: whose land you may pass through
+ * (deals in force; the page adds the ones agreed this turn).
  */
-export function moveTargets(ctx: GameContext, view: PlayerView, from: TerritoryId, plan: QueuePlan | null = null): MoveTarget[] {
+export function moveTargets(ctx: GameContext, view: PlayerView, from: TerritoryId, plan: QueuePlan | null = null, open: readonly PlayerId[] = passageOpen(view)): MoveTarget[] {
   const idx = indexMap(ctx.map);
   if (!isOwned(view, plan, from)) return [];
   const out: MoveTarget[] = (idx.neighbors.get(from) ?? []).map((to) => ({ to }));
+  if (open.length) {
+    // Breadth first through the partner's land you can see: the shortest way to each place beyond it.
+    const isOpen = (t: TerritoryId) => {
+      const v = seen(view, t);
+      return !!v && !!v.owner && open.includes(v.owner) && !plan?.captured.has(t);
+    };
+    const ways = new Map<TerritoryId, TerritoryId[]>();
+    const q: TerritoryId[] = [];
+    for (const n of idx.neighbors.get(from) ?? []) if (isOpen(n)) (ways.set(n, [n]), q.push(n));
+    const max = ctx.rules.diplomacy.passage.maxThrough;
+    while (q.length) {
+      const t = q.shift()!;
+      const way = ways.get(t)!;
+      for (const n of idx.neighbors.get(t) ?? []) {
+        if (n === from || ways.has(n)) continue;
+        if (isOpen(n)) {
+          if (way.length < max) (ways.set(n, [...way, n]), q.push(n));
+          continue;
+        }
+        // Never into the land of a partner whose land it crossed (it doesn't fight there).
+        const owner = seen(view, n)?.owner;
+        if (owner && owner !== view.me.id && way.some((w) => seen(view, w)?.owner === owner)) continue;
+        if (!out.some((x) => x.to === n)) out.push({ to: n, through: way });
+      }
+    }
+  }
   const specs = plan?.armySpecs.get(from) ?? seen(view, from)?.specialists.map((s) => s.type) ?? [];
   if (specs.includes("cavalry")) {
     const near = new Set([from, ...(idx.neighbors.get(from) ?? [])]);
@@ -263,6 +302,8 @@ export interface MoveDraft {
   from: TerritoryId;
   to: TerritoryId;
   via?: TerritoryId;
+  /** Right of passage: the partner's land it marches through on the way. */
+  through?: TerritoryId[];
   /** A share of the army there when the order plays, Just enough, or an exact number (under More). */
   amount: TroopAmount;
   preset: PresetId | null;
@@ -301,6 +342,7 @@ export function newDraft(ctx: GameContext, view: PlayerView, plan: QueuePlan, ta
     from: target.from,
     to: target.to,
     ...(target.via ? { via: target.via } : {}),
+    ...(target.through ? { through: target.through } : {}),
     amount: "all",
     preset: defaultPreset(view, target.to, plan),
     withLeader: false,
@@ -329,6 +371,7 @@ function expectation(ctx: GameContext, view: PlayerView, plan: QueuePlan, d: Omi
     specialists: plan.armySpecs.get(d.from) ?? [],
     withLeader: d.withLeader,
     ...(d.via ? { via: d.via } : {}),
+    ...(d.through ? { through: d.through } : {}),
   });
 }
 
@@ -396,6 +439,7 @@ export function draftToOrder(d: MoveDraft, id: string): Order {
     from: d.from,
     to: d.to,
     ...(d.via ? { via: d.via } : {}),
+    ...(d.through?.length ? { through: d.through } : {}),
     troops: d.amount,
     ...(d.withLeader ? { withLeader: true } : {}),
     ...(d.preset ? { preset: { id: d.preset } } : {}),
@@ -438,6 +482,7 @@ export function tapTerritory(
   selected: TerritoryId | null,
   tapped: TerritoryId,
   queue: readonly Order[] = [],
+  open: readonly PlayerId[] = passageOpen(view),
 ): TapAction {
   if (selected === tapped) return { kind: "deselect" };
   if (selected && plan.arrived.has(tapped) && queue.some((o) => o.kind === "move" && o.from === selected && o.to === tapped))
@@ -447,7 +492,7 @@ export function tapTerritory(
       const raise = raiseFor(plan, queue, from);
       const p = raise ? planQueue(ctx, view, queueFor(queue, { raise })) : plan;
       if ((p.free.get(from) ?? 0) <= 0) return null;
-      const target = moveTargets(ctx, view, from, p).find((t) => t.to === tapped);
+      const target = moveTargets(ctx, view, from, p, open).find((t) => t.to === tapped);
       return target ? { ...newDraft(ctx, view, p, { ...target, from }), ...(raise ? { raise } : {}) } : null;
     };
     const tip = chainTip(plan, queue, selected);

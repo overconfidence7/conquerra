@@ -122,7 +122,7 @@ describe("bots' diplomacy: never helping a runaway leader", () => {
     const sc = runaway();
     const v = viewFor(sc.ctx, sc.s, "p1");
     for (const terms of [truce(), { kind: "passage", turns: 3, mutual: false }, { kind: "trade", give: { gold: 30 }, get: { gold: 1 } }, { kind: "war", target: "p3", turns: 4 }] as DealTerms[])
-      expect(judgeOffer(sc.ctx, v, offer("p2", "p1", terms), "captain")).toEqual({ accept: false, reason: "You're running away with the map. I won't help you grow." });
+      expect(judgeOffer(sc.ctx, v, offer("p2", "p1", terms), "captain")).toEqual({ accept: false, reason: `You're running away with the map. ${terms.kind === "passage" ? "I won't let you through." : "I won't help you grow."}` });
     expect(judgeOffer(sc.ctx, v, offer("p3", "p1", { kind: "war", target: "p2", turns: 4 }), "captain")).toEqual({ accept: true, reason: "Gladly: P2 is running away with the map." });
     // The Recruit too.
     expect(judgeOffer(sc.ctx, v, offer("p2", "p1", truce()), "recruit").accept).toBe(false);
@@ -180,6 +180,61 @@ describe("bots' diplomacy: the Recruit's simpler rules", () => {
     expect(props.map((o) => o.terms.kind)).toEqual(["truce"]);
     weak.s.players[0]!.gold = 0;
     expect(proposeOffers(weak.ctx, viewFor(weak.ctx, weak.s, "p1"), "recruit").every((o) => o.terms.kind !== "trade")).toBe(true);
+  });
+});
+
+describe("bots' diplomacy: right of passage (session 15)", () => {
+  /** p1 (a, b) - p3 (c) - p2 (d...l, the runaway, as p1 remembers). p1 doesn't border p2. */
+  function beyond() {
+    const layout: Record<string, [string | null, number]> = { a: ["p1", 4], b: ["p1", 30], c: ["p3", 4] };
+    const memory: Record<string, [string | null, number]> = {};
+    for (const t of "defghijkl") (layout[t] = ["p2", 3]), (memory[t] = ["p2", 3]);
+    return scenario({ line: "abcdefghijkl", layout, memory, caps: ["a", "l", "c"], players: 3, gold: 0 });
+  }
+
+  it("asks a neighbour to let it through to a runaway leader it doesn't border, and says why", () => {
+    const sc = beyond();
+    sc.s.turn = 5;
+    // Already at war with p2 alongside p3 (so the joint-war offer is out of the way): now it asks p3 for passage.
+    withDeal(sc.s, "p1", "p3", { kind: "war", target: "p2", turns: 4 });
+    const o = proposeOffers(sc.ctx, viewFor(sc.ctx, sc.s, "p1"), "captain");
+    expect(o[0]).toMatchObject({ from: "p1", to: "p3", terms: { kind: "passage", mutual: false }, note: "Let my armies through your land to reach P2, who's running away with the map." });
+  });
+
+  it("with passage, the Captain marches through its partner's land to the front it wants", () => {
+    const sc = beyond();
+    sc.s.deals.push({ id: "d9", a: "p1", b: "p3", terms: { kind: "passage", turns: 4, mutual: false }, bond: "handshake", start: 1, last: 4, size: 8 });
+    const march = moves(sc.plan()).find((o) => o.through);
+    expect(march).toMatchObject({ from: "b", to: "d", through: ["c"], preset: { id: "onlyIfStronger" } });
+    // Without the deal it can't (and never attacks p3, who holds the runaway off).
+    sc.s.deals = [];
+    expect(moves(sc.plan()).some((o) => o.through || o.to === "c")).toBe(false);
+  });
+
+  it("never lets through someone attacking a partner of its own", () => {
+    const sc = scenario({ line: "abcdef", layout: { a: ["p1", 10], b: ["p1", 10], c: ["p2", 5], d: ["p2", 5], e: ["p3", 5], f: ["p3", 5] }, caps: ["a", "d", "f"], players: 3 });
+    withDeal(sc.s, "p1", "p3", truce());
+    const v = viewFor(sc.ctx, sc.s, "p1");
+    const last = [{ type: "battle", step: 3, player: "p2", defender: "p3", from: "d", to: "e" }] as unknown as ReplayEvent[];
+    expect(judgeOffer(sc.ctx, v, offer("p2", "p1", { kind: "passage", turns: 3, mutual: false }), "captain", last)).toEqual({ accept: false, reason: "You're at war with P3, who has a deal with me. I won't let you through." });
+    // A joint war aimed at its partner counts too (deals are public).
+    sc.s.deals.push({ id: "d8", a: "p2", b: "p4x", terms: { kind: "war", target: "p3", turns: 4 }, bond: "handshake", start: 1, last: 4, size: 8 });
+    expect(judgeOffer(sc.ctx, viewFor(sc.ctx, sc.s, "p1"), offer("p2", "p1", { kind: "passage", turns: 3, mutual: false }), "captain").reason).toContain("I won't let you through");
+  });
+
+  it("a long passage gets a counteroffer for the usual length; the Recruit never lets armies through", () => {
+    // Four players, p2 neither weak nor running away (so not p1's target).
+    const sc = scenario({
+      line: "abcdefghijkl",
+      layout: { a: ["p1", 10], b: ["p1", 10], c: ["p1", 10], d: ["p2", 3], e: ["p2", 3], f: ["p2", 3], g: ["p2", 3], h: ["p3", 3], i: ["p3", 3], j: ["p4", 3], k: ["p4", 3], l: ["p4", 3] },
+      memory: { e: ["p2", 3], f: ["p2", 3], g: ["p2", 3] },
+      caps: ["a", "g", "i", "l"],
+    });
+    const v = viewFor(sc.ctx, sc.s, "p1");
+    const a = judgeOffer(sc.ctx, v, offer("p2", "p1", { kind: "passage", turns: 6, mutual: false }), "captain");
+    expect(a.accept).toBe(false);
+    expect(a.counter?.terms).toEqual({ kind: "passage", turns: sc.ctx.rules.diplomacy.passage.defaultTurns, mutual: false });
+    expect(judgeOffer(sc.ctx, v, offer("p2", "p1", { kind: "passage", turns: 3, mutual: false }), "recruit")).toEqual({ accept: false, reason: "I don't let armies through my land." });
   });
 });
 

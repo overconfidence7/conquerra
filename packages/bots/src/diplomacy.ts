@@ -10,6 +10,7 @@ import {
   landProblem,
   oathPenalty,
   otherSide,
+  passageFor,
   previewAttack,
   termsProblem,
   type DealBoard,
@@ -207,10 +208,16 @@ export function judgeOffer(ctx: GameContext, view: PlayerView, offer: Offer, lev
   const myGold = view.me.gold - (t.kind === "trade" ? (t.get.gold ?? 0) : 0);
   if (cost > 0 && cost > myGold) return no(`I can't spare ${cost} gold for a binding pact.`);
   // Never help a runaway leader; always open to a joint war against one.
-  if (b.runaway === p && helpsProposer(t)) return no("You're running away with the map. I won't help you grow.");
+  const grow = t.kind === "passage" ? "I won't let you through." : "I won't help you grow.";
+  if (b.runaway === p && helpsProposer(t)) return no(`You're running away with the map. ${grow}`);
   // Deals are a softer test than attacks: under fog a runaway may not look like one yet, so the clear leader (as far
   // as it can tell) doesn't get help either.
-  if (helpsProposer(t) && t.kind !== "war" && leads(b, p)) return no("You're the strongest of us. I won't help you grow.");
+  if (helpsProposer(t) && t.kind !== "war" && leads(b, p)) return no(`You're the strongest of us. ${grow}`);
+  // Right of passage (session 15): never for someone attacking a partner of ours.
+  if (t.kind === "passage") {
+    const ally = attackingPartner(view, p, lastTurn);
+    if (ally) return no(`You're at war with ${n.name(ally)}, who has a deal with me. I won't let you through.`);
+  }
   const trust = trustIn(ctx, view, p);
   const r = rules.diplomacy.bots;
 
@@ -305,8 +312,18 @@ function captainWeighs(ctx: GameContext, view: PlayerView, b: Board, offer: Offe
       return { factors: f };
     }
     case "passage": {
+      if (b.focus === p) f.push({ w: -8, text: "You're my target; I won't open my land to you." });
       if (front.land.length && front.theirs > front.mine) f.push({ w: -4, text: "I don't want your armies in my land." });
       else f.push({ w: 1, text: "You may pass; keep moving." });
+      // Where can they go through our land? To someone we'd like beaten, gladly.
+      const beyond = reachedThrough(b, p);
+      const foe = [b.runaway, b.focus].find((x): x is PlayerId => !!x && x !== p && beyond.has(x));
+      if (foe) f.push({ w: 4, text: `Go and beat ${n.name(foe)}; you may pass.` });
+      if (t.mutual) f.push({ w: 0.5, text: "And my armies may pass through yours: fair." });
+      if (t.turns > rules.diplomacy.passage.defaultTurns) {
+        f.push({ w: -(t.turns - rules.diplomacy.passage.defaultTurns) * 0.75, text: `${t.turns} turns is too long to keep my land open.` });
+        return { factors: f, counter: { terms: { ...t, turns: rules.diplomacy.passage.defaultTurns }, why: `${rules.diplomacy.passage.defaultTurns} turns, and you may pass.` } };
+      }
       return { factors: f };
     }
     case "trade": {
@@ -329,6 +346,69 @@ function captainWeighs(ctx: GameContext, view: PlayerView, b: Board, offer: Offe
     }
   }
   return { factors: f };
+}
+
+/**
+ * Is `p` attacking a partner of this bot's (someone it has a truce, a joint war or passage with)? From what it watched
+ * last turn (a battle by `p` on that partner's land), and from the public deals (a joint war aimed at that partner).
+ */
+function attackingPartner(view: PlayerView, p: PlayerId, lastTurn?: readonly ReplayEvent[]): PlayerId | null {
+  const me = view.me.id;
+  const partners = new Set(view.deals.filter((d) => isParty(d, me) && d.kind !== "trade").map((d) => otherSide(d, me)));
+  partners.delete(p);
+  for (const e of lastTurn ?? []) if (e.type === "battle" && e.player === p && e.defender && partners.has(e.defender)) return e.defender;
+  for (const d of view.deals) if (d.kind === "war" && d.target && partners.has(d.target) && isParty(d, p)) return d.target;
+  return null;
+}
+
+/**
+ * The rivals `p` could reach through our land: players (as far as we know) holding land next to ours that isn't
+ * next to `p`'s, within the passage limit. What right of passage would open up for them.
+ */
+function reachedThrough(b: Board, p: PlayerId): Set<PlayerId> {
+  const out = new Set<PlayerId>();
+  const max = b.rules.diplomacy.passage.maxThrough;
+  const start = b.mine.filter((t) => b.idx.neighbors.get(t)!.some((x) => b.look0(x) === p));
+  const depth = new Map(start.map((t) => [t, 1]));
+  const q = [...start];
+  while (q.length) {
+    const t = q.shift()!;
+    const d = depth.get(t)!;
+    for (const x of b.idx.neighbors.get(t)!) {
+      const o = b.look0(x);
+      if (o === b.me.id) {
+        if (d < max && !depth.has(x)) (depth.set(x, d + 1), q.push(x));
+      } else if (o && o !== p) out.add(o);
+    }
+  }
+  return out;
+}
+
+/**
+ * The Captain asks a neighbour for right of passage when a rival it wants beaten (the runaway leader) lies beyond that
+ * neighbour's land and doesn't border ours: the neighbour's land is the way through. Returns that neighbour, if any.
+ */
+function passageToward(b: Board, target: PlayerId): PlayerId | null {
+  const max = b.rules.diplomacy.passage.maxThrough;
+  let best: { q: PlayerId; d: number } | null = null;
+  for (const q of [...b.facing.keys()].sort()) {
+    if (q === target) continue;
+    // Through q's land from ours, at most `max` territories, to land next to the target's.
+    const start = b.idx.ids.filter((t) => b.look0(t) === q && b.idx.neighbors.get(t)!.some(b.owned));
+    const depth = new Map(start.map((t) => [t, 1]));
+    const queue = [...start];
+    while (queue.length) {
+      const t = queue.shift()!;
+      const d = depth.get(t)!;
+      if (b.idx.neighbors.get(t)!.some((x) => b.look0(x) === target)) {
+        if (!best || d < best.d) best = { q, d };
+        break;
+      }
+      if (d >= max) continue;
+      for (const x of b.idx.neighbors.get(t)!) if (b.look0(x) === q && !depth.has(x)) (depth.set(x, d + 1), queue.push(x));
+    }
+  }
+  return best?.q ?? null;
 }
 
 /** What a trade is worth to this bot, in gold: what it gets, what it gives, in words, and anything that rules it out. */
@@ -431,6 +511,19 @@ export function proposeOffers(ctx: GameContext, view: PlayerView, level: Diploma
       .filter((q) => q !== R && ok(q, "war") && (bordersR(q) || b.facing.has(R)))
       .sort((x, y) => (b.knownLand.get(y) ?? 0) - (b.knownLand.get(x) ?? 0) || (x < y ? -1 : 1))[0];
     if (partner) add(partner, { kind: "war", target: R, turns: rules.diplomacy.war.defaultTurns }, `${n.name(R)} is running away with the map; let's stop them together.`);
+  }
+
+  // Right of passage toward a rival we want a front with but don't border (the runaway leader first): through a
+  // neighbour's land that reaches it.
+  const open = passageFor(view.deals.filter((d) => d.terms).map((d) => ({ a: d.a, b: d.b, terms: d.terms! })), me);
+  const fronts0 = b.alive.map((x) => x.id).filter((q) => !b.facing.has(q) && b.wantsFront(q)).sort((x, y) => Number(y === R) - Number(x === R) || (b.knownLand.get(x) ?? 0) - (b.knownLand.get(y) ?? 0) || (x < y ? -1 : 1));
+  for (const target of fronts0) {
+    if (out.length >= cap) break;
+    const way = passageToward(b, target);
+    if (!way || open.includes(way) || !ok(way, "passage")) continue;
+    const why = target === R ? `, who's running away with the map` : (b.knownLand.get(target) ?? 0) <= 3 ? ", who's nearly beaten" : "";
+    add(way, { kind: "passage", turns: rules.diplomacy.passage.defaultTurns, mutual: false }, `Let my armies through your land to reach ${n.name(target)}${why}.`);
+    break;
   }
 
   // A truce on a front we can't afford while another front needs us (never with the runaway or our target).

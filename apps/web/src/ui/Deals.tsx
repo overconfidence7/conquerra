@@ -15,7 +15,7 @@ const KIND_HELP: Record<DealKind, string> = {
   truce: "No attacks between you where it holds, for a few turns.",
   trade: "Gold now, gold each turn, or land that borders theirs.",
   war: "You both attack the same rival, with peace between you while it lasts.",
-  passage: "Your armies march through their land (coming soon).",
+  passage: "Your armies may march through their land to your own land or a fight beyond, but never stop or fight there.",
 };
 
 function Steps({ value, min, max, onChange, label }: { value: number; min: number; max: number; onChange(v: number): void; label: string }) {
@@ -49,7 +49,11 @@ function TermRows({ ctx, view, offer, changed }: { ctx: GameContext; view: Playe
     rows.push(["Target", nameOf(view, t.target), mark("target")]);
     rows.push(["How long", `${t.turns} turns`, mark("turns")]);
   }
-  if (t.kind === "passage") rows.push(["How long", `${t.turns} turns`, mark("turns")]);
+  if (t.kind === "passage") {
+    const through = offer.from === view.me.id ? `You through ${nameOf(view, offer.to)}'s land` : `${nameOf(view, offer.from)} through your land`;
+    rows.push(["Which way", t.mutual ? "Both ways" : through, mark("scope")]);
+    rows.push(["How long", `${t.turns} turns`, mark("turns")]);
+  }
   if (t.kind === "trade") {
     const side = (s: TradeSide) => {
       const parts: string[] = [];
@@ -107,12 +111,10 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
             role="radio"
             aria-checked={t.kind === k}
             className={`chip ${t.kind === k ? "on" : ""}`}
-            disabled={k === "passage"}
             title={KIND_HELP[k]}
             onClick={() => editDeal({ ...newOffer(ctx, view, them, k), id: offer.id, ...(offer.counterTo ? { counterTo: offer.counterTo } : {}) })}
           >
             {KIND_NAME[k]}
-            {k === "passage" ? " (soon)" : ""}
           </button>
         ))}
       </div>
@@ -176,6 +178,26 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
           <div className="row">
             <span>How long</span>
             <Steps value={t.turns} min={d.war.minTurns} max={Math.min(d.war.maxTurns, d.maxTurns)} label="turns" onChange={(v) => set({ ...t, turns: v })} />
+          </div>
+        </>
+      )}
+
+      {t.kind === "passage" && (
+        <>
+          <div className="row">
+            <span>Which way</span>
+            <span className="chips" role="radiogroup" aria-label="Which way">
+              <button role="radio" aria-checked={!t.mutual} className={`chip ${!t.mutual ? "on" : ""}`} onClick={() => set({ ...t, mutual: false })}>
+                You through theirs
+              </button>
+              <button role="radio" aria-checked={t.mutual} className={`chip ${t.mutual ? "on" : ""}`} onClick={() => set({ ...t, mutual: true })}>
+                Both ways
+              </button>
+            </span>
+          </div>
+          <div className="row">
+            <span>How long</span>
+            <Steps value={t.turns} min={d.passage.minTurns} max={Math.min(d.passage.maxTurns, d.maxTurns)} label="turns" onChange={(v) => set({ ...t, turns: v })} />
           </div>
         </>
       )}

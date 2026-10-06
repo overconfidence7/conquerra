@@ -1,6 +1,8 @@
 import { dealSize, indexMap, oathPenalty, type Offer } from "@conquerra/engine";
 import { beforeEach, describe, expect, it } from "vitest";
-import { agreedThisTurn, attackCheck, breakPrice, canProposeTo, changedTerms, counterFrom, dealMarks, dealsNow, markText, newOffer, truceLines, waitingOffers } from "../src/logic/deals";
+import { draftToOrder, moveTargets, planQueue, tapTerritory } from "../src/logic/orders";
+import { buildScene } from "../src/ui/MapView";
+import { agreedThisTurn, attackCheck, breakPrice, canProposeTo, changedTerms, counterFrom, dealMarks, dealsNow, markText, newOffer, passageLines, passageNow, truceLines, waitingOffers } from "../src/logic/deals";
 import { setHostFactory, useGame } from "../src/store";
 import { inProcessHost } from "./inProcessHost";
 
@@ -191,5 +193,41 @@ describe("diplomacy on the page", () => {
       s().endReplay();
     }
     useGame.getState().setLobby({ diplomacy: true });
+  });
+
+  it("right of passage (session 15): tap your army, then land beyond the partner's: a march through, drawn along the way", async () => {
+    await start();
+    const { from, to: theirs, rival } = await neighbour();
+    const { ctx, view } = s();
+    const idx = ctx!.map;
+    const nbs = (t: string) => idx.borders.flatMap((b) => (b.a === t ? [b.b] : b.b === t ? [b.a] : []));
+    // Land beyond the rival's territory that isn't next to ours.
+    const ownerOf = (t: string) => {
+      const v = view!.territories[t]!;
+      return v.detail === "full" ? v.owner : null;
+    };
+    const beyond = nbs(theirs).find((t) => t !== from && !nbs(from).includes(t) && ownerOf(t) !== rival);
+    expect(beyond).toBeDefined();
+    const plain = planQueue(ctx!, view!, []);
+    expect(moveTargets(ctx!, view!, from, plain, []).some((t) => t.to === beyond)).toBe(false);
+    // Agreed this turn: p1 through the rival's land. It starts before any move, so you can march at once.
+    const o: Offer = { id: "pass", from: "you", to: rival, terms: { kind: "passage", turns: 4, mutual: false }, bond: "handshake" };
+    const deals = dealsNow(ctx!, view!, [o]);
+    const open = passageNow(view!, deals);
+    expect(open).toEqual([rival]);
+    const target = moveTargets(ctx!, view!, from, plain, open).find((t) => t.to === beyond)!;
+    expect(target.through?.[0]).toBe(theirs);
+    // Two taps: your army, then the land beyond.
+    const act = tapTerritory(ctx!, view!, plain, from, beyond!, [], open);
+    expect(act.kind).toBe("draft");
+    const draft = (act as { draft: Parameters<typeof draftToOrder>[0] }).draft;
+    expect(draft.through).toEqual(target.through);
+    expect(draftToOrder(draft, "x")).toMatchObject({ kind: "move", from, to: beyond, through: target.through });
+    // The arrow follows the way, and the partner's land shows on the map (where you can see it).
+    const scene = buildScene(ctx!, view!, [], from, draft, true, [], [], passageLines(view!, deals), open);
+    expect(scene.arrows.find((a) => a.draft)).toMatchObject({ from, to: beyond, through: target.through });
+    expect(scene.passage!.some((p) => p.territory === theirs && p.open && p.pending)).toBe(true);
+    // Never into the partner's own land beyond: that would be fighting it.
+    for (const t of moveTargets(ctx!, view!, from, plain, open)) if (t.through) expect((view!.territories[t.to] as { owner?: string }).owner === rival).toBe(false);
   });
 });

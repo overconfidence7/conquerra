@@ -354,7 +354,8 @@ export const Rules = z.object({
     /** Gold each turn for at most `maxPerTurnTurns` turns; at most `maxLand` territories in one deal. */
     trade: z.object({ maxPerTurnTurns: z.number().int().min(1), maxLand: z.number().int().min(0) }),
     war: z.object({ minTurns: z.number().int().min(1), maxTurns: z.number().int().min(1), defaultTurns: z.number().int().min(1) }),
-    passage: z.object({ minTurns: z.number().int().min(1), maxTurns: z.number().int().min(1), defaultTurns: z.number().int().min(1) }),
+    /** Right of passage: how long, and how many of the partner's territories one move may pass through (session 15). */
+    passage: z.object({ minTurns: z.number().int().min(1), maxTurns: z.number().int().min(1), defaultTurns: z.number().int().min(1), maxThrough: z.number().int().min(1) }),
     /**
      * A deal's size (how much it covers), which scales the Oathbreaker penalty and a binding pact's price: each
      * territory a truce covers, each turn it runs, each gold traded, each territory of land traded, plus a joint war's

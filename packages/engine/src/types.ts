@@ -110,7 +110,8 @@ export interface TradeSide {
  *  - truce: no attacks between you where the scope says, for `turns` (or until `until` is knocked out, `turns` at most)
  *  - trade: `give` goes from the proposer to the other side, `get` the other way; gold each turn runs for `turns`
  *  - war: a joint war on `target` for `turns`, with a truce between the partners while it lasts
- *  - passage: the proposer's armies may move through the other's land (both ways if `mutual`); its moves come later
+ *  - passage: the proposer's armies may move through the other's land (both ways if `mutual`), never stopping or
+ *    fighting there (a move's `through`)
  */
 export type DealTerms =
   | { kind: "truce"; scope: TruceScope; turns: number; until?: PlayerId }
@@ -308,6 +309,12 @@ export type OrderBody =
       to: TerritoryId;
       /** Middle step for 2-territory moves (armies with cavalry). Must be yours when the order runs. */
       via?: TerritoryId;
+      /**
+       * Right of passage (session 15): the land passed through on the way from `from` to `to`, in order: a partner's
+       * land you have passage through (or your own). The army never stops or fights there. If land on the way has
+       * changed hands when the order plays, the army stops at your last territory before it.
+       */
+      through?: TerritoryId[];
       /** A share of the army there when the order plays ("all", 3/4, 1/2, 1/4), "enough" (Just enough), or an exact number. */
       troops: TroopAmount;
       /** Which specialists go along. Default: all of them (they travel with the stack). */
@@ -409,6 +416,7 @@ export const FIZZLE_CODES = [
   "storm",
   "noSet",
   "pact",
+  "passage",
 ] as const;
 export type FizzleCode = (typeof FIZZLE_CODES)[number];
 
@@ -466,6 +474,10 @@ export type GameEvent =
       withGeneral?: PlayerId;
       /** The general that wrote the order. */
       general?: PlayerId;
+      /** Right of passage: the partner's land it marched through on the way. */
+      through?: TerritoryId[];
+      /** It meant to go on to here, but land on the way had changed hands: it stopped at `to`, its last land before it. */
+      stopped?: TerritoryId;
     }
   | {
       type: "battle";
@@ -481,6 +493,8 @@ export type GameEvent =
       withGeneral?: PlayerId;
       /** The general that wrote the order. */
       general?: PlayerId;
+      /** Right of passage: the partner's land it marched through to get here (it attacked from the last of them). */
+      through?: TerritoryId[];
       defenders: ArmySnapshot;
       result: CombatResult;
       captured: boolean;

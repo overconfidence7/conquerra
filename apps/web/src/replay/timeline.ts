@@ -152,6 +152,8 @@ export function buildTimeline(events: readonly ReplayEvent[]): Timeline {
 export interface MarchAnim {
   from: TerritoryId;
   to: TerritoryId;
+  /** Right of passage: the partner's land it marches through on the way. */
+  through?: TerritoryId[];
   player: string;
   troops: number;
   /** 0..1 along the way. */
@@ -221,9 +223,9 @@ export function frameAt(tl: Timeline, t: number): ReplayFrame {
       // Grouped items start a little after each other and share the beat.
       const lag = n > 1 ? (k / n) * 0.35 : 0;
       const q = clamp01((p - lag) / (1 - (n > 1 ? 0.35 : 0)));
-      if (e.type === "moved") frame.marches.push({ from: e.from, to: e.to, player: e.player, troops: e.army.troops, progress: ease(q), retreat: e.retreat });
+      if (e.type === "moved") frame.marches.push({ from: e.from, to: e.to, ...(e.through ? { through: e.through } : {}), player: e.player, troops: e.army.troops, progress: ease(q), retreat: e.retreat });
       else if (e.type === "battle") {
-        if (p < MARCH_SHARE) frame.marches.push({ from: e.from, to: e.to, player: e.player, troops: e.attackers.troops, progress: ease(p / MARCH_SHARE) * 0.82, retreat: false });
+        if (p < MARCH_SHARE) frame.marches.push({ from: e.from, to: e.to, ...(e.through ? { through: e.through } : {}), player: e.player, troops: e.attackers.troops, progress: ease(p / MARCH_SHARE) * (e.through ? 1 - 0.18 / (e.through.length + 1) : 0.82), retreat: false });
         else
           frame.clashes.push({
             at: e.to,

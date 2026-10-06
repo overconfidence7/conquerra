@@ -183,12 +183,13 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
   const odds = attack ? oddsFor(ctx, view, plan, draft, troops) : null;
   const target = seen(view, draft.to);
   const enough = attack ? justEnough(ctx, view, plan, draft) : null;
-  const crossing = indexMap(ctx.map).border(draft.via ?? draft.from, draft.to) ?? "normal";
+  const lastStep = draft.through?.[draft.through.length - 1] ?? draft.via ?? draft.from;
+  const crossing = indexMap(ctx.map).border(lastStep, draft.to) ?? "normal";
   // Just enough only when it would do; the exact number lives under More.
   const chips = amountChoices(attack).filter((a) => a !== "enough" || enough !== null);
   const exact = typeof draft.amount === "number";
   // Across a deal of yours: a binding pact blocks the attack; a handshake truce warns what breaking it costs.
-  const check = attack ? attackCheck(ctx, view, pageDeals(), draft.via ?? draft.from, draft.to) : null;
+  const check = attack ? attackCheck(ctx, view, pageDeals(), lastStep, draft.to) : null;
   const blocked = !!check && "block" in check;
   return (
     <div className="panel">
@@ -203,6 +204,7 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
       <p className="muted">
         From {n.place(draft.from)}
         {draft.via ? ` via ${n.place(draft.via)} (cavalry)` : ""}
+        {draft.through ? ` through ${draft.through.map((t) => n.place(t)).join(", ")} (right of passage: it can't stop there)` : ""}
         {attack && target ? ` · defenders: ${target.troops}${target.owner ? ` (${n.who(target.owner)})` : " (neutral)"}` : ""}
       </p>
       {isHop(plan, draft.from) && <p className="muted small">A chained hop: the army that should arrive in {n.place(draft.from)} pushes on, in your next slot after it gets there.</p>}
@@ -233,7 +235,7 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
         </div>
       )}
       {odds && odds !== "unknown" && estimate && <p className="muted small">Its army depends on how the battle before it goes.</p>}
-      {closedNow(view, draft.via ?? draft.from, draft.to) && (
+      {closedNow(view, lastStep, draft.to) && (
         <p className="warn small">The way across is closed this turn (a flood or a rockslide): this order won't go.</p>
       )}
       {attack && crossing !== "normal" && (

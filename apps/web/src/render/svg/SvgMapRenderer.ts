@@ -106,7 +106,7 @@ class SvgMapRenderer implements MapRenderer {
           }
     const label = new Map(g.territories.map((t) => [t.id, t.label]));
     for (const a of arrows) {
-      const pts = [a.from, ...(a.via ? [a.via] : []), a.to].map((id) => label.get(id)!);
+      const pts = [a.from, ...(a.via ? [a.via] : []), ...(a.through ?? []), a.to].map((id) => label.get(id)!);
       el("polyline", { points: pts.map((p) => `${p.x},${p.y}`).join(" "), fill: "none", stroke: a.attack ? "#c2553f" : "#3a72c4", "stroke-width": 5 * k, "stroke-linecap": "round", opacity: a.draft ? 0.75 : 1 }, this.dynamic);
     }
     for (const t of g.territories) {

@@ -32,7 +32,7 @@ import type {
 import { recordTurnSightings } from "./sightings";
 import { spoilsEndOfTurn, turnInSpoils } from "./spoils";
 import { checkMissions, drawFate } from "./fate";
-import { anyDealAcross, attackAcross, diplomacyEndOfTurn, diplomacyStart, partnersOf } from "./diplomacy";
+import { anyDealAcross, attackAcross, diplomacyEndOfTurn, diplomacyStart, partnersOf, passageFor } from "./diplomacy";
 import { visibleTerritories } from "./vision";
 
 /** Called after every event with the live board (tests use it to check the replay against the real game). */
@@ -52,6 +52,10 @@ interface MovePlan {
   general: PlayerId | null;
   /** Border actually crossed into the destination (the second step for two-territory moves). */
   border: BorderType;
+  /** Right of passage: the land it marches through on the way (as far as it gets). */
+  through: TerritoryId[];
+  /** Land on the way changed hands: the army stops here, its last territory before it (and never fights). */
+  stopAt: TerritoryId | null;
 }
 
 /** A queued order, plus where a follow-through is pushing on from. */
@@ -210,7 +214,7 @@ class Turn {
         const target = terr(order.to);
         if (!target || target.owner === pid) return true; // not an attack
         const plan = this.planMove(pid, order);
-        if (isFizzle(plan)) return true; // let the order itself report why it can't run
+        if (isFizzle(plan) || plan.stopAt) return true; // let the order itself report why it can't run (or stop short)
         const e = this.expect(pid, order.to, plan);
         return c.atLeast === "guaranteed" ? e.captureGuaranteed : e.captureLikely;
       }
@@ -404,7 +408,38 @@ class Turn {
 
     const adjacent = (a: TerritoryId, b: TerritoryId) => this.idx.neighbors.get(a)?.includes(b) ?? false;
     let border = this.idx.border(o.from, o.to);
-    if (o.via) {
+    // Right of passage: through a partner's land, never stopping or fighting there.
+    let through: TerritoryId[] = [];
+    let stopAt: TerritoryId | null = null;
+    if (o.through?.length) {
+      if (o.via || o.through.length > rules.diplomacy.passage.maxThrough || new Set([o.from, ...o.through, o.to]).size !== o.through.length + 2) return fz("invalid");
+      const path = [o.from, ...o.through, o.to];
+      for (let i = 0; i + 1 < path.length; i++) {
+        if (!adjacent(path[i]!, path[i + 1]!)) return fz("notConnected");
+        if (this.closed.has(borderKey(path[i]!, path[i + 1]!))) return fz("storm", { territory: path[i + 1]! });
+      }
+      // Walk the way: your own land, or land you have passage through. Land that changed hands stops the army at your
+      // last territory before it.
+      const open = passageFor(this.s.deals, pid);
+      const passed = new Set<PlayerId>();
+      let lastOwn = -1;
+      for (let i = 0; i < o.through.length; i++) {
+        const owner = this.terr(o.through[i]!)?.owner ?? null;
+        if (owner === pid) lastOwn = i;
+        else if (owner && open.includes(owner)) passed.add(owner);
+        else {
+          if (lastOwn < 0) return fz("passage", { territory: o.through[i]! });
+          stopAt = o.through[lastOwn]!;
+          break;
+        }
+      }
+      through = stopAt ? o.through.slice(0, lastOwn) : [...o.through];
+      if (!stopAt) {
+        // It never fights the land it passes through: no attack on a partner whose land it crossed.
+        if (to.owner && passed.has(to.owner)) return fz("passage", { territory: o.to, player: to.owner });
+        border = this.idx.border(o.through[o.through.length - 1]!, o.to);
+      }
+    } else if (o.via) {
       if (!adjacent(o.from, o.via) || !adjacent(o.via, o.to)) return fz("notConnected");
       if (this.terr(o.via)?.owner !== pid) return fz("pathBlocked", { territory: o.via });
       border = this.idx.border(o.via, o.to);
@@ -425,7 +460,8 @@ class Turn {
       }
     }
     // Moving into your own army: only as many as fit; the rest stay behind.
-    if (to.owner === pid) specialists = specialists.slice(0, Math.max(0, rules.specialists.maxPerArmy - to.specialists.length));
+    const dest = stopAt ? this.terr(stopAt)! : to;
+    if (dest.owner === pid) specialists = specialists.slice(0, Math.max(0, rules.specialists.maxPerArmy - dest.specialists.length));
     if (o.via && !specialists.some((s) => s.type === "cavalry")) return fz("needsCavalry", { territory: o.from });
 
     const leaderGoes = !!o.withLeader && p.leader.alive && p.leader.territory === o.from;
@@ -435,8 +471,8 @@ class Turn {
     // Troops: a share of the army that can act, always leaving the garrison behind.
     const fresh = this.freshTroops(o.from);
     const available = Math.min(fresh, from.troops - rules.setup.minGarrison);
-    const attack = to.owner !== pid;
-    const draft: MovePlan = { troops: 0, specialists, leaderGoes, general, border: border ?? "normal" };
+    const attack = dest.owner !== pid;
+    const draft: MovePlan = { troops: 0, specialists, leaderGoes, general, border: border ?? "normal", through, stopAt };
     const enough = () => (attack ? fewestToTake((n) => this.expect(pid, o.to, { ...draft, troops: n }).captureLikely, available) : available);
     const troops = troopsFor(o.troops, fresh, available, enough);
     if (troops <= 0) {
@@ -471,10 +507,13 @@ class Turn {
     if (isFizzle(plan)) return plan;
     const p = this.player(pid);
     const from = this.terr(o.from)!;
-    const to = this.terr(o.to)!;
+    // Land on the way changed hands: the army stops at its last territory before it.
+    const dest = plan.stopAt ?? o.to;
+    const to = this.terr(dest)!;
+    const passage = plan.through.length ? { through: [...plan.through] } : {};
     // An attack across a deal: a binding pact calls it off; a handshake deal breaks (Oathbreaker) and it goes on.
     if (to.owner !== pid) {
-      const pact = attackAcross(this, pid, o.via ?? o.from, o.to);
+      const pact = attackAcross(this, pid, plan.through[plan.through.length - 1] ?? o.via ?? o.from, o.to);
       if (pact) return fz("pact", { territory: o.to, player: to.owner! });
     }
     const sendIds = new Set(plan.specialists.map((s) => s.id));
@@ -485,14 +524,16 @@ class Turn {
     if (to.owner === pid) {
       to.troops += plan.troops;
       to.specialists.push(...plan.specialists);
-      if (plan.leaderGoes) p.leader.territory = o.to;
-      if (plan.general) this.generalOf(p, plan.general)!.territory = o.to;
+      if (plan.leaderGoes) p.leader.territory = dest;
+      if (plan.general) this.generalOf(p, plan.general)!.territory = dest;
       this.emit({
         type: "moved",
         player: pid,
         orderId,
         from: o.from,
-        to: o.to,
+        to: dest,
+        ...passage,
+        ...(plan.stopAt ? { stopped: o.to } : {}),
         army: snapshot(plan.troops, plan.specialists),
         withLeader: plan.leaderGoes,
         retreat,
@@ -563,6 +604,7 @@ class Turn {
       to: o.to,
       defender: defenderId,
       attackers,
+      ...passage,
       withLeader: plan.leaderGoes,
       ...(plan.general ? { withGeneral: plan.general } : {}),
       ...(this.author ? { general: this.author } : {}),

@@ -315,6 +315,13 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
   const needFor = (from: TerritoryId, to: TerritoryId, avail: number, specs = specsAt(from), withLeader = false) =>
     fewestToTake((troops) => previewAttack(ctx, view, { from, to, troops, specialists: specs, ...(withLeader ? { withLeader } : {}) })?.captureLikely ?? false, avail);
 
+  /**
+   * A rival we'd like a front with (right of passage, session 15): the runaway leader, our target, a fast attacker, a
+   * rival we could finish off, or anyone in the endgame.
+   */
+  const wantsFront = (p: PlayerId | null): p is PlayerId =>
+    !!p && p !== me.id && alive.some((x) => x.id === p) && (p === runaway || p === focus || p === raider || endgame || (knownLand.get(p) ?? 0) <= WEAK_RIVAL_LAND) && !shieldsLeader.has(p);
+
   // Deals (session 14): an attack across a truce (or a joint war's truce) of ours, as far as we know who holds what.
   const ours = (view.deals ?? []).filter((d) => d.terms && (d.kind === "truce" || d.kind === "war"));
   const blocked = (from: TerritoryId, to: TerritoryId) => ours.length > 0 && ours.some((d) => covers(idx, d as Parameters<typeof covers>[1], from, to, look0));
@@ -322,7 +329,7 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
   return {
     ctx, view, rules, idx, me, garrison, on, blocked,
     seen, owned, rivalAt, troopsAt, specsAt, mine, border, crossing, isFrontier, frontier, enemyPressure, biggestEnemyNear,
-    alive, look0, knownLand, facing, endgame, runaway, shieldsLeader, raider, facesRival, facesRaider,
+    alive, look0, knownLand, facing, endgame, runaway, shieldsLeader, raider, facesRival, facesRaider, wantsFront,
     focus, toFocusCapital, spearhead, holdNeed, chokeHolder, capital, capThreatened, look, expectAt, valueOf, needFor, exposed,
   };
 }
@@ -335,6 +342,8 @@ export interface ChainStart {
   from: TerritoryId;
   to: TerritoryId;
   troops: number;
+  /** A march through a partner's land: the last of it, where the attack comes from. */
+  attackFrom?: TerritoryId;
 }
 
 /**
@@ -363,7 +372,7 @@ export function chainOn(
   const { idx, garrison, owned, look, shieldsLeader, me, crossing, expectAt, specsAt } = b;
   const value = pick.value ?? b.valueOf;
   const specs = specsAt(first.from);
-  let from = first.to, sent = first.troops, prevFrom = first.from, last = first.order;
+  let from = first.to, sent = first.troops, prevFrom = first.attackFrom ?? first.from, last = first.order;
   for (let hop = 0; hop < MAX_HOPS - 1; hop++) {
     const e = expectAt(prevFrom, from, sent, specs, pick.leader);
     if (!e.captureLikely) break;
