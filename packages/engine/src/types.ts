@@ -440,10 +440,11 @@ export type OrderBody =
    */
   | { kind: "advance"; from: TerritoryId; withLeader?: boolean; withGeneral?: PlayerId }
   /**
-   * Turn in a Spoils set for its windfall. `territory`: where a Tower set's fort goes, or the province a Laurel set
-   * raises culture in (default: your capital).
+   * Turn in a Spoils set for its windfall. `territory`: where a Tower set's fort goes, the province a Laurel set raises
+   * culture in (default: your capital), or where one of each puts its building (default: your most threatened land
+   * without one). `building`: which building one of each gives (default: a fort).
    */
-  | { kind: "spoils"; set: SpoilsSet; territory?: TerritoryId }
+  | { kind: "spoils"; set: SpoilsSet; territory?: TerritoryId; building?: BuildingType }
   /**
    * Diplomacy (session 14). None of these takes a slot: they're applied as the turn starts, before any move.
    * propose: make an offer (`offer.from` is you). answer: accept or decline an offer made to you this planning phase
@@ -703,6 +704,10 @@ export type GameEvent =
       troops: number;
       gold: number;
       fort: boolean;
+      /** One of each (session 16): the building it gave, at `at`. */
+      building?: BuildingType;
+      /** Troops spread over your front (session 16): how many went where. */
+      spread?: { territory: TerritoryId; troops: number }[];
       /** Territories that gained a level of culture. */
       culture: TerritoryId[];
       land: LandChange[];

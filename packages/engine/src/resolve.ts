@@ -396,7 +396,7 @@ class Turn {
       }
       case "spoils": {
         if (!this.s.settings.spoils) return fz("invalid");
-        const why = turnInSpoils(this, pid, o.set, o.territory, o.id);
+        const why = turnInSpoils(this, pid, o.set, o.territory, o.id, o.building);
         return why ? fz(why.code, why.territory ? { territory: why.territory } : {}) : null;
       }
     }

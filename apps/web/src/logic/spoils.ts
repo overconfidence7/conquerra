@@ -1,4 +1,5 @@
-import { indexMap, setsIn, type GameContext, type Order, type PlayerView, type SpoilsSet, type TerritoryId } from "@conquerra/engine";
+import type { BuildingType } from "@conquerra/content";
+import { buildingSpot, indexMap, setsIn, type GameContext, type Order, type PlayerView, type SpoilsSet, type TerritoryId } from "@conquerra/engine";
 import { SET_NAME, troopWord, windfallText } from "./cards";
 import type { Namer } from "./text";
 
@@ -10,6 +11,8 @@ import type { Namer } from "./text";
 export interface SetChoice {
   set: SpoilsSet;
   territory?: TerritoryId;
+  /** One of each: the building it gives (a fort unless you pick another). */
+  building?: BuildingType;
   /** "Three Towers: a fort and 3 troops at Galeholt". */
   label: string;
   /** What it gives, in general ("a finished fort and 3 troops on land you choose"). */
@@ -21,7 +24,7 @@ const seenMine = (view: PlayerView, t: TerritoryId) => {
   return v?.detail === "full" && v.owner === view.me.id ? v : null;
 };
 
-export function setChoices(ctx: GameContext, view: PlayerView, selected: TerritoryId | null, n: Namer): SetChoice[] {
+export function setChoices(ctx: GameContext, view: PlayerView, selected: TerritoryId | null, n: Namer, building: BuildingType = "fort"): SetChoice[] {
   const idx = indexMap(ctx.map);
   const mine = idx.ids.filter((t) => seenMine(view, t));
   const home = seenMine(view, view.me.capital) ? view.me.capital : [...mine].sort((a, b) => (seenMine(view, b)!.troops - seenMine(view, a)!.troops) || (a < b ? -1 : 1))[0];
@@ -43,23 +46,31 @@ export function setChoices(ctx: GameContext, view: PlayerView, selected: Territo
     if (set === "tower") {
       const at = selected && free(selected) ? selected : mine.filter(free).sort((a, b) => threat(b) - threat(a) || (a < b ? -1 : 1))[0];
       if (!at) continue;
-      out.push({ set, territory: at, help, label: `${SET_NAME[set]}: a fort and ${troopWord(ctx.rules.spoils.tower.garrison)} at ${n.place(at)}` });
+      out.push({ set, territory: at, help, label: `${SET_NAME[set]}: a fort and ${troopWord(ctx.rules.spoils.tower.garrison)} at ${n.place(at)}, and ${ctx.rules.spoils.tower.gold} gold` });
     } else if (set === "laurel") {
       const at = selected && seenMine(view, selected) ? selected : home;
       if (!at) continue;
       const prov = ctx.map.provinces.find((p) => p.id === idx.byId.get(at)?.province)?.name ?? "that province";
-      out.push({ set, territory: at, help, label: `${SET_NAME[set]}: culture in ${prov} (from ${n.place(at)})` });
+      out.push({ set, territory: at, help, label: `${SET_NAME[set]}: culture in ${prov} (from ${n.place(at)}), and ${ctx.rules.spoils.laurel.gold} gold` });
+    } else if (set === "mixed") {
+      const land = (t: TerritoryId) => seenMine(view, t) ?? (view.territories[t]?.detail === "full" ? (view.territories[t] as { owner: string | null; troops: number }) : undefined);
+      const at = selected && free(selected) ? selected : buildingSpot(idx, land, view.me.id);
+      const c = ctx.rules.spoils.mixed;
+      out.push({ set, help, building, ...(at ? { territory: at } : {}), label: `${SET_NAME[set]}: ${at ? `a ${BUILDING_WORD[building]} at ${n.place(at)}, ` : ""}${troopWord(c.troops)} over your front and ${c.gold} gold` });
     } else out.push({ set, help, label: `${SET_NAME[set]}: ${help}` });
   }
-  return out;
+  // The best set first: one of each.
+  return out.sort((a, b) => Number(b.set === "mixed") - Number(a.set === "mixed"));
 }
+
+const BUILDING_WORD: Record<BuildingType, string> = { fort: "fort", market: "market", barracks: "barracks", watchtower: "watchtower" };
 
 /** At the hand limit you must turn a set in this turn. */
 export const handFull = (ctx: GameContext, view: PlayerView) => view.settings.spoils && view.me.spoils.length >= ctx.rules.spoils.handLimit;
 
 /** The queue with this set turned in first (it replaces any turn-in already queued). */
-export function withTurnIn(queue: readonly Order[], c: { set: SpoilsSet; territory?: TerritoryId }, id: string): Order[] {
-  const order = { id, kind: "spoils", set: c.set, ...(c.territory ? { territory: c.territory } : {}) } as Order;
+export function withTurnIn(queue: readonly Order[], c: { set: SpoilsSet; territory?: TerritoryId; building?: BuildingType }, id: string): Order[] {
+  const order = { id, kind: "spoils", set: c.set, ...(c.territory ? { territory: c.territory } : {}), ...(c.set === "mixed" && c.building ? { building: c.building } : {}) } as Order;
   return [order, ...queue.filter((o) => o.kind !== "spoils")];
 }
 
@@ -69,6 +80,6 @@ export function withTurnIn(queue: readonly Order[], c: { set: SpoilsSet; territo
  */
 export function dueTurnIn(ctx: GameContext, view: PlayerView, queue: readonly Order[], n: Namer, id: string): Order[] {
   if (!handFull(ctx, view) || queue.some((o) => o.kind === "spoils")) return [...queue];
-  const pick = ["sword", "mixed", "tower", "laurel"].map((s) => setChoices(ctx, view, null, n).find((c) => c.set === s)).find(Boolean);
+  const pick = ["mixed", "sword", "tower", "laurel"].map((s) => setChoices(ctx, view, null, n).find((c) => c.set === s)).find(Boolean);
   return pick ? withTurnIn(queue, pick, id) : [...queue];
 }

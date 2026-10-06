@@ -43,6 +43,8 @@ const OutPanel = lazy(() => import("./Out").then((m) => ({ default: m.OutPanel }
 const KeepGenerals = lazy(() => import("./KeepGenerals"));
 /** Your cards (Spoils and missions): loaded the first time you open them. */
 const CardsSheet = lazy(() => import("./Cards"));
+/** The Chronicle (session 16): loaded the first time it's opened. */
+const ChronicleSheet = lazy(() => import("./Chronicle"));
 /** The deal card (session 14): loaded the first time you propose a deal or open an offer. */
 const DealSheet = lazy(() => import("./Deals"));
 /** The turn report and its wording (session 14): loaded once the first turn has played (it isn't needed before). */
@@ -168,6 +170,7 @@ export function GameScreen() {
   const [settings, setSettings] = useState(false);
   const [saves, setSaves] = useState<"save" | "load" | null>(null);
   const [cardsOpen, setCardsOpen] = useState(false);
+  const [chronicleOpen, setChronicleOpen] = useState(false);
   const [spendOpen, setSpendOpen] = useState(false);
   const [sheet, setSheet] = useState<SheetSize>("closed");
   const [tab, setTab] = useState("army");
@@ -195,7 +198,8 @@ export function GameScreen() {
   const pushToast = useCallback((t: Omit<ShownToast, "id">) => {
     const id = ++toastId;
     setToasts((list) => [...list.slice(-3), { ...t, id }]);
-    setTimeout(() => setToasts((list) => list.filter((x) => x.id !== id)), 3600);
+    // A banner (Fate or the Fallen on your land) stays longer.
+    setTimeout(() => setToasts((list) => list.filter((x) => x.id !== id)), t.banner ? 6500 : 3600);
   }, []);
 
   const onBeat = useCallback(
@@ -204,7 +208,8 @@ export function GameScreen() {
       let n = 0;
       for (const e of b.events) {
         const t = toastFor(ctx, view, e);
-        if (t && n++ < 2) pushToast(t);
+        // Banners always show; at most two other toasts a beat.
+        if (t && (t.banner || n++ < 2)) pushToast(t);
       }
     },
     [ctx, view, pushToast],
@@ -372,6 +377,7 @@ export function GameScreen() {
       phone={phone}
       fallen={out ? { influence: view.me.influence, perTurn: influencePerTurn(ctx, view) } : null}
       onPause={out || view.winner ? null : () => void g.togglePause()}
+      onChronicle={() => setChronicleOpen(true)}
       onSettings={() => setSettings((s) => !s)}
     />
   );
@@ -420,6 +426,22 @@ export function GameScreen() {
           <SavesDialog mode={saves} inGame onClose={() => setSaves(null)} />
         </Suspense>
       )}
+      {chronicleOpen && (
+        <Suspense fallback={null}>
+          <ChronicleSheet
+            ctx={ctx}
+            view={view}
+            onClose={() => setChronicleOpen(false)}
+            onShow={(at) => {
+              // Show the place: select it (its province lights up) and bring it to the middle of the map.
+              setChronicleOpen(false);
+              if (act) g.select(at);
+              const t = ctx.map.geometry!.territories.find((x) => x.id === at);
+              if (t) renderer.current?.centreOn(t.label.x, t.label.y);
+            }}
+          />
+        </Suspense>
+      )}
       {cardsOpen && act && (
         <Suspense fallback={null}>
           <CardsSheet ctx={ctx} view={view} onClose={() => setCardsOpen(false)} onShowMission={(id) => (setCardsOpen(false), g.showMission(id))} />
@@ -462,6 +484,9 @@ export function GameScreen() {
           </button>
           <button className={`icon-btn ${playersOn ? "on" : ""}`} onClick={() => setPlayersOn((p) => !p)} aria-label="Players" aria-pressed={playersOn}>
             <Icon.people />
+          </button>
+          <button className="icon-btn" onClick={() => setChronicleOpen(true)} aria-label="Chronicle" title="Chronicle: every turn so far">
+            <Icon.scroll />
           </button>
           {act && <CardStack ctx={ctx} view={view} onOpen={() => setCardsOpen(true)} compact />}
         </div>

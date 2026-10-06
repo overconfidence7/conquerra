@@ -333,13 +333,13 @@ export const Rules = z.object({
     handLimit: z.number().int().min(3),
     /** How likely each mark is (relative). */
     marks: z.object({ sword: z.number().min(0), tower: z.number().min(0), laurel: z.number().min(0) }),
-    /** Three Swords: troops at your capital. */
-    sword: z.object({ troops: z.number().int().min(0) }),
-    /** Three Towers: a finished fort on land you choose, with a small garrison. */
-    tower: z.object({ garrison: z.number().int().min(0) }),
-    /** Three Laurels: culture on up to `territories` of your territories in the province you choose. */
-    laurel: z.object({ culture: z.number().int().min(1), territories: z.number().int().min(1) }),
-    /** One of each: troops at your capital and gold. */
+    /** Three Swords (session 16): troops spread over your most threatened territories, and gold. */
+    sword: z.object({ troops: z.number().int().min(0), gold: z.number().int().min(0) }),
+    /** Three Towers: a finished fort on land you choose, a small garrison there, and gold. */
+    tower: z.object({ garrison: z.number().int().min(0), gold: z.number().int().min(0) }),
+    /** Three Laurels: culture on up to `territories` of your territories in the province you choose, and gold. */
+    laurel: z.object({ culture: z.number().int().min(1), territories: z.number().int().min(1), gold: z.number().int().min(0) }),
+    /** One of each (the best set, session 16): troops spread over your front, a finished building of your choice on land you choose, and gold. */
     mixed: z.object({ troops: z.number().int().min(0), gold: z.number().int().min(0) }),
   }),
   /**

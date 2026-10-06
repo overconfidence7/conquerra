@@ -7,6 +7,8 @@ export interface Toast {
   tone: "good" | "bad" | "info" | "quiet";
   /** House colour to trim the toast with (null for fogged or neutral events). */
   house: string | null;
+  /** A Fate or Fallen event on your own land (session 16): a big banner that stays longer. */
+  banner?: boolean;
 }
 
 /**
@@ -27,9 +29,10 @@ export function toastFor(ctx: GameContext, view: Pick<PlayerView, "players" | "m
     }
     case "fate":
       return {
-        text: e.shrugged ? `${fateName(e.card)} is seen off at ${place(e.at)}` : e.tone === "good" ? `${fateName(e.card)} at ${place(e.at)}` : `${fateName(e.card)} strikes ${place(e.at)}`,
+        text: `${me(e.holder) ? "Fate on your land: " : ""}${e.shrugged ? `${fateName(e.card)} is seen off at ${place(e.at)}` : e.tone === "good" ? `${fateName(e.card)} at ${place(e.at)}` : `${fateName(e.card)} strikes ${place(e.at)}`}`,
         tone: !me(e.holder) || e.shrugged ? "info" : e.tone === "good" ? "good" : "bad",
         house: house(e.holder)?.color ?? null,
+        ...(me(e.holder) ? { banner: true } : {}),
       };
     case "spoilsEarned":
       return { text: `A Spoils card: ${MARK_NAME[e.mark]}`, tone: "good", house: house(e.player)?.color ?? null };
@@ -56,7 +59,8 @@ export function toastFor(ctx: GameContext, view: Pick<PlayerView, "players" | "m
       return { text: me(e.player) ? "You have been knocked out" : `${name(e.player)} is knocked out`, tone: me(e.player) ? "bad" : me(e.by) ? "good" : "info", house: house(e.player)?.color ?? null };
     case "worldEvent": {
       const what = { plague: "A plague", storm: "A storm", uprising: "An uprising", mercenaries: "Mercenaries", famine: "A famine" }[e.event];
-      return { text: `${what} from the Fallen ${me(e.against) ? "strikes your land" : `strikes ${name(e.against)}`} at ${place(e.target)}`, tone: me(e.against) ? "bad" : "info", house: house(e.against)?.color ?? null };
+      if (me(e.against)) return { text: `The Fallen have turned on you: ${what.toLowerCase()} in ${place(e.target)}`, tone: "bad", house: house(e.against)?.color ?? null, banner: true };
+      return { text: `${what} from the Fallen strikes ${name(e.against)} at ${place(e.target)}`, tone: "info", house: house(e.against)?.color ?? null };
     }
     case "generalCaptured":
       return me(e.player) ? { text: `${view.players.find((p) => p.id === e.general)?.name ?? "A Leader"} joins you as a captured general`, tone: "good", house: house(e.general)?.color ?? null } : null;

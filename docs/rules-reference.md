@@ -323,23 +323,30 @@ Bots play by exactly the same rules as people, and only from their own view (inc
 
 ## 18. The Spoils deck (session 13)
 - **Earning:** at the end of any turn you took at least one territory, you earn **one Spoils card** (at most one a turn). Each shows one mark, **Sword**, **Tower** or **Laurel**, drawn from the game's seed.
-- **Sets:** three alike, or one of each, turn in for a windfall:
+- **Sets: collect three: three alike, or one of each (the best).** Every set gives gold (session 16, Nate):
 
 | Set | Windfall |
 |---|---|
-| Three Swords | 8 troops at your capital |
-| Three Towers | A finished fort and 3 troops on land you choose (land without a building) |
-| Three Laurels | +1 culture on up to 3 of your territories in the province you choose |
-| One of each | 4 troops at your capital and 6 gold |
+| Three Swords | 8 troops, spread over your most threatened territories, and 4 gold |
+| Three Towers | a finished fort on land you choose (land without a building), 2 troops there, and 4 gold |
+| Three Laurels | +1 culture on 3 territories in a province you choose, and 4 gold |
+| **One of each (the best)** | 6 troops spread over your front, a finished building of your choice (fort, market, barracks or watchtower) on land you choose, and 10 gold |
 
-- These are the bigger windfalls Nate chose (Oct 6). Session 13 had tried smaller ones (6 troops, a fort + 1, 3 troops + 5 gold) that kept games about a turn shorter; the balance pass (session 16) looks at length.
+- **Spread over your front:** one troop at a time to whichever of your territories is worst off (the biggest rival army next door, less what's there and what it's been given so far); with no rival next to you, the land facing neutral land; with none, your capital.
+- Earlier versions: session 13's first windfalls, Nate's bigger ones (Oct 6), then this rework (session 16). With it, games are about as long as before (`docs/sim-results-s16.md`).
 - **Windfalls never grow** with each set you turn in (unlike Risk), so they can't feed a runaway.
 - **Turning in** is an order: it takes its slot with your others, and the windfall shows in the replay and the report. Your capital means your strongest territory if you've lost it.
-- **Hand limit 5:** at 5 cards you must turn in a set that turn (five cards always hold one). The sensible set is already first in your queue when the turn starts (Swords, else one of each, else a fort where you're most threatened, else Laurels at home); change it or delete it if you like. If no set goes in, the game turns one in for you as the turn ends.
+- **Hand limit 5:** at 5 cards you must turn in a set that turn (five cards always hold one). The sensible set is already first in your queue when the turn starts (one of each, else Swords, else a fort where you're most threatened, else Laurels at home); change it or delete it if you like. If no set goes in, the game turns one in for you as the turn ends.
 - **What others see:** how many Spoils cards you hold, never which marks (bots too). A set you turn in shows to those who can see the land it changes.
-- **On screen:** a small card stack with its count on your Leader card (on a phone, by the map buttons). Tap it, then a set: 2 taps. A Tower or Laurel set goes on the territory you have selected if it can. The stack glows red when your hand is full.
-- **Bots:** the Captain turns a set in as soon as it has one: a Tower set on the front it most needs to hold, Laurels where it means to hold, else Swords, else one of each.
+- **On screen:** a small card stack with its count on your Leader card (on a phone, by the map buttons), saying "Collect three: three alike, or one of each (best)". Tap it, then a set: 2 taps. The Spoils sheet always shows the table above, with the sets your hand can make lit; one of each comes first, with chips to pick its building (a fort unless you pick another). A building, fort or culture goes on the territory you have selected if it can. The report says what a set gave ("You turned in one of each: a market at Galeholt, 6 troops (4 at Ashfell, 2 at Ravenmoor) and 10 gold"). The stack glows red when your hand is full.
+- **Bots:** they turn a set in as soon as they have one, one of each first: the Captain puts its fort on the front it most needs to hold (or, with no front needing one, a market on safe land), then a Tower set on that front, Laurels where it means to hold, else Swords.
 - Numbers: `rules.spoils`.
+
+## 18b. The Chronicle, and the moments you mustn't miss (session 16)
+- **The Chronicle** is a log of every turn so far: battles you saw, Fate events (yours, those on your land, those you saw, and "something stirs" in the fog), the Fallen's events, deals made, broken and ended, your spies' news, and your leaders' work. Newest turn first; in each turn, what touched you first. A switch shows only what touched you. **Tap a line to see the place on the map.**
+- It's built from your own turn reports, so it holds only what you were allowed to see (fighting in the fog is just "A battle in Northreach"). It's kept with the game, so Continue and saved games bring it back.
+- **Where:** the Chronicle button in the top bar (desktop); the scroll button with the map buttons (phone).
+- **Louder notices:** a Fate or Fallen event on your own land gets a big banner in the replay (it stays longer), the replay camera goes to it, and it's the first line of your report. When the Fallen aim at you, they say so: "The Fallen have turned on you: a plague in Old March."
 
 ## 19. The Fate deck (session 13)
 - **The opening turns stay quiet:** the first draw comes at the end of turn 3 (`rules.fate.firstDrawTurn`), so nothing from Fate happens and no missions arrive before turn 4's planning.

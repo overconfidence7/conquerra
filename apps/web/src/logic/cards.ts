@@ -19,15 +19,18 @@ export function windfallText(ctx: GameContext, set: SpoilsSet): string {
   const c = ctx.rules.spoils;
   switch (set) {
     case "sword":
-      return `${troopWord(c.sword.troops)} at your capital`;
+      return `${troopWord(c.sword.troops)}, spread over your most threatened territories, and ${c.sword.gold} gold`;
     case "tower":
-      return `a finished fort and ${troopWord(c.tower.garrison)} on land you choose`;
+      return `a finished fort on land you choose, ${troopWord(c.tower.garrison)} there, and ${c.tower.gold} gold`;
     case "laurel":
-      return `+${c.laurel.culture} culture on up to ${c.laurel.territories} of your territories in one province`;
+      return `+${c.laurel.culture} culture on ${c.laurel.territories} territories in a province you choose, and ${c.laurel.gold} gold`;
     case "mixed":
-      return `${troopWord(c.mixed.troops)} at your capital and ${c.mixed.gold} gold`;
+      return `${troopWord(c.mixed.troops)} spread over your front, a finished building of your choice (fort, market, barracks or watchtower) on land you choose, and ${c.mixed.gold} gold`;
   }
 }
+
+/** The Spoils rule in a line (the card stack and the sheet; session 16). */
+export const SPOILS_RULE = "Collect three: three alike, or one of each (best)";
 
 /** The Fate events' names, as the report and the replay call them. */
 export const FATE_NAME: Record<string, string> = {

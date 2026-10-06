@@ -20,3 +20,4 @@ export {
 } from "./diplomacy";
 export { captainSpoils, missionPull, missionSpend, MISSION_PULL, recruitSpoils, spoilsOrder, type SpoilsChoice } from "./cards";
 export { captainSpies } from "./spies";
+export { landEstimates, runawayLeader } from "./board";

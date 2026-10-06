@@ -1,5 +1,5 @@
 import type { GameContext, PlayerView } from "@conquerra/engine";
-import { MARK_ICON, MARK_NAME } from "../logic/cards";
+import { MARK_ICON, MARK_NAME, SPOILS_RULE } from "../logic/cards";
 import { handFull } from "../logic/spoils";
 
 /**
@@ -12,7 +12,7 @@ export function CardStack({ ctx, view, onOpen, compact = false }: { ctx: GameCon
   if (!hand.length && !missions) return null;
   const full = handFull(ctx, view);
   const label = [
-    hand.length ? `${hand.length} Spoils card${hand.length === 1 ? "" : "s"}${full ? ", hand full: turn in a set this turn" : ""}` : "",
+    hand.length ? `${hand.length} Spoils card${hand.length === 1 ? "" : "s"}${full ? ", hand full: turn in a set this turn" : ""}. ${SPOILS_RULE}` : "",
     missions ? `${missions} mission${missions === 1 ? "" : "s"}` : "",
   ]
     .filter(Boolean)
@@ -31,6 +31,7 @@ export function CardStack({ ctx, view, onOpen, compact = false }: { ctx: GameCon
       {!compact && (
         <span className="stack-text">
           {hand.length > 0 && <b>{full ? "Hand full" : `Spoils ${hand.length}`}</b>}
+          {hand.length > 0 && <span className="small rule">{SPOILS_RULE}</span>}
           {missions > 0 && <span className="small">{missions === 1 ? "1 mission" : `${missions} missions`}</span>}
         </span>
       )}

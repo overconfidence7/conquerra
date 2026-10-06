@@ -15,6 +15,9 @@ export interface GroupedReport {
   fog: LogLine[];
 }
 
+/** A Fate or Fallen event that struck your own land (session 16: loud: the top of the report, a banner in the replay). */
+export const onYourLand = (e: ReplayEvent, n: Pick<Namer, "isMe">): boolean => (e.type === "fate" && n.isMe(e.holder)) || (e.type === "worldEvent" && n.isMe(e.against));
+
 const involvesMe = (e: ReplayEvent, n: Namer): boolean => {
   switch (e.type) {
     case "battle":
@@ -44,6 +47,7 @@ const involvesMe = (e: ReplayEvent, n: Namer): boolean => {
 
 export function groupReport(ctx: GameContext, events: readonly ReplayEvent[], n: Namer): GroupedReport {
   const out: GroupedReport = { yours: [], seen: [], fog: [] };
+  const top: LogLine[] = [];
   const fog = new Map<string, { battles: number; leaders: number; stirs: number }>();
   out.fog.push(...revealedLines(ctx, events.filter((e): e is VisionEvent => e.type === "vision"), n));
   for (const e of events) {
@@ -58,11 +62,13 @@ export function groupReport(ctx: GameContext, events: readonly ReplayEvent[], n:
     }
     const line = narrate(ctx, e, n);
     if (!line) continue;
-    (involvesMe(e, n) ? out.yours : out.seen).push(line);
+    if (onYourLand(e, n)) top.push(line);
+    else (involvesMe(e, n) ? out.yours : out.seen).push(line);
   }
-  // Your wins and losses first, then the rest of your news (orders, recruits), with the gold line last.
+  // Fate and the Fallen on your land first (they're easy to miss), then your wins and losses, then the rest of your
+  // news (orders, recruits), with the gold line last.
   const rank = (l: LogLine) => (l.text.startsWith("Income") ? 3 : l.tone === "bad" ? 0 : l.tone === "good" ? 1 : 2);
-  out.yours = out.yours.map((l, i) => ({ l, i })).sort((a, b) => rank(a.l) - rank(b.l) || a.i - b.i).map((x) => x.l);
+  out.yours = [...top, ...out.yours.map((l, i) => ({ l, i })).sort((a, b) => rank(a.l) - rank(b.l) || a.i - b.i).map((x) => x.l)];
   for (const [prov, f] of fog) {
     const name = ctx.map.provinces.find((p) => p.id === prov)?.name ?? "the fog";
     if (f.battles) out.fog.push({ text: f.battles > 1 ? `Battles in ${name} (${f.battles})` : `A battle in ${name}`, tone: "quiet" });

@@ -22,11 +22,16 @@ describe("the Spoils hand on screen", () => {
     const { ctx, view, n } = start();
     view.me.spoils = ["tower", "tower", "tower", "sword", "laurel"];
     const c = setChoices(ctx, view, null, n);
-    expect(c.map((x) => x.set)).toEqual(["tower", "mixed"]);
-    expect(c[0]!.territory).toBe(view.me.capital);
+    // The best set first (session 16): one of each, then the rest.
+    expect(c.map((x) => x.set)).toEqual(["mixed", "tower"]);
+    expect(c[1]!.territory).toBe(view.me.capital);
     const sp = ctx.rules.spoils;
-    expect(c[0]!.label).toMatch(new RegExp(`^Three Towers: a fort and ${sp.tower.garrison} troops? at `));
-    expect(c[1]!.label).toBe(`One of each: ${sp.mixed.troops} troop${sp.mixed.troops === 1 ? "" : "s"} at your capital and ${sp.mixed.gold} gold`);
+    expect(c[1]!.label).toMatch(new RegExp(`^Three Towers: a fort and ${sp.tower.garrison} troops? at .*, and ${sp.tower.gold} gold$`));
+    expect(c[0]).toMatchObject({ set: "mixed", building: "fort", territory: view.me.capital });
+    expect(c[0]!.label).toMatch(new RegExp(`^One of each: a fort at .*, ${sp.mixed.troops} troops over your front and ${sp.mixed.gold} gold$`));
+    // Pick another building for it.
+    expect(setChoices(ctx, view, null, n, "market")[0]).toMatchObject({ building: "market" });
+    expect(withTurnIn([], setChoices(ctx, view, null, n, "market")[0]!, "x")).toEqual([{ id: "x", kind: "spoils", set: "mixed", territory: view.me.capital, building: "market" }]);
     view.me.spoils = ["sword", "tower"];
     expect(setChoices(ctx, view, null, n)).toEqual([]);
   });

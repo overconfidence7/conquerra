@@ -124,12 +124,14 @@ export function planReplayCamera(timeline: Timeline, spots: ReplaySpots, home: C
   /** Was the last glide for one of your own battles? */
   let lastMine = false;
   for (const beat of timeline.beats) {
-    if (!FOLLOWED.has(beat.kind)) continue;
-    const e = beat.events[0];
+    // Fate or the Fallen on your own land (session 16): always worth the camera, as much as your own battles.
+    const loud = !!me && beat.events.some((x) => (x.type === "fate" && x.holder === me) || (x.type === "worldEvent" && x.against === me));
+    if (!FOLLOWED.has(beat.kind) && !loud) continue;
+    const e = loud ? beat.events.find((x) => (x.type === "fate" && x.holder === me) || (x.type === "worldEvent" && x.against === me)) : beat.events[0];
     const hop = !!lastTaken && e?.type === "battle" && e.player === lastTaken.player && e.from === lastTaken.at;
-    const mine = !!me && e?.type === "battle" && (e.player === me || e.defender === me);
+    const mine = loud || (!!me && e?.type === "battle" && (e.player === me || e.defender === me));
     if (beat.start - lastAt < CAMERA_HOLD_MS && !hop && !(mine && !lastMine)) continue;
-    const s = focusOf(beat, spots);
+    const s = focusOf(loud && e ? { ...beat, events: [e] } : beat, spots);
     if (!s || inView(cur, vp, s)) {
       if (hop && e?.type === "battle") lastTaken = { player: e.player, at: e.to };
       continue;

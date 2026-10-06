@@ -41,11 +41,13 @@ interface Props {
   fallen?: { influence: number; perTurn: number } | null;
   /** Pause / resume the turn timer (only with a timer running). */
   onPause?: (() => void) | null;
+  /** Open the Chronicle (session 16; on a phone it's with the map buttons instead). */
+  onChronicle?: (() => void) | null;
   onSettings(): void;
 }
 
 /** Logo · gold (+N per turn), or Influence for the Fallen · Turn N, the timer and Pause · settings. */
-export function TopBar({ view, gold, goldAfter, income, clock, replaying, fallen, onPause, onSettings }: Props) {
+export function TopBar({ view, gold, goldAfter, income, clock, replaying, phone, fallen, onPause, onChronicle, onSettings }: Props) {
   const emblem = useArtUrl("emblem");
   const coin = useArtUrl("icon-gold");
   const isPaused = clock?.pausedLeft !== undefined;
@@ -78,6 +80,11 @@ export function TopBar({ view, gold, goldAfter, income, clock, replaying, fallen
         )}
       </span>
       <span className="spacer" />
+      {onChronicle && !phone && (
+        <button className="chronicle-btn" onClick={onChronicle} title="Every turn so far: battles, Fate and the Fallen, deals, spies and your leaders">
+          <Icon.scroll /> Chronicle
+        </button>
+      )}
       <button className="icon-btn" onClick={onSettings} aria-label="Settings">
         <Icon.gear />
       </button>

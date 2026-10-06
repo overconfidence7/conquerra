@@ -1,5 +1,8 @@
-import type { GameContext, PlayerView } from "@conquerra/engine";
-import { MARK_ICON, MARK_NAME, missionGoal, rewardText, turnsLeft, windfallText } from "../logic/cards";
+import type { BuildingType } from "@conquerra/content";
+import { setsIn, type GameContext, type PlayerView } from "@conquerra/engine";
+import { useState } from "react";
+import { MARK_ICON, MARK_NAME, missionGoal, rewardText, SET_NAME, SPOILS_RULE, turnsLeft, windfallText } from "../logic/cards";
+import { BUILDING_NAME } from "../logic/text";
 import { handFull, setChoices } from "../logic/spoils";
 import { namer } from "../logic/text";
 import { useGame } from "../store";
@@ -13,7 +16,10 @@ export default function CardsSheet({ ctx, view, onClose, onShowMission }: { ctx:
   const { selected, queue, turnInSpoils, remove } = useGame();
   const n = namer(ctx, view);
   const hand = view.me.spoils;
-  const choices = setChoices(ctx, view, selected, n);
+  // One of each gives a finished building of your choice (session 16): a fort unless you pick another.
+  const [building, setBuilding] = useState<BuildingType>("fort");
+  const choices = setChoices(ctx, view, selected, n, building);
+  const can = new Set(setsIn(hand));
   const queued = queue.find((o) => o.kind === "spoils");
   const full = handFull(ctx, view);
   const cfg = ctx.rules.spoils;
@@ -23,7 +29,7 @@ export default function CardsSheet({ ctx, view, onClose, onShowMission }: { ctx:
         <div className="scroll">
           {hand.length > 0 && (
             <section>
-              <h3>Spoils</h3>
+              <h3>Your Spoils</h3>
               <ul className="hand" aria-label="Your Spoils cards">
                 {hand.map((m, i) => (
                   <li key={i} className={`spoils-card ${m}`}>
@@ -50,7 +56,7 @@ export default function CardsSheet({ ctx, view, onClose, onShowMission }: { ctx:
                       key={c.set}
                       className={`wide set-btn ${queued?.kind === "spoils" && queued.set === c.set ? "on" : "primary"}`}
                       onClick={() => {
-                        turnInSpoils(c.set, c.territory);
+                        turnInSpoils(c.set, c.territory, c.building);
                         onClose();
                       }}
                       title={c.help}
@@ -58,24 +64,43 @@ export default function CardsSheet({ ctx, view, onClose, onShowMission }: { ctx:
                       Turn in {c.label.replace(/^./, (x) => x.toLowerCase())}
                     </button>
                   ))}
-                  {choices.some((c) => c.set === "tower" || c.set === "laurel") && (
-                    <p className="muted small">A fort or culture goes on the territory you have selected (if it can), else where it's most needed. It happens in its turn with your other orders.</p>
+                  {choices.some((c) => c.set === "mixed") && (
+                    <div className="chips" role="radiogroup" aria-label="One of each: which building">
+                      <span className="muted small">One of each builds:</span>
+                      {(["fort", "market", "barracks", "watchtower"] as const).map((b) => (
+                        <button key={b} role="radio" aria-checked={building === b} className={`chip ${building === b ? "on" : ""}`} onClick={() => setBuilding(b)}>
+                          {BUILDING_NAME[b]}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {choices.some((c) => c.set !== "sword") && (
+                    <p className="muted small">A building, a fort or culture goes on the territory you have selected (if it can), else where it's most needed. It happens in its turn with your other orders.</p>
                   )}
                 </div>
               ) : (
-                <p className="muted small">Three alike, or one of each, make a set. You earn a card at the end of each turn you take land (one a turn).</p>
+                <p className="muted small">You earn a card at the end of each turn you take land (one a turn).</p>
               )}
-              <details className="small muted">
-                <summary>What the sets give</summary>
-                <ul>
-                  {(["sword", "tower", "laurel", "mixed"] as const).map((s) => (
-                    <li key={s}>
-                      {s === "mixed" ? "One of each" : `Three ${MARK_NAME[s]}s`}: {windfallText(ctx, s)}
-                    </li>
+            </section>
+          )}
+          {/* The sets, always shown (session 16), the ones your hand can make lit, the best one marked. */}
+          {view.settings.spoils && (
+            <section>
+              <h3>{SPOILS_RULE}</h3>
+              <table className="spoils-table">
+                <tbody>
+                  {(["mixed", "sword", "tower", "laurel"] as const).map((s) => (
+                    <tr key={s} className={can.has(s) ? "lit" : ""}>
+                      <th scope="row">
+                        {s === "mixed" ? `${MARK_ICON.sword}${MARK_ICON.tower}${MARK_ICON.laurel}` : MARK_ICON[s].repeat(3)} {SET_NAME[s]}
+                        {s === "mixed" && <span className="best"> best</span>}
+                      </th>
+                      <td>{windfallText(ctx, s)}</td>
+                    </tr>
                   ))}
-                  <li>Windfalls don't grow with each set. Others see how many cards you hold, never which.</li>
-                </ul>
-              </details>
+                </tbody>
+              </table>
+              <p className="muted small">Windfalls don't grow with each set. Others see how many cards you hold, never which.</p>
             </section>
           )}
           {view.me.missions.length > 0 && (

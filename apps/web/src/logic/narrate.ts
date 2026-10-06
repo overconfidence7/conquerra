@@ -20,6 +20,9 @@ const FAILED_WHY = {
 } as const;
 
 /** One plain line for a world event the Fallen played (what it did, and to whom). */
+/** "a plague", "an uprising": the Fallen's events as a headline says them (session 16). */
+const FALLEN_STRIKE: Record<Extract<ReplayEvent, { type: "worldEvent" }>["event"], string> = { plague: "a plague", storm: "a storm", uprising: "an uprising", mercenaries: "mercenaries", famine: "a famine" };
+
 export function worldEventLine(e: Extract<ReplayEvent, { type: "worldEvent" }>, n: Namer): string {
   const whose = n.isMe(e.against) ? "your" : `${n.who(e.against)}'s`;
   switch (e.event) {
@@ -149,19 +152,28 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
     case "generalReleased":
       return { text: `You let ${who(e.general)} go (you may keep two captured generals).`, tone: "info" };
     case "worldEvent":
-      return { text: worldEventLine(e, n), tone: isMe(e.against) ? "bad" : e.by.some(isMe) ? "good" : "info" };
+      // Aimed at you (session 16): said plainly first. "The Fallen have turned on you: a plague in Old March."
+      return {
+        text: isMe(e.against) ? `The Fallen have turned on you: ${FALLEN_STRIKE[e.event]} in ${place(e.target)}. ${worldEventLine(e, n)}` : worldEventLine(e, n),
+        tone: isMe(e.against) ? "bad" : e.by.some(isMe) ? "good" : "info",
+      };
     case "worldEventFailed":
       return { text: `Your ${WORLD_EVENT_NAME[e.event].toLowerCase()} on ${place(e.target)} didn't happen (${FAILED_WHY[e.reason]}); your Influence wasn't spent.`, tone: "info" };
     case "spoilsEarned":
       return { text: `You earned a Spoils card: ${MARK_NAME[e.mark]} (you hold ${e.hand}).`, tone: "good" };
     case "spoilsTurnedIn": {
       const what = SET_NAME[e.set].toLowerCase();
+      // What the set gave (session 16): every set gives gold; troops say where they went.
+      const spread = e.spread?.length ? `${troopWord(e.troops)} (${e.spread.map((x) => `${x.troops} at ${place(x.territory)}`).join(", ")})` : `${troopWord(e.troops)} at ${place(e.at)}`;
+      const gold = e.gold ? ` and ${e.gold} gold` : "";
       const gave =
         e.set === "tower"
-          ? `a fort and ${troopWord(e.troops)} at ${place(e.at)}`
+          ? `a fort and ${troopWord(e.troops)} at ${place(e.at)}${gold}`
           : e.set === "laurel"
-            ? `culture rises at ${listPlaces(e.culture.map(place))}`
-            : `${troopWord(e.troops)} at ${place(e.at)}${e.gold ? ` and ${e.gold} gold` : ""}`;
+            ? `culture rises at ${listPlaces(e.culture.map(place))}${gold}`
+            : e.set === "mixed"
+              ? `${e.building ? `a ${BUILDING_NAME[e.building].toLowerCase()} at ${place(e.at)}, ` : ""}${spread}${gold}`
+              : `${spread}${gold}`;
       if (!isMe(e.player)) return { text: `${who(e.player)} turned in Spoils (${what}): ${gave}.`, tone: "info" };
       return { text: e.orderId === null ? `Your hand was full, so ${what} were turned in for you: ${gave}.` : `You turned in ${what}: ${gave}.`, tone: "good" };
     }

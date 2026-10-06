@@ -1,4 +1,4 @@
-import { defaultRules, mapCatalog, suggestedMode } from "@conquerra/content";
+import { defaultRules, mapCatalog, suggestedMode, type BuildingType } from "@conquerra/content";
 import { BOT_NAMES } from "./host/names";
 import { DEFAULT_HOUSE, HOUSES } from "./map/houses";
 import { indexMap, isShare, type DealKind, type GameContext, type Instruction, type Offer, type Order, type PlayerId, type PlayerView, type RecruitAmount, type SpoilsSet, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
@@ -13,7 +13,8 @@ import { DEFAULT_TIMER, type TurnClock } from "./logic/timer";
 import { actionBarState } from "./logic/actions";
 import type { Answer } from "@conquerra/bots";
 import { agreedThisTurn, attackCheck, counterFrom, dealsNow, newOffer, passageNow, type PageDeal } from "./logic/deals";
-import { planPath, type PathKind } from "./logic/paths";
+import type { PathKind } from "./logic/paths";
+import { chronicleOf } from "./logic/chronicleKeep";
 import { draftToOrder, isRecruitSite, type NewOrder, planQueue, queueFor, removeOrder, shiftOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
 
 export type Screen = "lobby" | "game" | "over";
@@ -59,6 +60,8 @@ interface GameStore {
   releases: PlayerId[];
   /** Sending a spy (session 15): the next tap on the map picks the province it goes to. */
   spyPick: string | null;
+  /** The Chronicle (session 16): your report of every turn so far, as you saw it (trimmed to what it shows). */
+  chronicle: TurnReport[];
   /** Orders along a path (session 16): choosing where the army from here should go (the next tap picks it). */
   pathPick: TerritoryId | null;
   /** The path box: from, to, and which way (the shortest, or the full sweep). Confirm adds its orders. */
@@ -114,7 +117,7 @@ interface GameStore {
   togglePause(): Promise<void>;
   dismissNotice(): void;
   /** Turn a Spoils set in: it goes first in your queue (replacing any turn-in already there). */
-  turnInSpoils(set: SpoilsSet, territory?: TerritoryId): void;
+  turnInSpoils(set: SpoilsSet, territory?: TerritoryId, building?: BuildingType): void;
   /** A mission you tapped: its target lights up on the map (until you tap the map). */
   mission: string | null;
   showMission(id: string | null): void;
@@ -129,7 +132,7 @@ interface GameStore {
   startPath(from: TerritoryId): void;
   setPathKind(kind: PathKind): void;
   /** Add the path's orders to your queue, as one chain (each still yours to change or delete). */
-  confirmPath(): void;
+  confirmPath(): Promise<void>;
   cancelPath(): void;
   sendSpy(spy: string): void;
   recallSpy(spy: string): void;
@@ -250,6 +253,7 @@ export const useGame = create<GameStore>((set, get) => ({
   spyPick: null,
   pathPick: null,
   path: null,
+  chronicle: [],
   releases: [],
   fallenOrders: [],
   aiming: null,
@@ -379,8 +383,8 @@ export const useGame = create<GameStore>((set, get) => ({
 
   showMission: (id) => set({ mission: id }),
 
-  turnInSpoils(s, territory) {
-    set({ queue: withTurnIn(get().queue, { set: s, ...(territory ? { territory } : {}) }, nextOrderId()) });
+  turnInSpoils(s, territory, building) {
+    set({ queue: withTurnIn(get().queue, { set: s, ...(territory ? { territory } : {}), ...(building ? { building } : {}) }, nextOrderId()) });
   },
 
   tap(t) {
@@ -463,9 +467,11 @@ export const useGame = create<GameStore>((set, get) => ({
     const p = get().path;
     if (p) set({ path: { ...p, kind } });
   },
-  confirmPath() {
+  async confirmPath() {
     const { path, ctx, view, queue, paused } = get();
     if (!path || !ctx || !view) return;
+    // The path planner loads with the game screen; it's only imported here when you confirm (keeps the start-up small).
+    const { planPath } = await import("./logic/paths");
     const plan = planPath(ctx, view, queue, get().pageDeals(), passageNow(view, get().pageDeals()), path);
     if (!plan.orders.length) return;
     // Orders of your own for a general's army take control of it back for the turn (its orders step aside).
@@ -610,7 +616,8 @@ export const useGame = create<GameStore>((set, get) => ({
     try {
       const before = get().view!;
       const u = await host.watchNext(get().fallenOrders);
-      set({ view: u.view, report: u.report, lastBefore: before, replay: u.report ? { before, report: u.report, key: Date.now() } : null, clock: null, fallenOrders: [], aiming: null });
+      const chronicle = get().chronicle;
+      set({ view: u.view, report: u.report, chronicle: u.report && !chronicle.some((r) => r.turn === u.report!.turn) ? [...chronicle, chronicleOf(u.report)] : chronicle, lastBefore: before, replay: u.report ? { before, report: u.report, key: Date.now() } : null, clock: null, fallenOrders: [], aiming: null });
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
     } finally {
@@ -675,6 +682,7 @@ async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: G
       // The map's geometry comes from the host, never from an import here.
       ctx: { map: u.map, rules: u.rules },
       view: u.view,
+      chronicle: u.chronicle ?? [],
       queue: kept ? kept.queue : openingQueue({ map: u.map, rules: u.rules }, u),
       instructions: kept?.instructions ?? {},
       paused: u.queued?.paused ?? [],
@@ -800,9 +808,12 @@ function applyTurn(u: HostUpdate, auto: boolean) {
   const before = useGame.getState().view;
   const over = u.view.winner !== null;
   const out = knockedOut(u.view);
+  const chronicle = useGame.getState().chronicle;
   useGame.setState({
     view: u.view,
     report: u.report,
+    // The Chronicle grows by this turn's report (session 16).
+    chronicle: u.report && !chronicle.some((r) => r.turn === u.report!.turn) ? [...chronicle, chronicleOf(u.report)] : chronicle,
     fastForwarded: u.fastForwarded,
     clock: u.clock,
     // A new turn: your generals have already written their orders, and every army is theirs again.

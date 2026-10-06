@@ -9,7 +9,7 @@ export function Toasts({ toasts }: { toasts: readonly ShownToast[] }) {
   return (
     <div className="toasts" aria-live="polite">
       {toasts.map((t) => (
-        <div key={t.id} className={`frame slim toast ${t.tone}`} style={t.house ? { borderLeftColor: t.house } : undefined}>
+        <div key={t.id} className={`frame slim toast ${t.tone}${t.banner ? " banner" : ""}`} role={t.banner ? "alert" : undefined} style={t.house ? { borderLeftColor: t.house } : undefined}>
           {t.text}
         </div>
       ))}

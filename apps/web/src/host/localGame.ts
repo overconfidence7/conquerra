@@ -18,9 +18,10 @@ import {
   type SaveFile,
 } from "@conquerra/engine";
 import { buildTimeline } from "../replay/timeline";
+import { chronicleOf } from "../logic/chronicleKeep";
 import { BOT_NAMES } from "./names";
 import { DEFAULT_HOUSE } from "../map/houses";
-import type { BotLevel, HostStart, HostUpdate, LobbySettings } from "./protocol";
+import type { BotLevel, HostStart, HostUpdate, LobbySettings, TurnReport } from "./protocol";
 import type { TurnClock } from "../logic/timer";
 
 export { BOT_NAMES };
@@ -52,6 +53,8 @@ export interface LocalHostData {
   queued?: { turn: number; orders: Order[]; paused: PlayerId[] };
   /** This turn's diplomacy among the bots and their answers to you (session 14), so Continue keeps it too. */
   talk?: Talk;
+  /** The Chronicle (session 16): every turn's report as you saw it, trimmed to what the Chronicle shows. */
+  chronicle?: TurnReport[];
 }
 
 /** The bots' diplomacy for one turn: their propose/answer orders, and the offers they made you. */
@@ -89,6 +92,8 @@ export class LocalGame {
   private readonly autosave?: (save: SaveFile) => void;
   /** What each seat watched in the last replay (from its own seat): the bots', and yours for your generals. */
   private lastTurn = new Map<string, ReplayEvent[]>();
+  /** The Chronicle (session 16): your report of every turn so far (only what you were allowed to see). */
+  private chronicle: TurnReport[] = [];
   /** This turn's diplomacy: the bots' offers and answers (to each other and to you), worked out as planning starts. */
   private talk: Talk = { turn: 0, orders: {}, toHuman: [] };
 
@@ -114,6 +119,7 @@ export class LocalGame {
       const seconds = host.turnSeconds === undefined ? null : host.turnSeconds;
       this.turnMs = seconds === null ? null : seconds * 1000;
       this.lastTurn = new Map(Object.entries(host.lastTurn ?? {}));
+      this.chronicle = Array.isArray(host.chronicle) ? host.chronicle : [];
       if (host.talk && host.talk.turn === restore.state.turn) this.talk = host.talk;
       // The history only replays exactly under the rules it was played with; a game carried on under new ones drops it.
       const h = restore.history;
@@ -217,7 +223,7 @@ export class LocalGame {
   start(): HostStart {
     const restored = this.restored;
     this.restored = null;
-    return { ...this.update(), map: this.ctx.map, rules: this.ctx.rules, ...(restored ? { queued: restored } : {}) };
+    return { ...this.update(), map: this.ctx.map, rules: this.ctx.rules, chronicle: this.chronicle, ...(restored ? { queued: restored } : {}) };
   }
 
   update(report: HostUpdate["report"] = null, fastForwarded = 0): HostUpdate {
@@ -310,6 +316,7 @@ export class LocalGame {
     // What each bot watched in this turn's replay (only its own view), for its next plan.
     this.lastTurn = new Map(this.state.players.filter((p) => p.eliminatedTurn === null).map((p) => [p.id, replayFor(this.ctx, before, result, p.id)]));
     const report = { turn: before.turn, events: this.lastTurn.get(HUMAN_ID) ?? replayFor(this.ctx, before, result, HUMAN_ID) };
+    this.chronicle.push(chronicleOf(report));
     this.startClock(buildTimeline(report.events).total);
     return report;
   }
@@ -369,6 +376,7 @@ export class LocalGame {
       lastTurn: Object.fromEntries(this.lastTurn),
       queued: { turn: this.state.turn, orders: this.saved, paused: this.savedPaused },
       talk: this.talk,
+      chronicle: this.chronicle,
     };
     return makeSave(this.ctx, this.state, HUMAN_ID, this.now(), {
       host: host as unknown as Record<string, unknown>,

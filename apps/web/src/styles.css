@@ -249,6 +249,9 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .toast.good { color: #bfe8b8; }
 .toast.bad { color: #ffb3a3; }
 .toast.quiet { color: #c9c2b2; font-style: italic; font-weight: 600; }
+/* Fate or the Fallen on your own land (session 16): a big banner, so it can't be missed. */
+.toast.banner { font-size: 1.15rem; padding: 12px 20px; border: 2px solid var(--gold-hi); border-left-width: 8px; box-shadow: 0 0 22px rgba(255, 210, 120, 0.45), 0 6px 18px rgba(0, 0, 0, 0.55); animation: toast-in 0.25s ease-out, banner-glow 1.6s ease-in-out 2; }
+@keyframes banner-glow { 50% { box-shadow: 0 0 34px rgba(255, 210, 120, 0.8), 0 6px 18px rgba(0, 0, 0, 0.55); } }
 @keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } }
 
 /* Replay banner */
@@ -325,6 +328,25 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { border-radius: 999px; padding: 5px 12px; font-size: var(--fs-small); min-height: 44px; }
 .chip.on { background: linear-gradient(#e3c77e, #c9a45c); color: var(--navy); border-color: #f1dca2; }
+/* The Chronicle (session 16). */
+.chronicle-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 4px 12px; font: 700 var(--fs-small) var(--font-head); }
+.chronicle-btn svg { width: 18px; height: 18px; }
+.dialog.chronicle { width: min(560px, calc(100vw - 24px)); max-height: min(80vh, 760px); display: flex; flex-direction: column; }
+.dialog.chronicle .scroll { overflow-y: auto; min-height: 0; }
+.chronicle-lines { list-style: none; margin: 0 0 10px; padding: 0; }
+.chronicle-line { display: flex; gap: 8px; align-items: flex-start; width: 100%; min-height: 40px; padding: 6px 8px; text-align: left; background: none; border: none; border-bottom: 1px solid rgba(201, 164, 92, 0.18); border-radius: 0; color: inherit; font: inherit; font-size: var(--fs-small); line-height: 1.35; }
+.chronicle-line:disabled { opacity: 1; cursor: default; }
+.chronicle-line .kind { width: 20px; flex: none; text-align: center; }
+.chronicle-lines li.bad .chronicle-line { color: #ffb3a3; }
+.chronicle-lines li.good .chronicle-line { color: #bfe8b8; }
+.chronicle-lines li.mine .chronicle-line { background: rgba(227, 199, 126, 0.08); font-weight: 600; }
+/* The Spoils table (session 16): every set, the ones your hand can make lit. */
+.spoils-table { width: 100%; border-collapse: collapse; font-size: var(--fs-small); }
+.spoils-table th, .spoils-table td { text-align: left; vertical-align: top; padding: 6px 6px; border-top: 1px solid rgba(201, 164, 92, 0.25); opacity: 0.62; }
+.spoils-table th { white-space: nowrap; font-weight: 700; }
+.spoils-table tr.lit th, .spoils-table tr.lit td { opacity: 1; color: var(--gold-hi); background: rgba(227, 199, 126, 0.1); }
+.spoils-table .best { font-size: 0.8em; padding: 0 5px; border-radius: 6px; background: var(--gold); color: var(--navy); margin-left: 4px; }
+.card-stack .rule { display: block; max-width: 150px; line-height: 1.2; opacity: 0.85; }
 /* Orders along a path (session 16). */
 .path-summary { font-weight: 700; color: var(--gold-hi); margin: 6px 0; }
 .row > .grow { flex: 1; margin: 0; }

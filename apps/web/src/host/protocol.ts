@@ -67,6 +67,8 @@ export interface HostUpdate {
 export interface HostStart extends HostUpdate {
   map: MapDef;
   rules: Rules;
+  /** The Chronicle so far (session 16): your report of every turn played (a loaded game brings its own). */
+  chronicle?: TurnReport[];
 }
 
 /** Where to load a saved game from: a slot on this device ("auto" is Continue), or a save file's text. */

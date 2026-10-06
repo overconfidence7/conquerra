@@ -189,18 +189,21 @@
       "laurel": 1
     },
     "sword": {
-      "troops": 8
+      "troops": 8,
+      "gold": 4
     },
     "tower": {
-      "garrison": 3
+      "garrison": 2,
+      "gold": 4
     },
     "laurel": {
       "culture": 1,
-      "territories": 3
+      "territories": 3,
+      "gold": 4
     },
     "mixed": {
-      "troops": 4,
-      "gold": 6
+      "troops": 6,
+      "gold": 10
     }
   },
   "fate": {
