@@ -466,7 +466,8 @@ Spies see deep behind the lines. They never fight and never change a battle: the
 - **On the map**, only for you: a small badge where each of your spies stands: an **eye** inside a rival's province, a **shield** on guard, a **hood** travelling.
 
 **The bots**
-- **The Captain** hires a spy or two when it has gold to spare (from turn 4, keeping 16 gold for troops). Its first goes into the province of its main target (the runaway leader, its focus, a fast attacker, else the strongest rival next to it), its second stands guard in a province it holds whole that a rival borders. It judges from its own view, including what its spies report, false reports and all.
+- **The Captain** hires one spy when it has gold to spare (from turn 6, keeping 24 gold for troops). It goes into the province of its main target (the runaway leader, its focus, a fast attacker, else the strongest rival next to it). It judges from its own view, including what its spy reports, false reports and all. (With two, it would station the second on guard in a whole province a rival borders.) So bots block spies but never kill or fool one: that takes 2 or 3 defenders. People can.
+- **Numbers:** `docs/sim-results-m3-spies.md`. Spies don't make games longer, and leave runaways and seat fairness where they were; one spy about pays for itself.
 - **The Recruit** doesn't use spies.
 
 ## Not in yet (later milestones)

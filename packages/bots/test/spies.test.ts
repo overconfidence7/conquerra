@@ -16,9 +16,9 @@ function board(gold = 60, turn = 6) {
 }
 
 describe("the Captain's spies (session 15)", () => {
-  it("hires a spy when it has gold to spare, from turn 4, at its capital", () => {
+  it("hires a spy when it has gold to spare, from turn 6, at its capital", () => {
     expect(spyOrders(board(60, 6).plan())).toContainEqual(expect.objectContaining({ kind: "hireSpy", territory: "a" }));
-    expect(spyOrders(board(60, 2).plan())).toEqual([]);
+    expect(spyOrders(board(60, 5).plan())).toEqual([]);
     expect(spyOrders(board(10, 6).plan())).toEqual([]);
   });
 

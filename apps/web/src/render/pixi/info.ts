@@ -351,37 +351,6 @@ export class InfoLayer {
           if (t.bond === "binding") studs(G, l, 28 * px, 3.4 * px, GOLD_HI);
         }
     }
-    // Passage land (session 15): territories armies may pass through under right of passage, where you can see them:
-    // a gold dashed ring just inside the outline (brighter where you may pass yourself). Screen-pixel widths, so it
-    // reads at every zoom. Agreed this turn: fainter.
-    for (const p of this.scene!.passage ?? []) {
-      const fade = p.pending ? 0.6 : 1;
-      for (const r of this.rings.get(p.territory) ?? []) {
-        ring(G, r).stroke({ width: 7 * px, color: INK, alpha: 0.28 * fade, join: "round" });
-        stitches(G, r, 10 * px, 6 * px, 3.2 * px, p.open ? GOLD_HI : 0xf6efdc, (p.open ? 0.95 : 0.6) * fade);
-      }
-    }
-    // Your spies (session 15): a small dark badge up and to the left of where each stands, gold-rimmed: an eye inside a
-    // rival's province, a shield on guard, a hood travelling. A second badge peeks out behind for two or more.
-    for (const sp of this.scene!.spies ?? []) {
-      const l = this.labelOf.get(sp.territory);
-      if (!l) continue;
-      const r = 11 * px, x = l.x - 30 * px, y = l.y - 24 * px;
-      if (sp.count > 1) G.circle(x - 5 * px, y - 4 * px, r).fill({ color: INK, alpha: 0.85 }).stroke({ width: 1.6 * px, color: GOLD_HI });
-      G.circle(x, y, r).fill({ color: INK, alpha: 0.92 }).stroke({ width: 2 * px, color: GOLD_HI });
-      if (sp.status === "in") {
-        // An eye: two arcs and a pupil.
-        G.moveTo(x - 7 * px, y).quadraticCurveTo(x, y - 7 * px, x + 7 * px, y).quadraticCurveTo(x, y + 7 * px, x - 7 * px, y).stroke({ width: 1.8 * px, color: 0xfff1c1 });
-        G.circle(x, y, 2.6 * px).fill({ color: 0xfff1c1 });
-      } else if (sp.status === "defend") {
-        // A shield.
-        G.moveTo(x - 6 * px, y - 6 * px).lineTo(x + 6 * px, y - 6 * px).lineTo(x + 6 * px, y + 1 * px).quadraticCurveTo(x, y + 8 * px, x - 6 * px, y + 1 * px).closePath().stroke({ width: 1.8 * px, color: 0xfff1c1 });
-      } else {
-        // A hood over a face.
-        G.moveTo(x - 6 * px, y + 6 * px).quadraticCurveTo(x - 6 * px, y - 8 * px, x, y - 7 * px).quadraticCurveTo(x + 6 * px, y - 8 * px, x + 6 * px, y + 6 * px).stroke({ width: 1.8 * px, color: 0xfff1c1 });
-        G.circle(x, y + 1 * px, 2.2 * px).fill({ color: 0xfff1c1 });
-      }
-    }
     // Passes: a small stone gate across the road, sized to read at Mid zoom.
     this.gates.clear();
     for (const p of g.passes) {
@@ -410,6 +379,8 @@ export class InfoLayer {
     // blue: you'd move), with the border's kind marked (river ripples, a pass's arch); its sea lanes light up.
     this.links.clear();
     if (selected) this.drawLinks(selected, px);
+    // Your spies, over the selection's chevrons.
+    this.drawSpies(px);
     // Selection in Tactical: a gold outline (illustrated: the pulsing double rule in realms.ts).
     if (selected && this.isTactical)
       for (const r of this.rings.get(selected) ?? []) {
@@ -472,6 +443,41 @@ export class InfoLayer {
         for (const [w, c, al] of [[5, INK, 0.5], [3, 0xd9cdb0, 1]] as const) K.moveTo(mx + Math.cos(a0) * r, my + Math.sin(a0) * r).arc(mx, my, r, a0, a1).stroke({ width: w * px, color: c, alpha: al, cap: "round" });
       }
       chevron(K, mx, my, ang, size, core, px);
+    }
+  }
+
+    // Your spies (session 15): a small dark badge up and to the left of where each stands, gold-rimmed: an eye inside a
+    // rival's province, a shield on guard, a hood travelling. A second badge peeks out behind for two or more.
+  private drawSpies(px: number) {
+    const G = this.links;
+    // Passage land (session 15): territories armies may pass through under right of passage, where you can see them:
+    // a ring of white stitches on a dark rule just inside the outline (gold where you may pass yourself), over the
+    // House bands so it reads on any colour. Screen-pixel widths, so it reads at every zoom. Agreed this turn: fainter.
+    for (const pl of this.scene!.passage ?? []) {
+      const fade = pl.pending ? 0.6 : 1;
+      for (const r of this.rings.get(pl.territory) ?? []) {
+        ring(G, r).stroke({ width: 8 * px, color: INK, alpha: 0.55 * fade, join: "round" });
+        stitches(G, r, 11 * px, 6 * px, 3.4 * px, pl.open ? GOLD_HI : 0xffffff, 0.95 * fade);
+      }
+    }
+    for (const sp of this.scene!.spies ?? []) {
+      const l = this.labelOf.get(sp.territory);
+      if (!l) continue;
+      const r = 13 * px, x = l.x - 34 * px, y = l.y - 30 * px;
+      if (sp.count > 1) G.circle(x - 6 * px, y - 5 * px, r).fill({ color: INK, alpha: 0.85 }).stroke({ width: 1.6 * px, color: GOLD_HI });
+      G.circle(x, y, r).fill({ color: INK, alpha: 0.92 }).stroke({ width: 2 * px, color: GOLD_HI });
+      if (sp.status === "in") {
+        // An eye: two arcs and a pupil.
+        G.moveTo(x - 7 * px, y).quadraticCurveTo(x, y - 7 * px, x + 7 * px, y).quadraticCurveTo(x, y + 7 * px, x - 7 * px, y).stroke({ width: 1.8 * px, color: 0xfff1c1 });
+        G.circle(x, y, 2.6 * px).fill({ color: 0xfff1c1 });
+      } else if (sp.status === "defend") {
+        // A shield.
+        G.moveTo(x - 6 * px, y - 6 * px).lineTo(x + 6 * px, y - 6 * px).lineTo(x + 6 * px, y + 1 * px).quadraticCurveTo(x, y + 8 * px, x - 6 * px, y + 1 * px).closePath().stroke({ width: 1.8 * px, color: 0xfff1c1 });
+      } else {
+        // A hood over a face.
+        G.moveTo(x - 6 * px, y + 6 * px).quadraticCurveTo(x - 6 * px, y - 8 * px, x, y - 7 * px).quadraticCurveTo(x + 6 * px, y - 8 * px, x + 6 * px, y + 6 * px).stroke({ width: 1.8 * px, color: 0xfff1c1 });
+        G.circle(x, y + 1 * px, 2.2 * px).fill({ color: 0xfff1c1 });
+      }
     }
   }
 

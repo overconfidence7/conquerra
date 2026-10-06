@@ -438,7 +438,7 @@
     "sight": 2,
     "maxPerProvince": 3,
     "fooled": { "troopJitter": 0.4, "cultureChance": 0.5 },
-    "bots": { "max": 2, "fromTurn": 4, "reserve": 16 }
+    "bots": { "max": 1, "fromTurn": 6, "reserve": 24 }
   },
   "game": {
     "turnTimerSecondsDefault": 300,

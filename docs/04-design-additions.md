@@ -74,6 +74,7 @@
 - **Nate's calls after session 14 (Oct 6):**
   - **A harsher Oathbreaker:** about double the fine and the unrest (`rules.diplomacy.oathbreaker`: fine 4 + 1.4 per size, unrest 0.8 per size; the mark still lasts 5 turns). Session 15.
   - **A lobby switch, "Diplomacy: On/Off"** (on by default), like the Fate deck's. Off means no deals and no offers. Session 15.
+  - **BUILT in session 15:** the harsher Oathbreaker, the lobby switch, and right of passage's moves (one order marches through up to 3 of the partner's territories to your own land or a fight beyond; land on the way that changed hands stops it at your last territory before it; the Captain asks for passage toward a rival it wants a front with but doesn't border, and marches through). Rules: `docs/rules-reference.md` §20.
   - **Game length with diplomacy is fixed in the bots first:** the balance pass (session 16) has bots offer fewer truces at big tables (for example, fewer offers when many players are left, and no "peace costs me nothing" truces that only pad the count). No rule change for length.
 
 ## 3. Contingency presets
@@ -148,6 +149,7 @@
 
   - The territory card's culture line names what's unlocked and the next step ("Culture 4 in Pinemark: Rangers. Next: Standard-bearer at 6").
   - The Captain hires them with its existing judgement: Rangers for a forest or hill front, a Standard-bearer for a big push.
+  - **BUILT (session 15, Oct 6)** exactly as above. Rangers are hired in about a quarter of 4-player games and two thirds of 10-player games; Standard-bearers in 16% and 60% (`docs/sim-results-m3-spies.md`).
 
 ## 6. Cards: three systems, consolidation suggested
 Nate's three ideas:
@@ -253,6 +255,13 @@ It matches "simple at first, deep later" and the 5-minute turn, and it plugs nea
 - **Spies do not affect combat.** Forts are Siege's job; spies are purely about information.
 - **Design note:** this gives holding whole countries a second payoff (spy defense), and makes the 3-defender deception a real mind game. Because the fake intel is generated from the true state with the seeded RNG, it stays deterministic and replayable.
 - **Open for the M3 build (orchestrator/Claude Code proposes, Nate approves):** spy movement speed, cost and the exact cap; whether "recall" is instant; and whether the defender learns that a spy was blocked or killed (planner suggests: yes for blocked and killed, no for fooled).
+- **BUILT (session 15, Oct 6):** as decided below. Details settled while building:
+  - **Spies act between turns:** sending and recalling take no slot; spies travel and every contest runs as the turn ends, after every army's move.
+  - **Spy intel is a report, not live vision:** each turn's report (what your spies see as the turn ends) shows in full on your map and goes into your last-seen memory. During the replay, a battle in a spied province shows only as "a battle in ...", whether your spy got in or was fooled; that's what stops the replay giving a fooled spy away.
+  - **A fooled report** keeps owners, buildings and capitals true; troops and specialists are moved around the House's own land there and each army is off by up to 40%; culture is a level off half the time; Leaders stand elsewhere. Made with the game's own seeded numbers (a separate sequence, so spies never change a battle's dice).
+  - A spy stops at the province it was sent to, or at the first province someone else holds whole (an attempt). A province that stops being whole has no defence. The contest runs again when the holder or the number of defenders changes.
+  - With fog off there are no spies.
+  - The Captain keeps one spy (tuned: two cost it more than they earned). Rules: `docs/rules-reference.md` §21. Numbers: `docs/sim-results-m3-spies.md`.
 - **DECIDED (Nate, Oct 6), for session 15:** a spy costs **8 gold and 1 gold upkeep**, and you can have **up to 5**. It's hired at your capital or a barracks and **travels 2 territories a turn**. **Recall** brings it home to your capital at the start of the next turn. **The defender is told** when an incoming spy is blocked or killed, **never when it's fooled**. Defending spies are stationed anywhere in a province you hold whole. Other players never see your spies on the map.
 
 ## 9. Maps: real geography (from Nate, Oct 2)

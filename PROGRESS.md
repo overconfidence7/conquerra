@@ -18,7 +18,7 @@
 ## Status right now
 **Phase: M3 (depth and balance). Sessions 7–14 are done. Next: session 15 (`docs/prompts/claude-code-session-15.md`): a harsher Oathbreaker and a Diplomacy lobby switch, right of passage's moves, spies, the richer culture ladder, then "Govern this province".**
 
-Claude Code sessions completed: **14** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, ...)
+Claude Code sessions completed: **15** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, ...)
 
 ---
 
@@ -725,3 +725,18 @@ Parts 1–4 are done, each committed and pushed. **Right of passage's moves (Par
 - **Still to come:** Nate's play tests of sessions 11–14.
 - **Next:** session 15 (`docs/prompts/claude-code-session-15.md`, run it locally). After it, a fresh orchestrator prompt is due.
 
+
+### Oct 6: Claude Code session 15 (M3: Nate's diplomacy calls, right of passage, spies, the culture ladder)
+Parts 0–4 are done, each committed and pushed. There were no play-test notes from sessions 11–14 to fix first, and no new art in `art/incoming/`.
+- **Nate's calls (Step 0):**
+  - **A harsher Oathbreaker:** fine 4 + 1.4 per size, unrest 0.8 per size (about double). A 3-turn truce everywhere now costs about 17 gold and 7 troops to break. The Captain uses the same numbers, so it now breaks mostly small deals.
+  - **"Diplomacy: On/Off"** in the lobby, next to the Fate deck. Off: no Propose, no offers, no deals; the bots play exactly as with diplomacy off in the sim.
+  - **Small fixes:** the offer card says what breaking costs ("Breaking it brings the Oathbreaker mark, about 17 gold and unrest"); the Oathbreaker badge moved to the House line, so names stay on one line. The Players panel bug in the s14 screenshot wasn't real (the panel showed the truce the script had just added); a test now checks a deal's mark goes when it ends.
+- **Right of passage, as built:** select your army, tap land beyond the partner's land: one order marches through up to 3 of their territories to your own land or a fight beyond, never stopping or fighting there. Land on the way that changed hands stops it at your last territory before it. Passage land shows on the map as a white stitched ring; the arrow and the replay follow the way. Bots ask for passage toward a rival they want a front with but don't border, march through it, and refuse it to a runaway or anyone attacking their partner ("You're running away with the map. I won't let you through.").
+- **Spies, as built:** hire one at your capital or a barracks (8 gold, 1 a turn, up to 5). Send it to a province (3 taps) or Recall it. Spies act between turns: they travel 2 territories, lift the fog 2 around them where nobody holds the province whole, and try to get into a province someone holds whole. The spy-against-spy table is exactly Nate's (in, blocked, killed, fooled). A fooled spy brings back a false picture close to the truth that looks exactly like the real thing; what you see yourself always wins. The defender hears of blocked and killed spies, never fooled ones. Only you see your spies (a small eye, shield or hood badge on the map).
+- **The culture ladder:** Rangers at culture 4 in a province (forest, hills and swamp defend like plains against them), the Standard-bearer at 6 (attacks 10% stronger, no stacking). In the odds preview, the Hire menu (locked ones greyed with the culture they need) and the card's culture line ("Culture 4 in Pinemark: Rangers. Next: Standard-bearer at 6"). Placeholder icons until the art comes (Tier 3 in the art list).
+- **Sims (500 games, spies off → on):** length 28.0 → 27.1 turns (4 players), 36.2 → 36.1 (6), 46.4 → 44.9 (10); runaways and seat fairness about the same. Spy attempts per game 6.6 / 10.3 / 31.6, nearly all infiltrations, some blocked; bots never kill or fool each other (one spy each). Tuned the Captain to one spy: Captains with spies now win 47% / 51% against Captains without (was 40%). Rangers in 26% / 50% / 67% of games, Standard-bearers in 16% / 39% / 60%. Details: `docs/sim-results-m3-spies.md`.
+- **Taps (384 px phone):** a basic turn is still **6**; hire a spy 3, send a spy **3**; Command 3, propose a truce 4, accept 1.
+- **Start-up bundle:** 493.9 KB → **440.4 KB** (gzip 152.2 → 134.9): the game screen now loads when the game starts.
+- **Saves:** game state version 6 (spies), with a migration; the session 13 save and a new session 14 save both load.
+- **Screenshots** (desktop and 384 px phone), in `docs/art/screens/s15-*.png`: the Diplomacy switch, passage land and a march through it, a spy on the move, an infiltrated province with its eye, the spy report lines, the Hire menu with Rangers and the Standard-bearer, the culture line on the card.

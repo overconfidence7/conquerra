@@ -2,7 +2,8 @@
  * Counts the taps for a basic turn on a 384 px phone (recruit, two attacks, lock in), on the Ringsea. Then, on the
  * next turn, the taps to give your Leader an instruction after selecting its territory (Command, Push toward a place,
  * the place on the map: session 12 asks for 3 or fewer). Then diplomacy (session 14): proposing a plain truce from the
- * Players panel (4 or fewer), and accepting an offer once it's open (1).
+ * Players panel (4 or fewer), and accepting an offer once it's open (1). Then spies (session 15): hiring one at your
+ * capital, and next turn sending it to a province (about 3: its territory, Send…, a province on the map).
  *   node apps/web/scripts/tap-count.mjs [screenshot.png] [command-screenshot.png]
  * Needs the built game running (`pnpm build`, `pnpm --filter web preview`).
  */
@@ -84,4 +85,40 @@ let acc = 0;
 await (async () => { await tapText("Accept"); acc++; await sleep(500); })();
 const accepted = await page.evaluate(() => window.__conquerraStore.getState().diplomacy.some((o) => o.kind === "answer" && o.accept));
 console.log("accept taps (once open):", acc, "accepted:", accepted);
+
+// Spies: hire one at your capital (its territory, Spend, Spy), lock in; next turn send it (its territory, Send…, a province).
+await page.evaluate(() => { const g = window.__conquerraStore.getState(); g.closeDeal(); window.__conquerraStore.setState({ offers: [] }); g.clearSelection(); document.querySelector('button[aria-label="Players"][aria-pressed="true"]')?.click(); });
+await sleep(500);
+const cap = await page.evaluate(() => window.__conquerraStore.getState().view.me.capital);
+await page.evaluate((id) => { const g = window.__conquerraStore.getState().ctx.map.geometry; const t = g.territories.find((x) => x.id === id); const r = window.__conquerraMap; r.centreOn(t.label.x, t.label.y + 220 / r.camera.cam.scale); }, cap);
+await sleep(900);
+let hire = 0;
+const hireTap = async (f, what) => { await f(); hire++; await sleep(600); console.log(`  ${hire} ${what}`); };
+await hireTap(async () => page.touchscreen.tap(...(await screenOf(cap))), "your capital");
+await hireTap(() => tapText("Spend"), "Spend");
+await hireTap(() => tapText("🕵 Spy"), "Spy");
+const hired = await page.evaluate(() => window.__conquerraStore.getState().queue.some((o) => o.kind === "hireSpy"));
+console.log("hire-a-spy taps:", hire, "queued:", hired);
+await page.evaluate(() => window.__conquerraStore.getState().clearSelection());
+await page.evaluate(() => window.__conquerraStore.getState().lockIn());
+await page.waitForFunction(() => window.__conquerraStore.getState().view.spies.length > 0, { timeout: 60000 });
+await page.evaluate(() => { const g = window.__conquerraStore.getState(); g.endReplay(); g.setShowReport(false); g.clearSelection(); });
+await sleep(800);
+const spyAt = await page.evaluate(() => window.__conquerraStore.getState().view.spies[0].at);
+await page.evaluate((id) => { const g = window.__conquerraStore.getState().ctx.map.geometry; const t = g.territories.find((x) => x.id === id); const r = window.__conquerraMap; r.centreOn(t.label.x, t.label.y + 220 / r.camera.cam.scale); }, spyAt);
+await sleep(900);
+let send = 0;
+const sendTap = async (f, what) => { await f(); send++; await sleep(600); console.log(`  ${send} ${what}`); };
+await sendTap(async () => page.touchscreen.tap(...(await screenOf(spyAt))), "your spy's territory");
+await sendTap(() => tapText("Send…"), "Send…");
+// A territory in another province that's on screen (the sheet folds away while you pick).
+const dest = await page.evaluate(async (from) => {
+  const g = window.__conquerraStore.getState(); const r = window.__conquerraMap; const c = r.camera.cam;
+  const prov = (t) => g.ctx.map.territories.find((x) => x.id === t).province;
+  return g.ctx.map.geometry.territories.filter((t) => prov(t.id) !== prov(from)).map((t) => ({ id: t.id, x: t.label.x * c.scale + c.x, y: t.label.y * c.scale + c.y })).find((t) => t.x > 30 && t.x < 354 && t.y > 160 && t.y < 600);
+}, spyAt);
+await sendTap(async () => page.touchscreen.tap(dest.x, dest.y), `a province on the map (${dest.id})`);
+const sentSpy = await page.evaluate(() => window.__conquerraStore.getState().queue.find((o) => o.kind === "spy"));
+console.log("send-a-spy taps:", send, JSON.stringify(sentSpy));
+await page.screenshot({ path: process.argv[3]?.replace(".png", "-spy.png") ?? "taps-spy.png" });
 await browser.close();

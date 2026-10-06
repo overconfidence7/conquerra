@@ -1,7 +1,6 @@
-import { lazy, StrictMode, Suspense } from "react";
+import { lazy, StrictMode, Suspense, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { useGame } from "./store";
-import { GameScreen } from "./ui/GameScreen";
 import { Lobby } from "./ui/Lobby";
 import { Diagnostics } from "./ui/Diagnostics";
 import { UpdatePrompt } from "./ui/UpdatePrompt";
@@ -24,10 +23,25 @@ void artUrl("frame-corner").then((u) => {
 
 /** The end of a game: loaded when it ends (with the turn report it shows). */
 const GameOver = lazy(() => import("./ui/GameOver").then((m) => ({ default: m.GameOver })));
+/**
+ * The game screen (session 15): not in the start-up bundle. It's fetched quietly once the lobby is showing, so Start and
+ * Continue don't wait for it.
+ */
+const loadGameScreen = () => import("./ui/GameScreen");
+const GameScreen = lazy(() => loadGameScreen().then((m) => ({ default: m.GameScreen })));
 
 function Screen() {
   const screen = useGame((s) => s.screen);
-  if (screen === "game") return <GameScreen />;
+  useEffect(() => {
+    const idle = (window as { requestIdleCallback?: (f: () => void) => number }).requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300));
+    idle(() => void loadGameScreen());
+  }, []);
+  if (screen === "game")
+    return (
+      <Suspense fallback={null}>
+        <GameScreen />
+      </Suspense>
+    );
   if (screen === "over")
     return (
       <Suspense fallback={null}>

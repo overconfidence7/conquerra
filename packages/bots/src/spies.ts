@@ -14,7 +14,7 @@ export function captainSpies(b: Board, newId: () => string, gold: number): { ord
   const { view, rules, idx, me, look0, owned } = b;
   const r = rules.spies;
   const out: Order[] = [];
-  if (!spiesOn(view) || !r) return { orders: out, spent: 0 };
+  if (!spiesOn(view) || !r || !b.on("spies")) return { orders: out, spent: 0 };
   const province = (t: TerritoryId) => idx.byId.get(t)!.province;
   const members = (p: string) => idx.provinceMembers.get(p) ?? [];
   const holds = (who: PlayerId, p: string) => members(p).length > 0 && members(p).every((t) => look0(t) === who);
