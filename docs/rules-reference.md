@@ -1,4 +1,4 @@
-# Conquerra Rules Reference (Milestone 3, session 12)
+# Conquerra Rules Reference (Milestone 3, session 13)
 
 *A 10-minute read. This is how the engine actually plays today. Numbers are the current balance settings from `packages/content/data/rules.json`; they will change as we tune.*
 
@@ -14,18 +14,19 @@
 - Each player starts with a **capital**, **12 troops** there, **20 gold**, and their **Leader**.
 - Capitals come from the map's **fair layout** for that many players: every capital is about as far from its nearest rival as the others, has land around it worth about the same, and stands on plains (see §12).
 - Every other territory starts neutral with **1 troop**.
-- The host also sets: the **turn timer** (see §3), an optional **turn limit**, the **luck level** (30% by default), **fog** (on by default), and how the **bots** play: **Captain** (the default) or **Recruit** (easy).
+- The host also sets: the **turn timer** (see §3), an optional **turn limit**, the **luck level** (30% by default), **fog** (on by default), the **Fate deck** (on by default, §19), and how the **bots** play: **Captain** (the default) or **Recruit** (easy).
 
 ## 3. A turn
 1. **Orders (the timer runs).** Everyone writes as many orders as they like, in secret.
 2. **Resolution.** The game shuffles the seat order, then plays orders **one per player at a time, round-robin**: everyone's 1st order, then everyone's 2nd, and so on. A chained hop (§4) is just another order in your list, so it waits its turn like the rest.
 3. **Replay.** Everyone watches what happened on the map, trimmed to what they could see (see §11).
-4. **End of turn.** Buildings finish, fallen Leaders come back (see §9), gold comes in, upkeep is paid.
+4. **End of turn.** Buildings finish, fallen Leaders come back (see §9), gold comes in, upkeep is paid. Then the card decks: missions are checked (§19), Spoils cards are earned (§18), and everyone draws a Fate card for the coming turn (§19).
 
 **The turn timer**
 - The host picks it in the lobby: **1, 3, 5 (default) or 10 minutes**, or **No timer** for relaxed solo play. (Longer timers, up to a week, come with online games.)
 - The countdown is kept by the game host (your browser's background game today, the server from M4), not by the rules engine.
 - It turns **gold at 1 minute** left and **red at 15 seconds**.
+- **Pause** (single player, session 13): with a timer on, the round button next to it stops the clock and the timer reads **Paused**. You can keep planning while it's paused (the map dims a little so you notice); nothing locks in until you resume, and the clock carries on from where it stopped. Without a timer there's no button. (Online games will pause by vote, in M4.)
 - **When it runs out, your orders lock in as they are**, exactly as if you had pressed Lock in. (Orders you haven't finished adding, such as an attack you're still choosing troops for, don't count.)
 - Lock in early and the turn plays straight away: the bots have already locked in.
 - The next countdown starts when the replay ends, plus 3 seconds to glance at the report.
@@ -116,7 +117,7 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
 - **What it does ("loyal land"):**
   - **Defense:** each level makes that territory defend **6% better** (+30% at level 5). It multiplies with terrain and forts (§9).
   - **Holding bonus:** +0.5 gold per turn per level on that territory, and a full province's bonus grows by 0.5 per level of its average culture.
-  - **Protection:** each level blocks 15% of bad effects there (up to 75%). Today that means **unrest** (§8). Fate events and uprisings (Milestone 3) will use the same protection.
+  - **Protection:** each level blocks 15% of bad effects there (up to 75%): **unrest** (§8), the Fallen's world events (§16) and bad **Fate events** (§19). An all-or-nothing event (a fire, a flooded ford) is shrugged off with that chance.
   - **Unlocks** the fancier specialists in that province (§6).
 - **Captured culture passes to the conqueror.** Investing in a border region is a gamble.
 - **On screen:** small gold laurels on the troop pill (one per level, at Mid and Near zoom). The territory card says what it does in one line, for example "Culture 2: defends +12%, shrugs off 30% of unrest, +1 gold, unlocks Siege and Engineers in Pinemark", or "No culture yet: raising it costs 3 gold". Before you tap Culture, the panel (and the button's tooltip) says what the next level adds.
@@ -183,7 +184,7 @@ Engineers make any of these ready immediately. A building under construction giv
   - Anyone else's action shows in full **if you could see its territory at the moment it happened** (just before or just after it).
   - **Changed in session 8:** land that only came into view *later* in the turn doesn't count. If a rival moved troops on a hill you only spotted three hops into your chain, you don't see the move; you just see the hill as it is when your army gets there. (The old rule showed anything on land you could see at the start or the end of the turn.)
   - A Leader coming back shows to its owner, and to anyone who can see where it reappears.
-  - A battle in the fog shows only as a **surface detail**: "a battle in Northreach." No names, no numbers. The same goes for a Leader falling in the fog.
+  - A battle in the fog shows only as a **surface detail**: "a battle in Northreach." No names, no numbers. The same goes for a Leader falling in the fog, and for a Fate event ("something stirs in Northreach", §19).
   - Quiet things in the fog (moves, recruiting, building, culture) don't show at all.
   - Eliminations and the end of the game are announced to everyone.
 - **Knocked-out players are the Fallen (§16) and see the political map:** who holds what everywhere, and the capitals, but no troop numbers, buildings or armies (so nothing about armies reaches a living friend). Their replay shows the public events and the world events, then who holds what at the end of the turn. In the turn you're knocked out you keep your own vision to the end, and the replay ends on the political map.
@@ -229,6 +230,7 @@ Bots play by exactly the same rules as people, and only from their own view (inc
 - **Bots don't use generals** (they already plan every army). A bot that knocks someone out still gets a captured general; it just stands where it was placed, and goes if its land falls.
 - **Knocked-out bots are Fallen bots** (§16): they aim world events at whoever looks to be leading, by the same runaway rule as priority 8, judged from their political map. With fewer than three players left, they aim at the leader once it holds 1.25 times the land of the next. They pick, best first: an uprising in the leader's quietest land, a plague where it holds the most of a province, a famine, mercenaries next to its land that borders neutral land, a storm on its border with another player. Every Fallen bot judges the same way, so they often pool.
 - If a realm loses its capital and has no barracks, it builds one straight away.
+- **Cards (session 13):** bots judge cards only from their own view (their own hand, how many cards rivals hold, their own missions). See §18 and §19.
 
 ## 14. Generals (session 12)
 - **A general leads one army:** the troops in the territory where it stands. It goes with them when they move.
@@ -286,5 +288,75 @@ Bots play by exactly the same rules as people, and only from their own view (inc
   - Next turn.
 - **Numbers** are all in `rules.fallen` (`packages/content/data/rules.json`). The events are built so a Fate deck could draw them later (session 13 decides).
 
+## 17. Saved games (session 13)
+- **The game saves itself** at the start of every turn's planning, on this device. Close the tab whenever you like: the lobby's **Continue** button (map, players, turn and when it was saved) picks it up at the start of that turn. Orders you'd queued but not locked in aren't kept. A finished game is no longer offered.
+- **Save game** (Settings): three slots, each showing map, players, turn and date. **Load game** (Settings, or "Load a saved game" in the lobby): the autosave or a slot. Loading leaves the game you're in, so save it to a slot first if you want to come back.
+- **Save to a file / Load a file:** the same save as a file, to keep, move to another device, or attach to a bug report. `pnpm sim --replay <file>` plays it back move by move (it also still reads the old "Save this game" files).
+- **Saves never leave the device.** If the browser can't store them (a private window, storage switched off, a full disk), you get a plain message and the game goes on; Save to a file still works.
+- **What a save is:** a snapshot of the game as it stands, with a version number, not a list of every turn's orders. So a save keeps loading after the rules or the bots change: the game carries on under the new rules. When the game's own shape changes, a small built-in update brings older saves up to date (a game saved before the card decks carries on without them). One we can't load says so plainly ("This save is from an older version of Conquerra and can't be loaded"). A test loads a save made in session 13 every time, so later sessions keep it working.
+- Tutorials and scenarios (M5) will be saves shipped with the game.
+
+## 18. The Spoils deck (session 13)
+- **Earning:** at the end of any turn you took at least one territory, you earn **one Spoils card** (at most one a turn). Each shows one mark, **Sword**, **Tower** or **Laurel**, drawn from the game's seed.
+- **Sets:** three alike, or one of each, turn in for a windfall:
+
+| Set | Windfall |
+|---|---|
+| Three Swords | 6 troops at your capital |
+| Three Towers | A finished fort and 1 troop on land you choose (land without a building) |
+| Three Laurels | +1 culture on up to 3 of your territories in the province you choose |
+| One of each | 3 troops at your capital and 5 gold |
+
+- **Windfalls never grow** with each set you turn in (unlike Risk), so they can't feed a runaway.
+- **Turning in** is an order: it takes its slot with your others, and the windfall shows in the replay and the report. Your capital means your strongest territory if you've lost it.
+- **Hand limit 5:** at 5 cards you must turn in a set that turn (five cards always hold one). The sensible set is already first in your queue when the turn starts (Swords, else one of each, else a fort where you're most threatened, else Laurels at home); change it or delete it if you like. If no set goes in, the game turns one in for you as the turn ends.
+- **What others see:** how many Spoils cards you hold, never which marks (bots too). A set you turn in shows to those who can see the land it changes.
+- **On screen:** a small card stack with its count on your Leader card (on a phone, by the map buttons). Tap it, then a set: 2 taps. A Tower or Laurel set goes on the territory you have selected if it can. The stack glows red when your hand is full.
+- **Bots:** the Captain turns a set in as soon as it has one: a Tower set on the front it most needs to hold, Laurels where it means to hold, else Swords, else one of each.
+- Numbers: `rules.spoils`.
+
+## 19. The Fate deck (session 13)
+- **Everyone still in draws one Fate card a turn**, automatically, as the turn ends, so it's there when the next turn's planning starts: a line in the turn report and a toast in the replay. No tap. Draws come from the game's seed: provably fair, and a saved game replays exactly.
+- **Because Fate lands between turns, you always plan with it in front of you:** no Fate event can make an attack the preview called "guaranteed" fail.
+- **About 7 in 10 are events.** An event lands on a random territory anywhere on the map, not near whoever drew it:
+
+| Event | Good or bad | What it does |
+|---|---|---|
+| A bountiful harvest | good | The holder gains 4 gold |
+| A wandering band | good | 3 troops join whoever holds the land (neutral land too) |
+| Pilgrims | good | +1 culture there |
+| Master masons | good | A building going up there is finished at once |
+| A hidden hoard (strong) | good | The holder gains 10 gold |
+| Veterans return (strong) | good | 6 troops join the holder there |
+| A flooded ford / A rockslide / Squalls at sea | bad | A river crossing / a pass / a sea lane there is closed for all of the next turn (everyone who can see it knows while planning; an order across it won't go) |
+| Fire in the works | bad | A building going up there burns down |
+| Camp fever | bad | 25% of the troops there die (the garrison stays) |
+| Blight | bad | The holder loses 4 gold |
+| Plague (strong) | bad | The Fallen's plague: 25% of the holder's troops in that province |
+| An uprising (strong) | bad | The Fallen's uprising: 4 rebels against land held by 4 or fewer; if they're more, it turns neutral |
+
+- **Caps:** never on a capital; never takes a player's last territory or knocks anyone out; at most one Fate event per territory a turn; culture protects (§7).
+- **What players see:** the holder of the land always sees the event. Others see it in full only if they can see the land; otherwise only "something stirs in Northreach" (whoever drew it too).
+- **About 3 in 10 are missions**, for whoever drew them (only you see yours): a goal, a deadline (2 to 4 turns) and a reward.
+
+| Mission | Reward |
+|---|---|
+| Take any territory in a province next to you | +8 gold |
+| Take a territory from a rival next to you | +5 troops at your capital |
+| Take 3 territories | +10 gold |
+| Win a battle across a mountain pass | A free Siege at your capital |
+| Win a battle across a river | +6 gold |
+| Hold a frontier territory (2 turns) | +1 culture there |
+| Lose no land (2 turns) | +6 gold |
+| Hold all of a province you mostly hold (4 turns) | +10 gold |
+| Build a fort on a frontier territory | +4 troops there |
+| Raise culture in a province you hold | +1 more culture there |
+
+  - At most 2 missions open; a third draw becomes an event. A mission lapses at its deadline, or the moment you lose the land you were to hold.
+  - **On screen:** your missions are on your Leader card with their deadline; tap one to light its target up on the map.
+- **The Fate deck: On / Off** is a lobby switch (on by default) for players who want less luck. The Fallen keep their own event menu (§16).
+- **Bots:** the Captain gives open missions a modest pull: an attack that would complete one scores a little higher (×1.3), but only among attacks it already judged likely to win; it builds a mission's fort or raises its culture only with gold to spare.
+- Numbers and every card: `rules.fate`.
+
 ## Not in yet (later milestones)
-Spies, Spoils and Fate decks, diplomacy, factions, and the "Govern this province" general instruction (session 15).
+Spies, diplomacy (session 14), factions, the "Govern this province" general instruction (session 15), pause by vote in online games (M4), tutorials and scenarios (M5).

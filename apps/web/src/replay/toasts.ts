@@ -27,7 +27,7 @@ export function toastFor(ctx: GameContext, view: Pick<PlayerView, "players" | "m
     }
     case "fate":
       return {
-        text: `${fateName(e.card)} ${e.shrugged ? "is seen off" : "strikes"} at ${place(e.at)}`,
+        text: e.shrugged ? `${fateName(e.card)} is seen off at ${place(e.at)}` : e.tone === "good" ? `${fateName(e.card)} at ${place(e.at)}` : `${fateName(e.card)} strikes ${place(e.at)}`,
         tone: !me(e.holder) || e.shrugged ? "info" : e.tone === "good" ? "good" : "bad",
         house: house(e.holder)?.color ?? null,
       };

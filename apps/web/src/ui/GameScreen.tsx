@@ -15,8 +15,7 @@ import { Frame } from "./Frame";
 import { Icon } from "./icons";
 import { LeaderCard } from "./LeaderCard";
 import { CardStack } from "./CardStack";
-import { KeepGenerals } from "./Command";
-import { FallenPanel, influencePerTurn } from "./Fallen";
+import { influencePerTurn } from "../logic/fallen";
 import { MapView, readTactical, saveTactical } from "./MapView";
 import { Minimap, type ViewRect } from "./Minimap";
 import { OrderQueue } from "./OrderQueue";
@@ -35,6 +34,11 @@ import type { LayoutChoice } from "../logic/layout";
 
 /** Save game / Load game: loaded the first time it's opened (it isn't needed to play a turn). */
 const SavesDialog = lazy(() => import("./Saves"));
+/** Screens few players see every game, loaded the first time they're needed: being knocked out (the choice, the
+ * Fallen's panel, watching) and choosing which captured generals to keep. */
+const KnockedOutChoice = lazy(() => import("./Out").then((m) => ({ default: m.KnockedOutChoice })));
+const OutPanel = lazy(() => import("./Out").then((m) => ({ default: m.OutPanel })));
+const KeepGenerals = lazy(() => import("./KeepGenerals"));
 /** Your cards (Spoils and missions): loaded the first time you open them. */
 const CardsSheet = lazy(() => import("./Cards"));
 
@@ -56,74 +60,6 @@ const readDockOpen = () => {
   }
 };
 const PHONE_INSETS: Insets = { top: 56, right: 0, bottom: 84, left: 0 };
-
-/** Shown once when you're knocked out while the game goes on. */
-function KnockedOutChoice({ view }: { view: PlayerView }) {
-  const { watch, seeResult, busy } = useGame();
-  const me = view.players.find((p) => p.id === view.me.id)!;
-  const by = me.eliminatedBy ? view.players.find((p) => p.id === me.eliminatedBy)?.name : null;
-  // One of the Fallen: you keep playing, with Influence.
-  const fallen = view.settings.fallen && view.settings.fog;
-  if (fallen)
-    return (
-      <div className="overlay">
-        <Frame className="dialog" role="dialog" label="You are one of the Fallen" title="You are one of the Fallen">
-          <p>Spend Influence to shake the living.</p>
-          <p className="muted small">
-            {by ? `${by} took your last territory` : "You lost your last territory"} on turn {me.eliminatedTurn}. You see who holds what, but not their armies. You earn Influence every turn (more the more Fallen there are) and spend it on plagues, storms, uprisings, mercenaries and famines.
-          </p>
-          <div className="choice">
-            <button className="primary wide" onClick={watch} disabled={busy} autoFocus>
-              Watch to the end
-            </button>
-            <button className="wide" onClick={seeResult} disabled={busy}>
-              {busy ? "The others are finishing the game…" : "Leave the game"}
-            </button>
-            <p className="muted small">Leaving: the others play on, and you see who won.</p>
-          </div>
-        </Frame>
-      </div>
-    );
-  return (
-    <div className="overlay">
-      <Frame className="dialog" role="dialog" label="You have been knocked out" title="You've been knocked out">
-        <p>
-          {by ? `${by} took your last territory` : "You lost your last territory"} on turn {me.eliminatedTurn}. The others fight on.
-        </p>
-        <div className="choice">
-          <button className="primary wide" onClick={watch} disabled={busy} autoFocus>
-            Watch to the end
-          </button>
-          <p className="muted small">See the whole map and each turn's replay. You can skip ahead any time.</p>
-          <button className="wide" onClick={seeResult} disabled={busy}>
-            {busy ? "The bots are finishing the game…" : "See the result"}
-          </button>
-        </div>
-      </Frame>
-    </div>
-  );
-}
-
-/** While watching after being knocked out: next turn, skip ahead, and the last turn's report. */
-function WatchPanel({ ctx, view, replaying }: { ctx: GameContext; view: PlayerView; replaying: boolean }) {
-  const { report, watchNext, seeResult, busy } = useGame();
-  return (
-    <Frame className="watch-panel" title={`Watching · turn ${view.turn}`}>
-      <p className="muted small">You're out, so you see the whole map. The bots play on.</p>
-      <button className="primary wide" onClick={watchNext} disabled={busy || replaying}>
-        {busy ? "Playing…" : "Next turn ▶"}
-      </button>
-      <button className="wide" onClick={seeResult} disabled={busy}>
-        Skip to the end ⏭
-      </button>
-      {report && !replaying && (
-        <div className="watch-report">
-          <ReportBody ctx={ctx} view={view} report={report} />
-        </div>
-      )}
-    </Frame>
-  );
-}
 
 function Settings({ tactical, onTactical, onFit, onReport, onSaves, onLeave, onClose }: { tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onClose(): void }) {
   return (
@@ -380,9 +316,15 @@ export function GameScreen() {
       {showReport && report && !replaying && (
         <TurnReportDialog ctx={ctx} view={view} report={report} autoLocked={autoLocked} onClose={() => g.setShowReport(false)} onWatchAgain={() => g.watchAgain()} />
       )}
-      {out && !watching && !replaying && <KnockedOutChoice view={view} />}
+      {out && !watching && !replaying && (
+        <Suspense fallback={null}>
+          <KnockedOutChoice view={view} />
+        </Suspense>
+      )}
       {act && !showReport && view.me.captured.length > ctx.rules.generals.maxCaptured && keptOn !== view.turn && (
-        <KeepGenerals ctx={ctx} view={view} onDone={() => setKeptOn(view.turn)} />
+        <Suspense fallback={null}>
+          <KeepGenerals ctx={ctx} view={view} onDone={() => setKeptOn(view.turn)} />
+        </Suspense>
       )}
       {error && !saves && (
         <Frame className="slim" style={{ position: "absolute", zIndex: 40, left: 8, top: phone ? 60 : 72 }}>
@@ -439,7 +381,11 @@ export function GameScreen() {
         {settingsMenu}
         <Toasts toasts={toasts} />
         {replayBar}
-        {out && watching && (view.settings.fallen && view.settings.fog ? <FallenPanel ctx={ctx} view={view} replaying={replaying} /> : <WatchPanel ctx={ctx} view={view} replaying={replaying} />)}
+        {out && watching && (
+          <Suspense fallback={null}>
+            <OutPanel ctx={ctx} view={view} replaying={replaying} />
+          </Suspense>
+        )}
         {!out && (
           <BottomSheet size={replaying ? "closed" : sheet} onSize={setSheet} bottom={76} tabs={tabs} tab={tab} onTab={setTab}>
             {tab === "army" && army}
@@ -489,7 +435,11 @@ export function GameScreen() {
       <Toasts toasts={toasts} />
       {replayBar}
       {out ? (
-        watching && (view.settings.fallen && view.settings.fog ? <FallenPanel ctx={ctx} view={view} replaying={replaying} /> : <WatchPanel ctx={ctx} view={view} replaying={replaying} />)
+        watching && (
+          <Suspense fallback={null}>
+            <OutPanel ctx={ctx} view={view} replaying={replaying} />
+          </Suspense>
+        )
       ) : (
         <>
           {/* One panel for the selected territory: the round action buttons, then who holds it, troops, chips,

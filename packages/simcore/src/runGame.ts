@@ -66,6 +66,33 @@ export interface GameSummary {
   hitBy: Record<string, { events: number; troops: number; land: number; gold: number }>;
   /** Was the eventual winner the player the Fallen hit hardest (most events; ties by troops)? Null with no events. */
   winnerHitHardest: boolean | null;
+  /** The card decks (session 13). Spoils sets turned in (and how many the game turned in at the hand limit). */
+  spoilsSets: number;
+  spoilsAuto: number;
+  /** The turn the eventual winner took the lead for good was a turn it turned in a set (null: a draw, or it led from turn 1). */
+  winnerLeadOnSet: boolean | null;
+  /** Share of the winner's turns on which it turned in a set (what "lead on a set turn" would be by chance). */
+  winnerSetTurnShare: number | null;
+  /** Fate events, good and bad (on a living player's land), strong ones, and missions drawn and done. */
+  fateEvents: number;
+  fateGood: number;
+  fateBad: number;
+  fateStrong: number;
+  missionsDrawn: number;
+  missionsDone: number;
+  /** Fate on each player's land: good minus bad events (shrugged-off ones don't count). */
+  fateNet: Record<string, number>;
+  /** The winner's share of the good Fate events that landed on players' land (null with none, or a draw). */
+  winnerGoodShare: number | null;
+  /** The share the winner would get by chance: its share of all the land players held, turn by turn. */
+  winnerLandShare: number | null;
+  /** The winner's Fate luck beyond what its land would draw by chance (good minus bad, in events). */
+  winnerLuck: number | null;
+  /** Was the winner the luckiest player with Fate (the best good-minus-bad beyond what its land would draw), alone? */
+  winnerLuckiest: boolean | null;
+  /** Missions the winner completed, and everyone else's average. */
+  winnerMissions: number;
+  othersMissions: number;
   log?: StepEvent[][];
 }
 
@@ -79,7 +106,16 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
     seed, winner: "draw", winnerSeat: null, endReason: null, turns: 0, battles: 0, captures: 0, lopsided: 0, lopsidedFailed: 0, byBorder: {}, orders: 0, fizzles: 0, hops: 0, hopCaptures: 0,
     initiatives: 0, leadersKilled: 0, hires: 0, invests: 0, investsAt: { capital: 0, choke: 0, frontier: 0, interior: 0 }, recruitsAt: { capital: 0, barracks: 0, province: 0 }, presets: 0, decidedTurn: null, leadChanges: 0, topShareTurn10: null, leaderTurn10: null, leaderHalfway: null, resolveMs: [], planMs: [], planMsByBot: {}, winnerBot: null,
     worldEvents: 0, worldEventsFailed: 0, hitBy: {}, winnerHitHardest: null,
+    spoilsSets: 0, spoilsAuto: 0, winnerLeadOnSet: null, winnerSetTurnShare: null,
+    fateEvents: 0, fateGood: 0, fateBad: 0, fateStrong: 0, missionsDrawn: 0, missionsDone: 0, fateNet: {}, winnerGoodShare: null, winnerLandShare: null, winnerLuck: null, winnerLuckiest: null, winnerMissions: 0, othersMissions: 0,
   };
+  /** Turns (1-based) on which each player turned in a set; missions each completed; good Fate events each received. */
+  const setTurns = new Map<string, Set<number>>();
+  const missionsBy = new Map<string, number>();
+  const goodBy = new Map<string, number>();
+  const strong = new Set(ctx.rules.fate.events.filter((e) => e.strong).map((e) => e.id));
+  /** Territories each player held at the start of each turn, summed (where a Fate event can land on them). */
+  const landTurns = new Map<string, number>();
   const leaders: (string | null)[] = [];
   const log: StepEvent[][] = [];
   let lastTurn = new Map<string, ReplayEvent[]>();
@@ -99,6 +135,10 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
       } else if (s.settings.fallen) orders[p.id] = fallenBot.plan(ctx, viewFor(ctx, s, p.id));
     const p1 = performance.now();
     const before = s;
+    for (const id of idx.ids) {
+      const o = s.territories[id]!.owner;
+      if (o) landTurns.set(o, (landTurns.get(o) ?? 0) + 1);
+    }
     const r = resolveTurn(ctx, s, orders);
     const p2 = performance.now();
     sum.planMs.push(p1 - p0);
@@ -138,6 +178,22 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
         if (e.flipped) h.land++;
       }
       if (e.type === "income" && e.famine) (sum.hitBy[e.player] ??= { events: 0, troops: 0, land: 0, gold: 0 }).gold += e.famine;
+      if (e.type === "spoilsTurnedIn") {
+        sum.spoilsSets++;
+        if (e.orderId === null) sum.spoilsAuto++;
+        (setTurns.get(e.player) ?? setTurns.set(e.player, new Set()).get(e.player)!).add(before.turn);
+      }
+      if (e.type === "fate") {
+        sum.fateEvents++;
+        if (strong.has(e.card)) sum.fateStrong++;
+        if (e.holder && !e.shrugged) {
+          if (e.tone === "good") (sum.fateGood++, goodBy.set(e.holder, (goodBy.get(e.holder) ?? 0) + 1));
+          else sum.fateBad++;
+          sum.fateNet[e.holder] = (sum.fateNet[e.holder] ?? 0) + (e.tone === "good" ? 1 : -1);
+        }
+      }
+      if (e.type === "missionDrawn") sum.missionsDrawn++;
+      if (e.type === "missionDone") (sum.missionsDone++, missionsBy.set(e.player, (missionsBy.get(e.player) ?? 0) + 1));
       if (e.type === "initiative") sum.initiatives++;
       if (e.type === "leaderKilled") sum.leadersKilled++;
       if (e.type === "hired") sum.hires++;
@@ -177,6 +233,28 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
   }
   sum.leaderTurn10 = leaders.length > 10 ? (leaders[9] ?? null) : null;
   sum.leaderHalfway = leaders[Math.ceil(leaders.length / 2) - 1] ?? null;
+  if (s.winner !== "draw") {
+    const w = s.winner;
+    const mine = setTurns.get(w) ?? new Set<number>();
+    if (sum.decidedTurn !== null && sum.decidedTurn > 1 && sum.spoilsSets > 0) sum.winnerLeadOnSet = mine.has(sum.decidedTurn);
+    if (sum.spoilsSets > 0) sum.winnerSetTurnShare = mine.size / Math.max(1, s.turn);
+    const allLand = [...landTurns.values()].reduce((a, b) => a + b, 0);
+    if (sum.fateGood > 0) {
+      sum.winnerGoodShare = (goodBy.get(w) ?? 0) / sum.fateGood;
+      sum.winnerLandShare = (landTurns.get(w) ?? 0) / Math.max(1, allLand);
+    }
+    if (sum.fateEvents > 0) {
+      // Luck: good minus bad, beyond what each player's land would have drawn by chance.
+      const perLand = (sum.fateGood - sum.fateBad) / Math.max(1, allLand);
+      const luck = (id: string) => (sum.fateNet[id] ?? 0) - perLand * (landTurns.get(id) ?? 0);
+      const lucks = players.map((p) => luck(p.id));
+      const best = Math.max(...lucks);
+      sum.winnerLuck = luck(w);
+      sum.winnerLuckiest = Math.abs(luck(w) - best) < 1e-9 && lucks.filter((x) => Math.abs(x - best) < 1e-9).length === 1;
+    }
+    sum.winnerMissions = missionsBy.get(w) ?? 0;
+    sum.othersMissions = players.filter((p) => p.id !== w).reduce((a, p) => a + (missionsBy.get(p.id) ?? 0), 0) / Math.max(1, players.length - 1);
+  }
   const hardest = Object.entries(sum.hitBy).sort((a, b) => b[1].events - a[1].events || b[1].troops - a[1].troops || (a[0] < b[0] ? -1 : 1))[0];
   sum.winnerHitHardest = hardest && s.winner !== "draw" ? hardest[0] === s.winner : null;
   if (keepLog) sum.log = log;

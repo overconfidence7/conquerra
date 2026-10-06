@@ -214,6 +214,29 @@ for (const players of playerCounts) {
     const judged = results.filter((g) => g.winnerHitHardest !== null);
     console.log(`The Fallen: ${avg((g) => g.worldEvents).toFixed(1)} world events per game (${avg((g) => g.worldEventsFailed).toFixed(1)} pledges came to nothing); events in ${pct(withEvents.length)} of games; the eventual winner was the player hit hardest in ${pct2(judged.filter((g) => g.winnerHitHardest).length, judged.length)} of games with events`);
   }
+  if (spoils || fate) {
+    // How often the decks decided a game (session 13).
+    const fmt = (x: number) => x.toFixed(1);
+    if (spoils) {
+      const judged = won.filter((g) => g.winnerLeadOnSet !== null);
+      const chance = won.filter((g) => g.winnerSetTurnShare !== null);
+      console.log(
+        `Spoils: ${fmt(avg((g) => g.spoilsSets))} sets turned in per game (${fmt(avg((g) => g.spoilsAuto))} by the game at the hand limit); the winner took the lead for good on a turn it turned in a set in ${pct2(judged.filter((g) => g.winnerLeadOnSet).length, judged.length)} of games (by chance: ${(100 * (chance.reduce((a, g) => a + g.winnerSetTurnShare!, 0) / Math.max(1, chance.length))).toFixed(0)}%)`,
+      );
+    }
+    if (fate) {
+      const shares = won.filter((g) => g.winnerGoodShare !== null);
+      const lucky = won.filter((g) => g.winnerLuckiest !== null);
+      console.log(
+        `Fate: ${fmt(avg((g) => g.fateEvents))} events per game (${fmt(avg((g) => g.fateGood))} good and ${fmt(avg((g) => g.fateBad))} bad on players' land, ${fmt(avg((g) => g.fateStrong))} strong), ${fmt(avg((g) => g.missionsDrawn))} missions drawn, ${fmt(avg((g) => g.missionsDone))} done`,
+      );
+      const share = (f: (g: GameSummary) => number) => (100 * (shares.reduce((a, g) => a + f(g), 0) / Math.max(1, shares.length))).toFixed(0);
+      const luck = won.filter((g) => g.winnerLuck !== null);
+      console.log(
+        `Fate and the winner: the winner got ${share((g) => g.winnerGoodShare!)}% of the good events, against ${share((g) => g.winnerLandShare!)}% of the land they could land on (its fair share); its luck beyond its land: ${(luck.reduce((a, g) => a + g.winnerLuck!, 0) / Math.max(1, luck.length)).toFixed(2)} events a game; it was the luckiest player in ${pct2(lucky.filter((g) => g.winnerLuckiest).length, lucky.length)} of games (by chance ${(100 / players).toFixed(0)}%); missions done: the winner ${fmt(won.reduce((a, g) => a + g.winnerMissions, 0) / Math.max(1, won.length))}, the others ${fmt(won.reduce((a, g) => a + g.othersMissions, 0) / Math.max(1, won.length))} each`,
+      );
+    }
+  }
   console.log(`CPU per turn (this machine): resolve avg ${ms(resolve.avg)}, p95 ${ms(resolve.p95)}, worst ${ms(resolve.max)} | bots planning (all seats) avg ${ms(plan.avg)}, worst ${ms(plan.max)} | total avg ${ms(total.avg)}, worst ${ms(total.max)}`);
   if (errors.length) {
     console.log(`CRASHES (first 3):`);

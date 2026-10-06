@@ -120,6 +120,11 @@ Nate's three ideas:
     - **About 3 in 10 are missions,** for the player who drew them, with a deadline and a reward: offensive, defensive or culture. For example: "Take any territory in Old March within 3 turns: +8 gold", or "Hold Ravencrest for 2 turns: +1 culture there". At most 2 missions open at once; a third becomes an event instead.
     - **A lobby switch** ("Fate deck: on/off", on by default) for players who want less luck.
   - **The Fallen keep their own event menu (Nate, Oct 6).** Fate events reuse the same engine; Influence doesn't move into Fate draws.
+- **BUILT (session 13, Oct 6):** both decks as above, with these details settled while building:
+  - **Spoils windfalls tuned down** (the first numbers made games about 3 turns longer): three Swords 6 troops, three Towers a finished fort + 1 troop, three Laurels +1 culture on up to 3 territories in a province, one of each 3 troops + 5 gold. A full hand has the sensible set already first in your queue.
+  - **Fate lands between turns:** you draw as the turn ends, so the card is in the report when you plan, and no event can make a "guaranteed" attack fail. Closed crossings (a flooded ford, a rockslide, squalls at sea) are closed for all of the next turn and everyone who can see them knows.
+  - **14 events, 10 missions,** all in `rules.fate`. Missions sit on your Leader card; tap one to light its target.
+  - Rules: `docs/rules-reference.md` §18–19. Numbers: `docs/sim-results-m3-cards.md`.
 
 ## 7. Troop types: the analysis Nate asked for (DECIDE)
 
@@ -205,6 +210,7 @@ It matches "simple at first, deep later" and the 5-minute turn, and it plugs nea
   - The game saves itself at the start of every turn, so closing the tab is safe, and the lobby's **Continue** button picks it up.
   - A few named save slots, plus "Save to a file" / "Load a file" (today's "Save this game" grows into this).
   - Saves stay on the device. A save from an older version either loads or says plainly why it can't.
+- **BUILT (session 13, Oct 6):** Pause (planning goes on while paused), autosave every turn with Continue, three slots, Save to a file / Load a file. A save is a snapshot of the game with a version number, so it survives rule changes; older saves are brought up to date or say why they can't load. Rules: `docs/rules-reference.md` §3 and §17.
 - **Multiplayer: pause by vote (M4).** One player asks for a pause; everyone else confirms or declines. The pause starts only if all agree, and it has a limit (how long, how many times).
 - **Tutorials (before the public launch, M5).**
   - A tutorial is a short game already in progress: a saved game with goals and hints, played out over a couple of turns to teach one thing.

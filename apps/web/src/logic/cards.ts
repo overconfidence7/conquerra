@@ -7,6 +7,9 @@ import { BUILDING_NAME, SPECIALIST_NAME, type Namer } from "./text";
  * turn: an event somewhere on the map, or a mission for you).
  */
 
+/** "1 troop", "6 troops". */
+export const troopWord = (n: number) => `${n} troop${n === 1 ? "" : "s"}`;
+
 export const MARK_NAME: Record<SpoilsMark, string> = { sword: "Sword", tower: "Tower", laurel: "Laurel" };
 export const MARK_ICON: Record<SpoilsMark, string> = { sword: "⚔", tower: "♜", laurel: "❦" };
 export const SET_NAME: Record<SpoilsSet, string> = { sword: "Three Swords", tower: "Three Towers", laurel: "Three Laurels", mixed: "One of each" };
@@ -16,13 +19,13 @@ export function windfallText(ctx: GameContext, set: SpoilsSet): string {
   const c = ctx.rules.spoils;
   switch (set) {
     case "sword":
-      return `${c.sword.troops} troops at your capital`;
+      return `${troopWord(c.sword.troops)} at your capital`;
     case "tower":
-      return `a finished fort and ${c.tower.garrison} troops on land you choose`;
+      return `a finished fort and ${troopWord(c.tower.garrison)} on land you choose`;
     case "laurel":
       return `+${c.laurel.culture} culture on up to ${c.laurel.territories} of your territories in one province`;
     case "mixed":
-      return `${c.mixed.troops} troops at your capital and ${c.mixed.gold} gold`;
+      return `${troopWord(c.mixed.troops)} at your capital and ${c.mixed.gold} gold`;
   }
 }
 

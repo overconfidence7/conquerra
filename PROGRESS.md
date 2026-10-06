@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–12 are done. Next: session 13 (`docs/prompts/claude-code-session-13.md`): single-player pause and saved games, then the Spoils and Fate decks.**
+**Phase: M3 (depth and balance). Sessions 7–13 are done. Next: session 14: preset diplomacy, with bots that judge treaties with strong, explainable logic.**
 
-Claude Code sessions completed: **12** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, ...)
+Claude Code sessions completed: **13** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, ...)
 
 ---
 
@@ -586,3 +586,44 @@ All five parts are done, each committed and pushed. There were no play-test note
 - **Still to come:** Nate's play tests of sessions 11 and 12 (generals, captured generals, the Fallen, the new art).
 - **Next:** session 13 (`docs/prompts/claude-code-session-13.md`, run it locally).
 
+### Oct 6: Claude Code session 13 (M3: pause and saved games, the Spoils and Fate decks)
+All four parts are done, each committed and pushed. There were no play-test notes from sessions 11 or 12 to fix first. Small polish: the Fallen's top bar now shows Influence instead of gold.
+- **Pause (single player):** with a timer on, a round button next to it stops the clock and the timer reads "Paused". You can keep planning while paused (the map dims a little); nothing locks in until you resume. Without a timer there's no button. Pause is a host action, so M4's pause by vote can wrap it.
+- **Saved games:**
+  - The game saves itself at the start of every turn's planning. The lobby shows **Continue** (map, players, turn, when).
+  - Settings → **Save game** (3 slots, each with map, players, turn and date, or **Save to a file**) and **Load game** (the autosave, a slot, or **Load a file**).
+  - **The format, in plain words:** a save is now a snapshot of the game as it stands, with a version number, instead of a list of every turn's orders, so it keeps loading after the rules change. When the game's own shape changes, a small built-in update brings old saves up to date; anything else says plainly why it can't load. A save made at the start of this session is loaded by the tests, so future sessions keep it working.
+  - Save files still play back move by move with `pnpm sim --replay` (old "Save this game" files too).
+  - Saves stay on the device. A private window or a full disk gets a plain message, and the game goes on.
+  - Queued orders you hadn't locked in aren't saved: Continue starts that turn fresh.
+- **The Spoils deck:** a card at the end of any turn you took land (one a turn), marked Sword, Tower or Laurel.
+  - Three alike or one of each turn in for a windfall: Swords 6 troops at your capital, Towers a fort + 1 troop, Laurels +1 culture on up to 3 territories in a province, one of each 3 troops + 5 gold. **Tuned down** from the first numbers (8 troops, fort + 3, 4 troops + 6 gold), which made games about 3 turns longer.
+  - A small card stack on your Leader card (by the map buttons on a phone): tap it, then a set, **2 taps**. At 5 cards it glows red and the sensible set is already first in your queue.
+  - Others see only how many cards you hold.
+- **The Fate deck:** everyone draws one card a turn as the turn ends, so it's in the report when you plan (no tap).
+  - About 7 in 10 are events landing anywhere on the map (14 cards: harvest, wandering band, pilgrims, master masons, hidden hoard, veterans, flooded ford, rockslide, squalls, fire, fever, blight, plague, uprising).
+  - About 3 in 10 are missions for you (10 cards), shown on your Leader card with their deadline. Tap one to light up its target.
+  - Caps: never a capital, never knocks anyone out, one Fate event per territory a turn, and culture protects. Because Fate lands between turns, it can never make a "guaranteed" attack fail.
+  - Under fog you see "something stirs in Northreach".
+  - Lobby switch: **Fate deck On/Off** (on by default). The Fallen keep their own menu.
+- **Bots:** the Captain turns sets in where they help (a fort on its hottest front, culture where it holds), and gives missions a modest pull, never chasing one it can't win.
+- **Sims (500 games each, no decks → both decks):**
+  - **Length:** 4 players 21.0 → 22.9 turns, 6 players 29.8 → 31.0, 10 players 38.3 → 39.6.
+  - **Runaways:** unchanged. Comebacks: 20 → 23%, 41 → 42%, 55 → 51%.
+  - **Decided by the decks? No:**
+    - the winner takes the lead on a Spoils turn as often as chance says;
+    - it gets fewer good Fate events than its land would draw;
+    - its net Fate luck is under 1 event a game.
+  - Details: `docs/sim-results-m3-cards.md`.
+- **Taps:** a basic turn is still 6 taps on a 384 px phone; Command is still 3.
+- **Start-up bundle:** 469.6 KB → 489.9 KB (gzip 144.8 → 150.8).
+  - The decks' rules and wording, saved games and the new lobby added about 35 KB.
+  - Loading the Save/Load dialog, the cards sheet, the knocked-out screens, "keep two generals" and the Command menu only when first needed took 14.5 KB back out.
+- **Rules:** `docs/rules-reference.md` §3 (pause), §17 (saved games), §18 (Spoils), §19 (Fate).
+- **Screenshots** (desktop and 384 px phone) are in `docs/art/screens/s13-*.png`:
+  - Continue in the lobby, and the save and load slots
+  - the paused timer
+  - the Spoils hand with a set ready
+  - a mission on the Leader card with its target lit
+  - a Fate event in the replay and the report
+- **Asked Nate to play on the preview** (laptop: pause, close, Continue, slots; phone: Spoils and a mission; do Fate events feel fair; how many turns). His notes go below once he's played.

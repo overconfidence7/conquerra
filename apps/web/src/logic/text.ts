@@ -1,6 +1,6 @@
 import type { BuildingType, SpecialistType, Terrain } from "@conquerra/content";
 import { amountLabel, recruitLabel, explainFizzle, explainHold, fizzleIsQuiet, indexMap, PRESETS, type ArmySnapshot, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type ReplayEvent } from "@conquerra/engine";
-import { fateLine, fateTone, MARK_NAME, missionLine, SET_NAME } from "./cards";
+import { fateLine, fateTone, MARK_NAME, missionLine, SET_NAME, troopWord } from "./cards";
 
 export const SPECIALIST_ICON: Record<SpecialistType, string> = { cavalry: "🐎", siege: "🎯", scouts: "🔭", engineers: "🔨", healers: "⚕️" };
 export const SPECIALIST_NAME: Record<SpecialistType, string> = { cavalry: "Cavalry", siege: "Siege", scouts: "Scouts", engineers: "Engineers", healers: "Healers" };
@@ -278,10 +278,10 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       const what = SET_NAME[e.set].toLowerCase();
       const gave =
         e.set === "tower"
-          ? `a fort and ${e.troops} troops at ${place(e.at)}`
+          ? `a fort and ${troopWord(e.troops)} at ${place(e.at)}`
           : e.set === "laurel"
             ? `culture rises at ${listPlaces(e.culture.map(place))}`
-            : `${e.troops} troops at ${place(e.at)}${e.gold ? ` and ${e.gold} gold` : ""}`;
+            : `${troopWord(e.troops)} at ${place(e.at)}${e.gold ? ` and ${e.gold} gold` : ""}`;
       if (!isMe(e.player)) return { text: `${who(e.player)} turned in Spoils (${what}): ${gave}.`, tone: "info" };
       return { text: e.orderId === null ? `Your hand was full, so ${what} were turned in for you: ${gave}.` : `You turned in ${what}: ${gave}.`, tone: "good" };
     }

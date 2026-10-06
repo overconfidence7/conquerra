@@ -2,6 +2,7 @@ import { WORLD_EVENT_KINDS, type GameContext, type PlayerView, type WorldEventKi
 import { describeOrder, namer, WORLD_EVENT_NAME } from "../logic/text";
 import { useGame } from "../store";
 import { Frame } from "./Frame";
+import { influencePerTurn } from "../logic/fallen";
 import { ReportBody } from "./TurnReport";
 
 /** What each event does, in one plain line, with this game's numbers. */
@@ -22,9 +23,7 @@ export function eventHelp(ctx: GameContext, k: WorldEventKind): string {
   }
 }
 
-/** Influence each of the Fallen earns a turn, with this many Fallen. */
-export const influencePerTurn = (ctx: GameContext, view: PlayerView) =>
-  ctx.rules.fallen.influenceBase + ctx.rules.fallen.influencePerOtherFallen * Math.max(0, view.players.filter((p) => p.eliminatedTurn !== null).length - 1);
+export { influencePerTurn };
 
 /**
  * One of the Fallen, watching: your Influence, the five world events as cards (cost, what it does, when it's ready),

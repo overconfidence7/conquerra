@@ -24,8 +24,9 @@ describe("the Spoils hand on screen", () => {
     const c = setChoices(ctx, view, null, n);
     expect(c.map((x) => x.set)).toEqual(["tower", "mixed"]);
     expect(c[0]!.territory).toBe(view.me.capital);
-    expect(c[0]!.label).toMatch(/^Three Towers: a fort and 3 troops at /);
-    expect(c[1]!.label).toBe("One of each: 4 troops at your capital and 6 gold");
+    const sp = ctx.rules.spoils;
+    expect(c[0]!.label).toMatch(new RegExp(`^Three Towers: a fort and ${sp.tower.garrison} troops? at `));
+    expect(c[1]!.label).toBe(`One of each: ${sp.mixed.troops} troop${sp.mixed.troops === 1 ? "" : "s"} at your capital and ${sp.mixed.gold} gold`);
     view.me.spoils = ["sword", "tower"];
     expect(setChoices(ctx, view, null, n)).toEqual([]);
   });

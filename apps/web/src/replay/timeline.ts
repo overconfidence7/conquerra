@@ -128,7 +128,8 @@ export function buildTimeline(events: readonly ReplayEvent[]): Timeline {
   const squeeze = sum > TARGET_MAX_MS ? TARGET_MAX_MS / sum : 1;
   let t = 0;
   const beats = raw.map((b) => {
-    const duration = Math.round(Math.max(b.ms * MIN_SHARE, b.ms * squeeze));
+    // (Rounded down when squeezed, so a long turn never runs past the target.)
+    const duration = squeeze < 1 ? Math.floor(Math.max(b.ms * MIN_SHARE, b.ms * squeeze)) : b.ms;
     const beat: Beat = { kind: b.kind, start: t, duration, events: b.events, ends: b.ends, lastIndex: b.lastIndex };
     t += duration;
     return beat;

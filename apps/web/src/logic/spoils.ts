@@ -1,5 +1,5 @@
 import { indexMap, setsIn, type GameContext, type Order, type PlayerView, type SpoilsSet, type TerritoryId } from "@conquerra/engine";
-import { SET_NAME, windfallText } from "./cards";
+import { SET_NAME, troopWord, windfallText } from "./cards";
 import type { Namer } from "./text";
 
 /**
@@ -43,7 +43,7 @@ export function setChoices(ctx: GameContext, view: PlayerView, selected: Territo
     if (set === "tower") {
       const at = selected && free(selected) ? selected : mine.filter(free).sort((a, b) => threat(b) - threat(a) || (a < b ? -1 : 1))[0];
       if (!at) continue;
-      out.push({ set, territory: at, help, label: `${SET_NAME[set]}: a fort and ${ctx.rules.spoils.tower.garrison} troops at ${n.place(at)}` });
+      out.push({ set, territory: at, help, label: `${SET_NAME[set]}: a fort and ${troopWord(ctx.rules.spoils.tower.garrison)} at ${n.place(at)}` });
     } else if (set === "laurel") {
       const at = selected && seenMine(view, selected) ? selected : home;
       if (!at) continue;
