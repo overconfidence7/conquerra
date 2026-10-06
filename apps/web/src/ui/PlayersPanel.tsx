@@ -42,12 +42,12 @@ function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: s
     <>
       {shield ? <img className="shield" src={shield} alt="" /> : <span />}
       {portrait ? <img className="portrait" src={portrait} alt="" /> : <span />}
-      <span>
-        <span className="pname">
-          {id === view.me.id ? "You" : p.name}
+      <span className="who">
+        <span className="pname">{id === view.me.id ? "You" : p.name}</span>
+        <span className="house">
+          House {house.name}
           {oath && <span className="oath" title={`Broke a deal: Oathbreaker until turn ${p.oathbreaker}`}>Oathbreaker</span>}
         </span>
-        <span className="house">House {house.name}</span>
         <Marks view={view} marks={marks} />
       </span>
       <span className="state">{out ? `Out (turn ${p.eliminatedTurn})` : "In"}</span>

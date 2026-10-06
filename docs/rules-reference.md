@@ -14,7 +14,7 @@
 - Each player starts with a **capital**, **12 troops** there, **20 gold**, and their **Leader**.
 - Capitals come from the map's **fair layout** for that many players: every capital is about as far from its nearest rival as the others, has land around it worth about the same, and stands on plains (see §12).
 - Every other territory starts neutral with **1 troop**.
-- The host also sets: the **turn timer** (see §3), an optional **turn limit**, the **luck level** (30% by default), **fog** (on by default), the **Fate deck** (on by default, §19), and how the **bots** play: **Captain** (the default) or **Recruit** (easy).
+- The host also sets: the **turn timer** (see §3), an optional **turn limit**, the **luck level** (30% by default), **fog** (on by default), the **Fate deck** (on by default, §19), **diplomacy** (on by default, §20), and how the **bots** play: **Captain** (the default) or **Recruit** (easy).
 
 ## 3. A turn
 1. **Orders (the timer runs).** Everyone writes as many orders as they like, in secret.
@@ -363,6 +363,8 @@ Bots play by exactly the same rules as people, and only from their own view (inc
 ## 20. Diplomacy (session 14)
 Preset deals between two players. Every number is in `rules.diplomacy`.
 
+- **Diplomacy: On / Off** is a lobby switch next to the Fate deck's (on by default; Nate, session 15). Off means no Propose, no offers and no deals: every House fights alone, and the bots play exactly as they did before diplomacy. The setting is part of the game, so a save keeps it.
+
 **Making a deal**
 - Tap a rival in the Players panel, then **Propose a deal**. The card comes with a plain truce ready to send (4 taps from opening the Players panel on a phone). Change the card or its terms if you like, pick **Handshake** or **Binding** (its gold price shows), then **Send**.
 - A bot answers at once, with one plain reason ("I need my army in the east."). It may send a counteroffer instead: the same card with the changes marked.
@@ -380,7 +382,7 @@ Preset deals between two players. Every number is in `rules.diplomacy`.
 | **Right of passage** | Coming in session 15 (it shows as "soon" on the card). |
 
 **Handshake and binding**
-- **Handshake:** free. You can break one, by attacking across it, missing a payment, or making a truce with your joint war's target. Breaking it brings a public **Oathbreaker** mark for 5 turns, a gold fine and unrest (troops desert from your land next to the player you wronged; culture protects as usual). All three scale with the deal's size: how much land it covers, how long it runs, how much it trades; "until X is knocked out" counts as big. A truce everywhere for 3 turns over 6 territories costs about 8 gold.
+- **Handshake:** free. You can break one, by attacking across it, missing a payment, or making a truce with your joint war's target. Breaking it brings a public **Oathbreaker** mark for 5 turns, a gold fine and unrest (troops desert from your land next to the player you wronged; culture protects as usual). All three scale with the deal's size: how much land it covers, how long it runs, how much it trades; "until X is knocked out" counts as big. **The fine is 4 gold + 1.4 per point of size, and up to 0.8 troops per point desert** (Nate doubled both in session 15). A truce everywhere for 3 turns over 6 territories (size 9) costs about 17 gold and 7 troops. The offer card says it in plain words: "Handshake: free. Breaking it brings the Oathbreaker mark, about 17 gold and unrest."
 - **Binding:** each side pays gold up front, more for longer and bigger deals. The game won't let you queue an attack across it (the order panel says why), and any attack that would cross it the turn it starts is called off with a line in the report. Gold owed each turn is taken automatically; if you're short, troops desert for it as with upkeep. It can't be broken.
 - **Limits:** every deal ends after 8 turns at most. One deal of each kind between the same two players at a time. When a player is knocked out, their deals end; the Fallen don't make deals. A general can't be told to raid a partner.
 
@@ -388,14 +390,14 @@ Preset deals between two players. Every number is in `rules.diplomacy`.
 - Who has which deal with whom, for how long, and a joint war's target: a small mark next to each player in the Players panel (a seal on a binding one) with the turns left, and the Oathbreaker mark.
 - A trade's terms only reach its two sides; others see "Lady Morwen and Baron Krell made a trade" and any land that changed hands where they can see it.
 - Truce borders show on the map as a white stitched band (gold studs on a binding pact), only where you can see both sides.
-- An attack you're drafting across a handshake truce warns you: "This breaks your truce with Lady Morwen: Oathbreaker, about 8 gold and unrest."
+- An attack you're drafting across a handshake truce warns you: "This breaks your truce with Lady Morwen: Oathbreaker, about 17 gold and unrest."
 
 **The bots**
 - They judge every offer from their own view only, for one plain reason: their fronts and where their armies are needed, who's ahead (by the Captain's runaway rule), what the deal frees up or costs, and their trust in you ("You broke our truce at Old March.").
 - They never help a runaway leader, or the clear leader as far as they can tell: no truce, trade or passage that helps it grow. They're always open to a joint war against one.
 - **Trust** is worked out from the record of how past deals ended (part of the saved game): down a lot when you broke a deal with them, a little when a joint war fell through, up slowly with deals kept, down for an Oathbreaker mark. With low trust they ask for a binding pact instead of a handshake.
 - **The Captain proposes:** a joint war against a runaway leader, a truce on a front it can't afford while fighting elsewhere, a trade for land that completes a province or when it's short of gold. Each bot makes at most one offer a turn, and you get at most one offer a turn from all of them together. They make deals with each other too.
-- **They keep their word,** except the Captain may break a handshake deal for a rival's capital it's sure to take (or the win, with fog off), and it says so in the report.
+- **They keep their word,** except the Captain may break a handshake deal for a rival's capital it's sure to take (or the win, with fog off), when the gain is at least twice the penalty, and it says so in the report. With the harsher Oathbreaker that now happens mostly with small deals (a truce on a few borders); a 3-turn truce everywhere is usually kept even for a capital.
 - **The Recruit:** takes a truce when it's weaker, refuses when it's stronger, and never proposes trades.
 - Numbers: `docs/sim-results-m3-diplomacy.md`.
 

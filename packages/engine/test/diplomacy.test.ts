@@ -330,9 +330,9 @@ describe("diplomacy: breaking a handshake deal", () => {
     replayMatches(b.st, b.r);
   });
 
-  it("the example in the design: a truce everywhere for 3 turns over 6 territories costs about 8 gold", () => {
+  it("the example in the design: a truce everywhere for 3 turns over 6 territories costs about 17 gold (Nate doubled it in session 15; it was 8)", () => {
     const size = 6 * ctx.rules.diplomacy.size.perTerritory + 3 * ctx.rules.diplomacy.size.perTurn;
-    expect(oathPenalty(ctx.rules, size).fine).toBe(8);
+    expect(oathPenalty(ctx.rules, size)).toEqual({ fine: 17, unrest: 7 });
   });
 
   it("culture protects against the unrest", () => {

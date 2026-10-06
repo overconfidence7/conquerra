@@ -25,6 +25,8 @@ export interface LobbySettings {
   turnSeconds: number | null;
   /** The Fate deck (one draw a turn: events and missions). On unless the host turns it off. */
   fate?: boolean;
+  /** Diplomacy (deals between players). On unless the host turns it off: off means no Propose, no offers, no deals. */
+  diplomacy?: boolean;
 }
 
 export interface TurnReport {

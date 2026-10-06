@@ -1,6 +1,6 @@
 import { DEAL_KINDS, describeTerms, indexMap, type DealKind, type DealTerms, type GameContext, type Offer, type PlayerId, type PlayerView, type TradeSide } from "@conquerra/engine";
 import { useEffect, useRef, type ReactNode } from "react";
-import { bindingPrice, changedTerms, newOffer, ownerFrom } from "../logic/deals";
+import { bindingPrice, breakPrice, changedTerms, newOffer, ownerFrom } from "../logic/deals";
 import { dealNames, namer } from "../logic/text";
 import { useGame } from "../store";
 import { Frame } from "./Frame";
@@ -62,7 +62,7 @@ function TermRows({ ctx, view, offer, changed }: { ctx: GameContext; view: Playe
     rows.push(["You give", side(mine ? t.give : t.get), mark(mine ? "give" : "get")]);
     rows.push([`${nameOf(view, mine ? offer.to : offer.from)} gives`, side(mine ? t.get : t.give), mark(mine ? "get" : "give")]);
   }
-  rows.push(["Promise", offer.bond === "binding" ? `Binding: ${bindingPrice(ctx, view, offer)} gold each, the game holds you both to it` : "Handshake: free; breaking it costs (Oathbreaker)", mark("bond")]);
+  rows.push(["Promise", offer.bond === "binding" ? `Binding: ${bindingPrice(ctx, view, offer)} gold each, the game holds you both to it` : `Handshake: free. Breaking it brings the Oathbreaker mark, ${breakPrice(ctx, view, offer)}.`, mark("bond")]);
   return (
     <dl className="deal-terms">
       {rows.map(([k, v, changedRow]) => (
@@ -221,7 +221,7 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
       )}
 
       <div className="chips bond" role="radiogroup" aria-label="Promise">
-        <button role="radio" aria-checked={offer.bond === "handshake"} className={`chip ${offer.bond === "handshake" ? "on" : ""}`} onClick={() => editDeal({ ...offer, bond: "handshake" })} title="Free. You can break it, but breaking it costs: Oathbreaker, a fine and unrest.">
+        <button role="radio" aria-checked={offer.bond === "handshake"} className={`chip ${offer.bond === "handshake" ? "on" : ""}`} onClick={() => editDeal({ ...offer, bond: "handshake" })} title={`Free. You can break it, but breaking it brings the Oathbreaker mark, ${breakPrice(ctx, view, offer)}.`}>
           🤝 Handshake (free)
         </button>
         <button role="radio" aria-checked={offer.bond === "binding"} className={`chip ${offer.bond === "binding" ? "on" : ""}`} onClick={() => editDeal({ ...offer, bond: "binding" })} title="Each side pays up front, and the game holds you both to it: no attacks across it.">

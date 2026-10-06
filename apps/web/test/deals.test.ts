@@ -1,6 +1,6 @@
-import type { Offer } from "@conquerra/engine";
+import { dealSize, indexMap, oathPenalty, type Offer } from "@conquerra/engine";
 import { beforeEach, describe, expect, it } from "vitest";
-import { agreedThisTurn, attackCheck, canProposeTo, changedTerms, counterFrom, dealMarks, dealsNow, markText, newOffer, truceLines, waitingOffers } from "../src/logic/deals";
+import { agreedThisTurn, attackCheck, breakPrice, canProposeTo, changedTerms, counterFrom, dealMarks, dealsNow, markText, newOffer, truceLines, waitingOffers } from "../src/logic/deals";
 import { setHostFactory, useGame } from "../src/store";
 import { inProcessHost } from "./inProcessHost";
 
@@ -131,5 +131,65 @@ describe("diplomacy on the page", () => {
     const war = newOffer(ctx!, view!, to, "war").terms;
     expect(war.kind === "war" && war.target !== to && war.target !== "you").toBe(true);
     expect(newOffer(ctx!, view!, to, "trade").terms).toEqual({ kind: "trade", give: { gold: Math.min(10, view!.me.gold) }, get: {} });
+  });
+  it("the harsher Oathbreaker (Nate, session 15): about double the fine and unrest, and the card and the warning both say it in plain words", async () => {
+    await start();
+    const { from, to, rival } = await neighbour();
+    const { ctx, view } = s();
+    const o = ctx!.rules.diplomacy.oathbreaker;
+    expect([o.fineBase, o.finePerSize, o.unrestPerSize, o.markTurns]).toEqual([4, 1.4, 0.8, 5]);
+    const offer: Offer = { id: "h", from: "you", to: rival, terms: { kind: "truce", scope: { kind: "all" }, turns: 3 }, bond: "handshake" };
+    const size = dealSize(ctx!.rules, indexMap(ctx!.map), offer.terms, "you", rival, (t) => {
+      const x = view!.territories[t]!;
+      return x.detail === "full" ? x.owner : (x.lastSeen?.owner ?? null);
+    });
+    const fine = oathPenalty(ctx!.rules, size).fine;
+    expect(fine).toBe(Math.round(4 + 1.4 * size));
+    expect(breakPrice(ctx!, view!, offer)).toBe(`about ${fine} gold and unrest`);
+    const warn = attackCheck(ctx!, view!, dealsNow(ctx!, view!, [offer]), from, to);
+    expect(warn).toEqual({ warn: expect.stringContaining(`about ${fine} gold and unrest`) });
+  });
+
+  it("the Players panel follows the game: a deal's mark goes when the deal ends", async () => {
+    await start();
+    let started = false;
+    for (let turn = 0; turn < 20 && !started; turn++) {
+      for (const p of s().view!.players.filter((x) => canProposeTo(s().view!, x.id))) {
+        s().openPropose(p.id);
+        const answer = await s().sendOffer((s().deal as { offer: Offer }).offer);
+        s().closeDeal();
+        if (answer?.accept) break;
+      }
+      await s().lockIn();
+      s().endReplay();
+      started = s().view!.deals.some((d) => d.a === "you" || d.b === "you");
+    }
+    expect(started).toBe(true);
+    const deal = s().view!.deals.find((d) => d.a === "you" || d.b === "you")!;
+    const them = deal.a === "you" ? deal.b : deal.a;
+    expect(dealMarks(s().view!, s().pageDeals(), them).some((m) => m.id === deal.id)).toBe(true);
+    for (let i = 0; i < 10 && s().view!.deals.some((d) => d.id === deal.id) && !s().view!.winner; i++) {
+      await s().lockIn();
+      s().endReplay();
+    }
+    expect(s().view!.deals.some((d) => d.id === deal.id)).toBe(false);
+    expect(dealMarks(s().view!, s().pageDeals(), them).some((m) => m.id === deal.id)).toBe(false);
+  });
+
+  it("Diplomacy: Off in the lobby (Nate): no Propose, no offers, no deals, and the setting is in the game (so saves keep it)", async () => {
+    useGame.getState().setLobby({ mapId: "embervale", bots: 3, turnSeconds: null, diplomacy: false });
+    await useGame.getState().start();
+    for (let turn = 0; turn < 6; turn++) {
+      const v = s().view!;
+      expect(v.settings.diplomacy).toBe(false);
+      expect(v.players.some((p) => canProposeTo(v, p.id))).toBe(false);
+      expect(s().offers).toEqual([]);
+      expect(v.deals).toEqual([]);
+      await s().autoPlan();
+      await s().lockIn();
+      expect(s().report!.events.some((e) => e.type.startsWith("deal") || e.type === "offerLapsed")).toBe(false);
+      s().endReplay();
+    }
+    useGame.getState().setLobby({ diplomacy: true });
   });
 });

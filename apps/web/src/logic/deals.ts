@@ -55,6 +55,12 @@ export function newOffer(ctx: GameContext, view: PlayerView, to: PlayerId, kind:
 /** What each side pays up front for a binding pact on these terms (worked out as the engine will, from what you see). */
 export const bindingPrice = (ctx: GameContext, view: PlayerView, o: Offer) => bindingCost(ctx.rules, dealSize(ctx.rules, indexMap(ctx.map), o.terms, o.from, o.to, ownerFrom(view)));
 
+/** What breaking a handshake deal on these terms would cost, in plain words ("about 16 gold and unrest"). */
+export function breakPrice(ctx: GameContext, view: PlayerView, o: Offer): string {
+  const { fine } = oathPenalty(ctx.rules, dealSize(ctx.rules, indexMap(ctx.map), o.terms, o.from, o.to, ownerFrom(view)));
+  return `about ${fine} gold and unrest`;
+}
+
 /**
  * Deals both sides have confirmed this planning phase, from your side: offers of yours a bot accepted, and offers to
  * you that you accepted. They start as the turn plays, before any move.

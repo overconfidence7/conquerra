@@ -38,8 +38,8 @@ function twoFronts(eastArmy = 20) {
   });
 }
 /** A deal in force between `a` and `b`, put straight into the game (as if agreed earlier). */
-function withDeal(s: GameState, a: string, b: string, terms: DealTerms, bond: Offer["bond"] = "handshake") {
-  s.deals.push({ id: `d${s.nextDeal++}`, a, b, terms, bond, start: s.turn, last: s.turn + 2, size: 9 });
+function withDeal(s: GameState, a: string, b: string, terms: DealTerms, bond: Offer["bond"] = "handshake", size = 9) {
+  s.deals.push({ id: `d${s.nextDeal++}`, a, b, terms, bond, start: s.turn, last: s.turn + 2, size });
 }
 
 describe("bots' diplomacy: answers with one plain reason", () => {
@@ -213,7 +213,11 @@ describe("bots' diplomacy: keeping their word", () => {
 
   it("the Captain breaks a handshake truce only for a capital it's sure to take, and says so", () => {
     const sc = scenario({ line: "abcd", layout: { a: ["p1", 3], b: ["p1", 60], c: ["p2", 2], d: ["p2", 3] }, caps: ["a", "c"], gold: 0 });
+    // The harsher Oathbreaker (session 15): a 3-turn truce everywhere (size 9) now costs too much to break even for a
+    // capital; a small one (size 4) is still worth breaking.
     withDeal(sc.s, "p1", "p2", truce());
+    expect(captainBreaks(sc.ctx, viewFor(sc.ctx, sc.s, "p1"))).toEqual([]);
+    sc.s.deals[0]!.size = 4;
     const v = viewFor(sc.ctx, sc.s, "p1");
     const br = captainBreaks(sc.ctx, v);
     expect(br).toEqual([{ id: expect.any(String), kind: "break", deal: "d1", note: "Your capital at C is mine for the taking; our truce isn't worth more than that." }]);
@@ -225,7 +229,7 @@ describe("bots' diplomacy: keeping their word", () => {
     sc.s.deals[0]!.bond = "binding";
     expect(captainBreaks(sc.ctx, viewFor(sc.ctx, sc.s, "p1"))).toEqual([]);
     const plain = scenario({ line: "abcde", layout: { a: ["p1", 3], b: ["p1", 60], c: ["p2", 2], d: ["p2", 3], e: ["p2", 3] }, caps: ["a", "e"], gold: 0 });
-    withDeal(plain.s, "p1", "p2", truce());
+    withDeal(plain.s, "p1", "p2", truce(), "handshake", 4);
     expect(captainBreaks(plain.ctx, viewFor(plain.ctx, plain.s, "p1"))).toEqual([]);
   });
 

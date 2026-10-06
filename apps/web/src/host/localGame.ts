@@ -135,6 +135,7 @@ export class LocalGame {
           // The engine just stores the timer; "No timer" is stored as the longest allowed.
           turnTimerSeconds: settings.turnSeconds ?? defaultRules.game.turnTimerSecondsMax,
           fate: settings.fate ?? true,
+          diplomacy: settings.diplomacy ?? true,
         },
       };
       this.state = createGame(this.ctx, setup);

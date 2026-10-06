@@ -136,6 +136,19 @@ export function Lobby() {
       </div>
 
       <div className="field">
+        <span className="field-name">Diplomacy</span>
+        <span className="seg">
+          <button className={lobby.diplomacy !== false ? "on" : ""} onClick={() => setLobby({ diplomacy: true })}>
+            On
+          </button>
+          <button className={lobby.diplomacy === false ? "on" : ""} onClick={() => setLobby({ diplomacy: false })}>
+            Off
+          </button>
+        </span>
+        <span className="muted small">{lobby.diplomacy === false ? "No deals: every House fights alone, and turns go faster." : "Houses can make deals: truces, trades, joint wars and right of passage."}</span>
+      </div>
+
+      <div className="field">
         <span className="field-name">Victory</span>
         <span className="seg">
           <button className={lobby.mode === "classic" ? "on" : ""} onClick={() => setLobby({ mode: "classic" })}>

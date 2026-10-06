@@ -191,7 +191,7 @@ const nextOrderId = () => `o${++orderCounter}`;
 
 const defaultLobby = (): LobbySettings => {
   const bots = 3;
-  return { mapId: "embervale", bots, botLevel: "captain", luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER, fate: true };
+  return { mapId: "embervale", bots, botLevel: "captain", luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER, fate: true, diplomacy: true };
 };
 
 export const useGame = create<GameStore>((set, get) => ({
