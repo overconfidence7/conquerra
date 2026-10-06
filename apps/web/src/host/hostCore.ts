@@ -4,6 +4,9 @@ import { LocalGame } from "./localGame";
 import type { HostStart, HostUpdate, LobbySettings, LoadSource } from "./protocol";
 import { saveErrorFor, type SaveStore, type SlotId, type SlotInfo } from "./saves";
 
+/** How long your queue must be still before the autosave keeps it (ms). */
+export const QUEUE_SAVE_MS = 1500;
+
 /**
  * Everything the single-player host does, in one place: the game, its turn timer's deadline, and saving it on the
  * device. The Web Worker forwards the page's requests here; tests run it in-process with a memory store.
@@ -12,6 +15,8 @@ export class HostCore {
   game: LocalGame | null = null;
   /** The autosave being written (tests wait for it). */
   private writing: Promise<void> = Promise.resolve();
+  /** Your queue changed: the autosave is written again once it's been still for a moment (Continue keeps it). */
+  private queuedTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private readonly store: SaveStore,
@@ -38,6 +43,9 @@ export class HostCore {
 
   /** After every turn: a finished game leaves the Continue button. */
   private afterTurn<T>(u: T): T {
+    // The new turn's autosave is already on its way; a queue saved for the old turn would be stale.
+    if (this.queuedTimer) clearTimeout(this.queuedTimer);
+    this.queuedTimer = null;
     if (this.game?.over) this.writing = this.writing.then(() => this.store.remove("auto").catch(() => undefined));
     return u;
   }
@@ -101,7 +109,23 @@ export class HostCore {
   lockIn = (orders: Order[], turn: number): HostUpdate => this.afterTurn(this.g.lockIn(orders, turn));
   watchNext = (orders?: Order[]): HostUpdate => this.afterTurn(this.g.watchNext(orders));
   finish = (): HostUpdate => this.afterTurn(this.g.finish());
-  saveOrders = (orders: Order[], turn: number) => this.game?.saveOrders(orders, turn);
+  /**
+   * Your orders as you build them. They lock in if time runs out, and the autosave keeps them (so Continue puts them
+   * back): written once the queue has been still for `QUEUE_SAVE_MS`, here in the background, so tapping never waits.
+   */
+  saveOrders = (orders: Order[], turn: number, paused: PlayerId[] = [], now = false) => {
+    if (!this.game?.saveOrders(orders, turn, paused)) return;
+    if (this.queuedTimer) clearTimeout(this.queuedTimer);
+    if (now) this.saveQueued();
+    else this.queuedTimer = setTimeout(() => this.saveQueued(), QUEUE_SAVE_MS);
+  };
+
+  /** Write the autosave with your queue now (the timer's job; tests call it straight away). */
+  saveQueued() {
+    if (this.queuedTimer) clearTimeout(this.queuedTimer);
+    this.queuedTimer = null;
+    if (this.game && !this.game.over) this.autosave(this.game.snapshot());
+  }
   suggest = (): Order[] => this.g.suggest();
   planGenerals = (instructions: Record<PlayerId, Instruction | null>): Order[] => this.g.generalOrders(instructions);
   pause = (): HostUpdate => this.g.pause();

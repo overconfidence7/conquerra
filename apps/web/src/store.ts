@@ -497,17 +497,19 @@ async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: G
   set({ busy: true, error: null });
   try {
     const u = await begin(host);
+    // Continue: the orders you'd queued on this turn come back, with your instruction changes and generals let go.
+    const kept = u.queued ? restoredQueue(u.queued.orders) : null;
     set({
       host,
       screen: "game",
       // The map's geometry comes from the host, never from an import here.
       ctx: { map: u.map, rules: u.rules },
       view: u.view,
-      queue: openingQueue({ map: u.map, rules: u.rules }, u),
-      instructions: {},
-      paused: [],
+      queue: kept ? kept.queue : openingQueue({ map: u.map, rules: u.rules }, u),
+      instructions: kept?.instructions ?? {},
+      paused: u.queued?.paused ?? [],
       picking: null,
-      releases: [],
+      releases: kept?.releases ?? [],
       fallenOrders: [],
       aiming: null,
       selected: knockedOut(u.view) ? null : u.view.me.capital,
@@ -532,6 +534,24 @@ async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: G
   } finally {
     set({ busy: false });
   }
+}
+
+/**
+ * Orders a save kept (Continue), split back into the queue, instruction changes and generals you let go. Order ids
+ * carry on past the highest one kept, so new orders never clash with them.
+ */
+export function restoredQueue(orders: readonly Order[]): { queue: Order[]; instructions: Record<PlayerId, Instruction | null>; releases: PlayerId[] } {
+  const instructions: Record<PlayerId, Instruction | null> = {};
+  const releases: PlayerId[] = [];
+  const queue: Order[] = [];
+  for (const o of orders) {
+    if (o.kind === "instruct") instructions[o.general] = o.instruction;
+    else if (o.kind === "release") releases.push(o.general);
+    else queue.push(o);
+    const n = /^o(\d+)$/.exec(o.id);
+    if (n) orderCounter = Math.max(orderCounter, Number(n[1]));
+  }
+  return { queue, instructions, releases };
 }
 
 /** The queue a turn's planning starts with: your generals' orders, and a Spoils set if your hand is full. */
@@ -568,7 +588,17 @@ function applyTurn(u: HostUpdate, auto: boolean) {
   if (!before || !u.report) useGame.getState().endReplay();
 }
 
-// The host keeps your orders as you build them: they're what locks in if the timer runs out.
+// The host keeps your orders as you build them: they're what locks in if the timer runs out, and the autosave keeps
+// them for Continue.
 useGame.subscribe((s, prev) => {
-  if ((s.queue !== prev.queue || s.instructions !== prev.instructions || s.releases !== prev.releases) && s.host && s.view) s.host.saveOrders(s.turnOrders(), s.view.turn);
+  if ((s.queue !== prev.queue || s.instructions !== prev.instructions || s.releases !== prev.releases || s.paused !== prev.paused) && s.host && s.view)
+    s.host.saveOrders(s.turnOrders(), s.view.turn, s.paused);
 });
+
+// The tab is going away (closed, or a phone put it in the background): save your queue now, not in a moment.
+const saveNow = () => {
+  const s = useGame.getState();
+  if (s.host && s.view && s.screen === "game") s.host.saveOrders(s.turnOrders(), s.view.turn, s.paused, true);
+};
+if (typeof window !== "undefined") window.addEventListener("pagehide", saveNow);
+if (typeof document !== "undefined") document.addEventListener("visibilitychange", () => document.visibilityState === "hidden" && saveNow());

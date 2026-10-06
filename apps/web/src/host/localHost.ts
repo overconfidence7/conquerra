@@ -58,7 +58,7 @@ export function createLocalHost(): GameHost {
     resume: () => send({ type: "resume" }),
     onNotice: (f) => void notices.push(f),
     lockIn: (orders, turn) => send({ type: "lockIn", orders, turn }),
-    saveOrders: (orders, turn) => worker.postMessage({ id: nextId++, type: "saveOrders", orders, turn } as HostRequest),
+    saveOrders: (orders, turn, paused, now) => worker.postMessage({ id: nextId++, type: "saveOrders", orders, turn, ...(paused?.length ? { paused } : {}), ...(now ? { now } : {}) } as HostRequest),
     onAutoLock: (f) => void autoLock.push(f),
     watchNext: (orders) => send({ type: "watchNext", ...(orders ? { orders } : {}) }),
     finish: () => send({ type: "finish" }),

@@ -46,6 +46,11 @@ export interface HostUpdate {
   autoLocked?: boolean;
   /** Your generals' orders for the turn now being planned, from their standing instructions (shown in your queue). */
   generalOrders: Order[];
+  /**
+   * Continue: the orders you'd queued on this turn but not locked in (with your instruction changes and generals you
+   * let go), and the generals whose army you'd taken back. Only on the first update after loading a save.
+   */
+  queued?: { orders: Order[]; paused: PlayerId[] };
 }
 
 /**
@@ -70,8 +75,12 @@ export interface GameHost {
    * the current view.
    */
   lockIn(orders: Order[], turn: number): Promise<HostUpdate>;
-  /** Keep the host up to date with your orders as you build them: they're what locks in when time runs out. */
-  saveOrders(orders: Order[], turn: number): void;
+  /**
+   * Keep the host up to date with your orders as you build them: they're what locks in when time runs out, and the
+   * autosave keeps them for Continue. `paused`: generals whose army you took back. `now`: save them at once (the tab
+   * is closing) instead of once the queue has been still for a moment.
+   */
+  saveOrders(orders: Order[], turn: number, paused?: PlayerId[], now?: boolean): void;
   /** Called when the timer runs out and the host locks your saved orders in for you. */
   onAutoLock(listener: (update: HostUpdate) => void): void;
   /** Once you're knocked out: the bots play one more turn (with your world events, as one of the Fallen), and you see that turn's report. */
@@ -102,7 +111,7 @@ export type HostRequest =
   | { id: number; type: "pause" }
   | { id: number; type: "resume" }
   | { id: number; type: "lockIn"; orders: Order[]; turn: number }
-  | { id: number; type: "saveOrders"; orders: Order[]; turn: number }
+  | { id: number; type: "saveOrders"; orders: Order[]; turn: number; paused?: PlayerId[]; now?: boolean }
   | { id: number; type: "watchNext"; orders?: Order[] }
   | { id: number; type: "finish" }
   | { id: number; type: "suggest" }

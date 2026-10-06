@@ -29,6 +29,8 @@ const map = MapDef.parse({
 });
 const ctxWith = (f?: (r: Rules) => void): GameContext => {
   const rules = JSON.parse(JSON.stringify(defaultRules)) as Rules;
+  // These tests check what each card does, from the first turn on (the real first draw waits; tested below).
+  rules.fate.firstDrawTurn = 1;
   f?.(rules);
   return { map, rules };
 };
@@ -66,10 +68,13 @@ function longGame(seed: string, turns = 30, settings: Partial<GameState["setting
 
 describe("Fate: the draw", () => {
   it("everyone still in draws exactly one card a turn, as the turn ends (so it's there when planning starts)", () => {
+    const first = defaultRules.fate.firstDrawTurn;
+    expect(first).toBe(3);
     for (const t of longGame("one-each", 20)) {
       const drawers = t.events.flatMap((e) => (e.type === "fate" ? [e.drawer] : e.type === "missionDrawn" ? [e.player] : []));
       const living = t.after.players.filter((p) => p.eliminatedTurn === null).map((p) => p.id);
-      expect([...drawers].sort()).toEqual([...living].sort());
+      // The opening turns stay quiet (Nate, Oct 6): no events and no missions before the end of turn 3.
+      expect([...drawers].sort()).toEqual(t.before.turn < first ? [] : [...living].sort());
       // After every battle and order: a Fate event can't make a "guaranteed" attack fail.
       const lastOrder = Math.max(...t.events.filter((e) => e.type === "battle" || e.type === "moved" || e.type === "recruited").map((e) => e.step), -1);
       for (const e of t.events) if (e.type === "fate" || e.type === "missionDrawn") expect(e.step).toBeGreaterThan(lastOrder);

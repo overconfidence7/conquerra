@@ -95,7 +95,9 @@ describe("last seen intel (v0.2 §8)", () => {
             midTurn++;
           }
           for (const t of Object.values(s.territories)) if (t.owner) expect(t.troops).toBeGreaterThan(0);
-          // The view never carries a fogged territory's current state, only the memory.
+          // The view never carries a fogged territory's current state, only the memory. (The Fallen see the
+          // political map instead: who holds what, no troops.)
+          if (p.eliminatedTurn !== null) continue;
           const v = viewFor(ctx, s, p.id);
           for (const [id, tv] of Object.entries(v.territories)) {
             if (tv.detail === "full") continue;

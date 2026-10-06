@@ -43,6 +43,11 @@ export interface LocalHostData {
   turnSeconds: number | null;
   /** What each seat watched in the last replay (its own view), for the bots' and your generals' next plans. */
   lastTurn: Record<PlayerId, ReplayEvent[]>;
+  /**
+   * The orders you'd queued but not locked in (Nate, Oct 6: Continue keeps them), with the generals whose army you
+   * took back. Only used if the save is still on that turn.
+   */
+  queued?: { turn: number; orders: Order[]; paused: PlayerId[] };
 }
 
 export interface LocalGameOptions {
@@ -62,6 +67,10 @@ export class LocalGame {
   private pausedLeft: number | null = null;
   /** Your orders as you build them (the page keeps sending them), locked in when time runs out. */
   private saved: Order[] = [];
+  /** Generals whose army you took back this turn (the page sends them with your orders; kept for Continue). */
+  private savedPaused: PlayerId[] = [];
+  /** Your queue as a save brought it back (Continue), sent to the page once with the first update. */
+  private restored: { orders: Order[]; paused: PlayerId[] } | null = null;
   private bot: Bot;
   private readonly botLevel: BotLevel;
   /** How the game was set up, the rules and every turn's orders, so `pnpm sim --replay` can play a save back. */
@@ -122,6 +131,13 @@ export class LocalGame {
     this.bot = BOTS[this.botLevel];
     // A game just loaded doesn't save itself again until its next turn starts.
     this.startClock(0, !restore);
+    // Continue puts back the orders you'd queued on this turn.
+    const queued = (restore?.host as Partial<LocalHostData> | undefined)?.queued;
+    if (queued && queued.turn === this.state.turn && Array.isArray(queued.orders) && !this.state.winner && !this.knockedOut) {
+      this.saved = queued.orders;
+      this.savedPaused = Array.isArray(queued.paused) ? queued.paused : [];
+      this.restored = { orders: queued.orders, paused: this.savedPaused };
+    }
   }
 
   /** Carry on from a save (already read and brought up to date with `readSave`). */
@@ -138,6 +154,7 @@ export class LocalGame {
   private startClock(replayMs: number, autosave = true) {
     // Your generals' orders go in even if you never touch the turn.
     this.saved = this.generalOrders();
+    this.savedPaused = [];
     this.pausedLeft = null;
     this.deadline = this.turnMs !== null && !this.state.winner && !this.knockedOut ? this.now() + replayMs + (replayMs ? REPORT_GRACE_MS : 0) + this.turnMs : null;
     if (autosave && !this.state.winner) this.autosave?.(this.snapshot());
@@ -180,7 +197,9 @@ export class LocalGame {
 
   /** The first message: the map and rules, plus your opening view. */
   start(): HostStart {
-    return { ...this.update(), map: this.ctx.map, rules: this.ctx.rules };
+    const restored = this.restored;
+    this.restored = null;
+    return { ...this.update(), map: this.ctx.map, rules: this.ctx.rules, ...(restored ? { queued: restored } : {}) };
   }
 
   update(report: HostUpdate["report"] = null, fastForwarded = 0): HostUpdate {
@@ -237,9 +256,15 @@ export class LocalGame {
     return this.update(this.play(humanOrders));
   }
 
-  /** The page's latest orders for this turn; these lock in if time runs out. */
-  saveOrders(orders: Order[], turn: number) {
-    if (turn === this.state.turn) this.saved = orders;
+  /**
+   * The page's latest orders for this turn; these lock in if time runs out, and Continue puts them back. Returns
+   * whether they were for this turn (so the host knows to save them).
+   */
+  saveOrders(orders: Order[], turn: number, paused: PlayerId[] = []): boolean {
+    if (turn !== this.state.turn || this.state.winner || this.knockedOut) return false;
+    this.saved = orders;
+    this.savedPaused = paused;
+    return true;
   }
 
   /** When the timer should next be checked (ms, host clock), or null if there's no countdown. */
@@ -276,6 +301,7 @@ export class LocalGame {
       botLevel: this.botLevel,
       turnSeconds: this.turnMs === null ? null : this.turnMs / 1000,
       lastTurn: Object.fromEntries(this.lastTurn),
+      queued: { turn: this.state.turn, orders: this.saved, paused: this.savedPaused },
     };
     return makeSave(this.ctx, this.state, HUMAN_ID, this.now(), {
       host: host as unknown as Record<string, unknown>,

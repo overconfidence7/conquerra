@@ -1,4 +1,4 @@
-# Conquerra Rules Reference (Milestone 3, session 13)
+# Conquerra Rules Reference (Milestone 3, session 14)
 
 *A 10-minute read. This is how the engine actually plays today. Numbers are the current balance settings from `packages/content/data/rules.json`; they will change as we tune.*
 
@@ -289,7 +289,7 @@ Bots play by exactly the same rules as people, and only from their own view (inc
 - **Numbers** are all in `rules.fallen` (`packages/content/data/rules.json`). The events are built so a Fate deck could draw them later (session 13 decides).
 
 ## 17. Saved games (session 13)
-- **The game saves itself** at the start of every turn's planning, on this device. Close the tab whenever you like: the lobby's **Continue** button (map, players, turn and when it was saved) picks it up at the start of that turn. Orders you'd queued but not locked in aren't kept. A finished game is no longer offered.
+- **The game saves itself** at the start of every turn's planning, on this device. Close the tab whenever you like: the lobby's **Continue** button (map, players, turn and when it was saved) picks it up on that turn, **with the orders you'd queued but not locked in** (session 14): they're saved a moment after you stop changing them, and at once when the tab closes or the phone puts it in the background. A finished game is no longer offered.
 - **Save game** (Settings): three slots, each showing map, players, turn and date. **Load game** (Settings, or "Load a saved game" in the lobby): the autosave or a slot. Loading leaves the game you're in, so save it to a slot first if you want to come back.
 - **Save to a file / Load a file:** the same save as a file, to keep, move to another device, or attach to a bug report. `pnpm sim --replay <file>` plays it back move by move (it also still reads the old "Save this game" files).
 - **Saves never leave the device.** If the browser can't store them (a private window, storage switched off, a full disk), you get a plain message and the game goes on; Save to a file still works.
@@ -302,11 +302,12 @@ Bots play by exactly the same rules as people, and only from their own view (inc
 
 | Set | Windfall |
 |---|---|
-| Three Swords | 6 troops at your capital |
-| Three Towers | A finished fort and 1 troop on land you choose (land without a building) |
+| Three Swords | 8 troops at your capital |
+| Three Towers | A finished fort and 3 troops on land you choose (land without a building) |
 | Three Laurels | +1 culture on up to 3 of your territories in the province you choose |
-| One of each | 3 troops at your capital and 5 gold |
+| One of each | 4 troops at your capital and 6 gold |
 
+- These are the bigger windfalls Nate chose (Oct 6). Session 13 had tried smaller ones (6 troops, a fort + 1, 3 troops + 5 gold) that kept games about a turn shorter; the balance pass (session 16) looks at length.
 - **Windfalls never grow** with each set you turn in (unlike Risk), so they can't feed a runaway.
 - **Turning in** is an order: it takes its slot with your others, and the windfall shows in the replay and the report. Your capital means your strongest territory if you've lost it.
 - **Hand limit 5:** at 5 cards you must turn in a set that turn (five cards always hold one). The sensible set is already first in your queue when the turn starts (Swords, else one of each, else a fort where you're most threatened, else Laurels at home); change it or delete it if you like. If no set goes in, the game turns one in for you as the turn ends.
@@ -316,7 +317,8 @@ Bots play by exactly the same rules as people, and only from their own view (inc
 - Numbers: `rules.spoils`.
 
 ## 19. The Fate deck (session 13)
-- **Everyone still in draws one Fate card a turn**, automatically, as the turn ends, so it's there when the next turn's planning starts: a line in the turn report and a toast in the replay. No tap. Draws come from the game's seed: provably fair, and a saved game replays exactly.
+- **The opening turns stay quiet:** the first draw comes at the end of turn 3 (`rules.fate.firstDrawTurn`), so nothing from Fate happens and no missions arrive before turn 4's planning.
+- **Everyone still in draws one Fate card a turn** from then on, automatically, as the turn ends, so it's there when the next turn's planning starts: a line in the turn report and a toast in the replay. No tap. Draws come from the game's seed: provably fair, and a saved game replays exactly.
 - **Because Fate lands between turns, you always plan with it in front of you:** no Fate event can make an attack the preview called "guaranteed" fail.
 - **About 7 in 10 are events.** An event lands on a random territory anywhere on the map, not near whoever drew it:
 

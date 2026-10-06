@@ -1,13 +1,14 @@
 import { maps } from "@conquerra/content/maps";
 import { recruitBot } from "@conquerra/bots";
 import { readFileSync } from "node:fs";
-import { readSave, replaySavedGame, stateFingerprint, type SaveFile } from "@conquerra/engine";
+import { readSave, replaySavedGame, stateFingerprint, type Order, type SaveFile } from "@conquerra/engine";
 import { HostCore } from "../src/host/hostCore";
 import { memorySaveStore, SAVE_ERRORS, type SaveStore } from "../src/host/saves";
 import { describe, expect, it } from "vitest";
 import { HUMAN_ID, LocalGame, REPORT_GRACE_MS } from "../src/host/localGame";
 import { formatClock, remainingMs, timerTone } from "../src/logic/timer";
 import type { HostUpdate, LobbySettings } from "../src/host/protocol";
+import { restoredQueue } from "../src/store";
 
 const settings: LobbySettings = { mapId: "embervale", bots: 3, botLevel: "captain", luck: 0.3, fog: true, mode: "classic", turnSeconds: 300 };
 const isOut = (g: LocalGame, u: ReturnType<LocalGame["update"]>) => u.view.players.find((p) => p.id === HUMAN_ID)!.eliminatedTurn !== null;
@@ -245,6 +246,38 @@ describe("saved games", () => {
     await again.flush();
     expect(v.view.winner).not.toBeNull();
     expect(await store.get("auto")).toBeNull();
+  });
+
+  it("Continue keeps the orders you'd queued but not locked in (Nate, Oct 6): queue, close the tab, Continue, and they're back", async () => {
+    const store = memorySaveStore();
+    const core = new HostCore(store, async (id) => maps[id]!);
+    const u = await core.start({ ...settings, bots: 2 }, "queued-test");
+    await core.flush();
+    const capital = u.view.me.capital;
+    const orders = [
+      { id: "instruct-you", kind: "instruct", general: HUMAN_ID, instruction: { kind: "hold" } },
+      { id: "o7", kind: "recruit", territory: capital, count: "all" },
+      { id: "o8", kind: "invest", territory: capital },
+    ] as Order[];
+    core.saveOrders(orders, u.view.turn, [HUMAN_ID]);
+    // Written in the background once the queue has been still for a moment (the tab closing writes it at once).
+    core.saveQueued();
+    await core.flush();
+    // Close the tab; open it again: Continue puts the same orders back.
+    const again = new HostCore(store, async (id) => maps[id]!);
+    const back = await again.load({ slot: "auto" });
+    expect(back.queued).toEqual({ orders, paused: [HUMAN_ID] });
+    expect(restoredQueue(back.queued!.orders)).toEqual({ queue: orders.slice(1), instructions: { [HUMAN_ID]: { kind: "hold" } }, releases: [] });
+    // They're also what locks in if the timer runs out, exactly as before closing the tab.
+    expect(again.game!.snapshot().host).toMatchObject({ queued: { turn: 1, orders } });
+    // Once the turn is played, a kept queue is never brought back into the next one.
+    again.lockIn(orders, 1);
+    await again.flush();
+    const next = await new HostCore(store, async (id) => maps[id]!).load({ slot: "auto" });
+    expect(next.view.turn).toBe(2);
+    expect(next.queued?.orders ?? []).toEqual(next.generalOrders);
+    // Orders for a turn that's already gone are ignored.
+    expect(again.game!.saveOrders(orders, 1)).toBe(false);
   });
 
   it("save slots show map, players, turn and date, and load the game they hold", async () => {

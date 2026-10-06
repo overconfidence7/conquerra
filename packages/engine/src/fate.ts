@@ -383,8 +383,10 @@ export function checkMissions(h: FateHost) {
 /** As the turn ends, after the missions are checked: everyone still in draws one Fate card, in seat order. */
 export function drawFate(h: FateHost, seats: readonly PlayerId[]) {
   const { s, ctx } = h;
-  if (!s.settings.fate || s.winner) return;
   const cfg = ctx.rules.fate;
+  // The opening turns stay quiet: the first draw comes at the end of turn `firstDrawTurn` (a save replayed under
+  // older rules, without the number, drew from turn 1).
+  if (!s.settings.fate || s.winner || s.turn < (cfg.firstDrawTurn ?? 1)) return;
   const rng = new Rng(s.decks.fate);
   /** One Fate event per territory a turn. */
   const hit = new Set<TerritoryId>();

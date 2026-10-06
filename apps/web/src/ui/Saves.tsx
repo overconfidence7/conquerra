@@ -75,12 +75,12 @@ export default function SavesDialog({ mode, inGame, onClose }: { mode: "save" | 
         {error && <p className="warn">{error}</p>}
         <hr className="rule" />
         {mode === "save" ? (
-          <button className="menu-item" onClick={() => void downloadSave()}>
+          <button className="menu-item stacked" onClick={() => void downloadSave()}>
             Save to a file <span className="muted">to keep it, move it, or send it with a bug report</span>
           </button>
         ) : (
           <>
-            <button className="menu-item" onClick={() => file.current?.click()} disabled={busy}>
+            <button className="menu-item stacked" onClick={() => file.current?.click()} disabled={busy}>
               Load a file <span className="muted">a game you saved to a file</span>
             </button>
             <input

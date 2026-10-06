@@ -334,6 +334,8 @@ export const Rules = z.object({
    * or, `missionShare` of the time, a mission for the drawer (at most `maxMissions` open; another becomes an event).
    */
   fate: z.object({
+    /** The first draw comes at the end of this turn (3: the opening turns stay quiet; Nate, Oct 6). Missions and events both wait. */
+    firstDrawTurn: z.number().int().min(1),
     missionShare: z.number().min(0).max(1),
     maxMissions: z.number().int().min(0),
     events: z.array(FateEvent).min(1),
