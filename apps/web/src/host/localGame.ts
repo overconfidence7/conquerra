@@ -1,4 +1,4 @@
-import { captainBot, fallenBot, generalsOf, planGeneral, recruitBot, type Bot } from "@conquerra/bots";
+import { agreedIn, answerOrder, captainBot, fallenBot, generalsOf, judgeOffer, negotiate, planGeneral, recruitBot, withAgreed, type Answer, type Bot } from "@conquerra/bots";
 import { defaultRules, type MapDef } from "@conquerra/content";
 import {
   createGame,
@@ -10,6 +10,7 @@ import {
   type GameState,
   type Instruction,
   type NewGameOptions,
+  type Offer,
   type PlayerId,
   type Order,
   type OrdersByPlayer,
@@ -48,6 +49,15 @@ export interface LocalHostData {
    * took back. Only used if the save is still on that turn.
    */
   queued?: { turn: number; orders: Order[]; paused: PlayerId[] };
+  /** This turn's diplomacy among the bots and their answers to you (session 14), so Continue keeps it too. */
+  talk?: Talk;
+}
+
+/** The bots' diplomacy for one turn: their propose/answer orders, and the offers they made you. */
+interface Talk {
+  turn: number;
+  orders: OrdersByPlayer;
+  toHuman: Offer[];
 }
 
 export interface LocalGameOptions {
@@ -78,6 +88,8 @@ export class LocalGame {
   private readonly autosave?: (save: SaveFile) => void;
   /** What each seat watched in the last replay (from its own seat): the bots', and yours for your generals. */
   private lastTurn = new Map<string, ReplayEvent[]>();
+  /** This turn's diplomacy: the bots' offers and answers (to each other and to you), worked out as planning starts. */
+  private talk: Talk = { turn: 0, orders: {}, toHuman: [] };
 
   constructor(
     /** The map to play on (the worker loads it with `loadMap`; tests pass it straight from `maps`). */
@@ -101,6 +113,7 @@ export class LocalGame {
       const seconds = host.turnSeconds === undefined ? null : host.turnSeconds;
       this.turnMs = seconds === null ? null : seconds * 1000;
       this.lastTurn = new Map(Object.entries(host.lastTurn ?? {}));
+      if (host.talk && host.talk.turn === restore.state.turn) this.talk = host.talk;
       // The history only replays exactly under the rules it was played with; a game carried on under new ones drops it.
       const h = restore.history;
       this.history = h && JSON.stringify(h.rules) === JSON.stringify(defaultRules) ? h : null;
@@ -152,6 +165,8 @@ export class LocalGame {
    * save the game on the device (Continue in the lobby picks it up).
    */
   private startClock(replayMs: number, autosave = true) {
+    // The bots talk first (offers between them answered at once; offers to you wait for you), then your generals plan.
+    if (this.talk.turn !== this.state.turn) this.botTalks();
     // Your generals' orders go in even if you never touch the turn.
     this.saved = this.generalOrders();
     this.savedPaused = [];
@@ -203,7 +218,50 @@ export class LocalGame {
   }
 
   update(report: HostUpdate["report"] = null, fastForwarded = 0): HostUpdate {
-    return { playerId: HUMAN_ID, view: viewFor(this.ctx, this.state, HUMAN_ID), report, fastForwarded, clock: this.clock, generalOrders: this.generalOrders() };
+    return {
+      playerId: HUMAN_ID,
+      view: viewFor(this.ctx, this.state, HUMAN_ID),
+      report,
+      fastForwarded,
+      clock: this.clock,
+      generalOrders: this.generalOrders(),
+      offers: this.talk.turn === this.state.turn ? this.talk.toHuman : [],
+    };
+  }
+
+  /**
+   * Diplomacy, as planning starts (a host action: in M4 the same offers travel between people). Each bot, in seat
+   * order, proposes; an offer to another bot is answered at once; one to you waits for you.
+   */
+  private botTalks() {
+    this.talk = { turn: this.state.turn, orders: {}, toHuman: [] };
+    if (!this.state.settings.diplomacy || this.state.winner) return;
+    const bots = this.state.players.filter((p) => p.id !== HUMAN_ID && p.eliminatedTurn === null).map((p) => ({ id: p.id, level: this.botLevel }));
+    const t = negotiate(this.ctx, bots, (id) => viewFor(this.ctx, this.state, id), (id) => this.lastTurn.get(id), this.knockedOut ? null : HUMAN_ID);
+    this.talk = { turn: this.state.turn, orders: t.orders, toHuman: t.toHuman };
+  }
+
+  /** Deals both sides have confirmed this planning phase (yours with the bots' answers, and the bots' own). */
+  private agreed(human: readonly Order[] = this.saved): Offer[] {
+    return agreedIn({ ...this.talk.orders, [HUMAN_ID]: [...human] });
+  }
+
+  /**
+   * You offer a bot a deal: it answers at once, from its own view, with its reason (and maybe a counteroffer). Its
+   * answer is kept as its order for this turn; your offer goes in with your orders (the page adds it).
+   */
+  propose(offer: Offer): Answer {
+    const bot = this.state.players.find((p) => p.id === offer.to);
+    if (offer.from !== HUMAN_ID || !bot || bot.id === HUMAN_ID || bot.eliminatedTurn !== null || this.state.winner || this.knockedOut || !this.state.settings.diplomacy)
+      return { accept: false, reason: "That offer can't be made." };
+    const view = withAgreed(viewFor(this.ctx, this.state, bot.id), this.agreed());
+    const answer = judgeOffer(this.ctx, view, offer, this.botLevel, this.lastTurn.get(bot.id));
+    // A later answer to the same offer replaces an earlier one.
+    const list = (this.talk.orders[bot.id] ?? []).filter((o) => !(o.kind === "answer" && o.from === HUMAN_ID && o.offer === offer.id) && !(o.kind === "propose" && o.offer.counterTo === offer.id));
+    list.push(answerOrder(offer, answer.accept));
+    if (answer.counter) list.push({ id: `propose-${answer.counter.id}`, kind: "propose", offer: answer.counter });
+    this.talk.orders[bot.id] = list;
+    return answer;
   }
 
   /**
@@ -213,7 +271,8 @@ export class LocalGame {
    */
   generalOrders(instructions: Record<PlayerId, Instruction | null> = {}): Order[] {
     if (this.state.winner || this.knockedOut) return [];
-    const view = viewFor(this.ctx, this.state, HUMAN_ID);
+    // Your generals plan knowing the deals you've agreed this turn (they start before any move).
+    const view = withAgreed(viewFor(this.ctx, this.state, HUMAN_ID), this.agreed());
     return generalsOf(view).flatMap((g) =>
       planGeneral(this.ctx, view, g.general, g.general in instructions ? instructions[g.general]! : g.instruction, this.lastTurn.get(HUMAN_ID)),
     );
@@ -223,11 +282,15 @@ export class LocalGame {
     return this.state.players.find((p) => p.id === HUMAN_ID)!.eliminatedTurn !== null;
   }
 
-  private botOrders(): OrdersByPlayer {
+  private botOrders(human: readonly Order[] = []): OrdersByPlayer {
     const orders: OrdersByPlayer = {};
+    // What everyone agreed this planning phase: each bot plans its moves knowing it (the deals start before any move).
+    const now = this.talk.turn === this.state.turn;
+    const agreed = now ? this.agreed(human) : [];
     for (const p of this.state.players) {
       if (p.id === HUMAN_ID) continue;
-      if (p.eliminatedTurn === null) orders[p.id] = this.bot.plan(this.ctx, viewFor(this.ctx, this.state, p.id), this.lastTurn.get(p.id));
+      if (p.eliminatedTurn === null)
+        orders[p.id] = [...((now && this.talk.orders[p.id]) || []), ...this.bot.plan(this.ctx, withAgreed(viewFor(this.ctx, this.state, p.id), agreed), this.lastTurn.get(p.id))];
       // Knocked-out bots are the Fallen: they play world events against whoever leads.
       else if (this.state.settings.fallen) orders[p.id] = fallenBot.plan(this.ctx, viewFor(this.ctx, this.state, p.id));
     }
@@ -237,7 +300,7 @@ export class LocalGame {
   /** Resolve one turn and return your report of it. */
   private play(humanOrders: Order[] | null): HostUpdate["report"] {
     const before = this.state;
-    const orders = humanOrders ? { ...this.botOrders(), [HUMAN_ID]: humanOrders } : this.botOrders();
+    const orders = humanOrders ? { ...this.botOrders(humanOrders), [HUMAN_ID]: humanOrders } : this.botOrders();
     const result = resolveTurn(this.ctx, before, orders);
     this.history?.turns.push(orders);
     this.state = result.state;
@@ -302,6 +365,7 @@ export class LocalGame {
       turnSeconds: this.turnMs === null ? null : this.turnMs / 1000,
       lastTurn: Object.fromEntries(this.lastTurn),
       queued: { turn: this.state.turn, orders: this.saved, paused: this.savedPaused },
+      talk: this.talk,
     };
     return makeSave(this.ctx, this.state, HUMAN_ID, this.now(), {
       host: host as unknown as Record<string, unknown>,

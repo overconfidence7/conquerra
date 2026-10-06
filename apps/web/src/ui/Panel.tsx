@@ -32,6 +32,7 @@ import {
 } from "../logic/orders";
 import { BUILDING_HELP, BUILDING_NAME, SPECIALIST_HELP, SPECIALIST_NAME, TERRAIN_ICON, namer } from "../logic/text";
 import { closedNow } from "../logic/cards";
+import { attackCheck } from "../logic/deals";
 import { ArtIcon, buildingIcon, specialistIcon } from "./ArtIcon";
 import { useGame } from "../store";
 import { nearestRecruitSite, RECRUIT_RULE } from "../logic/actions";
@@ -172,7 +173,7 @@ function RecruitPanel({ ctx, view, queue, selected, order: orderId }: Props & { 
 const MAIN_PRESETS = new Set(["onlyIfStronger", "followThrough"]);
 
 function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraft }) {
-  const { updateDraft, addDraft, clearSelection, select } = useGame();
+  const { updateDraft, addDraft, clearSelection, select, pageDeals } = useGame();
   const [more, setMore] = useState(false);
   const n = namer(ctx, view);
   const attack = isAttack(view, draft, plan);
@@ -186,6 +187,9 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
   // Just enough only when it would do; the exact number lives under More.
   const chips = amountChoices(attack).filter((a) => a !== "enough" || enough !== null);
   const exact = typeof draft.amount === "number";
+  // Across a deal of yours: a binding pact blocks the attack; a handshake truce warns what breaking it costs.
+  const check = attack ? attackCheck(ctx, view, pageDeals(), draft.via ?? draft.from, draft.to) : null;
+  const blocked = !!check && "block" in check;
   return (
     <div className="panel">
       <div className="panel-head">
@@ -238,6 +242,7 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
         </p>
       )}
       {max === 0 && <p className="warn">No troops left to send from here this turn.</p>}
+      {check && <p className={`warn deal-warn ${blocked ? "" : "small"}`} role="alert">{"block" in check ? check.block : check.warn}</p>}
 
       <div className="chips">
         {presetsFor(view, draft, plan).filter((p) => more || MAIN_PRESETS.has(p.id) || draft.preset === p.id).map((p) => (
@@ -284,7 +289,7 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
       )}
 
       {!more && !draft.withLeader && !draft.timing && <p className="muted small">More… has an exact number{view.me.leader.alive ? ", the Leader" : ""} and the other backup plans.</p>}
-      <button className="primary wide" disabled={troops <= 0} onClick={addDraft}>
+      <button className="primary wide" disabled={troops <= 0 || blocked} onClick={addDraft}>
         Add {attack ? "attack" : "move"}
       </button>
       {draft.preset && <p className="muted small">{presetsFor(view, draft, plan).find((p) => p.id === draft.preset)?.description}</p>}

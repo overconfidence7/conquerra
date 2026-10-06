@@ -20,7 +20,8 @@ import {
   troopsOf,
   type MoveDraft,
 } from "../src/logic/orders";
-import { namer, narrateTurn } from "../src/logic/text";
+import { namer } from "../src/logic/text";
+import { narrateTurn } from "../src/logic/narrate";
 
 /** a - b - c - d - e in a line; you start at a, the bot at e. */
 const map = MapDef.parse({

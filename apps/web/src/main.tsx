@@ -1,7 +1,6 @@
-import { StrictMode } from "react";
+import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { useGame } from "./store";
-import { GameOver } from "./ui/GameOver";
 import { GameScreen } from "./ui/GameScreen";
 import { Lobby } from "./ui/Lobby";
 import { Diagnostics } from "./ui/Diagnostics";
@@ -23,10 +22,18 @@ void artUrl("frame-corner").then((u) => {
   document.documentElement.classList.add("corner-art");
 });
 
+/** The end of a game: loaded when it ends (with the turn report it shows). */
+const GameOver = lazy(() => import("./ui/GameOver").then((m) => ({ default: m.GameOver })));
+
 function Screen() {
   const screen = useGame((s) => s.screen);
   if (screen === "game") return <GameScreen />;
-  if (screen === "over") return <GameOver />;
+  if (screen === "over")
+    return (
+      <Suspense fallback={null}>
+        <GameOver />
+      </Suspense>
+    );
   return <Lobby />;
 }
 

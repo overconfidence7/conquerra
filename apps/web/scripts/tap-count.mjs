@@ -1,7 +1,8 @@
 /**
  * Counts the taps for a basic turn on a 384 px phone (recruit, two attacks, lock in), on the Ringsea. Then, on the
  * next turn, the taps to give your Leader an instruction after selecting its territory (Command, Push toward a place,
- * the place on the map: session 12 asks for 3 or fewer).
+ * the place on the map: session 12 asks for 3 or fewer). Then diplomacy (session 14): proposing a plain truce from the
+ * Players panel (4 or fewer), and accepting an offer once it's open (1).
  *   node apps/web/scripts/tap-count.mjs [screenshot.png] [command-screenshot.png]
  * Needs the built game running (`pnpm build`, `pnpm --filter web preview`).
  */
@@ -60,4 +61,27 @@ await sleep(800);
 const done = await page.evaluate(() => { const g = window.__conquerraStore.getState(); return { instructions: g.instructions, generalOrders: g.queue.filter((o) => o.general).length }; });
 console.log("instruction taps:", cmd, JSON.stringify(done));
 await page.screenshot({ path: process.argv[3] ?? "taps-command.png" });
+
+// Diplomacy: propose a plain truce from the Players panel, counting every tap.
+await page.evaluate(() => window.__conquerraStore.getState().clearSelection());
+await sleep(500);
+let deal = 0;
+const dealTap = async (f, what) => { await f(); deal++; await sleep(600); console.log(`  ${deal} ${what}`); };
+const rival = await page.evaluate(() => { const g = window.__conquerraStore.getState(); return g.view.players.find((p) => p.id !== g.view.me.id && p.eliminatedTurn === null).name; });
+await dealTap(async () => page.tap('button[aria-label="Players"]'), "Players");
+await dealTap(() => tapText(rival), `the player (${rival})`);
+await dealTap(() => tapText("Propose a deal"), "Propose a deal");
+await dealTap(() => tapText("Send"), "Send");
+const sent = await page.evaluate(() => { const g = window.__conquerraStore.getState(); return { offer: g.diplomacy.find((o) => o.kind === "propose")?.offer.terms, answer: Object.values(g.answers)[0] }; });
+console.log("propose-a-truce taps:", deal, JSON.stringify(sent));
+await page.screenshot({ path: process.argv[3]?.replace(".png", "-propose.png") ?? "taps-propose.png" });
+// Accepting an offer: open it from its toast (not counted), then Accept.
+await page.evaluate(() => { const g = window.__conquerraStore.getState(); g.closeDeal(); const from = g.view.players.find((p) => p.id !== g.view.me.id && p.eliminatedTurn === null).id; window.__conquerraStore.setState({ offers: [{ id: "tap-test", from, to: g.view.me.id, terms: { kind: "truce", scope: { kind: "all" }, turns: 3 }, bond: "handshake", note: "Let's have peace on our border." }] }); });
+await sleep(600);
+await page.tap(".offer-toast");
+await sleep(600);
+let acc = 0;
+await (async () => { await tapText("Accept"); acc++; await sleep(500); })();
+const accepted = await page.evaluate(() => window.__conquerraStore.getState().diplomacy.some((o) => o.kind === "answer" && o.accept));
+console.log("accept taps (once open):", acc, "accepted:", accepted);
 await browser.close();

@@ -1,6 +1,6 @@
 import { defaultRules, mapCatalog, suggestedMode } from "@conquerra/content";
 import { BOT_NAMES } from "./host/names";
-import { indexMap, isShare, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type RecruitAmount, type SpoilsSet, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
+import { indexMap, isShare, type DealKind, type GameContext, type Instruction, type Offer, type Order, type PlayerId, type PlayerView, type RecruitAmount, type SpoilsSet, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
 import { asIfYouOrderFrom, instructOrders, takeControl, withGeneralOrders } from "./logic/generals";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
@@ -10,6 +10,8 @@ import { dueTurnIn, withTurnIn } from "./logic/spoils";
 import { namer } from "./logic/text";
 import { DEFAULT_TIMER, type TurnClock } from "./logic/timer";
 import { actionBarState } from "./logic/actions";
+import type { Answer } from "@conquerra/bots";
+import { agreedThisTurn, attackCheck, counterFrom, dealsNow, newOffer, type PageDeal } from "./logic/deals";
 import { draftToOrder, isRecruitSite, type NewOrder, planQueue, queueFor, removeOrder, shiftOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
 
 export type Screen = "lobby" | "game" | "over";
@@ -63,6 +65,34 @@ interface GameStore {
   slotProblem: string | null;
   /** A message from the host for the player (an autosave that couldn't be written). */
   notice: string | null;
+
+  // ---------- Diplomacy (session 14) ----------
+  /** Your diplomacy orders this turn (offers, answers, deals renounced): they take no slot and aren't in the queue. */
+  diplomacy: Order[];
+  /** Offers to you this turn: the bots' (as planning started) and their counteroffers to yours. */
+  offers: Offer[];
+  /** The bots' answers to your offers, by your offer's id (each with its one-line reason). */
+  answers: Record<string, Answer>;
+  /** The deal card being shown: proposing to someone (your draft), or an offer to you. */
+  deal: { mode: "propose"; offer: Offer } | { mode: "offer"; offer: Offer } | null;
+  /** Picking on the map for the deal card: borders for a truce, or land for a trade (yours to give, or theirs). */
+  dealPick: "borders" | "give" | "get" | null;
+  /** Open the Propose card for `to` (a plain truce with its defaults). */
+  openPropose(to: PlayerId, kind?: DealKind): void;
+  /** Open an offer to you. */
+  openOffer(offer: Offer): void;
+  /** Change the draft on the Propose card. */
+  editDeal(offer: Offer): void;
+  closeDeal(): void;
+  setDealPick(pick: "borders" | "give" | "get" | null): void;
+  /** Send your offer: the bot answers at once (with its reason, maybe a counteroffer). */
+  sendOffer(offer: Offer): Promise<Answer | null>;
+  /** Accept or decline an offer to you (one tap). */
+  answerOffer(offer: Offer, accept: boolean): void;
+  /** Counter an offer to you: decline it, and open the same card from your side to change and send. */
+  counterOffer(offer: Offer): void;
+  /** Deals in force plus those agreed this turn (for the warnings, the map and the Players panel). */
+  pageDeals(): PageDeal[];
 
   setLobby(patch: Partial<LobbySettings>): void;
   start(): Promise<void>;
@@ -195,6 +225,65 @@ export const useGame = create<GameStore>((set, get) => ({
   slotProblem: null,
   notice: null,
   mission: null,
+  diplomacy: [],
+  offers: [],
+  answers: {},
+  deal: null,
+  dealPick: null,
+
+  openPropose(to, kind = "truce") {
+    const { ctx, view } = get();
+    if (!ctx || !view) return;
+    set({ deal: { mode: "propose", offer: newOffer(ctx, view, to, kind, ++offerCounter) }, dealPick: null, draft: null, recruit: null });
+  },
+  openOffer: (offer) => set({ deal: { mode: "offer", offer }, dealPick: null, draft: null }),
+  editDeal(offer) {
+    const d = get().deal;
+    if (d?.mode === "propose") set({ deal: { mode: "propose", offer } });
+  },
+  closeDeal: () => set({ deal: null, dealPick: null }),
+  setDealPick: (pick) => set({ dealPick: pick }),
+
+  async sendOffer(offer) {
+    const { host, view } = get();
+    if (!host || !view) return null;
+    try {
+      const answer = await host.propose(offer);
+      if (get().view?.turn !== view.turn) return null;
+      // Your offer goes in with your orders (the deal starts as the turn plays, if the bot said yes).
+      const proposed: Order = { id: `propose-${offer.id}`, kind: "propose", offer };
+      set({
+        diplomacy: [...get().diplomacy.filter((o) => !(o.kind === "propose" && o.offer.id === offer.id)), proposed],
+        answers: { ...get().answers, [offer.id]: answer },
+        offers: answer.counter ? [...get().offers.filter((o) => o.id !== answer.counter!.id), answer.counter] : get().offers,
+        deal: answer.counter ? { mode: "offer", offer: answer.counter } : get().deal,
+      });
+      if (answer.accept) void replanGenerals();
+      return answer;
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+      return null;
+    }
+  },
+
+  answerOffer(offer, accept) {
+    const answer: Order = { id: `answer-${offer.from}-${offer.id}`, kind: "answer", from: offer.from, offer: offer.id, accept };
+    set({ diplomacy: [...get().diplomacy.filter((o) => !(o.kind === "answer" && o.from === offer.from && o.offer === offer.id)), answer], deal: null, dealPick: null });
+    if (accept) void replanGenerals();
+  },
+
+  counterOffer(offer) {
+    const { view } = get();
+    if (!view) return;
+    get().answerOffer(offer, false);
+    set({ deal: { mode: "propose", offer: counterFrom(view, offer, ++offerCounter) } });
+  },
+
+  pageDeals() {
+    const { ctx, view, diplomacy, answers, offers } = get();
+    if (!ctx || !view) return [];
+    return dealsNow(ctx, view, agreedThisTurn(view, diplomacy, answers, offers));
+  },
 
   setLobby(patch) {
     const { lobby, modeTouched } = get();
@@ -257,8 +346,10 @@ export const useGame = create<GameStore>((set, get) => ({
   },
 
   tap(t) {
-    const { ctx, view, queue, selected, recruit, picking, aiming } = get();
+    const { ctx, view, queue, selected, recruit, picking, aiming, deal, dealPick } = get();
     if (!ctx || !view) return;
+    // Picking for the deal card: a tap adds (or takes away) a border or a piece of land.
+    if (deal?.mode === "propose" && dealPick) return set({ deal: { mode: "propose", offer: pickForDeal(ctx, view, deal.offer, dealPick, t) }, selected: t });
     // One of the Fallen, aiming a world event: this tap is its target (a storm takes a second tap, across the border).
     if (aiming) {
       if (aiming.event === "storm" && !aiming.target) return set({ aiming: { ...aiming, target: t }, selected: t });
@@ -299,6 +390,9 @@ export const useGame = create<GameStore>((set, get) => ({
   addDraft() {
     const { draft: d, ctx, view } = get();
     if (!d || !ctx || !view) return;
+    // An attack across a binding pact can't be queued (the panel says why).
+    const check = attackCheck(ctx, view, get().pageDeals(), d.via ?? d.from, d.to);
+    if (check && "block" in check) return;
     // An order of your own for a general's army takes control of it back for the turn (its orders step aside).
     const taken = takeControl(view, get().queue, { id: "draft", kind: "move", from: d.from, to: d.to, troops: "all" }, get().paused);
     // A hop from an attack that sends Just enough raises that attack to All (the panel says so).
@@ -395,9 +489,9 @@ export const useGame = create<GameStore>((set, get) => ({
   removeFallenOrder: (id) => set({ fallenOrders: get().fallenOrders.filter((o) => o.id !== id) }),
 
   turnOrders() {
-    const { view, queue, instructions, releases } = get();
+    const { view, queue, instructions, releases, diplomacy } = get();
     if (!view) return [...queue];
-    return [...instructOrders(view, instructions), ...releases.map((g) => ({ id: `release-${g}`, kind: "release", general: g }) as Order), ...queue];
+    return [...instructOrders(view, instructions), ...releases.map((g) => ({ id: `release-${g}`, kind: "release", general: g }) as Order), ...diplomacy, ...queue];
   },
 
   async lockIn() {
@@ -473,7 +567,7 @@ export const useGame = create<GameStore>((set, get) => ({
     get().host?.dispose();
     // Back in the lobby: the game you left is the autosave (Continue).
     void get().refreshSlots();
-    set({ screen: "lobby", host: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null });
+    set({ screen: "lobby", host: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null, diplomacy: [], offers: [], answers: {}, deal: null, dealPick: null });
   },
 }));
 
@@ -510,6 +604,11 @@ async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: G
       paused: u.queued?.paused ?? [],
       picking: null,
       releases: kept?.releases ?? [],
+      diplomacy: kept?.diplomacy ?? [],
+      offers: u.offers ?? [],
+      answers: {},
+      deal: null,
+      dealPick: null,
       fallenOrders: [],
       aiming: null,
       selected: knockedOut(u.view) ? null : u.view.me.capital,
@@ -540,18 +639,72 @@ async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: G
  * Orders a save kept (Continue), split back into the queue, instruction changes and generals you let go. Order ids
  * carry on past the highest one kept, so new orders never clash with them.
  */
-export function restoredQueue(orders: readonly Order[]): { queue: Order[]; instructions: Record<PlayerId, Instruction | null>; releases: PlayerId[] } {
+export function restoredQueue(orders: readonly Order[]): { queue: Order[]; instructions: Record<PlayerId, Instruction | null>; releases: PlayerId[]; diplomacy: Order[] } {
   const instructions: Record<PlayerId, Instruction | null> = {};
   const releases: PlayerId[] = [];
   const queue: Order[] = [];
+  const diplomacy: Order[] = [];
   for (const o of orders) {
     if (o.kind === "instruct") instructions[o.general] = o.instruction;
     else if (o.kind === "release") releases.push(o.general);
+    else if (o.kind === "propose" || o.kind === "answer" || o.kind === "break") diplomacy.push(o);
     else queue.push(o);
     const n = /^o(\d+)$/.exec(o.id);
     if (n) orderCounter = Math.max(orderCounter, Number(n[1]));
   }
-  return { queue, instructions, releases };
+  return { queue, instructions, releases, diplomacy };
+}
+
+let offerCounter = 0;
+
+/** Your generals re-plan after you agree a deal (they never attack across it). */
+async function replanGenerals() {
+  const { host, view, instructions } = useGame.getState();
+  if (!host || !view) return;
+  try {
+    const fresh = await host.planGenerals(instructions);
+    if (useGame.getState().view?.turn !== view.turn) return;
+    useGame.setState({ queue: withGeneralOrders(useGame.getState().queue, fresh, useGame.getState().paused) });
+  } catch {
+    // The old orders stay; the engine and the generals' guards still keep the deal.
+  }
+}
+
+/**
+ * A tap while picking for the deal card: a truce's border (their land next to yours: every border between that
+ * territory and yours), or a piece of land to trade (yours to give, or theirs to get). Tapping again takes it back.
+ */
+function pickForDeal(ctx: GameContext, view: PlayerView, o: Offer, pick: "borders" | "give" | "get", t: TerritoryId): Offer {
+  const idx = indexMap(ctx.map);
+  const owner = (x: TerritoryId) => {
+    const v = view.territories[x];
+    return v?.detail === "full" ? v.owner : (v?.lastSeen?.owner ?? null);
+  };
+  if (pick === "borders" && o.terms.kind === "truce") {
+    const them = o.to === view.me.id ? o.from : o.to;
+    const theirs = owner(t) === them ? t : null;
+    const mine = owner(t) === view.me.id ? t : null;
+    const pairs: [TerritoryId, TerritoryId][] = theirs
+      ? (idx.neighbors.get(theirs) ?? []).filter((n) => owner(n) === view.me.id).map((n) => [n, theirs])
+      : mine
+        ? (idx.neighbors.get(mine) ?? []).filter((n) => owner(n) === them).map((n) => [mine, n])
+        : [];
+    if (!pairs.length) return o;
+    const now = o.terms.scope.kind === "borders" ? o.terms.scope.borders : [];
+    const has = (p: [TerritoryId, TerritoryId]) => now.some(([a, b]) => (a === p[0] && b === p[1]) || (a === p[1] && b === p[0]));
+    const next = pairs.every(has) ? now.filter((q) => !pairs.some((p) => (q[0] === p[0] && q[1] === p[1]) || (q[0] === p[1] && q[1] === p[0]))) : [...now, ...pairs.filter((p) => !has(p))];
+    return { ...o, terms: { ...o.terms, scope: next.length ? { kind: "borders", borders: next } : { kind: "all" } } };
+  }
+  if ((pick === "give" || pick === "get") && o.terms.kind === "trade") {
+    const side = o.terms[pick];
+    const giver = pick === "give" ? o.from : o.to;
+    if (owner(t) !== giver) return o;
+    const land = side.land ?? [];
+    const next = land.includes(t) ? land.filter((x) => x !== t) : [...land, t].slice(0, ctx.rules.diplomacy.trade.maxLand);
+    const { land: _old, ...rest } = side;
+    return { ...o, terms: { ...o.terms, [pick]: next.length ? { ...rest, land: next } : rest } };
+  }
+  return o;
 }
 
 /** The queue a turn's planning starts with: your generals' orders, and a Spoils set if your hand is full. */
@@ -575,6 +728,12 @@ function applyTurn(u: HostUpdate, auto: boolean) {
     queue: openingQueue(useGame.getState().ctx, u),
     instructions: {},
     paused: [],
+    // Last turn's offers have lapsed; this turn's are new.
+    diplomacy: [],
+    offers: u.offers ?? [],
+    answers: {},
+    deal: null,
+    dealPick: null,
     picking: null,
     releases: [],
     draft: null,
@@ -591,7 +750,7 @@ function applyTurn(u: HostUpdate, auto: boolean) {
 // The host keeps your orders as you build them: they're what locks in if the timer runs out, and the autosave keeps
 // them for Continue.
 useGame.subscribe((s, prev) => {
-  if ((s.queue !== prev.queue || s.instructions !== prev.instructions || s.releases !== prev.releases || s.paused !== prev.paused) && s.host && s.view)
+  if ((s.queue !== prev.queue || s.instructions !== prev.instructions || s.releases !== prev.releases || s.paused !== prev.paused || s.diplomacy !== prev.diplomacy) && s.host && s.view)
     s.host.saveOrders(s.turnOrders(), s.view.turn, s.paused);
 });
 

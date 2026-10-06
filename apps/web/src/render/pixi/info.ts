@@ -28,6 +28,48 @@ const MAX_SITE_SHIFT = 60;
 
 const ring = (g: Graphics, r: Line, close = true) => g.poly(r as number[], close);
 
+/** Short dashes along a line (`dash` long, `gap` apart): a truce's stitching. */
+function stitches(g: Graphics, l: Line, dash: number, gap: number, width: number, color: number, alpha: number) {
+  const p = l as number[];
+  let on = true, left = dash;
+  for (let i = 2; i < p.length; i += 2) {
+    let x0 = p[i - 2]!, y0 = p[i - 1]!;
+    const x1 = p[i]!, y1 = p[i + 1]!;
+    let len = Math.hypot(x1 - x0, y1 - y0);
+    while (len > 0) {
+      const step = Math.min(left, len);
+      const k = step / len;
+      const xs = x0 + (x1 - x0) * k, ys = y0 + (y1 - y0) * k;
+      if (on) g.moveTo(x0, y0).lineTo(xs, ys).stroke({ width, color, alpha, cap: "butt" });
+      x0 = xs;
+      y0 = ys;
+      len -= step;
+      left -= step;
+      if (left <= 1e-9) {
+        on = !on;
+        left = on ? dash : gap;
+      }
+    }
+  }
+}
+
+/** Small round studs every `gap` along a line (a binding pact's seal marks). */
+function studs(g: Graphics, l: Line, gap: number, r: number, color: number) {
+  const p = l as number[];
+  let carry = gap / 2;
+  for (let i = 2; i < p.length; i += 2) {
+    const x0 = p[i - 2]!, y0 = p[i - 1]!, x1 = p[i]!, y1 = p[i + 1]!;
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    let at = carry;
+    while (at <= len) {
+      const k = at / len;
+      g.circle(x0 + (x1 - x0) * k, y0 + (y1 - y0) * k, r).fill({ color, alpha: 0.95 }).stroke({ width: r * 0.5, color: INK, alpha: 0.8 });
+      at += gap;
+    }
+    carry = at - len;
+  }
+}
+
 export class InfoLayer {
   readonly tactical = new Graphics();
   /** Called when who holds what changes: the world layer paints the House tint from it (in its shader). */
@@ -293,6 +335,21 @@ export class InfoLayer {
           st(1.15, INK, 0.78);
         }
       }
+    }
+    // Truces (session 14): every border a truce covers, where you can see it: a white band stitched with dark dashes
+    // (a binding pact adds gold studs). Widths in screen pixels, so it reads at every zoom. Agreed this turn: fainter.
+    const truces = this.scene!.truces ?? [];
+    if (truces.length) {
+      const key = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+      const lineOf = new Map(g.borderLines.map((b) => [key(b.a, b.b), b.lines]));
+      for (const t of truces)
+        for (const l of lineOf.get(key(t.a, t.b)) ?? []) {
+          const fade = t.pending ? 0.65 : 1;
+          ring(G, l, false).stroke({ width: 11 * px, color: INK, alpha: 0.45 * fade, join: "round", cap: "round" });
+          ring(G, l, false).stroke({ width: 8 * px, color: 0xffffff, alpha: 0.9 * fade, join: "round", cap: "round" });
+          stitches(G, l, 9 * px, 7 * px, 2.4 * px, INK, 0.85 * fade);
+          if (t.bond === "binding") studs(G, l, 28 * px, 3.4 * px, GOLD_HI);
+        }
     }
     // Passes: a small stone gate across the road, sized to read at Mid zoom.
     this.gates.clear();

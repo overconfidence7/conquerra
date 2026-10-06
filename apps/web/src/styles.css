@@ -168,7 +168,41 @@ p.good { color: var(--good); margin: 0; }
 /* Right column (desktop): the players and your Leader; the selected territory has its own panel (bottom left). */
 .rightcol { position: absolute; top: 72px; right: 8px; max-height: calc(100vh - 360px); width: 284px; z-index: 6; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; scrollbar-width: thin; }
 .players { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.player { display: grid; grid-template-columns: 30px 38px 1fr auto; align-items: center; gap: 8px; }
+.player { display: block; }
+.player-btn { display: grid; grid-template-columns: 30px 38px 1fr auto; align-items: center; gap: 8px; width: 100%; }
+button.player-btn { background: none; border: 1px solid transparent; border-radius: 8px; padding: 2px 4px; margin: -2px -4px; width: calc(100% + 8px); min-height: 44px; color: inherit; text-align: left; font: inherit; }
+.player.open button.player-btn { border-color: rgba(201, 164, 92, 0.45); background: rgba(201, 164, 92, 0.08); }
+.player-more { display: flex; flex-direction: column; gap: 4px; padding: 6px 0 2px 76px; }
+.player-more p { margin: 0; }
+.player .oath { margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: #6b1f16; color: #ffd9cf; font: 700 var(--fs-label) var(--font-head); vertical-align: 1px; }
+.deal-marks { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.deal-mark { display: inline-flex; align-items: center; gap: 2px; padding: 0 5px 0 3px; border-radius: 999px; border: 1px solid rgba(220, 230, 240, 0.45); background: rgba(15, 22, 32, 0.6); font: 700 var(--fs-label) var(--font-num); line-height: 18px; }
+.deal-mark .with { width: 9px; height: 9px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0, 0, 0, 0.5); }
+.deal-mark.binding { border-color: var(--gold); }
+.deal-mark .seal { font-size: 0.7rem; }
+.deal-mark.pending { border-style: dashed; }
+/* The deal card (session 14) */
+.deal-sheet .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.deal-sheet .row > .chips { justify-content: flex-end; }
+.deal-sheet h3 { margin: 4px 0 2px; font: 700 var(--fs-body) var(--font-head); color: var(--gold-hi); }
+.deal-sheet .trade-side { display: flex; flex-direction: column; gap: 4px; }
+.deal-words { margin: 0; font-style: italic; }
+.deal-answer { border-left: 3px solid var(--gold); padding: 6px 10px; background: rgba(201, 164, 92, 0.08); border-radius: 6px; margin: 0; }
+.deal-answer p { margin: 0 0 4px; }
+.deal-answer.yes { border-left-color: var(--good); }
+.deal-answer.no { border-left-color: var(--bad); }
+.deal-terms { margin: 0; display: grid; gap: 4px; }
+.deal-terms > div { display: grid; grid-template-columns: 7.5em 1fr; gap: 8px; }
+.deal-terms dt { color: var(--muted); font: 700 var(--fs-label) var(--font-head); text-transform: uppercase; letter-spacing: 0.04em; padding-top: 2px; }
+.deal-terms dd { margin: 0; }
+.deal-terms .changed dd { color: var(--gold-hi); }
+.deal-terms .changed-tag { font: 700 var(--fs-label) var(--font-head); color: var(--navy); background: var(--gold-hi); border-radius: 999px; padding: 0 6px; margin-left: 6px; }
+.pick-banner.deal-pick { white-space: normal; }
+.deal-warn { border-left: 3px solid var(--bad); padding-left: 8px; }
+/* Offers to you: a small toast as planning starts (tap to open). */
+.offer-toasts { position: absolute; z-index: 26; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; }
+.offer-toast { pointer-events: auto; display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--gold); background: rgba(15, 22, 32, 0.92); color: var(--text, #f3ead6); font: 600 var(--fs-body) var(--font-body); min-height: 44px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45); }
+.offer-toast .house-dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.5); }
 .player img.shield { width: 30px; height: 30px; }
 .player img.portrait { width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--gold); object-fit: cover; }
 .player .pname { font: 600 0.95rem var(--font-body); }
@@ -478,3 +512,4 @@ p.good { color: var(--good); margin: 0; }
 .mission-line b { color: var(--good); font-weight: 700; }
 .mission-line .due { margin-left: 6px; font: 700 var(--fs-label) var(--font-head); color: var(--muted); }
 .mission-line .due.last { color: #ffb4a3; }
+.deal-sheet .scroll { padding-right: 6px; }

@@ -72,9 +72,11 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     case "fate":
     case "missionDone":
       return "pop";
-    // Deals: land that changed hands by agreement, and troops that deserted, pop on the map.
+    // Deals: a deal starting or broken gets a beat (its toast), with any land that changed hands or troops that
+    // deserted popping on the map; a payment only if troops deserted for it.
     case "dealStarted":
     case "dealBroken":
+      return "pop";
     case "tribute":
       return e.land.length ? "pop" : null;
     case "moved":

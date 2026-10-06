@@ -1,5 +1,6 @@
 import type { MapDef } from "@conquerra/content";
-import { readSave, type Instruction, type Order, type PlayerId, type SaveFile } from "@conquerra/engine";
+import type { Answer } from "@conquerra/bots";
+import { readSave, type Instruction, type Offer, type Order, type PlayerId, type SaveFile } from "@conquerra/engine";
 import { LocalGame } from "./localGame";
 import type { HostStart, HostUpdate, LobbySettings, LoadSource } from "./protocol";
 import { saveErrorFor, type SaveStore, type SlotId, type SlotInfo } from "./saves";
@@ -127,6 +128,7 @@ export class HostCore {
     if (this.game && !this.game.over) this.autosave(this.game.snapshot());
   }
   suggest = (): Order[] => this.g.suggest();
+  propose = (offer: Offer): Answer => this.g.propose(offer);
   planGenerals = (instructions: Record<PlayerId, Instruction | null>): Order[] => this.g.generalOrders(instructions);
   pause = (): HostUpdate => this.g.pause();
   resume = (): HostUpdate => this.g.resume();

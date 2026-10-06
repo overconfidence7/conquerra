@@ -128,6 +128,8 @@ export interface Offer {
   bond: Bond;
   /** A counteroffer: the offer (of the other side's) it answers. */
   counterTo?: string;
+  /** One line from the proposer: why it's asking (bots always say; the engine ignores it). */
+  note?: string;
 }
 
 /** A deal in force. */

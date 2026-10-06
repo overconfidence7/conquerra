@@ -318,7 +318,8 @@ function tradeValue(ctx: GameContext, view: PlayerView, b: Board, t: Extract<Dea
   };
   // What we get: the proposer's `give`; what we give: `get`.
   const gain = (t.give.gold ?? 0) + (t.give.perTurn ?? 0) * each * 0.8 + (t.give.land ?? []).reduce((a, x) => a + landWorth(x), 0);
-  let cost = (t.get.gold ?? 0) + (t.get.perTurn ?? 0) * each + (t.get.land ?? []).reduce((a, x) => a + landWorth(x) + (b.isFrontier(x) ? 2 : 0), 0);
+  // Land it gives up is worth more to it than the same land would be to buy (it holds it, and it's income every turn).
+  let cost = (t.get.gold ?? 0) + (t.get.perTurn ?? 0) * each + (t.get.land ?? []).reduce((a, x) => a + 3 * b.valueOf(x) + 4 + (b.isFrontier(x) ? 2 : 0), 0);
   let giveLandBad: string | null = null;
   for (const x of t.get.land ?? []) {
     if (x === b.capital || x === view.me.capital) giveLandBad = "I won't give up my capital.";
@@ -383,12 +384,13 @@ export function proposeOffers(ctx: GameContext, view: PlayerView, level: Diploma
   const recent = (q: PlayerId, kind: DealKind) => view.record.some((x) => x.kind === kind && between(x, me, q) && x.end >= view.turn - RE_ASK_TURNS);
   const ok = (q: PlayerId, kind: DealKind) =>
     q !== me && b.alive.some((x) => x.id === q) && !has(q, kind) && !recent(q, kind) && !askedLastTurn(lastTurn, me, q, kind) && trustIn(ctx, view, q).score >= rules.diplomacy.bots.trustMin;
-  const add = (to: PlayerId, terms: DealTerms) => out.length < cap && out.push({ id: `${me}-t${view.turn}-o${k++}`, from: me, to, terms, bond: "handshake" });
+  const add = (to: PlayerId, terms: DealTerms, note: string) => out.length < cap && out.push({ id: `${me}-t${view.turn}-o${k++}`, from: me, to, terms, bond: "handshake", note });
+  const n = namesFor(ctx, view);
   const truceTurns = rules.diplomacy.truce.defaultTurns;
 
   if (level === "recruit") {
     for (const [q] of [...b.facing].sort((x, y) => y[1] - x[1] || (x[0] < y[0] ? -1 : 1)))
-      if (q !== b.runaway && (b.knownLand.get(q) ?? 0) > b.mine.length * 1.2 && ok(q, "truce")) add(q, { kind: "truce", scope: { kind: "all" }, turns: truceTurns });
+      if (q !== b.runaway && (b.knownLand.get(q) ?? 0) > b.mine.length * 1.2 && ok(q, "truce")) add(q, { kind: "truce", scope: { kind: "all" }, turns: truceTurns }, "You're stronger than me; let's keep the peace.");
     return out;
   }
 
@@ -400,7 +402,7 @@ export function proposeOffers(ctx: GameContext, view: PlayerView, level: Diploma
       .map((x) => x.id)
       .filter((q) => q !== R && ok(q, "war") && (bordersR(q) || b.facing.has(R)))
       .sort((x, y) => (b.knownLand.get(y) ?? 0) - (b.knownLand.get(x) ?? 0) || (x < y ? -1 : 1))[0];
-    if (partner) add(partner, { kind: "war", target: R, turns: rules.diplomacy.war.defaultTurns });
+    if (partner) add(partner, { kind: "war", target: R, turns: rules.diplomacy.war.defaultTurns }, `${n.name(R)} is running away with the map; let's stop them together.`);
   }
 
   // A truce on a front we can't afford while another front needs us (never with the runaway or our target).
@@ -410,7 +412,8 @@ export function proposeOffers(ctx: GameContext, view: PlayerView, level: Diploma
       if (q === R || q === b.focus || !ok(q, "truce")) continue;
       const f = frontWith(b, q);
       if (troops > f.mine * AFFORD || (b.capThreatened && b.capital && b.facesRival(b.capital, q))) {
-        add(q, { kind: "truce", scope: { kind: "all" }, turns: truceTurns });
+        const elsewhere = fronts.find(([o]) => o !== q);
+        add(q, { kind: "truce", scope: { kind: "all" }, turns: truceTurns }, elsewhere ? `My army is needed in ${direction(ctx, b.mine, frontWith(b, elsewhere[0]).land)}; let's have peace on our border.` : "Let's have peace on our border.");
         break;
       }
     }
@@ -425,9 +428,9 @@ export function proposeOffers(ctx: GameContext, view: PlayerView, level: Diploma
     const prov = b.idx.byId.get(t)!.province;
     const missing = (b.idx.provinceMembers.get(prov) ?? []).filter((x) => !b.owned(x));
     if (missing.length !== 1 || landProblem(b.idx, rules, board, v.owner, me, [t])) continue;
-    const price = Math.min(Math.round(2 * b.valueOf(t)) + 2, view.me.gold - reserve);
+    const price = Math.min(Math.round(3 * b.valueOf(t)) + 6, view.me.gold - reserve);
     if (price < 4) continue;
-    add(v.owner, { kind: "trade", give: { gold: price }, get: { land: [t] } });
+    add(v.owner, { kind: "trade", give: { gold: price }, get: { land: [t] } }, `${n.place(t)} would complete ${n.province(prov)} for me; ${price} gold for it?`);
   }
 
   // Short of gold: sell a poor, quiet piece of border land to a neighbour (never next to our capital).
@@ -435,7 +438,7 @@ export function proposeOffers(ctx: GameContext, view: PlayerView, level: Diploma
     for (const t of [...b.frontier].sort((x, y) => b.valueOf(x) - b.valueOf(y) || (x < y ? -1 : 1))) {
       const buyer = b.idx.neighbors.get(t)!.map((x) => b.rivalAt(x)).find((q): q is PlayerId => !!q && q !== R && ok(q, "trade"));
       if (!buyer || b.idx.neighbors.get(t)!.includes(view.me.capital) || landProblem(b.idx, rules, board, me, buyer, [t])) continue;
-      add(buyer, { kind: "trade", give: { land: [t] }, get: { gold: Math.round(2 * b.valueOf(t)) + 4 } });
+      add(buyer, { kind: "trade", give: { land: [t] }, get: { gold: Math.round(3 * b.valueOf(t)) + 6 } }, `I'm short of gold; ${n.place(t)} is yours for a fair price.`);
       break;
     }
   return out;

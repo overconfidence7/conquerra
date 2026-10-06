@@ -1,5 +1,6 @@
 import type { GameContext, ReplayEvent, SeenTerritory, VisionEvent } from "@conquerra/engine";
-import { BUILDING_NAME, narrate, type LogLine, type Namer } from "./text";
+import { BUILDING_NAME, type LogLine, type Namer } from "./text";
+import { narrate } from "./narrate";
 
 /**
  * The turn report, grouped by what matters to you first:

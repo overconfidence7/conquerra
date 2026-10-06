@@ -18,6 +18,7 @@ export function inProcessHost(seed: string, store: SaveStore = memorySaveStore()
     watchNext: async (orders) => core.watchNext(orders),
     finish: async () => core.finish(),
     suggest: async () => core.suggest(),
+    propose: async (offer) => core.propose(offer),
     planGenerals: async (instructions) => core.planGenerals(instructions),
     saveTo: async (slot) => core.saveTo(slot),
     exportSave: async (notes) => core.exportSave(notes),

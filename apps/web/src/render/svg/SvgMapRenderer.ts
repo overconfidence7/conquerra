@@ -95,6 +95,15 @@ class SvgMapRenderer implements MapRenderer {
     for (const id of targets) el("path", { d: path(g.territories.find((t) => t.id === id)!.rings), fill: "rgba(255,255,255,0.15)", stroke: "#fff", "stroke-width": 2.5 * k, "stroke-dasharray": "6 4" }, this.dynamic);
     for (const id of glow) el("path", { d: path(g.territories.find((t) => t.id === id)!.rings), fill: "rgba(227,199,126,0.25)", stroke: "#fff1c1", "stroke-width": 2.5 * k }, this.dynamic);
     if (selected) el("path", { d: path(g.territories.find((t) => t.id === selected)!.rings), fill: "none", stroke: "#e3c77e", "stroke-width": 5 * k }, this.dynamic);
+    // Truce borders (session 14), where you can see them.
+    for (const tr of scene.truces ?? [])
+      for (const b of g.borderLines)
+        if ((b.a === tr.a && b.b === tr.b) || (b.a === tr.b && b.b === tr.a))
+          for (const l of b.lines) {
+            const d = `M${(l as number[]).reduce((s, v, i) => s + (i % 2 ? `,${v}` : `${i ? " L" : ""}${v}`), "")}`;
+            el("path", { d, fill: "none", stroke: "#f4f8ff", "stroke-opacity": 0.55, "stroke-width": 9 * k, "stroke-linecap": "round" }, this.dynamic);
+            el("path", { d, fill: "none", stroke: tr.bond === "binding" ? "#e3c77e" : "#2f6fae", "stroke-width": 3 * k, "stroke-linecap": "round" }, this.dynamic);
+          }
     const label = new Map(g.territories.map((t) => [t.id, t.label]));
     for (const a of arrows) {
       const pts = [a.from, ...(a.via ? [a.via] : []), a.to].map((id) => label.get(id)!);

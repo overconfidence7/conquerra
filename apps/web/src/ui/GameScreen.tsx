@@ -1,6 +1,8 @@
 import { recruitSitesIn, type GameContext, type Order, type PlayerView } from "@conquerra/engine";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { missionTargets } from "../logic/cards";
+import { truceLines, waitingOffers } from "../logic/deals";
+import { colorOf } from "./colors";
 import { incomeEstimate } from "../logic/actions";
 import { planQueue, queueFor } from "../logic/orders";
 import { asIfYouOrderFrom } from "../logic/generals";
@@ -25,7 +27,6 @@ import { TerritoryCard, vistaFor } from "./TerritoryCard";
 import { useArtUrl } from "./art";
 import { Toasts, type ShownToast } from "./Toasts";
 import { TopBar } from "./TopBar";
-import { ReportBody, TurnReportDialog } from "./TurnReport";
 import { useReplay } from "./useReplay";
 import { moreCue } from "./moreCue";
 import { useLayout, useLayoutChoice } from "./useLayout";
@@ -41,6 +42,11 @@ const OutPanel = lazy(() => import("./Out").then((m) => ({ default: m.OutPanel }
 const KeepGenerals = lazy(() => import("./KeepGenerals"));
 /** Your cards (Spoils and missions): loaded the first time you open them. */
 const CardsSheet = lazy(() => import("./Cards"));
+/** The deal card (session 14): loaded the first time you propose a deal or open an offer. */
+const DealSheet = lazy(() => import("./Deals"));
+/** The turn report and its wording (session 14): loaded once the first turn has played (it isn't needed before). */
+const TurnReportDialog = lazy(() => import("./TurnReport").then((m) => ({ default: m.TurnReportDialog })));
+const ReportBody = lazy(() => import("./TurnReport").then((m) => ({ default: m.ReportBody })));
 
 /** One shared empty list: a new [] on every render made the map rebuild its whole info layer many times a second during the replay (and freeze on big realms). */
 const NO_ORDERS: readonly Order[] = [];
@@ -195,6 +201,10 @@ export function GameScreen() {
     return m ? missionTargets(ctx, view, m) : NO_GLOW;
   }, [ctx, view, recruitOpen, missionId]);
   useEffect(() => setSpendOpen(false), [selected]);
+  // Diplomacy: truce borders on the map (in force, and agreed this turn), and offers to you still waiting.
+  const { diplomacy, answers, offers, deal } = g;
+  const truces = useMemo(() => truceLines(g.pageDeals()), [view, diplomacy, answers, offers]); // eslint-disable-line react-hooks/exhaustive-deps
+  const waiting = useMemo(() => waitingOffers(offers, diplomacy), [offers, diplomacy]);
 
   if (!ctx || !view || !plan) return null;
   const out = knockedOut(view);
@@ -220,6 +230,7 @@ export function GameScreen() {
         draft={act ? draft : null}
         showTargets={act && !recruitOpen && (plan.free.get(selected ?? "") ?? 0) > 0}
         glow={act ? glow : NO_GLOW}
+        truces={truces}
         onTap={(t) => {
           // One of the Fallen, aiming a world event: a tap picks its target.
           if (out && g.aiming && !replaying) return g.tap(t);
@@ -314,7 +325,9 @@ export function GameScreen() {
     <>
       {pickBanner}
       {showReport && report && !replaying && (
-        <TurnReportDialog ctx={ctx} view={view} report={report} autoLocked={autoLocked} onClose={() => g.setShowReport(false)} onWatchAgain={() => g.watchAgain()} />
+        <Suspense fallback={null}>
+          <TurnReportDialog ctx={ctx} view={view} report={report} autoLocked={autoLocked} onClose={() => g.setShowReport(false)} onWatchAgain={() => g.watchAgain()} />
+        </Suspense>
       )}
       {out && !watching && !replaying && (
         <Suspense fallback={null}>
@@ -348,6 +361,23 @@ export function GameScreen() {
         <Suspense fallback={null}>
           <CardsSheet ctx={ctx} view={view} onClose={() => setCardsOpen(false)} onShowMission={(id) => (setCardsOpen(false), g.showMission(id))} />
         </Suspense>
+      )}
+      {deal && act && (
+        <Suspense fallback={null}>
+          <DealSheet ctx={ctx} view={view} />
+        </Suspense>
+      )}
+      {/* Offers to you: a small toast as planning starts; tap it to open (Accept is one tap). */}
+      {act && !deal && !showReport && waiting.length > 0 && (
+        <div className="offer-toasts" style={{ top: phone ? 104 : 80 }}>
+          {waiting.map((o) => (
+            <button key={`${o.from}-${o.id}`} className="offer-toast" onClick={() => g.openOffer(o)}>
+              <i className="house-dot" style={{ background: colorOf(view, o.from) }} aria-hidden />
+              {view.players.find((p) => p.id === o.from)?.name ?? o.from} offers {o.terms.kind === "war" ? "a joint war" : o.terms.kind === "passage" ? "right of passage" : `a ${o.terms.kind}`}
+              {o.counterTo ? " (a counteroffer)" : ""} ›
+            </button>
+          ))}
+        </div>
       )}
     </>
   );
@@ -392,7 +422,11 @@ export function GameScreen() {
             {tab === "orders" && <OrderQueue ctx={ctx} view={view} plan={plan} queue={shownQueue} bare />}
             {tab === "card" && (selected ? <TerritoryCard ctx={ctx} view={view} id={selected} /> : <p className="muted">Tap a territory to see its card. Tap and hold anywhere for a quick look.</p>)}
             {tab === "card" && <LeaderCard ctx={ctx} view={view} queue={queue} onCards={() => setCardsOpen(true)} />}
-            {tab === "report" && report && <ReportBody ctx={ctx} view={view} report={report} />}
+            {tab === "report" && report && (
+              <Suspense fallback={null}>
+                <ReportBody ctx={ctx} view={view} report={report} />
+              </Suspense>
+            )}
             {tab === "report" && report && <button onClick={() => g.watchAgain()}>Watch again</button>}
           </BottomSheet>
         )}

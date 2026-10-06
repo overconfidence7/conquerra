@@ -24,6 +24,8 @@ interface Props {
   showTargets: boolean;
   /** Territories to glow gold (recruit sites while the Recruit panel is open). */
   glow?: readonly TerritoryId[];
+  /** Truce borders to draw (where you can see them). */
+  truces?: MapScene["truces"];
   onTap(t: TerritoryId): void;
   onBackground?(): void;
 }
@@ -45,7 +47,7 @@ export const saveTactical = (on: boolean) => {
 };
 
 /** Builds what the map shows from the game screen's state. */
-export function buildScene(ctx: GameContext, view: PlayerView, queue: readonly Order[], selected: TerritoryId | null, draft: MoveDraft | null, showTargets: boolean, glow: readonly TerritoryId[] = []): MapScene {
+export function buildScene(ctx: GameContext, view: PlayerView, queue: readonly Order[], selected: TerritoryId | null, draft: MoveDraft | null, showTargets: boolean, glow: readonly TerritoryId[] = [], truces: MapScene["truces"] = []): MapScene {
   // Walk the queue step by step, so each arrow is an attack or a move as it will be when it plays.
   const arrows: OrderArrow[] = [];
   queue.forEach((o, i) => {
@@ -65,10 +67,12 @@ export function buildScene(ctx: GameContext, view: PlayerView, queue: readonly O
     // Only where an attack should capture (or a hop pushes on from): the plain moves already show on your own markers.
     arriving: [...plan.captured].map((t) => ({ territory: t, troops: plan.arriving.get(t) ?? 0 })),
     odds: draft && isAttack(view, draft, plan) ? { target: draft.to, odds: oddsFor(ctx, view, plan, draft), estimate: oddsAreEstimate(plan, draft) } : null,
+    truces,
   };
 }
 
 const NO_GLOW: readonly TerritoryId[] = [];
+const NO_TRUCES: MapScene["truces"] = [];
 
 interface CardState {
   id: TerritoryId;
@@ -77,13 +81,13 @@ interface CardState {
   how: "hover" | "hold";
 }
 
-export function MapView({ ctx, view, queue, selected, draft, showTargets, glow = NO_GLOW, onTap, onBackground, insets, tactical, rendererRef, onViewMoved, tools = false }: Props) {
+export function MapView({ ctx, view, queue, selected, draft, showTargets, glow = NO_GLOW, truces = NO_TRUCES, onTap, onBackground, insets, tactical, rendererRef, onViewMoved, tools = false }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const ownRef = useRef<MapRenderer | null>(null);
   const renderer = rendererRef ?? ownRef;
   const [kind, setKind] = useState<MapRenderer["kind"] | null>(null);
   const [card, setCard] = useState<CardState | null>(null);
-  const scene = useMemo(() => buildScene(ctx, view, queue, selected, draft, showTargets, glow), [ctx, view, queue, selected, draft, showTargets, glow]);
+  const scene = useMemo(() => buildScene(ctx, view, queue, selected, draft, showTargets, glow, truces), [ctx, view, queue, selected, draft, showTargets, glow, truces]);
   // Latest handlers and scene, for the renderer's callbacks and its async start.
   const live = useRef({ onTap, onBackground, scene, onViewMoved, insets, tactical });
   live.current = { onTap, onBackground, scene, onViewMoved, insets, tactical };

@@ -62,6 +62,22 @@ export function toastFor(ctx: GameContext, view: Pick<PlayerView, "players" | "m
       return me(e.player) ? { text: `${view.players.find((p) => p.id === e.general)?.name ?? "A Leader"} joins you as a captured general`, tone: "good", house: house(e.general)?.color ?? null } : null;
     case "gameOver":
       return { text: e.winner === "draw" ? "The game ends in a draw" : me(e.winner) ? "You win!" : `${name(e.winner)} wins the game`, tone: me(e.winner) ? "good" : "info", house: e.winner === "draw" ? null : (house(e.winner)?.color ?? null) };
+    // Diplomacy (session 14): your own deals, a joint war aimed at you (you're told who's coming), and Oathbreakers.
+    case "dealStarted": {
+      const d = e.deal;
+      const kind = d.terms.kind === "war" ? "joint war" : d.terms.kind === "passage" ? "right of passage" : d.terms.kind;
+      if (me(d.a) || me(d.b)) return { text: `Your ${kind} with ${name(me(d.a) ? d.b : d.a)} starts`, tone: "good", house: house(me(d.a) ? d.b : d.a)?.color ?? null };
+      if (d.terms.kind === "war" && me(d.terms.target)) return { text: `${name(d.a)} and ${name(d.b)} declare a joint war on you`, tone: "bad", house: house(d.a)?.color ?? null };
+      return null;
+    }
+    case "dealBroken": {
+      const kind = e.kind === "war" ? "joint war" : e.kind;
+      if (me(e.by)) return { text: `You broke your ${kind}: Oathbreaker`, tone: "bad", house: house(e.by)?.color ?? null };
+      if (me(e.a) || me(e.b)) return { text: `${name(e.by)} broke their ${kind} with you`, tone: "bad", house: house(e.by)?.color ?? null };
+      return { text: `${name(e.by)} is an Oathbreaker`, tone: "info", house: house(e.by)?.color ?? null };
+    }
+    case "dealEnded":
+      return me(e.a) || me(e.b) ? { text: `Your ${e.kind === "war" ? "joint war" : e.kind} with ${name(me(e.a) ? e.b : e.a)} has ended`, tone: "info", house: house(me(e.a) ? e.b : e.a)?.color ?? null } : null;
     default:
       return null;
   }

@@ -37,6 +37,9 @@ scope.onmessage = async (e) => {
       case "exportSave":
         scope.postMessage({ id: req.id, ok: true, save: core.exportSave(req.notes) });
         return;
+      case "propose":
+        scope.postMessage({ id: req.id, ok: true, answer: core.propose(req.offer) });
+        return;
       case "suggest":
         scope.postMessage({ id: req.id, ok: true, orders: core.suggest() });
         return;

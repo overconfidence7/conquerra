@@ -37,6 +37,11 @@ export interface MapScene {
   arriving: Arrival[];
   /** The odds badge (four pips) on the target of the attack being drafted. An estimate when its army depends on an earlier battle. */
   odds: { target: TerritoryId; odds: Odds; estimate: boolean } | null;
+  /**
+   * Truce borders (session 14): every border a truce (or a joint war's truce) covers, where you can see it. Info
+   * layer only: the painting never carries game state. `pending`: agreed this turn, starts as it plays.
+   */
+  truces?: { a: TerritoryId; b: TerritoryId; bond: "handshake" | "binding"; pending: boolean }[];
 }
 
 export interface MapEvents {

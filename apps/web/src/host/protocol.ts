@@ -1,5 +1,6 @@
 import type { MapDef, Rules } from "@conquerra/content";
-import type { GameMode, Instruction, Order, PlayerId, PlayerView, ReplayEvent, SaveFile } from "@conquerra/engine";
+import type { Answer } from "@conquerra/bots";
+import type { GameMode, Instruction, Offer, Order, PlayerId, PlayerView, ReplayEvent, SaveFile } from "@conquerra/engine";
 import type { TurnClock } from "../logic/timer";
 import type { SlotId, SlotInfo } from "./saves";
 
@@ -51,6 +52,8 @@ export interface HostUpdate {
    * let go), and the generals whose army you'd taken back. Only on the first update after loading a save.
    */
   queued?: { orders: Order[]; paused: PlayerId[] };
+  /** Deals the bots offered you this turn (session 14): accept, counter or decline before you lock in, or they lapse. */
+  offers?: Offer[];
 }
 
 /**
@@ -89,6 +92,11 @@ export interface GameHost {
   finish(): Promise<HostUpdate>;
   /** Your generals' orders for this turn with these instructions (the ones you haven't changed keep theirs). */
   planGenerals(instructions: Record<PlayerId, Instruction | null>): Promise<Order[]>;
+  /**
+   * Offer a bot a deal (session 14). It answers at once, from its own view, with one plain reason (and maybe a
+   * counteroffer). Add the `propose` order to your orders so the deal starts if it said yes.
+   */
+  propose(offer: Offer): Promise<Answer>;
   /** What a bot of this game's level would order for you this turn (for testing; maybe an "auto-orders" button later). */
   suggest(): Promise<Order[]>;
   /** Save the game as it stands into one of your slots on this device. */
@@ -116,7 +124,8 @@ export type HostRequest =
   | { id: number; type: "finish" }
   | { id: number; type: "suggest" }
   | { id: number; type: "planGenerals"; instructions: Record<PlayerId, Instruction | null> }
-  | { id: number; type: "exportSave"; notes?: Record<string, string> };
+  | { id: number; type: "exportSave"; notes?: Record<string, string> }
+  | { id: number; type: "propose"; offer: Offer };
 
 export type HostResponse =
   | { id: number; ok: true; update: HostUpdate | HostStart }
@@ -125,6 +134,7 @@ export type HostResponse =
   | { id: number; ok: true; orders: Order[] }
   | { id: number; ok: true; save: SaveFile }
   | { id: number; ok: true; slot: SlotInfo }
+  | { id: number; ok: true; answer: Answer }
   /** Not an answer: something for the player to know (id is 0). */
   | { id: 0; ok: true; notice: string }
   | { id: number; ok: false; error: string };
