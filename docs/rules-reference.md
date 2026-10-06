@@ -487,5 +487,10 @@ Spies see deep behind the lines. They never fight and never change a battle: the
 - **Numbers:** `docs/sim-results-m3-spies.md`. Spies don't make games longer, and leave runaways and seat fairness where they were; one spy about pays for itself.
 - **The Recruit** doesn't use spies.
 
+## 22. Seeing the map (session 16)
+- **Fully zoomed out, the whole map is clear of the menus** (desktop: the top bar, the map buttons, the right column, the selected-territory panel and the dock; phone: the top bar, the action bar and an open sheet). You can pan any edge of the map into the clear part at every zoom.
+- **Provinces on demand:** province names are painted on the land only at Far zoom, with every province's plaque as before. At Mid and Near, **tap any territory** (yours, a rival's, or fogged land) and its whole province lights up with a bright band round its border and its plaque ("The Oak Downs +3"), until you tap elsewhere. The card's province chip says the same: "The Oak Downs +3: you hold 2 of 5". The province's shape, name and bonus are public; "you hold" counts only your own land.
+- **Sharp at every zoom:** zoom in past the Mid detail and the land where you're looking is painted again at up to three times the detail (a moment after you stop, nearest the middle first), with bigger copies of the art that arrive after the game is on screen.
+
 ## Not in yet (later milestones)
-Factions, pause by vote and deals between people in online games (M4), tutorials and scenarios (M5). Not planned: shared vision between partners, and spies that sabotage or affect combat.
+The Marshal and bot personalities (session 17), leaders you delegate to with their own purses (session 18), bigger maps (about 160 and 200 territories) and the balance pass (session 19), the polish pass with replay effects (session 20); the end-of-game power graph and awards (session 20, if not sooner). Factions, pause by vote, deals between people and colours chosen by each player in online games (M4), tutorials and scenarios (M5). Not planned: shared vision between partners, and spies that sabotage or affect combat.

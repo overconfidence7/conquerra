@@ -95,13 +95,26 @@ export function chronicleLines(ctx: GameContext, reports: readonly TurnReport[],
   const out: ChronicleTurn[] = [];
   for (const r of [...reports].sort((a, b) => b.turn - a.turn)) {
     const lines: ChronicleLine[] = [];
+    // Fighting in the fog: one line per province and kind, with how many ("Battles in Mistreach ×3 (in the fog)").
+    const fogged = new Map<string, { line: ChronicleLine; n: number; what: string; province: string }>();
     for (const e of r.events) {
       if (!keepForChronicle(e)) continue;
       let text: string | null = null;
       let tone: Tone = "quiet";
+      if (e.type === "surface" && !e.yours) {
+        const key = `${e.what}|${e.province}`;
+        const f = fogged.get(key);
+        if (f) f.n++;
+        else {
+          const line: ChronicleLine = { text: "", tone: "quiet", kind: kindOf(e), at: placeOf(ctx, e), mine: false };
+          fogged.set(key, { line, n: 1, what: e.what, province: province(e.province) });
+          lines.push(line);
+        }
+        continue;
+      }
       if (e.type === "surface") {
-        text = e.what === "battle" ? `A battle in ${province(e.province)} (in the fog)` : e.what === "fate" ? `Something stirs in ${province(e.province)}` : `A Leader fell in ${province(e.province)} (in the fog)`;
-        if (e.yours) (text = `Your Fate card: ${text.toLowerCase()}`), (tone = "info");
+        text = `Your Fate card: ${e.what === "fate" ? "something stirs" : "a battle"} in ${province(e.province)}`;
+        tone = "info";
       } else {
         const line = narrate(ctx, e, n);
         if (line) ({ text, tone } = line);
@@ -110,6 +123,11 @@ export function chronicleLines(ctx: GameContext, reports: readonly TurnReport[],
       const mine = onYourLand(e, n) || (e.type === "battle" ? n.isMe(e.player) || n.isMe(e.defender) : "player" in e && n.isMe(e.player as string));
       lines.push({ text, tone, kind: kindOf(e), at: placeOf(ctx, e), mine });
     }
+    for (const f of fogged.values())
+      f.line.text =
+        f.what === "battle" ? (f.n > 1 ? `Battles in ${f.province} ×${f.n} (in the fog)` : `A battle in ${f.province} (in the fog)`)
+        : f.what === "fate" ? `Something stirs in ${f.province}${f.n > 1 ? ` ×${f.n}` : ""}`
+        : `${f.n > 1 ? `${f.n} Leaders fell` : "A Leader fell"} in ${f.province} (in the fog)`;
     // What touched you first: Fate and the Fallen on your land at the very top.
     const rank = (l: ChronicleLine, i: number) => (l.mine && (l.kind === "fate" || l.kind === "fallen") ? 0 : l.mine ? 1 : 2) * 10000 + i;
     out.push({ turn: r.turn, lines: lines.map((l, i) => ({ l, k: rank(l, i) })).sort((a, b) => a.k - b.k).map((x) => x.l) });

@@ -284,6 +284,17 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
           ))}
         </div>
       )}
+      {/* Your Leader goes with an army leaving its land by default (session 16); one tap leaves it home. */}
+      {leaderCanJoin(view, draft.from, plan) && (
+        <div className="chips leader-choice" role="radiogroup" aria-label="Your Leader">
+          <button role="radio" aria-checked={draft.withLeader} className={`chip ${draft.withLeader ? "on" : ""}`} onClick={() => updateDraft({ withLeader: true })} title="Your Leader goes with this army (+20% strength) and carries on with it through a chain">
+            👑 Leader goes (+20%)
+          </button>
+          <button role="radio" aria-checked={!draft.withLeader} className={`chip ${!draft.withLeader ? "on" : ""}`} onClick={() => updateDraft({ withLeader: false })} title="Your Leader stays where it is">
+            Stays home
+          </button>
+        </div>
+      )}
       {(more || exact) && max > 0 && (
         <div className="row">
           <span className="muted small">Exactly</span>
@@ -323,17 +334,6 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
         </button>
       </div>
 
-      {/* Your Leader goes with an army leaving its land by default (session 16); one tap leaves it home. */}
-      {leaderCanJoin(view, draft.from, plan) && (
-        <div className="chips leader-choice" role="radiogroup" aria-label="Your Leader">
-          <button role="radio" aria-checked={draft.withLeader} className={`chip ${draft.withLeader ? "on" : ""}`} onClick={() => updateDraft({ withLeader: true })} title="Your Leader goes with this army (+20% strength) and carries on with it through a chain">
-            👑 Leader goes (+20%)
-          </button>
-          <button role="radio" aria-checked={!draft.withLeader} className={`chip ${!draft.withLeader ? "on" : ""}`} onClick={() => updateDraft({ withLeader: false })} title="Your Leader stays where it is">
-            Stays home
-          </button>
-        </div>
-      )}
       {view.me.leader.alive && (more || draft.timing) && (timingAvailable(view, queue, "first") || timingAvailable(view, queue, "last") || draft.timing) && (
         <div className="chips">
           {(timingAvailable(view, queue, "first") || draft.timing === "first") && (

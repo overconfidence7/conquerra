@@ -153,6 +153,7 @@
 - **Planner's take:** this creates a real strategic choice ("tall vs. wide") and gives the Fallen system a counterweight. Keep it to **one culture number per territory**, not a separate tech tree, or it bloats.
 - **DECIDED (Oct 2): military and conquest first, with a cultural flair.** Culture must stay light; this is not Civilization. No culture victory, no culture tech tree.
 - **Culture is lost when land changes hands (Nate, Oct 6 play test):** a captured territory's culture drops to 0; its buildings stay (a fort keeps standing for the new owner). Culture becomes an investment in land you mean to keep. This replaces "captured culture passes to the conqueror". Session 16.
+  - **BUILT (session 16):** on a capture, a trade of land, or land taken by rebels (`rules.culture.keptOnCapture` = 0). No change in game length (4 players 27.9 → 27.7 turns, 6 players 37.1 → 37.4; `docs/sim-results-s16.md`).
 - **A richer culture ladder (Nate, Oct 6), for session 15.** Culture still unlocks only specialists (no tree, no new resource). The ladder uses the total culture you hold in the province, as today. **Orchestrator's defaults** (numbers in `packages/content`; Nate can change any of them after playing):
 
 | Culture in the province | Unlocks |
@@ -216,6 +217,7 @@ Nate's three ideas:
 | **One of each (the best)** | 6 troops spread over your front, a finished building of your choice (fort, market, barracks or watchtower) on land you choose, and 10 gold |
 
   - **Explained on screen:** the card stack says "Collect three: three alike, or one of each (best)". The Spoils sheet always shows this table, with the set you can make lit, and the report says what a set gave.
+  - **BUILT (session 16)** exactly as the table. Troops go one at a time to whichever territory is worst off against the rival army next door; one of each's building defaults to a fort on the most threatened land without one (chips pick another). Bots turn in one of each first. Games about as long as before (4 players 27.7 → 27.5, 6 players 37.4 → 36.7).
 
 ## 7. Troop types: the analysis Nate asked for (DECIDE)
 
@@ -343,5 +345,6 @@ Nate's notes: his test game on Wyrmland against 5 Captains lasted only 12 turns,
 - **Orders along a path:** pick the territory you're coming from and the one you're going to; the game offers **the shortest way** or **the full sweep** (snaking back and forth to take every territory in between), then a box says how many orders it will add, and you confirm.
 - **A Chronicle:** a log of every turn (battles you saw, Fate and the Fallen's events, deals, spies), so nothing that touched you can be missed. Fate and the Fallen get louder notices now and full effects in the polish pass.
 - **The end of the game:** a line graph of each House's power by turn, and awards (Best Military, Best Culture, Master Builder, Spymaster, Diplomat and the like).
+- **BUILT (session 16):** everything above except the end of the game (it moves to session 20 if session 16 had no room), with these details: the Leader choice sits right under the troop chips; Initiative and Wait are under More…; on a phone the Chronicle is a scroll button with the map buttons (not a fifth sheet tab); the path box is reached with a **Path…** button (a long-press already shows the card on phones); Near tiles use bigger copies of the art loaded after the first paint. Details in `docs/decisions.md`.
 - **Bigger maps (Nate):** Wyrmland (120) felt right but small for 6 players. Two new official maps: about **160 territories** (6–8 players) and **200** (8–10), made in the map lab, Nate OKs the Far picture, and speed-checked on phones (session 19).
 

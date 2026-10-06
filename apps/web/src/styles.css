@@ -346,7 +346,8 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .spoils-table th { white-space: nowrap; font-weight: 700; }
 .spoils-table tr.lit th, .spoils-table tr.lit td { opacity: 1; color: var(--gold-hi); background: rgba(227, 199, 126, 0.1); }
 .spoils-table .best { font-size: 0.8em; padding: 0 5px; border-radius: 6px; background: var(--gold); color: var(--navy); margin-left: 4px; }
-.card-stack .rule { display: block; max-width: 150px; line-height: 1.2; opacity: 0.85; }
+.card-stack .stack-text { flex: 1; min-width: 0; }
+.card-stack .rule { display: block; font: 500 var(--fs-label) var(--font-body); line-height: 1.25; white-space: normal; opacity: 0.85; }
 /* Orders along a path (session 16). */
 .path-summary { font-weight: 700; color: var(--gold-hi); margin: 6px 0; }
 .row > .grow { flex: 1; margin: 0; }

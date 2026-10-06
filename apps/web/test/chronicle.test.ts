@@ -56,7 +56,9 @@ describe("the Chronicle (session 16)", () => {
     const n = namer(g.ctx, u.view);
     const surfaces = reports.flatMap((r) => r.events).filter((e) => e.type === "surface" && e.what === "battle");
     const lines = chronicleLines(g.ctx, reports.map(chronicleOf), n).flatMap((t) => t.lines);
-    if (surfaces.length) expect(lines.some((l) => /^A battle in .* \(in the fog\)$/.test(l.text))).toBe(true);
+    // One line per province a turn: "A battle in Mistreach (in the fog)", or "Battles in Mistreach ×3 (in the fog)".
+    if (surfaces.length) expect(lines.some((l) => /^(A battle|Battles) in .* \(in the fog\)$/.test(l.text))).toBe(true);
+    expect(lines.filter((l) => / \(in the fog\)$/.test(l.text)).every((l) => !/\d+ troop/.test(l.text))).toBe(true);
     // Every battle line is from a battle in your own report.
     const battles = reports.flatMap((r) => r.events).filter((e) => e.type === "battle").length;
     expect(lines.filter((l) => l.kind === "battle").length).toBeLessThanOrEqual(battles + surfaces.length);
