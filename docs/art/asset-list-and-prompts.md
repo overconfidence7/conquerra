@@ -129,8 +129,8 @@ File names: `vista-city.png` (castle city on a hill above fields), `vista-valley
 ## Tier 3: later
 Lobby and title background art, the game-over screen, faction-specific castles, extra building variants, seasonal textures and the marketing key art.
 
-### Batch 4 (Oct 6): to make now, for sessions 16 and 17
-*About 50 images, for the polish pass (`docs/09-polish-and-effects-plan.md`) and the fixes found on the bench. Same rules as above: the style line first (except where noted), PNG into `art/incoming/` with the exact file name. Work in the order below; anything missing simply waits for a later batch. Session 16 registers these names and moves this list into its own "## Batch 4" section after Batch 3 (it sits under Tier 3 until then, because a test counts the names from the Batch 3 heading onward against the game's registry).*
+### Batch 4 (Oct 6): to make now, for sessions 16 and 20
+*About 50 images, for the polish pass (`docs/09-polish-and-effects-plan.md`) and the fixes found on the bench. Same rules as above: the style line first (except where noted), PNG into `art/incoming/` with the exact file name. Work in the order below; anything missing simply waits for a later batch. Session 20 (the polish pass) registers these names and moves this list into its own "## Batch 4" section after Batch 3 (it sits under Tier 3 until then, because a test counts the names from the Batch 3 heading onward against the game's registry).*
 
 **Two new backgrounds in this batch:**
 - **Magenta** (as before) for solid objects.
@@ -189,7 +189,7 @@ Icons as in Tier 2 (bold, simple, reads at 24 px, thin light-gold rim, magenta, 
 | `art-victory.png` | A triumphant army on a green hilltop at sunrise, seen from behind and a little above: ranks of soldiers raising spears, a tall plain gold-and-white banner at the front, a castle on the next hill with smoke clearing, golden light breaking through clouds. No text. |
 | `art-defeat.png` | A lone torn banner on a broken pole in the mud of a quiet battlefield at dusk, a fallen shield and helmet beside it, smoke drifting over a burned-out castle in the distance, crows on a dead tree, cold blue-grey light. No text. |
 
-#### 6. Scenery additions (for session 17's map polish)
+#### 6. Scenery additions (for the polish pass, session 20)
 | File | Prompt (after the style line) |
 |---|---|
 | `peak-narrow-1.png` … `-3.png` | A single tall, narrow mountain peak, much taller than it is wide, cold blue-grey granite with heavy snow on the upper third, small dark pines at the base. (Make 3 different peaks.) For ranges that run up and down the screen. |
@@ -199,7 +199,7 @@ Icons as in Tier 2 (bold, simple, reads at 24 px, thin light-gold rim, magenta, 
 | `glade-1.png`, `glade-2.png` | A small round forest meadow seen straight from above: soft grass, a few wildflowers, a fallen mossy log, edges fading softly into the magenta. (Make 2.) |
 | `paper-grain.png` | No style line, no magenta: bird's-eye view of a large sheet of warm neutral parchment paper, very flat and even, fine fibres and faint mottling only, no stains, no edges, no folds, one continuous sheet, nothing repeats. (16:9; crop a square from the middle.) |
 
-*(This list sits under Tier 3 on purpose: a test counts the file names in Tiers 1–2 and from the Batch 3 heading onward against the game's art list. Session 16 moves it.)*
+*(This list sits under Tier 3 on purpose: a test counts the file names in Tiers 1–2 and from the Batch 3 heading onward against the game's art list. Session 20 moves it.)*
 
 ---
 

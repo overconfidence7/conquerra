@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–15 are done. Next: Nate plays sessions 11–15 on the preview and art batch 4 is made in Gemini (`docs/prompts/gemini-art-session-04.md`); then session 16 (`docs/prompts/claude-code-session-16.md`): his fixes and the balance pass; then session 17, the polish pass (`docs/09-polish-and-effects-plan.md`).**
+**Phase: M3 (depth and balance). Sessions 7–15 are done. Next: session 16 (`docs/prompts/claude-code-session-16.md`): Nate's play-test fixes (controls, sharp zoom, provinces on demand, orders along a path, Spoils, the Chronicle); then 17 the Marshal and bot personalities, 18 leaders you delegate to, 19 bigger maps and the balance pass, 20 the polish pass. Art batch 4 can be made in Gemini any time before 20.**
 
 Claude Code sessions completed: **15** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -772,3 +772,34 @@ All five parts are done, each committed and pushed, including Part 5 ("Govern th
 - **Fifteen Claude Code sessions are done,** so there's a fresh orchestrator prompt: `docs/prompts/orchestrator-06.md`.
 - **Next:** Nate plays on the preview and runs the Gemini session; then session 16 (`docs/prompts/claude-code-session-16.md`, run it locally), with his notes added by the orchestrator first.
 
+### Oct 6: Nate's play test of sessions 11–15
+Nate played a full game on Wyrmland against 5 Captain bots. His notes, in his words where it matters:
+1. **Leaders and attacks:** the Leader should go with the attacking army by default ("right now I have to click More"), easy to switch off. After the first move the Leader drops off, so it can't carry on through a chain with the troops; it should.
+2. **"Seize the Initiative" and "Lie in Wait"** sit in oddly shaped bubbles. Make them buttons that just say "Initiative" and "Wait", with more on hover.
+3. **More open space at the map's edges:** fully zoomed out, menus cover playable land.
+4. **Provinces are still hard to see, and their names clutter the map.** Instead: tap any territory (yours or not) to light up the border of its whole province and show its name and bonus then.
+5. **Player 1 should be red by default,** and players choose colours when setting up a multiplayer game.
+6. **Zooming in still looks bad:** "we have high-resolution pictures that are shrunk down, so they should still look good, but everything is blurry when zooming in."
+7. **Bots should have different personalities and play styles** (aggressive and focused on one front; all-out expansion with no defence; super-defensive, building culture and defence; deals it can break and lots of spies…), mixed at random so a table of 5 feels different. Maybe a separate, hardest bot level; see if it wins more.
+8. **Orders along a path:** click where you're coming from and where you're going; take the shortest path or the "complete path" that snakes back and forth to take every territory in between; a box says how many orders that adds, and you confirm.
+9. **The leaders don't seem to do much with the orders I give them.** Instead of the tax idea: give each a share or an exact amount of gold each turn, and they use it to carry out their orders. See the orders they set, mixed in with yours or (a toggle) after yours. They should make several orders where it fits: building, or attacking or moving in a chain.
+10. **Spoils don't make sense:** one of each should give the most. Small troop rewards in scattered places are fine; culture or buildings would be nice too; always some gold.
+11. **A power line graph at the end,** with awards (best culture, best military and so on).
+12. **The game was too short:** Wyrmland, 5 bots, 12 turns, the last 3 a mop-up. The bots weren't hard enough, or culture and diplomacy didn't matter enough.
+13. **Fate events need more fanfare** and a way to see what happened; it's very easy to miss them. The same for the Fallen. "I ran away with the game; I'd assume the others would team up against me and the Fallen would target me, but I noticed no extra resistance."
+14. **Buildings in captured land should stay** (a fort someone built), **but culture should be wiped** when land changes hands.
+15. **"I played the whole game without building a building or doing any culture."** Idea: two leaders from the start, one for culture and one for the military. Name your own Leader at the start, and command it the same as a captured one, so taking over two players gives three military leaders and up to three culture leaders, and gold is drawn away from your own recruiting to delegate. They should be very good at it. A military command: **"expand our empire in this direction"** toward a target territory: rapidly taking easy, undefended land by chaining, or slowly pushing the border where it's contested, not in a straight line, securing provinces on the way.
+16. **Map size:** Wyrmland felt right for 6 players but on the small side; go much bigger for larger battles and longer games.
+
+**Nate's calls on the plan (Oct 6):**
+- **Mechanics first:** 16 his fixes (controls, sharp zoom, provinces on demand, red by default and choosing colours, orders along a path, culture wiped on capture, the Spoils rework, the Chronicle, the end-of-game graph); **17** the Marshal and bot personalities; **18** leaders you delegate to; **19** bigger maps (about 160 and 200 territories) and the balance pass; **20** the polish pass (effects). (Nate agreed leaders, then bots; the orchestrator put the Marshal first because Nate wants leaders to plan at the Marshal's level.)
+- **Leaders keep a visible purse** and can save up. A larger command list, with menus inside menus if needed. You can tell a leader to do anything, up to running your whole military, not just the land it stands on. Your own and captured leaders plan at the Marshal's level.
+- **The Marshal is a new hard level** with personalities, built separately from the Captain. Analyse the sims to find which behaviours win, and build those into it.
+- **Bigger maps:** about 160 and 200 territories.
+- Details: `docs/04-design-additions.md` §4 (leaders), §5 (culture wiped on capture), §6 (the Spoils rework), §11 (the Marshal), §12 (controls and map clarity).
+
+**On graphics engines (Nate asked):** the game already uses **PixiJS v8**, the leading free, open-source (MIT) 2D engine for the web. Switching (Phaser, or a 3D engine like Three.js) would mean a rewrite and be heavier on phones. Instead:
+- **pixi-filters** (MIT; v6 for PixiJS v8) comes in with the polish pass: shockwaves, glow, bloom, light rays, colour grading.
+- **@pixi/sound** (MIT; v6 for PixiJS v8) if Nate wants sound.
+- **Particles and effects are built in-house** on PixiJS's own fast particle container. Off-the-shelf emitters simulate frame by frame with random numbers, so a replay's effects couldn't be scrubbed, skipped or played again identically. Ours are worked out from the replay's clock and the game's seed.
+- **The blurry zoom is ours to fix, not an engine's:** the whole map is painted once at about 1.75 pixels per map unit on desktop (1.3 on a phone) for Wyrmland, and fully zoomed in that's stretched about three times. The art is also stored small (trees 192 px, castles 384 px) though the originals are 2048 px. Session 16 paints sharper tiles where you're looking and keeps the art bigger.

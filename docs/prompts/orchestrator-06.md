@@ -54,12 +54,17 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first, simul
 
 **Game length today** (Captain bots, everything on, 500 games): 4 players about 27 turns, 6 players about 36, 10 players about 45 (35% within 40). Diplomacy added about 4–7 turns (session 14); the balance pass has bots offer fewer truces. The halfway leader wins 66–75%.
 
-**What happens next, in order:**
-1. **Nate plays sessions 11–15 on the preview** (he hasn't yet). **When he reports, record his notes in `PROGRESS.md` as "Nate's play test of sessions 11–15"** (session 16's Part 1 reads them from there), capture any new ideas in the design docs, and adjust session 16's prompt if his notes change its priorities.
-2. **Art batch 4 in Gemini** (`docs/prompts/gemini-art-session-04.md`; Nate runs it in a separate Claude chat with Claude in Chrome): about 50 pieces: effects for the replay (soft effects on pure black), key art (title, victory, defeat), the Rangers, Standard-bearer and spy icons and figures, redo items (greener hills, warmer pines, a lower scaffold, a lighter bridge) and scenery additions. When the art chat reports, record its lessons in the art list's "Working in Gemini" and look at the contact sheets.
-3. **Session 16** (`docs/prompts/claude-code-session-16.md`, written): Nate's fixes, batch 4 in (registry, the importer's black-background rule, drop-in pieces only), spy upkeep only while away, then the **balance pass** (fewer truces at big tables, runaways, seat fairness, each system's cost in turns, the Recruit stays easy, a speed check before M4), and an M3 checklist.
-4. **Session 17, the polish pass** (Nate, Oct 6: "I want this game to look like a large development team with a good budget made it"). **Write its prompt after reviewing session 16,** from `docs/09-polish-and-effects-plan.md`: the effects layer and the Effects Full / Light / Off setting, marches and battles, the cinematic replay, events, deals and spies, the living map, menus with weight, title and game-over art, the scenery additions. Probably more than one usage window: split it into parts in priority order, as the plan's "Order of work" does, and ask Nate whether he'd rather have a 17 and an 18.
-5. **After M3: decided after Nate plays** (his call, Oct 6): a play-test fixes session if needed, then **M4** (online with friends, $5/month Workers Paid, multiplayer pause by vote, deals between people).
+**Nate's play test of sessions 11–15 is in** (`PROGRESS.md`, "Nate's play test of sessions 11–15", 16 notes). His Wyrmland game against 5 Captains lasted 12 turns: the bots were too easy, nobody ganged up on him, he never built or raised culture, the generals did little, and zoom was blurry. It reshaped the plan.
+
+**What happens next, in order (Nate's call: mechanics first):**
+1. **Session 16** (`docs/prompts/claude-code-session-16.md`, written): his fixes (`04-design-additions.md` §12, §5, §6): the Leader goes with an attack and stays through a chain; "Initiative"/"Wait" buttons; room at the map's edges; player 1 red and colours in the lobby; culture wiped on capture; spy upkeep only while away; **sharp zoom** (a Near detail level painted on demand, art stored about 2× bigger); **provinces on demand**; **orders along a path** (shortest or full sweep, with a confirm box); the **Spoils rework**; the **Chronicle** and louder Fate/Fallen moments; a check of why nobody ganged up on Nate; and (if room) the end-of-game power graph with awards.
+2. **Session 17: the Marshal** (§11): a new hard bot level with personalities mixed at random (Conqueror, Blitzer, Turtle, Schemer, Opportunist, Merchant), built separately from the Captain; run them against each other in the sims, find which behaviours win, and build those into the Marshal; it must stop a runaway person. Becomes the default level if it wins more. Ask Nate whether players see a bot's personality.
+3. **Session 18: leaders you delegate to** (§4 "REDESIGN"): your named Leader and a Steward from the start; captured players give both of theirs (up to 4 of each); each gets a budget a turn into its own visible purse and can save; a big command list (menus in menus) up to "run the military" and "run the realm", and "Expand our empire in this direction"; several orders a turn in your queue (mixed in or after yours); the Marshal's brain. This replaces "generals never spend gold" and "Govern"'s income share.
+4. **Session 19: bigger maps and the balance pass:** two new official maps of about 160 and 200 territories (map lab; Nate OKs the Far picture; phone speed check), then length, runaways, seat fairness, each system's cost in turns, the Recruit stays easy, a speed check before M4.
+5. **Session 20: the polish pass** (`docs/09-polish-and-effects-plan.md`) with **art batch 4** (`docs/prompts/gemini-art-session-04.md`; Nate runs the Gemini chat any time before 20) and its import. Probably more than one usage window: ask Nate whether he'd rather have a 20 and a 21. Ask him about sound.
+6. **After M3: decided after Nate plays** (a play-test fixes session if needed, then **M4**: online with friends, $5/month Workers Paid, multiplayer pause by vote, deals between people, each player picks a colour).
+
+**Libraries (decided Oct 6, at Nate's request):** stay on PixiJS v8 (MIT); add pixi-filters v6 (MIT) in the polish pass and @pixi/sound v6 (MIT) if Nate wants sound; build particles and effects in-house on PixiJS's `ParticleContainer`, seeded and driven by the replay's clock (off-the-shelf emitters can't be scrubbed or replayed identically); no tweening library.
 
 **Then (the milestones):**
 - **M4:** online with friends ($5/month Workers Paid), multiplayer pause by vote, deals between people
@@ -75,8 +80,8 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first, simul
 - **Game length is measured in turns: up to 30–40 turns.** Bigger maps and 10-player games may run longer (he allowed 120-territory maps for 10 players, and kept the Fallen's +3 turns for comebacks). Don't change rules just for length.
 - **Runaways and length:** fix them in the bots first, not the rules. When a rule change looks necessary, bring Nate the options with numbers.
 - **Maps:** a 40-territory quick map plus 60–120-territory maps in imaginative shapes with clear provinces. New official maps go through the map lab, and Nate OKs the Far picture.
-- **Generals:** one army each, five instructions, no gold of your own ("Govern" spends a share of the province's own income, shown only as progress, never as a second pot).
-- **Bots:** strong, explainable logic; one plain reason for every deal answer. Bot levels: Recruit (easy) and Captain; a future hard level could be "Marshal".
+- **Leaders (Nate's redesign, Oct 6, for session 18):** your named Leader and a Steward; each gets a budget into its own visible purse (it can save up); a big command list, up to running your whole military or all your building; they plan with the Marshal's brain and write several orders a turn into your queue. Your own Leader alone gives +20% in battle.
+- **Bots:** strong, explainable logic; one plain reason for every deal answer. Levels: Recruit (easy), Captain (medium, the sims' yardstick), **Marshal** (hard, with personalities; session 17). Bots must team up on a runaway, including a person.
 - **Deals are public** (trade terms private); handshake and binding both.
 - **Single player** has pause and saved games. **Multiplayer pause** is by vote (M4). **Tutorials and scenarios** come before the public launch (M5).
 - **The map builder is a player feature from the start** (saving, sharing, fairness checks, moderation); it comes after M4. The map lab is its first step.
@@ -110,9 +115,9 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first, simul
 
 ## Design guardrails (from Nate)
 - **Simple to play, deep to master.** A basic turn takes about 60 seconds (6 taps today), and a deep turn fits the 5-minute default. Watch the tap count and screen count. Today: proposing a truce 4 taps, accepting an offer 1, hiring or sending a spy 3, Command 3, turning in Spoils 2, the Fate draw 0.
-- **Military and conquest first, with a light cultural flair.** It's not Civilization:
+- **Military and conquest first, with a light cultural flair.** It's not Civilization (but culture and building must matter enough that a player does them; the Steward is the answer, session 18):
   - no tech tree or Research
-  - no culture victory; culture unlocks only specialists
+  - no culture victory; culture unlocks only specialists; culture is lost when land changes hands (buildings stay)
   - **gold is the only resource**
 - **Fair and readable:**
   - 70/30 skill to luck, with the odds preview; "guaranteed" must always win (Fate lands between turns; spy intel never overrides what you see directly).
@@ -136,7 +141,7 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first, simul
 - **Syncing to the claude.ai Project:** `project_write` each changed doc with `local_path` (from your clone) under `claude/<same path>`: prompts under `claude/prompts/`, art docs under `claude/art/`. Delete Project copies of files removed from the repo.
 - **Art batches** are made by a separate Claude chat that drives Gemini in Nate's Chrome (`docs/prompts/gemini-art-session-04.md` is the latest template; lessons in the art list's "Working in Gemini"). Make sure Nate runs it **before** the Claude Code session that imports it.
 - **The art-list test** counts the file names in Tiers 1–2 and **everything from the first occurrence of the literal text "## Batch 3" onward** against the game's registry. So:
-  - put lists of art not yet registered under "## Tier 3: later" (batch 4 sits there until session 16 moves it)
+  - put lists of art not yet registered under "## Tier 3: later" (batch 4 sits there until session 20 moves it)
   - **never write the literal heading text "## Batch 3" anywhere else in the file** (a note quoting it broke the test once)
   - run `pnpm vitest run packages/art` after every edit to the art list
 - **Art reviews:** contact sheets (PIL in your clone, or on the device in `art/incoming/_review/`). Gemini's "magenta" is often lighter pink; the importer handles it. Soft effects come on black (batch 4 on).
@@ -147,4 +152,4 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first, simul
 Nate is a business leader, not a full-time developer. Use plain language and short answers, recommend a choice, and keep him moving. Keep `PROGRESS.md` simple.
 
 ## Right now
-Nate has three things in hand: the preview to play (sessions 11–15), the Gemini prompt for art batch 4, and session 16's prompt (to run after his notes are recorded). He may bring his play-test notes, the art chat's report, or session 16's summary first. Run the loop for whichever arrives. After session 16, write session 17 (the polish pass), and ask him about sound.
+Nate has session 16's prompt (his play-test fixes), and the Gemini prompt for art batch 4 (any time before session 20). He'll bring session 16's summary next, perhaps with the art chat's report. Run the loop. Then write session 17 (the Marshal) from `04-design-additions.md` §11, using session 16's findings on why nobody ganged up on him.

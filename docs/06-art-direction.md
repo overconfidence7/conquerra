@@ -116,7 +116,7 @@ Everything below is worked out by the renderer from the map data alone (`apps/we
 The map is full screen with a compact top bar. The action bar sits at the bottom; panels open as a bottom sheet, and the minimap and players panel are toggles.
 
 ## The polish pass (Nate, Oct 6)
-Nate wants Conquerra to look like a large team with a good budget made it, with special effects in the replay. The plan is `docs/09-polish-and-effects-plan.md`: a cinematic replay, armies that march and fight in dust and smoke, banners raised over captured land, an effect for every event, a living map, menus with weight, and title and game-over art. The art is batch 4 (`docs/art/asset-list-and-prompts.md`); the code is session 17. Effects never carry game state, fit inside the replay's timing, respect fog, and have a Full / Light / Off setting.
+Nate wants Conquerra to look like a large team with a good budget made it, with special effects in the replay. The plan is `docs/09-polish-and-effects-plan.md`: a cinematic replay, armies that march and fight in dust and smoke, banners raised over captured land, an effect for every event, a living map, menus with weight, and title and game-over art. The art is batch 4 (`docs/art/asset-list-and-prompts.md`); the code is session 20 (after the Marshal, the leaders and the bigger maps). Session 16 also makes zoom sharp: the map is painted at higher detail where you're looking, and the art is stored bigger. Effects never carry game state, fit inside the replay's timing, respect fog, and have a Full / Light / Off setting.
 
 ## Performance targets
 - Aim for 60 fps panning and zooming on a mid-range phone.

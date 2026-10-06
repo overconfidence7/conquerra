@@ -131,6 +131,20 @@
   - The Captain may use it for a captured general in a province it holds safely; its own play is otherwise unchanged.
 - **BUILT (session 15, Oct 6)** exactly as above. Details settled while building: the share is taken as the turn's income comes in (rounded down), and the general may buy more than one thing in a turn if the gold is there (a fort, then culture). It buys a fort only where a rival army stands next to the province's land; culture goes where the most rival troops stand next door (lowest culture breaking ties). A seat whose Leader governs all game wins about as often as one that holds (19% at 4 players, against Hold here's 21.5% in session 12): it parks the main army, so it's for a captured general or a quiet province. Rules: `docs/rules-reference.md` §14.
 
+- **REDESIGN (Nate, Oct 6, after his play test): leaders you delegate to, with their own purse.** Nate's notes: the generals "don't seem to do much with the orders I give them"; he played a whole game without a building or any culture. His direction, which replaces "one treasury" and "Govern this province"'s income share:
+  - **Two leaders from the start:** your **Leader** (military) and a **Steward** (culture, buildings, forts, the economy). You **name your Leader** at the start of the game (a sensible name is filled in); naming the Steward is optional.
+  - **Your own leaders work exactly like captured ones:** you command them the same way, and they're just as capable.
+  - **Captured leaders:** knocking a player out gives you their Leader and their Steward. Nate's example: take over two players and you command three military leaders and up to three Stewards. The cap of 2 captured is lifted to fit (orchestrator's default: up to 4 of each kind, in `packages/content`).
+  - **Budgets and purses:** each turn you give each leader a **budget**, as a share of your income or an exact amount. It goes into the leader's **own visible purse**; a leader can **save up** for bigger things (a fort, a run of culture). Unspent gold stays in the purse. This is a deliberate choice to pull gold away from your own recruiting and delegate it.
+  - **A much larger command list,** with menus inside menus where needed. You can hand a leader anything, up to **running your whole military** (every army and the recruiting) or **all your building and culture**. Commands are not limited to the territory the leader stands in. Defaults for the first version:
+    - **Military:** Hold here; Defend this border; Push toward a place; Raid a rival; **Expand our empire in this direction** (pick a target territory: the leader moves out that way, chaining through easy, undefended land quickly, or pushing the border out slowly where it's contested; not in a straight line: it takes and secures whole provinces on the way); **Command this front** (every army in a region you mark); **Run the military** (everything).
+    - **Steward:** Build up this province (forts, markets, barracks where they help); Fortify this frontier; Raise culture here; Grow the economy (markets and culture where they pay most); **Run the realm** (all building and culture).
+  - **They're very good at it:** leaders plan with the **Marshal's brain** (§11), from your view only, and write **several orders a turn** (chains of attacks or moves, building in several places).
+  - **You see their orders:** they go into your order queue, marked with the leader's portrait, and you can edit or delete any of them. A setting chooses when they're written: **mixed in with yours as they're made, or after yours are done**.
+  - **Your Leader still fights:** its +20% stays with your own Leader only; captured Leaders command (no bonus), as today.
+  - **Why it helps:** a big empire stays playable in 5 minutes, culture and buildings happen through the Steward even for a military-minded player, and spending on leaders becomes a real choice.
+  - **When:** session 18, after the Marshal (session 17), because the leaders use its brain.
+
 ## 5. Military vs. culture
 - Income can go to **military** (troops, forts) or **culture**.
 - Culture protects against events (uprisings, plague, storms) and against the Fallen's revenge events, and it boosts holding bonuses.
@@ -138,6 +152,7 @@
 - Culture you build up can be captured. Someone who invested in culture risks a military player taking over and reaping the benefit.
 - **Planner's take:** this creates a real strategic choice ("tall vs. wide") and gives the Fallen system a counterweight. Keep it to **one culture number per territory**, not a separate tech tree, or it bloats.
 - **DECIDED (Oct 2): military and conquest first, with a cultural flair.** Culture must stay light; this is not Civilization. No culture victory, no culture tech tree.
+- **Culture is lost when land changes hands (Nate, Oct 6 play test):** a captured territory's culture drops to 0; its buildings stay (a fort keeps standing for the new owner). Culture becomes an investment in land you mean to keep. This replaces "captured culture passes to the conqueror". Session 16.
 - **A richer culture ladder (Nate, Oct 6), for session 15.** Culture still unlocks only specialists (no tree, no new resource). The ladder uses the total culture you hold in the province, as today. **Orchestrator's defaults** (numbers in `packages/content`; Nate can change any of them after playing):
 
 | Culture in the province | Unlocks |
@@ -190,6 +205,17 @@ Nate's three ideas:
 - **Nate's calls after session 13 (Oct 6), built in session 14:**
   - **Spoils go back to the bigger rewards:** three Swords 8 troops, three Towers a fort + 3 troops, one of each 4 troops + 6 gold (Laurels unchanged). Games run about 1–2 turns longer; the balance pass looks at length.
   - **The first Fate draw comes at the end of turn 3** (`rules.fate`), so the opening turns stay quiet.
+
+- **Spoils rework (Nate, Oct 6 play test):** "Explain how the spoils work, because they're not making sense to me. One of each should give me the most." Small troop rewards in scattered places are fine, culture or buildings would be nice too, and **every set should include gold**. Orchestrator's defaults for session 16 (numbers in `rules.spoils`):
+
+| Set | Windfall |
+|---|---|
+| Three Swords | 8 troops, spread over your most threatened territories, and 4 gold |
+| Three Towers | a finished fort on land you choose, 2 troops there, and 4 gold |
+| Three Laurels | +1 culture on 3 territories in a province you choose, and 4 gold |
+| **One of each (the best)** | 6 troops spread over your front, a finished building of your choice (fort, market, barracks or watchtower) on land you choose, and 10 gold |
+
+  - **Explained on screen:** the card stack says "Collect three: three alike, or one of each (best)". The Spoils sheet always shows this table, with the set you can make lit, and the report says what a set gave.
 
 ## 7. Troop types: the analysis Nate asked for (DECIDE)
 
@@ -291,4 +317,31 @@ It matches "simple at first, deep later" and the 5-minute turn, and it plugs nea
   - Subjects: chaining attacks, recruiting, culture, buildings, cards, treaties, generals.
   - Built on saved games, once the rules have settled.
 - **Scenarios (M5 or later):** set-piece games (a fixed map, starting positions and goals), on the same saved-game format.
+
+## 11. Bot personalities and the Marshal (Nate, Oct 6 play test)
+Nate's notes: his test game on Wyrmland against 5 Captains lasted only 12 turns, the last 3 a mop-up. He ran away with it, and neither the bots nor the Fallen seemed to team up against him. "Bots should have different play styles and personalities… think through all the ways someone could win and make them distinct and random so a group of 5 feels different."
+- **DECIDED: a new hard level, the Marshal,** built separately from the Captain. The Captain stays as it is (the sims' yardstick, and the medium level); the Recruit stays easy. If the Marshal wins more, it becomes the default.
+- **Personalities, mixed at random each game** (orchestrator's first list; session 17 refines it):
+  - **The Conqueror:** picks one front, masses there, outmanoeuvres the armies in front of it, holds its other borders.
+  - **The Blitzer:** all-out expansion every turn, little defence, chains everything it can.
+  - **The Turtle:** slow and sure; fortifies, builds culture and markets, expands only into safe land, then strikes late with a big army.
+  - **The Schemer:** lives on deals (truces it means to break at the right moment, joint wars that serve itself), heavy on spies.
+  - **The Opportunist:** a vulture; hits whoever just fought, the weakened and the overstretched, and the leader's exposed flank.
+  - **The Merchant:** trades, markets and peace early, a rich late push.
+- **Learn what wins:** session 17 runs the personalities against each other and the Captain across maps and table sizes, measures which behaviours win most (early expansion pace, when to fortify, focus on one front, culture timing, deals), and builds the winning behaviours into the Marshal's judgement on top of its personality.
+- **Stops a runaway, including a person:** the Marshal reads a fast-growing player (human or bot) early, forms joint wars against them, and the Fallen aim at them. Session 17 first checks why that didn't happen in Nate's game.
+- **Your leaders and captured leaders plan with the Marshal's brain** (§4, session 18).
+- **Open for session 17:** whether players can see a bot's personality (a title like "Lady Morwen the Bold", or only learn it by playing).
+
+## 12. Controls and map clarity (Nate, Oct 6 play test), for session 16
+- **Your Leader goes with the attacking army by default** (one tap to leave it home), and **stays with the army through a chain** of attacks.
+- **Seize the Initiative and Lie in Wait** become plain buttons, "Initiative" and "Wait", with the full explanation on hover (desktop) or long-press (phone).
+- **Room at the map's edges:** fully zoomed out, the whole map is visible clear of the menus (the camera keeps a margin for the panels).
+- **Provinces on demand:** province names no longer sit on the map at Mid and Near. Tapping any territory (yours or not) **lights up the border of its whole province** and shows the province's name and bonus there. Far zoom keeps the plaques.
+- **Colours:** player 1 is **red** (Gules) by default, and you choose your House colour in the lobby (online games: each player chooses, M4).
+- **Sharp at every zoom:** the map is painted at higher detail where you're looking when you zoom in, and the art is kept at a higher resolution, so Near zoom looks crisp instead of blurry.
+- **Orders along a path:** pick the territory you're coming from and the one you're going to; the game offers **the shortest way** or **the full sweep** (snaking back and forth to take every territory in between), then a box says how many orders it will add, and you confirm.
+- **A Chronicle:** a log of every turn (battles you saw, Fate and the Fallen's events, deals, spies), so nothing that touched you can be missed. Fate and the Fallen get louder notices now and full effects in the polish pass.
+- **The end of the game:** a line graph of each House's power by turn, and awards (Best Military, Best Culture, Master Builder, Spymaster, Diplomat and the like).
+- **Bigger maps (Nate):** Wyrmland (120) felt right but small for 6 players. Two new official maps: about **160 territories** (6–8 players) and **200** (8–10), made in the map lab, Nate OKs the Far picture, and speed-checked on phones (session 19).
 

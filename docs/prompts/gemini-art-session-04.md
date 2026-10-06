@@ -100,5 +100,5 @@ If you run low on usage, stop after a numbered step and report. Anything missing
   - `batch-4-key-art.png`: the three key art pieces
   Show them to Nate.
 - **Report** what was added, and anything rejected or compromised on, by file name.
-- **Don't run `pnpm art:import` and don't commit:** `art/incoming/` stays out of git, and Claude Code session 16 imports the batch.
+- **Don't run `pnpm art:import` and don't commit:** `art/incoming/` stays out of git, and Claude Code session 20 (the polish pass) imports the batch.
 - **Don't edit any file under `docs/`.** Nate's folder is a git clone, and a local edit would clash with the next pull. Put any better prompts you learned in your report; Nate passes it to the orchestrator, who records them.
