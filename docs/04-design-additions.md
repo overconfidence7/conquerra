@@ -66,6 +66,14 @@
   - **One treasury:** generals never spend gold. You still recruit, build and raise culture yourself.
   - **Your Leader is your first general:** order it directly, or hand it an instruction (one tap to take control back).
   - **Captured generals:** knocking a player out gives you their Leader as a general. **Captured generals command only:** they don't add the +20% fighting bonus (only your own Leader does). **You keep at most 2**; when a third comes, you choose which to keep.
+- **BUILT (session 12, Oct 6):** the four instructions as decided. Details settled while building:
+  - A general's army is the troops with it when it plans: it moves them by number, so that turn's recruits stay home.
+  - It never stops next to an army that would throw it straight back out.
+  - Your Leader as a general uses Seize the Initiative on its first attack on a rival.
+  - Any order of yours out of its territory takes control back for the turn.
+  - Captured generals appear at your capital; with a third, the two nearest the front stay unless you choose.
+
+  Rules: `docs/rules-reference.md` §14–15. Numbers: `docs/sim-results-m3-generals.md`.
 - **ON FILE (Oct 5, Nate likes both): "Govern this province".** A general that runs a province and keeps a share of its income to build it up, sending the rest home (the original "send me 10% of its income" idea). It comes after the army general has been played, as a fifth instruction, and must not add a second gold pot the player has to track: the province's share is spent by the general on that province and shown as one line.
 
 ## 5. Military vs. culture

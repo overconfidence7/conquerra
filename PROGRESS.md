@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–11 are done. Next: art batch 3 in Gemini (`docs/prompts/gemini-art-session-03.md`), then session 12 (`docs/prompts/claude-code-session-12.md`): the art in, then generals, captured generals and the Fallen.**
+**Phase: M3 (depth and balance). Sessions 7–12 are done: art batch 3 is in, Wyrmland and the Crownlands are re-seeded, and generals, captured generals and the Fallen are playable on the preview. Next: Nate's play test of session 12, the orchestrator's review (a new orchestrator prompt is due), then session 13 (Spoils and Fate decks).**
 
-Claude Code sessions completed: **11** (a new orchestrator prompt is due after sessions 3, 6, 9, ...)
+Claude Code sessions completed: **12** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, ...)
 
 ---
 
@@ -512,3 +512,57 @@ No new art had arrived and Nate's session 9 play test isn't in yet, so there was
 - Lessons for prompting Gemini are recorded in `docs/art/asset-list-and-prompts.md`. The big one: Gemini fakes "seamless" textures by repeating a small patch, so we ask for a vast scene and crop.
 - Next: session 12 (`docs/prompts/claude-code-session-12.md`).
 
+### Oct 6: Claude Code session 12 (M3: art batch 3 in, generals, captured generals and the Fallen)
+All five parts are done, each committed and pushed. There were no play-test notes to fix first.
+- **Art batch 3 is in, all 19 pieces.** Nothing kept today's drawing: pines, hills/rock/snow textures, ridges, sea cliffs, the pass gatehouse, scaffolding, the wooden bridge, four landmarks and the plaque frame.
+  - **Tuned on the bench:**
+    - the scaffold is sized to the building (it stood over a capital);
+    - landmarks stay inside one territory (a windmill sat where three borders meet).
+  - **Worth another go in batch 4** (in the art file, under Tier 3):
+    - the hills texture looks like brown dirt at Near;
+    - the new pines are bluer than the broadleaf trees;
+    - a lower scaffold would show the building through it;
+    - the wooden bridge is small and dark.
+  - **Pictures:** before/after in `docs/art/screens/compare/`; the new bench set in `bench-after/`.
+- **Desktop panel fix:** at 1440×900 the selected-territory panel faded out its own last row, because the frame's corner pieces hang 5 px below it. Fixed.
+- **Wyrmland and the Crownlands re-seeded (Nate's OK):**
+  - **Wyrmland** grows into Gemini's dragon, seed `mask-120-6`, now suggested for 6–8 players. Games run longer: 6 players 37.3 turns (was 33.0), 8 players 38.5 (36.7), 10 players 41.9 (39.2).
+  - **The Crownlands** (`mask-100-9`) now has 5 rivers. 6 players 32.9 turns (was 35.4), 10 players 39.3 (38.0).
+  - The other six maps are unchanged. Pictures: `docs/maps/session12/` and `docs/art/screens/s12-wyrmland-far.png`, `s12-crownlands-far.png`.
+- **Generals:** your Leader can take a standing instruction (Hold here, Defend this border, Push toward a place, Raid a rival).
+  - **How it works:**
+    - It writes its army's orders each turn with the Captain's brain, from your view only.
+    - It never spends gold.
+    - Its orders sit at the top of your queue with its portrait.
+    - Giving its army an order of your own takes control back for the turn.
+  - **On screen:** select its land, then **Command**: 3 taps at most. **The basic turn is still 6 taps** on a 384 px phone.
+  - **Sim** (one general seat against Captains, from turn 6): Hold, Push and Raid win about as often as a plain Captain; Defend wins less (it parks the army on a border).
+  - **Dumb things found and fixed:** it emptied the capital, walked into stronger armies, and sent a lone Leader to march.
+  - The Captain plays exactly as before (checked over 12,187 orders).
+- **Captured generals:** knock a player out and their Leader joins you at your capital. It commands only: no +20% and no timing tricks. You keep two, it's gone for good if its land falls, and its portrait shows on its army.
+- **The Fallen:** knocked-out players earn Influence and spend it on Plague, Storm, Uprising, Mercenaries and Famine.
+  - **Caps:** no capitals, nobody knocked out, one event per player per turn, cooldowns, and culture protects.
+  - **What they see:** who holds what, with no troop numbers.
+  - **Tuning:** the first numbers made 6-player games 10 turns longer, so I tuned them down. All numbers are in `rules.fallen`.
+  - **500 games each, without → with the Fallen:**
+    - 4 players: 20.8 → 21.0 turns, comebacks 19 → 20%
+    - 6 players: 27.7 → 29.8 turns, comebacks 37 → 41%
+    - 10 players: 35.2 → 38.3 turns, comebacks 52 → 55%
+  - **Risk:** at 10 players, games within 40 turns drop from 79% to 65%.
+  - Details: `docs/sim-results-m3-generals.md`.
+- **Rules:** `docs/rules-reference.md` §14–16.
+- **Screenshots** (desktop and 384 px phone) are in `docs/art/screens/s12-*.png`:
+  - the Command panel
+  - the queue with a general's orders
+  - a captured general
+  - "You are one of the Fallen" and the Fallen panel
+  - a plague in the replay and the report
+- **Tests and deploy:** 488 automated tests pass. The start-up bundle is 469.6 KB (was 445.7). Deployed to the private preview (version `b9d9ac0d`); the lock check passed.
+- **Asked Nate to play on the preview:**
+  - Twin Realms on the laptop with a Push general
+  - Ringsea on the phone with a captured general
+  - some Fallen events
+  - the new art and the two maps
+  - how many turns each game took
+
+  His notes go below once he's played.
