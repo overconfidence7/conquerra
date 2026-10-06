@@ -55,6 +55,8 @@ export function focusOf(beat: Beat, spots: ReplaySpots): Spot | null {
     case "invested":
     case "leaderReturned":
     case "leaderKilled":
+    case "generalCaptured":
+    case "generalLost":
       return spots.territory.get(e.territory) ?? null;
     case "surface":
       return spots.province.get(e.province) ?? null;

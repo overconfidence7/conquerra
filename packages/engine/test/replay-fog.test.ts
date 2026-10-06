@@ -72,7 +72,7 @@ describe("the fog lifts during the replay", () => {
     const order = replay.filter((e) => e.type === "battle" || e.type === "vision").map((e) => (e.type === "battle" ? `take ${e.to}` : `see ${Object.keys(e.revealed).join("")}`));
     expect(order).toEqual(["take c", "see d", "take d", "see e", "take e", "see f"]);
     // The snapshot is the land as it was at that moment, with the same detail viewFor gives.
-    expect(v[0]!.revealed.d).toEqual({ detail: "full", seenBy: ["border"], owner: null, troops: 1, specialists: [], building: null, construction: null, culture: 0, leaders: [], capitalOf: null });
+    expect(v[0]!.revealed.d).toEqual({ detail: "full", seenBy: ["border"], owner: null, troops: 1, specialists: [], building: null, construction: null, culture: 0, leaders: [], generals: [], capitalOf: null });
   });
 
   it("a rival's battle on land you only saw part-way through the turn shows in full", () => {

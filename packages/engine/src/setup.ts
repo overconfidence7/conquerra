@@ -78,6 +78,8 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
       capital: cap,
       leader: { alive: true, territory: cap },
       cooldowns: { seize: 0, lie: 0 },
+      command: null,
+      captured: [],
     };
   });
   // Keep the player list in the caller's order; seats are reshuffled every turn anyway.

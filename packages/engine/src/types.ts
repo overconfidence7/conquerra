@@ -17,6 +17,34 @@ export interface Specialist {
   type: SpecialistType;
 }
 
+/**
+ * A general's standing instruction (session 12). Each turn the general writes its army's orders from its owner's
+ * view (the planner is in @conquerra/bots); the engine only stores the instruction.
+ *  - hold: keep the territory it stands in, pulling in troops from next door if it's threatened
+ *  - defend: hold the border toward a rival, or toward a chosen neighbouring place
+ *  - push: march toward a place, taking land along the way
+ *  - raid: take a rival's weakly held land, avoiding its strong armies
+ */
+export type Instruction =
+  | { kind: "hold" }
+  | { kind: "defend"; player: PlayerId }
+  | { kind: "defend"; territory: TerritoryId }
+  | { kind: "push"; territory: TerritoryId }
+  | { kind: "raid"; player: PlayerId };
+export type InstructionKind = Instruction["kind"];
+
+/**
+ * A rival's Leader you captured by knocking them out. It commands an army like your own Leader (it goes with the
+ * troops where it stands), but adds no fighting bonus and has no timing tricks. Lost for good if its army is wiped
+ * out or the territory it stands in is taken.
+ */
+export interface CapturedGeneral {
+  /** Whose Leader it was (the knocked-out player): its id and portrait. */
+  of: PlayerId;
+  territory: TerritoryId;
+  instruction: Instruction | null;
+}
+
 export interface PlayerState {
   id: PlayerId;
   name: string;
@@ -29,6 +57,10 @@ export interface PlayerState {
   leader: { alive: boolean; territory: TerritoryId | null };
   /** Turns remaining before each leader ability can be used again (0 = ready). */
   cooldowns: { seize: number; lie: number };
+  /** Your Leader's standing instruction as a general (null: you order its army yourself). */
+  command: Instruction | null;
+  /** Captured generals, at most `rules.generals.maxCaptured` (one more while you choose which to let go). */
+  captured: CapturedGeneral[];
 }
 
 /** Each territory holds at most one army: a troop count plus up to `maxPerArmy` specialists. */
@@ -125,9 +157,18 @@ export type OrderBody =
       /** Which specialists go along. Default: all of them (they travel with the stack). */
       specialists?: SpecialistType[] | "all";
       withLeader?: boolean;
+      /** A captured general (by whose Leader it was) standing in `from` goes with the army. */
+      withGeneral?: PlayerId;
     }
   /** Pull the army back to the safest neighbouring territory you hold. */
   | { kind: "retreat"; from: TerritoryId }
+  /**
+   * Give a general a standing instruction (null: order its army yourself). `general` is whose Leader it is: your own
+   * id for your Leader, the knocked-out player's id for a captured general. Applied as the turn starts; takes no slot.
+   */
+  | { kind: "instruct"; general: PlayerId; instruction: Instruction | null }
+  /** Let a captured general go (when a third arrives, you choose which two to keep). Applied as the turn starts. */
+  | { kind: "release"; general: PlayerId }
   /** Attack the weakest neighbour of `from` that the army can likely take (used by followThrough). */
   | { kind: "advance"; from: TerritoryId };
 
@@ -143,6 +184,8 @@ export type Order = OrderBody & {
   timing?: "first" | "last";
   /** A named preset; expanded by the engine when the turn starts. */
   preset?: PresetRef;
+  /** Written by a general (whose Leader: your own id for your Leader), for the queue, the replay and the report. */
+  general?: PlayerId;
 };
 
 export type OrdersByPlayer = Record<PlayerId, Order[]>;
@@ -229,7 +272,20 @@ export type GameEvent =
   | { type: "built"; player: PlayerId; orderId: string; territory: TerritoryId; building: BuildingType; cost: number; /** null = ready now (engineers). */ doneAtEndOfTurn: number | null }
   | { type: "completed"; player: PlayerId; territory: TerritoryId; building: BuildingType }
   | { type: "invested"; player: PlayerId; orderId: string; territory: TerritoryId; culture: number; cost: number }
-  | { type: "moved"; player: PlayerId; orderId: string; from: TerritoryId; to: TerritoryId; army: ArmySnapshot; withLeader: boolean; retreat: boolean }
+  | {
+      type: "moved";
+      player: PlayerId;
+      orderId: string;
+      from: TerritoryId;
+      to: TerritoryId;
+      army: ArmySnapshot;
+      withLeader: boolean;
+      retreat: boolean;
+      /** A captured general went with the army. */
+      withGeneral?: PlayerId;
+      /** The general that wrote the order. */
+      general?: PlayerId;
+    }
   | {
       type: "battle";
       player: PlayerId;
@@ -240,18 +296,28 @@ export type GameEvent =
       attackers: ArmySnapshot;
       /** The attacker's Leader went along (it moves in on a capture). */
       withLeader: boolean;
+      /** A captured general went with the attack (it moves in on a capture, and is lost if the army is wiped out). */
+      withGeneral?: PlayerId;
+      /** The general that wrote the order. */
+      general?: PlayerId;
       defenders: ArmySnapshot;
       result: CombatResult;
       captured: boolean;
       /** Specialists that were lost with a destroyed army. */
       specialistsLost: SpecialistType[];
       /** What helped the defenders, beyond terrain and the border (both come from the map): for "They held: hills and a fort". */
-      defense: { fort: boolean; culture: number; leader: boolean };
+      defense: { fort: boolean; culture: number; leader: boolean; /** Captured generals standing there (no bonus; lost on a capture). */ generals?: PlayerId[] };
     }
   | { type: "leaderKilled"; player: PlayerId; territory: TerritoryId }
   /** A fallen Leader comes back for free at the end of the turn: at the capital, or the strongest territory if the capital is lost. */
   | { type: "leaderReturned"; player: PlayerId; territory: TerritoryId }
   | { type: "eliminated"; player: PlayerId; by: PlayerId | null }
+  /** The knocked-out player's Leader joins whoever knocked them out, as a captured general at `territory`. */
+  | { type: "generalCaptured"; player: PlayerId; general: PlayerId; territory: TerritoryId }
+  /** A captured general is gone for good: its army was wiped out, or the land it stood in was taken. */
+  | { type: "generalLost"; player: PlayerId; general: PlayerId; territory: TerritoryId; by: PlayerId | null }
+  /** You let a captured general go (you may keep only so many). */
+  | { type: "generalReleased"; player: PlayerId; general: PlayerId }
   | {
       type: "income";
       player: PlayerId;

@@ -34,6 +34,10 @@ scope.onmessage = async (e) => {
         scope.postMessage({ id: req.id, ok: true, orders: game.suggest() });
         return;
       }
+      if (req.type === "planGenerals") {
+        scope.postMessage({ id: req.id, ok: true, orders: game.generalOrders(req.instructions) });
+        return;
+      }
       if (req.type === "save") {
         scope.postMessage({ id: req.id, ok: true, save: game.save(req.notes) });
         return;

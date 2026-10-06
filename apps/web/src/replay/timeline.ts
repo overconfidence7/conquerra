@@ -61,6 +61,8 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     case "completed":
     case "invested":
     case "leaderReturned":
+    case "generalCaptured":
+    case "generalLost":
       return "pop";
     case "moved":
       return "march";
@@ -78,6 +80,7 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     case "income":
     case "initiative":
     case "fizzled":
+    case "generalReleased":
     // The fog lifting (or falling) rides on the beat of the step that caused it.
     case "vision":
       return null;
@@ -217,6 +220,8 @@ export function frameAt(tl: Timeline, t: number): ReplayFrame {
       else if (e.type === "built" || e.type === "completed") frame.pops.push({ at: e.territory, player: e.player, label: e.building, progress: q });
       else if (e.type === "invested") frame.pops.push({ at: e.territory, player: e.player, label: "culture", progress: q });
       else if (e.type === "leaderReturned") frame.pops.push({ at: e.territory, player: e.player, label: "Leader", progress: q });
+      else if (e.type === "generalCaptured") frame.pops.push({ at: e.territory, player: e.player, label: "Captured general", progress: q });
+      else if (e.type === "generalLost") frame.pops.push({ at: e.territory, player: e.player, label: "General lost", progress: q });
     });
     break;
   }
@@ -268,6 +273,11 @@ export function replayView(before: PlayerView, events: readonly ReplayEvent[], a
     if (from) edit(from, (t) => (t.leaders = t.leaders.filter((p) => p !== player)));
     if (to) edit(to, (t) => (t.leaders = t.leaders.includes(player) ? t.leaders : [...t.leaders, player]));
   };
+  /** A captured general (by whose Leader it was) moving with its army, appearing or gone. */
+  const moveGeneral = (general: string, from: TerritoryId | null, to: TerritoryId | null) => {
+    if (from) edit(from, (t) => (t.generals = t.generals.filter((p) => p !== general)));
+    if (to) edit(to, (t) => (t.generals = t.generals.includes(general) ? t.generals : [...t.generals, general]));
+  };
   /** Where each House's Leader stands, as far as this view knows. */
   const leaderAt = (player: string) => Object.keys(territories).find((id) => {
     const t = territories[id]!;
@@ -306,6 +316,7 @@ export function replayView(before: PlayerView, events: readonly ReplayEvent[], a
         edit(e.from, (t) => (t.troops -= e.army.troops));
         edit(e.to, (t) => ((t.troops += e.army.troops), t.specialists.push(...specs)));
         if (e.withLeader) moveLeader(e.player, e.from, e.to);
+        if (e.withGeneral) moveGeneral(e.withGeneral, e.from, e.to);
         break;
       }
       case "battle": {
@@ -328,8 +339,15 @@ export function replayView(before: PlayerView, events: readonly ReplayEvent[], a
           }
         });
         if (e.captured && e.withLeader) moveLeader(e.player, e.from, e.to);
+        if (e.captured && e.withGeneral) moveGeneral(e.withGeneral, e.from, e.to);
         break;
       }
+      case "generalCaptured":
+        moveGeneral(e.general, null, e.territory);
+        break;
+      case "generalLost":
+        moveGeneral(e.general, e.territory, null);
+        break;
       case "leaderKilled":
         moveLeader(e.player, leaderAt(e.player), null);
         break;
@@ -342,7 +360,7 @@ export function replayView(before: PlayerView, events: readonly ReplayEvent[], a
         break;
       case "vision":
         noteCapitals(e.revealed);
-        for (const [id, seen] of Object.entries(e.revealed)) territories[id] = { ...seen, specialists: [...seen.specialists], leaders: [...seen.leaders] };
+        for (const [id, seen] of Object.entries(e.revealed)) territories[id] = { ...seen, specialists: [...seen.specialists], leaders: [...seen.leaders], generals: [...seen.generals] };
         for (const [id, last] of Object.entries(e.fogged)) territories[id] = { detail: "fogged", lastSeen: { ...last } };
         break;
       default:

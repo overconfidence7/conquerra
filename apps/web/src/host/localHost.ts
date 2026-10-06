@@ -51,6 +51,7 @@ export function createLocalHost(): GameHost {
     watchNext: () => send({ type: "watchNext" }),
     finish: () => send({ type: "finish" }),
     suggest: () => send<Order[]>({ type: "suggest" }),
+    planGenerals: (instructions) => send<Order[]>({ type: "planGenerals", instructions }),
     save: (notes) => send<SavedGame>({ type: "save", ...(notes ? { notes } : {}) }),
     dispose: () => worker.terminate(),
   };

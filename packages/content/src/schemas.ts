@@ -223,6 +223,8 @@ export const Rules = z.object({
     seizeInitiativeCooldown: z.number().int().min(1),
     lieInWaitCooldown: z.number().int().min(1),
   }),
+  /** Generals (session 12): captured generals you may keep (when one more arrives, you choose which to let go). */
+  generals: z.object({ maxCaptured: z.number().int().min(0) }),
   vision: z.object({ base: z.number().int().min(0) }),
   game: z.object({
     /** Order-phase timer. The engine only stores it; the server runs the clock. */

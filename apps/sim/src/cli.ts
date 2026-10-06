@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { indexMap, replaySavedGame, type GameContext, type GameMode, type SavedGame } from "@conquerra/engine";
-import { CAPTAIN_CHAIN_MARGIN, makeCaptainBot, makeRecruitBot, type Bot, type CaptainFeature } from "@conquerra/bots";
+import { CAPTAIN_CHAIN_MARGIN, makeCaptainBot, makeGeneralSeat, makeRecruitBot, type Bot, type CaptainFeature } from "@conquerra/bots";
+import type { InstructionKind } from "@conquerra/engine";
 import { narrate } from "./narrate";
 import { runGame, type GameSummary } from "./runGame";
 
@@ -16,6 +17,8 @@ import { runGame, type GameSummary } from "./runGame";
  *   pnpm sim --mix captain,recruit,recruit,recruit   mixed tables: one bot per seat, rotated each game so no bot
  *                                              keeps a lucky seat; prints each bot's win rate
  *   pnpm sim --replay game.json                play a saved game (Settings → "Save this game") turn by turn
+ *   pnpm sim --mix general-push,captain,captain,captain   one seat's Leader runs on a standing instruction
+ *                                              (general-hold, -defend, -push or -raid); the rest play as the Captain
  * Options: --map embervale|greatmarch (default: Embervale up to 6 players, Greatmarch above),
  *          --luck 0.3, --mode classic|conquest, --turn-limit N, --fog on|off, --seed prefix,
  *          --chain-margin N (bots chain on when the arriving army is this many times what the next target needs;
@@ -47,7 +50,9 @@ const makeBot = (kind: string): Bot => {
   if (kind === "captain") return makeCaptainBot({ ...runawayTuning, chainMargin: margin ?? CAPTAIN_CHAIN_MARGIN, off: (arg("captain-off", "") ? arg("captain-off", "").split(",") : []) as CaptainFeature[] });
   // "captain-no-culture" etc.: a Captain with one priority switched off, under its own name (for mixed tables).
   if (kind.startsWith("captain-no-")) return { ...makeCaptainBot({ chainMargin: margin ?? CAPTAIN_CHAIN_MARGIN, off: [kind.slice("captain-no-".length) as CaptainFeature] }), id: kind };
-  throw new Error(`Unknown bot "${kind}" (recruit, captain, or captain-no-<priority>)`);
+  // "general-push" etc.: a Captain whose Leader's army runs on that standing instruction (session 12).
+  if (kind.startsWith("general-")) return makeGeneralSeat(kind.slice("general-".length) as InstructionKind, { chainMargin: margin ?? CAPTAIN_CHAIN_MARGIN });
+  throw new Error(`Unknown bot "${kind}" (recruit, captain, captain-no-<priority>, or general-hold|defend|push|raid)`);
 };
 const mix = arg("mix", "") ? arg("mix", "").split(",").map((k) => k.trim()) : null;
 const label = mix ? `mixed table (${mix.join(", ")})` : `${botKind === "captain" ? "Captain" : "Recruit"} bots${marginArg ? ` (chain margin ${marginArg})` : ""}`;

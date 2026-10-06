@@ -1,6 +1,7 @@
 import { defaultRules, mapCatalog, suggestedMode } from "@conquerra/content";
 import { BOT_NAMES } from "./host/names";
-import { isShare, type GameContext, type Order, type PlayerView, type RecruitAmount, type TerritoryId } from "@conquerra/engine";
+import { isShare, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type RecruitAmount, type TerritoryId } from "@conquerra/engine";
+import { asIfYouOrderFrom, instructOrders, takeControl, withGeneralOrders } from "./logic/generals";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
 import type { GameHost, HostUpdate, LobbySettings, TurnReport } from "./host/protocol";
@@ -41,6 +42,14 @@ interface GameStore {
   autoLocked: boolean;
   busy: boolean;
   error: string | null;
+  /** Your generals' instructions as you've set them this turn (starting from the standing ones). */
+  instructions: Record<PlayerId, Instruction | null>;
+  /** Generals whose army you gave an order of your own this turn: yours to command until the turn ends. */
+  paused: PlayerId[];
+  /** Choosing a place on the map for a general (Push toward, or Defend toward a place): the next tap picks it. */
+  picking: { general: PlayerId; kind: "push" | "defend" } | null;
+  /** Captured generals you chose to let go this turn (you may keep two). */
+  releases: PlayerId[];
 
   setLobby(patch: Partial<LobbySettings>): void;
   start(): Promise<void>;
@@ -80,6 +89,15 @@ interface GameStore {
   /** Knocked out: skip ahead to the end and see the result. */
   seeResult(): Promise<void>;
   playAgain(): void;
+  /** Give a general a standing instruction (null: you give its army orders yourself). Its new orders replace its old ones in your queue. */
+  setInstruction(general: PlayerId, instruction: Instruction | null): Promise<void>;
+  /** Push toward / Defend toward a place: the next tap on the map picks the place. */
+  pickPlace(general: PlayerId, kind: "push" | "defend"): void;
+  cancelPick(): void;
+  /** With a third captured general: let this one go (or keep it after all). */
+  toggleRelease(general: PlayerId): void;
+  /** Everything that goes to the host for this turn: instruction changes, generals you let go, then the queue. */
+  turnOrders(): Order[];
   /** Replace your orders with a bot's plan (the game's bot level; testing: the perf script plays whole games with it). */
   autoPlan(): Promise<void>;
 }
@@ -135,6 +153,10 @@ export const useGame = create<GameStore>((set, get) => ({
   autoLocked: false,
   busy: false,
   error: null,
+  instructions: {},
+  paused: [],
+  picking: null,
+  releases: [],
 
   setLobby(patch) {
     const { lobby, modeTouched } = get();
@@ -164,7 +186,11 @@ export const useGame = create<GameStore>((set, get) => ({
         // The map's geometry comes from the host, never from an import here.
         ctx: { map: u.map, rules: u.rules },
         view: u.view,
-        queue: [],
+        queue: u.generalOrders ?? [],
+        instructions: {},
+        paused: [],
+        picking: null,
+        releases: [],
         selected: u.view.me.capital,
         draft: null,
         recruit: null,
@@ -185,20 +211,28 @@ export const useGame = create<GameStore>((set, get) => ({
   },
 
   tap(t) {
-    const { ctx, view, queue, selected, recruit } = get();
+    const { ctx, view, queue, selected, recruit, picking } = get();
     if (!ctx || !view) return;
+    // Choosing a place for a general: this tap is it.
+    if (picking) {
+      set({ picking: null });
+      void get().setInstruction(picking.general, picking.kind === "push" ? { kind: "push", territory: t } : { kind: "defend", territory: t });
+      return;
+    }
     // Recruit panel open: tapping a glowing site recruits there. Anything else closes the panel and taps as usual.
     if (recruit) {
       if (isRecruitSite(ctx, view, t)) return get().recruitAt(t);
       set({ recruit: null });
     }
-    const action = tapTerritory(ctx, view, planQueue(ctx, view, queue), selected, t, queue);
+    // From a general's territory, its army counts as yours to order (giving it an order takes control back).
+    const mineFirst = asIfYouOrderFrom(view, queue, selected);
+    const action = tapTerritory(ctx, view, planQueue(ctx, view, mineFirst), selected, t, mineFirst);
     if (action.kind === "deselect") set({ selected: null, draft: null });
     else if (action.kind === "select") set({ selected: action.territory, draft: null });
     else set({ draft: action.draft });
   },
 
-  clearSelection: () => set({ selected: null, draft: null, recruit: null }),
+  clearSelection: () => set({ selected: null, draft: null, recruit: null, picking: null }),
   select: (t) => set({ selected: t, draft: null }),
 
   updateDraft(patch) {
@@ -209,8 +243,10 @@ export const useGame = create<GameStore>((set, get) => ({
   addDraft() {
     const { draft: d, ctx, view } = get();
     if (!d || !ctx || !view) return;
+    // An order of your own for a general's army takes control of it back for the turn (its orders step aside).
+    const taken = takeControl(view, get().queue, { id: "draft", kind: "move", from: d.from, to: d.to, troops: "all" }, get().paused);
     // A hop from an attack that sends Just enough raises that attack to All (the panel says so).
-    const base = queueFor(get().queue, d);
+    const base = queueFor(taken.queue, d);
     if (troopsOf(ctx, view, planQueue(ctx, view, base), d) <= 0) return;
     const queue = base.map((o) => {
       // Seize / Lie in Wait go on one order only.
@@ -219,11 +255,14 @@ export const useGame = create<GameStore>((set, get) => ({
       if (o.kind === "move" && o.to === d.from && o.preset?.id === "followThrough") o = { ...o, preset: undefined };
       return o;
     });
-    set({ queue: [...queue, draftToOrder(d, nextOrderId())], draft: null, selected: d.from, recruit: null });
+    set({ queue: [...queue, draftToOrder(d, nextOrderId())], paused: taken.paused, draft: null, selected: d.from, recruit: null });
   },
 
   add(order) {
-    set({ queue: [...get().queue, { ...order, id: nextOrderId() } as Order] });
+    const { view, queue, paused } = get();
+    const added = { ...order, id: nextOrderId() } as Order;
+    const taken = view ? takeControl(view, queue, added, paused) : { queue: [...queue], paused };
+    set({ queue: [...taken.queue, added], paused: taken.paused });
   },
 
   quickRecruit() {
@@ -272,12 +311,41 @@ export const useGame = create<GameStore>((set, get) => ({
     set({ queue: shiftOrder(get().queue, id, dir) });
   },
 
+  async setInstruction(general, instruction) {
+    const { host, view, instructions } = get();
+    if (!host || !view) return;
+    const next = { ...instructions, [general]: instruction };
+    // Handing it an instruction gives the army back to the general (unless you give it an order again).
+    set({ instructions: next, paused: get().paused.filter((g) => g !== general), picking: null });
+    try {
+      const fresh = await host.planGenerals(next);
+      if (get().view?.turn !== view.turn) return;
+      set({ queue: withGeneralOrders(get().queue, fresh, get().paused) });
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  pickPlace: (general, kind) => set({ picking: { general, kind }, draft: null, recruit: null }),
+  cancelPick: () => set({ picking: null }),
+
+  toggleRelease(general) {
+    const r = get().releases;
+    set({ releases: r.includes(general) ? r.filter((g) => g !== general) : [...r, general] });
+  },
+
+  turnOrders() {
+    const { view, queue, instructions, releases } = get();
+    if (!view) return [...queue];
+    return [...instructOrders(view, instructions), ...releases.map((g) => ({ id: `release-${g}`, kind: "release", general: g }) as Order), ...queue];
+  },
+
   async lockIn() {
-    const { host, queue, busy, view } = get();
+    const { host, busy, view } = get();
     if (!host || busy || !view || get().replay) return;
     set({ busy: true, error: null });
     try {
-      const u = await host.lockIn(queue, view.turn);
+      const u = await host.lockIn(get().turnOrders(), view.turn);
       // No report: the timer locked this turn in first (that update already arrived).
       if (u.report) applyTurn(u, false);
     } catch (e) {
@@ -343,7 +411,7 @@ export const useGame = create<GameStore>((set, get) => ({
 
   playAgain() {
     get().host?.dispose();
-    set({ screen: "lobby", host: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null });
+    set({ screen: "lobby", host: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, paused: [], picking: null, releases: [] });
   },
 }));
 
@@ -357,7 +425,12 @@ function applyTurn(u: HostUpdate, auto: boolean) {
     report: u.report,
     fastForwarded: u.fastForwarded,
     clock: u.clock,
-    queue: [],
+    // A new turn: your generals have already written their orders, and every army is theirs again.
+    queue: u.generalOrders ?? [],
+    instructions: {},
+    paused: [],
+    picking: null,
+    releases: [],
     draft: null,
     recruit: null,
     selected: over || out ? null : u.view.me.capital,
@@ -371,5 +444,5 @@ function applyTurn(u: HostUpdate, auto: boolean) {
 
 // The host keeps your orders as you build them: they're what locks in if the timer runs out.
 useGame.subscribe((s, prev) => {
-  if (s.queue !== prev.queue && s.host && s.view) s.host.saveOrders(s.queue, s.view.turn);
+  if ((s.queue !== prev.queue || s.instructions !== prev.instructions || s.releases !== prev.releases) && s.host && s.view) s.host.saveOrders(s.turnOrders(), s.view.turn);
 });

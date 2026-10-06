@@ -3,7 +3,7 @@ import { fewestToTake, recruitCount, troopsFor } from "./amounts";
 import { expectBattle, rollLosses, type BattleExpectation } from "./combat";
 import { canRecruitAt, cultureProtection, incomeFor, investCost, provinceCulture, scoreFor, specialistUnlocked } from "./economy";
 import { updateIntel } from "./intel";
-import { indexMap, type MapIndex } from "./mapIndex";
+import { distancesFrom, indexMap, type MapIndex } from "./mapIndex";
 import { expandPreset } from "./presets";
 import { Rng } from "./rng";
 import type {
@@ -15,6 +15,7 @@ import type {
   GameContext,
   GameEvent,
   GameState,
+  Instruction,
   Order,
   OrderBody,
   OrdersByPlayer,
@@ -42,6 +43,8 @@ interface MovePlan {
   troops: number;
   specialists: Specialist[];
   leaderGoes: boolean;
+  /** A captured general (whose Leader it was) going with the army. */
+  general: PlayerId | null;
   /** Border actually crossed into the destination (the second step for two-territory moves). */
   border: BorderType;
 }
@@ -86,6 +89,8 @@ class Turn {
   readonly lastCapturer = new Map<PlayerId, PlayerId>();
   /** Set by a move that captured its target, so `then` follow-ups know where to push from. */
   lastCapture: TerritoryId | null = null;
+  /** The general that wrote the order now running (for the replay and the report). */
+  author: PlayerId | undefined;
   /** Vision cache; bumped whenever something that affects vision changes. */
   private visionEpoch = 0;
   private visionCache = new Map<PlayerId, { epoch: number; set: Set<TerritoryId> }>();
@@ -264,6 +269,7 @@ class Turn {
       return null;
     }
     this.lastCapture = null;
+    this.author = order.general;
     const failed = (order.conditions ?? []).find((c) => !this.check(pid, c, order));
     const reason = failed ? fz("condition", this.conditionDetail(pid, failed, order)) : this.apply(pid, order);
     if (reason === null) {
@@ -399,12 +405,14 @@ class Turn {
     if (o.via && !specialists.some((s) => s.type === "cavalry")) return fz("needsCavalry", { territory: o.from });
 
     const leaderGoes = !!o.withLeader && p.leader.alive && p.leader.territory === o.from;
+    // A captured general standing there goes along if the order says so (it adds no fighting bonus).
+    const general = o.withGeneral && p.captured.some((g) => g.of === o.withGeneral && g.territory === o.from) ? o.withGeneral : null;
 
     // Troops: a share of the army that can act, always leaving the garrison behind.
     const fresh = this.freshTroops(o.from);
     const available = Math.min(fresh, from.troops - rules.setup.minGarrison);
     const attack = to.owner !== pid;
-    const draft: MovePlan = { troops: 0, specialists, leaderGoes, border: border ?? "normal" };
+    const draft: MovePlan = { troops: 0, specialists, leaderGoes, general, border: border ?? "normal" };
     const enough = () => (attack ? fewestToTake((n) => this.expect(pid, o.to, { ...draft, troops: n }).captureLikely, available) : available);
     const troops = troopsFor(o.troops, fresh, available, enough);
     if (troops <= 0) {
@@ -449,7 +457,19 @@ class Turn {
       to.troops += plan.troops;
       to.specialists.push(...plan.specialists);
       if (plan.leaderGoes) p.leader.territory = o.to;
-      this.emit({ type: "moved", player: pid, orderId, from: o.from, to: o.to, army: snapshot(plan.troops, plan.specialists), withLeader: plan.leaderGoes, retreat });
+      if (plan.general) this.generalOf(p, plan.general)!.territory = o.to;
+      this.emit({
+        type: "moved",
+        player: pid,
+        orderId,
+        from: o.from,
+        to: o.to,
+        army: snapshot(plan.troops, plan.specialists),
+        withLeader: plan.leaderGoes,
+        retreat,
+        ...(plan.general ? { withGeneral: plan.general } : {}),
+        ...(this.author ? { general: this.author } : {}),
+      });
       return null;
     }
 
@@ -474,6 +494,9 @@ class Turn {
     const captured = to.troops === 0 && survivors > 0;
     /** Leaders who fall in this battle. They're announced right after it, so the event log reads in order. */
     const fallen: PlayerState[] = [];
+    /** Captured generals lost in this battle (the defender's on a capture; the attacker's if its army is wiped out). */
+    const lost: { owner: PlayerState; of: PlayerId; by: PlayerId | null }[] = [];
+    const standing = defender ? defender.captured.filter((g) => g.territory === o.to).map((g) => g.of) : [];
     if (captured) {
       // The defending army is gone; its specialists are lost with it. Buildings and culture stay with the land.
       specialistsLost.push(...to.specialists.map((s) => s.type));
@@ -484,6 +507,8 @@ class Turn {
       this.clearSpent(o.to);
       if (defenderLeader && defender) fallen.push(defender);
       if (plan.leaderGoes) p.leader.territory = o.to;
+      if (plan.general) this.generalOf(p, plan.general)!.territory = o.to;
+      if (defender) for (const of of standing) lost.push({ owner: defender, of, by: pid });
       if (defenderId) this.lastCapturer.set(defenderId, pid);
       this.lastCapture = o.to;
     } else {
@@ -496,6 +521,7 @@ class Turn {
       } else {
         specialistsLost.push(...plan.specialists.map((s) => s.type));
         if (plan.leaderGoes) fallen.push(p);
+        if (plan.general) lost.push({ owner: p, of: plan.general, by: defenderId });
       }
     }
     this.emit({
@@ -507,6 +533,8 @@ class Turn {
       defender: defenderId,
       attackers,
       withLeader: plan.leaderGoes,
+      ...(plan.general ? { withGeneral: plan.general } : {}),
+      ...(this.author ? { general: this.author } : {}),
       defenders,
       result: {
         attackStrength: round2(exp.attackStrength),
@@ -518,11 +546,16 @@ class Turn {
       },
       captured,
       specialistsLost,
-      defense: { fort: exp.fortCounted, culture: to.culture, leader: defenderLeader },
+      defense: { fort: exp.fortCounted, culture: to.culture, leader: defenderLeader, ...(standing.length ? { generals: standing } : {}) },
     });
     for (const f of fallen) {
       f.leader = { alive: false, territory: null };
       this.emit({ type: "leaderKilled", player: f.id, territory: f === p ? o.from : o.to });
+    }
+    for (const l of lost) {
+      const at = this.generalOf(l.owner, l.of)!.territory;
+      l.owner.captured = l.owner.captured.filter((g) => g.of !== l.of);
+      this.emit({ type: "generalLost", player: l.owner.id, general: l.of, territory: at, by: l.by });
     }
     if (captured && defenderId) this.checkEliminated(defenderId);
     return null;
@@ -565,7 +598,33 @@ class Turn {
     p.eliminatedTurn = this.s.turn;
     p.eliminatedBy = this.lastCapturer.get(pid) ?? null;
     p.leader = { alive: false, territory: null };
+    p.captured = [];
     this.emit({ type: "eliminated", player: pid, by: p.eliminatedBy });
+    // Their Leader joins whoever knocked them out, as a captured general at that player's capital (or, if it's lost,
+    // their strongest territory), with no army until troops are there.
+    const captor = p.eliminatedBy ? this.player(p.eliminatedBy) : null;
+    if (captor && captor.eliminatedTurn === null) {
+      const home = this.homeOf(captor);
+      if (home) {
+        captor.captured.push({ of: pid, territory: home, instruction: null });
+        this.emit({ type: "generalCaptured", player: captor.id, general: pid, territory: home });
+      }
+    }
+  }
+
+  generalOf(p: PlayerState, of: PlayerId) {
+    return p.captured.find((g) => g.of === of);
+  }
+
+  /** The capital if they hold it, else their strongest territory (most troops; ties by id). */
+  homeOf(p: PlayerState): TerritoryId | null {
+    if (this.s.territories[p.capital]?.owner === p.id) return p.capital;
+    let home: TerritoryId | null = null;
+    for (const id of this.idx.ids) {
+      const t = this.s.territories[id]!;
+      if (t.owner === p.id && (!home || t.troops > this.s.territories[home]!.troops)) home = id;
+    }
+    return home;
   }
 }
 
@@ -582,6 +641,58 @@ function queueFollowThrough(T: Turn, pid: PlayerId, q: Queued[], next: Queued) {
     return;
   }
   q.unshift(next);
+}
+
+/** Is this a sensible instruction for `p` on this map (places exist, rivals are other players still in)? */
+function validInstruction(T: Turn, p: PlayerState, i: Instruction): boolean {
+  const rival = (id: PlayerId) => id !== p.id && T.s.players.some((x) => x.id === id && x.eliminatedTurn === null);
+  switch (i.kind) {
+    case "hold":
+      return true;
+    case "push":
+      return T.idx.byId.has(i.territory);
+    case "raid":
+      return rival(i.player);
+    case "defend":
+      return "territory" in i ? T.idx.byId.has(i.territory) : rival(i.player);
+  }
+}
+
+/**
+ * As the turn starts: captured generals you chose to let go, then (if you still have more than you may keep) the
+ * ones farthest from your front go, then standing instructions. A general you don't have, or an instruction that
+ * makes no sense, is ignored.
+ */
+function commandGenerals(T: Turn, p: PlayerState, list: readonly Order[]) {
+  for (const o of list)
+    if (o.kind === "release" && T.generalOf(p, o.general)) {
+      p.captured = p.captured.filter((g) => g.of !== o.general);
+      T.emit({ type: "generalReleased", player: p.id, general: o.general });
+    }
+  const max = T.ctx.rules.generals.maxCaptured;
+  if (p.captured.length > max) {
+    // Keep the ones nearest the front: the fewest borders from land another player holds (ties: the earlier ones).
+    const front = T.idx.ids.filter((t) => {
+      const o = T.s.territories[t]!.owner;
+      return o !== null && o !== p.id;
+    });
+    const far = (t: TerritoryId) => {
+      const d = distancesFrom(T.idx, t);
+      return front.length ? Math.min(...front.map((f) => d.get(f) ?? 1e9)) : 0;
+    };
+    const ranked = p.captured.map((g, i) => ({ g, i, d: far(g.territory) })).sort((a, b) => a.d - b.d || a.i - b.i);
+    const keep = new Set(ranked.slice(0, max).map((r) => r.g.of));
+    for (const g of p.captured.filter((g) => !keep.has(g.of))) T.emit({ type: "generalReleased", player: p.id, general: g.of });
+    p.captured = p.captured.filter((g) => keep.has(g.of));
+  }
+  for (const o of list) {
+    if (o.kind !== "instruct" || (o.instruction && !validInstruction(T, p, o.instruction))) continue;
+    if (o.general === p.id) p.command = o.instruction;
+    else {
+      const g = T.generalOf(p, o.general);
+      if (g) g.instruction = o.instruction;
+    }
+  }
 }
 
 /**
@@ -613,7 +724,10 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
     const p = T.player(pid);
     const q: Queued[] = [];
     const list = Array.isArray(orders[pid]) ? orders[pid]! : [];
+    // Generals first: who to let go, then standing instructions. Neither takes a slot.
+    commandGenerals(T, p, list);
     for (const raw of list) {
+      if (raw.kind === "instruct" || raw.kind === "release") continue;
       const o = expandPreset(raw);
       if (o.timing === "first" && !firsts.has(pid) && p.leader.alive && p.cooldowns.seize === 0) firsts.set(pid, o);
       else if (o.timing === "last" && !lasts.has(pid) && p.leader.alive && p.cooldowns.lie === 0) lasts.set(pid, o);

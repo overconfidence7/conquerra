@@ -2,6 +2,7 @@ import { recruitLabel, type GameContext, type Order, type PlayerView } from "@co
 import { amountPill, isAttack, planQueue, recruitedBy, type QueuePlan } from "../logic/orders";
 import { describeOrder, namer, orderTags } from "../logic/text";
 import { useGame } from "../store";
+import { GeneralPortrait } from "./Command";
 import { Frame } from "./Frame";
 import { moreCue } from "./moreCue";
 
@@ -24,6 +25,8 @@ export function OrderQueue({ ctx, view, plan, queue, bare = false, onFold }: { c
                 // A recruit can be edited: tap it to change where and how many.
                 {...(o.kind === "recruit" ? { role: "button", tabIndex: 0, title: "Change where and how many", onClick: () => openRecruit(o.id) } : {})}
               >
+                {/* Written by a general: its portrait first, so you're never surprised. */}
+                {o.general && <GeneralPortrait view={view} general={o.general} size={22} />}
                 {o.kind === "move" && before
                   ? describeOrder(o, n, isAttack(view, o, before), amountPill(plan.sent[i] ?? 0, o.troops, before.estimated.has(o.from)))
                   : o.kind === "recruit"

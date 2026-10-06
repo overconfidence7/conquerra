@@ -1,5 +1,5 @@
 import type { MapDef, Rules } from "@conquerra/content";
-import type { GameMode, Order, PlayerView, ReplayEvent, SavedGame } from "@conquerra/engine";
+import type { GameMode, Instruction, Order, PlayerId, PlayerView, ReplayEvent, SavedGame } from "@conquerra/engine";
 import type { TurnClock } from "../logic/timer";
 
 /**
@@ -41,6 +41,8 @@ export interface HostUpdate {
   clock: TurnClock | null;
   /** Set when this update came from the timer running out (your saved orders were locked in for you). */
   autoLocked?: boolean;
+  /** Your generals' orders for the turn now being planned, from their standing instructions (shown in your queue). */
+  generalOrders: Order[];
 }
 
 /**
@@ -68,6 +70,8 @@ export interface GameHost {
   watchNext(): Promise<HostUpdate>;
   /** Once you're knocked out: the bots play on to the end. */
   finish(): Promise<HostUpdate>;
+  /** Your generals' orders for this turn with these instructions (the ones you haven't changed keep theirs). */
+  planGenerals(instructions: Record<PlayerId, Instruction | null>): Promise<Order[]>;
   /** What a bot of this game's level would order for you this turn (for testing; maybe an "auto-orders" button later). */
   suggest(): Promise<Order[]>;
   /** "Save this game": everything needed to replay it exactly (single player only). */
@@ -83,6 +87,7 @@ export type HostRequest =
   | { id: number; type: "watchNext" }
   | { id: number; type: "finish" }
   | { id: number; type: "suggest" }
+  | { id: number; type: "planGenerals"; instructions: Record<PlayerId, Instruction | null> }
   | { id: number; type: "save"; notes?: Record<string, string> };
 
 export type HostResponse =

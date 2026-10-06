@@ -40,7 +40,9 @@ export type ReplayEvent = StepEvent | SurfaceEvent | VisionEvent;
  *    just after it). Land that only came into view later in the turn doesn't count;
  *  - otherwise fogged battles and fallen Leaders become surface details ("a battle in Northreach"), and quiet
  *    actions in the fog (moves, recruiting, building, culture) are left out entirely;
- *  - eliminations and the end of the game are public;
+ *  - eliminations and the end of the game are public; a knocked-out Leader joining whoever knocked them out (a
+ *    captured general) shows to that player and to anyone who can see where it appears; a captured general lost shows
+ *    to its owner, to whoever took it, and to anyone who could see it happen;
  *  - after each step where their vision changes, a "vision" event says what came into view and what fogged over.
  */
 export function replayFor(ctx: GameContext, before: GameState, result: TurnResult, player: PlayerId): ReplayEvent[] {
@@ -88,7 +90,15 @@ export function replayFor(ctx: GameContext, before: GameState, result: TurnResul
       case "completed":
       case "invested":
       case "leaderReturned":
+      case "generalCaptured":
         if (mine || sees(e.territory)) out.push(e);
+        break;
+      // Your own general lost always shows, and so does one you took from them; others only where you could see.
+      case "generalLost":
+        if (mine || e.by === player || sees(e.territory)) out.push(e);
+        break;
+      case "generalReleased":
+        if (mine) out.push(e);
         break;
     }
     if (changes) out.push(visionEvent(ctx, tv.board, player, e.step, before.turn, changes));
@@ -109,6 +119,8 @@ function placesSeen(e: StepEvent): TerritoryId[] {
     case "completed":
     case "invested":
     case "leaderReturned":
+    case "generalCaptured":
+    case "generalLost":
       return [e.territory];
     default:
       return [];

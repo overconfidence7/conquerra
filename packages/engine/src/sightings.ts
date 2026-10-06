@@ -58,7 +58,7 @@ function copyBoard(s: GameState): GameState {
     territories[id] = { ...t, specialists: t.specialists.map((x) => ({ ...x })), construction: t.construction ? { ...t.construction } : null };
   return {
     ...s,
-    players: s.players.map((p) => ({ ...p, leader: { ...p.leader }, cooldowns: { ...p.cooldowns } })),
+    players: s.players.map((p) => ({ ...p, leader: { ...p.leader }, cooldowns: { ...p.cooldowns }, captured: p.captured.map((g) => ({ ...g })) })),
     territories,
     intel: {},
   };
@@ -202,6 +202,10 @@ export class TurnVision {
     const b = this.board;
     const terr = (id: TerritoryId) => b.territories[id]!;
     const player = (id: PlayerId) => b.players.find((p) => p.id === id)!;
+    const moveGeneral = (owner: PlayerId, of: PlayerId, to: TerritoryId) => {
+      const g = player(owner).captured.find((x) => x.of === of);
+      if (g) g.territory = to;
+    };
     /** The specialists an army took with it: the first fresh ones of each type listed, in board order. */
     const take = (from: TerritoryId, types: readonly SpecialistType[]): Specialist[] => {
       const want = [...types];
@@ -245,6 +249,7 @@ export class TurnVision {
         terr(e.to).troops += e.army.troops;
         terr(e.to).specialists.push(...specs);
         if (e.withLeader) player(e.player).leader.territory = e.to;
+        if (e.withGeneral) moveGeneral(e.player, e.withGeneral, e.to);
         break;
       }
       case "battle": {
@@ -258,6 +263,7 @@ export class TurnVision {
           to.troops = survivors;
           to.specialists = specs;
           if (e.withLeader) player(e.player).leader.territory = e.to;
+          if (e.withGeneral) moveGeneral(e.player, e.withGeneral, e.to);
         } else {
           if (to.troops <= 0) to.specialists = [];
           if (survivors > 0) {
@@ -279,6 +285,16 @@ export class TurnVision {
         p.eliminatedTurn = b.turn;
         p.eliminatedBy = e.by;
         p.leader = { alive: false, territory: null };
+        p.captured = [];
+        break;
+      }
+      case "generalCaptured":
+        player(e.player).captured.push({ of: e.general, territory: e.territory, instruction: null });
+        break;
+      case "generalLost":
+      case "generalReleased": {
+        const p = player(e.player);
+        p.captured = p.captured.filter((g) => g.of !== e.general);
         break;
       }
       case "income":

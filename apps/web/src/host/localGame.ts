@@ -1,4 +1,4 @@
-import { captainBot, recruitBot, type Bot } from "@conquerra/bots";
+import { captainBot, generalsOf, planGeneral, recruitBot, type Bot } from "@conquerra/bots";
 import { defaultRules, type MapDef } from "@conquerra/content";
 import {
   createGame,
@@ -8,7 +8,9 @@ import {
   viewFor,
   type GameContext,
   type GameState,
+  type Instruction,
   type NewGameOptions,
+  type PlayerId,
   type Order,
   type OrdersByPlayer,
   type ReplayEvent,
@@ -45,7 +47,7 @@ export class LocalGame {
   /** How the game was set up and every turn's orders, for "Save this game". */
   private readonly setup: NewGameOptions;
   private readonly history: OrdersByPlayer[] = [];
-  /** What each bot watched in the last replay (from its own seat). */
+  /** What each seat watched in the last replay (from its own seat): the bots', and yours for your generals. */
   private lastTurn = new Map<string, ReplayEvent[]>();
 
   constructor(
@@ -82,7 +84,8 @@ export class LocalGame {
 
   /** Start the countdown for the turn now being planned, after `replayMs` of replay plus a moment for the report. */
   private startClock(replayMs: number) {
-    this.saved = [];
+    // Your generals' orders go in even if you never touch the turn.
+    this.saved = this.generalOrders();
     this.deadline = this.turnMs !== null && !this.state.winner && !this.knockedOut ? this.now() + replayMs + (replayMs ? REPORT_GRACE_MS : 0) + this.turnMs : null;
   }
 
@@ -97,7 +100,20 @@ export class LocalGame {
   }
 
   update(report: HostUpdate["report"] = null, fastForwarded = 0): HostUpdate {
-    return { playerId: HUMAN_ID, view: viewFor(this.ctx, this.state, HUMAN_ID), report, fastForwarded, clock: this.clock };
+    return { playerId: HUMAN_ID, view: viewFor(this.ctx, this.state, HUMAN_ID), report, fastForwarded, clock: this.clock, generalOrders: this.generalOrders() };
+  }
+
+  /**
+   * Your generals' orders for this turn, written from your view as planning starts (and again when you change an
+   * instruction: `instructions` overrides the standing ones). The same view and instructions always give the same
+   * orders, so it doesn't matter whether they're worked out here, on the page, or (M4) on the server.
+   */
+  generalOrders(instructions: Record<PlayerId, Instruction | null> = {}): Order[] {
+    if (this.state.winner || this.knockedOut) return [];
+    const view = viewFor(this.ctx, this.state, HUMAN_ID);
+    return generalsOf(view).flatMap((g) =>
+      planGeneral(this.ctx, view, g.general, g.general in instructions ? instructions[g.general]! : g.instruction, this.lastTurn.get(HUMAN_ID)),
+    );
   }
 
   private get knockedOut(): boolean {
@@ -119,8 +135,8 @@ export class LocalGame {
     this.history.push(orders);
     this.state = result.state;
     // What each bot watched in this turn's replay (only its own view), for its next plan.
-    this.lastTurn = new Map(this.state.players.filter((p) => p.id !== HUMAN_ID && p.eliminatedTurn === null).map((p) => [p.id, replayFor(this.ctx, before, result, p.id)]));
-    const report = { turn: before.turn, events: replayFor(this.ctx, before, result, HUMAN_ID) };
+    this.lastTurn = new Map(this.state.players.filter((p) => p.eliminatedTurn === null).map((p) => [p.id, replayFor(this.ctx, before, result, p.id)]));
+    const report = { turn: before.turn, events: this.lastTurn.get(HUMAN_ID) ?? replayFor(this.ctx, before, result, HUMAN_ID) };
     this.startClock(buildTimeline(report.events).total);
     return report;
   }

@@ -1,5 +1,5 @@
 import type { BuildingType, SpecialistType, Terrain } from "@conquerra/content";
-import { amountLabel, recruitLabel, explainFizzle, explainHold, fizzleIsQuiet, indexMap, PRESETS, type ArmySnapshot, type GameContext, type Order, type PlayerView, type ReplayEvent } from "@conquerra/engine";
+import { amountLabel, recruitLabel, explainFizzle, explainHold, fizzleIsQuiet, indexMap, PRESETS, type ArmySnapshot, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 
 export const SPECIALIST_ICON: Record<SpecialistType, string> = { cavalry: "🐎", siege: "🎯", scouts: "🔭", engineers: "🔨", healers: "⚕️" };
 export const SPECIALIST_NAME: Record<SpecialistType, string> = { cavalry: "Cavalry", siege: "Siege", scouts: "Scouts", engineers: "Engineers", healers: "Healers" };
@@ -22,6 +22,8 @@ export const TERRAIN_ICON: Record<Terrain, string> = { plains: "", forest: "🌲
 
 /** Names for people and places, with "you" for the player. */
 export interface Namer {
+  /** Your own view, for lines about your generals. */
+  view?: PlayerView;
   who(id: string | null): string;
   place(id: string): string;
   isMe(id: string | null): boolean;
@@ -33,6 +35,7 @@ export interface Namer {
 export function namer(ctx: GameContext, view: PlayerView, before?: PlayerView | null): Namer {
   const idx = indexMap(ctx.map);
   return {
+    view,
     who: (id) => (id === null ? "neutral" : id === view.me.id ? "You" : (view.players.find((p) => p.id === id)?.name ?? id)),
     place: (id) => idx.byId.get(id)?.name ?? id,
     isMe: (id) => id === view.me.id,
@@ -65,7 +68,59 @@ export function describeOrder(o: Order, n: Namer, attack: boolean, sending?: str
       return `Advance from ${n.place(o.from)}`;
     case "move":
       return `${attack ? "Attack" : "Move"} ${n.place(o.to)} from ${n.place(o.from)}${o.via ? ` via ${n.place(o.via)}` : ""} with ${sending ?? amountLabel(o.troops)}`;
+    case "instruct":
+      return `${generalName(n, o.general)}: ${o.instruction ? instructionName(o.instruction, n) : "you give the orders"}`;
+    case "release":
+      return `Let ${generalName(n, o.general)} go`;
   }
+}
+
+/** A general's name: "Your Leader", or a captured general by the name of the player whose Leader it was. */
+export function generalName(n: Namer, general: PlayerId): string {
+  return n.isMe(general) ? "Your Leader" : n.who(general);
+}
+
+/** An instruction as a command ("Push toward Old March"). */
+export function instructionName(i: Instruction, n: Namer): string {
+  switch (i.kind) {
+    case "hold":
+      return "Hold here";
+    case "defend":
+      return "territory" in i ? `Defend the border toward ${n.place(i.territory)}` : `Defend the border with ${n.who(i.player)}`;
+    case "push":
+      return `Push toward ${n.place(i.territory)}`;
+    case "raid":
+      return `Raid ${n.who(i.player)}`;
+  }
+}
+
+/** What a general is doing, as on the Leader card ("Holding Galeholt", "Pushing toward Old March"). */
+export function instructionDoing(i: Instruction, n: Namer, at: string | null): string {
+  switch (i.kind) {
+    case "hold":
+      return at ? `Holding ${n.place(at)}` : "Holding its ground";
+    case "defend":
+      return "territory" in i ? `Defending the border toward ${n.place(i.territory)}` : `Defending the border with ${n.who(i.player)}`;
+    case "push":
+      return `Pushing toward ${n.place(i.territory)}`;
+    case "raid":
+      return `Raiding ${n.who(i.player)}`;
+  }
+}
+
+/** Where a general stands now and its instruction, from your view (null if it isn't yours or has none). */
+export function generalStatus(view: PlayerView, general: PlayerId): { at: string | null; instruction: Instruction | null } | null {
+  if (general === view.me.id) return { at: view.me.leader.alive ? view.me.leader.territory : null, instruction: view.me.command };
+  const g = view.me.captured.find((x) => x.of === general);
+  return g ? { at: g.territory, instruction: g.instruction } : null;
+}
+
+/** "Your Leader, holding Galeholt," for a replay line about an order a general wrote (or a fight where it stood). */
+function generalPhrase(view: PlayerView | undefined, n: Namer, general: PlayerId | undefined, at?: string): string | null {
+  if (!general || !view) return null;
+  const st = generalStatus(view, general);
+  const doing = st?.instruction ? instructionDoing(st.instruction, n, at ?? st.at).replace(/^./, (c) => c.toLowerCase()) : null;
+  return doing ? `${generalName(n, general)}, ${doing},` : generalName(n, general);
 }
 
 /** Little tags under a queued order: preset, leader, timing. */
@@ -121,6 +176,8 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
     case "invested":
       return { text: `${who(e.player)} raised culture at ${place(e.territory)} to ${e.culture}.`, tone: "quiet" };
     case "moved":
+      if (e.general && isMe(e.player))
+        return { text: `${generalPhrase(n.view, n, e.general)} ${e.retreat ? "pulled back" : "moved"} ${army(e.army)} from ${place(e.from)} to ${place(e.to)}.`, tone: "info" };
       return {
         text: `${who(e.player)} ${e.retreat ? "retreated" : "moved"} ${army(e.army)} from ${place(e.from)} to ${place(e.to)}${e.withLeader ? " with the Leader" : ""}.`,
         tone: e.retreat && isMe(e.player) ? "info" : "quiet",
@@ -131,6 +188,16 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       // Both armies and both sides' losses: "You attacked Ashfell (Gules, 8 troops) with 10 troops and took it: you lost 3, they lost 8."
       const defenders = `${vsMe ? "yours" : e.defender ? who(e.defender) : "neutral"}, ${army(e.defenders)}`;
       const head = `${who(e.player)} attacked ${place(e.to)} (${defenders}) with ${army(e.attackers)}`;
+      // A general's own fights read as its story: "Your Leader, pushing toward Old March, took Ashfell (...)".
+      const g = mine && e.general ? generalPhrase(n.view, n, e.general) : null;
+      if (g)
+        return {
+          text: `${g} ${e.captured ? "took" : "attacked"} ${place(e.to)} (${defenders}) with ${army(e.attackers)}${e.captured ? "" : " and was driven back"}: you lost ${e.result.attackerLosses}, they lost ${e.result.defenderLosses}.`,
+          tone: e.captured ? "good" : "bad",
+        };
+      const guard = vsMe && !e.captured && e.defense.leader && n.view?.me.command ? generalPhrase(n.view, n, n.view.me.id, e.to) : null;
+      if (guard)
+        return { text: `${guard} drove back ${who(e.player)}'s attack on ${place(e.to)} (${army(e.attackers)}): you lost ${e.result.defenderLosses}, they lost ${e.result.attackerLosses}.`, tone: "good" };
       const result = e.captured ? "and took it" : verb(e.player, "and were driven back", "and was driven back");
       const lossA = `${mine ? "you" : vsMe ? "they" : who(e.player)} lost ${e.result.attackerLosses}`;
       const lossD = `${vsMe ? "you" : mine ? "they" : "the defenders"} lost ${e.result.defenderLosses}`;
@@ -150,6 +217,16 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
           : `${who(e.player)} has been eliminated${e.by ? ` by ${who(e.by)}` : ""}.`,
         tone: isMe(e.player) ? "bad" : isMe(e.by) ? "good" : "info",
       };
+    case "generalCaptured":
+      return isMe(e.player)
+        ? { text: `${who(e.general)} joins you as a captured general, at ${place(e.territory)}. Give them an instruction, or move troops there for them to command.`, tone: "good" }
+        : { text: `${who(e.general)} now serves ${who(e.player)} as a captured general.`, tone: "info" };
+    case "generalLost":
+      return isMe(e.player)
+        ? { text: `${who(e.general)}, your captured general, is gone for good: ${place(e.territory)} ${e.by ? `fell to ${who(e.by)}` : "was lost"}.`, tone: "bad" }
+        : { text: `${who(e.player)}'s captured general ${who(e.general)} is gone for good, at ${place(e.territory)}.`, tone: isMe(e.by) ? "good" : "quiet" };
+    case "generalReleased":
+      return { text: `You let ${who(e.general)} go (you may keep two captured generals).`, tone: "info" };
     case "income":
       return {
         text: `Income +${e.income}, upkeep −${e.upkeep}: you now have ${e.goldAfter} gold.${e.deserted ? ` ${e.deserted} troops deserted (unpaid upkeep).` : ""}`,

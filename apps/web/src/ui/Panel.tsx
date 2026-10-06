@@ -37,6 +37,8 @@ import { nearestRecruitSite, RECRUIT_RULE } from "../logic/actions";
 import { colorOf } from "./colors";
 import { cultureLine, cultureNext, placeFacts } from "../map/card";
 import { CardRows } from "./TerritoryCard";
+import { CommandRow } from "./Command";
+import { generalIn } from "../logic/generals";
 
 const CROSSING = { river: "🌊 Across a river", pass: "⛰ Through a mountain pass", sea: "⛵ Over a sea lane" } as const;
 
@@ -390,9 +392,12 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
   const cultureCost = nextCultureCost(ctx, plan, selected);
   const hires = hireOptions(ctx, view, plan, selected);
   const hasOwnNeighbour = (idx.neighbors.get(selected) ?? []).some((t) => isMine(view, t));
+  // One of your generals stands here: what it's doing, and Command.
+  const general = generalIn(view, selected);
   return (
     <div className="panel">
       {header}
+      {general && <CommandRow key={general} ctx={ctx} view={view} general={general} />}
       {facts}
       <p className="muted small">Tap a neighbour on the map to move or attack.</p>
 

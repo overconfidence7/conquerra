@@ -33,6 +33,12 @@ export function narrate(ctx: GameContext, e: StepEvent, name: (id: string | null
       return `☠ ${name(e.player)} is eliminated${e.by ? ` by ${name(e.by)}` : ""}`;
     case "income":
       return `${name(e.player)}: +${e.income}g income, -${e.upkeep}g upkeep → ${e.goldAfter}g${e.deserted ? ` (${e.deserted} deserted)` : ""}`;
+    case "generalCaptured":
+      return `${name(e.general)}'s Leader joins ${name(e.player)} as a captured general at ${place(e.territory)}`;
+    case "generalLost":
+      return `${name(e.player)} loses captured general ${name(e.general)} at ${place(e.territory)}`;
+    case "generalReleased":
+      return `${name(e.player)} lets captured general ${name(e.general)} go`;
     case "gameOver":
       return `★ Game over (${e.reason}): ${e.winner === "draw" ? "draw" : `${name(e.winner)} wins`}`;
   }

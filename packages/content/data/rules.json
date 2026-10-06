@@ -132,6 +132,9 @@
     "seizeInitiativeCooldown": 3,
     "lieInWaitCooldown": 2
   },
+  "generals": {
+    "maxCaptured": 2
+  },
   "vision": {
     "base": 1
   },

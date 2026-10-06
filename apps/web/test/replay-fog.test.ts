@@ -47,7 +47,7 @@ describe("the fog lifts during the replay (on screen)", () => {
   it("the fog lifts around captured land as the battle's result shows, not before", () => {
     const vision: VisionEvent = { type: "vision", step: 4, revealed: {}, fogged: {} };
     const tid = ctx.map.territories[3]!.id;
-    vision.revealed[tid] = { detail: "full", seenBy: ["border"], owner: null, troops: 2, specialists: [], building: null, construction: null, culture: 0, leaders: [], capitalOf: null };
+    vision.revealed[tid] = { detail: "full", seenBy: ["border"], owner: null, troops: 2, specialists: [], building: null, construction: null, culture: 0, leaders: [], generals: [], capitalOf: null };
     const events: ReplayEvent[] = [
       { type: "turnStart", step: 0, turn: 3, seats: ["p1"] },
       {
@@ -73,7 +73,7 @@ describe("the fog lifts during the replay (on screen)", () => {
     const ev: ReplayEvent[] = [
       {
         type: "vision", step: 1,
-        revealed: { [hidden]: { detail: "full", seenBy: ["border"], owner: "p2", troops: 7, specialists: [], building: "fort", construction: null, culture: 1, leaders: ["p2"], capitalOf: null } },
+        revealed: { [hidden]: { detail: "full", seenBy: ["border"], owner: "p2", troops: 7, specialists: [], building: "fort", construction: null, culture: 1, leaders: ["p2"], generals: [], capitalOf: null } },
         fogged: { [seen]: { owner: null, troops: 1, building: null, turn: 1 } },
       },
     ];
@@ -124,7 +124,7 @@ describe("the fog lifts during the replay (on screen)", () => {
     const view = viewFor(ctx, createGame(ctx, { gameId: "r", seed: "rep", players: [{ id: "p1", name: "A" }, { id: "p2", name: "B" }] }), "p1");
     const ids = ctx.map.territories.map((t) => t.id);
     const full = (owner: string | null, troops: number, extra: Partial<Extract<TerritoryView, { detail: "full" }>> = {}) =>
-      ({ detail: "full", seenBy: ["border"], owner, troops, specialists: [], building: null, construction: null, culture: 0, leaders: [], capitalOf: null, ...extra }) as Extract<TerritoryView, { detail: "full" }>;
+      ({ detail: "full", seenBy: ["border"], owner, troops, specialists: [], building: null, construction: null, culture: 0, leaders: [], generals: [], capitalOf: null, ...extra }) as Extract<TerritoryView, { detail: "full" }>;
     const events: ReplayEvent[] = [
       { type: "vision", step: 3, revealed: { [ids[5]!]: full("p2", 8, { building: "fort" }), [ids[6]!]: full(null, 1) }, fogged: {} },
       { type: "vision", step: 9, revealed: { [ids[7]!]: full("p2", 12, { capitalOf: "p2", leaders: ["p2"] }) }, fogged: {} },

@@ -2,6 +2,7 @@ import { recruitSitesIn, type GameContext, type Order, type PlayerView } from "@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { incomeEstimate } from "../logic/actions";
 import { planQueue, queueFor } from "../logic/orders";
+import { asIfYouOrderFrom } from "../logic/generals";
 import type { Insets } from "../map/camera";
 import type { Beat } from "../replay/timeline";
 import { toastFor } from "../replay/toasts";
@@ -210,7 +211,8 @@ export function GameScreen() {
   const rp = useReplay(ctx, replay, renderer, onBeat, onEnd);
 
   // While a hop is being drafted, show the queue as it will be once it's added (its Just-enough attack raised to All).
-  const shownQueue = useMemo(() => queueFor(queue, draft), [queue, draft]);
+  // (A draft out of a general's territory shows that army as yours: its general's orders step aside once you add it.)
+  const shownQueue = useMemo(() => queueFor(view && draft ? asIfYouOrderFrom(view, queue, draft.from) : queue, draft), [view, queue, draft]);
   const plan = useMemo(() => (ctx && view ? planQueue(ctx, view, shownQueue) : null), [ctx, view, shownQueue]);
   const income = useMemo(() => (ctx && view ? incomeEstimate(ctx, view) : 0), [ctx, view]);
 
@@ -223,6 +225,11 @@ export function GameScreen() {
       setSheet((s) => (s === "closed" ? "half" : s));
     }
   }, [draft, recruitOpen, phone]);
+  // Choosing a place for a general: on a phone the sheet folds away so the whole map can be tapped.
+  const picking = g.picking;
+  useEffect(() => {
+    if (phone && picking) setSheet("closed");
+  }, [phone, picking]);
   // Recruit sites glow while the Recruit panel is open.
   const glow = useMemo(() => (ctx && view && recruitOpen ? recruitSitesIn(ctx, view) : NO_GLOW), [ctx, view, recruitOpen]);
   useEffect(() => setSpendOpen(false), [selected]);
@@ -328,8 +335,17 @@ export function GameScreen() {
     />
   );
   const minimap = <Minimap ctx={ctx} view={shownView} rect={rect} onJump={(x, y) => renderer.current?.centreOn(x, y)} />;
+  const pickBanner = picking && act && (
+    <Frame className="pick-banner slim" role="status">
+      <span>Tap the place to {picking.kind === "push" ? "push toward" : "defend toward"}</span>
+      <button className="link" onClick={() => g.cancelPick()}>
+        Cancel
+      </button>
+    </Frame>
+  );
   const overlays = (
     <>
+      {pickBanner}
       {showReport && report && !replaying && (
         <TurnReportDialog ctx={ctx} view={view} report={report} autoLocked={autoLocked} onClose={() => g.setShowReport(false)} onWatchAgain={() => g.watchAgain()} />
       )}

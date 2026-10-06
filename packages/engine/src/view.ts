@@ -14,6 +14,8 @@ export interface TerritoryDetail {
   culture: number;
   /** Leaders standing here. */
   leaders: PlayerId[];
+  /** Captured generals standing here (whose Leader each was), commanded by whoever holds the land. */
+  generals: PlayerId[];
   /** Whose capital this is, while its own House holds it. You learn a rival's capital by seeing it. */
   capitalOf: PlayerId | null;
 }
@@ -49,6 +51,7 @@ export function trueDetail(state: GameState, id: TerritoryId): TerritoryDetail {
     construction: t.construction ? { ...t.construction } : null,
     culture: t.culture,
     leaders: state.players.filter((p) => p.leader.alive && p.leader.territory === id).map((p) => p.id),
+    generals: (state.players.find((p) => p.id === t.owner)?.captured ?? []).filter((g) => g.territory === id).map((g) => g.of),
     capitalOf: state.players.find((p) => p.eliminatedTurn === null && p.capital === id && t.owner === p.id)?.id ?? null,
   };
 }

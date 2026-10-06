@@ -23,6 +23,7 @@ function inProcessHost(seed: string): GameHost {
     watchNext: async () => game!.watchNext(),
     finish: async () => game!.finish(),
     suggest: async () => game!.suggest(),
+    planGenerals: async (instructions) => game!.generalOrders(instructions),
     save: async (notes) => game!.save(notes),
     dispose: () => {},
   };
