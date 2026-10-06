@@ -2,7 +2,23 @@
 
 *All-Captain tables, luck 0.3, classic, fog on, the Fallen on. 500 games per row (same seeds in every row). Embervale for 4 and 6 players, Greatmarch for 10. Run with `pnpm sim --games 500 --players N [--spoils off] [--fate off]`.*
 
-## In short
+## After Nate's calls (session 14)
+*Bigger Spoils windfalls again (three Swords 8 troops, three Towers a fort + 3 troops, one of each 4 troops + 6 gold) and the first Fate draw at the end of turn 3. Same tables and seeds as below; 500 games per row; `pnpm sim --games 500 --players 4,6,10 [--spoils off --fate off]`.*
+
+| Players | Length: no decks → both decks | Within 40 turns | Half the map by turn 10 | Halfway leader wins | Comebacks |
+|---|---|---|---|---|---|
+| 4 | 21.0 → **23.6** (session 13's tuned decks: 22.9) | 98.8% → 97.2% | 40% → 32% | 84% → 82% | 20% → 25% |
+| 6 | 29.8 → **31.8** (31.0) | 85.4% → 82.0% | 25% → 21% | 73% → 69% | 41% → 45% |
+| 10 | 38.3 → **40.8** (39.6) | 65.2% → 54.4% | 1.2% → 0.4% | 71% → 74% | 55% → 55% |
+
+- **Length:** the bigger windfalls cost about 1 more turn than session 13's tuned numbers (+0.7, +0.8, +1.2), as Nate expected. The quiet opening (no Fate until turn 4's planning) changes little. 10-player games now average 40.8 turns, just over the 30–40 guide: one for the balance pass (session 16).
+- **Runaways:** no worse. Fewer games have one player on half the map by turn 10, and comebacks hold or rise.
+- **Decided by the decks? Still no.**
+  - Spoils: the winner took the lead for good on a turn it turned in a set in 23% / 30% / 29% of games, against 27% / 28% / 30% by chance.
+  - Fate: the winner got 61% / 50% / 37% of the good events, against 60% / 51% / 44% of the land they could land on; its luck beyond its land was +0.3 / +1.0 / −0.2 events a game.
+- **Seat fairness (both decks):** 4 players 21.6 / 25.0 / 24.6 / 28.8%; 6 players 14.0 / 16.2 / 17.8 / 17.8 / 14.4 / 19.8%; 10 players 9.0 / 9.8 / 9.0 / 9.0 / 10.8 / 12.6 / 8.4 / 10.0 / 11.2 / 10.2%.
+
+## In short (session 13)
 - **The decks add colour without deciding games.** The winner takes the lead for good on a turn it turned in a Spoils set about as often as chance says it would (28% vs 27% at 4 players; 32% vs 30% at 10). It gets fewer good Fate events than its land would draw (58% vs 60%; 36% vs 45% at 10 players); net of the bad ones, its Fate luck is +0.3 to +1.0 events over a whole game of 45 to 157 events.
 - **Games run about 1 to 2 turns longer** with both decks (4 players 21.0 → 22.9, 6 players 29.8 → 31.0, 10 players 38.3 → 39.6). The orchestrator's first Spoils numbers added about 3 turns at every size, so the windfalls were tuned down (below).
 - **Runaways don't grow:** the halfway leader wins about as often as without the decks, and comebacks hold (4 players 20 → 23%, 6 players 41 → 42%, 10 players 55 → 51%).
