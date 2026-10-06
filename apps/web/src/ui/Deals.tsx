@@ -1,5 +1,5 @@
 import { DEAL_KINDS, describeTerms, indexMap, type DealKind, type DealTerms, type GameContext, type Offer, type PlayerId, type PlayerView, type TradeSide } from "@conquerra/engine";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { bindingPrice, changedTerms, newOffer, ownerFrom } from "../logic/deals";
 import { dealNames, namer } from "../logic/text";
 import { useGame } from "../store";
@@ -93,6 +93,11 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
   const shared = ctx.map.provinces.filter((p) => (idx.provinceMembers.get(p.id) ?? []).some((x) => (owner(x) === view.me.id || owner(x) === them) && (idx.neighbors.get(x) ?? []).some((y) => owner(y) === (owner(x) === view.me.id ? them : view.me.id))));
   const price = bindingPrice(ctx, view, offer);
   const words = describeTerms(t, offer.from, offer.to, dealNames(namer(ctx, view)));
+  // The answer arrives below the card's terms: bring it into view (on a phone it's under the fold).
+  const said = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    said.current?.scrollIntoView({ block: "nearest" });
+  }, [answer]);
   return (
     <>
       <div className="chips deal-kinds" role="radiogroup" aria-label="Deal card">
@@ -138,16 +143,19 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
           {living.length > 0 && (
             <div className="row">
               <span className="muted small">Until</span>
-              <span className="chips">
-                <button className={`chip ${!t.until ? "on" : ""}`} onClick={() => set({ kind: "truce", scope: t.scope, turns: t.turns })}>
-                  Those turns
-                </button>
+              <select
+                className="deal-until"
+                aria-label="Until"
+                value={t.until ?? ""}
+                onChange={(e) => set(e.target.value ? { ...t, until: e.target.value, turns: Math.min(d.truce.maxTurns, d.maxTurns) } : { kind: "truce", scope: t.scope, turns: t.turns })}
+              >
+                <option value="">Those turns</option>
                 {living.map((p) => (
-                  <button key={p.id} className={`chip ${t.until === p.id ? "on" : ""}`} onClick={() => set({ ...t, until: p.id, turns: Math.min(d.truce.maxTurns, d.maxTurns) })}>
-                    {p.name} is out
-                  </button>
+                  <option key={p.id} value={p.id}>
+                    {p.name} is knocked out ({Math.min(d.truce.maxTurns, d.maxTurns)} turns at most)
+                  </option>
                 ))}
-              </span>
+              </select>
             </div>
           )}
         </>
@@ -224,7 +232,7 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
         You offer {nameOf(view, them)} {words}.
       </p>
       {answer ? (
-        <div className={`deal-answer ${answer.accept ? "yes" : "no"}`} role="status">
+        <div ref={said} className={`deal-answer ${answer.accept ? "yes" : "no"}`} role="status">
           <p>
             <b>{nameOf(view, them)}:</b> “{answer.reason}”
           </p>

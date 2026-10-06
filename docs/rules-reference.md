@@ -360,5 +360,44 @@ Bots play by exactly the same rules as people, and only from their own view (inc
 - **Bots:** the Captain gives open missions a modest pull: an attack that would complete one scores a little higher (×1.3), but only among attacks it already judged likely to win; it builds a mission's fort or raises its culture only with gold to spare.
 - Numbers and every card: `rules.fate`.
 
+## 20. Diplomacy (session 14)
+Preset deals between two players. Every number is in `rules.diplomacy`.
+
+**Making a deal**
+- Tap a rival in the Players panel, then **Propose a deal**. The card comes with a plain truce ready to send (4 taps from opening the Players panel on a phone). Change the card or its terms if you like, pick **Handshake** or **Binding** (its gold price shows), then **Send**.
+- A bot answers at once, with one plain reason ("I need my army in the east."). It may send a counteroffer instead: the same card with the changes marked.
+- **Offers to you** arrive as a small toast as planning starts, with the bot's reason for asking. Tap it, then **Accept** (one tap), **Counter** or **Decline**.
+- **The re-confirm rule:** a deal starts only if both sides confirm during the same planning phase. It starts as the turn plays, **before any move**. An offer nobody confirmed lapses as the turn plays; one between two players who fought each other that turn is void.
+- Offers, answers and broken deals are orders that take no slot, so a saved game and `pnpm sim --replay` reproduce them exactly. Continue keeps them too.
+
+**The deal cards**
+
+| Card | What it does |
+|---|---|
+| **Truce** | No attacks between you across the borders it covers: everywhere (the default), a whole province, or borders you pick on the map. For 2 to 8 turns (3 by default), or until a player you name is knocked out (8 turns at most). |
+| **Trade** | Gold now, gold each turn (for up to 5 turns), or land (up to 3 territories in a deal, never a capital or land with a Leader in it; it must border the other side's land). The giver's troops there step back to its own strongest neighbouring territory, one of the receiver's troops moves in from its strongest neighbouring army, and buildings and culture stay with the land. A trade with nothing paid each turn is done at once. |
+| **Joint war** | You both name the same rival for 2 to 6 turns (4 by default), with a truce everywhere between you while it lasts. Attacking your partner, or making a truce with the target, breaks it. It ends early if the target is knocked out. A partner who never attacks the target hasn't broken it, but bots remember. Partners don't share what they see. |
+| **Right of passage** | Coming in session 15 (it shows as "soon" on the card). |
+
+**Handshake and binding**
+- **Handshake:** free. You can break one, by attacking across it, missing a payment, or making a truce with your joint war's target. Breaking it brings a public **Oathbreaker** mark for 5 turns, a gold fine and unrest (troops desert from your land next to the player you wronged; culture protects as usual). All three scale with the deal's size: how much land it covers, how long it runs, how much it trades; "until X is knocked out" counts as big. A truce everywhere for 3 turns over 6 territories costs about 8 gold.
+- **Binding:** each side pays gold up front, more for longer and bigger deals. The game won't let you queue an attack across it (the order panel says why), and any attack that would cross it the turn it starts is called off with a line in the report. Gold owed each turn is taken automatically; if you're short, troops desert for it as with upkeep. It can't be broken.
+- **Limits:** every deal ends after 8 turns at most. One deal of each kind between the same two players at a time. When a player is knocked out, their deals end; the Fallen don't make deals. A general can't be told to raid a partner.
+
+**What everyone sees**
+- Who has which deal with whom, for how long, and a joint war's target: a small mark next to each player in the Players panel (a seal on a binding one) with the turns left, and the Oathbreaker mark.
+- A trade's terms only reach its two sides; others see "Lady Morwen and Baron Krell made a trade" and any land that changed hands where they can see it.
+- Truce borders show on the map as a white stitched band (gold studs on a binding pact), only where you can see both sides.
+- An attack you're drafting across a handshake truce warns you: "This breaks your truce with Lady Morwen: Oathbreaker, about 8 gold and unrest."
+
+**The bots**
+- They judge every offer from their own view only, for one plain reason: their fronts and where their armies are needed, who's ahead (by the Captain's runaway rule), what the deal frees up or costs, and their trust in you ("You broke our truce at Old March.").
+- They never help a runaway leader, or the clear leader as far as they can tell: no truce, trade or passage that helps it grow. They're always open to a joint war against one.
+- **Trust** is worked out from the record of how past deals ended (part of the saved game): down a lot when you broke a deal with them, a little when a joint war fell through, up slowly with deals kept, down for an Oathbreaker mark. With low trust they ask for a binding pact instead of a handshake.
+- **The Captain proposes:** a joint war against a runaway leader, a truce on a front it can't afford while fighting elsewhere, a trade for land that completes a province or when it's short of gold. Each bot makes at most one offer a turn, and you get at most one offer a turn from all of them together. They make deals with each other too.
+- **They keep their word,** except the Captain may break a handshake deal for a rival's capital it's sure to take (or the win, with fog off), and it says so in the report.
+- **The Recruit:** takes a truce when it's weaker, refuses when it's stronger, and never proposes trades.
+- Numbers: `docs/sim-results-m3-diplomacy.md`.
+
 ## Not in yet (later milestones)
-Spies, diplomacy (session 14), factions, the "Govern this province" general instruction (session 15), pause by vote in online games (M4), tutorials and scenarios (M5).
+Spies, right of passage's moves, and the "Govern this province" general instruction (session 15), factions, pause by vote and deals between people in online games (M4), tutorials and scenarios (M5).

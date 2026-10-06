@@ -179,7 +179,7 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .deal-mark { display: inline-flex; align-items: center; gap: 2px; padding: 0 5px 0 3px; border-radius: 999px; border: 1px solid rgba(220, 230, 240, 0.45); background: rgba(15, 22, 32, 0.6); font: 700 var(--fs-label) var(--font-num); line-height: 18px; }
 .deal-mark .with { width: 9px; height: 9px; border-radius: 50%; display: inline-block; border: 1px solid rgba(0, 0, 0, 0.5); }
 .deal-mark.binding { border-color: var(--gold); }
-.deal-mark .seal { font-size: 0.7rem; }
+.deal-mark .deal-seal { font-size: 0.7rem; }
 .deal-mark.pending { border-style: dashed; }
 /* The deal card (session 14) */
 .deal-sheet .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
@@ -513,3 +513,4 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .mission-line .due { margin-left: 6px; font: 700 var(--fs-label) var(--font-head); color: var(--muted); }
 .mission-line .due.last { color: #ffb4a3; }
 .deal-sheet .scroll { padding-right: 6px; }
+.deal-until { min-height: 44px; max-width: 70%; background: rgba(15, 22, 32, 0.8); color: inherit; border: 1px solid rgba(201, 164, 92, 0.5); border-radius: 8px; padding: 4px 8px; font: inherit; }

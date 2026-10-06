@@ -64,6 +64,13 @@
   - **Bots keep their word,** except that the Captain may break a handshake deal when the gain clearly outweighs the penalty (a capital it's sure to take, or the win), and it says so in its reason.
   - **Generals respect every deal:** a general never attacks across a truce or breaks a deal, and "Raid a rival" can't name a partner.
   - **The sims check the bots aren't pushovers or walls:** acceptance rates on a fixed set of good, neutral and bad offers; deals and breaks per game; and game length, runaways and seat fairness with diplomacy on and off.
+- **BUILT (session 14, Oct 6):** truces, trades and joint wars as above, handshake and binding, the Oathbreaker penalty, and bots that judge, counter, propose and keep their word (right of passage is stored but its moves come in session 15). Details settled while building:
+  - Offers carry a one-line note: a bot's offer to you says why it's asking ("My army is needed in the west; let's have peace on our border.").
+  - Trust is worked out from the record of how past deals ended, kept in the game state (so it's in every save).
+  - Bots refuse to help the clear leader as far as they can tell, not only a runaway they can see, because under fog a runaway often doesn't look like one.
+  - The Captain breaks its word only for a capital it's sure to take (or the win, with fog off).
+  - Acceptance rates: good offers 94%, neutral 26% (70% countered), bad 2%. Games run longer with diplomacy (about 4, 5 and 7 turns at 4, 6 and 10 players) while runaways fall; the balance pass looks at it.
+  - Rules: `docs/rules-reference.md` §20. Numbers: `docs/sim-results-m3-diplomacy.md`.
 
 ## 3. Contingency presets
 - Order backups come from a short list of one-tap templates instead of being built by hand. Examples:

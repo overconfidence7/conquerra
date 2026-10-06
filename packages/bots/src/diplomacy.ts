@@ -162,6 +162,20 @@ function frontWith(b: Board, rival: PlayerId) {
   return { mine, theirs: b.facing.get(rival) ?? 0, land };
 }
 
+/**
+ * The clear leader as far as this bot can tell (for deals only; attacks keep the Captain's runaway rule): the most
+ * land it knows of, a good third more than anyone else's (its own included), and at least a fifth of the map.
+ */
+function leads(b: Board, p: PlayerId): boolean {
+  const est = [...b.knownLand].filter(([q]) => b.alive.some((x) => x.id === q)).sort((x, y) => y[1] - x[1] || (x[0] < y[0] ? -1 : 1));
+  if (b.alive.length < 3 || est[0]?.[0] !== p) return false;
+  const land = est[0][1];
+  const next = Math.max(b.mine.length, est[1]?.[1] ?? 0);
+  return land >= LEAD_OVER * next && land >= LEAD_SHARE * b.idx.ids.length;
+}
+const LEAD_OVER = 1.35;
+const LEAD_SHARE = 0.2;
+
 /** Does a deal on these terms help the proposer (so a runaway may not have it)? */
 function helpsProposer(t: DealTerms): boolean {
   if (t.kind !== "trade") return true;
@@ -194,6 +208,9 @@ export function judgeOffer(ctx: GameContext, view: PlayerView, offer: Offer, lev
   if (cost > 0 && cost > myGold) return no(`I can't spare ${cost} gold for a binding pact.`);
   // Never help a runaway leader; always open to a joint war against one.
   if (b.runaway === p && helpsProposer(t)) return no("You're running away with the map. I won't help you grow.");
+  // Deals are a softer test than attacks: under fog a runaway may not look like one yet, so the clear leader (as far
+  // as it can tell) doesn't get help either.
+  if (helpsProposer(t) && t.kind !== "war" && leads(b, p)) return no("You're the strongest of us. I won't help you grow.");
   const trust = trustIn(ctx, view, p);
   const r = rules.diplomacy.bots;
 
@@ -266,9 +283,13 @@ function captainWeighs(ctx: GameContext, view: PlayerView, b: Board, offer: Offe
     case "war": {
       const target = t.target;
       const vs = frontWith(b, target);
+      // Always open to a joint war against a runaway leader (or the clear leader, as far as it can tell).
+      if (target === b.runaway || leads(b, target)) {
+        const why = target === b.runaway ? `Gladly: ${n.name(target)} is running away with the map.` : `Gladly: ${n.name(target)} is the strongest of us.`;
+        return { factors: [{ w: 10, text: why }], counter: t.turns > rules.diplomacy.war.defaultTurns ? { terms: { ...t, turns: rules.diplomacy.war.defaultTurns }, why: `${rules.diplomacy.war.defaultTurns} turns, and I'm in.` } : undefined };
+      }
       if (b.focus === p && front.mine >= front.theirs) f.push({ w: -6, text: "You're my target; I won't make peace with you." });
-      if (target === b.runaway) f.push({ w: 8, text: `Gladly: ${n.name(target)} is running away with the map.` });
-      else if (b.shieldsLeader.has(target)) f.push({ w: -8, text: `${n.name(target)} is holding back ${n.name(b.runaway!)}; I won't weaken them.` });
+      if (b.shieldsLeader.has(target)) f.push({ w: -8, text: `${n.name(target)} is holding back ${n.name(b.runaway!)}; I won't weaken them.` });
       if (view.deals.some((d) => between(d, view.me.id, target) && (d.kind === "truce" || d.kind === "war"))) f.push({ w: -10, text: `I have a truce with ${n.name(target)}.` });
       if (!vs.land.length) f.push({ w: -4, text: `I can't reach ${n.name(target)} from where I stand.` });
       else {
@@ -276,8 +297,12 @@ function captainWeighs(ctx: GameContext, view: PlayerView, b: Board, offer: Offe
         if (vs.mine >= vs.theirs) f.push({ w: 3, text: `${n.name(target)}'s army near me is weak; let's do it.` });
         else f.push({ w: -3, text: `${n.name(target)} is too strong for me to take on right now.` });
       }
-      if (t.turns > rules.diplomacy.war.defaultTurns) f.push({ w: -0.5, text: "That's too long a war to promise." });
-      return { factors: f, counter: t.turns > rules.diplomacy.war.minTurns ? { terms: { ...t, turns: rules.diplomacy.war.minTurns }, why: `${rules.diplomacy.war.minTurns} turns, and I'm in.` } : undefined };
+      // Too long is the one thing a shorter war fixes.
+      if (t.turns > rules.diplomacy.war.defaultTurns) {
+        f.push({ w: -1.5, text: "That's too long a war to promise." });
+        return { factors: f, counter: { terms: { ...t, turns: rules.diplomacy.war.defaultTurns }, why: `${rules.diplomacy.war.defaultTurns} turns, and I'm in.` } };
+      }
+      return { factors: f };
     }
     case "passage": {
       if (front.land.length && front.theirs > front.mine) f.push({ w: -4, text: "I don't want your armies in my land." });
@@ -289,8 +314,11 @@ function captainWeighs(ctx: GameContext, view: PlayerView, b: Board, offer: Offe
       if (v.cantPay) return { factors: [{ w: -20, text: "I don't have that much gold." }] };
       if (v.giveLandBad) f.push({ w: -20, text: v.giveLandBad });
       const net = v.gain - v.cost;
-      f.push({ w: net / 2, text: net >= 0 ? (v.gainWords ? `${v.gainWords} for ${v.costWords || "that"}: a fair price.` : "A fair price.") : `I'd give ${v.costWords || "too much"} for ${v.gainWords || "too little"}: not enough.` });
+      const fair = !v.costWords ? `${v.gainWords}, and nothing asked in return: gladly.` : v.gainWords ? `${v.gainWords} for ${v.costWords}: a fair price.` : "A fair price.";
+      f.push({ w: net / 2, text: net >= 0 ? fair : `I'd give ${v.costWords || "too much"} for ${v.gainWords || "too little"}: not enough.` });
       if (v.needGold) f.push({ w: -3, text: "I need my gold for troops." });
+      // Short of gold: gold now is worth more than gold later.
+      if ((t.give.gold ?? 0) > 0 && view.me.gold < rules.troops.cost * 5) f.push({ w: 1.5, text: "I could use the gold now." });
       // Close: ask for the difference in gold.
       const more = Math.ceil(-net) + 1;
       if (net < 0 && more <= 12 && !v.giveLandBad) {

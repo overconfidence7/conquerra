@@ -1,4 +1,4 @@
-import type { Instruction, InstructionKind, PlayerId, PlayerView } from "@conquerra/engine";
+import { partnersOf, type Deal, type Instruction, type InstructionKind, type PlayerId, type PlayerView } from "@conquerra/engine";
 import { useState } from "react";
 import { INSTRUCTIONS } from "../logic/generals";
 import { useGame } from "../store";
@@ -9,7 +9,7 @@ import { colorOf } from "./colors";
  * instruction needs one. Loaded the first time Command is opened.
  */
 export default function CommandMenu({ view, general, current, onDone }: { view: PlayerView; general: PlayerId; current: Instruction | null; onDone(): void }) {
-  const { setInstruction, pickPlace } = useGame();
+  const { setInstruction, pickPlace, pageDeals } = useGame();
   const [choosing, setChoosing] = useState<InstructionKind | null>(null);
   const done = (i: Instruction | null) => {
     void setInstruction(general, i);
@@ -49,7 +49,8 @@ export default function CommandMenu({ view, general, current, onDone }: { view: 
     <div className="action">
       <p className="small">{choosing === "raid" ? "Raid which rival?" : "Defend the border with which rival?"}</p>
       <div className="chips" role="radiogroup" aria-label="Rival">
-        {rivals.map((p) => (
+        {/* "Raid a rival" can't name a partner (a truce or a joint war of yours, in force or agreed this turn). */}
+        {rivals.filter((p) => choosing !== "raid" || !partnersOf(pageDeals().filter((d) => d.terms) as Deal[], view.me.id).includes(p.id)).map((p) => (
           <button key={p.id} className="chip rival-chip" style={{ borderColor: colorOf(view, p.id) }} onClick={() => done(choosing === "raid" ? { kind: "raid", player: p.id } : { kind: "defend", player: p.id })}>
             {p.name}
           </button>

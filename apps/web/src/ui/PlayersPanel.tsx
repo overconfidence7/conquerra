@@ -20,7 +20,7 @@ function Marks({ view, marks }: { view: PlayerView; marks: DealMark[] }) {
         <span key={m.id} className={`deal-mark ${m.bond} ${m.pending ? "pending" : ""}`} title={`${markText(view, m)} with ${m.with === view.me.id ? "you" : (view.players.find((p) => p.id === m.with)?.name ?? m.with)}${m.bond === "binding" ? " (binding)" : ""}`}>
           <i className="with" style={{ background: colorOf(view, m.with) }} aria-hidden />
           {MARK_GLYPH[m.kind]}
-          {m.bond === "binding" && <span className="seal" aria-label="binding">🔒</span>}
+          {m.bond === "binding" && <span className="deal-seal" aria-label="binding">🔒</span>}
           <span className="left">{m.pending ? "new" : m.turnsLeft}</span>
         </span>
       ))}
