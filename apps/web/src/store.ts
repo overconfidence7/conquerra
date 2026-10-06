@@ -13,6 +13,7 @@ import { DEFAULT_TIMER, type TurnClock } from "./logic/timer";
 import { actionBarState } from "./logic/actions";
 import type { Answer } from "@conquerra/bots";
 import { agreedThisTurn, attackCheck, counterFrom, dealsNow, newOffer, passageNow, type PageDeal } from "./logic/deals";
+import { planPath, type PathKind } from "./logic/paths";
 import { draftToOrder, isRecruitSite, type NewOrder, planQueue, queueFor, removeOrder, shiftOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
 
 export type Screen = "lobby" | "game" | "over";
@@ -58,6 +59,10 @@ interface GameStore {
   releases: PlayerId[];
   /** Sending a spy (session 15): the next tap on the map picks the province it goes to. */
   spyPick: string | null;
+  /** Orders along a path (session 16): choosing where the army from here should go (the next tap picks it). */
+  pathPick: TerritoryId | null;
+  /** The path box: from, to, and which way (the shortest, or the full sweep). Confirm adds its orders. */
+  path: { from: TerritoryId; to: TerritoryId; kind: PathKind } | null;
   /** One of the Fallen: the world events you're putting Influence toward this turn (sent with Next turn). */
   fallenOrders: Order[];
   /** Aiming a world event: the next tap picks the land (a storm then takes a neighbour across the border). */
@@ -120,6 +125,12 @@ interface GameStore {
   addDraft(): void;
   add(order: NewOrder): void;
   /** Spies (session 15): Send (then tap a province), Recall, or stop picking. One order per spy, in the queue. */
+  /** Orders along a path (session 16): pick where the army in `from` should go. */
+  startPath(from: TerritoryId): void;
+  setPathKind(kind: PathKind): void;
+  /** Add the path's orders to your queue, as one chain (each still yours to change or delete). */
+  confirmPath(): void;
+  cancelPath(): void;
   sendSpy(spy: string): void;
   recallSpy(spy: string): void;
   cancelSpyPick(): void;
@@ -237,6 +248,8 @@ export const useGame = create<GameStore>((set, get) => ({
   paused: [],
   picking: null,
   spyPick: null,
+  pathPick: null,
+  path: null,
   releases: [],
   fallenOrders: [],
   aiming: null,
@@ -373,6 +386,12 @@ export const useGame = create<GameStore>((set, get) => ({
   tap(t) {
     const { ctx, view, queue, selected, recruit, picking, aiming, deal, dealPick, spyPick } = get();
     if (!ctx || !view) return;
+    // Orders along a path: this tap picks where to go (tap the start again, or your own land next door: back to normal).
+    const { pathPick } = get();
+    if (pathPick) {
+      if (t === pathPick) return set({ pathPick: null });
+      return set({ pathPick: null, path: { from: pathPick, to: t, kind: "shortest" }, draft: null, selected: pathPick });
+    }
     // Sending a spy: this tap picks the province it goes to.
     if (spyPick) {
       const province = indexMap(ctx.map).byId.get(t)?.province;
@@ -410,7 +429,7 @@ export const useGame = create<GameStore>((set, get) => ({
     else set({ draft: action.draft });
   },
 
-  clearSelection: () => set({ selected: null, draft: null, recruit: null, picking: null, mission: null, spyPick: null }),
+  clearSelection: () => set({ selected: null, draft: null, recruit: null, picking: null, mission: null, spyPick: null, pathPick: null, path: null }),
   select: (t) => set({ selected: t, draft: null }),
 
   updateDraft(patch) {
@@ -439,6 +458,28 @@ export const useGame = create<GameStore>((set, get) => ({
     set({ queue: [...queue, draftToOrder(d, nextOrderId())], paused: taken.paused, draft: null, selected: d.from, recruit: null });
   },
 
+  startPath: (from) => set({ pathPick: from, path: null, draft: null, recruit: null, picking: null, spyPick: null, selected: from }),
+  setPathKind(kind) {
+    const p = get().path;
+    if (p) set({ path: { ...p, kind } });
+  },
+  confirmPath() {
+    const { path, ctx, view, queue, paused } = get();
+    if (!path || !ctx || !view) return;
+    const plan = planPath(ctx, view, queue, get().pageDeals(), passageNow(view, get().pageDeals()), path);
+    if (!plan.orders.length) return;
+    // Orders of your own for a general's army take control of it back for the turn (its orders step aside).
+    let next: Order[] = [...queue];
+    let p = paused;
+    for (const o of plan.orders) {
+      const order = { ...o, id: nextOrderId() } as Order;
+      const taken = takeControl(view, next, order, p);
+      next = [...taken.queue, order];
+      p = taken.paused;
+    }
+    set({ queue: next, paused: p, path: null, selected: plan.steps[plan.steps.length - 1] ?? path.from });
+  },
+  cancelPath: () => set({ path: null, pathPick: null }),
   sendSpy: (spy) => set({ spyPick: spy, draft: null, recruit: null, picking: null }),
   recallSpy: (spy) => set({ queue: withSpyOrder(get().queue, { kind: "spy", spy, to: null }, nextOrderId()), spyPick: null }),
   cancelSpyPick: () => set({ spyPick: null }),
@@ -769,6 +810,8 @@ function applyTurn(u: HostUpdate, auto: boolean) {
     instructions: {},
     paused: [],
     spyPick: null,
+    pathPick: null,
+    path: null,
     // Last turn's offers have lapsed; this turn's are new.
     diplomacy: [],
     offers: u.offers ?? [],

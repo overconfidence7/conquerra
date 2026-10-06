@@ -3,7 +3,8 @@
  * next turn, the taps to give your Leader an instruction after selecting its territory (Command, Push toward a place,
  * the place on the map: session 12 asks for 3 or fewer). Then diplomacy (session 14): proposing a plain truce from the
  * Players panel (4 or fewer), and accepting an offer once it's open (1). Then spies (session 15): hiring one at your
- * capital, and next turn sending it to a province (about 3: its territory, Send…, a province on the map).
+ * capital, and next turn sending it to a province (about 3: its territory, Send…, a province on the map). Then orders
+ * along a path (session 16): your land, Path…, a place three steps away, Confirm (and one more for the full sweep).
  *   node apps/web/scripts/tap-count.mjs [screenshot.png] [command-screenshot.png]
  * Needs the built game running (`pnpm build`, `pnpm --filter web preview`).
  */
@@ -115,10 +116,36 @@ await sendTap(() => tapText("Send…"), "Send…");
 const dest = await page.evaluate(async (from) => {
   const g = window.__conquerraStore.getState(); const r = window.__conquerraMap; const c = r.camera.cam;
   const prov = (t) => g.ctx.map.territories.find((x) => x.id === t).province;
-  return g.ctx.map.geometry.territories.filter((t) => prov(t.id) !== prov(from)).map((t) => ({ id: t.id, x: t.label.x * c.scale + c.x, y: t.label.y * c.scale + c.y })).find((t) => t.x > 30 && t.x < 354 && t.y > 160 && t.y < 600);
+  return g.ctx.map.geometry.territories.filter((t) => prov(t.id) !== prov(from)).map((t) => ({ id: t.id, x: t.label.x * c.scale + c.x, y: t.label.y * c.scale + c.y })).find((t) => t.x > 70 && t.x < 354 && t.y > 160 && t.y < 600);
 }, spyAt);
 await sendTap(async () => page.touchscreen.tap(dest.x, dest.y), `a province on the map (${dest.id})`);
 const sentSpy = await page.evaluate(() => window.__conquerraStore.getState().queue.find((o) => o.kind === "spy"));
 console.log("send-a-spy taps:", send, JSON.stringify(sentSpy));
 await page.screenshot({ path: process.argv[3]?.replace(".png", "-spy.png") ?? "taps-spy.png" });
+
+// Orders along a path (session 16): from your capital to a place three steps away, the shortest way, then the full sweep.
+for (const kind of ["shortest", "sweep"]) {
+  await page.evaluate(() => { const g = window.__conquerraStore.getState(); g.clearSelection(); window.__conquerraStore.setState({ queue: [] }); });
+  const capNow = await page.evaluate(() => window.__conquerraStore.getState().view.me.capital);
+  await page.evaluate((id) => { const g = window.__conquerraStore.getState().ctx.map.geometry; const t = g.territories.find((x) => x.id === id); const r = window.__conquerraMap; r.centreOn(t.label.x, t.label.y + 160 / r.camera.cam.scale); }, capNow);
+  await sleep(900);
+  let pathTaps = 0;
+  const pathTap = async (f, what) => { await f(); pathTaps++; await sleep(600); console.log(`  ${pathTaps} ${what}`); };
+  await pathTap(async () => page.touchscreen.tap(...(await screenOf(capNow))), "your capital");
+  await pathTap(() => tapText("Path…"), "Path…");
+  const three = await page.evaluate((from) => {
+    const g = window.__conquerraStore.getState(); const r = window.__conquerraMap; const c = r.camera.cam;
+    const nb = (t) => g.ctx.map.borders.flatMap((b) => (b.a === t ? [b.b] : b.b === t ? [b.a] : []));
+    const d = new Map([[from, 0]]); const q = [from];
+    while (q.length) { const t = q.shift(); for (const n of nb(t)) if (!d.has(n)) (d.set(n, d.get(t) + 1), q.push(n)); }
+    return [...d].filter(([, k]) => k === 3).map(([id]) => { const t = g.ctx.map.geometry.territories.find((x) => x.id === id); return { id, x: t.label.x * c.scale + c.x, y: t.label.y * c.scale + c.y }; }).find((t) => t.x > 70 && t.x < 354 && t.y > 140 && t.y < 700);
+  }, capNow);
+  await pathTap(async () => page.touchscreen.tap(three.x, three.y), `the place (${three.id})`);
+  if (kind === "sweep") await pathTap(() => tapText("Full sweep"), "Full sweep");
+  const box = await page.evaluate(() => document.querySelector(".path-summary, .path-panel .warn")?.textContent);
+  await page.screenshot({ path: process.argv[3]?.replace(".png", `-path-${kind}.png`) ?? `taps-path-${kind}.png` });
+  await pathTap(() => tapText("Confirm"), "Confirm");
+  const added = await page.evaluate(() => window.__conquerraStore.getState().queue.filter((o) => o.kind === "move").length);
+  console.log(`path (${kind}) taps:`, pathTaps, JSON.stringify({ box, ordersAdded: added }));
+}
 await browser.close();

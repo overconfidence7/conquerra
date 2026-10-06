@@ -325,6 +325,9 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { border-radius: 999px; padding: 5px 12px; font-size: var(--fs-small); min-height: 44px; }
 .chip.on { background: linear-gradient(#e3c77e, #c9a45c); color: var(--navy); border-color: #f1dca2; }
+/* Orders along a path (session 16). */
+.path-summary { font-weight: 700; color: var(--gold-hi); margin: 6px 0; }
+.row > .grow { flex: 1; margin: 0; }
 /* The lobby's House colours: one swatch each, 44px to tap. */
 .houses { display: flex; flex-wrap: wrap; gap: 6px; }
 .house-swatch { width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 50%; border: 2px solid rgba(201, 164, 92, 0.5); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25); }

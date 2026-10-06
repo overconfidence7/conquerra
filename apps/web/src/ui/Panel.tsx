@@ -46,6 +46,8 @@ const SpyRows = lazy(() => import("./Spies").then((m) => ({ default: m.SpyRows }
 const spyNews = (view: PlayerView, t: TerritoryId) => view.spies.some((s) => s.at === t) || ((v) => v?.detail === "full" && v.seenBy.includes("spy"))(view.territories[t]);
 import { CardRows } from "./TerritoryCard";
 import { CommandRow } from "./Command";
+import { pathSummary, planPath, type PathKind } from "../logic/paths";
+import { passageNow } from "../logic/deals";
 import { HintButton } from "./HintButton";
 import { generalIn } from "../logic/generals";
 
@@ -65,6 +67,8 @@ interface Props {
 /** The context panel: a draft move/attack if one is open, else the Recruit panel if it's open, else the selected territory. */
 export function Panel(props: Props) {
   const recruit = useGame((s) => s.recruit);
+  const path = useGame((s) => s.path);
+  if (path) return <PathPanel {...props} path={path} />;
   if (props.draft) return <DraftPanel {...props} draft={props.draft} />;
   if (recruit) return <RecruitPanel {...props} order={recruit.order} />;
   if (props.selected) return <TerritoryPanel {...props} selected={props.selected} />;
@@ -176,11 +180,61 @@ function RecruitPanel({ ctx, view, queue, selected, order: orderId }: Props & { 
   );
 }
 
+/**
+ * Orders along a path (session 16): the shortest way or the full sweep to where you tapped, drawn on the map as a
+ * numbered chain, with what it adds. Confirm puts its orders in your queue as one chain; each is an ordinary hop you
+ * can change or delete there.
+ */
+function PathPanel({ ctx, view, queue, path }: Props & { path: { from: TerritoryId; to: TerritoryId; kind: PathKind } }) {
+  const { setPathKind, confirmPath, cancelPath, pageDeals } = useGame();
+  const n = namer(ctx, view);
+  const open = passageNow(view, pageDeals());
+  const plans = { shortest: planPath(ctx, view, queue, pageDeals(), open, { ...path, kind: "shortest" }), sweep: planPath(ctx, view, queue, pageDeals(), open, { ...path, kind: "sweep" }) };
+  const p = plans[path.kind];
+  const leader = p.orders.some((o) => o.kind === "move" && o.withLeader);
+  return (
+    <div className="panel path-panel">
+      <div className="panel-head">
+        <h2>Path to {n.place(path.to)}</h2>
+        <button className="link" onClick={cancelPath}>
+          Cancel
+        </button>
+      </div>
+      <p className="muted">From {n.place(path.from)}</p>
+      <div className="chips" role="radiogroup" aria-label="Which way">
+        {(["shortest", "sweep"] as const).map((k) => (
+          <button key={k} role="radio" aria-checked={path.kind === k} className={`chip ${path.kind === k ? "on" : ""}`} onClick={() => setPathKind(k)} title={PATH_HELP[k]}>
+            {k === "shortest" ? "Shortest way" : "Full sweep"} · {plans[k].orders.length}
+          </button>
+        ))}
+      </div>
+      <p className="muted small">{PATH_HELP[path.kind]}</p>
+      <p className={p.orders.length ? "path-summary" : "warn"} role="status">
+        {pathSummary(p, (t) => n.place(t))}
+      </p>
+      {p.orders.length > 0 && (
+        <p className="muted small">
+          Each hop sends All (leaving 1 behind) and attacks only if still stronger{leader ? "; your Leader goes along" : ""}. Your own land is walked through, never attacked.
+        </p>
+      )}
+      <button className="primary wide" disabled={!p.orders.length} onClick={confirmPath}>
+        Confirm: add {p.orders.length} {p.orders.length === 1 ? "order" : "orders"}
+      </button>
+      <p className="muted small">They go in your orders as one chain: change or delete any step there.</p>
+    </div>
+  );
+}
+
+const PATH_HELP = {
+  shortest: "The fewest steps there, through your own land where it can.",
+  sweep: "Takes every territory it can between here and there, sweeping steadily toward the end, then ends there.",
+} as const;
+
 /** Presets shown up front; the rest wait behind "More". */
 const MAIN_PRESETS = new Set(["onlyIfStronger", "followThrough"]);
 
 function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraft }) {
-  const { updateDraft, addDraft, clearSelection, select, pageDeals } = useGame();
+  const { updateDraft, addDraft, clearSelection, select, pageDeals, startPath } = useGame();
   const [more, setMore] = useState(false);
   const n = namer(ctx, view);
   const attack = isAttack(view, draft, plan);
@@ -315,12 +369,15 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
           Just select {n.place(draft.to)} instead
         </button>
       )}
+      <button className="link small" onClick={() => startPath(draft.from)} title="Tap a place further away: the shortest way there, or sweep up everything in between">
+        Further? Path…
+      </button>
     </div>
   );
 }
 
 function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { selected: TerritoryId }) {
-  const { add, recruitAt } = useGame();
+  const { add, recruitAt, startPath } = useGame();
   const idx = indexMap(ctx.map);
   const n = namer(ctx, view);
   const def = idx.byId.get(selected)!;
@@ -433,7 +490,14 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
       {general && <CommandRow key={general} ctx={ctx} view={view} general={general} />}
       {facts}
       {spies}
-      <p className="muted small">Tap a neighbour on the map to move or attack.</p>
+      <div className="row">
+        <p className="muted small grow">Tap a neighbour on the map to move or attack.</p>
+        {(plan.free.get(selected) ?? 0) > 0 && (
+          <button onClick={() => startPath(selected)} title="Orders along a path: tap a place further away, then take the shortest way there or sweep up everything in between">
+            Path…
+          </button>
+        )}
+      </div>
 
       {site && (
         <div className="action">

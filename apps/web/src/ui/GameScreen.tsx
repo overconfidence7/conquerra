@@ -6,6 +6,7 @@ import { colorOf } from "./colors";
 import { incomeEstimate } from "../logic/actions";
 import { planQueue, queueFor } from "../logic/orders";
 import { asIfYouOrderFrom } from "../logic/generals";
+import { planPath } from "../logic/paths";
 import { clearInsets, landFrame, type Insets, type Rect } from "../map/camera";
 import type { Beat } from "../replay/timeline";
 import { toastFor } from "../replay/toasts";
@@ -216,7 +217,12 @@ export function GameScreen() {
 
   // While a hop is being drafted, show the queue as it will be once it's added (its Just-enough attack raised to All).
   // (A draft out of a general's territory shows that army as yours: its general's orders step aside once you add it.)
+  // Orders along a path (session 16): while the path box is open, its orders show on the map as a numbered chain.
+  const pathBox = g.path;
+  const pathPlan = useMemo(() => (ctx && view && pathBox ? planPath(ctx, view, queue, g.pageDeals(), passageNow(view, g.pageDeals()), pathBox) : null), [ctx, view, queue, pathBox]); // eslint-disable-line react-hooks/exhaustive-deps
   const shownQueue = useMemo(() => queueFor(view && draft ? asIfYouOrderFrom(view, queue, draft.from) : queue, draft), [view, queue, draft]);
+  /** What the map draws: your orders, plus the path being planned (not in your order list until you confirm). */
+  const mapQueue = useMemo(() => (pathPlan ? [...shownQueue, ...pathPlan.orders.map((o, i) => ({ ...o, id: `path-preview-${i}` }) as Order)] : shownQueue), [shownQueue, pathPlan]);
   const plan = useMemo(() => (ctx && view ? planQueue(ctx, view, shownQueue) : null), [ctx, view, shownQueue]);
   const income = useMemo(() => (ctx && view ? incomeEstimate(ctx, view) : 0), [ctx, view]);
 
@@ -231,10 +237,14 @@ export function GameScreen() {
   }, [draft, recruitOpen, phone]);
   // Choosing a place for a general, or a province for a spy: on a phone the sheet folds away so the whole map can be tapped.
   const picking = g.picking;
-  const spyPicking = !!g.spyPick;
+  const spyPicking = !!g.spyPick || !!g.pathPick;
   useEffect(() => {
     if (phone && (picking || spyPicking)) setSheet("closed");
   }, [phone, picking, spyPicking]);
+  // The path box opens the sheet again on a phone.
+  useEffect(() => {
+    if (phone && pathBox) (setTab("army"), setSheet((s) => (s === "closed" ? "half" : s)));
+  }, [phone, pathBox]);
   // Recruit sites glow while the Recruit panel is open; a mission you tapped lights up its target.
   const missionId = g.mission;
   const glow = useMemo(() => {
@@ -276,7 +286,7 @@ export function GameScreen() {
       <MapView
         ctx={ctx}
         view={shownView}
-        queue={act ? shownQueue : NO_ORDERS}
+        queue={act ? mapQueue : NO_ORDERS}
         selected={act ? selected : null}
         draft={act ? draft : null}
         showTargets={act && !recruitOpen && (plan.free.get(selected ?? "") ?? 0) > 0}
@@ -366,10 +376,10 @@ export function GameScreen() {
     />
   );
   const minimap = <Minimap ctx={ctx} view={shownView} rect={rect} onJump={(x, y) => renderer.current?.centreOn(x, y)} />;
-  const pickBanner = (picking || g.spyPick) && act && (
+  const pickBanner = (picking || g.spyPick || g.pathPick) && act && (
     <Frame className="pick-banner slim" role="status">
-      <span>{g.spyPick ? "Tap a province to send your spy there" : `Tap the place to ${picking!.kind === "push" ? "push toward" : "defend toward"}`}</span>
-      <button className="link" onClick={() => (g.spyPick ? g.cancelSpyPick() : g.cancelPick())}>
+      <span>{g.pathPick ? "Tap where the army should go" : g.spyPick ? "Tap a province to send your spy there" : `Tap the place to ${picking!.kind === "push" ? "push toward" : "defend toward"}`}</span>
+      <button className="link" onClick={() => (g.pathPick ? g.cancelPath() : g.spyPick ? g.cancelSpyPick() : g.cancelPick())}>
         Cancel
       </button>
     </Frame>
