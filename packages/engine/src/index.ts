@@ -25,6 +25,21 @@ export {
   type IncomeBreakdown,
 } from "./economy";
 export { seedCommitment, verifySeed } from "./fairness";
-export { saveGame, replaySavedGame, stateFingerprint, type SavedGame } from "./saved";
+export {
+  makeSave,
+  readSave,
+  replaySavedGame,
+  saveSummary,
+  stateFingerprint,
+  SAVE_FORMAT,
+  SAVE_PROBLEMS,
+  SAVE_VERSION,
+  STATE_MIGRATIONS,
+  STATE_VERSION,
+  type ReadSave,
+  type SaveFile,
+  type SavedGameV1,
+  type SaveSummary,
+} from "./saved";
 export { indexMap, distancesFrom, type MapIndex } from "./mapIndex";
 export { Rng, seedRng, type RngState } from "./rng";

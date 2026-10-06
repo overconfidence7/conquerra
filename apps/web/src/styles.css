@@ -68,6 +68,18 @@ select { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(
 .small { font-size: var(--fs-small); }
 .block { display: block; }
 .warn { color: var(--bad); margin: 0; }
+p.good { color: var(--good); margin: 0; }
+
+/* Saved games: Continue in the lobby, and the slots (Save game / Load game). */
+.lobby .continue { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.lobby .continue .small { font: 600 var(--fs-small) var(--font-body); opacity: 0.85; letter-spacing: 0; text-transform: none; }
+.slots { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.slot { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid rgba(201, 164, 92, 0.35); border-radius: 8px; background: rgba(15, 22, 32, 0.45); }
+.slot.empty { opacity: 0.75; }
+.slot-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.slot button { flex: none; min-width: 92px; }
+.notice { display: flex; align-items: center; gap: 8px; }
+.notice p { flex: 1; }
 .cost { color: var(--gold-hi); font: 800 0.8em var(--font-num); margin-left: 4px; }
 
 /* ---------- The gilded frame (one, used everywhere) ---------- */
@@ -142,6 +154,12 @@ select { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(
 .timer.gold { color: var(--navy); background: var(--gold-hi); border-color: #f1dca2; }
 .timer.red { color: #fff; background: var(--danger); border-color: #ff9c86; animation: pulse 1s ease-in-out infinite; }
 .timer.none { color: var(--muted); font-size: 0.85rem; font-family: var(--font-body); font-weight: 600; }
+.timer.paused { color: var(--gold-hi); font-size: 0.85rem; font-family: var(--font-head); font-weight: 700; letter-spacing: 0.04em; border-style: dashed; }
+.pause-btn { min-width: 36px; min-height: 36px; border-radius: 50%; }
+.pause-btn svg { width: 18px; height: 18px; }
+.influence-stat .unit { font: 600 var(--fs-label) var(--font-head); color: var(--muted); }
+/* Paused: the map dims a little, so it's clear the clock has stopped (planning goes on). */
+.game.timer-paused .map-layer { filter: saturate(0.7) brightness(0.85); transition: filter 0.3s; }
 @keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(194, 85, 63, 0.35); } }
 .icon-btn { min-width: 44px; min-height: 44px; padding: 0; display: inline-grid; place-items: center; background: rgba(15, 22, 32, 0.6); }
 .icon-btn svg { width: 22px; height: 22px; }
@@ -333,6 +351,8 @@ select { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(
 .game.phone .stat { font-size: 0.98rem; }
 .game.phone .turn { font-size: 0.85rem; gap: 6px; }
 .game.phone .timer { font-size: 1rem; min-width: 56px; padding: 2px 8px; }
+.game.phone .timer.paused { font-size: 0.8rem; }
+.game.phone .pause-btn { min-width: 32px; min-height: 32px; }
 .game.phone .toasts { top: 60px; }
 .game.phone .popover { top: 58px; }
 .game.phone .topbar .spacer:first-of-type { display: none; }

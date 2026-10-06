@@ -16,11 +16,14 @@ export interface TurnClock {
   endsAt: number;
   /** The full turn length (the countdown never shows more, even while the replay is still playing). */
   turnMs: number;
+  /** Paused (single player): the time left when the clock stopped. Nothing locks in until it's resumed. */
+  pausedLeft?: number;
 }
 
 export type TimerTone = "calm" | "gold" | "red";
 
 export function remainingMs(clock: TurnClock, now: number): number {
+  if (clock.pausedLeft !== undefined) return Math.max(0, Math.min(clock.turnMs, clock.pausedLeft));
   return Math.max(0, Math.min(clock.turnMs, clock.endsAt - now));
 }
 

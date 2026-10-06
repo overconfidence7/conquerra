@@ -4,7 +4,8 @@ import { indexMap, isShare, type GameContext, type Instruction, type Order, type
 import { asIfYouOrderFrom, instructOrders, takeControl, withGeneralOrders } from "./logic/generals";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
-import type { GameHost, HostUpdate, LobbySettings, TurnReport } from "./host/protocol";
+import type { GameHost, HostStart, HostUpdate, LoadSource, LobbySettings, TurnReport } from "./host/protocol";
+import { listSlots, type SlotId, type SlotInfo } from "./host/saves";
 import { DEFAULT_TIMER, type TurnClock } from "./logic/timer";
 import { actionBarState } from "./logic/actions";
 import { draftToOrder, isRecruitSite, type NewOrder, planQueue, queueFor, removeOrder, shiftOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
@@ -54,9 +55,24 @@ interface GameStore {
   fallenOrders: Order[];
   /** Aiming a world event: the next tap picks the land (a storm then takes a neighbour across the border). */
   aiming: { event: WorldEventKind; target: TerritoryId | null } | null;
+  /** Saved games on this device (the autosave and your slots): map, players, turn, date. Never the games themselves. */
+  slots: SlotInfo[];
+  /** Why saved games can't be used on this device (a private window, ...), if so. */
+  slotProblem: string | null;
+  /** A message from the host for the player (an autosave that couldn't be written). */
+  notice: string | null;
 
   setLobby(patch: Partial<LobbySettings>): void;
   start(): Promise<void>;
+  /** Carry on from a saved game: the autosave (Continue), a slot, or a file's text. */
+  load(source: LoadSource): Promise<boolean>;
+  /** Read the saved-game list again (the lobby, the Save and Load menus). */
+  refreshSlots(): Promise<void>;
+  /** Save the game as it stands into a slot. Returns false (and sets `error`) if it couldn't. */
+  saveToSlot(slot: SlotId): Promise<boolean>;
+  /** Pause or resume the turn timer (single player, with a timer on). */
+  togglePause(): Promise<void>;
+  dismissNotice(): void;
   tap(t: TerritoryId): void;
   clearSelection(): void;
   select(t: TerritoryId): void;
@@ -168,6 +184,9 @@ export const useGame = create<GameStore>((set, get) => ({
   releases: [],
   fallenOrders: [],
   aiming: null,
+  slots: [],
+  slotProblem: null,
+  notice: null,
 
   setLobby(patch) {
     const { lobby, modeTouched } = get();
@@ -184,42 +203,44 @@ export const useGame = create<GameStore>((set, get) => ({
 
   async start() {
     const { lobby } = get();
-    get().host?.dispose();
-    const host = takeHost();
-    set({ busy: true, error: null, host });
-    host.onAutoLock((u) => {
-      if (get().host === host) applyTurn(u, true);
-    });
+    await enterGame((host) => host.start(lobby));
+  },
+
+  async load(source) {
+    // A game already running: its host loads the save in its place.
+    return enterGame((host) => host.load(source), get().host);
+  },
+
+  async refreshSlots() {
+    const { slots, problem } = await listSlots();
+    set({ slots, slotProblem: problem });
+  },
+
+  async saveToSlot(slot) {
+    const { host } = get();
+    if (!host) return false;
     try {
-      const u = await host.start(lobby);
-      set({
-        screen: "game",
-        // The map's geometry comes from the host, never from an import here.
-        ctx: { map: u.map, rules: u.rules },
-        view: u.view,
-        queue: u.generalOrders ?? [],
-        instructions: {},
-        paused: [],
-        picking: null,
-        releases: [],
-        selected: u.view.me.capital,
-        draft: null,
-        recruit: null,
-        report: null,
-        showReport: false,
-        fastForwarded: 0,
-        watching: false,
-        clock: u.clock,
-        replay: null,
-        lastBefore: null,
-        autoLocked: false,
-      });
+      await host.saveTo(slot);
+      await get().refreshSlots();
+      return true;
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
-    } finally {
-      set({ busy: false });
+      return false;
     }
   },
+
+  async togglePause() {
+    const { host, clock } = get();
+    if (!host || !clock) return;
+    try {
+      const u = await (clock.pausedLeft !== undefined ? host.resume() : host.pause());
+      set({ clock: u.clock });
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  dismissNotice: () => set({ notice: null }),
 
   tap(t) {
     const { ctx, view, queue, selected, recruit, picking, aiming } = get();
@@ -436,9 +457,68 @@ export const useGame = create<GameStore>((set, get) => ({
 
   playAgain() {
     get().host?.dispose();
+    // Back in the lobby: the game you left is the autosave (Continue).
+    void get().refreshSlots();
     set({ screen: "lobby", host: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null });
   },
 }));
+
+/**
+ * Start or load a game on a host (a fresh one unless `reuse` is given) and show it. Returns false (with `error` set
+ * in plain words) if it couldn't: a save from an older version, a damaged file, ...
+ */
+async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: GameHost | null = null): Promise<boolean> {
+  const get = useGame.getState;
+  const set = useGame.setState;
+  const host = reuse ?? takeHost();
+  if (!reuse) {
+    get().host?.dispose();
+    host.onAutoLock((u) => {
+      if (get().host === host) applyTurn(u, true);
+    });
+    host.onNotice((notice) => {
+      if (get().host === host) set({ notice });
+    });
+  }
+  set({ busy: true, error: null });
+  try {
+    const u = await begin(host);
+    set({
+      host,
+      screen: "game",
+      // The map's geometry comes from the host, never from an import here.
+      ctx: { map: u.map, rules: u.rules },
+      view: u.view,
+      queue: u.generalOrders ?? [],
+      instructions: {},
+      paused: [],
+      picking: null,
+      releases: [],
+      fallenOrders: [],
+      aiming: null,
+      selected: knockedOut(u.view) ? null : u.view.me.capital,
+      draft: null,
+      recruit: null,
+      report: null,
+      showReport: false,
+      fastForwarded: 0,
+      watching: false,
+      clock: u.clock,
+      replay: null,
+      lastBefore: null,
+      autoLocked: false,
+      notice: null,
+    });
+    return true;
+  } catch (e) {
+    // A host we started just for this goes; one already running a game keeps it.
+    if (!reuse) host.dispose();
+    set({ error: e instanceof Error ? e.message : String(e) });
+    return false;
+  } finally {
+    set({ busy: false });
+  }
+}
 
 /** A turn resolved (you locked in, or the timer did): play its replay, then the report. */
 function applyTurn(u: HostUpdate, auto: boolean) {

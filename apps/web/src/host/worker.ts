@@ -1,20 +1,21 @@
 import { loadMap } from "@conquerra/content/loadMap";
-import { LocalGame } from "./localGame";
+import { HostCore } from "./hostCore";
 import type { HostRequest, HostResponse } from "./protocol";
+import { idbSaveStore } from "./saves";
 
-// The engine and bots run here, off the page. The page only ever receives HostUpdates.
+// The engine and bots run here, off the page. The page only ever receives HostUpdates (and short slot lists).
 const scope = self as unknown as { onmessage: ((e: MessageEvent<HostRequest>) => void) | null; postMessage(msg: HostResponse): void };
-let game: LocalGame | null = null;
+const core = new HostCore(idbSaveStore(), loadMap, (notice) => scope.postMessage({ id: 0, ok: true, notice }));
 let timer: ReturnType<typeof setTimeout> | null = null;
 
 /** The turn timer lives here, in the host: when it runs out, lock your saved orders in and tell the page. */
 function armTimer() {
   if (timer) clearTimeout(timer);
   timer = null;
-  const due = game?.nextDeadline;
-  if (due === null || due === undefined) return;
+  const due = core.nextDeadline;
+  if (due === null) return;
   timer = setTimeout(() => {
-    const pushed = game?.expireIfDue();
+    const pushed = core.expireIfDue();
     if (pushed) scope.postMessage({ id: 0, ok: true, pushed });
     armTimer();
   }, Math.max(0, due - Date.now()) + 5);
@@ -23,33 +24,45 @@ function armTimer() {
 scope.onmessage = async (e) => {
   const req = e.data;
   try {
-    if (req.type === "start") {
-      // Only this map's data is fetched, when the game starts.
-      game = new LocalGame(await loadMap(req.settings.mapId), req.settings, req.seed);
-      scope.postMessage({ id: req.id, ok: true, update: game.start() });
-      armTimer();
-    } else {
-      if (!game) throw new Error("No game running");
-      if (req.type === "suggest") {
-        scope.postMessage({ id: req.id, ok: true, orders: game.suggest() });
+    switch (req.type) {
+      case "start":
+        scope.postMessage({ id: req.id, ok: true, update: await core.start(req.settings, req.seed) });
+        break;
+      case "load":
+        scope.postMessage({ id: req.id, ok: true, update: await core.load(req.source) });
+        break;
+      case "saveTo":
+        scope.postMessage({ id: req.id, ok: true, slot: await core.saveTo(req.slot) });
         return;
-      }
-      if (req.type === "planGenerals") {
-        scope.postMessage({ id: req.id, ok: true, orders: game.generalOrders(req.instructions) });
+      case "exportSave":
+        scope.postMessage({ id: req.id, ok: true, save: core.exportSave(req.notes) });
         return;
-      }
-      if (req.type === "save") {
-        scope.postMessage({ id: req.id, ok: true, save: game.save(req.notes) });
+      case "suggest":
+        scope.postMessage({ id: req.id, ok: true, orders: core.suggest() });
         return;
-      }
-      if (req.type === "saveOrders") {
-        game.saveOrders(req.orders, req.turn);
+      case "planGenerals":
+        scope.postMessage({ id: req.id, ok: true, orders: core.planGenerals(req.instructions) });
         return;
-      }
-      const update = req.type === "lockIn" ? game.lockIn(req.orders, req.turn) : req.type === "watchNext" ? game.watchNext(req.orders) : game.finish();
-      scope.postMessage({ id: req.id, ok: true, update });
-      armTimer();
+      case "saveOrders":
+        core.saveOrders(req.orders, req.turn);
+        return;
+      case "pause":
+        scope.postMessage({ id: req.id, ok: true, update: core.pause() });
+        break;
+      case "resume":
+        scope.postMessage({ id: req.id, ok: true, update: core.resume() });
+        break;
+      case "lockIn":
+        scope.postMessage({ id: req.id, ok: true, update: core.lockIn(req.orders, req.turn) });
+        break;
+      case "watchNext":
+        scope.postMessage({ id: req.id, ok: true, update: core.watchNext(req.orders) });
+        break;
+      case "finish":
+        scope.postMessage({ id: req.id, ok: true, update: core.finish() });
+        break;
     }
+    armTimer();
   } catch (err) {
     scope.postMessage({ id: req.id, ok: false, error: err instanceof Error ? err.message : String(err) });
   }

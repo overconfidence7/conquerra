@@ -3,23 +3,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { LocalGame } from "../src/host/localGame";
 import type { GameHost, LobbySettings } from "../src/host/protocol";
 import { knockedOut, setHostFactory, useGame } from "../src/store";
+import { inProcessHost } from "./inProcessHost";
 
-/** The real game, run in-process instead of in a Web Worker. */
-function inProcessHost(seed: string): GameHost {
-  let game: LocalGame | null = null;
-  return {
-    start: async (s: LobbySettings) => (game = new LocalGame(maps[s.mapId]!, s, seed)).start(),
-    lockIn: async (orders, turn) => game!.lockIn(orders, turn),
-    saveOrders: (orders, turn) => game?.saveOrders(orders, turn),
-    onAutoLock: () => {},
-    watchNext: async (orders) => game!.watchNext(orders),
-    finish: async () => game!.finish(),
-    suggest: async () => game!.suggest(),
-    planGenerals: async (instructions) => game!.generalOrders(instructions),
-    save: async (notes) => game!.save(notes),
-    dispose: () => {},
-  };
-}
 
 async function playUntilKnockedOut() {
   const g = useGame.getState();

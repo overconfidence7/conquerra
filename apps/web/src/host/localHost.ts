@@ -1,4 +1,5 @@
-import type { Order, SavedGame } from "@conquerra/engine";
+import type { Order, SaveFile } from "@conquerra/engine";
+import type { SlotInfo } from "./saves";
 import type { GameHost, HostRequest, HostResponse, HostStart, HostUpdate, LobbySettings } from "./protocol";
 
 /** A fresh secret seed for the game's dice (the engine itself never makes randomness). */
@@ -15,17 +16,22 @@ export function createLocalHost(): GameHost {
   let nextId = 1;
   const pending = new Map<number, { resolve: (u: unknown) => void; reject: (e: Error) => void }>();
   const autoLock: ((u: HostUpdate) => void)[] = [];
+  const notices: ((m: string) => void)[] = [];
   worker.onmessage = (e: MessageEvent<HostResponse>) => {
     const res = e.data;
     if ("pushed" in res) {
       for (const f of autoLock) f(res.pushed);
       return;
     }
+    if ("notice" in res) {
+      for (const f of notices) f(res.notice);
+      return;
+    }
     const p = pending.get(res.id);
     if (!p) return;
     pending.delete(res.id);
     if (!res.ok) p.reject(new Error(res.error));
-    else p.resolve("orders" in res ? res.orders : "save" in res ? res.save : res.update);
+    else p.resolve("orders" in res ? res.orders : "save" in res ? res.save : "slot" in res ? res.slot : res.update);
   };
   // If the engine's worker stops (it crashed, or the browser killed it), say so instead of waiting forever.
   const failAll = (why: string) => {
@@ -45,6 +51,12 @@ export function createLocalHost(): GameHost {
     });
   return {
     start: (settings: LobbySettings) => send<HostStart>({ type: "start", settings, seed: newSeed() }),
+    load: (source) => send<HostStart>({ type: "load", source }),
+    saveTo: (slot) => send<SlotInfo>({ type: "saveTo", slot }),
+    exportSave: (notes) => send<SaveFile>({ type: "exportSave", ...(notes ? { notes } : {}) }),
+    pause: () => send({ type: "pause" }),
+    resume: () => send({ type: "resume" }),
+    onNotice: (f) => void notices.push(f),
     lockIn: (orders, turn) => send({ type: "lockIn", orders, turn }),
     saveOrders: (orders, turn) => worker.postMessage({ id: nextId++, type: "saveOrders", orders, turn } as HostRequest),
     onAutoLock: (f) => void autoLock.push(f),
@@ -52,7 +64,6 @@ export function createLocalHost(): GameHost {
     finish: () => send({ type: "finish" }),
     suggest: () => send<Order[]>({ type: "suggest" }),
     planGenerals: (instructions) => send<Order[]>({ type: "planGenerals", instructions }),
-    save: (notes) => send<SavedGame>({ type: "save", ...(notes ? { notes } : {}) }),
     dispose: () => worker.terminate(),
   };
 }

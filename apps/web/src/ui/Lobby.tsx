@@ -1,6 +1,6 @@
 import { mapCatalog, suggestedMode } from "@conquerra/content";
 import { BOT_NAMES } from "../host/names";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { prewarmHost, useGame } from "../store";
 import type { BotLevel } from "../host/protocol";
 import { mapChoiceLabel } from "../logic/text";
@@ -8,6 +8,10 @@ import { TIMER_CHOICES, timerLabel } from "../logic/timer";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
 import { VersionLine } from "./Diagnostics";
+import { savedWhen, slotLine } from "./saveText";
+
+/** Load game: loaded the first time it's opened. */
+const SavesDialog = lazy(() => import("./Saves"));
 
 const BOT_LEVELS: { value: BotLevel; label: string; note: string }[] = [
   { value: "recruit", label: "Recruit (easy)", note: "Straightforward: grabs what it can and rarely plans ahead." },
@@ -22,12 +26,15 @@ const LUCK = [
 ];
 
 export function Lobby() {
-  const { lobby, setLobby, start, busy, error } = useGame();
-  // Load the game engine, the maps and the map painter while the player picks settings.
+  const { lobby, setLobby, start, load, busy, error, slots, refreshSlots } = useGame();
+  const [loading, setLoading] = useState(false);
+  // Load the game engine, the maps and the map painter while the player picks settings; see what's saved.
   useEffect(() => {
     prewarmHost();
     void import("../render/pixi/PixiMapRenderer");
-  }, []);
+    void refreshSlots();
+  }, [refreshSlots]);
+  const auto = slots.find((s) => s.slot === "auto");
   const map = mapCatalog.find((m) => m.id === lobby.mapId) ?? mapCatalog[0]!;
   const players = lobby.bots + 1;
   const rec = map.recommendedPlayers;
@@ -40,6 +47,19 @@ export function Lobby() {
         <h1>Conquerra</h1>
       </div>
       <p className="muted">Set your orders, lock in, and watch every plan play out at once.</p>
+      {auto && (
+        <button className="primary wide big continue" onClick={() => void load({ slot: "auto" })} disabled={busy}>
+          Continue
+          <span className="small block">
+            {slotLine(auto)} · saved {savedWhen(auto.savedAt).replace(/^[A-Z]/, (c) => c.toLowerCase())}
+          </span>
+        </button>
+      )}
+      {slots.length > 0 && (
+        <button className="link" onClick={() => setLoading(true)}>
+          Load a saved game
+        </button>
+      )}
       <hr className="rule" />
 
       <div className="field">
@@ -132,10 +152,20 @@ export function Lobby() {
         </span>
       </div>
 
-      {error && <p className="warn">{error}</p>}
-      <button className="primary wide big" onClick={start} disabled={busy}>
-        {busy ? "Starting…" : "Start"}
+      {error && !loading && <p className="warn">{error}</p>}
+      <button className={`${auto ? "" : "primary "}wide big`} onClick={start} disabled={busy}>
+        {busy ? "Starting…" : auto ? "Start a new game" : "Start"}
       </button>
+      {slots.length === 0 && (
+        <button className="link" onClick={() => setLoading(true)}>
+          Load a saved game
+        </button>
+      )}
+      {loading && (
+        <Suspense fallback={null}>
+          <SavesDialog mode="load" inGame={false} onClose={() => setLoading(false)} />
+        </Suspense>
+      )}
       <VersionLine />
       </Frame>
     </div>

@@ -49,6 +49,16 @@ export const Icon = {
       <path d="M9 4v14M15 6v14" />
     </svg>
   ),
+  pause: () => (
+    <svg viewBox="0 0 24 24" {...P}>
+      <path d="M9 5v14M15 5v14" />
+    </svg>
+  ),
+  play: () => (
+    <svg viewBox="0 0 24 24" {...P}>
+      <path d="M7 4.5l12 7.5-12 7.5z" />
+    </svg>
+  ),
   scroll: () => (
     <svg viewBox="0 0 24 24" {...P}>
       <path d="M6 4h11a2 2 0 012 2v12a2 2 0 01-2 2H8a2 2 0 01-2-2z" />

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
-import { indexMap, replaySavedGame, type GameContext, type GameMode, type SavedGame } from "@conquerra/engine";
+import { indexMap, replaySavedGame, stateFingerprint, type GameContext, type GameMode, type SaveFile, type SavedGameV1 } from "@conquerra/engine";
 import { CAPTAIN_CHAIN_MARGIN, makeCaptainBot, makeGeneralSeat, makeRecruitBot, type Bot, type CaptainFeature } from "@conquerra/bots";
 import type { InstructionKind } from "@conquerra/engine";
 import { narrate } from "./narrate";
@@ -16,7 +16,7 @@ import { runGame, type GameSummary } from "./runGame";
  *   pnpm sim --bots recruit                    all-Recruit tables (the default is all-Captain, the lobby's default)
  *   pnpm sim --mix captain,recruit,recruit,recruit   mixed tables: one bot per seat, rotated each game so no bot
  *                                              keeps a lucky seat; prints each bot's win rate
- *   pnpm sim --replay game.json                play a saved game (Settings → "Save this game") turn by turn
+ *   pnpm sim --replay game.json                play a saved game (Settings → "Save to a file") turn by turn
  *   pnpm sim --mix general-push,captain,captain,captain   one seat's Leader runs on a standing instruction
  *                                              (general-hold, -defend, -push or -raid); the rest play as the Captain
  * Options: --fallen on|off (knocked-out seats play world events; on by default), --rules a.b=1,c.d=2 (any rule number),
@@ -83,19 +83,31 @@ function ctxFor(players: number): GameContext {
 }
 
 if (arg("replay", "")) {
-  const save = JSON.parse(readFileSync(arg("replay", ""), "utf8")) as SavedGame;
-  if (save.format !== "conquerra-save") throw new Error("That file isn't a saved Conquerra game.");
-  const map = maps[save.mapId];
-  if (!map) throw new Error(`Unknown map ${save.mapId}`);
-  if ((map.generator?.version ?? null) !== save.mapVersion)
-    console.log(`Warning: this game was played on ${map.name} made by map maker v${save.mapVersion}; this copy is v${map.generator?.version}. The replay will go differently.`);
-  const ctx: GameContext = { map, rules: save.rules };
+  // Both kinds of file: today's save (a snapshot, with the game's history when it has one) and the old "Save this
+  // game" file (version 1: the setup and every turn's orders).
+  const file = JSON.parse(readFileSync(arg("replay", ""), "utf8")) as SaveFile | SavedGameV1;
+  if (file.format !== "conquerra-save") throw new Error("That file isn't a saved Conquerra game.");
+  const game =
+    file.version === 1
+      ? { setup: file.setup, rules: file.rules, turns: file.turns, fingerprint: file.fingerprint }
+      : file.history
+        ? { ...file.history, fingerprint: stateFingerprint(file.state) }
+        : null;
+  if (!game) {
+    console.log(`This save has no history to play back (it was carried on under newer rules). It's ${(file as SaveFile).summary.mapName}, turn ${(file as SaveFile).state.turn}.`);
+    process.exit(1);
+  }
+  const map = maps[file.mapId];
+  if (!map) throw new Error(`Unknown map ${file.mapId}`);
+  if ((map.generator?.version ?? null) !== file.mapVersion)
+    console.log(`Warning: this game was played on ${map.name} made by map maker v${file.mapVersion}; this copy is v${map.generator?.version}. The replay will go differently.`);
+  const ctx: GameContext = { map, rules: game.rules };
   const idx = indexMap(map);
-  const names = new Map(save.setup.players.map((p) => [p.id, p.name]));
+  const names = new Map(game.setup.players.map((p) => [p.id, p.name]));
   const name = (id: string | null) => (id ? (names.get(id) ?? id) : "neutral");
   const place = (id: string) => idx.byId.get(id)?.name ?? id;
-  console.log(`Replaying ${save.setup.gameId} on ${map.name}: ${save.setup.players.map((p) => p.name).join(", ")}; ${save.turns.length} turns${save.notes ? ` (${Object.entries(save.notes).map(([k, v]) => `${k} ${v}`).join(", ")})` : ""}`);
-  const { matches, state } = replaySavedGame(ctx, save, (r) => {
+  console.log(`Replaying ${game.setup.gameId} on ${map.name}: ${game.setup.players.map((p) => p.name).join(", ")}; ${game.turns.length} turns${file.notes ? ` (${Object.entries(file.notes).map(([k, v]) => `${k} ${v}`).join(", ")})` : ""}`);
+  const { matches, state } = replaySavedGame(ctx, game, game.fingerprint, (r) => {
     for (const e of r.events) console.log(narrate(ctx, e, name, place));
   });
   console.log(matches ? `\nThe replay matches the saved game exactly (turn ${state.turn}).` : `\nThe replay ended somewhere different from the saved game (the rules or the engine have changed since).`);

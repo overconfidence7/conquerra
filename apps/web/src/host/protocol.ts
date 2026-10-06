@@ -1,6 +1,7 @@
 import type { MapDef, Rules } from "@conquerra/content";
-import type { GameMode, Instruction, Order, PlayerId, PlayerView, ReplayEvent, SavedGame } from "@conquerra/engine";
+import type { GameMode, Instruction, Order, PlayerId, PlayerView, ReplayEvent, SaveFile } from "@conquerra/engine";
 import type { TurnClock } from "../logic/timer";
+import type { SlotId, SlotInfo } from "./saves";
 
 /**
  * The contract between the UI and whatever runs the game.
@@ -54,8 +55,13 @@ export interface HostStart extends HostUpdate {
   rules: Rules;
 }
 
+/** Where to load a saved game from: a slot on this device ("auto" is Continue), or a save file's text. */
+export type LoadSource = { slot: SlotId } | { file: string };
+
 export interface GameHost {
   start(settings: LobbySettings): Promise<HostStart>;
+  /** Carry on from a saved game. Rejects with a plain sentence if it can't be loaded. */
+  load(source: LoadSource): Promise<HostStart>;
   /**
    * Send this turn's orders. Bots plan their own, the turn resolves, and you get your new view.
    * `turn` is the turn the orders are for: if the timer already locked that turn in, nothing happens and you get
@@ -74,26 +80,40 @@ export interface GameHost {
   planGenerals(instructions: Record<PlayerId, Instruction | null>): Promise<Order[]>;
   /** What a bot of this game's level would order for you this turn (for testing; maybe an "auto-orders" button later). */
   suggest(): Promise<Order[]>;
-  /** "Save this game": everything needed to replay it exactly (single player only). */
-  save(notes?: Record<string, string>): Promise<SavedGame>;
+  /** Save the game as it stands into one of your slots on this device. */
+  saveTo(slot: SlotId): Promise<SlotInfo>;
+  /** "Save to a file": the save itself (single player only; it also plays back with `pnpm sim --replay`). */
+  exportSave(notes?: Record<string, string>): Promise<SaveFile>;
+  /** Pause / resume the turn timer (single player; M4 wraps it in a pause by vote). The update carries the clock. */
+  pause(): Promise<HostUpdate>;
+  resume(): Promise<HostUpdate>;
+  /** Something went wrong in the background (an autosave couldn't be written): a sentence for the player. */
+  onNotice(listener: (message: string) => void): void;
   dispose(): void;
 }
 
 /** Messages over the worker boundary. */
 export type HostRequest =
   | { id: number; type: "start"; settings: LobbySettings; seed: string }
+  | { id: number; type: "load"; source: LoadSource }
+  | { id: number; type: "saveTo"; slot: SlotId }
+  | { id: number; type: "pause" }
+  | { id: number; type: "resume" }
   | { id: number; type: "lockIn"; orders: Order[]; turn: number }
   | { id: number; type: "saveOrders"; orders: Order[]; turn: number }
   | { id: number; type: "watchNext"; orders?: Order[] }
   | { id: number; type: "finish" }
   | { id: number; type: "suggest" }
   | { id: number; type: "planGenerals"; instructions: Record<PlayerId, Instruction | null> }
-  | { id: number; type: "save"; notes?: Record<string, string> };
+  | { id: number; type: "exportSave"; notes?: Record<string, string> };
 
 export type HostResponse =
   | { id: number; ok: true; update: HostUpdate | HostStart }
   /** Not an answer: the timer ran out and the host locked your orders in (id is 0). */
   | { id: 0; ok: true; pushed: HostUpdate }
   | { id: number; ok: true; orders: Order[] }
-  | { id: number; ok: true; save: SavedGame }
+  | { id: number; ok: true; save: SaveFile }
+  | { id: number; ok: true; slot: SlotInfo }
+  /** Not an answer: something for the player to know (id is 0). */
+  | { id: 0; ok: true; notice: string }
   | { id: number; ok: false; error: string };

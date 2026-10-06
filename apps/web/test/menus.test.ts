@@ -10,24 +10,10 @@ import { isMine, justEnough, moveTargets, planQueue } from "../src/logic/orders"
 import { groupReport } from "../src/logic/report";
 import { mapChoiceLabel, namer } from "../src/logic/text";
 import { setHostFactory, useGame } from "../src/store";
+import { inProcessHost } from "./inProcessHost";
 
 const ctx: GameContext = { map: maps.embervale!, rules: defaultRules };
 
-function inProcessHost(seed: string): GameHost {
-  let game: LocalGame | null = null;
-  return {
-    start: async (s: LobbySettings) => (game = new LocalGame(maps[s.mapId]!, s, seed)).start(),
-    lockIn: async (orders, turn) => game!.lockIn(orders, turn),
-    saveOrders: (orders, turn) => game?.saveOrders(orders, turn),
-    onAutoLock: () => {},
-    watchNext: async (orders) => game!.watchNext(orders),
-    finish: async () => game!.finish(),
-    suggest: async () => game!.suggest(),
-    planGenerals: async (instructions) => game!.generalOrders(instructions),
-    save: async (notes) => game!.save(notes),
-    dispose: () => {},
-  };
-}
 
 describe("tap count: a typical turn takes 7 taps or fewer", () => {
   beforeEach(() => {

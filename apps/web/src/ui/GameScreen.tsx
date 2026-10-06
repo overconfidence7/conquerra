@@ -1,5 +1,5 @@
 import { recruitSitesIn, type GameContext, type Order, type PlayerView } from "@conquerra/engine";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { incomeEstimate } from "../logic/actions";
 import { planQueue, queueFor } from "../logic/orders";
 import { asIfYouOrderFrom } from "../logic/generals";
@@ -14,7 +14,7 @@ import { Frame } from "./Frame";
 import { Icon } from "./icons";
 import { LeaderCard } from "./LeaderCard";
 import { KeepGenerals } from "./Command";
-import { FallenPanel } from "./Fallen";
+import { FallenPanel, influencePerTurn } from "./Fallen";
 import { MapView, readTactical, saveTactical } from "./MapView";
 import { Minimap, type ViewRect } from "./Minimap";
 import { OrderQueue } from "./OrderQueue";
@@ -28,8 +28,11 @@ import { ReportBody, TurnReportDialog } from "./TurnReport";
 import { useReplay } from "./useReplay";
 import { moreCue } from "./moreCue";
 import { useLayout, useLayoutChoice } from "./useLayout";
-import { BUILD, VersionLine } from "./Diagnostics";
+import { VersionLine } from "./Diagnostics";
 import type { LayoutChoice } from "../logic/layout";
+
+/** Save game / Load game: loaded the first time it's opened (it isn't needed to play a turn). */
+const SavesDialog = lazy(() => import("./Saves"));
 
 /** One shared empty list: a new [] on every render made the map rebuild its whole info layer many times a second during the replay (and freeze on big realms). */
 const NO_ORDERS: readonly Order[] = [];
@@ -118,25 +121,7 @@ function WatchPanel({ ctx, view, replaying }: { ctx: GameContext; view: PlayerVi
   );
 }
 
-/**
- * Settings → "Save this game": downloads a small file (the setup, the seed and every turn's orders) that
- * `pnpm sim --replay <file>` plays back exactly. For bug reports: attach a strange game and we can see what happened.
- */
-async function saveThisGame() {
-  const { host, view } = useGame.getState();
-  if (!host || !view) return;
-  const save = await host.save({ app: BUILD });
-  const url = URL.createObjectURL(new Blob([JSON.stringify(save)], { type: "application/json" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `conquerra-${save.setup.gameId}-turn${view.turn}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
-
-function Settings({ tactical, onTactical, onFit, onReport, onLeave, onClose }: { tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onLeave(): void; onClose(): void }) {
+function Settings({ tactical, onTactical, onFit, onReport, onSaves, onLeave, onClose }: { tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onClose(): void }) {
   return (
     <Frame className="popover" title="Settings" extra={<button className="link" onClick={onClose}>Close</button>}>
       <button className="menu-item" onClick={onTactical} aria-pressed={tactical}>
@@ -150,13 +135,16 @@ function Settings({ tactical, onTactical, onFit, onReport, onLeave, onClose }: {
           Last turn's report
         </button>
       )}
-      <button className="menu-item" onClick={() => void saveThisGame()}>
-        Save this game <span className="muted">for bug reports</span>
+      <button className="menu-item" onClick={() => onSaves("save")}>
+        Save game <span className="muted">a slot, or a file</span>
+      </button>
+      <button className="menu-item" onClick={() => onSaves("load")}>
+        Load game
       </button>
       <LayoutSetting />
       <hr className="rule" />
       <button className="menu-item" onClick={onLeave}>
-        Leave this game
+        Leave this game <span className="muted">Continue picks it up</span>
       </button>
       <VersionLine />
     </Frame>
@@ -194,6 +182,7 @@ export function GameScreen() {
   const renderer = useRef<MapRenderer | null>(null);
   const [tactical, setTactical] = useState(readTactical);
   const [settings, setSettings] = useState(false);
+  const [saves, setSaves] = useState<"save" | "load" | null>(null);
   const [spendOpen, setSpendOpen] = useState(false);
   const [sheet, setSheet] = useState<SheetSize>("closed");
   const [tab, setTab] = useState("army");
@@ -346,6 +335,7 @@ export function GameScreen() {
       onTactical={toggleTactical}
       onFit={() => renderer.current?.fit()}
       onReport={report && !replaying ? () => (setSettings(false), g.setShowReport(true)) : null}
+      onSaves={(mode) => (setSettings(false), setSaves(mode))}
       onLeave={() => g.playAgain()}
       onClose={() => setSettings(false)}
     />
@@ -359,6 +349,8 @@ export function GameScreen() {
       clock={out ? null : clock}
       replaying={replaying}
       phone={phone}
+      fallen={out ? { influence: view.me.influence, perTurn: influencePerTurn(ctx, view) } : null}
+      onPause={out || view.winner ? null : () => void g.togglePause()}
       onSettings={() => setSettings((s) => !s)}
     />
   );
@@ -381,10 +373,23 @@ export function GameScreen() {
       {act && !showReport && view.me.captured.length > ctx.rules.generals.maxCaptured && keptOn !== view.turn && (
         <KeepGenerals ctx={ctx} view={view} onDone={() => setKeptOn(view.turn)} />
       )}
-      {error && (
+      {error && !saves && (
         <Frame className="slim" style={{ position: "absolute", zIndex: 40, left: 8, top: phone ? 60 : 72 }}>
           <p className="warn">{error}</p>
         </Frame>
+      )}
+      {g.notice && (
+        <Frame className="slim notice" style={{ position: "absolute", zIndex: 40, left: 8, right: 8, top: phone ? 60 : 72 }} role="status">
+          <p className="warn small">{g.notice}</p>
+          <button className="link" onClick={() => g.dismissNotice()}>
+            OK
+          </button>
+        </Frame>
+      )}
+      {saves && (
+        <Suspense fallback={null}>
+          <SavesDialog mode={saves} inGame onClose={() => setSaves(null)} />
+        </Suspense>
       )}
     </>
   );
@@ -397,7 +402,7 @@ export function GameScreen() {
       ...(report ? [{ id: "report", label: "Report" }] : []),
     ];
     return (
-      <div className="game phone">
+      <div className={`game phone ${clock?.pausedLeft !== undefined ? "timer-paused" : ""}`}>
         {map}
         {topbar}
         <div className="map-tools" style={{ top: 62, left: 8 }}>
@@ -445,7 +450,7 @@ export function GameScreen() {
   // The vista for the selected territory: a slim strip at the top of its panel.
   const vista = selected && act && !draft && !recruitOpen ? <SelectedVista ctx={ctx} id={selected} /> : null;
   return (
-    <div className={`game desktop ${dockOpen ? "dock-open" : "dock-folded"}`}>
+    <div className={`game desktop ${dockOpen ? "dock-open" : "dock-folded"} ${clock?.pausedLeft !== undefined ? "timer-paused" : ""}`}>
       {map}
       {topbar}
       <div className="map-tools" style={{ top: DESKTOP_INSETS.top + 4, right: DESKTOP_INSETS.right + 4 }}>
