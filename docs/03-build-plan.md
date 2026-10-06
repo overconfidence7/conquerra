@@ -95,9 +95,9 @@ Research, outline v0.1, v0.2 additions, and decisions.
   - **11 ✅:** the visual upgrade's code (scenery rules, House tint, forests, softer Far view, roomier desktop) and the six new maps made official. Art batch 3 wasn't made yet, so it lands in 12.
   - **12 ✅:** art batch 3, Wyrmland's dragon and the Crownlands' rivers, generals, captured generals, the Fallen
   - **13 ✅:** single-player pause and saved games (Nate, Oct 6), then the Spoils and Fate decks
-  - **14:** Nate's calls on the decks and Continue, then preset diplomacy: truces, trades, joint wars and right of passage, handshake and binding, with bots that accept or decline for clear reasons (`04-design-additions.md` §2). Right of passage is last and moves to 15 if the session runs short.
-  - **15:** spies and culture unlocks, and the "Govern this province" general instruction (`04-design-additions.md` §4)
-  - **16:** balance pass (runaways, game length up to 30–40 turns, seat fairness)
+  - **14 ✅:** Nate's calls on the decks and Continue, then preset diplomacy: truces, trades and joint wars, handshake and binding, with bots that accept or decline for clear reasons (`04-design-additions.md` §2). Right of passage's moves moved to 15.
+  - **15:** a harsher Oathbreaker and a Diplomacy lobby switch, right of passage's moves, spies, the richer culture ladder (Rangers, Standard-bearer), then "Govern this province" (`04-design-additions.md` §2, §4, §5, §8). Govern is last and moves to 16 if the session runs short.
+  - **16:** balance pass (runaways, game length up to 30–40 turns with bots offering fewer truces at big tables, seat fairness, the Fallen's and the decks' length cost)
 - A fresh orchestrator prompt is due after session 15 (orchestrator-05 was written after session 12).
 - Leader-as-general (standing instructions) and captured generals.
 - Spoils and Fate decks (events and missions).

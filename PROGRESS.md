@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–14 are done. Next: session 15: right of passage's moves (moved from session 14), spies, culture unlocks and the "Govern this province" general instruction.**
+**Phase: M3 (depth and balance). Sessions 7–14 are done. Next: session 15 (`docs/prompts/claude-code-session-15.md`): a harsher Oathbreaker and a Diplomacy lobby switch, right of passage's moves, spies, the richer culture ladder, then "Govern this province".**
 
 Claude Code sessions completed: **14** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, ...)
 
@@ -707,3 +707,21 @@ Parts 1–4 are done, each committed and pushed. **Right of passage's moves (Par
   - Do the bots' reasons sound like strong logic? Are they too easy or too stubborn? How many turns did each game take?
 
   His notes go below once he's played.
+
+### Oct 6: Orchestrator review of session 14
+- **Checked the work:**
+  - GitHub's checks pass on all seven session 14 commits, including the last one (`e5e7d52`).
+  - Re-ran 4 players with diplomacy on (500 games): 27.8 turns, 90.6% within 40, 36% comebacks, 10.5 deals a game. All match session 14's numbers exactly.
+  - The screenshots look right: the Propose card, answers with reasons, the offer toast, the Players panel marks, white stitched truce borders on the map, and the warning on an attack across a handshake truce. Three small things go into session 15's Step 0:
+    - the offer card's "breaking it costs (Oathbreaker)" reads oddly
+    - in the warning screenshot, the Players panel still showed a binding pact that the screenshot script had removed: check that the panel updates when a deal ends
+    - the Oathbreaker badge pushes a player's name onto two lines in the panel
+- **Nate's calls:**
+  - **Game length with diplomacy:** the balance pass (session 16) has bots offer fewer truces at big tables, and session 15 adds a lobby switch, "Diplomacy: On/Off".
+  - **A harsher Oathbreaker:** about double the fine and the unrest.
+  - **Spies use the orchestrator's defaults:** 8 gold + 1 upkeep, up to 5, travel 2 territories a turn, recall brings one home next turn, the defender is told of blocked and killed spies but never of a fooled one.
+  - **A richer culture ladder:** culture still unlocks only specialists. New at culture 4 in a province, **Rangers** (forest, hills and swamp defend like plains against them); at 6, the **Standard-bearer** (attacks 10% stronger). These are the orchestrator's defaults; Nate can change them after playing.
+- **Session 15's order:** Step 0 (the Oathbreaker, the switch, the small fixes), right of passage's moves, spies, the culture ladder, then sims, screenshots and the deploy. "Govern this province" is last and moves to session 16 if the session runs short.
+- **Still to come:** Nate's play tests of sessions 11–14.
+- **Next:** session 15 (`docs/prompts/claude-code-session-15.md`, run it locally). After it, a fresh orchestrator prompt is due.
+

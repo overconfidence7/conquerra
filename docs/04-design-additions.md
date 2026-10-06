@@ -71,6 +71,10 @@
   - The Captain breaks its word only for a capital it's sure to take (or the win, with fog off).
   - Acceptance rates: good offers 94%, neutral 26% (70% countered), bad 2%. Games run longer with diplomacy (about 4, 5 and 7 turns at 4, 6 and 10 players) while runaways fall; the balance pass looks at it.
   - Rules: `docs/rules-reference.md` §20. Numbers: `docs/sim-results-m3-diplomacy.md`.
+- **Nate's calls after session 14 (Oct 6):**
+  - **A harsher Oathbreaker:** about double the fine and the unrest (`rules.diplomacy.oathbreaker`: fine 4 + 1.4 per size, unrest 0.8 per size; the mark still lasts 5 turns). Session 15.
+  - **A lobby switch, "Diplomacy: On/Off"** (on by default), like the Fate deck's. Off means no deals and no offers. Session 15.
+  - **Game length with diplomacy is fixed in the bots first:** the balance pass (session 16) has bots offer fewer truces at big tables (for example, fewer offers when many players are left, and no "peace costs me nothing" truces that only pad the count). No rule change for length.
 
 ## 3. Contingency presets
 - Order backups come from a short list of one-tap templates instead of being built by hand. Examples:
@@ -117,6 +121,13 @@
 
   Rules: `docs/rules-reference.md` §14–15. Numbers: `docs/sim-results-m3-generals.md`.
 - **ON FILE (Oct 5, Nate likes both): "Govern this province".** A general that runs a province and keeps a share of its income to build it up, sending the rest home (the original "send me 10% of its income" idea). It comes after the army general has been played, as a fifth instruction, and must not add a second gold pot the player has to track: the province's share is spent by the general on that province and shown as one line.
+- **First version for session 15 (orchestrator's defaults, Oct 6; numbers in `packages/content`; Nate can change any of them):**
+  - **Govern this province** is a fifth instruction for any general (your Leader or a captured one) standing in a province where you hold most of the land.
+  - The general's army stays in the province and defends it, as "Hold here" does across the whole province.
+  - **The general keeps 25% of that province's income** (its territories and its holding bonus) and spends it on the province the same turn: a fort on the most threatened frontier territory first, else culture where the province is most exposed, else troops at the general's territory. The rest goes home as usual.
+  - **No second pot:** what it can't spend yet is held toward its next purchase and shown only as progress on the province ("A fort at Pinemark: 5 of 10 gold"), never as a separate gold total. If the general leaves the province or is lost, that progress goes home.
+  - One line on the Leader card and in the report: "Your Leader governs Old March: kept 3 gold, raised culture in Pinemark."
+  - The Captain may use it for a captured general in a province it holds safely; its own play is otherwise unchanged.
 
 ## 5. Military vs. culture
 - Income can go to **military** (troops, forts) or **culture**.
@@ -125,6 +136,18 @@
 - Culture you build up can be captured. Someone who invested in culture risks a military player taking over and reaping the benefit.
 - **Planner's take:** this creates a real strategic choice ("tall vs. wide") and gives the Fallen system a counterweight. Keep it to **one culture number per territory**, not a separate tech tree, or it bloats.
 - **DECIDED (Oct 2): military and conquest first, with a cultural flair.** Culture must stay light; this is not Civilization. No culture victory, no culture tech tree.
+- **A richer culture ladder (Nate, Oct 6), for session 15.** Culture still unlocks only specialists (no tree, no new resource). The ladder uses the total culture you hold in the province, as today. **Orchestrator's defaults** (numbers in `packages/content`; Nate can change any of them after playing):
+
+| Culture in the province | Unlocks |
+|---|---|
+| 0 | Cavalry, Scouts (as today) |
+| 2 | Siege, Engineers (as today) |
+| 3 | Healers (as today) |
+| **4** | **Rangers** (9 gold, upkeep 1): when this army attacks, forest, hills and swamp defend like plains (mountains still count). Siege's counterpart for terrain. |
+| **6** | **Standard-bearer** (12 gold, upkeep 1): this army attacks 10% stronger. Two in one army don't stack. |
+
+  - The territory card's culture line names what's unlocked and the next step ("Culture 4 in Pinemark: Rangers. Next: Standard-bearer at 6").
+  - The Captain hires them with its existing judgement: Rangers for a forest or hill front, a Standard-bearer for a big push.
 
 ## 6. Cards: three systems, consolidation suggested
 Nate's three ideas:
@@ -230,6 +253,7 @@ It matches "simple at first, deep later" and the 5-minute turn, and it plugs nea
 - **Spies do not affect combat.** Forts are Siege's job; spies are purely about information.
 - **Design note:** this gives holding whole countries a second payoff (spy defense), and makes the 3-defender deception a real mind game. Because the fake intel is generated from the true state with the seeded RNG, it stays deterministic and replayable.
 - **Open for the M3 build (orchestrator/Claude Code proposes, Nate approves):** spy movement speed, cost and the exact cap; whether "recall" is instant; and whether the defender learns that a spy was blocked or killed (planner suggests: yes for blocked and killed, no for fooled).
+- **DECIDED (Nate, Oct 6), for session 15:** a spy costs **8 gold and 1 gold upkeep**, and you can have **up to 5**. It's hired at your capital or a barracks and **travels 2 territories a turn**. **Recall** brings it home to your capital at the start of the next turn. **The defender is told** when an incoming spy is blocked or killed, **never when it's fooled**. Defending spies are stationed anywhere in a province you hold whole. Other players never see your spies on the map.
 
 ## 9. Maps: real geography (from Nate, Oct 2)
 - **Look and feel:** like War.app and the better Risk variants. Territories have organic, irregular borders, not hexes or straight-edged cells.
