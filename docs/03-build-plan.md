@@ -96,9 +96,12 @@ Research, outline v0.1, v0.2 additions, and decisions.
   - **12 ✅:** art batch 3, Wyrmland's dragon and the Crownlands' rivers, generals, captured generals, the Fallen
   - **13 ✅:** single-player pause and saved games (Nate, Oct 6), then the Spoils and Fate decks
   - **14 ✅:** Nate's calls on the decks and Continue, then preset diplomacy: truces, trades and joint wars, handshake and binding, with bots that accept or decline for clear reasons (`04-design-additions.md` §2). Right of passage's moves moved to 15.
-  - **15:** a harsher Oathbreaker and a Diplomacy lobby switch, right of passage's moves, spies, the richer culture ladder (Rangers, Standard-bearer), then "Govern this province" (`04-design-additions.md` §2, §4, §5, §8). Govern is last and moves to 16 if the session runs short.
-  - **16:** balance pass (runaways, game length up to 30–40 turns with bots offering fewer truces at big tables, seat fairness, the Fallen's and the decks' length cost)
-- A fresh orchestrator prompt is due after session 15 (orchestrator-05 was written after session 12).
+  - **15 ✅:** a harsher Oathbreaker and a Diplomacy lobby switch, right of passage's moves, spies, the richer culture ladder (Rangers, Standard-bearer), and "Govern this province" (`04-design-additions.md` §2, §4, §5, §8).
+  - **Art batch 4** (Gemini, before 16): effects for the replay, key art, the new specialists and spies, scenery fixes (`docs/prompts/gemini-art-session-04.md`).
+  - **16:** after Nate's play test of sessions 11–15: his fixes, art batch 4 in (drop-in pieces only), spy upkeep only while away, then the **balance pass** (bots offer fewer truces at big tables, runaways, game length up to 30–40 turns, seat fairness, the Fallen's and the decks' length cost, a speed check before M4).
+  - **17: the polish pass** (Nate, Oct 6): replay effects, a cinematic replay, a living map, menus with weight, the title and game-over art (`docs/09-polish-and-effects-plan.md`).
+- After 17, M3 is done. **What comes next is decided after Nate plays** (a play-test fixes session if needed, then M4).
+- Orchestrator prompts: orchestrator-06 was written after session 15; the next is due after session 18.
 - Leader-as-general (standing instructions) and captured generals.
 - Spoils and Fate decks (events and missions).
 - Preset-based diplomacy with counteroffers and the re-confirm rule.

@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–14 are done. Next: session 15 (`docs/prompts/claude-code-session-15.md`): a harsher Oathbreaker and a Diplomacy lobby switch, right of passage's moves, spies, the richer culture ladder, then "Govern this province".**
+**Phase: M3 (depth and balance). Sessions 7–15 are done. Next: Nate plays sessions 11–15 on the preview and art batch 4 is made in Gemini (`docs/prompts/gemini-art-session-04.md`); then session 16 (`docs/prompts/claude-code-session-16.md`): his fixes and the balance pass; then session 17, the polish pass (`docs/09-polish-and-effects-plan.md`).**
 
-Claude Code sessions completed: **15** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, ...)
+Claude Code sessions completed: **15** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
 ---
 
@@ -749,3 +749,26 @@ All five parts are done, each committed and pushed, including Part 5 ("Govern th
   - Do spies feel worth their gold? Did you ever suspect you'd been fooled? How many turns did each game take?
 
   His notes go below once he's played.
+
+### Oct 6: Orchestrator review of session 15
+- **Checked the work:**
+  - GitHub's checks pass on all seven session 15 commits.
+  - Re-ran 4 players with everything on (500 games): 27.2 turns (session 15 reported 27.1 before "Govern this province" went in), 92% within 40, spies infiltrating 6.0 times a game and blocked 0.7, 10.5 deals and 0.6 passage deals a game. All in line.
+  - The screenshots look right: the Diplomacy switch in the lobby, passage land in white stitches with the march drawn through it, the spy's hood badge and the eye over an infiltrated province, the spy report lines, the Hire menu with Rangers and a locked Standard-bearer, and the culture line naming the next unlock.
+  - The start-up bundle fell from 493.9 to 441.1 KB (the game screen now loads when a game starts).
+- **Nate's calls:**
+  - **Spy upkeep only while away:** free in your own land (at home or guarding a province), 1 gold a turn while travelling or inside someone else's land. Session 16.
+  - **He plays sessions 11–15 before the balance pass,** so his notes go into session 16.
+  - **Art batch 4 now,** and **a polish pass:** Nate wants the game to look like a large team with a good budget made it, with special effects in the replay. The orchestrator wrote the plan, `docs/09-polish-and-effects-plan.md`:
+    - a cinematic replay (letterbox, golden-hour grade, a camera that pushes in on big moments, title cards like "Galeholt falls to House Gules")
+    - armies that march as soldiers with dust, ships that bob, battles in smoke with arrow volleys and siege stones, banners raised over captured land, burning capitals
+    - an effect for every Fate event, the Fallen's events, deals (a scroll and wax seal; a torn scroll and a red crack for a broken deal) and spies
+    - a living map (moving water, drifting clouds and their shadows, chimney smoke, turning windmills, birds)
+    - menus with weight (the seal stamps, numbers roll, the timer glows), and real title and game-over art
+    - an "Effects: Full / Light / Off" setting; effects never carry game state, fit inside the replay's timing and respect fog
+  - The art is **batch 4**, about 50 pieces (Tier 3 of the art list; `docs/prompts/gemini-art-session-04.md` drives Gemini). Soft effects are painted on pure black and the importer will turn brightness into transparency.
+  - **The code is session 17,** after the balance pass. Sound is listed in the plan for Nate to decide.
+  - **What comes after M3 is decided after he plays.**
+- **Fifteen Claude Code sessions are done,** so there's a fresh orchestrator prompt: `docs/prompts/orchestrator-06.md`.
+- **Next:** Nate plays on the preview and runs the Gemini session; then session 16 (`docs/prompts/claude-code-session-16.md`, run it locally), with his notes added by the orchestrator first.
+

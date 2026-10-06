@@ -264,6 +264,7 @@ It matches "simple at first, deep later" and the 5-minute turn, and it plugs nea
   - With fog off there are no spies.
   - The Captain keeps one spy (tuned: two cost it more than they earned). Rules: `docs/rules-reference.md` §21. Numbers: `docs/sim-results-m3-spies.md`.
 - **DECIDED (Nate, Oct 6), for session 15:** a spy costs **8 gold and 1 gold upkeep**, and you can have **up to 5**. It's hired at your capital or a barracks and **travels 2 territories a turn**. **Recall** brings it home to your capital at the start of the next turn. **The defender is told** when an incoming spy is blocked or killed, **never when it's fooled**. Defending spies are stationed anywhere in a province you hold whole. Other players never see your spies on the map.
+- **Spy upkeep only while away (Nate, Oct 6, after session 15):** a spy costs nothing a turn while it's in your own land (at home or guarding a province), and 1 gold a turn while it's travelling or inside land you don't hold. Session 15's sims found that 1 gold every turn made a spy a small loss for the Captain (47%) and none made it a small win (53%); this makes guarding (and so fooling) worth doing. Session 16.
 
 ## 9. Maps: real geography (from Nate, Oct 2)
 - **Look and feel:** like War.app and the better Risk variants. Territories have organic, irregular borders, not hexes or straight-edged cells.
