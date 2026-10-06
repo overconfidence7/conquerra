@@ -6,7 +6,7 @@
 
 **In the game (Oct 4, session 6):** all 79 imported and judged on both maps. Worth redoing, in order: (1) `tree-conifer-1` and `-2` (still round bushes; use the pine prompt below, "clear spiky tips"); (2) `terrain-rock` and `terrain-snow` (big boulders; mostly hidden under mountain sprites, so low priority); (3) `terrain-hills` (big swirls). Everything else fits; the importer fixed the pink edges, the `tree-broadleaf-3` smudge and the cream clouds.
 
-**Batch 3 (Oct 5, for session 11):** about 20 images: the redo items plus new pieces for the visual upgrade. See "Batch 3" at the end of this file. The art session prompt is `docs/prompts/gemini-art-session-03.md`.
+**Batch 3 (made Oct 6):** all 20 pieces are in `art/incoming/` (old versions of the redone files in `_old/`, contact sheet `_review/batch-3.png`, a paler chalk cliff in `_review/_alt/cliff-3-chalk.png`). Session 12 imports them. The pines came out as steep-angle fir clusters rather than straight overhead (Gemini wouldn't do overhead pines without making thistle-like stars); they read as pines at game size.
 
 **Before you start:** confirm your image tool's terms allow commercial use of the images, since the game will be sold.
 
@@ -37,6 +37,15 @@ The target look is `docs/art/reference-mockup.png` (realistic terrain) with the 
 - **Icons:** add *"Every part fully solid, nothing fading out"* (otherwise the bottom of a coin stack faded into the background) and *"no badge, no circle, no frame behind it"*.
 - **Portraits:** add *"no lion emblems"*. Gemini kept putting a lion brooch on every cloak.
 - The import script accepts a background within about 90 colour-distance of pure magenta at the corners; Gemini's lighter pinks (e.g. 240,54,245) are fine.
+
+**Lessons from batch 3 (Oct 6):**
+- **Textures:** Gemini quietly builds "seamless tileable" textures out of copies of one small patch (a 4×4 or 2×2 grid). Don't say "seamless tileable texture". Say "bird's-eye view looking straight down from very high above at a vast [ground]… one continuous scene, nothing repeats, no grid", ask for 16:9 with only the mockup attached, then crop a square from the middle. Check every texture for repeats inside the image, not just when tiled 3×3.
+- **Ridges and cliffs:** "camera faces it straight on… runs perfectly horizontally, NOT diagonal". For cliffs add "both ends taper naturally into tumbled rocks, not cut off like a block".
+- **Mountain colour:** "cold blue-grey granite, heavy snow on the upper third" matches the existing peaks; without it, ridges come out brown.
+- **Windmill-like sprites:** "turned to face the viewer, four sails in a clean symmetrical X, no ladders or tail pole".
+- **Silhouettes (map masks):** "the whole [shape] is ONE single solid black shape, no white lines or gaps inside", or the inner lines split the land.
+- **Chat length:** start a fresh chat after about 6 images; the magenta drifts darker in long chats (past the importer's tolerance).
+- **Driving Gemini from Claude in Chrome:** pick menu items by element, not by screen position (the menu moves with the greeting text; one position click opened Deep Research).
 
 ---
 

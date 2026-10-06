@@ -500,3 +500,15 @@ No new art had arrived and Nate's session 9 play test isn't in yet, so there was
   1. Art batch 3 in Gemini (`docs/prompts/gemini-art-session-03.md`). **Do this before session 12.**
   2. Session 12 (`docs/prompts/claude-code-session-12.md`, run it locally).
 
+### Oct 6: Art batch 3 made in Gemini
+- A Claude chat drove Gemini and made all 20 pieces; they're in `art/incoming/`, ready for session 12 to import:
+  - redone pines and hills, rock and snow textures (the old ones are in `_old/`)
+  - the dragon outline for Wyrmland (one solid shape with an S-neck and a curled tail; it reads as a dragon at 160 pixels)
+  - three ridges, three sea cliffs, a pass gate, scaffolding, a wooden bridge, four landmarks and the plaque frame
+- **Compromises:**
+  - The pines are steep-angle fir clusters rather than straight overhead; they read as pines at game size.
+  - The new hills texture is slightly finer at the top, and the rock texture has faint dusty streaks.
+  - A paler chalk cliff is there as an alternative (`_review/_alt/cliff-3-chalk.png`).
+- Lessons for prompting Gemini are recorded in `docs/art/asset-list-and-prompts.md`. The big one: Gemini fakes "seamless" textures by repeating a small patch, so we ask for a vast scene and crop.
+- Next: session 12 (`docs/prompts/claude-code-session-12.md`).
+
