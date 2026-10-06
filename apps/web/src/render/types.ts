@@ -54,6 +54,11 @@ export interface MapScene {
    * province, a shield on guard, a hood travelling). `picking`: you're choosing where to send one. Info layer only.
    */
   spies?: { territory: TerritoryId; status: "travel" | "defend" | "in"; count: number }[];
+  /**
+   * Provinces on demand (session 16): the province of the territory you last tapped (yours or not, fogged too),
+   * lit up with a bright band round its whole border and its plaque (name and bonus) shown at every zoom.
+   */
+  province?: string | null;
 }
 
 export interface MapEvents {

@@ -53,10 +53,11 @@ uniform float uSea;
 uniform float uRepeat;
 uniform float uSlot;
 uniform vec2 uAtlasPx;
+uniform float uCols;
 ${NOISE}
 
 vec3 slotTex(float i, vec2 p) {
-  vec2 slot = vec2(mod(i, 4.0), floor(i / 4.0));
+  vec2 slot = vec2(mod(i, uCols), floor(i / uCols));
   vec2 f = fract(p / uRepeat);
   vec2 px = slot * uSlot + 1.0 + f * (uSlot - 2.0);
   return texture(uAtlas, px / uAtlasPx).rgb;

@@ -29,10 +29,17 @@ export interface AssetSpec {
   size: number;
   /** Smallest sensible source (longest side, px). Smaller files are imported but flagged as blurry. */
   minSource: number;
+  /**
+   * Map art painted into the world (session 16): also stored this big (longest side, px), loaded after the game is on
+   * screen and used only for the Near zoom, so close up it stays sharp while the first paint stays as quick as before.
+   */
+  hd?: number;
 }
 
-const tex = (name: string): AssetSpec => ({ name, kind: "texture", tier: 1, size: 512, minSource: 512 });
+const tex = (name: string): AssetSpec => ({ name, kind: "texture", tier: 1, size: 512, minSource: 512, hd: 1024 });
 const sprite = (name: string, size = 256, tint = false): AssetSpec => ({ name, kind: "sprite", tier: 1, size, minSource: 128, ...(tint ? { tint } : {}) });
+/** Map art painted into the world: twice as big again for the Near zoom (session 16). */
+const painted = (name: string, size: number): AssetSpec => ({ ...sprite(name, size), hd: size * 2 });
 const icon = (name: string, tint = false): AssetSpec => ({ name, kind: "icon", tier: 2, size: 128, minSource: 64, ...(tint ? { tint } : {}) });
 const range = (stem: string, n: number) => Array.from({ length: n }, (_, i) => `${stem}-${i + 1}`);
 
@@ -57,27 +64,27 @@ export const ASSETS: AssetSpec[] = [
   // ---- Tier 1: the map ----
   ...TERRAIN_TEXTURES.map(tex),
   ...WATER_TEXTURES.map(tex),
-  ...range("tree-conifer", 3).map((n) => sprite(n, 192)),
-  ...range("tree-broadleaf", 3).map((n) => sprite(n, 192)),
-  ...range("mountain", 4).map((n) => sprite(n, 256)),
-  ...range("hill", 3).map((n) => sprite(n, 192)),
-  ...range("village", 3).map((n) => sprite(n, 256)),
-  ...range("town", 2).map((n) => sprite(n, 256)),
-  ...range("capital", 2).map((n) => sprite(n, 384)),
+  ...range("tree-conifer", 3).map((n) => painted(n, 192)),
+  ...range("tree-broadleaf", 3).map((n) => painted(n, 192)),
+  ...range("mountain", 4).map((n) => painted(n, 256)),
+  ...range("hill", 3).map((n) => painted(n, 192)),
+  ...range("village", 3).map((n) => painted(n, 256)),
+  ...range("town", 2).map((n) => painted(n, 256)),
+  ...range("capital", 2).map((n) => painted(n, 384)),
   ...BUILDING_SPRITES.map((n) => sprite(n, 256)),
   // Every figure is made in white/grey, so the game can tint it to its House.
   ...FIGURE_SPRITES.map((n) => sprite(n, 256, true)),
   sprite("banner-flag", 256, true),
-  sprite("ship", 256),
-  sprite("bridge", 192),
+  painted("ship", 256),
+  painted("bridge", 192),
   ...range("cloud", 3).map((n) => sprite(n, 512)),
   // Batch 3 (session 11). Ridges and cliffs are wide (the size is the longest side).
-  ...range("ridge", 3).map((n) => sprite(n, 384)),
-  ...range("cliff", 3).map((n) => sprite(n, 384)),
-  sprite("pass-gate", 256),
+  ...range("ridge", 3).map((n) => painted(n, 384)),
+  ...range("cliff", 3).map((n) => painted(n, 384)),
+  painted("pass-gate", 256),
   sprite("scaffold", 256),
-  sprite("bridge-wood", 192),
-  ...LANDMARK_SPRITES.map((n) => sprite(n, 256)),
+  painted("bridge-wood", 192),
+  ...LANDMARK_SPRITES.map((n) => painted(n, 256)),
   // ---- Tier 2: info layer and menus ----
   icon("shield-base", true),
   icon("banner-base", true),
@@ -112,6 +119,8 @@ export interface ManifestEntry {
   height: number;
   /** For tinted art: the light grey parts on their own, to colour with the House tincture over `file`. */
   tintMask?: string;
+  /** The bigger copy for the Near zoom (session 16), for art with an `hd` size. */
+  hd?: { file: string; width: number; height: number };
 }
 
 export interface ArtManifest {

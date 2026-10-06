@@ -16,12 +16,22 @@
     "bridge-wood": {
       "file": "bridge-wood.webp",
       "width": 192,
-      "height": 159
+      "height": 159,
+      "hd": {
+        "file": "bridge-wood.hd.webp",
+        "width": 384,
+        "height": 318
+      }
     },
     "bridge": {
       "file": "bridge.webp",
       "width": 192,
-      "height": 125
+      "height": 125,
+      "hd": {
+        "file": "bridge.hd.webp",
+        "width": 384,
+        "height": 249
+      }
     },
     "building-barracks": {
       "file": "building-barracks.webp",
@@ -46,27 +56,52 @@
     "capital-1": {
       "file": "capital-1.webp",
       "width": 384,
-      "height": 369
+      "height": 369,
+      "hd": {
+        "file": "capital-1.hd.webp",
+        "width": 768,
+        "height": 738
+      }
     },
     "capital-2": {
       "file": "capital-2.webp",
       "width": 384,
-      "height": 366
+      "height": 366,
+      "hd": {
+        "file": "capital-2.hd.webp",
+        "width": 768,
+        "height": 733
+      }
     },
     "cliff-1": {
       "file": "cliff-1.webp",
       "width": 384,
-      "height": 94
+      "height": 94,
+      "hd": {
+        "file": "cliff-1.hd.webp",
+        "width": 768,
+        "height": 188
+      }
     },
     "cliff-2": {
       "file": "cliff-2.webp",
       "width": 384,
-      "height": 111
+      "height": 111,
+      "hd": {
+        "file": "cliff-2.hd.webp",
+        "width": 768,
+        "height": 223
+      }
     },
     "cliff-3": {
       "file": "cliff-3.webp",
       "width": 384,
-      "height": 99
+      "height": 99,
+      "hd": {
+        "file": "cliff-3.hd.webp",
+        "width": 768,
+        "height": 198
+      }
     },
     "cloud-1": {
       "file": "cloud-1.webp",
@@ -137,17 +172,32 @@
     "hill-1": {
       "file": "hill-1.webp",
       "width": 192,
-      "height": 108
+      "height": 108,
+      "hd": {
+        "file": "hill-1.hd.webp",
+        "width": 384,
+        "height": 215
+      }
     },
     "hill-2": {
       "file": "hill-2.webp",
       "width": 192,
-      "height": 111
+      "height": 111,
+      "hd": {
+        "file": "hill-2.hd.webp",
+        "width": 384,
+        "height": 221
+      }
     },
     "hill-3": {
       "file": "hill-3.webp",
       "width": 192,
-      "height": 89
+      "height": 89,
+      "hd": {
+        "file": "hill-3.hd.webp",
+        "width": 384,
+        "height": 178
+      }
     },
     "icon-barracks": {
       "file": "icon-barracks.webp",
@@ -217,22 +267,42 @@
     "landmark-lighthouse": {
       "file": "landmark-lighthouse.webp",
       "width": 156,
-      "height": 256
+      "height": 256,
+      "hd": {
+        "file": "landmark-lighthouse.hd.webp",
+        "width": 311,
+        "height": 512
+      }
     },
     "landmark-ruins": {
       "file": "landmark-ruins.webp",
       "width": 256,
-      "height": 195
+      "height": 195,
+      "hd": {
+        "file": "landmark-ruins.hd.webp",
+        "width": 512,
+        "height": 391
+      }
     },
     "landmark-stones": {
       "file": "landmark-stones.webp",
       "width": 256,
-      "height": 216
+      "height": 216,
+      "hd": {
+        "file": "landmark-stones.hd.webp",
+        "width": 512,
+        "height": 431
+      }
     },
     "landmark-windmill": {
       "file": "landmark-windmill.webp",
       "width": 210,
-      "height": 256
+      "height": 256,
+      "hd": {
+        "file": "landmark-windmill.hd.webp",
+        "width": 421,
+        "height": 512
+      }
     },
     "leader-01": {
       "file": "leader-01.webp",
@@ -287,42 +357,82 @@
     "mountain-1": {
       "file": "mountain-1.webp",
       "width": 256,
-      "height": 216
+      "height": 216,
+      "hd": {
+        "file": "mountain-1.hd.webp",
+        "width": 512,
+        "height": 433
+      }
     },
     "mountain-2": {
       "file": "mountain-2.webp",
       "width": 256,
-      "height": 200
+      "height": 200,
+      "hd": {
+        "file": "mountain-2.hd.webp",
+        "width": 512,
+        "height": 399
+      }
     },
     "mountain-3": {
       "file": "mountain-3.webp",
       "width": 256,
-      "height": 207
+      "height": 207,
+      "hd": {
+        "file": "mountain-3.hd.webp",
+        "width": 512,
+        "height": 414
+      }
     },
     "mountain-4": {
       "file": "mountain-4.webp",
       "width": 256,
-      "height": 212
+      "height": 212,
+      "hd": {
+        "file": "mountain-4.hd.webp",
+        "width": 512,
+        "height": 425
+      }
     },
     "pass-gate": {
       "file": "pass-gate.webp",
       "width": 256,
-      "height": 250
+      "height": 250,
+      "hd": {
+        "file": "pass-gate.hd.webp",
+        "width": 512,
+        "height": 500
+      }
     },
     "ridge-1": {
       "file": "ridge-1.webp",
       "width": 384,
-      "height": 156
+      "height": 156,
+      "hd": {
+        "file": "ridge-1.hd.webp",
+        "width": 768,
+        "height": 312
+      }
     },
     "ridge-2": {
       "file": "ridge-2.webp",
       "width": 384,
-      "height": 128
+      "height": 128,
+      "hd": {
+        "file": "ridge-2.hd.webp",
+        "width": 768,
+        "height": 256
+      }
     },
     "ridge-3": {
       "file": "ridge-3.webp",
       "width": 384,
-      "height": 132
+      "height": 132,
+      "hd": {
+        "file": "ridge-3.hd.webp",
+        "width": 768,
+        "height": 264
+      }
     },
     "scaffold": {
       "file": "scaffold.webp",
@@ -343,102 +453,202 @@
     "ship": {
       "file": "ship.webp",
       "width": 215,
-      "height": 256
+      "height": 256,
+      "hd": {
+        "file": "ship.hd.webp",
+        "width": 430,
+        "height": 512
+      }
     },
     "terrain-farmland": {
       "file": "terrain-farmland.webp",
       "width": 512,
-      "height": 512
+      "height": 512,
+      "hd": {
+        "file": "terrain-farmland.hd.webp",
+        "width": 1024,
+        "height": 1024
+      }
     },
     "terrain-forest": {
       "file": "terrain-forest.webp",
       "width": 512,
-      "height": 512
+      "height": 512,
+      "hd": {
+        "file": "terrain-forest.hd.webp",
+        "width": 1024,
+        "height": 1024
+      }
     },
     "terrain-grass": {
       "file": "terrain-grass.webp",
       "width": 512,
-      "height": 512
+      "height": 512,
+      "hd": {
+        "file": "terrain-grass.hd.webp",
+        "width": 1024,
+        "height": 1024
+      }
     },
     "terrain-hills": {
       "file": "terrain-hills.webp",
       "width": 512,
-      "height": 512
+      "height": 512,
+      "hd": {
+        "file": "terrain-hills.hd.webp",
+        "width": 1024,
+        "height": 1024
+      }
     },
     "terrain-rock": {
       "file": "terrain-rock.webp",
       "width": 512,
-      "height": 512
+      "height": 512,
+      "hd": {
+        "file": "terrain-rock.hd.webp",
+        "width": 1024,
+        "height": 1024
+      }
     },
     "terrain-sand": {
       "file": "terrain-sand.webp",
       "width": 512,
-      "height": 512
+      "height": 512,
+      "hd": {
+        "file": "terrain-sand.hd.webp",
+        "width": 1024,
+        "height": 1024
+      }
     },
     "terrain-snow": {
       "file": "terrain-snow.webp",
       "width": 512,
-      "height": 512
+      "height": 512,
+      "hd": {
+        "file": "terrain-snow.hd.webp",
+        "width": 1024,
+        "height": 1024
+      }
     },
     "terrain-swamp": {
       "file": "terrain-swamp.webp",
       "width": 512,
-      "height": 512
+      "height": 512,
+      "hd": {
+        "file": "terrain-swamp.hd.webp",
+        "width": 1024,
+        "height": 1024
+      }
     },
     "town-1": {
       "file": "town-1.webp",
       "width": 256,
-      "height": 248
+      "height": 248,
+      "hd": {
+        "file": "town-1.hd.webp",
+        "width": 512,
+        "height": 496
+      }
     },
     "town-2": {
       "file": "town-2.webp",
       "width": 256,
-      "height": 212
+      "height": 212,
+      "hd": {
+        "file": "town-2.hd.webp",
+        "width": 512,
+        "height": 425
+      }
     },
     "tree-broadleaf-1": {
       "file": "tree-broadleaf-1.webp",
       "width": 189,
-      "height": 192
+      "height": 192,
+      "hd": {
+        "file": "tree-broadleaf-1.hd.webp",
+        "width": 379,
+        "height": 384
+      }
     },
     "tree-broadleaf-2": {
       "file": "tree-broadleaf-2.webp",
       "width": 192,
-      "height": 189
+      "height": 189,
+      "hd": {
+        "file": "tree-broadleaf-2.hd.webp",
+        "width": 384,
+        "height": 379
+      }
     },
     "tree-broadleaf-3": {
       "file": "tree-broadleaf-3.webp",
       "width": 192,
-      "height": 180
+      "height": 180,
+      "hd": {
+        "file": "tree-broadleaf-3.hd.webp",
+        "width": 384,
+        "height": 360
+      }
     },
     "tree-conifer-1": {
       "file": "tree-conifer-1.webp",
       "width": 147,
-      "height": 192
+      "height": 192,
+      "hd": {
+        "file": "tree-conifer-1.hd.webp",
+        "width": 294,
+        "height": 384
+      }
     },
     "tree-conifer-2": {
       "file": "tree-conifer-2.webp",
       "width": 156,
-      "height": 192
+      "height": 192,
+      "hd": {
+        "file": "tree-conifer-2.hd.webp",
+        "width": 312,
+        "height": 384
+      }
     },
     "tree-conifer-3": {
       "file": "tree-conifer-3.webp",
       "width": 192,
-      "height": 179
+      "height": 179,
+      "hd": {
+        "file": "tree-conifer-3.hd.webp",
+        "width": 384,
+        "height": 357
+      }
     },
     "village-1": {
       "file": "village-1.webp",
       "width": 256,
-      "height": 204
+      "height": 204,
+      "hd": {
+        "file": "village-1.hd.webp",
+        "width": 512,
+        "height": 408
+      }
     },
     "village-2": {
       "file": "village-2.webp",
       "width": 256,
-      "height": 217
+      "height": 217,
+      "hd": {
+        "file": "village-2.hd.webp",
+        "width": 512,
+        "height": 433
+      }
     },
     "village-3": {
       "file": "village-3.webp",
       "width": 256,
-      "height": 213
+      "height": 213,
+      "hd": {
+        "file": "village-3.hd.webp",
+        "width": 512,
+        "height": 427
+      }
     },
     "vista-city": {
       "file": "vista-city.webp",
@@ -468,12 +678,22 @@
     "water-deep": {
       "file": "water-deep.webp",
       "width": 512,
-      "height": 512
+      "height": 512,
+      "hd": {
+        "file": "water-deep.hd.webp",
+        "width": 1024,
+        "height": 1024
+      }
     },
     "water-shallow": {
       "file": "water-shallow.webp",
       "width": 512,
-      "height": 512
+      "height": 512,
+      "hd": {
+        "file": "water-shallow.hd.webp",
+        "width": 1024,
+        "height": 1024
+      }
     }
   }
 }

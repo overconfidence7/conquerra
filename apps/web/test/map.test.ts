@@ -3,7 +3,7 @@ import { maps } from "@conquerra/content/maps";
 import { createGame, resolveTurn, viewFor, type GameContext, type PlayerView } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { clampCamera, clearInsets, fitCamera, toMap, toScreen, zoomAt } from "../src/map/camera";
-import { cultureLine, cultureNext, ladderLine, seenAgo, territoryCard } from "../src/map/card";
+import { cultureLine, cultureNext, ladderLine, provinceLine, seenAgo, territoryCard } from "../src/map/card";
 import { hireOptions, planQueue } from "../src/logic/orders";
 import { DEFAULT_HOUSE, HOUSES, houseOf } from "../src/map/houses";
 import { layoutMarkers, markerMetrics, MIN_PILL_HEIGHT, pillHeight, type MarkerBox, type MarkerContent } from "../src/map/layout";
@@ -351,5 +351,37 @@ describe("House colours (session 16)", () => {
     expect(houseOf({ players: [{ id: "you", house: 1 }, { id: "bot", house: 0 }] }, "bot").name).toBe("Azure");
     expect(houseOf({ players: [{ id: "x" }, { id: "y" }] }, "y").name).toBe("Gules");
     expect(HOUSES[DEFAULT_HOUSE]!.name).toBe("Gules");
+  });
+});
+
+describe("provinces on demand (session 16)", () => {
+  const ctx: GameContext = { map: maps.embervale!, rules: defaultRules };
+  it("province names sit on the land only at Far; sea and mountain names stay longer", () => {
+    const size = typicalTerritorySize(ctx.map);
+    const at = (px: number) => zoomDetail(px / size, size);
+    for (const tactical of [false, true]) {
+      const far = detailMix(at(MID_FROM_PX * 0.4), tactical);
+      const mid = detailMix(at(MID_FROM_PX * 1.6), tactical);
+      expect(far.provinceNames).toBeGreaterThan(0.9);
+      expect(mid.provinceNames).toBeLessThan(0.05);
+      expect(mid.placeNames).toBeGreaterThan(0.3);
+    }
+  });
+  it("tapping any territory (yours, a rival's, fogged land) lights up its province; an attack you draft lights its target's", async () => {
+    const { buildScene } = await import("../src/ui/MapView");
+    const s = createGame(ctx, { gameId: "p", seed: "p", players: [{ id: "a", name: "A" }, { id: "b", name: "B" }] });
+    const v = viewFor(ctx, s, "a");
+    const far = ctx.map.territories.find((t) => v.territories[t.id]?.detail !== "full")!;
+    expect(buildScene(ctx, v, [], far.id, null, false).province).toBe(far.province);
+    expect(buildScene(ctx, v, [], null, null, false).province).toBeNull();
+    const to = ctx.map.borders.find((b) => b.a === v.me.capital || b.b === v.me.capital)!;
+    const target = to.a === v.me.capital ? to.b : to.a;
+    const draft = { from: v.me.capital, to: target, amount: "all" as const, preset: null, withLeader: false, timing: null };
+    expect(buildScene(ctx, v, [], v.me.capital, draft, true).province).toBe(ctx.map.territories.find((t) => t.id === target)!.province);
+  });
+  it("the card's province chip says it the same way as the plaque", () => {
+    expect(provinceLine("The Oak Downs", 3, 2, 5)).toBe("The Oak Downs +3: you hold 2 of 5");
+    expect(provinceLine("The Oak Downs", 3, 5, 5)).toBe("The Oak Downs +3: you hold all 5");
+    expect(provinceLine("The Oak Downs", 3, 0, 5)).toBe("The Oak Downs +3: you hold none of 5");
   });
 });

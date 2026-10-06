@@ -69,7 +69,8 @@ const PHONE_INSETS: Insets = { top: 56, right: 0, bottom: 84, left: 0 };
 
 /** The menus that sit over the map, by layout (measured on screen, session 16). */
 const COVERS_DESKTOP = ".game .topbar, .game > .map-tools, .game .rightcol, .game .dock";
-const COVERS_PHONE = ".game .topbar, .game > .map-tools, .game .phonebar";
+// (On a phone the two small map buttons float over the sea at the top left; counting them would shrink the whole map.)
+const COVERS_PHONE = ".game .topbar, .game .phonebar";
 
 /**
  * Where the menus sit over the map, measured on screen whenever they change size (session 16), so "fit map" and

@@ -71,8 +71,10 @@ export interface DetailMix {
   dim: number;
   /** Flat House tint over owned land (Far zoom; the border wash covers Mid and Near). */
   tint: number;
-  /** Province names. */
+  /** Province names painted on the land: Far only (session 16: at Mid and Near, tap a territory to see its province). */
   provinceNames: number;
+  /** Sea, lake and mountain range names. */
+  placeNames: number;
   /** Banners, crowns and building icons next to the pills. */
   icons: number;
   /** Specialist figures and icons, culture dots and gold value. */
@@ -84,12 +86,13 @@ export interface DetailMix {
 export function detailMix(z: Pick<ZoomDetail, "far" | "near">, tactical: boolean): DetailMix {
   if (tactical)
     // Tactical view shows every detail at every zoom; names once there's room for them.
-    return { dim: 0, tint: 1, provinceNames: 1 - 0.6 * z.near, icons: 1, nearDetail: 1, names: 1 - z.far };
+    return { dim: 0, tint: 1, provinceNames: z.far, placeNames: 1 - 0.6 * z.near, icons: 1, nearDetail: 1, names: 1 - z.far };
   return {
     dim: 0.38 * z.far,
     // Mid and Near: the House wash along the border only. Far: a stronger flat tint over the whole land.
     tint: 0.55 * z.far,
-    provinceNames: Math.max(0, 0.4 + 0.6 * z.far - 0.4 * z.near),
+    provinceNames: z.far,
+    placeNames: Math.max(0, 0.4 + 0.6 * z.far - 0.4 * z.near),
     icons: 1 - z.far,
     nearDetail: z.near,
     names: z.near,

@@ -385,19 +385,25 @@ export async function importArt({ incomingDir, outDir }: ImportOptions): Promise
     const outName = `${spec.name}.webp`;
     let width: number, height: number;
     let tintFile: string | undefined;
+    /** The bigger copy for the Near zoom (session 16), for art with an hd size. */
+    let hd: { file: string; width: number; height: number } | undefined;
+    const hdName = `${spec.name}.hd.webp`;
 
     if (spec.kind === "texture") {
       if (w0 !== h0) notes.push(`cropped to a square from ${w0}×${h0}`);
       const side = Math.min(w0, h0);
-      const square = await raw(src.clone().extract({ left: Math.floor((w0 - side) / 2), top: Math.floor((h0 - side) / 2), width: side, height: side }).resize(spec.size, spec.size, { kernel: "lanczos3" }));
-      const seamless = makeSeamless(square);
       const target = colourTargetFor(spec.name, spec.kind);
-      if (target?.flatten) flattenLighting(seamless, target.flatten);
-      if (target) {
-        matchColour(seamless, target);
-        notes.push("colour matched");
+      // The game-size texture, and (session 16) a bigger one made the same way for the Near zoom.
+      for (const size of [spec.size, ...(spec.hd ? [Math.min(spec.hd, side)] : [])]) {
+        const square = await raw(src.clone().extract({ left: Math.floor((w0 - side) / 2), top: Math.floor((h0 - side) / 2), width: side, height: side }).resize(size, size, { kernel: "lanczos3" }));
+        const seamless = makeSeamless(square);
+        if (target?.flatten) flattenLighting(seamless, target.flatten);
+        if (target) matchColour(seamless, target);
+        const isHd = size !== spec.size;
+        await fromRaw(seamless).webp({ quality: 86 }).toFile(join(outDir, isHd ? hdName : outName));
+        if (isHd) hd = { file: hdName, width: size, height: size };
       }
-      await fromRaw(seamless).webp({ quality: 86 }).toFile(join(outDir, outName));
+      if (target) notes.push("colour matched");
       width = height = spec.size;
     } else if (spec.kind === "portrait" || spec.kind === "vista") {
       const [w, h] = spec.kind === "portrait" ? [spec.size, spec.size] : [spec.size, spec.size / 2];
@@ -432,12 +438,21 @@ export async function importArt({ incomingDir, outDir }: ImportOptions): Promise
         notes.push("colour matched to its family");
       }
       await fromRaw(sized).webp({ quality: 90, alphaQuality: 100 }).toFile(join(outDir, outName));
+      // The bigger copy for the Near zoom (session 16): only when the original is bigger than the game size.
+      if (spec.hd && Math.max(box.width, box.height) > spec.size) {
+        const k = Math.min(1, spec.hd / Math.max(box.width, box.height));
+        const hw = Math.max(1, Math.round(box.width * k)), hh = Math.max(1, Math.round(box.height * k));
+        const big = await raw(fromRaw(await raw(fromRaw(img).extract(box))).resize(hw, hh, { kernel: "lanczos3" }));
+        if (target) matchColour(big, target);
+        await fromRaw(big).webp({ quality: 88, alphaQuality: 100 }).toFile(join(outDir, hdName));
+        hd = { file: hdName, width: hw, height: hh };
+      }
       if (spec.tint) {
         tintFile = `${spec.name}.tint.webp`;
         await fromRaw(tintMask(sized)).webp({ quality: 90, alphaQuality: 100 }).toFile(join(outDir, tintFile));
       }
     }
-    manifest.assets[spec.name] = { file: outName, width, height, ...(tintFile ? { tintMask: tintFile } : {}) };
+    manifest.assets[spec.name] = { file: outName, width, height, ...(tintFile ? { tintMask: tintFile } : {}), ...(hd ? { hd } : {}) };
     report.imported.push({ file, asset: spec.name, ...(notes.length ? { note: notes.join("; ") } : {}) });
   }
 
@@ -451,7 +466,7 @@ export async function importArt({ incomingDir, outDir }: ImportOptions): Promise
   }
   report.missing = ASSETS.filter((a) => !manifest.assets[a.name]);
   // Clear out files from earlier imports that are no longer in the manifest.
-  const keep = new Set(Object.values(manifest.assets).flatMap((e) => [e.file, ...(e.tintMask ? [e.tintMask] : [])]));
+  const keep = new Set(Object.values(manifest.assets).flatMap((e) => [e.file, ...(e.tintMask ? [e.tintMask] : []), ...(e.hd ? [e.hd.file] : [])]));
   for (const f of readdirSync(outDir)) if (f.endsWith(".webp") && !keep.has(f)) rmSync(join(outDir, f));
   writeFileSync(join(outDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   return { manifest, report };

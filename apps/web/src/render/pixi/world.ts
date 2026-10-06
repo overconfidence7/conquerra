@@ -13,9 +13,18 @@ import { DISPLAY_FRAGMENT, GROUND_FRAGMENT, VERTEX } from "./shaders";
  * The illustrated world: painted once per game into tiles (ground, relief, water, rivers, passes, sea lanes and
  * every decoration), plus one smaller "Far" image of the whole map for zoomed-out views. Each frame only shows
  * the tiles (with fog and a water shimmer), so panning stays cheap.
+ *
+ * Three detail levels (session 16): the Far image, the Mid tiles (the whole map, painted once), and **Near** tiles,
+ * painted on demand only where you're looking once you zoom past what the Mid tiles can show sharply, at up to 3x
+ * the Mid detail (matched to the screen). Near tiles are kept in a small cache that forgets the least recently seen
+ * ones; until one is ready, the Mid tile underneath shows.
  */
 
 const TILE = 1024;
+/** Near tiles are smaller (device pixels a side): quicker to paint one a frame, and less memory wasted off screen. */
+const NEAR_TILE = 512;
+/** Near tiles show once the screen needs this many times the Mid detail. */
+const NEAR_FROM = 1.3;
 /** Ground textures repeat every this many map units. */
 const REPEAT_UNITS = 170;
 
@@ -27,8 +36,23 @@ const CASTLE_SIZE = 46;
 const OWNER_WASH = 0.5;
 
 export interface WorldOptions {
-  /** Painted pixels per map unit (detail at Mid and Near zoom). */
+  /** Painted pixels per map unit (detail at Mid zoom). */
   ppu: number;
+  /** Painted pixels per map unit for Near tiles (0: none, the Mid tiles are as sharp as the screen gets). */
+  nearPpu?: number;
+  /** At most this many Near tiles are kept (each about 1 MB of texture memory). */
+  nearCap?: number;
+}
+
+interface NearTile {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  rt: RenderTexture;
+  mesh: Mesh<MeshGeometry, Shader>;
+  /** When it was last on screen (for forgetting the least recently seen). */
+  seen: number;
 }
 
 interface Tile {
@@ -39,6 +63,9 @@ interface Tile {
   rt: RenderTexture | null;
   mesh: Mesh<MeshGeometry, Shader> | null;
 }
+
+/** A texture with mipmaps (its own, not the shared cached one), so it stays smooth painted much smaller than its art. */
+const mipmapped = (image: CanvasImageSource) => Texture.from({ resource: image, autoGenerateMipmaps: true } as unknown as Parameters<typeof Texture.from>[0], true);
 
 const quad = (x: number, y: number, w: number, h: number) =>
   new MeshGeometry({
@@ -69,7 +96,20 @@ export class WorldLayer {
   private ownerBlurCanvas: HTMLCanvasElement;
   private ownerBlurTex: Texture;
   private bakeScene = new Container();
+  /** The ground, painted from the Mid atlas (Far and Mid tiles) or the sharper Near atlas (built the first time). */
+  private groundMid!: Mesh<MeshGeometry, Shader>;
+  private groundNear: Mesh<MeshGeometry, Shader> | null = null;
+  private groundMesh!: (slot: number, hd?: boolean) => Mesh<MeshGeometry, Shader>;
+  /** Sprites in the painting, with their extent, so a tile only paints the ones it touches. */
+  private cullables: { obj: Sprite; x0: number; y0: number; x1: number; y1: number }[] = [];
+  /** The bigger art's textures for Near painting (session 16), by name, made the first time each is needed. */
+  private hdTex = new Map<string, Texture | null>();
   private tiles: Tile[] = [];
+  private near = new Map<string, NearTile>();
+  private nearLayer = new Container();
+  /** Near tiles on screen that aren't painted yet, nearest the centre first. */
+  private nearWanted: { key: string; x: number; y: number; w: number; h: number }[] = [];
+  private nearFrame = 0;
   private far: { rt: RenderTexture; mesh: Mesh<MeshGeometry, Shader>; ppu: number } | null = null;
   private fogCanvas: HTMLCanvasElement;
   private fogTex: Texture;
@@ -89,7 +129,7 @@ export class WorldLayer {
   private sea: TilingSprite;
   /** A second, larger and turned copy over the open sea at half strength, so its repeats never line up. */
   private seaBreak: TilingSprite;
-  readonly stats = { bakeMs: 0, tilesBaked: 0, tileCount: 0, textureBytes: 0, steps: {} as Record<string, number> };
+  readonly stats = { bakeMs: 0, tilesBaked: 0, tileCount: 0, textureBytes: 0, nearBaked: 0, nearKept: 0, nearMs: 0, steps: {} as Record<string, number> };
   private step(name: string, t0: number) {
     this.stats.steps[name] = Math.round(performance.now() - t0);
     return performance.now();
@@ -152,7 +192,7 @@ export class WorldLayer {
     this.seaBreak.position.copyFrom(this.sea.position);
     this.seaBreak.tileScale.set((REPEAT_UNITS * 2.37) / deep.image.width);
     this.seaBreak.tileRotation = 0.61;
-    this.view.addChild(this.sea, this.seaBreak, this.tilesLayer);
+    this.view.addChild(this.sea, this.seaBreak, this.tilesLayer, this.nearLayer);
     this.stats.bakeMs += performance.now() - t0;
   }
 
@@ -171,43 +211,61 @@ export class WorldLayer {
     });
   }
 
+  /**
+   * The ground and water textures in one atlas with `slot` px slots: 5 x 2 when that fits in 4096 px (less memory),
+   * else 4 x 3.
+   */
+  private atlas(slot: number, hd = false): { tex: Texture; cols: number; rows: number } {
+    // The Near atlas uses the bigger textures where they've arrived (session 16).
+    const images = [...TERRAIN_TEXTURES, ...WATER_TEXTURES].map((n) => (hd ? this.art.hd(n) : null) ?? this.art.get(n)!.image);
+    const cols = slot * 5 <= 4096 ? 5 : 4;
+    const rows = Math.ceil(images.length / cols);
+    const [atlas, actx] = canvas(slot * cols, slot * rows);
+    actx.imageSmoothingQuality = "high";
+    images.forEach((image, i) => actx.drawImage(image, (i % cols) * slot, Math.floor(i / cols) * slot, slot, slot));
+    const tex = Texture.from(atlas);
+    this.disposables.push(tex);
+    return { tex, cols, rows };
+  }
+
   /** Everything that gets painted into the tiles. */
   private buildBakeScene() {
     const { g, art } = this;
-    // ---- Ground textures in one atlas (4 x 3 slots) ----
-    const names = [...TERRAIN_TEXTURES, ...WATER_TEXTURES];
-    const arts = names.map((n) => art.get(n)!);
-    const slot = arts.some((a) => a.real) ? 512 : 256;
-    const [atlas, actx] = canvas(slot * 4, slot * 3);
-    arts.forEach((a, i) => actx.drawImage(a.image, (i % 4) * slot, Math.floor(i / 4) * slot, slot, slot));
-    const atlasTex = Texture.from(atlas);
+    // ---- Ground textures in one atlas: the Mid one with 512 px slots (as the art was stored before session 16) ----
+    const real = [...TERRAIN_TEXTURES, ...WATER_TEXTURES].some((n) => art.get(n)!.real);
     const biomes = biomeCanvases(g).map((c) => Texture.from(c));
     const aux2 = Texture.from(this.aux.aux2);
-    const ground = new Mesh({
-      geometry: quad(0, 0, g.width, g.height),
-      shader: Shader.from({
-        gl: { vertex: VERTEX, fragment: GROUND_FRAGMENT },
-        resources: {
-          uAtlas: atlasTex.source,
-          uB0: biomes[0]!.source,
-          uB1: biomes[1]!.source,
-          uB2: biomes[2]!.source,
-          uAux1: this.auxTex.source,
-          uAux2: aux2.source,
-          ground: new UniformGroup({
-            uMap: { value: new Float32Array([g.width, g.height]), type: "vec2<f32>" },
-            uGrid: { value: new Float32Array([g.biome.cols * g.biome.cellSize, g.biome.rows * g.biome.cellSize]), type: "vec2<f32>" },
-            uCell: { value: g.biome.cellSize, type: "f32" },
-            uSea: { value: g.heightMap.seaLevel / 255, type: "f32" },
-            uRepeat: { value: REPEAT_UNITS, type: "f32" },
-            uSlot: { value: slot, type: "f32" },
-            uAtlasPx: { value: new Float32Array([slot * 4, slot * 3]), type: "vec2<f32>" },
-          }),
-        },
-      }),
-    });
-    this.bakeScene.addChild(ground);
-    this.disposables.push(atlasTex, aux2, ...biomes);
+    this.disposables.push(aux2, ...biomes);
+    this.groundMesh = (slot: number, hd = false) => {
+      const { tex, cols, rows } = this.atlas(slot, hd);
+      if (!this.midAtlas) this.midAtlas = tex;
+      return new Mesh({
+        geometry: quad(0, 0, g.width, g.height),
+        shader: Shader.from({
+          gl: { vertex: VERTEX, fragment: GROUND_FRAGMENT },
+          resources: {
+            uAtlas: tex.source,
+            uB0: biomes[0]!.source,
+            uB1: biomes[1]!.source,
+            uB2: biomes[2]!.source,
+            uAux1: this.auxTex.source,
+            uAux2: aux2.source,
+            ground: new UniformGroup({
+              uMap: { value: new Float32Array([g.width, g.height]), type: "vec2<f32>" },
+              uGrid: { value: new Float32Array([g.biome.cols * g.biome.cellSize, g.biome.rows * g.biome.cellSize]), type: "vec2<f32>" },
+              uCell: { value: g.biome.cellSize, type: "f32" },
+              uSea: { value: g.heightMap.seaLevel / 255, type: "f32" },
+              uRepeat: { value: REPEAT_UNITS, type: "f32" },
+              uSlot: { value: slot, type: "f32" },
+              uAtlasPx: { value: new Float32Array([slot * cols, slot * rows]), type: "vec2<f32>" },
+              uCols: { value: cols, type: "f32" },
+            }),
+          },
+        }),
+      });
+    };
+    this.groundMid = this.groundMesh(real ? 512 : 256);
+    this.bakeScene.addChild(this.groundMid);
 
     // ---- Rivers: a darker bank, then water, wider toward the mouth ----
     const rivers = new Graphics();
@@ -257,7 +315,8 @@ export class WorldLayer {
       }
       if (ship && len > 40) {
         const [x, y, ang] = quadPoint(x0, y0, cx, cy, x1, y1, 0.5);
-        const s = new Sprite(Texture.from(ship.image));
+        const s = new Sprite(mipmapped(ship.image));
+        s.label = "ship";
         s.anchor.set(0.5, 0.75);
         s.scale.set(18 / ship.image.width);
         if (Math.cos(ang) < 0) s.scale.x *= -1;
@@ -274,7 +333,9 @@ export class WorldLayer {
       let t = texCache.get(name);
       if (!t) {
         const a = art.get(name);
-        t = a ? Texture.from(a.image) : Texture.WHITE;
+        // Mipmapped, so art much bigger than it's painted stays smooth instead of shimmering (session 16).
+        t = a ? mipmapped(a.image) : Texture.WHITE;
+        if (a) this.disposables.push(t);
         texCache.set(name, t);
       }
       return t;
@@ -301,6 +362,7 @@ export class WorldLayer {
     const place = (name: string, x: number, y: number, size: number, flip: boolean) => {
       const t = tex(name);
       const s = new Sprite(t);
+      s.label = name;
       s.anchor.set(0.5, 0.88);
       s.scale.set(size / t.width);
       if (flip) s.scale.x *= -1;
@@ -359,7 +421,71 @@ export class WorldLayer {
     });
     items.sort((a, b) => a.y - b.y);
     for (const it of items) this.bakeScene.addChild(it.make());
+    // Every sprite's extent (the scene isn't moved or scaled), so painting a tile skips the ones it doesn't touch.
+    for (const c of this.bakeScene.children)
+      if (c instanceof Sprite) {
+        const b = c.getBounds();
+        this.cullables.push({ obj: c, x0: b.minX, y0: b.minY, x1: b.maxX, y1: b.maxY });
+      }
   }
+
+  /**
+   * Paint the part of the map from (x, y), w x h map units, at `ppu`, showing only the sprites that touch it. `hd`:
+   * with the bigger art where it has arrived (Near tiles), each piece kept exactly the size it was.
+   */
+  private paint(rt: RenderTexture, x: number, y: number, w: number, h: number, ppu: number, hd = false) {
+    const swapped: { s: Sprite; tex: Texture; sx: number; sy: number }[] = [];
+    for (const c of this.cullables) {
+      c.obj.visible = c.x1 >= x && c.x0 <= x + w && c.y1 >= y && c.y0 <= y + h;
+      if (!hd || !c.obj.visible) continue;
+      const big = c.obj.label ? this.hdTexture(c.obj.label) : null;
+      if (!big) continue;
+      const s = c.obj;
+      swapped.push({ s, tex: s.texture, sx: s.scale.x, sy: s.scale.y });
+      const k = s.texture.width / big.width;
+      s.texture = big;
+      s.scale.set(s.scale.x * k, s.scale.y * k);
+    }
+    this.renderer.render({ container: this.bakeScene, target: rt, clear: true, transform: new Matrix().translate(-x, -y).scale(ppu, ppu) });
+    for (const { s, tex, sx, sy } of swapped) {
+      s.texture = tex;
+      s.scale.set(sx, sy);
+    }
+    for (const c of this.cullables) c.obj.visible = true;
+  }
+
+  private hdTexture(name: string): Texture | null {
+    if (!this.hdTex.has(name)) {
+      const image = this.art.hd(name);
+      const t = image ? mipmapped(image) : null;
+      if (t) this.disposables.push(t);
+      this.hdTex.set(name, t);
+    }
+    return this.hdTex.get(name) ?? null;
+  }
+
+  /**
+   * The bigger art has arrived (session 16): Near tiles painted so far are forgotten and painted again with it
+   * (only those on screen, as ever), and the Near ground atlas is made again from the bigger textures.
+   */
+  hdArrived() {
+    this.hdTex.clear();
+    for (const t of this.near.values()) {
+      this.stats.textureBytes -= t.rt.width * t.rt.height * 4;
+      t.mesh.destroy();
+      t.rt.destroy(true);
+    }
+    this.near.clear();
+    if (this.groundNear) {
+      this.bakeScene.removeChild(this.groundNear);
+      this.groundNear.destroy();
+      this.groundNear = null;
+      this.stats.textureBytes -= this.nearAtlasBytes;
+      this.nearAtlasBytes = 0;
+    }
+    this.stats.nearKept = 0;
+  }
+  private nearAtlasBytes = 0;
 
   /** Paint the whole map into the Far image. Fast; this is what shows first. */
   bakeFar() {
@@ -378,6 +504,24 @@ export class WorldLayer {
     this.stats.bakeMs += performance.now() - t0;
   }
 
+  /**
+   * Once every Mid tile is painted, the Mid ground atlas isn't needed any more (the Far image and the tiles are done;
+   * Near tiles have their own): its memory goes back.
+   */
+  private freeMidAtlas() {
+    if (this.midAtlasFreed) return;
+    this.midAtlasFreed = true;
+    this.groundMid.visible = false;
+    const t = this.midAtlas;
+    if (t) {
+      this.disposables = this.disposables.filter((d) => d !== t);
+      t.destroy(true);
+    }
+  }
+  private midAtlasFreed = false;
+  /** The Mid ground atlas (the first one made). */
+  private midAtlas: Texture | null = null;
+
   /** Paint up to `max` more tiles, the ones nearest the screen centre first. Returns how many are left. */
   bakeTiles(max: number, cam: Camera, vp: Viewport): number {
     const t0 = performance.now();
@@ -387,7 +531,7 @@ export class WorldLayer {
     for (const t of pending.slice(0, max)) {
       const w = Math.ceil(t.w * ppu), h = Math.ceil(t.h * ppu);
       const rt = RenderTexture.create({ width: w, height: h, antialias: false });
-      this.renderer.render({ container: this.bakeScene, target: rt, clear: true, transform: new Matrix().translate(-t.x, -t.y).scale(ppu, ppu) });
+      this.paint(rt, t.x, t.y, t.w, t.h, ppu);
       t.rt = rt;
       t.mesh = new Mesh({ geometry: quad(t.x, t.y, t.w, t.h), shader: this.displayShader(rt) });
       this.tilesLayer.addChild(t.mesh);
@@ -395,7 +539,9 @@ export class WorldLayer {
       this.stats.textureBytes += w * h * 4;
     }
     this.stats.bakeMs += performance.now() - t0;
-    return pending.length - Math.min(max, pending.length);
+    const left = pending.length - Math.min(max, pending.length);
+    if (!left) this.freeMidAtlas();
+    return left;
   }
 
   /**
@@ -407,16 +553,95 @@ export class WorldLayer {
     const useFar = !!this.far && devicePxPerUnit <= this.far.ppu * 1.35;
     this.tilesLayer.visible = !useFar;
     if (this.far) this.far.mesh.visible = true;
+    const nearPpu = this.opts.nearPpu ?? 0;
+    // Near tiles only once the screen needs clearly more than the Mid detail, and only while a screenful of them
+    // fits comfortably in the cache (a little less sharp just past Mid, rather than painting dozens of tiles).
+    const screenTiles = nearPpu ? ((vp.width / cam.scale) * nearPpu / NEAR_TILE + 1) * ((vp.height / cam.scale) * nearPpu / NEAR_TILE + 1) : Infinity;
+    const useNear = !useFar && nearPpu > 0 && devicePxPerUnit > this.opts.ppu * NEAR_FROM && screenTiles <= (this.opts.nearCap ?? 24) * 0.6;
+    this.nearLayer.visible = useNear;
+    this.nearWanted = [];
     if (useFar) return;
     const x0 = -cam.x / cam.scale, y0 = -cam.y / cam.scale, x1 = x0 + vp.width / cam.scale, y1 = y0 + vp.height / cam.scale;
+    // Near tiles: show the painted ones on screen, and list the rest to paint (nearest the centre first).
+    let allNear = useNear;
+    if (useNear) {
+      this.nearFrame++;
+      const u = NEAR_TILE / nearPpu;
+      const shown = new Set<string>();
+      for (let j = Math.max(0, Math.floor(y0 / u)); j * u < Math.min(this.g.height, y1); j++)
+        for (let i = Math.max(0, Math.floor(x0 / u)); i * u < Math.min(this.g.width, x1); i++) {
+          const key = `${i},${j}`;
+          shown.add(key);
+          const t = this.near.get(key);
+          if (t) t.seen = this.nearFrame;
+          else {
+            allNear = false;
+            const x = i * u, y = j * u;
+            this.nearWanted.push({ key, x, y, w: Math.min(u, this.g.width - x), h: Math.min(u, this.g.height - y) });
+          }
+        }
+      for (const [key, t] of this.near) t.mesh.visible = shown.has(key);
+      const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      this.nearWanted.sort((a, b) => Math.hypot(a.x + a.w / 2 - cx, a.y + a.h / 2 - cy) - Math.hypot(b.x + b.w / 2 - cx, b.y + b.h / 2 - cy));
+    }
     let allOnScreenPainted = true;
     for (const t of this.tiles) {
       const on = t.x < x1 && t.x + t.w > x0 && t.y < y1 && t.y + t.h > y0;
-      if (t.mesh) t.mesh.visible = on;
+      // Under a screenful of finished Near tiles, the Mid tiles needn't be drawn at all.
+      if (t.mesh) t.mesh.visible = on && !allNear;
       else if (on) allOnScreenPainted = false;
     }
     // The Far image only needs drawing underneath while some on-screen tile is still unpainted.
-    if (this.far) this.far.mesh.visible = !allOnScreenPainted;
+    if (this.far) this.far.mesh.visible = !allOnScreenPainted && !allNear;
+  }
+
+  /** Near tiles on screen still to paint (`update` lists them). */
+  get pendingNear() {
+    return this.nearWanted.length;
+  }
+
+  /**
+   * Paint up to `max` of the Near tiles on screen, nearest the centre first, then forget the least recently seen
+   * ones beyond the cap. The sharper ground atlas is made the first time (the Mid one paints everything else).
+   */
+  bakeNear(max: number): void {
+    const nearPpu = this.opts.nearPpu ?? 0;
+    if (!nearPpu || !this.nearWanted.length) return;
+    const t0 = performance.now();
+    if (!this.groundNear) {
+      // As many texture pixels per map unit as the Near tiles paint (rounded up to 128 px slots; 512 to 1024).
+      const slot = Math.max(512, Math.min(1024, Math.ceil((nearPpu * REPEAT_UNITS) / 128) * 128));
+      this.groundNear = this.groundMesh(slot, true);
+      this.bakeScene.addChildAt(this.groundNear, this.bakeScene.getChildIndex(this.groundMid) + 1);
+      this.nearAtlasBytes = slot * slot * (slot * 5 <= 4096 ? 10 : 12) * 4;
+      this.stats.textureBytes += this.nearAtlasBytes;
+    }
+    const midShown = this.groundMid.visible;
+    this.groundMid.visible = false;
+    this.groundNear.visible = true;
+    for (const w of this.nearWanted.splice(0, max)) {
+      const rt = RenderTexture.create({ width: Math.ceil(w.w * nearPpu), height: Math.ceil(w.h * nearPpu), antialias: false });
+      this.paint(rt, w.x, w.y, w.w, w.h, nearPpu, true);
+      const mesh = new Mesh({ geometry: quad(w.x, w.y, w.w, w.h), shader: this.displayShader(rt) });
+      this.nearLayer.addChild(mesh);
+      this.near.set(w.key, { ...w, rt, mesh, seen: this.nearFrame });
+      this.stats.nearBaked++;
+      this.stats.textureBytes += rt.width * rt.height * 4;
+    }
+    this.groundNear.visible = false;
+    this.groundMid.visible = midShown;
+    // Forget the least recently seen beyond the cap (never one on screen now).
+    const cap = this.opts.nearCap ?? 24;
+    if (this.near.size > cap)
+      for (const [key, t] of [...this.near].sort((a, b) => a[1].seen - b[1].seen)) {
+        if (this.near.size <= cap || t.seen === this.nearFrame) break;
+        this.stats.textureBytes -= t.rt.width * t.rt.height * 4;
+        t.mesh.destroy();
+        t.rt.destroy(true);
+        this.near.delete(key);
+      }
+    this.stats.nearKept = this.near.size;
+    this.stats.nearMs += performance.now() - t0;
   }
 
   /** Far-zoom dimming for the sea beyond the edges (the painted map dims in its shader). */
@@ -522,6 +747,7 @@ export class WorldLayer {
 
   destroy() {
     for (const t of this.tiles) t.rt?.destroy(true);
+    for (const t of this.near.values()) t.rt.destroy(true);
     this.far?.rt.destroy(true);
     this.fogTex.destroy(true);
     this.fogPrevTex.destroy(true);

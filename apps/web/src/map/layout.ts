@@ -123,18 +123,29 @@ export function layoutMarkers(boxes: readonly MarkerBox[], opts: { gap?: number;
   const order = [...boxes].sort((a, b) => b.priority - a.priority || a.y - b.y || a.x - b.x || (a.id < b.id ? -1 : 1));
   const placed: { box: MarkerBox; x: number; y: number }[] = [];
   const out = new Map<string, MarkerPlacement>();
-  // Simple grid so each check only looks at nearby markers.
+  // A grid of placed anchors, so each check only looks at markers close enough to touch (session 16: the reach is
+  // worked out from the biggest box placed so far, not a fixed margin, and keys are numbers: far fewer cells to read).
   const cell = 64;
-  const grid = new Map<string, number[]>();
-  const keyOf = (cx: number, cy: number) => `${cx},${cy}`;
-  const near = (x: number, y: number, b: MarkerBox) => {
-    const r = Math.ceil((Math.max(b.w, b.h) + 200) / cell / 2);
+  const grid = new Map<number, number[]>();
+  const keyOf = (cx: number, cy: number) => (cx + 32768) * 65536 + (cy + 32768);
+  let reachW = 0, reachH = 0;
+  const cellsAround = (x: number, y: number, b: MarkerBox, visit: (k: number) => boolean | void) => {
+    const rx = Math.ceil((b.w / 2 + reachW + gap) / cell) + 1;
+    const ry = Math.ceil((b.h / 2 + Math.abs(b.dy ?? 0) + reachH + gap) / cell) + 1;
     const cx = Math.floor(x / cell), cy = Math.floor(y / cell);
+    for (let i = cx - rx; i <= cx + rx; i++)
+      for (let j = cy - ry; j <= cy + ry; j++) {
+        const list = grid.get(keyOf(i, j));
+        if (list) for (const k of list) if (visit(k) === false) return false;
+      }
+    return true;
+  };
+  const near = (x: number, y: number, b: MarkerBox) => {
     const found: number[] = [];
-    for (let i = cx - r; i <= cx + r; i++) for (let j = cy - r; j <= cy + r; j++) found.push(...(grid.get(keyOf(i, j)) ?? []));
+    cellsAround(x, y, b, (k) => void found.push(k));
     return found;
   };
-  const free = (x: number, y: number, b: MarkerBox) => near(x, y, b).every((k) => !overlaps(x, y, b, placed[k]!.x, placed[k]!.y, placed[k]!.box, gap));
+  const free = (x: number, y: number, b: MarkerBox) => cellsAround(x, y, b, (k) => !overlaps(x, y, b, placed[k]!.x, placed[k]!.y, placed[k]!.box, gap));
 
   for (const b of order) {
     const maxShift = opts.maxShift ?? Math.max(b.w, b.h) * 0.9;
@@ -152,7 +163,11 @@ export function layoutMarkers(boxes: readonly MarkerBox[], opts: { gap?: number;
     if (spot) {
       const idx = placed.push({ box: b, x: spot[0], y: spot[1] }) - 1;
       const gk = keyOf(Math.floor(spot[0] / cell), Math.floor(spot[1] / cell));
-      grid.set(gk, [...(grid.get(gk) ?? []), idx]);
+      const list = grid.get(gk);
+      if (list) list.push(idx);
+      else grid.set(gk, [idx]);
+      reachW = Math.max(reachW, b.w / 2);
+      reachH = Math.max(reachH, b.h / 2 + Math.abs(b.dy ?? 0));
       out.set(b.id, { x: spot[0], y: spot[1], shifted: spot[0] !== b.x || spot[1] !== b.y, mergedInto: null, merged: [] });
       continue;
     }

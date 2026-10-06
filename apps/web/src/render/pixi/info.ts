@@ -280,8 +280,8 @@ export class InfoLayer {
     // The gate symbol always shows at Far and in Tactical; with the painted gatehouse it gives way from Mid in.
     // (Illustrated, `icons` is 1 - Far.)
     this.gates.alpha = this.isTactical || !this.paintedGates ? 1 : 1 - mix.icons;
-    this.names.alpha = mix.provinceNames;
-    this.labels.illustrated.places.alpha = this.labels.tactical.places.alpha = Math.min(1, 0.4 + mix.provinceNames);
+    this.labels.illustrated.provinces.alpha = this.labels.tactical.provinces.alpha = mix.provinceNames;
+    this.labels.illustrated.places.alpha = this.labels.tactical.places.alpha = Math.min(1, 0.4 + mix.placeNames);
     this.figures.visible = !this.isTactical && mix.nearDetail > 0.02;
     this.figures.alpha = mix.nearDetail;
     if (this.scene && (this.drawnScale === 0 || Math.abs(Math.log(scale / this.drawnScale)) > 0.08)) {
@@ -360,6 +360,16 @@ export class InfoLayer {
     // Realms: in Tactical, a dark line round everything each House holds. Illustrated: the House bands (realms.ts).
     if (this.isTactical) for (const outlines of this.realms.values()) for (const l of outlines) ring(G, l, false).stroke({ width: 2.6 * px, color: INK, alpha: 0.9, join: "round" });
     else this.realmLayer.draw(px);
+    // Provinces on demand (session 16): the province of the territory you tapped, lit round its whole border with a
+    // bright band (a soft light halo, a dark rule, a warm white core), so it reads over every House colour, the
+    // gilded province borders and the sea.
+    const lit = this.scene!.province;
+    if (lit)
+      for (const l of this.provinceOutline(lit)) {
+        ring(G, l, false).stroke({ width: 17 * px, color: 0xffffff, alpha: 0.22, join: "round", cap: "round" });
+        ring(G, l, false).stroke({ width: 10 * px, color: INK, alpha: 0.85, join: "round", cap: "round" });
+        ring(G, l, false).stroke({ width: 5 * px, color: 0xfff7d6, alpha: 1, join: "round", cap: "round" });
+      }
     // Where the selected army can go.
     for (const id of targets) {
       for (const r of this.rings.get(id) ?? []) {
@@ -387,6 +397,16 @@ export class InfoLayer {
         ring(G, r).stroke({ width: 7 * px, color: GOLD_HI, alpha: 0.5, join: "round" });
         ring(G, r).stroke({ width: 2.6 * px, color: 0xfff1c1, alpha: 1, join: "round" });
       }
+  }
+
+  private provinceOutlines: Map<string, Line[]> | null = null;
+  /** The outline of a whole province (its border with other provinces and its coast). */
+  private provinceOutline(province: string): Line[] {
+    if (!this.provinceOutlines) {
+      const of = new Map(this.map.territories.map((t) => [t.id, t.province]));
+      this.provinceOutlines = groupOutlines(this.map.geometry!, (id) => of.get(id) ?? null);
+    }
+    return this.provinceOutlines.get(province) ?? [];
   }
 
   /** Neighbour link marks for the selected territory (see drawLines). */

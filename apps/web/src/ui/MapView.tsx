@@ -92,6 +92,8 @@ export function buildScene(
     truces,
     passage,
     spies: [...spyAt.values()],
+    // The territory you tapped last (an attack's target while you draft it) lights up its province.
+    province: ctx.map.territories.find((t) => t.id === (draft?.to ?? selected))?.province ?? null,
   };
 }
 

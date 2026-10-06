@@ -144,7 +144,7 @@ export interface PlaceFact {
 
 /**
  * Where a territory is and what it's worth, in plain words: "Forest, defends ×1.2", "+1 gold a turn",
- * "Pinemark +3 if you hold all 5 · you hold 3".
+ * "Pinemark +3: you hold 3 of 5" (session 16: the same words as the plaque that lights up on the map).
  */
 export function placeFacts(ctx: GameContext, view: PlayerView, id: TerritoryId): PlaceFact[] {
   const def = ctx.map.territories.find((t) => t.id === id)!;
@@ -160,10 +160,14 @@ export function placeFacts(ctx: GameContext, view: PlayerView, id: TerritoryId):
       const v = view.territories[t.id];
       return v?.detail === "full" && v.owner === view.me.id;
     }).length;
-    const all = held === members.length;
-    facts.push({ key: "province", icon: "icon-crown", text: all ? `${province.name} +${province.bonus}: you hold all ${members.length}` : `${province.name} +${province.bonus} if you hold all ${members.length}${held ? ` · you hold ${held}` : ""}` });
+    facts.push({ key: "province", icon: "icon-crown", text: provinceLine(province.name, province.bonus, held, members.length) });
   }
   return facts;
+}
+
+/** "The Oak Downs +3: you hold 2 of 5" ("you hold all 5"; "none of 5 yours yet"). */
+export function provinceLine(name: string, bonus: number, held: number, of: number): string {
+  return `${name} +${bonus}: ${held === of ? `you hold all ${of}` : held ? `you hold ${held} of ${of}` : `you hold none of ${of}`}`;
 }
 
 export function territoryCard(ctx: GameContext, view: PlayerView, id: TerritoryId): TerritoryCard {
@@ -175,8 +179,12 @@ export function territoryCard(ctx: GameContext, view: PlayerView, id: TerritoryI
   /** Plain words for who holds it: "Yours", "Held by Lady Morwen", "Neutral land". */
   const heldBy = (owner: string | null) => (owner === view.me.id ? "Yours" : owner ? `Held by ${playerName(owner)}` : "Neutral land");
   const where = `${province?.name ?? ""} · ${TERRAIN_NAME[def.terrain]}`;
-  const members = province ? ctx.map.territories.filter((t) => t.province === province.id).length : 0;
-  const worth: CardLine = { label: "Gold", icon: "icon-gold", value: `+${gold} gold a turn${province ? ` · ${province.name} +${province.bonus} if you hold all ${members}` : ""}` };
+  const memberIds = province ? ctx.map.territories.filter((t) => t.province === province.id).map((t) => t.id) : [];
+  const heldHere = memberIds.filter((m) => {
+    const x = view.territories[m];
+    return x?.detail === "full" && x.owner === view.me.id;
+  }).length;
+  const worth: CardLine = { label: "Gold", icon: "icon-gold", value: `+${gold} gold a turn${province ? ` · ${provinceLine(province.name, province.bonus, heldHere, memberIds.length)}` : ""}` };
   const troops = (n: number) => `${n} ${n === 1 ? "troop" : "troops"}`;
 
   if (v.detail === "full") {

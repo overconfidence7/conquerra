@@ -1,0 +1,142 @@
+[
+  {
+    "device": "desktop",
+    "label": "before",
+    "firstMapMs": 2489,
+    "allPaintedMs": 2628,
+    "paintMs": 1071,
+    "ppu": 1.32,
+    "nearPpu": 0,
+    "artKB": 1817,
+    "pan": {
+      "mid": {
+        "fps": 159.8,
+        "p95ms": 8.2
+      },
+      "near": {
+        "fps": 130.2,
+        "p95ms": 8.9
+      },
+      "deepest": {
+        "fps": 183.8,
+        "p95ms": 7.3
+      }
+    },
+    "sharpenMs": 993,
+    "textureMB": 50.8,
+    "nearBaked": 0,
+    "nearKept": 0,
+    "nearPaintMs": 0,
+    "jsHeapMB": 146.3,
+    "replay": {
+      "fps": 130,
+      "p95ms": 9.8,
+      "seconds": 8
+    }
+  },
+  {
+    "device": "phone",
+    "label": "before",
+    "firstMapMs": 3367,
+    "allPaintedMs": 3704,
+    "paintMs": 1095,
+    "ppu": 1.32,
+    "nearPpu": 0,
+    "artKB": 1816,
+    "pan": {
+      "mid": {
+        "fps": 94.9,
+        "p95ms": 13.9
+      },
+      "near": {
+        "fps": 101.4,
+        "p95ms": 11.9
+      },
+      "deepest": {
+        "fps": 99,
+        "p95ms": 13.2
+      }
+    },
+    "sharpenMs": 954,
+    "textureMB": 50.8,
+    "nearBaked": 0,
+    "nearKept": 0,
+    "nearPaintMs": 0,
+    "jsHeapMB": 107.5,
+    "replay": {
+      "fps": 34.8,
+      "p95ms": 44,
+      "seconds": 8.3
+    }
+  },
+  {
+    "device": "desktop",
+    "label": "after",
+    "firstMapMs": 2096,
+    "allPaintedMs": 2273,
+    "paintMs": 926,
+    "ppu": 1.32,
+    "nearPpu": 3.93,
+    "artKB": 1823,
+    "pan": {
+      "mid": {
+        "fps": 154,
+        "p95ms": 8.6
+      },
+      "near": {
+        "fps": 128.2,
+        "p95ms": 9.2
+      },
+      "deepest": {
+        "fps": 120.7,
+        "p95ms": 10.3
+      }
+    },
+    "sharpenMs": 276,
+    "textureMB": 95.4,
+    "nearBaked": 29,
+    "nearKept": 20,
+    "nearPaintMs": 191,
+    "jsHeapMB": 153.9,
+    "replay": {
+      "fps": 125.8,
+      "p95ms": 9.8,
+      "seconds": 8.2
+    }
+  },
+  {
+    "device": "phone",
+    "label": "after",
+    "firstMapMs": 4007,
+    "allPaintedMs": 4262,
+    "paintMs": 1263,
+    "ppu": 1.32,
+    "nearPpu": 3.97,
+    "artKB": 1822,
+    "pan": {
+      "mid": {
+        "fps": 96.8,
+        "p95ms": 21.5
+      },
+      "near": {
+        "fps": 101.3,
+        "p95ms": 12.4
+      },
+      "deepest": {
+        "fps": 101.7,
+        "p95ms": 12.7
+      }
+    },
+    "sharpenMs": 164,
+    "textureMB": 88.1,
+    "nearBaked": 13,
+    "nearKept": 13,
+    "nearPaintMs": 260,
+    "jsHeapMB": 134.1,
+    "replay": {
+      "fps": 42.5,
+      "p95ms": 31.7,
+      "seconds": 8
+    }
+  }
+]

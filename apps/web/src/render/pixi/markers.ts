@@ -379,20 +379,24 @@ export class MarkerLayer {
       const [x, y] = toScreen(cam, m.anchor[0], m.anchor[1]);
       return { id: m.id, x, y, w: m.metrics.w * k, h: m.metrics.h * k, dy: m.metrics.dy * k, priority: m.priority };
     });
-    // Province plaques come last and never cover an army: with no room nearby, they're dropped.
+    // Province plaques (session 16): every one at Far, as before; at Mid and Near only the province of the territory
+    // you tapped (provinces on demand). They come last and never cover an army: with no room nearby, they're dropped.
+    const lit = this.scene?.province ? `plaque:${this.scene.province}` : null;
+    const shown = (pl: PlaqueView) => (pl.id === lit ? 1 : z.far);
     for (const pl of this.plaques.values()) {
+      if (shown(pl) < 0.05) continue;
       const [x, y] = toScreen(cam, pl.anchor[0], pl.anchor[1]);
       boxes.push({ id: pl.id, x, y, w: pl.w, h: pl.h, dy: 0, priority: -1, optional: true });
     }
     const placed = layoutMarkers(boxes);
-    this.plaqueAlpha = 1 - z.near;
+    this.plaqueAlpha = z.far;
     for (const pl of this.plaques.values()) {
-      const at = placed.get(pl.id)!;
+      const at = placed.get(pl.id);
       const [x, y] = toScreen(cam, pl.anchor[0], pl.anchor[1]);
-      pl.offset = [at.x - x, at.y - y];
-      pl.hidden = !!at.dropped || this.plaqueAlpha < 0.05;
+      pl.offset = at ? [at.x - x, at.y - y] : [0, 0];
+      pl.hidden = !at || !!at.dropped;
       pl.root.visible = !pl.hidden;
-      pl.root.alpha = this.plaqueAlpha;
+      pl.root.alpha = shown(pl);
     }
     this.screenBoxes = [];
     for (const b of boxes) {

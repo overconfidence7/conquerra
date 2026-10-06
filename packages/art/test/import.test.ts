@@ -91,13 +91,16 @@ describe("pnpm art:import", () => {
 
     const { manifest, report } = await importArt({ incomingDir: incoming, outDir: out });
     expect(Object.keys(manifest.assets).sort()).toEqual(["figure-army", "terrain-grass", "tree-conifer-1"]);
-    expect(manifest.assets["terrain-grass"]).toEqual({ file: "terrain-grass.webp", width: 512, height: 512 });
+    // Session 16: a bigger copy for the Near zoom too, as big as the original allows (here 600 of the 1024 asked for).
+    expect(manifest.assets["terrain-grass"]).toEqual({ file: "terrain-grass.webp", width: 512, height: 512, hd: { file: "terrain-grass.hd.webp", width: 600, height: 600 } });
     expect(manifest.assets["figure-army"]!.tintMask).toBe("figure-army.tint.webp");
     // The tree was trimmed to its disc (about 120 px), not kept at 300 px.
     expect(manifest.assets["tree-conifer-1"]!.width).toBeLessThan(140);
+    // Its original is no bigger than the game size, so there's no bigger copy to make.
+    expect(manifest.assets["tree-conifer-1"]!.hd).toBeUndefined();
     const tree = await sharp(join(out, "tree-conifer-1.webp")).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     expect(tree.data[3]).toBe(0); // corner is see-through
-    expect(readdirSync(out).sort()).toEqual(["figure-army.tint.webp", "figure-army.webp", "manifest.json", "terrain-grass.webp", "tree-conifer-1.webp"]);
+    expect(readdirSync(out).sort()).toEqual(["figure-army.tint.webp", "figure-army.webp", "manifest.json", "terrain-grass.hd.webp", "terrain-grass.webp", "tree-conifer-1.webp"]);
     expect(JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"))).toEqual(manifest);
 
     expect(report.unknown).toEqual([{ file: "dragon.png" }]);

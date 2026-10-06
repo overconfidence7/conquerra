@@ -23,6 +23,8 @@ const placeholderCache = new Map<string, Art | null>();
 
 export class ArtBook {
   private cache = placeholderCache;
+  /** The bigger copies of the map art (session 16), once `loadHd` has brought them in. */
+  private hdLoaded = new Map<string, Art["image"]>();
   private constructor(
     private manifest: ArtManifest,
     private loaded: Map<string, Art>,
@@ -73,6 +75,36 @@ export class ArtBook {
       }),
     );
     return added;
+  }
+
+  /**
+   * Load the bigger copies of the map art (session 16), used only to paint the Near zoom. Called once the game is on
+   * screen, so the first paint isn't kept waiting. Returns how many arrived.
+   */
+  async loadHd(base: string = import.meta.env.BASE_URL): Promise<number> {
+    let n = 0;
+    await Promise.all(
+      Object.entries(this.manifest.assets).map(async ([name, e]) => {
+        if (!e.hd || this.hdLoaded.has(name) || !this.loaded.has(name)) return;
+        try {
+          this.hdLoaded.set(name, await loadImage(`${base}art/${e.hd.file}`));
+          n++;
+        } catch (err) {
+          console.warn(`Art "${name}" (Near size) failed to load; the usual size paints it`, err);
+        }
+      }),
+    );
+    return n;
+  }
+
+  /** How many bigger copies have arrived. */
+  get hdCount() {
+    return this.hdLoaded.size;
+  }
+
+  /** The bigger copy of a piece of map art, if it has arrived. */
+  hd(name: string): Art["image"] | null {
+    return this.hdLoaded.get(name) ?? null;
   }
 
   /** For tests and the no-art fallback. */

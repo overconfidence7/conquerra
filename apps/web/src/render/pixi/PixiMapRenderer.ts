@@ -2,7 +2,7 @@ import { Application, Container } from "pixi.js";
 import { ArtBook } from "../../art/book";
 import { centreOn, fitCamera, landFrame, toMap, type Camera, type Insets } from "../../map/camera";
 import { hitTester, type HitTester } from "../../map/shapes";
-import { detailMix, MID_FROM_PX, scaleForPx, typicalTerritorySize, zoomDetail, type ZoomDetail } from "../../map/zoom";
+import { detailMix, MID_FROM_PX, NEAR_FROM_PX, scaleForPx, typicalTerritorySize, zoomDetail, type ZoomDetail } from "../../map/zoom";
 import { attachInput, CameraController } from "../controls";
 import type { MapEvents, MapRenderer, MapScene, RendererOptions } from "../types";
 import { TextureBank } from "./bank";
@@ -52,6 +52,13 @@ export interface MapStats {
   markers: number;
   realArt: string[];
   ppu: number;
+  /** Near detail (session 16): pixels per map unit, Near tiles painted so far and kept now, and ms spent painting them. */
+  nearPpu: number;
+  nearBaked: number;
+  nearKept: number;
+  nearMs: number;
+  /** Pieces of the bigger Near art that have arrived. */
+  hdArt: number;
   steps: Record<string, number>;
 }
 
@@ -135,7 +142,11 @@ class PixiMapRenderer implements MapRenderer {
     const phone = Math.min(screen.width, screen.height) < 700;
     const budget = phone ? 8e6 : 14e6;
     const ppu = Math.min(2.5, Math.sqrt(budget / (g.width * g.height)));
-    this.world = new WorldLayer(this.app.renderer, ctx.map, this.art, { ppu }, scenery);
+    // Near detail (session 16): as sharp as the screen shows at the deepest zoom, up to 3x the Mid detail (and 6),
+    // painted only where you look; a small cache (each tile about 1 MB), smaller on phones.
+    const deepest = scaleForPx(NEAR_FROM_PX * 2.4, this.territorySize) * this.app.renderer.resolution;
+    const nearPpu = Math.min(ppu * 3, deepest, 6);
+    this.world = new WorldLayer(this.app.renderer, ctx.map, this.art, { ppu, nearPpu: nearPpu > ppu * 1.3 ? nearPpu : 0, nearCap: phone ? 20 : 32 }, scenery);
     mark("world");
     this.info = new InfoLayer(ctx.map, this.bank);
     this.info.onRealms = (realms) => this.world.setOwners(realms);
@@ -167,6 +178,13 @@ class PixiMapRenderer implements MapRenderer {
     this.applyMode();
     if (this.scene) this.setScene(this.scene);
     this.app.ticker.add(() => this.frame());
+    // The bigger art for the Near zoom (session 16) comes once the map is on screen, so it never slows the first paint.
+    if (this.world.opts.nearPpu)
+      void this.art.loadHd().then((n) => {
+        if (!n || this.destroyed) return;
+        this.world.hdArrived();
+        this.dirtyCam = true;
+      });
   }
 
   /** Start at Mid zoom on your capital when the whole map would be too small (phones); otherwise show it all. */
@@ -208,6 +226,11 @@ class PixiMapRenderer implements MapRenderer {
     // Paint remaining tiles a couple per frame, nearest the screen first.
     if (this.world.pendingTiles) {
       this.world.bakeTiles(this.cam.animating ? 1 : 2, this.cam.cam, this.cam.vp);
+      this.dirtyCam = true;
+    }
+    // Near tiles where you're looking: one a frame while the camera moves, two when it's still.
+    if (this.world.pendingNear) {
+      this.world.bakeNear(this.cam.animating ? 1 : 2);
       this.dirtyCam = true;
     }
     if (this.dirtyCam) this.applyCamera();
@@ -327,6 +350,11 @@ class PixiMapRenderer implements MapRenderer {
     this.cam.setViewport({ width: host.clientWidth, height: host.clientHeight, ...(this.cam.vp.insets ? { insets: this.cam.vp.insets } : {}) });
   }
 
+  /** Near tiles on screen still being painted (for the scripts that wait for a sharp picture). */
+  pendingNear(): number {
+    return this.world?.pendingNear ?? 0;
+  }
+
   /** Numbers for the performance report (and a quick look in the browser console). */
   stats(): MapStats {
     const s = this.world.stats;
@@ -342,6 +370,11 @@ class PixiMapRenderer implements MapRenderer {
       markers: this.markers.count,
       realArt: this.art.realNames,
       ppu: Math.round(this.world.opts.ppu * 100) / 100,
+      nearPpu: Math.round((this.world.opts.nearPpu ?? 0) * 100) / 100,
+      nearBaked: s.nearBaked,
+      nearKept: s.nearKept,
+      nearMs: Math.round(s.nearMs),
+      hdArt: this.art.hdCount,
       steps: { ...this.steps, ...s.steps },
     };
   }
