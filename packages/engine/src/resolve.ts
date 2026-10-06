@@ -34,6 +34,7 @@ import { spoilsEndOfTurn, turnInSpoils } from "./spoils";
 import { checkMissions, drawFate } from "./fate";
 import { anyDealAcross, attackAcross, diplomacyEndOfTurn, diplomacyStart, partnersOf, passageFor } from "./diplomacy";
 import { visibleTerritories } from "./vision";
+import { hireSpy, spiesEndOfTurn, spyOrders, spyReports } from "./spies";
 
 /** Called after every event with the live board (tests use it to check the replay against the real game). */
 export type TurnObserver = (e: StepEvent, live: Readonly<GameState>) => void;
@@ -388,6 +389,10 @@ class Turn {
         return this.retreat(pid, o.from, o.id);
       case "advance":
         return this.advance(pid, o.from, o.id);
+      case "hireSpy": {
+        const why = hireSpy(this, p, o.territory, o.id);
+        return why ? fz(why.code, { territory: o.territory, ...(why.cost !== undefined ? { gold: why.gold, cost: why.cost } : {}) }) : null;
+      }
       case "spoils": {
         if (!this.s.settings.spoils) return fz("invalid");
         const why = turnInSpoils(this, pid, o.set, o.territory, o.id);
@@ -672,6 +677,8 @@ class Turn {
     p.eliminatedBy = this.lastCapturer.get(pid) ?? null;
     p.leader = { alive: false, territory: null };
     p.captured = [];
+    // Their spies are gone with them.
+    this.s.spies = this.s.spies.filter((x) => x.owner !== pid);
     this.emit({ type: "eliminated", player: pid, by: p.eliminatedBy });
     // Their Leader joins whoever knocked them out, as a captured general at that player's capital (or, if it's lost,
     // their strongest territory), with no army until troops are there.
@@ -803,7 +810,7 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
     // Generals first: who to let go, then standing instructions. Neither takes a slot.
     commandGenerals(T, p, list);
     for (const raw of list) {
-      if (raw.kind === "instruct" || raw.kind === "release" || raw.kind === "propose" || raw.kind === "answer" || raw.kind === "break") continue;
+      if (raw.kind === "instruct" || raw.kind === "release" || raw.kind === "propose" || raw.kind === "answer" || raw.kind === "break" || raw.kind === "spy") continue;
       const o = expandPreset(raw);
       if (o.timing === "first" && !firsts.has(pid) && p.leader.alive && p.cooldowns.seize === 0) firsts.set(pid, o);
       else if (o.timing === "last" && !lasts.has(pid) && p.leader.alive && p.cooldowns.lie === 0) lasts.set(pid, o);
@@ -814,6 +821,8 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
 
   // Deals agreed this planning phase start now, before any move (and handshake deals renounced end).
   diplomacyStart(T, seats, orders);
+  // Where each player sends their spies (they travel as the turn ends).
+  spyOrders(T, seats, orders);
 
   // The Fallen's world events land before anyone's orders.
   playWorldEvents(T, orders);
@@ -943,6 +952,8 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
     checkMissions(T);
     spoilsEndOfTurn(T, seats, T.tookLand);
     drawFate(T, seats);
+    // Spies travel and every contest is run, after every army's move and the decks.
+    spiesEndOfTurn(T);
   }
 
   s.rng = T.rng.state;
@@ -958,7 +969,9 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
       s.players.filter((p) => p.eliminatedTurn === null).map((p) => p.id),
       s,
     );
-  // Then everyone remembers what they can see now; land that slips into the fog keeps its last-seen entry.
+  // Each player's spies report (and their reports go into memory), then everyone remembers what they can see now
+  // (what you see yourself always wins); land that slips into the fog keeps its last-seen entry.
+  spyReports(ctx, s);
   updateIntel(ctx, s);
   return { state: s, events: T.events };
 }

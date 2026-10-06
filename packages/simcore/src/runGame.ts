@@ -108,6 +108,16 @@ export interface GameSummary {
   warsVsLeader: number;
   /** Right of passage (session 15): moves and attacks that marched through a partner's land. */
   marchesThrough: number;
+  /**
+   * Spies (session 15): hired, and how each attempt to get into a province ended (fooled counted apart, which only the
+   * simulator can see: the spy's owner is told it got in). `spyGold`: gold spent on spies (hiring and upkeep).
+   */
+  spiesHired: number;
+  spyIn: number;
+  spyFooled: number;
+  spyBlocked: number;
+  spyKilled: number;
+  spyGold: number;
   reasons: string[];
   log?: StepEvent[][];
 }
@@ -124,7 +134,7 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
     worldEvents: 0, worldEventsFailed: 0, hitBy: {}, winnerHitHardest: null,
     spoilsSets: 0, spoilsAuto: 0, winnerLeadOnSet: null, winnerSetTurnShare: null,
     fateEvents: 0, fateGood: 0, fateBad: 0, fateStrong: 0, missionsDrawn: 0, missionsDone: 0, fateNet: {}, winnerGoodShare: null, winnerLandShare: null, winnerLuck: null, winnerLuckiest: null, winnerMissions: 0, othersMissions: 0,
-    offers: 0, accepted: 0, countered: 0, dealsMade: 0, dealsBinding: 0, dealsByKind: {}, dealsBroken: 0, warsVsLeader: 0, marchesThrough: 0, reasons: [],
+    offers: 0, accepted: 0, countered: 0, dealsMade: 0, dealsBinding: 0, dealsByKind: {}, dealsBroken: 0, warsVsLeader: 0, marchesThrough: 0, spiesHired: 0, spyIn: 0, spyFooled: 0, spyBlocked: 0, spyKilled: 0, spyGold: 0, reasons: [],
   };
   const level = (b: Bot) => (b.id === "recruit" ? ("recruit" as const) : ("captain" as const));
   const name = (id: string) => players.find((p) => p.id === id)?.name ?? id;
@@ -172,6 +182,7 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
     const landLeader = [...held].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0]?.[0] ?? null;
     const r = resolveTurn(ctx, s, orders);
     const p2 = performance.now();
+    sum.spyGold += (before.spies ?? []).length * ctx.rules.spies.upkeep;
     sum.planMs.push(p1 - p0);
     sum.resolveMs.push(p2 - p1);
     s = r.state;
@@ -201,6 +212,16 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
       }
       if (e.type === "fizzled") sum.fizzles++;
       if ((e.type === "moved" || e.type === "battle") && e.through?.length) sum.marchesThrough++;
+      if (e.type === "spyHired") {
+        sum.spiesHired++;
+        sum.spyGold += e.cost;
+      }
+      if (e.type === "spy" && e.outcome !== "home") {
+        if (e.outcome === "blocked") sum.spyBlocked++;
+        else if (e.outcome === "killed") sum.spyKilled++;
+        else if (r.state.spies.some((x) => e.spies.includes(x.id) && x.fooled)) sum.spyFooled++;
+        else sum.spyIn++;
+      }
       if (e.type === "dealStarted") {
         sum.dealsMade++;
         sum.dealsByKind[e.deal.terms.kind] = (sum.dealsByKind[e.deal.terms.kind] ?? 0) + 1;

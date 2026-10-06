@@ -195,6 +195,53 @@ export interface PlayerState {
   oathbreaker: number;
 }
 
+// ---------- Spies (session 15) ----------
+
+/**
+ * Where a spy stands with respect to its province:
+ *  - travel: in a province no single player holds whole (it lifts the fog `rules.spies.sight` territories around it)
+ *  - defend: in a province its owner holds whole (it holds its post and blocks other spies)
+ *  - in: it got into a province a rival holds whole (the fog stays lifted on the whole province)
+ */
+export type SpyStatus = "travel" | "defend" | "in";
+
+/** A spy: its own piece, not part of an army. Only its owner ever sees it. */
+export interface Spy {
+  /** Unique within the game ("y3"). */
+  id: string;
+  owner: PlayerId;
+  at: TerritoryId;
+  /** The province it's heading for (null: it stays where it is). */
+  target: string | null;
+  /** Called home: it's back at its owner's capital as the next turn starts. */
+  recalled: boolean;
+  status: SpyStatus;
+  /**
+   * Infiltrating ("in"): the province's holder and how many defending spies it was contested against (the contest runs
+   * again when either changes), and whether the defenders fooled it. Kept in the game, never sent to a client: a fooled
+   * spy's owner sees exactly what a real infiltration would show.
+   */
+  holder?: PlayerId;
+  defence?: number;
+  fooled?: boolean;
+}
+
+/** What a player sees on a territory they have vision of (or that their spy reports on). */
+export interface TerritoryDetail {
+  owner: PlayerId | null;
+  troops: number;
+  specialists: Specialist[];
+  building: BuildingType | null;
+  construction: TerritoryState["construction"];
+  culture: number;
+  /** Leaders standing here. */
+  leaders: PlayerId[];
+  /** Captured generals standing here (whose Leader each was), commanded by whoever holds the land. */
+  generals: PlayerId[];
+  /** Whose capital this is, while its own House holds it. You learn a rival's capital by seeing it. */
+  capitalOf: PlayerId | null;
+}
+
 /** Each territory holds at most one army: a troop count plus up to `maxPerArmy` specialists. */
 export interface TerritoryState {
   owner: PlayerId | null;
@@ -226,10 +273,12 @@ export interface GameSettings {
   fate: boolean;
   /** Diplomacy: deals between players (on by default; the simulator compares with it off). */
   diplomacy: boolean;
+  /** Spies (session 15): hire spies to see deep behind the lines (on by default, and only with fog; the simulator compares with them off). */
+  spies: boolean;
 }
 
 export interface GameState {
-  version: 5;
+  version: 6;
   gameId: string;
   mapId: string;
   turn: number;
@@ -250,7 +299,7 @@ export interface GameState {
    * The card decks' own seeded random numbers (from the game's seed, like the dice): Spoils marks and Fate draws.
    * Separate from the dice, so turning a deck off doesn't change any battle's roll.
    */
-  decks: { spoils: RngState; fate: RngState };
+  decks: { spoils: RngState; fate: RngState; spies: RngState };
   /** Borders a Fate event closed for a coming turn (a flooded ford, a rockslide): closed through all of `turn`. */
   closures: { a: TerritoryId; b: TerritoryId; turn: number }[];
   /** Counter for mission ids. */
@@ -261,6 +310,16 @@ export interface GameState {
   nextDeal: number;
   /** How past deals ended (kept, broken, ended): the bots' trust is worked out from it. */
   record: DealRecord[];
+  /** Every player's spies (session 15). Each player only ever sees their own (view.ts). */
+  spies: Spy[];
+  /** Counter for spy ids. */
+  nextSpy: number;
+  /**
+   * Each player's spy reports for the turn they're planning: the land their spies lift the fog from, as their spies
+   * saw it at the end of the last turn (a fooled spy's is false, and stored exactly like a true one). Land the player
+   * sees directly isn't in it: what you see yourself always wins. Never sent whole to a client.
+   */
+  spyIntel: Record<PlayerId, Record<TerritoryId, TerritoryDetail>>;
 }
 
 // ---------- Orders ----------
@@ -301,6 +360,13 @@ export type OrderBody =
   /** `count`: All (the default), a share of the gold you have when it plays, or an exact number. */
   | { kind: "recruit"; territory: TerritoryId; count: RecruitAmount }
   | { kind: "hire"; territory: TerritoryId; specialist: SpecialistType }
+  /** Hire a spy at your capital or a barracks (session 15). It's its own piece, and goes where you send it from next turn. */
+  | { kind: "hireSpy"; territory: TerritoryId }
+  /**
+   * Send a spy of yours to a province (`to`), or call it home (`to` null: it's back at your capital as the next turn
+   * starts). Takes no slot: spies travel as the turn ends, after every army's move.
+   */
+  | { kind: "spy"; spy: string; to: string | null }
   | { kind: "build"; territory: TerritoryId; building: BuildingType }
   | { kind: "invest"; territory: TerritoryId }
   | {
@@ -417,6 +483,7 @@ export const FIZZLE_CODES = [
   "noSet",
   "pact",
   "passage",
+  "spyCap",
 ] as const;
 export type FizzleCode = (typeof FIZZLE_CODES)[number];
 
@@ -458,6 +525,16 @@ export type GameEvent =
   | { type: "fizzled"; player: PlayerId; orderId: string; reason: FizzleCode; detail: FizzleDetail; order: FizzledOrder; usedFallback: boolean }
   | { type: "recruited"; player: PlayerId; orderId: string; territory: TerritoryId; count: number; cost: number }
   | { type: "hired"; player: PlayerId; orderId: string; territory: TerritoryId; specialist: SpecialistType; cost: number }
+  /** You hired a spy (only you see it). */
+  | { type: "spyHired"; player: PlayerId; orderId: string; territory: TerritoryId; spy: string; cost: number }
+  /**
+   * Your spy's news, as the turn ends (only you see it): it got into a province ("in": a fooled spy reads exactly the
+   * same), was turned back ("blocked": it's home again), was killed ("killed": every spy in that attempt), or came
+   * home when called ("home").
+   */
+  | { type: "spy"; player: PlayerId; spies: string[]; province: string; outcome: "in" | "blocked" | "killed" | "home"; territory: TerritoryId }
+  /** A spy was caught in your province (only you see it; never who sent it, and never a spy that fooled you... you fooled it). */
+  | { type: "spyCaught"; player: PlayerId; province: string; outcome: "blocked" | "killed"; spies: number }
   | { type: "built"; player: PlayerId; orderId: string; territory: TerritoryId; building: BuildingType; cost: number; /** null = ready now (engineers). */ doneAtEndOfTurn: number | null }
   | { type: "completed"; player: PlayerId; territory: TerritoryId; building: BuildingType }
   | { type: "invested"; player: PlayerId; orderId: string; territory: TerritoryId; culture: number; cost: number }

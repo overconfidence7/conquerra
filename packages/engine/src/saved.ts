@@ -72,7 +72,7 @@ export interface SavedGameV1 {
 }
 
 /** The game state's current shape. Bump it (and add a migration below) whenever GameState changes. */
-export const STATE_VERSION: GameState["version"] = 5;
+export const STATE_VERSION: GameState["version"] = 6;
 
 /**
  * How to bring an older game state up to date, one version at a time: `STATE_MIGRATIONS[n]` turns a version-n
@@ -106,6 +106,18 @@ export const STATE_MIGRATIONS: Record<number, (s: Record<string, unknown>) => Re
     deals: [],
     nextDeal: 1,
     record: [],
+  }),
+  /**
+   * 5 -> 6 (session 15): spies. A game saved before them carries on with nobody holding a spy, spies possible from now
+   * on, and their own random sequence (from the game's dice, since the seed isn't kept).
+   */
+  5: (s) => ({
+    ...s,
+    settings: { ...(s.settings as Record<string, unknown>), spies: true },
+    decks: { ...(s.decks as Record<string, unknown>), spies: seedRng(`${String(s.gameId)}|${JSON.stringify(s.rng)}|spies`) },
+    spies: [],
+    nextSpy: 1,
+    spyIntel: {},
   }),
 };
 

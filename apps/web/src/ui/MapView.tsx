@@ -62,6 +62,14 @@ export function buildScene(
   passage: MapScene["passage"] = [],
   open: readonly PlayerId[] = passageOpen(view),
 ): MapScene {
+  // Your spies, one badge per place (and kind).
+  const spyAt = new Map<string, NonNullable<MapScene["spies"]>[number]>();
+  for (const s of view.spies ?? []) {
+    const k = `${s.at}|${s.status}`;
+    const b = spyAt.get(k);
+    if (b) b.count++;
+    else spyAt.set(k, { territory: s.at, status: s.status, count: 1 });
+  }
   // Walk the queue step by step, so each arrow is an attack or a move as it will be when it plays.
   const arrows: OrderArrow[] = [];
   queue.forEach((o, i) => {
@@ -83,6 +91,7 @@ export function buildScene(
     odds: draft && isAttack(view, draft, plan) ? { target: draft.to, odds: oddsFor(ctx, view, plan, draft), estimate: oddsAreEstimate(plan, draft) } : null,
     truces,
     passage,
+    spies: [...spyAt.values()],
   };
 }
 

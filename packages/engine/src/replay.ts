@@ -3,7 +3,7 @@ import { indexMap } from "./mapIndex";
 import { sightingOf, TurnVision } from "./sightings";
 import { isParty } from "./diplomacy";
 import type { DealTerms, GameContext, GameState, PlayerId, StepEvent, TerritoryId, TurnResult } from "./types";
-import { politicalOf, seesPolitically, trueDetail, type TerritoryView } from "./view";
+import { copyDetail, politicalOf, seesPolitically, trueDetail, type TerritoryView } from "./view";
 import { visionFor } from "./vision";
 
 /**
@@ -104,6 +104,10 @@ export function replayFor(ctx: GameContext, before: GameState, result: TurnResul
       case "generalLost":
         if (mine || e.by === player || sees(e.territory)) out.push(e);
         break;
+      // Spies (session 15): only their owner hears of them; the defender only that one was caught.
+      case "spyHired":
+      case "spy":
+      case "spyCaught":
       case "generalReleased":
       case "worldEventFailed":
       case "spoilsEarned":
@@ -150,6 +154,10 @@ export function replayFor(ctx: GameContext, before: GameState, result: TurnResul
     }
     if (changes) out.push(visionEvent(ctx, tv.board, player, e.step, before.turn, changes));
   }
+  // Your spies report as the turn ends (session 15): the land they lift the fog from shows as they saw it (a fooled
+  // spy's report looks exactly like a true one), and land they no longer watch fogs over with what you last saw there.
+  const report = spyReportFor(ctx, before, result, player);
+  if (report) out.push(report);
   // Knocked out this turn with the Fallen on: the replay ends on the political map you'll see from now on.
   if (seesPolitically(result.state, player) && !seesPolitically(before, player)) {
     const fogged: Record<TerritoryId, LastSeen> = {};
@@ -222,6 +230,20 @@ function fallenReplay(ctx: GameContext, result: TurnResult, player: PlayerId): R
   for (const id of indexMap(ctx.map).ids) fogged[id] = { ...politicalOf(result.state, id), turn: result.state.turn - 1 };
   out.push({ type: "vision", step: last, revealed: {}, fogged });
   return out;
+}
+
+function spyReportFor(ctx: GameContext, before: GameState, result: TurnResult, player: PlayerId): VisionEvent | null {
+  if (seesPolitically(result.state, player)) return null;
+  const now = result.state.spyIntel?.[player] ?? {};
+  const was = before.spyIntel?.[player] ?? {};
+  if (!Object.keys(now).length && !Object.keys(was).length) return null;
+  const sees = visionFor(ctx, result.state, player);
+  const memory = result.state.intel[player] ?? {};
+  const revealed: Record<TerritoryId, SeenTerritory> = {};
+  const fogged: Record<TerritoryId, LastSeen> = {};
+  for (const [t, d] of Object.entries(now)) revealed[t] = { detail: "full", seenBy: ["spy"], ...copyDetail(d) };
+  for (const t of Object.keys(was)) if (!now[t] && !sees.has(t) && memory[t]) fogged[t] = { ...memory[t]! };
+  return { type: "vision", step: result.events[result.events.length - 1]?.step ?? 0, revealed, fogged };
 }
 
 function visionEvent(ctx: GameContext, board: GameState, player: PlayerId, step: number, turn: number, d: { revealed: TerritoryId[]; fogged: TerritoryId[] }): VisionEvent {

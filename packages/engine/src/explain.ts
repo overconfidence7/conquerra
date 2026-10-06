@@ -121,6 +121,7 @@ const WHY: Record<FizzleCode, (d: FizzleDetail, o: FizzledOrder, n: PlaceNames, 
     d.player
       ? `you may pass through ${n.player?.(d.player) ?? "their"} land, but never stop or fight there`
       : `you had no right of passage through ${d.territory ? n.place(d.territory) : "the land on the way"} when it came up (it changed hands, or the deal ended)`,
+  spyCap: () => "you already have as many spies as you may",
   pact: (d, _o, n) => `you have a binding pact with ${d.player ? (n.player?.(d.player) ?? "them") : "them"} across that border, and the game holds both sides to it`,
 };
 

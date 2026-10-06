@@ -43,6 +43,7 @@ const SAMPLE: Record<FizzleCode, FizzleDetail> = {
   noSet: {},
   pact: { territory: "c", player: "p2" },
   passage: { territory: "c" },
+  spyCap: {},
 };
 
 const plain = (text: string) => {

@@ -361,6 +361,27 @@ export class InfoLayer {
         stitches(G, r, 10 * px, 6 * px, 3.2 * px, p.open ? GOLD_HI : 0xf6efdc, (p.open ? 0.95 : 0.6) * fade);
       }
     }
+    // Your spies (session 15): a small dark badge up and to the left of where each stands, gold-rimmed: an eye inside a
+    // rival's province, a shield on guard, a hood travelling. A second badge peeks out behind for two or more.
+    for (const sp of this.scene!.spies ?? []) {
+      const l = this.labelOf.get(sp.territory);
+      if (!l) continue;
+      const r = 11 * px, x = l.x - 30 * px, y = l.y - 24 * px;
+      if (sp.count > 1) G.circle(x - 5 * px, y - 4 * px, r).fill({ color: INK, alpha: 0.85 }).stroke({ width: 1.6 * px, color: GOLD_HI });
+      G.circle(x, y, r).fill({ color: INK, alpha: 0.92 }).stroke({ width: 2 * px, color: GOLD_HI });
+      if (sp.status === "in") {
+        // An eye: two arcs and a pupil.
+        G.moveTo(x - 7 * px, y).quadraticCurveTo(x, y - 7 * px, x + 7 * px, y).quadraticCurveTo(x, y + 7 * px, x - 7 * px, y).stroke({ width: 1.8 * px, color: 0xfff1c1 });
+        G.circle(x, y, 2.6 * px).fill({ color: 0xfff1c1 });
+      } else if (sp.status === "defend") {
+        // A shield.
+        G.moveTo(x - 6 * px, y - 6 * px).lineTo(x + 6 * px, y - 6 * px).lineTo(x + 6 * px, y + 1 * px).quadraticCurveTo(x, y + 8 * px, x - 6 * px, y + 1 * px).closePath().stroke({ width: 1.8 * px, color: 0xfff1c1 });
+      } else {
+        // A hood over a face.
+        G.moveTo(x - 6 * px, y + 6 * px).quadraticCurveTo(x - 6 * px, y - 8 * px, x, y - 7 * px).quadraticCurveTo(x + 6 * px, y - 8 * px, x + 6 * px, y + 6 * px).stroke({ width: 1.8 * px, color: 0xfff1c1 });
+        G.circle(x, y + 1 * px, 2.2 * px).fill({ color: 0xfff1c1 });
+      }
+    }
     // Passes: a small stone gate across the road, sized to read at Mid zoom.
     this.gates.clear();
     for (const p of g.passes) {

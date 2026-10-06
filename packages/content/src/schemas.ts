@@ -397,6 +397,26 @@ export const Rules = z.object({
     }),
   }),
   vision: z.object({ base: z.number().int().min(0) }),
+  /**
+   * Spies (session 15, design additions §8). A spy is its own piece (not part of an army), hired at your capital or a
+   * barracks. It travels `travel` territories a turn; in a province no single player holds whole it lifts the fog
+   * `sight` territories around it; entering a province one player holds whole is an attempt to infiltrate it. At most
+   * `maxPerProvince` spies a side count in one province. Spy against spy: each attacking spy beyond the first cancels
+   * one defender; what's left decides (0 infiltrates, 1 blocked, 2 killed, 3 fooled).
+   */
+  spies: z.object({
+    cost: z.number().int().min(0),
+    upkeep: z.number().int().min(0),
+    /** How many spies one player may have at once. */
+    max: z.number().int().min(0),
+    travel: z.number().int().min(1),
+    sight: z.number().int().min(0),
+    maxPerProvince: z.number().int().min(1),
+    /** A fooled spy's false picture: each army's troops off by up to this share (after moving them around), and the chance each territory's culture is off by one. */
+    fooled: z.object({ troopJitter: z.number().min(0).max(1), cultureChance: z.number().min(0).max(1) }),
+    /** The Captain: at most this many spies, not before this turn, and only with this much gold left over for troops. */
+    bots: z.object({ max: z.number().int().min(0), fromTurn: z.number().int().min(1), reserve: z.number().int().min(0) }),
+  }),
   game: z.object({
     /** Order-phase timer. The engine only stores it; the server runs the clock. */
     turnTimerSecondsDefault: z.number().int().min(1),

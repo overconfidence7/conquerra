@@ -298,8 +298,8 @@ describe("bots' diplomacy: keeping their word", () => {
 describe("bots' diplomacy: bots dealing with each other", () => {
   const ctx: GameContext = { map: maps.embervale!, rules: defaultRules };
   /** A whole 4-Captain game on Embervale, bots negotiating every turn (as the host and the simulator do). */
-  function play(seed: string, diplomacy = true, turns = 30) {
-    let s = createGame(ctx, { gameId: "fp", seed, players: ["p1", "p2", "p3", "p4"].map((id) => ({ id, name: id })), settings: { diplomacy } });
+  function play(seed: string, diplomacy = true, turns = 30, spies = true) {
+    let s = createGame(ctx, { gameId: "fp", seed, players: ["p1", "p2", "p3", "p4"].map((id) => ({ id, name: id })), settings: { diplomacy, spies } });
     let last = new Map<string, ReplayEvent[]>();
     const talks: string[] = [];
     for (let i = 0; i < turns && !s.winner; i++) {
@@ -327,7 +327,13 @@ describe("bots' diplomacy: bots dealing with each other", () => {
   });
 
   it("with diplomacy off, the Captain plays exactly as it did before diplomacy (its fingerprint)", () => {
-    expect(stateFingerprint(play("captain-fingerprint", false, 25).s)).toBe("b5a97ae9cff6ce38");
+    // (With spies off too, and the game's new spy fields set aside, so the fingerprint is the one from session 14.)
+    const s = structuredClone(play("captain-fingerprint", false, 25, false).s) as unknown as Record<string, unknown>;
+    for (const k of ["spies", "nextSpy", "spyIntel"]) delete s[k];
+    delete (s.decks as Record<string, unknown>).spies;
+    delete (s.settings as Record<string, unknown>).spies;
+    s.version = 5;
+    expect(stateFingerprint(s as unknown as GameState)).toBe("b5a97ae9cff6ce38");
   });
 
   it("never floods anyone: at most one offer a turn per bot, and at most one to the human from all of them", () => {

@@ -55,6 +55,8 @@ interface GameStore {
   picking: { general: PlayerId; kind: "push" | "defend" } | null;
   /** Captured generals you chose to let go this turn (you may keep two). */
   releases: PlayerId[];
+  /** Sending a spy (session 15): the next tap on the map picks the province it goes to. */
+  spyPick: string | null;
   /** One of the Fallen: the world events you're putting Influence toward this turn (sent with Next turn). */
   fallenOrders: Order[];
   /** Aiming a world event: the next tap picks the land (a storm then takes a neighbour across the border). */
@@ -116,6 +118,10 @@ interface GameStore {
   updateDraft(patch: Partial<MoveDraft>): void;
   addDraft(): void;
   add(order: NewOrder): void;
+  /** Spies (session 15): Send (then tap a province), Recall, or stop picking. One order per spy, in the queue. */
+  sendSpy(spy: string): void;
+  recallSpy(spy: string): void;
+  cancelSpyPick(): void;
   /**
    * The action bar's Recruit: one tap recruits all you can afford at the selected territory (the capital if nothing is
    * selected) and opens the Recruit panel to change the amount or place. If the selected land can't recruit, the panel
@@ -218,6 +224,7 @@ export const useGame = create<GameStore>((set, get) => ({
   instructions: {},
   paused: [],
   picking: null,
+  spyPick: null,
   releases: [],
   fallenOrders: [],
   aiming: null,
@@ -346,8 +353,14 @@ export const useGame = create<GameStore>((set, get) => ({
   },
 
   tap(t) {
-    const { ctx, view, queue, selected, recruit, picking, aiming, deal, dealPick } = get();
+    const { ctx, view, queue, selected, recruit, picking, aiming, deal, dealPick, spyPick } = get();
     if (!ctx || !view) return;
+    // Sending a spy: this tap picks the province it goes to.
+    if (spyPick) {
+      const province = indexMap(ctx.map).byId.get(t)?.province;
+      if (!province) return;
+      return set({ queue: withSpyOrder(queue, { kind: "spy", spy: spyPick, to: province }, nextOrderId()), spyPick: null, selected: t, draft: null });
+    }
     // Picking for the deal card: a tap adds (or takes away) a border or a piece of land.
     if (deal?.mode === "propose" && dealPick) return set({ deal: { mode: "propose", offer: pickForDeal(ctx, view, deal.offer, dealPick, t) }, selected: t });
     // One of the Fallen, aiming a world event: this tap is its target (a storm takes a second tap, across the border).
@@ -379,7 +392,7 @@ export const useGame = create<GameStore>((set, get) => ({
     else set({ draft: action.draft });
   },
 
-  clearSelection: () => set({ selected: null, draft: null, recruit: null, picking: null, mission: null }),
+  clearSelection: () => set({ selected: null, draft: null, recruit: null, picking: null, mission: null, spyPick: null }),
   select: (t) => set({ selected: t, draft: null }),
 
   updateDraft(patch) {
@@ -407,6 +420,10 @@ export const useGame = create<GameStore>((set, get) => ({
     });
     set({ queue: [...queue, draftToOrder(d, nextOrderId())], paused: taken.paused, draft: null, selected: d.from, recruit: null });
   },
+
+  sendSpy: (spy) => set({ spyPick: spy, draft: null, recruit: null, picking: null }),
+  recallSpy: (spy) => set({ queue: withSpyOrder(get().queue, { kind: "spy", spy, to: null }, nextOrderId()), spyPick: null }),
+  cancelSpyPick: () => set({ spyPick: null }),
 
   add(order) {
     const { view, queue, paused } = get();
@@ -639,6 +656,11 @@ async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: G
  * Orders a save kept (Continue), split back into the queue, instruction changes and generals you let go. Order ids
  * carry on past the highest one kept, so new orders never clash with them.
  */
+/** The queue with this spy's order in it (one order per spy: a new one replaces the old). */
+export function withSpyOrder(queue: readonly Order[], o: Extract<NewOrder, { kind: "spy" }>, id: string): Order[] {
+  return [...queue.filter((x) => !(x.kind === "spy" && x.spy === o.spy)), { ...o, id }];
+}
+
 export function restoredQueue(orders: readonly Order[]): { queue: Order[]; instructions: Record<PlayerId, Instruction | null>; releases: PlayerId[]; diplomacy: Order[] } {
   const instructions: Record<PlayerId, Instruction | null> = {};
   const releases: PlayerId[] = [];
@@ -728,6 +750,7 @@ function applyTurn(u: HostUpdate, auto: boolean) {
     queue: openingQueue(useGame.getState().ctx, u),
     instructions: {},
     paused: [],
+    spyPick: null,
     // Last turn's offers have lapsed; this turn's are new.
     diplomacy: [],
     offers: u.offers ?? [],

@@ -11,6 +11,7 @@ export const SPECIALIST_HELP: Record<SpecialistType, string> = {
   engineers: "Finishes buildings here instantly",
   healers: "Loses 25% fewer troops",
 };
+export const SPY_HELP = "Its own piece: send it to a province to see behind the lines, or guard one you hold whole (1 gold a turn)";
 export const BUILDING_ICON: Record<BuildingType, string> = { fort: "🏰", market: "💰", barracks: "⚔️", watchtower: "🗼" };
 export const BUILDING_NAME: Record<BuildingType, string> = { fort: "Fort", market: "Market", barracks: "Barracks", watchtower: "Watchtower" };
 export const BUILDING_HELP: Record<BuildingType, string> = {
@@ -88,6 +89,10 @@ export function describeOrder(o: Order, n: Namer, attack: boolean, sending?: str
       const d = n.view?.deals.find((x) => x.id === o.deal);
       return d ? `Break your ${DEAL_NAME[d.kind]} with ${n.who(d.a === n.view!.me.id ? d.b : d.a)}` : "Break a deal";
     }
+    case "hireSpy":
+      return `Hire a spy at ${n.place(o.territory)}`;
+    case "spy":
+      return o.to ? `Send your spy to ${n.ctx?.map.provinces.find((p) => p.id === o.to)?.name ?? o.to}` : "Call your spy home";
   }
 }
 

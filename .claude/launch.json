@@ -31,6 +31,22 @@
         "--strictPort"
       ],
       "port": 4173
+    },
+    {
+      "name": "web-s15",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "web",
+        "exec",
+        "vite",
+        "--port",
+        "5175",
+        "--strictPort",
+        "--open",
+        "false"
+      ],
+      "port": 5175
     }
   ]
 }

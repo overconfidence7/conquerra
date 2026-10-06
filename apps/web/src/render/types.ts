@@ -49,6 +49,11 @@ export interface MapScene {
    * `open`: you may pass through it yourself. Info layer only.
    */
   passage?: { territory: TerritoryId; open: boolean; pending: boolean }[];
+  /**
+   * Your own spies (session 15), never anyone else's: a small badge where each stands (an eye inside a rival's
+   * province, a shield on guard, a hood travelling). `picking`: you're choosing where to send one. Info layer only.
+   */
+  spies?: { territory: TerritoryId; status: "travel" | "defend" | "in"; count: number }[];
 }
 
 export interface MapEvents {

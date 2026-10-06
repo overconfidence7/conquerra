@@ -418,6 +418,16 @@
   "vision": {
     "base": 1
   },
+  "spies": {
+    "cost": 8,
+    "upkeep": 1,
+    "max": 5,
+    "travel": 2,
+    "sight": 2,
+    "maxPerProvince": 3,
+    "fooled": { "troopJitter": 0.4, "cultureChance": 0.5 },
+    "bots": { "max": 2, "fromTurn": 4, "reserve": 16 }
+  },
   "game": {
     "turnTimerSecondsDefault": 300,
     "turnTimerSecondsMin": 60,

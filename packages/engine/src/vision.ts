@@ -10,7 +10,7 @@ import type { GameContext, GameState, PlayerId, TerritoryId } from "./types";
  * will get a forged detail for those territories; the view code takes details through one function,
  * so forging is a swap there, and the viewer is never told which source was fooled.
  */
-export type VisionSource = "own" | "border" | "watchtower" | "scouts" | "fogOff" | "spectator";
+export type VisionSource = "own" | "border" | "watchtower" | "scouts" | "fogOff" | "spectator" | "spy";
 
 export type Vision = Map<TerritoryId, VisionSource[]>;
 

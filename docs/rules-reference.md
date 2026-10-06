@@ -1,4 +1,4 @@
-# Conquerra Rules Reference (Milestone 3, session 14)
+# Conquerra Rules Reference (Milestone 3, session 15)
 
 *A 10-minute read. This is how the engine actually plays today. Numbers are the current balance settings from `packages/content/data/rules.json`; they will change as we tune.*
 
@@ -412,5 +412,47 @@ Preset deals between two players. Every number is in `rules.diplomacy`.
 - **The Recruit:** takes a truce when it's weaker, refuses when it's stronger, and never proposes trades.
 - Numbers: `docs/sim-results-m3-diplomacy.md`.
 
+## 21. Spies (session 15)
+Spies see deep behind the lines. They never fight and never change a battle: they're only about information. Every number is in `rules.spies`.
+
+**Hiring**
+- **Hire** a spy at your capital or a barracks (in Spend, next to the specialists): **8 gold**, then **1 gold a turn** upkeep (paid with your specialists; if you can't pay, troops desert as with any upkeep). You may have **up to 5**.
+- A spy is its **own piece**, not part of an army. **Only you ever see your spies**: other players never see them on the map, and bots never learn of them.
+- With fog off there's nothing to spy on, so there are no spies.
+
+**Sending and recalling** (Send takes 3 taps: the spy's territory, **Send…**, then a province on the map)
+- Sending a spy, or calling it home (**Recall**), takes no slot. It shows in your Orders list; send it again to change your mind.
+- **Spies act between turns**, after every army's move: a called-home spy is back at your capital as the next turn starts; the others travel **2 territories** toward the province you sent them to.
+- **Travelling:** while a spy stands in a province no single player holds whole, the fog lifts **2 territories** around it.
+- **Infiltrating:** entering a province one player holds whole is an attempt to get into it (the spy stops there). If it gets in, the fog stays lifted on the **whole province every turn**, until the spy is killed or recalled, or the defence changes (then the contest runs again).
+
+**Defending and spy against spy**
+- Only a player who holds a **whole province** can defend it, by stationing spies in it (send them there). Defenders hold their post and block other spies.
+- At most **3 spies a side** count in one province. Each attacking spy beyond the first cancels one defender. What's left decides:
+
+| Defence left | What happens to the incoming spies |
+|---|---|
+| 0 | **Infiltrate:** you see the true province |
+| 1 | **Blocked:** they come home |
+| 2 | **Killed:** every spy in that attempt dies |
+| 3 (3 defenders against 1 spy) | **Fooled:** the spy thinks it got in, and brings back a false picture |
+
+  Examples: 2 defenders against 1 spy: killed. 2 against 3: in. 3 against 2: killed. 1 against 2: in.
+- **What you're told:** "Your spy slipped into the Oak Downs", "Your spy was turned back at Old March", "Your spy was killed in Rush March". The defender is told when a spy is blocked or killed ("A spy was caught in Old March and turned back"), never whose it was, and **never when one is fooled**.
+
+**Fooled**
+- A fooled spy's news reads exactly like a real infiltration, and its province shows exactly like one: nothing in your game says it's false.
+- The false picture is close to the truth: **who holds each territory is right** (and buildings), but troops, culture, Leaders and where the armies stand are wrong or moved. It's made from the true game with the game's own seeded random numbers, so a saved game plays back exactly.
+- **What you see yourself always wins.** Your own land and the land bordering it are always shown as they truly are (so a fooled spy can never touch the odds preview, and "guaranteed" always captures). You find out the truth when you fight there.
+
+**What spies show you**
+- Your spies report as the turn ends: their land shows in full on your map (marked "what your spy reported as the last turn ended"), and goes into your last-seen memory like anything else you saw. When a spy leaves, its land fogs over and shows what it last reported.
+- Spy reports aren't live: in the replay, a battle in a province your spy watches shows only as "a battle in ..." (the same whether your spy got in or was fooled). The report at the end of the replay brings the map up to date.
+- **On the map**, only for you: a small badge where each of your spies stands: an **eye** inside a rival's province, a **shield** on guard, a **hood** travelling.
+
+**The bots**
+- **The Captain** hires a spy or two when it has gold to spare (from turn 4, keeping 16 gold for troops). Its first goes into the province of its main target (the runaway leader, its focus, a fast attacker, else the strongest rival next to it), its second stands guard in a province it holds whole that a rival borders. It judges from its own view, including what its spies report, false reports and all.
+- **The Recruit** doesn't use spies.
+
 ## Not in yet (later milestones)
-Spies and the "Govern this province" general instruction (session 15), factions, pause by vote and deals between people in online games (M4), tutorials and scenarios (M5).
+The "Govern this province" general instruction (session 15 if there's room, else session 16), factions, pause by vote and deals between people in online games (M4), tutorials and scenarios (M5).

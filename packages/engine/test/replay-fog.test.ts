@@ -191,6 +191,14 @@ function randomOrders(s: GameState, pid: string, rng: Rng): Order[] {
     }
   }
   if (rng.int(3) === 0) orders.unshift({ id: `${pid}-r`, kind: "recruit", territory: s.players.find((p) => p.id === pid)!.capital, count: 5 });
+  // Spies (session 15): hire one now and then, and send them about (or home).
+  if (rng.int(3) === 0) orders.push({ id: `${pid}-y`, kind: "hireSpy", territory: s.players.find((p) => p.id === pid)!.capital });
+  const provinces = ectx.map.provinces.map((p) => p.id);
+  for (const spy of s.spies.filter((x) => x.owner === pid)) {
+    const roll = rng.int(6);
+    if (roll < 3) orders.push({ id: `${pid}-s-${spy.id}`, kind: "spy", spy: spy.id, to: provinces[rng.int(provinces.length)]! });
+    else if (roll === 3) orders.push({ id: `${pid}-s-${spy.id}`, kind: "spy", spy: spy.id, to: null });
+  }
   return orders;
 }
 
@@ -255,7 +263,7 @@ describe("the step-by-step replay never leaks", () => {
   }, 30000);
 
   it("every replay event and every vision snapshot matches the real game at that step, and only where the player could see", () => {
-    let checkedVision = 0, checkedRival = 0, hiddenLater = 0, worldEvents = 0, fateShown = 0, fateHidden = 0;
+    let checkedVision = 0, checkedRival = 0, hiddenLater = 0, worldEvents = 0, fateShown = 0, fateHidden = 0, spyReported = 0;
     fc.assert(
       fc.property(fc.string(), fc.integer({ min: 2, max: 5 }), (seed, players) => {
         for (const turn of playTurns(seed, players, 10)) {
@@ -274,6 +282,25 @@ describe("the step-by-step replay never leaks", () => {
                 k++;
               }
               if (e.type === "vision") {
+                // The spies' report as the turn ends (session 15): what they report, never land seen directly.
+                const report = Object.values(e.revealed).every((x) => x.seenBy[0] === "spy") && Object.keys(e.fogged).every((t) => !sees(e.step - 1, t));
+                if (report && !out) {
+                  const intel = turn.result.state.spyIntel[p.id] ?? {};
+                  const end = visionFor(ectx, turn.result.state, p.id);
+                  for (const [t, seen] of Object.entries(e.revealed)) {
+                    const { detail: _d, seenBy, ...rest } = seen;
+                    expect(seenBy).toEqual(["spy"]);
+                    expect(end.has(t)).toBe(false);
+                    expect(rest).toEqual(intel[t]);
+                    spyReported++;
+                  }
+                  for (const [t, last] of Object.entries(e.fogged)) {
+                    expect(intel[t]).toBeUndefined();
+                    expect(end.has(t)).toBe(false);
+                    expect(last).toEqual(turn.result.state.intel[p.id]![t]);
+                  }
+                  continue;
+                }
                 for (const [t, seen] of Object.entries(e.revealed)) {
                   const real = after(turn, e.step);
                   expect(sees(e.step, t) || out).toBe(true);
@@ -368,6 +395,8 @@ describe("the step-by-step replay never leaks", () => {
     // Fate events: shown to the land's holder and those who see it, a surface detail otherwise.
     expect(fateShown).toBeGreaterThan(5);
     expect(fateHidden).toBeGreaterThan(5);
+    // Spies reported, and only ever on land the player didn't see directly.
+    expect(spyReported).toBeGreaterThan(20);
   }, 30000);
 
   it("works out vision from the event log without being told anything else (same result twice)", () => {

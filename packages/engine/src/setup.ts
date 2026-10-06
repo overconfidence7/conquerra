@@ -54,6 +54,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
     spoils: opts.settings?.spoils ?? true,
     fate: opts.settings?.fate ?? true,
     diplomacy: opts.settings?.diplomacy ?? true,
+    spies: opts.settings?.spies ?? true,
   };
   if (settings.turnLimit !== null && !(Number.isInteger(settings.turnLimit) && settings.turnLimit >= 1))
     throw new Error("turnLimit must be a whole number of turns, at least 1");
@@ -94,7 +95,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   players.sort((a, b) => opts.players.findIndex((p) => p.id === a.id) - opts.players.findIndex((p) => p.id === b.id));
 
   const state: GameState = {
-    version: 5,
+    version: 6,
     gameId: opts.gameId,
     mapId: map.id,
     turn: 1,
@@ -109,12 +110,15 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
     endReason: null,
     eventCooldowns: { plague: 0, storm: 0, uprising: 0, mercenaries: 0, famine: 0 },
     // The card decks draw from their own sequences of the same secret seed (so they're provably fair too).
-    decks: { spoils: seedRng(`${opts.seed}|spoils`), fate: seedRng(`${opts.seed}|fate`) },
+    decks: { spoils: seedRng(`${opts.seed}|spoils`), fate: seedRng(`${opts.seed}|fate`), spies: seedRng(`${opts.seed}|spies`) },
     closures: [],
     nextMission: 1,
     deals: [],
     nextDeal: 1,
     record: [],
+    spies: [],
+    nextSpy: 1,
+    spyIntel: {},
   };
   updateIntel(ctx, state);
   return state;

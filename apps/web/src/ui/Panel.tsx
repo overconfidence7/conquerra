@@ -1,6 +1,6 @@
 import type { SpecialistType } from "@conquerra/content";
 import { amountLabel, indexMap, recruitLabel, type GameContext, type Order, type PlayerView, type TerritoryId } from "@conquerra/engine";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   affordableTroops,
   amountChoices,
@@ -25,12 +25,13 @@ import {
   presetsFor,
   sameAmount,
   seen,
+  spyHireOption,
   timingAvailable,
   troopsOf,
   type MoveDraft,
   type QueuePlan,
 } from "../logic/orders";
-import { BUILDING_HELP, BUILDING_NAME, SPECIALIST_HELP, SPECIALIST_NAME, TERRAIN_ICON, namer } from "../logic/text";
+import { BUILDING_HELP, BUILDING_NAME, SPECIALIST_HELP, SPECIALIST_NAME, SPY_HELP, TERRAIN_ICON, namer } from "../logic/text";
 import { closedNow } from "../logic/cards";
 import { attackCheck } from "../logic/deals";
 import { ArtIcon, buildingIcon, specialistIcon } from "./ArtIcon";
@@ -38,6 +39,11 @@ import { useGame } from "../store";
 import { nearestRecruitSite, RECRUIT_RULE } from "../logic/actions";
 import { colorOf } from "./colors";
 import { cultureLine, cultureNext, placeFacts } from "../map/card";
+
+/** Your spies where they stand (session 15): loaded the first time there's one to show. */
+const SpyRows = lazy(() => import("./Spies").then((m) => ({ default: m.SpyRows })));
+/** Is there anything about spies to show here (one of yours, or a spy's report)? */
+const spyNews = (view: PlayerView, t: TerritoryId) => view.spies.some((s) => s.at === t) || ((v) => v?.detail === "full" && v.seenBy.includes("spy"))(view.territories[t]);
 import { CardRows } from "./TerritoryCard";
 import { CommandRow } from "./Command";
 import { generalIn } from "../logic/generals";
@@ -390,11 +396,17 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
       {v.leaders.length > 0 && <li className="with-icon"><ArtIcon name="icon-crown" size={18} />{v.leaders.map((l) => (n.isMe(l) ? "Your Leader" : `${n.who(l)}'s Leader`)).join(", ")}</li>}
     </ul>
   );
+  const spies = spyNews(view, selected) && (
+    <Suspense fallback={null}>
+      <SpyRows ctx={ctx} view={view} at={selected} />
+    </Suspense>
+  );
   if (!mine)
     return (
       <div className="panel">
         {header}
         {facts}
+        {spies}
       </div>
     );
 
@@ -402,6 +414,7 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
   const hireHere = isHireSite(view, selected);
   const cultureCost = nextCultureCost(ctx, plan, selected);
   const hires = hireOptions(ctx, view, plan, selected);
+  const spyHire = spyHireOption(ctx, view, plan, selected);
   const hasOwnNeighbour = (idx.neighbors.get(selected) ?? []).some((t) => isMine(view, t));
   // One of your generals stands here: what it's doing, and Command.
   const general = generalIn(view, selected);
@@ -410,6 +423,7 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
       {header}
       {general && <CommandRow key={general} ctx={ctx} view={view} general={general} />}
       {facts}
+      {spies}
       <p className="muted small">Tap a neighbour on the map to move or attack.</p>
 
       {site && (
@@ -438,6 +452,12 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
                 <span className="small muted block">{h.why ?? SPECIALIST_HELP[h.specialist]}</span>
               </button>
             ))}
+            {spyHire && (
+              <button disabled={!spyHire.ok} title={spyHire.why ?? SPY_HELP} onClick={() => add({ kind: "hireSpy", territory: selected })}>
+                <span aria-hidden>🕵</span> Spy <span className="cost">{spyHire.cost}g</span>
+                <span className="small muted block">{spyHire.why ?? SPY_HELP}</span>
+              </button>
+            )}
           </div>
         </div>
       )}

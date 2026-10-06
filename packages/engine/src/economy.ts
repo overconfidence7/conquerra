@@ -87,6 +87,8 @@ export function incomeFor(ctx: GameContext, state: GameState, player: PlayerId):
     if (t.building === "market") buildings += rules.buildings.market.income;
     for (const s of t.specialists) specialistUpkeep += rules.specialists[s.type].upkeep;
   }
+  // Spies (session 15) are paid with the specialists.
+  for (const spy of state.spies ?? []) if (spy.owner === player) specialistUpkeep += rules.spies.upkeep;
   const p = state.players.find((x) => x.id === player)!;
   const capital = state.territories[p.capital]?.owner === player ? rules.economy.capitalIncome : 0;
   let provinces = 0;

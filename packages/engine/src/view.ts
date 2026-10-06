@@ -1,25 +1,10 @@
-import type { BuildingType } from "@conquerra/content";
 import type { LastSeen } from "./intel";
 import { indexMap } from "./mapIndex";
 import { coveredBorders, isParty, passageFor } from "./diplomacy";
-import type { Bond, Deal, DealKind, DealRecord, DealTerms, GameContext, GameSettings, GameState, PlayerId, PlayerState, Specialist, TerritoryId, TerritoryState, WorldEventKind } from "./types";
+import type { Bond, Deal, DealKind, DealRecord, DealTerms, GameContext, GameSettings, GameState, PlayerId, PlayerState, SpyStatus, TerritoryDetail, TerritoryId, WorldEventKind } from "./types";
 import { visionFor, type VisionSource } from "./vision";
 
-/** What a player sees on a territory they have vision of. */
-export interface TerritoryDetail {
-  owner: PlayerId | null;
-  troops: number;
-  specialists: Specialist[];
-  building: BuildingType | null;
-  construction: TerritoryState["construction"];
-  culture: number;
-  /** Leaders standing here. */
-  leaders: PlayerId[];
-  /** Captured generals standing here (whose Leader each was), commanded by whoever holds the land. */
-  generals: PlayerId[];
-  /** Whose capital this is, while its own House holds it. You learn a rival's capital by seeing it. */
-  capitalOf: PlayerId | null;
-}
+export type { TerritoryDetail };
 
 /**
  * A fogged territory carries nothing current: its outline, terrain, province and holding bonuses are all public
@@ -81,6 +66,19 @@ export interface PlayerView {
   deals: DealView[];
   /** How past deals ended: your own, and every broken one (Oathbreakers are public). */
   record: DealRecord[];
+  /** Your own spies (session 15). Never anyone else's. */
+  spies: SpyView[];
+}
+
+/** One of your own spies, as you see it (nobody else ever does). A fooled spy looks exactly like one that got in. */
+export interface SpyView {
+  id: string;
+  at: TerritoryId;
+  /** The province it's heading for (null: it stays). */
+  target: string | null;
+  /** Called home: back at your capital as the next turn starts. */
+  recalled: boolean;
+  status: SpyStatus;
 }
 
 /** One deal as `player` sees it, given what they can see. */
@@ -156,6 +154,9 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
   const memory = state.intel[player] ?? {};
   const territories: Record<TerritoryId, TerritoryView> = {};
   const political = seesPolitically(state, player);
+  // What your spies report (session 15): land they lift the fog from, as they saw it as the last turn ended. Never land
+  // you see yourself (that always shows as it truly is).
+  const spied = (!political && state.spyIntel?.[player]) || {};
   for (const id of idx.ids) {
     if (political) {
       territories[id] = { detail: "fogged", lastSeen: politicalOf(state, id) };
@@ -163,9 +164,12 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
     }
     const seenBy = vision.get(id);
     const last = memory[id];
+    const report = spied[id];
     territories[id] = seenBy
       ? { detail: "full", seenBy: [...seenBy], ...trueDetail(state, id) }
-      : last
+      : report
+        ? { detail: "full", seenBy: ["spy"], ...copyDetail(report) }
+        : last
         ? { detail: "fogged", lastSeen: { ...last } }
         : { detail: "fogged" };
   }
@@ -190,5 +194,19 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
     closures: state.closures.filter((c) => c.turn >= state.turn && (!state.settings.fog || vision.has(c.a) || vision.has(c.b) || political)).map((c) => ({ ...c })),
     deals: (state.deals ?? []).map((d) => dealView(ctx, state, d, player, (t) => !state.settings.fog || political || vision.has(t))),
     record: (state.record ?? []).filter((r) => r.how === "broken" || isParty(r, player)).map((r) => ({ ...r })),
+    spies: (state.spies ?? []).filter((x) => x.owner === player).map((x) => ({ id: x.id, at: x.at, target: x.target, recalled: x.recalled, status: x.status })),
   };
 }
+
+/** A territory detail, copied (same shape and order as `trueDetail`). */
+export const copyDetail = (d: TerritoryDetail): TerritoryDetail => ({
+  owner: d.owner,
+  troops: d.troops,
+  specialists: d.specialists.map((s) => ({ ...s })),
+  building: d.building,
+  construction: d.construction ? { ...d.construction } : null,
+  culture: d.culture,
+  leaders: [...d.leaders],
+  generals: [...d.generals],
+  capitalOf: d.capitalOf,
+});

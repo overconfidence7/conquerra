@@ -6,6 +6,7 @@ import {
   investCost,
   isRecruitSiteIn,
   passageFor,
+  spiesOn,
   isShare,
   PRESETS,
   previewAttack,
@@ -73,6 +74,8 @@ export interface QueuePlan {
   sent: number[];
   /** For moves in a chain: the hop number (1 for the first). Null for everything else. */
   hop: (number | null)[];
+  /** Spies queued to be hired this turn (session 15). */
+  spiesHired: number;
 }
 
 /** Yours now, or should be by the time later orders run (captured earlier in the queue). */
@@ -103,6 +106,7 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
     estimated: new Set(),
     sent: [],
     hop: [],
+    spiesHired: 0,
   };
   /** Troops resting after a failed attack can't go again (they count in the army, not in what's free). */
   const resting = new Map<TerritoryId, number>();
@@ -132,6 +136,10 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
         if (count > 0) setArmy(o.territory, (plan.army.get(o.territory) ?? 0) + count);
         break;
       }
+      case "hireSpy":
+        cost = rules.spies.cost;
+        plan.spiesHired++;
+        break;
       case "hire":
         cost = rules.specialists[o.specialist].cost;
         plan.specialists.set(o.territory, (plan.specialists.get(o.territory) ?? 0) + 1);
@@ -539,6 +547,19 @@ export function hireOptions(ctx: GameContext, view: PlayerView, plan: QueuePlan,
     else if (def.cost > plan.goldLeft) why = "Not enough gold";
     return { specialist, cost: def.cost, ok: !why, ...(why ? { why } : {}) };
   });
+}
+
+/**
+ * Hiring a spy here (session 15): at your capital or a barracks, with spies in the game, up to the cap (counting the
+ * ones queued this turn). Null where spies can't be hired at all.
+ */
+export function spyHireOption(ctx: GameContext, view: PlayerView, plan: QueuePlan, t: TerritoryId): { cost: number; ok: boolean; why?: string } | null {
+  const r = ctx.rules.spies;
+  if (!spiesOn(view) || !isHireSite(view, t)) return null;
+  let why: string | undefined;
+  if (view.spies.length + plan.spiesHired >= r.max) why = `You may have at most ${r.max} spies`;
+  else if (r.cost > plan.goldLeft) why = "Not enough gold";
+  return { cost: r.cost, ok: !why, ...(why ? { why } : {}) };
 }
 
 export type BuildOption = { building: BuildingType; cost: number; ok: boolean };

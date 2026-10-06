@@ -431,10 +431,13 @@ describe("diplomacy: knocked-out players, fog, saves, determinism", () => {
     expect(truceFor("p3")).toEqual([]);
   });
 
-  it("a game saved before diplomacy carries on with no deals (state version 4 -> 5)", () => {
+  it("a game saved before diplomacy carries on with no deals (state version 4 -> 5, then on to today's)", () => {
     const s = game();
     const old = JSON.parse(JSON.stringify(s)) as Record<string, unknown>;
     old.version = 4;
+    for (const k of ["spies", "nextSpy", "spyIntel"]) delete old[k];
+    delete (old.decks as Record<string, unknown>).spies;
+    delete (old.settings as Record<string, unknown>).spies;
     delete old.deals;
     delete old.nextDeal;
     delete old.record;
@@ -445,9 +448,10 @@ describe("diplomacy: knocked-out players, fog, saves, determinism", () => {
     expect(read.ok).toBe(true);
     if (!read.ok) return;
     const st = read.save.state;
-    expect([st.version, st.deals, st.nextDeal, st.record, st.settings.diplomacy]).toEqual([5, [], 1, [], true]);
+    expect([st.version, st.deals, st.nextDeal, st.record, st.settings.diplomacy]).toEqual([6, [], 1, [], true]);
     expect(st.players.every((p) => p.oathbreaker === 0)).toBe(true);
-    expect(stateFingerprint(st)).toBe(stateFingerprint(s));
+    // (Spies' own random sequence is made from the game's dice when an old save is brought up to date.)
+    expect(stateFingerprint({ ...st, decks: { ...st.decks, spies: s.decks.spies } })).toBe(stateFingerprint(s));
     // And it plays on, with deals.
     expect(resolveTurn(ctx, st, agreed(offer("p1", "p2", truce()))).state.deals).toHaveLength(1);
   });

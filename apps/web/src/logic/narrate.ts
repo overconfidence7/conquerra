@@ -1,4 +1,4 @@
-import { dealLine, explainFizzle, explainHold, fizzleIsQuiet, type GameContext, type PlayerId, type PlayerView, type ReplayEvent } from "@conquerra/engine";
+import { dealLine, explainFizzle, explainHold, fizzleIsQuiet, spyLine, type GameContext, type PlayerId, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 import { fateLine, fateTone, MARK_NAME, missionLine, SET_NAME, troopWord } from "./cards";
 import { army, BUILDING_NAME, dealNames, generalName, generalStatus, instructionDoing, SPECIALIST_NAME, WORLD_EVENT_NAME, type LogLine, type Namer, type Tone } from "./text";
 
@@ -191,6 +191,14 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       return { text: dealLine(e, dealNames(n))!, tone: "quiet" };
     case "tribute":
       return { text: dealLine(e, dealNames(n))!, tone: e.short ? "bad" : "info" };
+    // Spies (session 15): only their owner hears of them (a fooled spy reads exactly like one that got in).
+    case "spyHired":
+    case "spy":
+    case "spyCaught": {
+      const text = spyLine(e, { place, province: (id) => ctx.map.provinces.find((p) => p.id === id)?.name ?? id });
+      const tone: Tone = e.type === "spy" ? (e.outcome === "in" ? "good" : e.outcome === "killed" ? "bad" : "info") : e.type === "spyCaught" ? "good" : "info";
+      return { text, tone };
+    }
     // What came into view goes in its own part of the report (logic/report.ts).
     case "vision":
       return null;

@@ -4,6 +4,7 @@ import { BREAKTHROUGH_MARGIN, CAPTAIN_CHAIN_MARGIN, chainOn, readBoard, type Cap
 import type { Bot } from "./recruit";
 import { captainSpoils, missionPull, missionSpend, spoilsOrder } from "./cards";
 import { captainBreaks, respectDeals, withoutDeals } from "./diplomacy";
+import { captainSpies } from "./spies";
 
 export { CAPTAIN_CHAIN_MARGIN, type CaptainFeature, type CaptainOptions } from "./board";
 
@@ -174,6 +175,11 @@ function planMoves(ctx: GameContext, view: PlayerView, opts: CaptainOptions, las
       gold -= cost;
     }
   }
+
+  // Spies (session 15): one or two, with gold to spare; sent where they'll learn the most, or set to guard.
+  const spying = captainSpies(b, id, gold);
+  orders.push(...spying.orders);
+  gold -= spying.spent;
 
   let recruited = 0;
   if (site && gold >= rules.troops.cost) {

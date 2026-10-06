@@ -21,6 +21,7 @@ import { runGame, type GameSummary } from "./runGame";
  *                                              (general-hold, -defend, -push or -raid); the rest play as the Captain
  * Options: --fallen on|off (knocked-out seats play world events; on by default), --rules a.b=1,c.d=2 (any rule number),
  *          --spoils on|off, --fate on|off (the card decks; both on by default), --diplomacy on|off (deals; on by default),
+ *          --spies on|off (spies; on by default),
  *          --reasons N (print N of the bots' reason lines from the games),
  *          --map embervale|greatmarch (default: Embervale up to 6 players, Greatmarch above),
  *          --luck 0.3, --mode classic|conquest, --turn-limit N, --fog on|off, --seed prefix,
@@ -47,8 +48,10 @@ const spoils = arg("spoils", "on") !== "off";
 const fate = arg("fate", "on") !== "off";
 /** Diplomacy (session 14): the bots make deals with each other (on by default; --diplomacy off to compare). */
 const diplomacy = arg("diplomacy", "on") !== "off";
+/** Spies (session 15): the Captain hires and sends them (on by default; --spies off to compare). */
+const spies = arg("spies", "on") !== "off";
 const seedPrefix = arg("seed", "sim");
-const settings = { luck, mode, fog, fallen, spoils, fate, diplomacy, ...(turnLimit ? { turnLimit } : {}) };
+const settings = { luck, mode, fog, fallen, spoils, fate, diplomacy, spies, ...(turnLimit ? { turnLimit } : {}) };
 const botKind = arg("bots", "captain");
 const marginArg = arg("chain-margin", "");
 /** Tuning the Captain's runaway rule (priority 8): --runaway-share 0.4 --runaway-lead 1.75. */
@@ -174,7 +177,7 @@ for (const players of playerCounts) {
   const plan = stats(results.flatMap((g) => g.planMs));
   const total = stats(results.flatMap((g) => g.resolveMs.map((r, i) => r + g.planMs[i]!)));
 
-  console.log(`\n=== ${players} players — ${ctx.map.name}, ${label}, luck ${luck}, ${mode}${turnLimit ? ` (${turnLimit} turns)` : ""}, fog ${fog ? "on" : "off"}, the Fallen ${fallen ? "on" : "off"}, Spoils ${spoils ? "on" : "off"}, Fate ${fate ? "on" : "off"}, diplomacy ${diplomacy ? "on" : "off"}${tuned} ===`);
+  console.log(`\n=== ${players} players — ${ctx.map.name}, ${label}, luck ${luck}, ${mode}${turnLimit ? ` (${turnLimit} turns)` : ""}, fog ${fog ? "on" : "off"}, the Fallen ${fallen ? "on" : "off"}, Spoils ${spoils ? "on" : "off"}, Fate ${fate ? "on" : "off"}, diplomacy ${diplomacy ? "on" : "off"}, spies ${spies ? "on" : "off"}${tuned} ===`);
   console.log(`Games: ${results.length} finished, ${errors.length} crashed, in ${(wall / 1000).toFixed(1)}s`);
   console.log(`Win rate by seat (fair ≈ ${(100 / players).toFixed(1)}% each): ${wins.map((w) => pct(w)).join(" / ")}   draws ${pct(draws)}`);
   if (mix) {
@@ -239,6 +242,12 @@ for (const players of playerCounts) {
         `Fate and the winner: the winner got ${share((g) => g.winnerGoodShare!)}% of the good events, against ${share((g) => g.winnerLandShare!)}% of the land they could land on (its fair share); its luck beyond its land: ${(luck.reduce((a, g) => a + g.winnerLuck!, 0) / Math.max(1, luck.length)).toFixed(2)} events a game; it was the luckiest player in ${pct2(lucky.filter((g) => g.winnerLuckiest).length, lucky.length)} of games (by chance ${(100 / players).toFixed(0)}%); missions done: the winner ${fmt(won.reduce((a, g) => a + g.winnerMissions, 0) / Math.max(1, won.length))}, the others ${fmt(won.reduce((a, g) => a + g.othersMissions, 0) / Math.max(1, won.length))} each`,
       );
     }
+  }
+  if (spies) {
+    const tries = avg((g) => g.spyIn + g.spyFooled + g.spyBlocked + g.spyKilled);
+    console.log(
+      `Spies: ${avg((g) => g.spiesHired).toFixed(1)} hired per game (${pct(results.filter((g) => g.spiesHired > 0).length)} of games); attempts per game ${tries.toFixed(1)}: infiltrated ${avg((g) => g.spyIn).toFixed(2)}, blocked ${avg((g) => g.spyBlocked).toFixed(2)}, killed ${avg((g) => g.spyKilled).toFixed(2)}, fooled ${avg((g) => g.spyFooled).toFixed(2)}; spy gold per game (hire + upkeep) ${avg((g) => g.spyGold).toFixed(1)}`,
+    );
   }
   if (diplomacy) {
     const sum = (f: (g: GameSummary) => number) => results.reduce((a, g) => a + f(g), 0);

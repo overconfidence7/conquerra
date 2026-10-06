@@ -318,10 +318,10 @@ export function GameScreen() {
     />
   );
   const minimap = <Minimap ctx={ctx} view={shownView} rect={rect} onJump={(x, y) => renderer.current?.centreOn(x, y)} />;
-  const pickBanner = picking && act && (
+  const pickBanner = (picking || g.spyPick) && act && (
     <Frame className="pick-banner slim" role="status">
-      <span>Tap the place to {picking.kind === "push" ? "push toward" : "defend toward"}</span>
-      <button className="link" onClick={() => g.cancelPick()}>
+      <span>{g.spyPick ? "Tap a province to send your spy there" : `Tap the place to ${picking!.kind === "push" ? "push toward" : "defend toward"}`}</span>
+      <button className="link" onClick={() => (g.spyPick ? g.cancelSpyPick() : g.cancelPick())}>
         Cancel
       </button>
     </Frame>

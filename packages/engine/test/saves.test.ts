@@ -33,6 +33,24 @@ describe("saved games: the snapshot format", () => {
     for (const p of s.players) expect(viewFor(ctx, next.state, p.id).turn).toBe(6);
   });
 
+  it("the save made at the end of session 14 (state version 5, with deals in its record) loads, comes up to date, and plays on", () => {
+    const raw = JSON.parse(readFileSync(new URL("./fixtures/save-v2-session14.json", import.meta.url), "utf8")) as { state: { version: number } };
+    expect(raw.state.version).toBe(5);
+    const read = readSave(raw);
+    expect(read.ok).toBe(true);
+    if (!read.ok) return;
+    const s = read.save.state as GameState;
+    expect(s.version).toBe(STATE_VERSION);
+    expect(read.save.summary).toMatchObject({ mapName: "Embervale", turn: 9 });
+    // Its diplomacy carries on; saved before spies (session 15), it has none, and can hire them from now on.
+    expect(s.record.length).toBeGreaterThan(0);
+    expect([s.spies, s.nextSpy, s.spyIntel, s.settings.spies]).toEqual([[], 1, {}, true]);
+    const next = resolveTurn(ctx, s, { [s.players[0]!.id]: [{ id: "y", kind: "hireSpy", territory: s.players[0]!.capital }] });
+    expect(next.state.turn).toBe(10);
+    expect(next.state.spies.length).toBe(next.events.some((e) => e.type === "spyHired") ? 1 : 0);
+    for (const p of s.players) expect(viewFor(ctx, next.state, p.id).turn).toBe(10);
+  });
+
   it("a save carries its history for pnpm sim --replay (which only matches while the engine plays those turns the same way)", () => {
     const read = readSave(fixture());
     if (!read.ok || !read.save.history) throw new Error("fixture has no history");

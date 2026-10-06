@@ -103,6 +103,10 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     case "dealEnded":
     case "dealFailed":
     case "offerLapsed":
+    // Spies report as the turn ends: in the turn report (their owner's eyes only).
+    case "spyHired":
+    case "spy":
+    case "spyCaught":
     // The fog lifting (or falling) rides on the beat of the step that caused it.
     case "vision":
       return null;
