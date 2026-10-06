@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–13 are done. Next: session 14 (`docs/prompts/claude-code-session-14.md`): Nate's three calls on the decks and Continue, then preset diplomacy (truces, trades, joint wars, right of passage) with bots that judge deals for reasons they can explain.**
+**Phase: M3 (depth and balance). Sessions 7–14 are done. Next: session 15: right of passage's moves (moved from session 14), spies, culture unlocks and the "Govern this province" general instruction.**
 
-Claude Code sessions completed: **13** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, ...)
+Claude Code sessions completed: **14** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, ...)
 
 ---
 
@@ -646,3 +646,64 @@ All four parts are done, each committed and pushed. There were no play-test note
 - **Still to come:** Nate's play tests of sessions 11, 12 and 13.
 - **Next:** session 14 (`docs/prompts/claude-code-session-14.md`, run it locally). Right of passage is its last part; if the session runs short, it moves to session 15.
 
+### Oct 6: Claude Code session 14 (M3: Nate's calls on the decks, then diplomacy)
+Parts 1–4 are done, each committed and pushed. **Right of passage's moves (Part 5) move to session 15**: the card shows "soon", and passage deals are already stored, so saves won't change again. There were no play-test notes from sessions 11–13 to fix first.
+- **Nate's three calls (Step 0):**
+  - **Spoils are back to the bigger rewards:** three Swords 8 troops, three Towers a fort + 3, one of each 4 troops + 6 gold.
+  - **The first Fate draw comes at the end of turn 3,** so nothing from Fate happens before turn 4's planning.
+  - **Continue keeps the orders you'd queued.** They're saved in the background a moment after you stop changing them, and at once when the tab closes or the phone puts it away. Tested in the browser: queue, reload, Continue, same orders.
+  - **Phone fix:** "Save to a file" and "Load a file" now put their explanation under the label.
+  - **Deck sims:** games run about 1 turn longer than with session 13's smaller numbers (4 players 23.6, 6 players 31.8, 10 players 40.8 turns). The decks still don't decide games. Details are at the top of `docs/sim-results-m3-cards.md`.
+- **Diplomacy, as built:**
+  - **Making a deal:**
+    - Tap a rival in the Players panel, then **Propose a deal**. A plain truce is ready to send: **4 taps** on a phone.
+    - The bot answers at once with one plain reason ("I need my army in the east."), or sends a counteroffer with the changes marked.
+    - Offers to you come as a small toast as planning starts, with the bot's reason for asking. Accepting takes **1 tap**.
+  - **The cards:**
+    - **Truce:** everywhere, a province, or borders picked on the map. 2–8 turns, or until someone is knocked out.
+    - **Trade:** gold now, gold each turn, or land picked on the map. The giver's troops step back and one of the receiver's moves in.
+    - **Joint war:** against the same rival, with peace between the partners while it lasts.
+  - **Handshake or binding:**
+    - **Handshake:** free. Breaking it brings a public Oathbreaker mark, a fine and unrest, scaled by the deal's size. A truce everywhere for 3 turns is about 8 gold.
+    - **Binding:** costs gold up front, and the game won't let either side attack across it.
+  - **What shows where:**
+    - The Players panel shows a mark for each deal (a seal on a binding one), its turns left, and the Oathbreaker mark.
+    - Truce borders are drawn on the map as a white stitched band, with gold studs on a binding pact.
+    - An attack across a handshake truce warns what breaking it costs.
+    - The report and replay say when deals start, end and break.
+  - **The re-confirm rule:** both sides must confirm in the same planning phase, and the deal starts before any move. Unconfirmed offers lapse, and an attack between the two voids them.
+  - **Saves and replays:** offers and answers are orders, so a saved game and `pnpm sim --replay` reproduce exactly. A game saved before diplomacy carries on with no deals, and the session 13 save still loads.
+- **The bots:**
+  - Every answer comes with its strongest reason: fronts, who's ahead, what the deal costs, or trust ("You broke our truce at Old March.").
+  - They never help a runaway (or the clear leader as far as they can tell), and they always join a war against one.
+  - **Trust** comes from the record of how past deals ended, so it's part of every save.
+  - The Captain proposes joint wars against a runaway, truces on fronts it can't afford, and land-for-gold trades. Bots also make deals with each other.
+  - They keep their word, except that the Captain breaks a handshake deal for a capital it's sure to take, and says so.
+  - The Recruit takes a truce only when it's weaker and never offers trades.
+  - With diplomacy off, the Captain plays exactly as before (a test checks it).
+- **Acceptance rates** on offers sorted beforehand: good **94%**, neutral **26%** (and 70% countered), bad **2%**.
+  - The bad ones it accepts are mostly truces from a runaway it can't see under fog.
+- **Sims (500 games, diplomacy off → on):**
+  - **Length:** 4 players 23.6 → 27.8 turns, 6 players 31.8 → 36.4, 10 players 40.8 → **47.4** (only 27% of 10-player games end within 40).
+  - **Runaways:** comebacks 25 → 36%, 45 → 51%, 55 → 62%.
+  - **Deals per game:** 10.5, 21.6 and 62.1 made; 0.8, 2.4 and 5.1 broken; joint wars on the land leader 1.8, 3.4 and 4.6.
+  - Rules weren't changed for length, as asked: it's for the balance pass. Options are in `docs/sim-results-m3-diplomacy.md`.
+- **Taps (384 px phone):** a basic turn is still **6**, proposing a truce **4**, accepting an offer **1**. Command is still 3.
+- **Start-up bundle:** 489.9 KB → **493.9 KB** (gzip 150.8 → 152.2).
+  - The deal card loads when first used.
+  - The turn report's wording and the game-over screen now load when first needed. That paid for almost all of diplomacy.
+- **Rules:** `docs/rules-reference.md` §20 (diplomacy), plus §17–19 for Continue, Spoils and Fate.
+- **Screenshots** (desktop and 384 px phone), in `docs/art/screens/s14-*.png`:
+  - the Propose card
+  - a decline and an accept with their reasons
+  - an offer to you (its toast, and opened)
+  - the Players panel with a binding pact and an Oathbreaker mark
+  - a truce border on the map
+  - the warning on an attack across a truce
+- **Tests and deploy:** 612 automated tests pass. Deployed to the private preview (version `6e48e323`); the lock check passed.
+- **Asked Nate to play on the preview:**
+  - **Laptop, 4 players on Embervale:** propose a truce, a joint war on the leader, and a binding pact; break a handshake truce; trade gold for land; close the tab mid-turn and press Continue.
+  - **Phone, 6 players on the Twin Realms:** answer a bot's offer, count the taps for a truce, and check that Fate stays quiet for three turns.
+  - Do the bots' reasons sound like strong logic? Are they too easy or too stubborn? How many turns did each game take?
+
+  His notes go below once he's played.
