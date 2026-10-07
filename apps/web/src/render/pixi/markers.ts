@@ -68,6 +68,11 @@ interface PlaqueView {
   h: number;
   offset: [number, number];
   hidden: boolean;
+  /**
+   * Its name at Far (session 17): small letters with a dark rim, no plaque, on the province itself. Only names that fit
+   * without overlapping show (bigger provinces first); the tapped province shows its full plaque instead.
+   */
+  name: { root: Container; anchor: [number, number]; w: number; h: number; rank: number; shown: boolean };
 }
 
 interface MarkerView {
@@ -95,8 +100,7 @@ export class MarkerLayer {
   private markers = new Map<string, MarkerView>();
   private plaques = new Map<string, PlaqueView>();
   private plaqueLayer = new Container();
-  /** Plaques show at Far and Mid and fade out at Near. */
-  private plaqueAlpha = 1;
+  private nameLayer = new Container();
   private scene: MapScene | null = null;
   private key = "";
   private resolution: number;
@@ -109,7 +113,7 @@ export class MarkerLayer {
   ) {
     this.resolution = Math.max(2, resolution);
     this.labelOf = new Map(map.geometry!.territories.map((t) => [t.id, t.label]));
-    this.root.addChild(this.plaqueLayer, this.leaders, this.layer, this.badges);
+    this.root.addChild(this.nameLayer, this.plaqueLayer, this.leaders, this.layer, this.badges);
   }
 
   /** Rebuild when the scene changes, or the zoom crosses a level that changes what markers hold. */
@@ -139,7 +143,7 @@ export class MarkerLayer {
 
   /** One plaque per province, under its painted name: "Pinemark +3 · you hold 3 of 5", or "Pinemark +3" if you hold none of it. */
   private buildPlaques(scene: MapScene) {
-    for (const pl of this.plaques.values()) pl.root.destroy({ children: true });
+    for (const pl of this.plaques.values()) (pl.root.destroy({ children: true }), pl.name.root.destroy({ children: true }));
     this.plaques.clear();
     const view = scene.view;
     for (const label of this.map.geometry!.provinceLabels) {
@@ -186,7 +190,28 @@ export class MarkerLayer {
       const [x0, y0, cx, cy, x1, y1] = labelCurve(label.path);
       const [mx, my] = quadPoint(x0, y0, cx, cy, x1, y1, 0.5);
       const size = Math.max(13, Math.min(30, (Math.hypot(x1 - x0, y1 - y0) / Math.max(6, prov.name.length)) * 1.05));
-      this.plaques.set(prov.id, { id: `plaque:${prov.id}`, root, anchor: [mx, my + size * 0.95], w, h, offset: [0, 0], hidden: false });
+      // The name at Far: smaller, no plaque (it would cover the land), on the middle of the province's name line.
+      const name = new Container();
+      const rim = { color: 0x0b0f16, width: 3, join: "round" as const };
+      const nameParts = [
+        new Text({ text: `${prov.name} `, style: { fontFamily: "Cinzel, serif", fontWeight: "700", fontSize: 10, fill: PARCH, stroke: rim }, resolution: this.resolution }),
+        new Text({ text: `+${prov.bonus}`, style: { fontFamily: "Manrope, system-ui, sans-serif", fontWeight: "800", fontSize: 10, fill: GOLD_HI, stroke: rim }, resolution: this.resolution }),
+      ];
+      const nameW = nameParts.reduce((a, t) => a + t.width, 0);
+      let nx = -nameW / 2;
+      for (const t of nameParts) {
+        t.anchor.set(0, 0.5);
+        t.position.set(nx, 0);
+        nx += t.width;
+        name.addChild(t);
+      }
+      name.visible = false;
+      this.nameLayer.addChild(name);
+      this.plaques.set(prov.id, {
+        id: `plaque:${prov.id}`, root, anchor: [mx, my + size * 0.95], w, h, offset: [0, 0], hidden: false,
+        // A little room round each name (the box is bigger than the letters), so names never sit shoulder to shoulder.
+        name: { root: name, anchor: [mx, my], w: nameW + 18, h: 20, rank: members.length, shown: false },
+      });
       this.plaqueLayer.addChild(root);
     }
   }
@@ -369,9 +394,6 @@ export class MarkerLayer {
     }
   }
 
-  /** Where markers sit after the last layout, relative to the camera origin (so panning doesn't change them). */
-  screenBoxes: { x: number; y: number; w: number; h: number; dy: number }[] = [];
-
   /** Re-run collisions (after zooming or a rebuild). */
   layout(cam: Camera, z: ZoomDetail) {
     const k = pillHeight(z) / REF;
@@ -379,26 +401,35 @@ export class MarkerLayer {
       const [x, y] = toScreen(cam, m.anchor[0], m.anchor[1]);
       return { id: m.id, x, y, w: m.metrics.w * k, h: m.metrics.h * k, dy: m.metrics.dy * k, priority: m.priority };
     });
-    // Province plaques (session 16): every one at Far, as before; at Mid and Near only the province of the territory
-    // you tapped (provinces on demand). They come last and never cover an army: with no room nearby, they're dropped.
+    // Province plaques (session 16): only the province of the territory you tapped (provinces on demand), at every
+    // zoom. At Far (session 17), every other province shows just its name, small and without a plaque, where it fits:
+    // bigger provinces first, never moved off its province, never over an army or another name (a crowded map shows
+    // fewer names rather than a pile of them). Both come after the armies and are dropped with no room.
     const lit = this.scene?.province ? `plaque:${this.scene.province}` : null;
-    const shown = (pl: PlaqueView) => (pl.id === lit ? 1 : z.far);
+    const names = z.far >= 0.05;
     for (const pl of this.plaques.values()) {
-      if (shown(pl) < 0.05) continue;
-      const [x, y] = toScreen(cam, pl.anchor[0], pl.anchor[1]);
-      boxes.push({ id: pl.id, x, y, w: pl.w, h: pl.h, dy: 0, priority: -1, optional: true });
+      if (pl.id === lit) {
+        const [x, y] = toScreen(cam, pl.anchor[0], pl.anchor[1]);
+        boxes.push({ id: pl.id, x, y, w: pl.w, h: pl.h, dy: 0, priority: -1, optional: true });
+      } else if (names) {
+        const [x, y] = toScreen(cam, pl.name.anchor[0], pl.name.anchor[1]);
+        // A name that would hang off the screen's edge isn't shown (it would read as a cut-off word).
+        const sw = this.screen.width, sh = this.screen.height;
+        if (sw && (x - pl.name.w / 2 < 0 || x + pl.name.w / 2 > sw || y - pl.name.h / 2 < 0 || y + pl.name.h / 2 > sh)) continue;
+        boxes.push({ id: `name:${pl.id}`, x, y, w: pl.name.w, h: pl.name.h, dy: 0, priority: -2 + pl.name.rank / 1000, optional: true, fixed: true });
+      }
     }
     const placed = layoutMarkers(boxes);
-    this.plaqueAlpha = z.far;
     for (const pl of this.plaques.values()) {
-      const at = placed.get(pl.id);
+      const at = pl.id === lit ? placed.get(pl.id) : undefined;
       const [x, y] = toScreen(cam, pl.anchor[0], pl.anchor[1]);
       pl.offset = at ? [at.x - x, at.y - y] : [0, 0];
       pl.hidden = !at || !!at.dropped;
       pl.root.visible = !pl.hidden;
-      pl.root.alpha = shown(pl);
+      const nm = placed.get(`name:${pl.id}`);
+      pl.name.shown = !!nm && !nm.dropped;
+      pl.name.root.visible = pl.name.shown;
     }
-    this.screenBoxes = [];
     for (const b of boxes) {
       const m = this.markers.get(b.id);
       if (!m) continue;
@@ -409,7 +440,6 @@ export class MarkerLayer {
       m.root.scale.set(k);
       m.merged.visible = p.merged.length > 0;
       if (p.merged.length) m.mergedText.text = `+${p.merged.length}`;
-      if (!m.hidden) this.screenBoxes.push({ x: p.x - cam.x, y: p.y - cam.y, w: b.w, h: b.h, dy: b.dy });
     }
     this.place(cam, z);
   }
@@ -439,6 +469,10 @@ export class MarkerLayer {
       if (sw > pl.w + 8) px = Math.max(pl.w / 2 + 4, Math.min(sw - pl.w / 2 - 4, px));
       if (sh > pl.h + 8) py = Math.max(pl.h / 2 + 4, Math.min(sh - pl.h / 2 - 4, py));
       pl.root.position.set(Math.round(px), Math.round(py));
+      if (pl.name.shown) {
+        const [nx, ny] = toScreen(cam, pl.name.anchor[0], pl.name.anchor[1]);
+        pl.name.root.position.set(Math.round(nx), Math.round(ny));
+      }
     }
     if (!this.scene) return;
     for (const b of this.badges.children) {
@@ -473,6 +507,7 @@ export class MarkerLayer {
       m.near.alpha = tactical ? 1 : Math.min(1, mix.nearDetail * 1.6);
       m.names.alpha = Math.min(1, mix.names * 1.6);
     }
+    for (const pl of this.plaques.values()) pl.name.root.alpha = mix.provinceNames;
   }
 
   get count() {

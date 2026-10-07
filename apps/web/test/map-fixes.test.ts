@@ -3,31 +3,9 @@ import { describe, expect, it } from "vitest";
 import { clampCamera, fitCamera, landFrame, toMap, toScreen } from "../src/map/camera";
 import { colourDistance } from "../src/map/colorblind";
 import { HOUSES } from "../src/map/houses";
-import { glyphAlphas } from "../src/map/layout";
 import { dashes } from "../src/map/shapes";
 
 const geo = maps.embervale!.geometry!;
-
-describe("province names give way to army markers", () => {
-  it("letters under a marker fade almost away, their neighbours half, the rest stay", () => {
-    const glyphs = [0, 1, 2, 3, 4, 5].map((i) => ({ x: i * 10, y: 0, r: 3 }));
-    const a = glyphAlphas(glyphs, [{ x: 30, y: 0, w: 8, h: 8 }]);
-    expect(a[3]).toBeLessThan(0.15);
-    expect(a[2]).toBeGreaterThan(0.3);
-    expect(a[2]).toBeLessThan(1);
-    expect(a[4]).toBeLessThan(1);
-    expect(a[1]).toBe(1);
-    expect(a[5]).toBe(1);
-  });
-  it("no markers, no fading", () => {
-    expect(glyphAlphas([{ x: 0, y: 0, r: 3 }], [])).toEqual([1]);
-  });
-  it("uses the marker's vertical offset", () => {
-    const g = [{ x: 0, y: 20, r: 2 }];
-    expect(glyphAlphas(g, [{ x: 0, y: 0, w: 10, h: 10 }])[0]).toBe(1);
-    expect(glyphAlphas(g, [{ x: 0, y: 0, w: 10, h: 10, dy: 18 }])[0]).toBeLessThan(0.15);
-  });
-});
 
 describe("fit map fills the screen", () => {
   const frame = landFrame(geo);

@@ -96,6 +96,8 @@ export interface MarkerBox {
   priority: number;
   /** Optional labels (province plaques): with no room they're simply dropped, never folded into a marker. */
   optional?: boolean;
+  /** Stays on its own spot or isn't shown (province names at Far, session 17: never moved off their province). */
+  fixed?: boolean;
 }
 
 export interface MarkerPlacement {
@@ -148,7 +150,7 @@ export function layoutMarkers(boxes: readonly MarkerBox[], opts: { gap?: number;
   const free = (x: number, y: number, b: MarkerBox) => cellsAround(x, y, b, (k) => !overlaps(x, y, b, placed[k]!.x, placed[k]!.y, placed[k]!.box, gap));
 
   for (const b of order) {
-    const maxShift = opts.maxShift ?? Math.max(b.w, b.h) * 0.9;
+    const maxShift = b.fixed ? 0 : (opts.maxShift ?? Math.max(b.w, b.h) * 0.9);
     const step = Math.max(4, Math.min(b.w, b.h) / 3);
     let spot: [number, number] | null = free(b.x, b.y, b) ? [b.x, b.y] : null;
     for (let d = step; !spot && d <= maxShift + 0.01; d += step) {
@@ -187,16 +189,4 @@ export function layoutMarkers(boxes: readonly MarkerBox[], opts: { gap?: number;
     out.set(b.id, { x: host.x, y: host.y, shifted: true, mergedInto: host.box.id, merged: [] });
   }
   return out;
-}
-
-/**
- * Army markers always win over painted names: how visible each letter of a province name should be, given the
- * markers' boxes on screen (all in screen px; boxes are centred on x, y + dy). Letters under a marker fade almost
- * away; their neighbours half fade, so the name thins out smoothly instead of having a hard gap.
- */
-export function glyphAlphas(glyphs: readonly { x: number; y: number; r: number }[], boxes: readonly { x: number; y: number; w: number; h: number; dy?: number }[], pad = 3): number[] {
-  const covered = glyphs.map((g) =>
-    boxes.some((b) => Math.abs(g.x - b.x) < b.w / 2 + g.r + pad && Math.abs(g.y - (b.y + (b.dy ?? 0))) < b.h / 2 + g.r + pad),
-  );
-  return covered.map((c, i) => (c ? 0.08 : covered[i - 1] || covered[i + 1] ? 0.55 : 1));
 }

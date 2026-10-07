@@ -120,6 +120,18 @@ describe("army markers", () => {
     expect(crowd.some((c) => out2.get(c.id)!.merged.includes("plaque"))).toBe(false);
   });
 
+  it("names at Far (session 17): bigger provinces first, never moved, dropped where they'd overlap anything", () => {
+    const army: MarkerBox = { id: "army", x: 100, y: 100, w: 30, h: 16, priority: 2 };
+    const big: MarkerBox = { id: "big", x: 200, y: 100, w: 90, h: 14, priority: -2 + 9 / 1000, optional: true, fixed: true };
+    const small: MarkerBox = { id: "small", x: 230, y: 108, w: 70, h: 14, priority: -2 + 3 / 1000, optional: true, fixed: true };
+    const onArmy: MarkerBox = { id: "onArmy", x: 110, y: 104, w: 60, h: 14, priority: -2 + 5 / 1000, optional: true, fixed: true };
+    const out = layoutMarkers([small, onArmy, army, big]);
+    expect(out.get("big")).toMatchObject({ x: 200, y: 100, shifted: false });
+    expect(out.get("small")!.dropped).toBe(true);
+    expect(out.get("onArmy")!.dropped).toBe(true);
+    expect(out.get("army")).toMatchObject({ x: 100, y: 100, shifted: false, merged: [] });
+  });
+
   it("merge into a neighbour (\"+1\") when there's no room nearby", () => {
     // A tight crowd: far more markers than fit in the space they're allowed to move in.
     const boxes: MarkerBox[] = Array.from({ length: 30 }, (_, i) => ({ id: `t${i}`, x: 200 + (i % 5) * 3, y: 200 + Math.floor(i / 5) * 3, w: 50, h: 22, priority: i === 0 ? 5 : 1 }));

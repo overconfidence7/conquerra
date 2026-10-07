@@ -258,7 +258,6 @@ class PixiMapRenderer implements MapRenderer {
     if (rebuilt || this.laidOutScale === 0 || Math.abs(Math.log(c.scale / this.laidOutScale)) > 0.02) {
       this.laidOutScale = c.scale;
       this.markers.layout(c, this.detail);
-      this.info.fadeNamesUnder(this.markers.screenBoxes, c);
     } else this.markers.place(c, this.detail);
     if (prev !== this.detail.level) this.events.zoomChanged?.(this.detail.level);
     const [vx, vy] = toMap(c, 0, 0);

@@ -385,7 +385,8 @@ describe("the step-by-step replay never leaks", () => {
           }
         }
       }),
-      { numRuns: 40 },
+      // Every case the random inputs found once stays as a fixed regression case.
+      { numRuns: 40, examples: [["{T", 5]] },
     );
     expect(checkedVision).toBeGreaterThan(200);
     expect(checkedRival).toBeGreaterThan(50);

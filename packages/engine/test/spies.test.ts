@@ -437,7 +437,17 @@ describe("spies: the fog never leaks (property)", () => {
           }
         },
       ),
-      { numRuns: 120 },
+      // Fooling needs 3 defenders against 1 spy (about 1 random case in 12), so a few fixed cases make sure the fooled
+      // check always runs, whatever the random inputs are; the random cases still look for new problems.
+      {
+        numRuns: 120,
+        examples: [
+          ["fooled-a", 3, 1, [12, 8, 5, 20], [0, 0, 1]],
+          ["fooled-b", 3, 1, [3, 25, 9, 4], [2, 1, 0]],
+          ["fooled-c", 3, 1, [30, 1, 14, 7], [3, 0, 2]],
+          ["fooled-d", 3, 1, [6, 6, 6, 6], [1, 1, 3]],
+        ],
+      },
     );
     expect(fooledSeen).toBeGreaterThan(10);
     expect(realSeen).toBeGreaterThan(10);

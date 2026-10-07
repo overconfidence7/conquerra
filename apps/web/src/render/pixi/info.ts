@@ -10,7 +10,6 @@ import type { MapScene } from "../types";
 import type { TextureBank } from "./bank";
 import { buildLabels, type MapLabels } from "./labels";
 import { RealmLayer } from "./realms";
-import { glyphAlphas } from "../../map/layout";
 
 /**
  * The info layer in map space: House borders (the House tint itself is painted by the world layer's shader), the selection glow, reachable-target highlights, order
@@ -85,7 +84,7 @@ export class InfoLayer {
   private paintedGates: boolean;
   /** Neighbour link marks for the selected territory. */
   readonly links = new Graphics();
-  private labels: { illustrated: MapLabels; tactical: MapLabels };
+  private labels: MapLabels;
   readonly names = new Container();
   private scene: MapScene | null = null;
   private status = new Map<string, TerritoryStatus>();
@@ -108,8 +107,8 @@ export class InfoLayer {
     const g = map.geometry!;
     this.rings = new Map(g.territories.map((t) => [t.id, t.rings]));
     this.labelOf = new Map(g.territories.map((t) => [t.id, t.label]));
-    this.labels = { illustrated: buildLabels(map, true), tactical: buildLabels(map, false) };
-    this.names.addChild(this.labels.illustrated.provinces, this.labels.illustrated.places, this.labels.tactical.provinces, this.labels.tactical.places);
+    this.labels = buildLabels(map);
+    this.names.addChild(this.labels.places);
     this.figures.visible = false;
     this.paintedGates = !!bank.get("pass-gate");
   }
@@ -148,8 +147,6 @@ export class InfoLayer {
     this.realmLayer.visible = !tactical;
     this.drawFills();
     this.drawSites();
-    this.labels.illustrated.provinces.visible = this.labels.illustrated.places.visible = !tactical;
-    this.labels.tactical.provinces.visible = this.labels.tactical.places.visible = tactical;
     this.drawnScale = 0; // lines and arrows redraw at the next zoom update
   }
 
@@ -267,21 +264,12 @@ export class InfoLayer {
     }
   }
 
-  /** Army markers win: fade the letters of province names that would sit under one. Boxes are camera-relative px. */
-  fadeNamesUnder(boxes: readonly { x: number; y: number; w: number; h: number; dy: number }[], cam: { scale: number }) {
-    for (const set of [this.labels.illustrated, this.labels.tactical]) {
-      const pts = set.glyphs.map((g) => ({ x: g.x * cam.scale, y: g.y * cam.scale, r: g.r * cam.scale }));
-      glyphAlphas(pts, boxes).forEach((a, i) => (set.glyphs[i]!.sprite.alpha = a));
-    }
-  }
-
   /** Redraw lines and arrows when the zoom has changed enough; set fades. */
   setZoom(scale: number, mix: DetailMix) {
     // The gate symbol always shows at Far and in Tactical; with the painted gatehouse it gives way from Mid in.
     // (Illustrated, `icons` is 1 - Far.)
     this.gates.alpha = this.isTactical || !this.paintedGates ? 1 : 1 - mix.icons;
-    this.labels.illustrated.provinces.alpha = this.labels.tactical.provinces.alpha = mix.provinceNames;
-    this.labels.illustrated.places.alpha = this.labels.tactical.places.alpha = Math.min(1, 0.4 + mix.placeNames);
+    this.labels.places.alpha = Math.min(1, 0.4 + mix.placeNames);
     this.figures.visible = !this.isTactical && mix.nearDetail > 0.02;
     this.figures.alpha = mix.nearDetail;
     if (this.scene && (this.drawnScale === 0 || Math.abs(Math.log(scale / this.drawnScale)) > 0.08)) {
@@ -544,8 +532,7 @@ export class InfoLayer {
   }
 
   destroy() {
-    this.labels.illustrated.destroy();
-    this.labels.tactical.destroy();
+    this.labels.destroy();
     for (const c of [this.tactical, this.lines, this.gates, this.glow, this.links, this.sites, this.figures, this.arrows, this.names]) c.destroy({ children: true });
     this.shadowTex?.destroy(true);
     this.realmLayer.destroy();
