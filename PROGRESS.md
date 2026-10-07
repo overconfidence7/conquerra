@@ -970,7 +970,7 @@ All five parts are done, each committed and pushed. Art batch 4 wasn't imported 
 - **Screenshots** (desktop and 384 px phone), `docs/art/screens/s19-*.png`: each new map at Far and Mid, the Fallen's choice and their first turn out. Galleries and Far pictures: `docs/maps/s19/`.
 - **Start-up bundle:** 474.1 → 476.6 KB (gzip 145.1 → 146.0); each new map loads only when picked (413–552 KB compressed).
 - **Tests and deploy:** 844 automated tests pass (the full run twice). Deployed to the private preview (version `36e80125`); the lock check passed. Nate: please check the repo's Actions page for the last commit.
-- **Questions for Nate:** keep culture +1 a level, or another lever (table in the write-up)? Should Conquerra's 20-turn Conquest default grow on the 160–200 maps? Make the Recruit weaker still (a new player wins 46% against three)? Fairer capital spots for the other maps next (a later session)?
+- **Questions for Nate:** keep culture +1 a level, or another lever (table in the write-up)? Should Conquest's 20-turn default grow on the 160–200 maps? Make the Recruit weaker still (a new player wins 46% against three)? Fairer capital spots for the other maps next (a later session)?
 
 ### Things to test after session 19 (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop: 6 players on Wyrmland, you in red; phone: the same checks where they apply.*
