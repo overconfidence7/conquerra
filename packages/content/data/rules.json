@@ -152,7 +152,9 @@
     "crowdedTerritories": 12,
     "shareChips": [0, 0.1, 0.2, 0.3, 0.5],
     "maxGoldBudget": 99,
-    "nameMaxLength": 20
+    "nameMaxLength": 20,
+    "finish": { "territories": 6, "share": 0.1 },
+    "cleanUpShare": 0.75
   },
   "fallen": {
     "startInfluence": 8,

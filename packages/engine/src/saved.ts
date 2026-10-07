@@ -1,12 +1,12 @@
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils";
 import { defaultRules, type Rules } from "@conquerra/content";
-import { dealLeaderNames } from "./leaders";
+import { dealLeaderNames, trimBudgets } from "./leaders";
 import { resolveTurn } from "./resolve";
 import { seedRng } from "./rng";
 import { emptyStats, landHeld } from "./history";
 import { createGame, type NewGameOptions } from "./setup";
-import type { GameContext, GameState, OrdersByPlayer, PlayerId, TurnResult } from "./types";
+import type { GameContext, GameState, OrdersByPlayer, PlayerId, PlayerState, TurnResult } from "./types";
 
 /**
  * Saved games (session 13).
@@ -239,6 +239,8 @@ export function readSave(raw: unknown): ReadSave {
     v++;
   }
   if (!isObj(state.territories) || !Array.isArray(state.players) || typeof state.turn !== "number") return { ok: false, why: SAVE_PROBLEMS.damaged };
+  // Budgets over 100% of income (possible before session 20) are trimmed in roster order as the game loads.
+  for (const p of state.players as Record<string, unknown>[]) if (isObj(p) && Array.isArray(p.leaders)) trimBudgets(p as unknown as Pick<PlayerState, "leaders">);
   const save = { ...raw, state } as unknown as SaveFile;
   return { ok: true, save, migrated };
 }

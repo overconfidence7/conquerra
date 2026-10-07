@@ -48,7 +48,7 @@ export function authorOf(o: Pick<Order, "general" | "steward">): LeaderRef | nul
   return null;
 }
 
-/** Is this a command for a military Leader (else a Steward's)? */
+/** Is this a command for a military Leader (else a Steward's)? ("Report to" is either kind's.) */
 export const isMilitaryCommand = (i: Pick<Instruction, "kind">): boolean => (MILITARY_COMMANDS as readonly string[]).includes(i.kind);
 export const isStewardCommand = (i: Pick<Instruction, "kind">): boolean => (STEWARD_COMMANDS as readonly string[]).includes(i.kind);
 export const commandFits = (kind: LeaderKind, i: Pick<Instruction, "kind">): boolean => (kind === "leader" ? isMilitaryCommand(i) : isStewardCommand(i));
@@ -164,16 +164,25 @@ function releaseSteward(p: PlayerState, of: PlayerId): number {
  * Is this a sensible command for this leader (it fits the leader's kind, places and provinces exist, a rival is
  * another player still in and not a partner for a raid)?
  */
-export function validCommand(h: LeadersHost, p: PlayerState, kind: LeaderKind, i: Instruction, partners: readonly PlayerId[]): boolean {
+export function validCommand(h: LeadersHost, p: PlayerState, kind: LeaderKind, i: Instruction, partners: readonly PlayerId[], self?: LeaderRef): boolean {
   if (!commandFits(kind, i)) return false;
   const rival = (id: PlayerId) => id !== p.id && h.s.players.some((x) => x.id === id && x.eliminatedTurn === null);
   const province = (id: string) => h.idx.provinceMembers.has(id);
   switch (i.kind) {
     case "hold":
     case "military":
+    case "cleanup":
     case "economy":
     case "realm":
       return true;
+    case "pushBack":
+      // Never a player you have a truce or a joint war with.
+      return rival(i.player) && !partners.includes(i.player);
+    case "report": {
+      // To another leader of yours of the same kind that isn't itself reporting to someone.
+      const senior = findLeader(p, { kind, of: i.to });
+      return !!senior && i.to !== self?.of && senior.command?.kind !== "report";
+    }
     case "push":
     case "expand":
       return h.idx.byId.has(i.territory);
@@ -232,11 +241,13 @@ export function commandLeaders(h: LeadersHost, p: PlayerState, list: readonly Or
     if (o.kind !== "instruct") continue;
     const r = findLeader(p, { kind: o.role === "steward" ? "steward" : "leader", of: o.general });
     if (!r) continue;
-    if (o.instruction && !validCommand(h, p, r.kind, o.instruction, partners)) continue;
+    if (o.instruction && !validCommand(h, p, r.kind, o.instruction, partners, r)) continue;
     // Only one leader runs the whole military, and only one the realm: the newest order wins.
     if (o.instruction && ONE_AT_A_TIME.has(o.instruction.kind)) for (const x of p.leaders) if (x !== r && x.command?.kind === o.instruction.kind) x.command = null;
     r.command = o.instruction ? (JSON.parse(JSON.stringify(o.instruction)) as Instruction) : null;
   }
+  // Nobody reports to a leader that reports to someone itself (a senior told to report ends its juniors' arrangement).
+  for (const x of p.leaders) if (x.command?.kind === "report" && findLeader(p, { kind: x.kind, of: x.command.to })?.command?.kind === "report") x.command = null;
   for (const o of list) {
     if (o.kind !== "budget") continue;
     const r = findLeader(p, { kind: o.role === "steward" ? "steward" : "leader", of: o.general });
@@ -245,6 +256,8 @@ export function commandLeaders(h: LeadersHost, p: PlayerState, list: readonly Or
       const b = cleanBudget(rules, o.budget);
       if (b) r.budget = b;
     }
+    // Take back ends a "Report to" (its budget comes back to you; session 20).
+    if (o.takeBack !== undefined && r.command?.kind === "report") r.command = null;
     if (typeof o.takeBack === "number" && o.takeBack > 0 && r.purse > 0) {
       const gold = Math.min(r.purse, Math.floor(o.takeBack));
       if (gold <= 0) continue;
@@ -253,6 +266,31 @@ export function commandLeaders(h: LeadersHost, p: PlayerState, list: readonly Or
       h.emit({ type: "purseTaken", player: p.id, leader: refOf(r), gold });
     }
   }
+  trimBudgets(p);
+}
+
+/**
+ * Budgets add up to at most all of your income (session 20, Nate found he could give more): shares over 100% are
+ * trimmed in roster order (your Leader first). Exact amounts are paid only from what the treasury holds anyway.
+ */
+export function trimBudgets(p: Pick<PlayerState, "leaders">) {
+  let left = 1;
+  for (const l of p.leaders ?? []) {
+    if (!isShareBudget(l.budget)) continue;
+    const share = Math.max(0, Math.min(l.budget.share, Math.round(left * 1000) / 1000));
+    if (share !== l.budget.share) l.budget = { share };
+    left -= share;
+  }
+}
+
+/** The share of your income your leaders' budgets take (exact amounts not counted). */
+export const budgetShare = (p: Pick<PlayerState, "leaders">): number => (p.leaders ?? []).reduce((a, l) => a + (isShareBudget(l.budget) ? l.budget.share : 0), 0);
+
+/** The senior a leader reports to (session 20), if it does and the senior is there. */
+export function seniorOf(p: Pick<PlayerState, "leaders">, l: LeaderRecord): LeaderRecord | null {
+  if (l.command?.kind !== "report") return null;
+  const r = findLeader(p, { kind: l.kind, of: l.command.to });
+  return r && r !== l && r.command?.kind !== "report" ? r : null;
 }
 
 /**
@@ -281,11 +319,19 @@ export function pursesPayUpkeep(p: PlayerState, short: number): { short: number;
 export function payBudgets(p: PlayerState, earned: number): (LeaderRef & { gold: number })[] {
   const paid: (LeaderRef & { gold: number })[] = [];
   for (const l of p.leaders ?? []) {
+    // A leader that reports to another (session 20): its budget, and whatever was in its purse, go to its senior.
+    const to = seniorOf(p, l) ?? l;
+    if (to !== l && l.purse > 0) {
+      to.purse += l.purse;
+      l.purse = 0;
+    }
     const gold = Math.min(p.gold, budgetAmount(l.budget, earned));
     if (gold <= 0) continue;
     p.gold -= gold;
-    l.purse += gold;
-    paid.push({ ...refOf(l), gold });
+    to.purse += gold;
+    const at = paid.find((x) => sameLeader(x, to));
+    if (at) at.gold += gold;
+    else paid.push({ ...refOf(to), gold });
   }
   return paid;
 }

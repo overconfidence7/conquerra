@@ -14,10 +14,11 @@ import { fileURLToPath } from "node:url";
 import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { playTable } from "@conquerra/simcore";
-import { indexMap, type GameContext, type GameState, type PlayerId } from "@conquerra/engine";
+import { indexMap, seedRng, type GameContext, type GameState, type PlayerId } from "@conquerra/engine";
 import { botFor, seatsFor, type TournamentSpec } from "../src/tournament";
 
-const DIR = fileURLToPath(new URL("../../../packages/bots/test/fixtures/mopup/", import.meta.url));
+// MOPUP_DIR: a wider set for measuring (sim-results/, not committed); the 20 test fixtures by default.
+const DIR = process.env.MOPUP_DIR ? `${process.env.MOPUP_DIR.replace(/\/?$/, "/")}` : fileURLToPath(new URL("../../../packages/bots/test/fixtures/mopup/", import.meta.url));
 export interface MopupFixture {
   name: string;
   map: string;
@@ -60,7 +61,7 @@ const pool = <T>(jobs: unknown[], workers = 19): Promise<T[]> => {
   ).then((p) => p.flat());
 };
 
-type Job = { kind: "make"; map: string; players: number; seats: string[]; i: number } | { kind: "run"; file: string; how: string };
+type Job = { kind: "make"; map: string; players: number; seats: string[]; i: number } | { kind: "run"; file: string; how: string; rep: number };
 
 function work(job: Job): unknown {
   const ctx: GameContext = { map: maps[job.kind === "make" ? job.map : "embervale"]!, rules: defaultRules };
@@ -89,6 +90,8 @@ function work(job: Job): unknown {
   const c: GameContext = { map: maps[fx.map]!, rules: { ...defaultRules, game: { ...defaultRules.game, maxTurnsHard: 500 } } };
   const seat = Number(fx.top.slice(1)) - 1;
   const start = structuredClone(fx.state);
+  // Repeats play the same position with other dice.
+  if (job.rep > 0) start.rng = seedRng(`${fx.name}-rep${job.rep}`);
   const kinds = [...fx.kinds];
   if (job.how !== "marshal") {
     kinds[seat] = job.how === "cleanup" ? "delegate-80+cleanup" : "delegate-80";
@@ -105,7 +108,7 @@ function work(job: Job): unknown {
   const r = playTable(c, `${fx.name}-run`, kinds.map((k) => botFor(k)), { start, maxTurns: from + 14 });
   const end = r.final!;
   const m = mopupShape(c, end);
-  return { name: fx.name, map: fx.map, how: job.how, turns: end.winner ? end.turn - from + 1 : 99, won: end.winner === fx.top, share: m?.share ?? 0, left: m?.rivals.length ?? 0 };
+  return { name: `${fx.name}${job.rep ? `#${job.rep}` : ""}`, map: fx.map, how: job.how, turns: end.winner ? end.turn - from + 1 : 99, won: end.winner === fx.top, share: m?.share ?? 0, left: m?.rivals.length ?? 0 };
 }
 
 if (args[0] === "--worker") {
@@ -125,15 +128,22 @@ if (args[0] === "--worker") {
   }
 } else if (args[0] === "run") {
   const hows = !args[1] || args[1] === "all" ? ["leader", "marshal"] : args[1].split(",");
-  const only = args[2]?.split(",");
+  const only = args[2] && args[2] !== "all" ? args[2].split(",") : undefined;
+  const reps = Number(args[3] ?? 1);
   const files = readdirSync(DIR).filter((f) => f.endsWith(".json") && (!only || only.some((m) => f.startsWith(m))));
-  const jobs: Job[] = hows.flatMap((how) => files.map((f) => ({ kind: "run" as const, file: `${DIR}${f}`, how })));
+  const jobs: Job[] = hows.flatMap((how) => files.flatMap((f) => Array.from({ length: reps }, (_, rep) => ({ kind: "run" as const, file: `${DIR}${f}`, how, rep }))));
   const res = await pool<{ name: string; map: string; how: string; turns: number; won: boolean; share: number; left: number }>(jobs);
   for (const how of hows) {
     const rs = res.filter((r) => r.how === how).sort((a, b) => a.name.localeCompare(b.name, "en", { numeric: true }));
     const t = rs.map((r) => r.turns);
     const sorted = [...t].sort((a, b) => a - b);
-    console.log(`${how.padEnd(8)} ${rs.length} fixtures: median ${sorted[Math.floor(sorted.length / 2)]}, within 2 ${rs.filter((r) => r.turns <= 2).length}, within 4 ${rs.filter((r) => r.turns <= 4).length}, unfinished after 15 ${rs.filter((r) => r.turns === 99).length}, lost ${rs.filter((r) => r.turns !== 99 && !r.won).length}`);
+    const pc = (k: number) => `${Math.round((100 * k) / rs.length)}%`;
+    console.log(`${how.padEnd(8)} ${rs.length} runs: median ${sorted[Math.floor(sorted.length / 2)]}, average ${(t.filter((x) => x < 99).reduce((a, b) => a + b, 0) / Math.max(1, t.filter((x) => x < 99).length)).toFixed(2)}, within 2 ${pc(rs.filter((r) => r.turns <= 2).length)}, within 4 ${pc(rs.filter((r) => r.turns <= 4).length)}, unfinished after 15 ${rs.filter((r) => r.turns === 99).length}, lost ${rs.filter((r) => r.turns !== 99 && !r.won).length}`);
+    const hist = new Map<number, number>();
+    for (const x of t) hist.set(x, (hist.get(x) ?? 0) + 1);
+    console.log(`   turns: ${[...hist].sort((a, b) => a[0] - b[0]).map(([k, v]) => `${k === 99 ? "15+" : k}:${v}`).join(" ")}`);
+    if (process.env.SLOW) console.log(`   slow: ${rs.filter((r) => r.turns > Number(process.env.SLOW)).map((r) => `${r.name}=${r.turns}`).join(" ")}`);
+    if (rs.length > 60) continue;
     for (const m of [...new Set(rs.map((r) => r.map))]) console.log(`   ${m.padEnd(12)} ${rs.filter((r) => r.map === m).map((r) => (r.turns === 99 ? "–" : r.won ? r.turns : `x${r.turns}`)).join(" ")}`);
   }
 }

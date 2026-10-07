@@ -4,6 +4,7 @@ import { BREAKTHROUGH_MARGIN, chainOn, readBoard, type Board, type CaptainOption
 import { captainSpoils, missionPull, missionSpend, spoilsOrder } from "../cards";
 import { respectDeals, withoutDeals } from "../diplomacy";
 import { captainSpies } from "../spies";
+import { planFinish, remnantRivals } from "./finish";
 import { think, type Insight } from "./judge";
 import type { MarshalMemory } from "./memory";
 import { marshalBreaks } from "./talk";
@@ -44,6 +45,10 @@ export interface Steer {
   timing: boolean;
   /** It keeps the capital guard (session 19): a command over the whole realm (Run the military) does; narrower ones don't. */
   guardsCapital?: boolean;
+  /** Session 20: the rivals it finishes off (default: any rival down to a handful). */
+  finishes?(rival: PlayerId): boolean;
+  /** Session 20: Clean up (every rival is one to finish; Run the military does it unasked from `rules.leaders.cleanUpShare`). */
+  cleanUp?: boolean;
 }
 
 export interface MarshalRequest {
@@ -63,13 +68,17 @@ export interface MarshalRequest {
 
 export interface MarshalPlan {
   orders: Order[];
+  /** Session 20: the rivals it's finishing off this turn (with the land it knows they hold), for the Leaders panel. */
+  finishing: { rival: PlayerId; land: number }[];
+  /** Session 20: gold it keeps in its purse, and what for (a leader never keeps gold without a reason it can name). */
+  saving: { gold: number; for: "barracks"; at: TerritoryId | null } | null;
   /** The memory to keep for next turn (this turn taken in). */
   memory: MarshalMemory;
   insight: Insight;
 }
 
 /** Where each order came from, so a scope can keep just its part: spending, or an army (the territory it set out from). */
-type Source = { spend: true } | { army: TerritoryId };
+type Source = { spend: true } | { army: TerritoryId; first?: true };
 
 /** The Captain's own settings the Marshal shares (its priorities 1 to 9 all on). */
 const BASE: CaptainOptions = { chainMargin: 1.25 };
@@ -96,7 +105,9 @@ export function planMarshal(req: MarshalRequest): MarshalPlan {
   const view = withoutDeals(req.view, breaks.map((o) => (o.kind === "break" ? o.deal : "")));
   const sources = new Map<string, Source>();
   const steer = scope.kind === "leader" ? scope.steer : undefined;
-  const moves = planMoves(ctx, view, P, judgement, insight, lastTurn, req.purse ?? view.me.gold, sources, steer);
+  const finishing: MarshalPlan["finishing"] = [];
+  const saving: { v: MarshalPlan["saving"] } = { v: null };
+  const moves = planMoves(ctx, view, P, judgement, insight, lastTurn, req.purse ?? view.me.gold, sources, steer, finishing, saving);
   let kept = steer ? moves : moves.filter((o) => inScope(scope, sources.get(o.id), view, ctx));
   if (!steer && scope.kind === "realm") {
     // Its own Leader goes with the main attack out of where it stands (session 19, as your leaders' does).
@@ -104,7 +115,10 @@ export function planMarshal(req: MarshalRequest): MarshalPlan {
     if (at) kept = carryLeader(kept, at, { withLeader: true }, null);
     if (judgement.queue === "armies") kept = armiesFirst(kept, sources);
   }
-  return { orders: [...breaks, ...respectDeals(ctx, view, kept)], memory, insight };
+  // Strikes that are ready before anyone can move (finishing a rival, session 20) go first of all.
+  const first = (o: Order) => { const src = sources.get(o.id); return !!src && "army" in src && !!src.first; };
+  kept = [...kept.filter(first), ...kept.filter((o) => !first(o))];
+  return { orders: [...breaks, ...respectDeals(ctx, view, kept)], memory, insight, finishing, saving: saving.v };
 }
 
 /** Troops first (the Spoils, recruits), then the armies' moves, then everything else it buys (session 19). */
@@ -163,6 +177,8 @@ function planMoves(
   purse: number,
   sources: Map<string, Source>,
   steer?: Steer,
+  finishing: MarshalPlan["finishing"] = [],
+  saving: { v: MarshalPlan["saving"] } = { v: null },
 ): Order[] {
   const b = marshalBoard(ctx, view, insight, lastTurn);
   if (!b) return [];
@@ -181,7 +197,7 @@ function planMoves(
   let n = 0;
   const id = () => `${me.id}-t${view.turn}-m${n++}`;
   const spend = (o: Order) => (orders.push(o), sources.set(o.id, { spend: true }));
-  const army = (o: Order, from: TerritoryId) => (orders.push(o), sources.set(o.id, { army: from }));
+  const army = (o: Order, from: TerritoryId, first?: boolean) => (orders.push(o), sources.set(o.id, first ? { army: from, first: true } : { army: from }));
   const calm = A.strikeTurn > 0 && view.turn < A.strikeTurn && !capThreatened;
 
   // ---------- Whom it's after ----------
@@ -221,6 +237,23 @@ function planMoves(
     }
     return v;
   };
+
+  // ---------- Whom it finishes off (session 20) ----------
+  // A rival down to a handful of territories (or, cleaning up, every rival): it goes and ends them.
+  const cleanUp = !!steer?.cleanUp || mine.length >= rules.leaders.cleanUpShare * idx.ids.length;
+  // (Not in the opening, unless it's cleaning up: early on every rival is small, and the opening plays as before.)
+  const toFinish = J.finish && !calm && (cleanUp || view.turn > (J.opening?.turns ?? 0))
+    ? remnantRivals(b, rules.leaders.finish, cleanUp).filter((r) => !atPeace(r) && !shieldsLeader.has(r) && (steer?.finishes ? steer.finishes(r) : !steer?.aim || idx.ids.some((t) => b.look0(t) === r && steer.aim!(t, 1) !== null)))
+    : [];
+  /** How far each of our territories is from their land, through our own (for recruiting near them). */
+  const toRemnant = new Map<TerritoryId, number>();
+  if (toFinish.length) {
+    const q = mine.filter((t) => idx.neighbors.get(t)!.some((x) => toFinish.includes(b.look0(x) ?? "")));
+    for (const t of q) toRemnant.set(t, 0);
+    for (let h = 0; h < q.length; h++)
+      for (const nb of idx.neighbors.get(q[h]!)!)
+        if (owned(nb) && !toRemnant.has(nb)) (toRemnant.set(nb, toRemnant.get(q[h]!)! + 1), q.push(nb));
+  }
 
   // ---------- Spending ----------
   // A leader spends its own purse (session 18); the realm's planner, the treasury.
@@ -274,7 +307,7 @@ function planMoves(
     if (!own && !barracksBuilding && spot && gold >= rules.buildings.barracks.cost + troopCost * 4) {
       spend({ id: id(), kind: "build", territory: spot, building: "barracks" });
       gold -= rules.buildings.barracks.cost;
-    }
+    } else if (!recruitSites.length && !barracksBuilding && gold >= troopCost) saving.v = { gold, for: "barracks", at: spot ?? null };
   } else if (shelter && gold >= rules.buildings.barracks.cost) {
     spend({ id: id(), kind: "build", territory: shelter, building: "barracks" });
     gold -= rules.buildings.barracks.cost;
@@ -350,9 +383,27 @@ function planMoves(
   }
 
   let recruited = 0;
-  if (site && gold >= troopCost) {
+  /** Troops recruited this turn, by site. */
+  const recruitedAt = new Map<TerritoryId, number>();
+  // Finishing (session 20): recruits at the sites nearest their land, shared out, so they march straight in.
+  // (A site their armies could take before the recruits arrive comes last.)
+  const holds = (t: TerritoryId) => troopsAt(t) >= holdNeed(t);
+  const finishSites = toFinish.length && J.finish ? recruitSites.filter((t) => toRemnant.has(t) && (!steer || steer.buys.troops)).sort((a, c) => Number(holds(c)) - Number(holds(a)) || toRemnant.get(a)! - toRemnant.get(c)! || (a < c ? -1 : 1)).slice(0, J.finish.sites) : [];
+  /** Never hoard (session 20): a recruit whose site is lost before it's paid for recruits at the safest site instead. */
+  const safest = [...recruitSites].sort((a, c) => Number(isFrontier(a)) - Number(isFrontier(c)) || enemyPressure(a) - enemyPressure(c) || troopsAt(c) - troopsAt(a) || (a < c ? -1 : 1))[0];
+  const recruitOrder = (t: TerritoryId, count: number): Order => ({ id: id(), kind: "recruit", territory: t, count, ...(safest && safest !== t ? { fallback: { id: id(), kind: "recruit", territory: safest, count } as Order } : {}) });
+  if (finishSites.length && gold >= troopCost) {
+    const all = Math.floor(gold / troopCost);
+    finishSites.forEach((t, i) => {
+      const n = Math.floor(all / finishSites.length) + (i < all % finishSites.length ? 1 : 0);
+      if (n > 0) (recruitedAt.set(t, n), spend(recruitOrder(t, n)));
+    });
+    recruited = all;
+    gold -= all * troopCost;
+  } else if (site && gold >= troopCost) {
     recruited = Math.floor(gold / troopCost);
-    spend({ id: id(), kind: "recruit", territory: site, count: recruited });
+    recruitedAt.set(site, recruited);
+    spend(recruitOrder(site, recruited));
     gold -= recruited * troopCost;
   }
 
@@ -378,7 +429,7 @@ function planMoves(
     }
     capGuard = Math.ceil(reach * G.reach);
     const crowded = G.crowded === undefined || ctx.map.territories.length / view.players.length <= G.crowded;
-    if (crowded && view.turn <= G.turns) capGuard = Math.max(capGuard, Math.ceil((troopsAt(capital) + (site === capital ? recruited : 0)) * G.opening));
+    if (crowded && view.turn <= G.turns) capGuard = Math.max(capGuard, Math.ceil((troopsAt(capital) + (recruitedAt.get(capital) ?? 0)) * G.opening));
   }
   const keep = (t: TerritoryId) => Math.max(keep0(t), t === capital ? capGuard : 0);
   const keep0 = (t: TerritoryId) => {
@@ -396,7 +447,25 @@ function planMoves(
   const free = new Map<TerritoryId, number>();
   for (const t of mine)
     // A leader moves only the armies it commands, and the troops it recruited this turn.
-    free.set(t, steer && !steer.commands(t) ? (t === site ? recruited : 0) : Math.max(0, troopsAt(t) + (t === site ? recruited : 0) - keep(t)));
+    free.set(t, steer && !steer.commands(t) ? (recruitedAt.get(t) ?? 0) : Math.max(0, troopsAt(t) + (recruitedAt.get(t) ?? 0) - keep(t)));
+
+  // ---------- Finishing them off (session 20) ----------
+  const targeted = new Set<TerritoryId>();
+  let usedInitiative = false;
+  if (toFinish.length && J.finish) {
+    const f = planFinish(b, toFinish, free, targeted, id, army, {
+      margin: J.finish.margin,
+      hops: J.finish.hops,
+      ...(steer ? { commands: (t: TerritoryId) => steer.commands(t) || recruitedAt.has(t) } : {}),
+      initiative: me.leader.alive && me.cooldowns.seize === 0 && (!steer || steer.timing),
+      recruited: recruitedAt,
+      bringAll: cleanUp,
+      maxHops: A.maxHops,
+      followThroughSpare: A.followThroughSpare,
+    });
+    usedInitiative = f.usedInitiative && me.leader.alive && me.cooldowns.seize === 0 && (!steer || steer.timing);
+    finishing.push(...f.targets);
+  }
 
   // ---------- Attacks ----------
   type Plan = { from: TerritoryId; to: TerritoryId; troops: number; score: number; vsPlayer: boolean; breakthrough: boolean; through?: TerritoryId[] };
@@ -463,9 +532,7 @@ function planMoves(
     }
   }
   candidates.sort((a, c) => c.score - a.score || (a.to < c.to ? -1 : 1));
-  const targeted = new Set<TerritoryId>();
   const attackedFrom = new Set<TerritoryId>();
-  let usedInitiative = false;
   const queued: { order: Order; from: TerritoryId; to: TerritoryId; troops: number; attackFrom?: TerritoryId }[] = [];
   for (const c of candidates) {
     if (targeted.has(c.to)) continue;
@@ -502,7 +569,7 @@ function planMoves(
   // ---------- Reinforcements ----------
   const goals = new Map<TerritoryId, number>();
   const want = (t: TerritoryId, w: number) => (steer?.goal && !steer.goal(t) ? goals : goals.set(t, Math.max(goals.get(t) ?? 0, w)));
-  if (capThreatened && capital && holdNeed(capital) > troopsAt(capital) + (site === capital ? recruited : 0)) want(capital, 100);
+  if (capThreatened && capital && holdNeed(capital) > troopsAt(capital) + (recruitedAt.get(capital) ?? 0)) want(capital, 100);
   for (const t of frontier) {
     if (chokeHolder(t)) {
       if (holdNeed(t) > troopsAt(t)) want(t, facesRaider(t) ? 70 : 50);
@@ -546,7 +613,7 @@ function planMoves(
     if (isFrontier(t) && !chokeHolder(t)) {
       // A front stack shifts sideways only toward a spearhead (it keeps what it needs to hold its own stretch).
       if (!spearhead || goals.get(t)! >= 30) continue;
-      send = Math.min(avail, troopsAt(t) + (t === site ? recruited : 0) - Math.max(keep(t), holdNeed(t)));
+      send = Math.min(avail, troopsAt(t) + (recruitedAt.get(t) ?? 0) - Math.max(keep(t), holdNeed(t)));
       if (send <= 0) continue;
     } else if (goals.has(t) && !spearhead) continue;
     let best: { g: TerritoryId; score: number; d: number } | null = null;

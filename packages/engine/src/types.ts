@@ -31,12 +31,16 @@ export interface Specialist {
  *    taking whole provinces on the way; it holds once it's there
  *  - front: command every army of yours in these provinces, and recruit for them
  *  - military: run the military: every army and all the recruiting
+ *  - cleanup (session 20, Nate): finish off every rival that's left, working with every other leader on Clean up
+ *  - pushBack (session 20, Nate): push one rival back: its weakly held land, never anyone else's
+ *  - report (session 20, Nate): work under another Leader (`to`: whose Leader): its army and budget go to that senior
  * Stewards (culture, buildings and the economy; they never stand on the map):
  *  - buildUp: forts, markets and barracks where they help, in one province
  *  - fortify: forts and garrisons where you're most threatened (facing one rival, or anyone)
  *  - culture: raise culture in one province
  *  - economy: markets and culture where they pay most
  *  - realm: run the realm: all building and culture
+ *  - report (session 20): work under the Steward running the realm (`to`: whose Steward): its budget goes there
  */
 export type MilitaryCommand =
   | { kind: "hold" }
@@ -46,18 +50,22 @@ export type MilitaryCommand =
   | { kind: "raid"; player: PlayerId }
   | { kind: "expand"; territory: TerritoryId }
   | { kind: "front"; provinces: string[] }
-  | { kind: "military" };
+  | { kind: "military" }
+  | { kind: "cleanup" }
+  | { kind: "pushBack"; player: PlayerId }
+  | { kind: "report"; to: PlayerId };
 export type StewardCommand =
   | { kind: "buildUp"; province: string }
   | { kind: "fortify"; player?: PlayerId }
   | { kind: "culture"; province: string }
   | { kind: "economy" }
-  | { kind: "realm" };
+  | { kind: "realm" }
+  | { kind: "report"; to: PlayerId };
 /** Any leader's command (the name stays from session 12, when only generals had them). */
 export type Instruction = MilitaryCommand | StewardCommand;
 export type InstructionKind = Instruction["kind"];
-export const MILITARY_COMMANDS = ["hold", "defend", "push", "raid", "expand", "front", "military"] as const;
-export const STEWARD_COMMANDS = ["buildUp", "fortify", "culture", "economy", "realm"] as const;
+export const MILITARY_COMMANDS = ["hold", "defend", "push", "raid", "expand", "front", "military", "cleanup", "pushBack", "report"] as const;
+export const STEWARD_COMMANDS = ["buildUp", "fortify", "culture", "economy", "realm", "report"] as const;
 
 /** A military Leader, or a Steward. */
 export type LeaderKind = "leader" | "steward";

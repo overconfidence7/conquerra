@@ -11,6 +11,7 @@ import {
   type LeaderRef,
   type MilitaryCommand,
   type Order,
+  type PlayerId,
   type PlayerView,
   type ReplayEvent,
   type StewardCommand,
@@ -20,6 +21,7 @@ import type { Board } from "../board";
 import { respectDeals } from "../diplomacy";
 import { launchesFrom, planGeneral } from "../generals";
 import { think } from "./judge";
+import { remnantRivals } from "./finish";
 import { freshMemory, type MarshalMemory } from "./memory";
 import { carryLeader, marshalBoard, planMarshal, type Steer } from "./plan";
 import { planSteward } from "./steward";
@@ -64,7 +66,18 @@ export interface LeadersPlan {
   memory: MarshalMemory;
   /** How many orders each leader wrote (for the page and the sims). */
   written: Record<string, number>;
+  /** What each leader is up to this turn, in a line the Leaders panel says in words (session 20), by `leaderKey`. */
+  notes: Record<string, LeaderNote>;
 }
+
+/**
+ * A leader's plain reason for the turn (session 20): finishing a rival off (with the land it knows they hold), pushing
+ * one back (the land it's going for, and the army it keeps clear of), or saving its purse for something it names.
+ */
+export type LeaderNote =
+  | { kind: "finishing"; rivals: { rival: PlayerId; land: number }[] }
+  | { kind: "pushBack"; rival: PlayerId; going: TerritoryId[]; avoiding: { at: TerritoryId; troops: number } | null; striking: boolean }
+  | { kind: "saving"; gold: number; for: "barracks"; at: TerritoryId | null };
 
 /** Which of our armies each leader commands this turn (a narrower command keeps its armies over a wider one). */
 export interface Claims {
@@ -72,9 +85,13 @@ export interface Claims {
   armies: Map<TerritoryId, string>;
   /** Territories where a leader of yours with no command stands: yours to order. */
   yours: Set<TerritoryId>;
+  /** Clean up (session 20): the rivals each leader on it is finishing, by `leaderKey`. */
+  rivalsOf?: Map<string, PlayerId[]>;
 }
 
 const STYLE = () => marshalData.leaders.style;
+/** Commands a junior's army can work under (a leader that directs more than its own army). */
+const SENIOR = new Set(["military", "expand", "front", "cleanup", "pushBack"]);
 
 /** Every military leader's and Steward's command as it will be this turn (the page's changes on top of the game's). */
 function commandsOf(view: PlayerView, overrides: Record<string, Instruction | null> = {}): { l: LeaderRecord; command: Instruction | null }[] {
@@ -99,16 +116,34 @@ export function claimArmies(b: Board, view: PlayerView, list: { l: LeaderRecord;
   const claim = (t: TerritoryId, key: string) => {
     if (b.owned(t) && !armies.has(t) && !yours.has(t)) armies.set(t, key);
   };
-  // 1. Each military leader's own army: its own if it has a command, yours if it hasn't.
+  const commandOf = (of: PlayerId) => military.find((x) => x.l.of === of)?.command ?? null;
+  // 1. Each military leader's own army: its own if it has a command; your own Leader's is yours if it hasn't. (A
+  // captured Leader with no command is just standing there: its army is Run the military's, session 20. They arrive
+  // at your capital, and used to freeze its army.) A leader that reports to another: its senior's (session 20).
   for (const { l, command } of military) {
     const at = leaderAt(view.me, l);
     if (!at || !b.owned(at)) continue;
-    if (command) claim(at, leaderKey(l));
-    else yours.add(at);
+    if (command?.kind === "report") {
+      const senior = commandOf(command.to);
+      if (senior && SENIOR.has(senior.kind)) claim(at, leaderKey({ kind: "leader", of: command.to }));
+    } else if (command) claim(at, leaderKey(l));
+    else if (l.of === view.me.id) yours.add(at);
   }
   // 2. Fronts.
   for (const { l, command } of military)
     if (command?.kind === "front") for (const p of command.provinces) for (const t of b.idx.provinceMembers.get(p) ?? []) claim(t, leaderKey(l));
+  // 2b. Push back a rival (session 20): our land facing them (two steps from their land, as far as we know).
+  for (const { l, command } of military) {
+    if (command?.kind !== "pushBack") continue;
+    const theirs = b.idx.ids.filter((t) => b.look0(t) === command.player);
+    const d = new Map<TerritoryId, number>(theirs.map((t) => [t, 0]));
+    const q = [...theirs];
+    for (let h = 0; h < q.length; h++) if (d.get(q[h]!)! < 2) for (const nb of b.idx.neighbors.get(q[h]!)!) if (!d.has(nb)) (d.set(nb, d.get(q[h]!)! + 1), q.push(nb));
+    for (const t of b.mine) if (d.has(t)) claim(t, leaderKey(l));
+  }
+  // 2c. Clean up (session 20): the leaders on it share out the rivals left, and each takes our land nearest its own.
+  const split = cleanUpSplit(b, view, military);
+  for (const [t, key] of split.land) claim(t, key);
   // 3. The way an Expand leader is taking (until it's there).
   for (const { l, command } of military) {
     const at = leaderAt(view.me, l);
@@ -118,7 +153,49 @@ export function claimArmies(b: Board, view: PlayerView, list: { l: LeaderRecord;
   }
   // 4. Run the military: everything else.
   for (const { l, command } of military) if (command?.kind === "military") for (const t of b.mine) claim(t, leaderKey(l));
-  return { armies, yours };
+  return { armies, yours, rivalsOf: split.rivals };
+}
+
+/**
+ * Clean up (session 20, Nate): every leader on it works together. The rivals left (as far as we know, most land
+ * first) are shared out: each to the leader on Clean up with the fewest so far, the nearest breaking ties (with more
+ * leaders than rivals, a rival gets more than one). Each of our territories goes to the leader whose rivals' land is
+ * nearest (within 10 steps: Run the military keeps the rest, if anyone's running it).
+ */
+function cleanUpSplit(b: Board, view: PlayerView, military: { l: LeaderRecord; command: Instruction | null }[]): { rivals: Map<string, PlayerId[]>; land: Map<TerritoryId, string> } {
+  const rivals = new Map<string, PlayerId[]>();
+  const land = new Map<TerritoryId, string>();
+  const cleaners = military.filter((x) => x.command?.kind === "cleanup").map((x) => x.l);
+  if (!cleaners.length) return { rivals, land };
+  const left = remnantRivals(b, { territories: 0, share: 0 }, true);
+  if (!left.length) return { rivals, land };
+  const theirLand = new Map(left.map((r) => [r, b.idx.ids.filter((t) => b.look0(t) === r)]));
+  const home = (l: LeaderRecord) => leaderAt(view.me, l) ?? (b.capital ?? b.mine[0]!);
+  const dist = new Map(cleaners.map((l) => [leaderKey(l), distancesFrom(b.idx, home(l))]));
+  const far = (l: LeaderRecord, r: PlayerId) => Math.min(...theirLand.get(r)!.map((t) => dist.get(leaderKey(l))!.get(t) ?? 1e9));
+  for (const l of cleaners) rivals.set(leaderKey(l), []);
+  const byLand = [...left].sort((x, y) => theirLand.get(y)!.length - theirLand.get(x)!.length || (x < y ? -1 : 1));
+  for (const r of byLand) {
+    const l = [...cleaners].sort((x, y) => rivals.get(leaderKey(x))!.length - rivals.get(leaderKey(y))!.length || far(x, r) - far(y, r) || (leaderKey(x) < leaderKey(y) ? -1 : 1))[0]!;
+    rivals.get(leaderKey(l))!.push(r);
+  }
+  for (const l of cleaners)
+    if (!rivals.get(leaderKey(l))!.length) rivals.get(leaderKey(l))!.push([...left].sort((x, y) => far(l, x) - far(l, y) || (x < y ? -1 : 1))[0]!);
+  // Our land: to whichever leader's rivals are nearest.
+  const near = new Map<string, Map<TerritoryId, number>>();
+  for (const l of cleaners) {
+    const starts = rivals.get(leaderKey(l))!.flatMap((r) => theirLand.get(r)!);
+    const d = new Map<TerritoryId, number>(starts.map((t) => [t, 0]));
+    const q = [...starts];
+    for (let h = 0; h < q.length; h++) if (d.get(q[h]!)! < 10) for (const nb of b.idx.neighbors.get(q[h]!)!) if (!d.has(nb)) (d.set(nb, d.get(q[h]!)! + 1), q.push(nb));
+    near.set(leaderKey(l), d);
+  }
+  const anyoneRuns = military.some((x) => x.command?.kind === "military");
+  for (const t of b.mine) {
+    const best = cleaners.map((l) => ({ k: leaderKey(l), d: near.get(leaderKey(l))!.get(t) })).filter((x) => x.d !== undefined || !anyoneRuns).sort((x, y) => (x.d ?? 1e9) - (y.d ?? 1e9) || (x.k < y.k ? -1 : 1))[0];
+    if (best) land.set(t, best.k);
+  }
+  return { rivals, land };
 }
 
 /**
@@ -130,10 +207,11 @@ export function planLeaders(req: LeadersRequest): LeadersPlan {
   const J = req.judgement ?? marshalData.judgement;
   const thought = think(ctx, view, J, req.memory ?? freshMemory(), lastTurn);
   const written: Record<string, number> = {};
+  const notes: Record<string, LeaderNote> = {};
   const list = commandsOf(view, req.commands).filter((x) => !!x.command && (!req.only || req.only.includes(leaderKey(x.l))));
-  if (!list.length || view.me.eliminatedTurn !== null) return { orders: [], memory: thought.memory, written };
+  if (!list.length || view.me.eliminatedTurn !== null) return { orders: [], memory: thought.memory, written, notes };
   const b = marshalBoard(ctx, view, thought.insight, lastTurn);
-  if (!b) return { orders: [], memory: thought.memory, written };
+  if (!b) return { orders: [], memory: thought.memory, written, notes };
   const claims = claimArmies(b, view, commandsOf(view, req.commands));
   const taken = new Set<TerritoryId>();
   const purseOf = (l: LeaderRecord) => req.purses?.[leaderKey(l)] ?? l.purse;
@@ -145,17 +223,24 @@ export function planLeaders(req: LeadersRequest): LeadersPlan {
     let n = 0;
     const tag = l.kind === "steward" ? { steward: l.of } : { general: l.of };
     const prefix = `${view.me.id}-t${view.turn}-${l.kind === "steward" ? "s" : "l"}${l.of}-`;
-    const own = (os: Order[]) => os.map((o) => ({ ...o, id: `${prefix}${n++}`, ...tag }) as Order);
+    // Its purse pays (a fallback too: a recruit whose site was lost recruits elsewhere, session 20).
+    const tagged = (o: Order): Order => ({ ...o, ...tag, ...(o.fallback ? { fallback: tagged(o.fallback) } : {}), ...(o.then ? { then: tagged(o.then) } : {}) }) as Order;
+    const own = (os: Order[]) => os.map((o) => ({ ...tagged(o), id: `${prefix}${n++}` }) as Order);
     let mine: Order[] = [];
-    if (l.kind === "steward") {
+    // A leader that reports to another plans nothing itself: its senior directs its army and spends its budget.
+    if (command!.kind === "report") mine = [];
+    else if (l.kind === "steward") {
       if (!isMilitaryCommand(command!)) mine = own(planSteward(b, marshalData.leaders.steward, command as StewardCommand, purseOf(l), () => `${prefix}x${n++}`, taken, ctx.rules.game.maxTurnsHard));
     } else if (isMilitaryCommand(command!)) {
-      mine = own(planMilitary(ctx, view, b, J, l, command as MilitaryCommand, purseOf(l), claims, thought, lastTurn));
+      const juniors = commandsOf(view, req.commands).filter((x) => x.l.kind === "leader" && x.command?.kind === "report" && x.command.to === l.of).map((x) => x.l);
+      const planned = planMilitary(ctx, view, b, J, l, command as MilitaryCommand, purseOf(l), claims, thought, lastTurn, juniors);
+      mine = own(planned.orders);
+      if (planned.note) notes[key] = planned.note;
     }
     written[key] = mine.length;
     orders.push(...mine);
   }
-  return { orders: respectDeals(ctx, view, orders), memory: thought.memory, written };
+  return { orders: respectDeals(ctx, view, orders), memory: thought.memory, written, notes };
 }
 
 /** One military leader's orders. */
@@ -170,7 +255,8 @@ function planMilitary(
   claims: Claims,
   thought: ReturnType<typeof think>,
   lastTurn?: readonly ReplayEvent[],
-): Order[] {
+  juniors: readonly LeaderRecord[] = [],
+): { orders: Order[]; note: LeaderNote | null } {
   const key = leaderKey(l);
   const at = leaderAt(view.me, l);
   const isOwn = l.of === view.me.id;
@@ -180,7 +266,7 @@ function planMilitary(
   const reached = command.kind === "expand" && b.owned(command.territory);
   const single = command.kind === "hold" || command.kind === "defend" || command.kind === "push" || command.kind === "raid" || reached;
   if (single) {
-    if (!at || !b.owned(at)) return [];
+    if (!at || !b.owned(at)) return { orders: [], note: null };
     const instruction: Instruction = reached ? (at === (command as { territory: TerritoryId }).territory ? { kind: "hold" } : { kind: "push", territory: (command as { territory: TerritoryId }).territory }) : command;
     // Recruits from its purse join its army first (so they march with it), where it stands if it can recruit there.
     const troop = ctx.rules.troops.cost;
@@ -201,12 +287,36 @@ function planMilitary(
       }
     }
     const board = plannedView === view ? b : marshalBoard(ctx, plannedView, thought.insight, lastTurn);
-    return [...pre, ...planGeneral(ctx, plannedView, l.of, instruction, lastTurn, { chainMargin: margin }, board)];
+    return { orders: [...pre, ...planGeneral(ctx, plannedView, l.of, instruction, lastTurn, { chainMargin: margin }, board)], note: null };
   }
 
   // Expand, Command this front, Run the military: the Marshal's planner, steered.
   const commands = (t: TerritoryId) => claims.armies.get(t) === key;
   const steer: Steer = { commands, buys: { troops: true, specialists: true, barracks: command.kind !== "expand" }, timing: isOwn, guardsCapital: command.kind === "military" };
+  let pushing: { rival: PlayerId; biggest: { at: TerritoryId; troops: number } | null } | null = null;
+  if (command.kind === "cleanup") {
+    // Clean up (session 20): it finishes the rivals it was given (with the other leaders on Clean up), all of them.
+    const mineToFinish = claims.rivalsOf?.get(key) ?? [];
+    steer.cleanUp = true;
+    steer.finishes = (r) => mineToFinish.includes(r);
+    steer.aim = (t, base) => {
+      const o = b.look(t).owner;
+      if (o && mineToFinish.includes(o)) return Math.max(base, 0.5) * 2;
+      return o ? null : base;
+    };
+  } else if (command.kind === "pushBack") {
+    // Push back one rival (session 20, Nate): its weakly held land (the less there, the better), never anyone else's
+    // (neutral land only on the way to theirs), and only where what arrives would hold next to its bigger armies.
+    const R = command.player;
+    const ofR = (t: TerritoryId) => b.look0(t) === R;
+    const nearR = (t: TerritoryId) => b.idx.neighbors.get(t)!.some(ofR);
+    steer.aim = (t, base) => (ofR(t) ? Math.max(base, 0.5) * (1 + 4 / (1 + b.look(t).troops)) : !b.look(t).owner && nearR(t) ? Math.max(base, 0.5) * 0.5 : null);
+    steer.careful = (t) => b.idx.neighbors.get(t)!.some((x) => b.rivalAt(x) === R && b.troopsAt(x) > b.garrison * 3);
+    steer.finishes = (r) => r === R;
+    steer.goal = (t) => commands(t) && (nearR(t) || b.idx.neighbors.get(t)!.some(nearR));
+    const stacks = b.idx.ids.filter((t) => ofR(t) && !!b.seen(t)).sort((x, y) => b.troopsAt(y) - b.troopsAt(x) || (x < y ? -1 : 1));
+    pushing = { rival: R, biggest: stacks[0] && b.troopsAt(stacks[0]) > b.garrison * 3 ? { at: stacks[0], troops: b.troopsAt(stacks[0]) } : null };
+  }
   if (command.kind === "front") {
     const provinces = new Set(command.provinces);
     const inFront = (t: TerritoryId) => provinces.has(b.idx.byId.get(t)!.province);
@@ -234,8 +344,21 @@ function planMilitary(
     steer.goal = (t) => commands(t);
   }
   const plan = planMarshal({ ctx, view, personality: STYLE(), judgement: J, memory: thought.memory, insight: thought, ...(lastTurn ? { lastTurn } : {}), scope: { kind: "leader", steer }, purse });
-  const orders = plan.orders.filter((o) => o.kind !== "break");
-  return at && commands(at) ? carryLeader(orders, at, goes, command.kind === "expand" ? distancesFrom(b.idx, command.territory) : null) : orders;
+  let orders: Order[] = plan.orders.filter((o) => o.kind !== "break");
+  if (at && commands(at)) orders = carryLeader(orders, at, goes, command.kind === "expand" ? distancesFrom(b.idx, command.territory) : null);
+  // A leader that reports to this one goes with its own army's main move (its portrait shows on that order).
+  for (const j of juniors) {
+    const jat = leaderAt(view.me, j);
+    if (jat && commands(jat)) orders = carryLeader(orders, jat, j.of === view.me.id ? { withLeader: true } : { withGeneral: j.of }, null);
+  }
+  // What it's up to, in a line (session 20).
+  let note: LeaderNote | null = null;
+  if (pushing) {
+    const going = orders.flatMap((o) => (o.kind === "move" && b.look0(o.to) === pushing!.rival ? [o.to] : []));
+    note = { kind: "pushBack", rival: pushing.rival, going: going.slice(0, 2), avoiding: pushing.biggest && !going.includes(pushing.biggest.at) ? pushing.biggest : null, striking: !!pushing.biggest && going.includes(pushing.biggest.at) };
+  } else if (plan.finishing.length) note = { kind: "finishing", rivals: plan.finishing };
+  else if (plan.saving) note = { kind: "saving", ...plan.saving };
+  return { orders, note };
 }
 
 /** The view as it will be once `count` recruits stand in `t` (so the army that marches counts them). */
@@ -306,4 +429,4 @@ export function mergeLeaderOrders(view: PlayerView, own: readonly Order[], leade
   return out;
 }
 
-export type { LeaderRef };
+export type { LeaderRef, PlayerId };

@@ -77,7 +77,7 @@ export function describeOrder(o: Order, n: Namer, attack: boolean, sending?: str
       return `${attack ? "Attack" : "Move"} ${n.place(o.to)} from ${n.place(o.from)}${o.via ? ` via ${n.place(o.via)}` : ""}${o.through?.length ? ` through ${o.through.map((t) => n.place(t)).join(", ")}` : ""} with ${sending ?? amountLabel(o.troops)}`;
     case "instruct": {
       const ref: LeaderRef = { kind: o.role === "steward" ? "steward" : "leader", of: o.general };
-      return `${leaderName(n, ref)}: ${o.instruction ? instructionName(o.instruction, n) : ref.kind === "steward" ? "no command" : "you give the orders"}`;
+      return `${leaderName(n, ref)}: ${o.instruction ? instructionName(o.instruction, n, ref.kind) : ref.kind === "steward" ? "no command" : "you give the orders"}`;
     }
     case "budget": {
       const ref: LeaderRef = { kind: o.role === "steward" ? "steward" : "leader", of: o.general };
@@ -143,7 +143,7 @@ const provinceName = (n: Namer, id: string) => n.ctx?.map.provinces.find((p) => 
 const provinceList = (n: Namer, ids: readonly string[]) => (ids.length > 2 ? `${ids.slice(0, 2).map((x) => provinceName(n, x)).join(", ")} and ${ids.length - 2} more` : ids.map((x) => provinceName(n, x)).join(" and "));
 
 /** A command, as you'd give it ("Push toward Old March", "Run the realm"). */
-export function instructionName(i: Instruction, n: Namer): string {
+export function instructionName(i: Instruction, n: Namer, kind: LeaderRef["kind"] = "leader"): string {
   switch (i.kind) {
     case "hold":
       return "Hold here";
@@ -159,6 +159,12 @@ export function instructionName(i: Instruction, n: Namer): string {
       return `Command the front in ${provinceList(n, i.provinces)}`;
     case "military":
       return "Run the military";
+    case "cleanup":
+      return "Clean up";
+    case "pushBack":
+      return `Push back ${n.who(i.player)}`;
+    case "report":
+      return `Report to ${leaderShortName(n, { kind, of: i.to })}`;
     case "buildUp":
       return `Build up ${provinceName(n, i.province)}`;
     case "fortify":
@@ -173,7 +179,7 @@ export function instructionName(i: Instruction, n: Namer): string {
 }
 
 /** What a leader is doing ("Holding Galeholt", "Expanding toward Old March", "Running the realm"). */
-export function instructionDoing(i: Instruction, n: Namer, at: string | null): string {
+export function instructionDoing(i: Instruction, n: Namer, at: string | null, kind: LeaderRef["kind"] = "leader"): string {
   switch (i.kind) {
     case "hold":
       return at ? `Holding ${n.place(at)}` : "Holding its ground";
@@ -189,6 +195,12 @@ export function instructionDoing(i: Instruction, n: Namer, at: string | null): s
       return `Commanding the front in ${provinceList(n, i.provinces)}`;
     case "military":
       return "Running the military";
+    case "cleanup":
+      return "Cleaning up";
+    case "pushBack":
+      return `Pushing back ${n.who(i.player)}`;
+    case "report":
+      return `Reports to ${leaderShortName(n, { kind, of: i.to })}`;
     case "buildUp":
       return `Building up ${provinceName(n, i.province)}`;
     case "fortify":

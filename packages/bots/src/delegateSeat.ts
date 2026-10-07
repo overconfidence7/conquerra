@@ -70,6 +70,10 @@ export interface DelegateOptions {
   diplomat?: Diplomat;
   leaderStays?: boolean;
   stewardFirst?: boolean;
+  /** Session 20: once it holds `rules.leaders.cleanUpShare` of the map, every military leader of its own goes on Clean up. */
+  cleanUp?: boolean;
+  /** Session 20: the leaders it captures report to its own (Leaders to its Leader, Stewards to its Steward). */
+  report?: boolean;
   id?: string;
 }
 
@@ -81,7 +85,17 @@ export function makeDelegateSeat(leaderShare = 0.8, opts: DelegateOptions = {}):
     id: opts.id ?? `delegate-${Math.round(leaderShare * 100)}`,
     name: `Delegates everything (Leader ${Math.round(leaderShare * 100)}%, Steward ${Math.round((1 - leaderShare) * 100)}%)`,
     plan(ctx, view, lastTurn) {
-      const { orders: setup, commands } = setUp(view, { leader: { command: { kind: "military" }, budget: { share: leaderShare } }, steward: { command: { kind: "realm" }, budget: { share: Math.round((1 - leaderShare) * 100) / 100 } } });
+      const held = Object.values(view.territories).filter((t) => t.detail === "full" && t.owner === view.me.id).length;
+      const cleaning = !!opts.cleanUp && held >= ctx.rules.leaders.cleanUpShare * ctx.map.territories.length;
+      const { orders: setup, commands } = setUp(view, { leader: { command: cleaning ? { kind: "cleanup" } : { kind: "military" }, budget: { share: leaderShare } }, steward: { command: { kind: "realm" }, budget: { share: Math.round((1 - leaderShare) * 100) / 100 } } });
+      // Its captured leaders: on Clean up too, or reporting to its own.
+      for (const l of view.me.leaders) {
+        if (l.of === view.me.id) continue;
+        const want: Instruction | null = cleaning && l.kind === "leader" ? { kind: "cleanup" } : opts.report ? { kind: "report", to: view.me.id } : null;
+        if (!want) continue;
+        commands[leaderKey(l)] = want;
+        if (JSON.stringify(l.command) !== JSON.stringify(want)) setup.push({ ...instruct(view, l.kind, want), id: `${view.me.id}-t${view.turn}-cmd-${l.kind}-${l.of}`, general: l.of });
+      }
       const plan = planLeaders({ ctx, view, memory: mem.recall(view), commands, ...(lastTurn ? { lastTurn } : {}) });
       mem.keep(view, plan.memory);
       // The treasury it holds (its starting gold, and what budgets round off): troops at its capital, as a person would.

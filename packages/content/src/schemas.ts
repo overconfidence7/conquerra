@@ -315,6 +315,14 @@ export const Rules = z.object({
     shareChips: z.array(z.number().min(0).max(1)).min(1),
     maxGoldBudget: z.number().int().min(0),
     nameMaxLength: z.number().int().min(1),
+    /**
+     * Session 20 (Nate): a rival is down to a handful of territories, and a leader with a military command (and every
+     * Marshal) goes and ends them, when it holds at most `territories` territories, or at most `share` of ours (as far as
+     * we know), and we hold at least three times its land.
+     */
+    finish: z.object({ territories: z.number().int().min(0), share: z.number().min(0).max(1) }).default({ territories: 6, share: 0.1 }),
+    /** Session 20 (Nate): "Clean up" is offered once you hold this share of the map; Run the military cleans up unasked from there. */
+    cleanUpShare: z.number().min(0).max(1).default(0.75),
   }),
   /**
    * The Fallen (session 12): knocked-out players earn Influence each turn (base, plus a little more for each other

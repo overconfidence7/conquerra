@@ -70,6 +70,8 @@ export function botFor(kind: string, tweak?: TournamentSpec["tweak"]): Bot {
       ...(opts.includes("mtalk") ? { diplomat: makeMarshalBot(marshalData.leaders.style).diplomat } : {}),
       ...(opts.includes("stays") ? { leaderStays: true } : {}),
       ...(opts.includes("stewfirst") ? { stewardFirst: true } : {}),
+      ...(opts.includes("cleanup") ? { cleanUp: true } : {}),
+      ...(opts.includes("report") ? { report: true } : {}),
     });
   }
   if (opts.length && k.startsWith("marshal-") && PERSONALITY_IDS.includes(k.slice(8) as PersonalityId)) {

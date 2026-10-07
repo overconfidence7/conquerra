@@ -174,6 +174,15 @@ export const MarshalJudgement = z.object({
    * won less, for about 4 more turns a game (fine, Nate: his own games run shorter than the bots').
    */
   capitalGuard: z.object({ steps: z.number().int().min(1), reach: z.number().min(0), turns: z.number().int().min(0), opening: z.number().min(0).max(1), crowded: z.number().min(0).optional() }).optional(),
+  /**
+   * Session 20 (Nate): finishing a rival that's down to a handful of territories (`rules.leaders.finish`). It recruits at
+   * the `sites` recruit sites nearest them, marches troops through its own land (up to `hops` hops, one order a hop) to
+   * every territory of ours next to theirs, and strikes each of theirs with `margin` times what it takes, their armies
+   * first, chaining on through the rest and taking the empty land they could run to.
+   */
+  finish: z.object({ margin: z.number().min(1), hops: z.number().int().min(1), sites: z.number().int().min(1) }).optional(),
+  /** Session 20: reinforcements march up to this many hops through its own land in one turn (one order a hop; 1: a step a turn, as before). */
+  march: z.number().int().min(1).optional(),
 });
 export type MarshalJudgement = z.infer<typeof MarshalJudgement>;
 

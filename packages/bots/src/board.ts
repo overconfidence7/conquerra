@@ -257,14 +257,14 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
     if (last) return { owner: last.owner, troops: last.troops + (last.owner ? 2 * Math.max(1, view.turn - last.turn) : 0), specialists: [], building: last.building, culture: 0, leaders: [], capitalOf: null };
     return { owner: null, troops: UNEXPLORED_GUESS, specialists: [], building: null, culture: 0, leaders: [], capitalOf: null };
   };
-  /** The odds of `troops` (with these specialists, and our Leader if it goes) taking `to` from `from`, on our best guess of what's there. */
-  const expectAt = (from: TerritoryId, to: TerritoryId, troops: number, specs: readonly SpecialistType[], leader = false) => {
+  /** The odds of `troops` (with these specialists, and our Leader if it goes) taking `to` from `from`, on our best guess of what's there (and `extraDefenders` more). */
+  const expectAt = (from: TerritoryId, to: TerritoryId, troops: number, specs: readonly SpecialistType[], leader = false, extraDefenders = 0) => {
     const g = look(to);
     return expectBattle(rules, {
       attackers: troops,
       attackerSpecialists: specs,
       attackerLeader: leader,
-      defenders: g.troops,
+      defenders: g.troops + extraDefenders,
       defenderSpecialists: g.specialists,
       defenderLeader: !!g.owner && g.leaders.includes(g.owner),
       terrain: idx.byId.get(to)!.terrain,
