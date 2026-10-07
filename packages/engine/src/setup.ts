@@ -5,7 +5,7 @@ import { distancesFrom, indexMap } from "./mapIndex";
 import { Rng, seedRng } from "./rng";
 import type { GameContext, GameSettings, GameState, PlayerState, TerritoryState } from "./types";
 import { emptyStats, landHeld } from "./history";
-import { cleanName, dealLeaderNames, startingLeaders } from "./leaders";
+import { cleanName, dealLeaderNames, startingLeaders, startingStewardShare } from "./leaders";
 
 export interface NewGameOptions {
   gameId: string;
@@ -93,6 +93,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
 
   // Names for everyone's Leader and Steward, from the seed (its own sequence: the dice never change), unless named.
   const dealt = dealLeaderNames(opts.seed, opts.players.map((p) => p.id));
+  const stewardShare = startingStewardShare(rules, ctx.map.territories.length, opts.players.length);
   const players: PlayerState[] = seats.map((p, i) => {
     const cap = capitals[i]!;
     territories[cap] = { owner: p.id, troops: rules.setup.startTroops, specialists: [], building: null, construction: null, culture: 0 };
@@ -106,7 +107,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
       leader: { alive: true, territory: cap },
       cooldowns: { seize: 0, lie: 0 },
       captured: [],
-      leaders: startingLeaders(rules, p.id, { leader: cleanName(rules, p.leaderName) ?? dealt[p.id]!.leader, steward: cleanName(rules, p.stewardName) ?? dealt[p.id]!.steward }, !!p.delegate),
+      leaders: startingLeaders(rules, p.id, { leader: cleanName(rules, p.leaderName) ?? dealt[p.id]!.leader, steward: cleanName(rules, p.stewardName) ?? dealt[p.id]!.steward }, !!p.delegate, stewardShare),
       influence: 0,
       spoils: [],
       missions: [],

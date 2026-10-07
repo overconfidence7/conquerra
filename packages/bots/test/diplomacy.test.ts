@@ -297,8 +297,15 @@ describe("bots' diplomacy: keeping their word", () => {
 
 describe("bots' diplomacy: bots dealing with each other", () => {
   const ctx: GameContext = { map: maps.embervale!, rules: defaultRules };
+  const ember = ctx;
+  /**
+   * The rules as they were before session 19's balance changes (culture +½ gold a level):
+   * the Captain's fingerprints below check its own play is unchanged, so they play under the rules they
+   * were pinned with.
+   */
+  const s18: GameContext = { map: maps.embervale!, rules: { ...defaultRules, culture: { ...defaultRules.culture, incomePerLevel: 0.5 } } };
   /** A whole 4-Captain game on Embervale, bots negotiating every turn (as the host and the simulator do). */
-  function play(seed: string, diplomacy = true, turns = 30, spies = true, bot = captainBot) {
+  function play(seed: string, diplomacy = true, turns = 30, spies = true, bot = captainBot, ctx: GameContext = ember) {
     let s = createGame(ctx, { gameId: "fp", seed, players: ["p1", "p2", "p3", "p4"].map((id) => ({ id, name: id })), settings: { diplomacy, spies } });
     let last = new Map<string, ReplayEvent[]>();
     const talks: string[] = [];
@@ -331,7 +338,7 @@ describe("bots' diplomacy: bots dealing with each other", () => {
     // (And without session 15's governing captured generals, which changes how the Captain plays on purpose.)
     // (Session 16 changed the rules underneath it on purpose: culture is lost when land changes hands, the Captain values
     // a rival's culture only as what taking it denies them, Follow through carries the Leader on, and the Spoils rework. Pinned again then.)
-    const s = structuredClone(play("captain-fingerprint", false, 25, false, makeCaptainBot({ chainMargin: CAPTAIN_CHAIN_MARGIN })).s) as unknown as Record<string, unknown>;
+    const s = structuredClone(play("captain-fingerprint", false, 25, false, makeCaptainBot({ chainMargin: CAPTAIN_CHAIN_MARGIN }), s18).s) as unknown as Record<string, unknown>;
     for (const k of ["spies", "nextSpy", "spyIntel", "history", "stats"]) delete s[k];
     delete (s.decks as Record<string, unknown>).spies;
     delete (s.settings as Record<string, unknown>).spies;
@@ -352,7 +359,7 @@ describe("bots' diplomacy: bots dealing with each other", () => {
   it("with everything on, the Captain plays exactly as at the end of session 16 (its fingerprint; session 17 adds the Marshal beside it, unchanged)", () => {
     // Pinned again in session 18: Govern is gone and the game's shape changed (leaders). Checked first with
     // apps/sim/scripts/s18-captain-same.ts: the board, gold, deals and dice match session 17's Captain with Govern off.
-    const a = play("captain-s16", true, 30, true);
+    const a = play("captain-s16", true, 30, true, captainBot, s18);
     expect(stateFingerprint(a.s)).toBe("c86498c32b7f525a");
   });
 

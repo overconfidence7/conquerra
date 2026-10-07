@@ -94,12 +94,13 @@ describe("the Leaders panel's logic (session 18)", () => {
     useGame.getState().setLobby({ mapId: "embervale", bots: 3, botLevel: "captain", turnSeconds: null, leaderName: "Aldric", stewardName: "Odo" });
   });
 
-  it("the lobby's names reach the game; your Steward starts running the realm on 20%", async () => {
+  it("the lobby's names reach the game; your Steward starts running the realm on 20% (10% on a crowded table)", async () => {
     await useGame.getState().start();
-    const v = useGame.getState().view!;
-    expect(v.me.leaders.map((l) => [l.kind, l.name, l.command, l.budget])).toEqual([
+    const { view: v, ctx: c } = useGame.getState();
+    const share = c!.map.territories.length / v!.players.length <= c!.rules.leaders.crowdedTerritories ? 0.1 : 0.2;
+    expect(v!.me.leaders.map((l) => [l.kind, l.name, l.command, l.budget])).toEqual([
       ["leader", "Aldric", null, { share: 0 }],
-      ["steward", "Odo", { kind: "realm" }, { share: 0.2 }],
+      ["steward", "Odo", { kind: "realm" }, { share }],
     ]);
   });
 

@@ -101,5 +101,6 @@ export {
   refOf,
   sameLeader,
   startingLeaders,
+  startingStewardShare,
   suggestLeaderName,
 } from "./leaders";

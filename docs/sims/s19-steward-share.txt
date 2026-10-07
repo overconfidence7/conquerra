@@ -1,0 +1,5 @@
+Session 19, Part 2: the default Steward's share, with culture at +1 gold a level (a Captain with the Steward on Run the realm at N% against plain Captains; seed s19L).
+embervale:4 (1000 games) captain-steward-10: 20.4% (x0.82) | captain-steward-15: 18.2% (x0.73) | captain-steward-20: 17.1% (x0.68)
+embervale:4 Steward without forts (fortThreat 99): captain-steward-20 19.4% (x0.78) | captain-steward-10 21.9% (x0.88)
+wyrmland:6 (600 games) captain-steward-10: 19.7% (x1.18) | captain-steward-15: 19.3% (x1.16) | captain-steward-20: 20.6% (x1.24, from s19-levers) | captain-steward-30: 20.7% (x1.24)
+greatmarch:10 (500 games) captain-steward-10: 10.0% (x1.00) | captain-steward-20: 9.0% (x0.90)

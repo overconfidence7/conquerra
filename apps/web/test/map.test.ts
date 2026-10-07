@@ -234,8 +234,8 @@ describe("the tap card", () => {
     const v = view.territories[cap] as Extract<PlayerView["territories"][string], { detail: "full" }>;
     v.culture = 2;
     const step = Math.round(100 * r.culture.defensePerLevel);
-    expect(cultureLine(ctx, view, cap, 2)).toBe(`Culture 2: defends +${2 * step}%, shrugs off 30% of unrest, +1 gold. Culture 2 in ${province.name}: Siege and Engineers. Next: Healers at 3`);
-    expect(cultureNext(ctx, view, cap, 2)).toBe(`Culture 3 for ${r.culture.investCost[2]} gold: defends +${3 * step}% (was +${2 * step}%), shrugs off 45% of unrest, +1½ gold, newly unlocks Healers in ${province.name}`);
+    expect(cultureLine(ctx, view, cap, 2)).toBe(`Culture 2: defends +${2 * step}%, shrugs off 30% of unrest, +2 gold. Culture 2 in ${province.name}: Siege and Engineers. Next: Healers at 3`);
+    expect(cultureNext(ctx, view, cap, 2)).toBe(`Culture 3 for ${r.culture.investCost[2]} gold: defends +${3 * step}% (was +${2 * step}%), shrugs off 45% of unrest, +3 gold, newly unlocks Healers in ${province.name}`);
     expect(cultureNext(ctx, view, cap, r.culture.max)).toBeNull();
   });
 

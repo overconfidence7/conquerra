@@ -111,7 +111,7 @@ export function ladderLine(ctx: GameContext, view: PlayerView, id: TerritoryId, 
 
 /**
  * What raising culture once more here adds (the Culture button and the panel show it before you tap):
- * "Culture 3 for 6 gold: defends +18% (was +12%), shrugs off 45% of unrest, +1½ gold, newly unlocks Healers in Pinemark".
+ * "Culture 3 for 6 gold: defends +18% (was +12%), shrugs off 45% of unrest, +3 gold, newly unlocks Healers in Pinemark".
  * Null when it's at the top.
  */
 export function cultureNext(ctx: GameContext, view: PlayerView, id: TerritoryId, level: number, levels?: ReadonlyMap<TerritoryId, number>): string | null {

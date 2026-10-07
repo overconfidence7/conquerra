@@ -121,7 +121,7 @@
       8,
       10
     ],
-    "incomePerLevel": 0.5,
+    "incomePerLevel": 1,
     "keptOnCapture": 0,
     "provinceBonusPerLevel": 0.5,
     "protectionPerLevel": 0.15,
@@ -148,6 +148,8 @@
   "leaders": {
     "maxOfKind": 4,
     "stewardShare": 0.2,
+    "stewardShareCrowded": 0.1,
+    "crowdedTerritories": 12,
     "shareChips": [0, 0.1, 0.2, 0.3, 0.5],
     "maxGoldBudget": 99,
     "nameMaxLength": 20

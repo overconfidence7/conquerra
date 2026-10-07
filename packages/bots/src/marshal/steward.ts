@@ -130,6 +130,8 @@ export function planSteward(b: Board, cfg: LeaderPlanning["steward"], command: S
         ...economy(mine).filter((w) => w.order.kind === "build"),
         ...barracksFor(mine),
         ...culture(mine).filter((w) => (w.territory === capital || chokeHolder(w.territory)) && holdCulture(w.territory)).slice(0, 1),
+        // Culture for its income, where it pays back as well as a market would (session 19).
+        ...economy(mine).filter((w) => w.order.kind === "invest" && payback(w.territory, "culture") >= cfg.culturePays),
       ];
       break;
     }

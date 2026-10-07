@@ -100,11 +100,20 @@ export function suggestLeaderName(kind: LeaderKind, seed: string): string {
  * the Steward on "Run the realm" with `stewardShare` of your income if `delegate` (a person's seat), else idle (a bot
  * plans its whole realm itself).
  */
-export function startingLeaders(rules: Rules, of: PlayerId, names: { leader: string; steward: string }, delegate: boolean): LeaderRecord[] {
+export function startingLeaders(rules: Rules, of: PlayerId, names: { leader: string; steward: string }, delegate: boolean, share = rules.leaders.stewardShare): LeaderRecord[] {
   return [
     { kind: "leader", of, name: names.leader, command: null, budget: { ...NO_BUDGET }, purse: 0 },
-    { kind: "steward", of, name: names.steward, command: delegate ? { kind: "realm" } : null, budget: delegate ? { share: rules.leaders.stewardShare } : { ...NO_BUDGET }, purse: 0 },
+    { kind: "steward", of, name: names.steward, command: delegate ? { kind: "realm" } : null, budget: delegate ? { share } : { ...NO_BUDGET }, purse: 0 },
   ];
+}
+
+/**
+ * Your Steward's share at the start (session 19): `stewardShare`, or `stewardShareCrowded` on a crowded table (at most
+ * `crowdedTerritories` territories a player), where buildings pay back too slowly for more.
+ */
+export function startingStewardShare(rules: Rules, territories: number, players: number): number {
+  const l = rules.leaders;
+  return territories / Math.max(1, players) <= (l.crowdedTerritories ?? 12) ? (l.stewardShareCrowded ?? l.stewardShare) : l.stewardShare;
 }
 
 /** Where a leader stands: your own Leader (while alive), a captured Leader, or nowhere (a Steward, or gone). */

@@ -1,0 +1,99 @@
+## today {}
+embervale:4 captain-steward-20 vs captains: 14.4% (fair 25.0%, x0.58); markets by 10 1.5, culture by 10 1.1, forts by 10 2.6
+embervale:4 Marshals: blitzer 21.9%, conqueror 26.7%, merchant 31.8%, opportunist 20.6%, schemer 21.7%, turtle 27.6%
+embervale:4 Marshals: 28.5 turns, 87.5% within 40; half-map at 10 27.3%, halfway leader won 68.4%, comebacks 41.3%
+embervale:4 what wins, markets by 10: 0: 17.5% (n 1080) · 1: 28.7% (n 1388) · 2-3: 33.6% (n 560) · 4+: 48.8% (n 461)
+embervale:4 what wins, culture by 10: 0: 25.2% (n 1495) · 1-2: 22.2% (n 866) · 3-5: 23.6% (n 518) · 6+: 50.8% (n 610)
+wyrmland:6 captain-steward-20 vs captains: 17.6% (fair 16.7%, x1.06); markets by 10 4.0, culture by 10 1.1, forts by 10 2.7
+wyrmland:6 Marshals: blitzer 15.4%, conqueror 12.8%, merchant 23.8%, opportunist 15.6%, schemer 15.4%, turtle 16.8%
+wyrmland:6 Marshals: 42.8 turns, 50.4% within 40; half-map at 10 9.2%, halfway leader won 77.4%, comebacks 44.3%
+wyrmland:6 what wins, markets by 10: 0: 13.8% (n 610) · 1: 25.7% (n 813) · 2-3: 27.1% (n 306) · 4+: 43.2% (n 285)
+wyrmland:6 what wins, culture by 10: 0: 19.3% (n 1127) · 1-2: 21.7% (n 355) · 3-5: 11.7% (n 111) · 6+: 45.6% (n 421)
+## culture {"culture":{"incomePerLevel":1}}
+embervale:4 captain-steward-20 vs captains: 17.0% (fair 25.0%, x0.68); markets by 10 1.4, culture by 10 2.1, forts by 10 2.5
+embervale:4 Marshals: blitzer 20.3%, conqueror 27.1%, merchant 33.9%, opportunist 19.2%, schemer 20.1%, turtle 29.7%
+embervale:4 Marshals: 28.7 turns, 88.3% within 40; half-map at 10 28.6%, halfway leader won 69.3%, comebacks 42.5%
+embervale:4 what wins, markets by 10: 0: 17.8% (n 1066) · 1: 27.2% (n 1387) · 2-3: 33.9% (n 548) · 4+: 51.4% (n 481)
+embervale:4 what wins, culture by 10: 0: 22.1% (n 1476) · 1-2: 24.8% (n 859) · 3-5: 23.7% (n 515) · 6+: 53.6% (n 632)
+wyrmland:6 captain-steward-20 vs captains: 20.6% (fair 16.7%, x1.24); markets by 10 3.6, culture by 10 3.2, forts by 10 2.7
+wyrmland:6 Marshals: blitzer 15.4%, conqueror 14.2%, merchant 22.2%, opportunist 13.0%, schemer 14.8%, turtle 20.4%
+wyrmland:6 Marshals: 43.1 turns, 47.2% within 40; half-map at 10 9.4%, halfway leader won 76.6%, comebacks 47.0%
+wyrmland:6 what wins, markets by 10: 0: 14.1% (n 608) · 1: 24.7% (n 818) · 2-3: 30.7% (n 309) · 4+: 39.1% (n 299)
+wyrmland:6 what wins, culture by 10: 0: 19.1% (n 1140) · 1-2: 21.0% (n 333) · 3-5: 12.2% (n 131) · 6+: 45.6% (n 430)
+## markets {"buildings":{"market":{"income":3}}}
+embervale:4 captain-steward-20 vs captains: 16.8% (fair 25.0%, x0.67); markets by 10 1.5, culture by 10 1.1, forts by 10 2.7
+embervale:4 Marshals: blitzer 20.0%, conqueror 25.0%, merchant 34.7%, opportunist 22.0%, schemer 19.3%, turtle 29.4%
+embervale:4 Marshals: 28.4 turns, 87.3% within 40; half-map at 10 29.8%, halfway leader won 69.3%, comebacks 42.5%
+embervale:4 what wins, markets by 10: 0: 16.8% (n 1092) · 1: 28.6% (n 1357) · 2-3: 31.7% (n 549) · 4+: 53.6% (n 474)
+embervale:4 what wins, culture by 10: 0: 24.5% (n 1454) · 1-2: 22.5% (n 867) · 3-5: 20.4% (n 485) · 6+: 52.6% (n 666)
+wyrmland:6 captain-steward-20 vs captains: 21.6% (fair 16.7%, x1.30); markets by 10 4.2, culture by 10 1.2, forts by 10 3.0
+wyrmland:6 Marshals: blitzer 13.8%, conqueror 17.0%, merchant 24.6%, opportunist 13.0%, schemer 14.2%, turtle 17.0%
+wyrmland:6 Marshals: 42.2 turns, 52.2% within 40; half-map at 10 9.4%, halfway leader won 78.7%, comebacks 45.6%
+wyrmland:6 what wins, markets by 10: 0: 12.0% (n 615) · 1: 24.9% (n 846) · 2-3: 31.0% (n 287) · 4+: 41.8% (n 297)
+wyrmland:6 what wins, culture by 10: 0: 18.9% (n 1133) · 1-2: 20.4% (n 363) · 3-5: 9.7% (n 113) · 6+: 45.6% (n 436)
+## marketsCheap {"buildings":{"market":{"cost":4}}}
+embervale:4 captain-steward-20 vs captains: 19.6% (fair 25.0%, x0.78); markets by 10 2.4, culture by 10 1.2, forts by 10 2.6
+embervale:4 Marshals: blitzer 21.8%, conqueror 24.2%, merchant 35.2%, opportunist 18.5%, schemer 20.1%, turtle 30.6%
+embervale:4 Marshals: 28.4 turns, 88.2% within 40; half-map at 10 26.5%, halfway leader won 69.6%, comebacks 42.4%
+embervale:4 what wins, markets by 10: 0: 17.4% (n 1013) · 1: 26.7% (n 1400) · 2-3: 33.0% (n 564) · 4+: 51.7% (n 509)
+embervale:4 what wins, culture by 10: 0: 23.0% (n 1470) · 1-2: 22.4% (n 881) · 3-5: 20.6% (n 472) · 6+: 55.4% (n 663)
+wyrmland:6 captain-steward-20 vs captains: 21.0% (fair 16.7%, x1.26); markets by 10 6.8, culture by 10 1.2, forts by 10 2.7
+wyrmland:6 Marshals: blitzer 15.0%, conqueror 13.0%, merchant 22.6%, opportunist 16.8%, schemer 17.4%, turtle 15.2%
+wyrmland:6 Marshals: 43.2 turns, 47.2% within 40; half-map at 10 8.4%, halfway leader won 78.0%, comebacks 48.0%
+wyrmland:6 what wins, markets by 10: 0: 14.7% (n 565) · 1: 27.2% (n 819) · 2-3: 23.8% (n 324) · 4+: 39.1% (n 299)
+wyrmland:6 what wins, culture by 10: 0: 21.7% (n 1099) · 1-2: 19.7% (n 361) · 3-5: 7.7% (n 117) · 6+: 42.1% (n 430)
+## forts {"buildings":{"fort":{"cost":5}}}
+embervale:4 captain-steward-20 vs captains: 16.4% (fair 25.0%, x0.66); markets by 10 1.7, culture by 10 1.2, forts by 10 3.6
+embervale:4 Marshals: blitzer 24.0%, conqueror 28.2%, merchant 30.5%, opportunist 21.1%, schemer 21.5%, turtle 25.0%
+embervale:4 Marshals: 28.9 turns, 87.8% within 40; half-map at 10 26.5%, halfway leader won 68.5%, comebacks 42.9%
+embervale:4 what wins, markets by 10: 0: 18.6% (n 1073) · 1: 30.3% (n 1374) · 2-3: 28.8% (n 562) · 4+: 46.9% (n 471)
+embervale:4 what wins, culture by 10: 0: 26.7% (n 1461) · 1-2: 24.3% (n 864) · 3-5: 16.7% (n 466) · 6+: 46.7% (n 689)
+wyrmland:6 captain-steward-20 vs captains: 21.4% (fair 16.7%, x1.28); markets by 10 4.5, culture by 10 1.2, forts by 10 3.8
+wyrmland:6 Marshals: blitzer 13.2%, conqueror 15.8%, merchant 22.2%, opportunist 16.0%, schemer 14.0%, turtle 18.6%
+wyrmland:6 Marshals: 44.0 turns, 45.4% within 40; half-map at 10 9.2%, halfway leader won 72.5%, comebacks 49.7%
+wyrmland:6 what wins, markets by 10: 0: 12.4% (n 630) · 1: 25.5% (n 833) · 2-3: 31.7% (n 293) · 4+: 39.6% (n 293)
+wyrmland:6 what wins, culture by 10: 0: 20.8% (n 1124) · 1-2: 17.2% (n 367) · 3-5: 9.0% (n 122) · 6+: 43.8% (n 436)
+## fortsQuick {"buildings":{"fort":{"buildTurns":1}}}
+embervale:4 captain-steward-20 vs captains: 12.2% (fair 25.0%, x0.49); markets by 10 1.6, culture by 10 1.1, forts by 10 2.5
+embervale:4 Marshals: blitzer 22.8%, conqueror 25.1%, merchant 34.2%, opportunist 23.5%, schemer 17.7%, turtle 27.0%
+embervale:4 Marshals: 29.2 turns, 86.6% within 40; half-map at 10 28.1%, halfway leader won 67.6%, comebacks 44.3%
+embervale:4 what wins, markets by 10: 0: 18.8% (n 1097) · 1: 27.5% (n 1380) · 2-3: 32.4% (n 568) · 4+: 50.3% (n 459)
+embervale:4 what wins, culture by 10: 0: 25.7% (n 1497) · 1-2: 20.2% (n 881) · 3-5: 23.4% (n 529) · 6+: 52.4% (n 597)
+wyrmland:6 captain-steward-20 vs captains: 17.6% (fair 16.7%, x1.06); markets by 10 4.1, culture by 10 1.1, forts by 10 2.8
+wyrmland:6 Marshals: blitzer 16.0%, conqueror 13.6%, merchant 21.8%, opportunist 14.0%, schemer 17.4%, turtle 17.2%
+wyrmland:6 Marshals: 43.2 turns, 46.6% within 40; half-map at 10 10.8%, halfway leader won 76.0%, comebacks 46.8%
+wyrmland:6 what wins, markets by 10: 0: 14.9% (n 626) · 1: 25.3% (n 833) · 2-3: 27.7% (n 311) · 4+: 38.3% (n 287)
+wyrmland:6 what wins, culture by 10: 0: 20.7% (n 1142) · 1-2: 20.2% (n 357) · 3-5: 7.8% (n 141) · 6+: 43.4% (n 417)
+## culture+markets {"culture":{"incomePerLevel":1},"buildings":{"market":{"income":3}}}
+embervale:4 captain-steward-20 vs captains: 16.8% (fair 25.0%, x0.67); markets by 10 1.5, culture by 10 2.2, forts by 10 2.6
+embervale:4 Marshals: blitzer 17.8%, conqueror 24.2%, merchant 39.4%, opportunist 16.4%, schemer 20.1%, turtle 32.5%
+embervale:4 Marshals: 28.2 turns, 87.6% within 40; half-map at 10 28.3%, halfway leader won 65.7%, comebacks 43.1%
+embervale:4 what wins, markets by 10: 0: 15.7% (n 1077) · 1: 25.7% (n 1373) · 2-3: 36.3% (n 560) · 4+: 59.3% (n 464)
+embervale:4 what wins, culture by 10: 0: 20.9% (n 1487) · 1-2: 21.9% (n 832) · 3-5: 24.1% (n 464) · 6+: 57.2% (n 691)
+wyrmland:6 captain-steward-20 vs captains: 22.0% (fair 16.7%, x1.32); markets by 10 3.8, culture by 10 3.4, forts by 10 2.8
+wyrmland:6 Marshals: blitzer 15.0%, conqueror 15.8%, merchant 22.6%, opportunist 13.2%, schemer 11.4%, turtle 22.0%
+wyrmland:6 Marshals: 43.2 turns, 48.2% within 40; half-map at 10 8.0%, halfway leader won 77.0%, comebacks 50.0%
+wyrmland:6 what wins, markets by 10: 0: 14.2% (n 611) · 1: 22.6% (n 847) · 2-3: 37.8% (n 283) · 4+: 39.9% (n 288)
+wyrmland:6 what wins, culture by 10: 0: 18.2% (n 1129) · 1-2: 21.0% (n 348) · 3-5: 18.9% (n 111) · 6+: 45.4% (n 441)
+## culture+forts {"culture":{"incomePerLevel":1},"buildings":{"fort":{"cost":5}}}
+embervale:4 captain-steward-20 vs captains: 14.4% (fair 25.0%, x0.58); markets by 10 1.6, culture by 10 2.5, forts by 10 3.4
+embervale:4 Marshals: blitzer 19.0%, conqueror 25.3%, merchant 37.0%, opportunist 22.0%, schemer 17.4%, turtle 29.8%
+embervale:4 Marshals: 28.4 turns, 87.9% within 40; half-map at 10 26.1%, halfway leader won 68.9%, comebacks 42.6%
+embervale:4 what wins, markets by 10: 0: 15.9% (n 1046) · 1: 27.7% (n 1393) · 2-3: 34.7% (n 565) · 4+: 52.6% (n 479)
+embervale:4 what wins, culture by 10: 0: 23.2% (n 1455) · 1-2: 23.2% (n 850) · 3-5: 16.8% (n 476) · 6+: 55.0% (n 702)
+wyrmland:6 captain-steward-20 vs captains: 21.6% (fair 16.7%, x1.30); markets by 10 3.7, culture by 10 3.5, forts by 10 3.8
+wyrmland:6 Marshals: blitzer 13.8%, conqueror 16.4%, merchant 24.2%, opportunist 13.6%, schemer 12.8%, turtle 19.2%
+wyrmland:6 Marshals: 43.4 turns, 46.4% within 40; half-map at 10 8.4%, halfway leader won 77.2%, comebacks 47.4%
+wyrmland:6 what wins, markets by 10: 0: 13.3% (n 610) · 1: 23.6% (n 825) · 2-3: 33.7% (n 297) · 4+: 43.2% (n 287)
+wyrmland:6 what wins, culture by 10: 0: 19.7% (n 1107) · 1-2: 18.6% (n 354) · 3-5: 7.8% (n 103) · 6+: 45.7% (n 455)
+## markets+forts {"buildings":{"market":{"income":3},"fort":{"cost":5}}}
+embervale:4 captain-steward-20 vs captains: 18.8% (fair 25.0%, x0.75); markets by 10 1.8, culture by 10 1.3, forts by 10 3.6
+embervale:4 Marshals: blitzer 18.5%, conqueror 25.9%, merchant 36.7%, opportunist 20.9%, schemer 19.0%, turtle 29.4%
+embervale:4 Marshals: 27.7 turns, 89.6% within 40; half-map at 10 31.2%, halfway leader won 69.7%, comebacks 43.1%
+embervale:4 what wins, markets by 10: 0: 15.8% (n 1049) · 1: 28.5% (n 1346) · 2-3: 33.7% (n 575) · 4+: 54.4% (n 471)
+embervale:4 what wins, culture by 10: 0: 24.1% (n 1455) · 1-2: 21.8% (n 806) · 3-5: 20.4% (n 431) · 6+: 51.5% (n 749)
+wyrmland:6 captain-steward-20 vs captains: 22.4% (fair 16.7%, x1.34); markets by 10 4.9, culture by 10 1.3, forts by 10 3.9
+wyrmland:6 Marshals: blitzer 15.0%, conqueror 12.4%, merchant 25.4%, opportunist 12.8%, schemer 14.4%, turtle 20.0%
+wyrmland:6 Marshals: 42.2 turns, 51.0% within 40; half-map at 10 11.2%, halfway leader won 78.6%, comebacks 46.0%
+wyrmland:6 what wins, markets by 10: 0: 12.7% (n 638) · 1: 22.4% (n 822) · 2-3: 35.0% (n 300) · 4+: 45.5% (n 286)
+wyrmland:6 what wins, culture by 10: 0: 19.2% (n 1143) · 1-2: 15.4% (n 345) · 3-5: 7.1% (n 113) · 6+: 49.2% (n 445)

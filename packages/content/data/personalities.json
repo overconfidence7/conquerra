@@ -432,7 +432,8 @@
       "fortThreat": 4,
       "marketsStopBefore": 4,
       "cultureFights": 4,
-      "exposedWorth": 0.5
+      "exposedWorth": 0.5,
+      "culturePays": 0.3
     }
   }
 }

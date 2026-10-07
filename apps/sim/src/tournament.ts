@@ -85,8 +85,6 @@ export function botFor(kind: string, tweak?: TournamentSpec["tweak"]): Bot {
       const [steps, reach, turns, opening, crowded = 12] = gd.slice(6).split("-").map(Number) as [number, number, number, number, number?];
       J = { ...J, capitalGuard: { steps, reach, turns, opening, crowded } };
     }
-    const offs = opts.filter((o) => o.startsWith("off-")).map((o) => o.slice(4));
-    if (offs.length) J = { ...J, off: offs };
     const P = opts.includes("style") ? { ...marshalData.leaders.style, id } : Personality.parse(merge(merge(personality(id), tweak?.personalities?.["*"]), tweak?.personalities?.[id]));
     return { ...makeMarshalBot(P as Personality, J), id: kind.replace(/^sighted:/, "") };
   }

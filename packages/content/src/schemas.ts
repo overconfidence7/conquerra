@@ -306,6 +306,12 @@ export const Rules = z.object({
   leaders: z.object({
     maxOfKind: z.number().int().min(1),
     stewardShare: z.number().min(0).max(1),
+    /**
+     * Session 19: on a crowded table (at most `crowdedTerritories` territories a player: Embervale at 4, Greatmarch at
+     * 8–10) your Steward starts on this share instead: buildings pay back too slowly there for 20% (the sims).
+     */
+    stewardShareCrowded: z.number().min(0).max(1).default(0.1),
+    crowdedTerritories: z.number().min(0).default(12),
     shareChips: z.array(z.number().min(0).max(1)).min(1),
     maxGoldBudget: z.number().int().min(0),
     nameMaxLength: z.number().int().min(1),

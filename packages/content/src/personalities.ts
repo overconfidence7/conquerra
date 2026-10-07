@@ -168,8 +168,6 @@ export const MarshalJudgement = z.object({
    * steps apart there; on roomier tables the opening guard only slowed games down).
    */
   capitalGuard: z.object({ steps: z.number().int().min(1), reach: z.number().min(0), turns: z.number().int().min(0), opening: z.number().min(0).max(1), crowded: z.number().min(0) }).optional(),
-  /** TEMPORARY (session 19 tests): parts of the realm plan switched off. */
-  off: z.array(z.string()).optional(),
 });
 export type MarshalJudgement = z.infer<typeof MarshalJudgement>;
 
@@ -198,6 +196,12 @@ export const LeaderPlanning = z.object({
     cultureFights: z.number().min(0),
     /** A frontier land facing a rival is worth this share of a quiet one when judging what pays (it may be lost). */
     exposedWorth: z.number().min(0).max(1),
+    /**
+     * Run the realm buys culture for its income (not only where it protects) when a level pays back at least this much
+     * gold a turn for each gold (a market pays 2 for 6: 0.33). Session 19: under the old rules culture paid 0.17, so it
+     * never did; with more income a level, it does.
+     */
+    culturePays: z.number().min(0).default(0.3),
   }),
 });
 export type LeaderPlanning = z.infer<typeof LeaderPlanning>;

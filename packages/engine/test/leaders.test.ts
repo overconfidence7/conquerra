@@ -4,6 +4,7 @@ import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import {
   createGame,
+  startingStewardShare,
   findLeader,
   readSave,
   replayFor,
@@ -69,7 +70,8 @@ describe("two leaders from the start", () => {
       ],
     });
     expect(rec(s, "p1", "leader")).toMatchObject({ name: "Aldric the Bold", command: null, budget: { share: 0 } });
-    expect(rec(s, "p1", "steward")).toMatchObject({ command: { kind: "realm" }, budget: { share: 0.2 } });
+    // (A crowded table, at most 12 territories a player: 10%; session 19.)
+    expect(rec(s, "p1", "steward")).toMatchObject({ command: { kind: "realm" }, budget: { share: ctx.map.territories.length / 2 <= 12 ? 0.1 : 0.2 } });
     expect(rec(s, "p1", "steward")!.name.trim()).not.toBe("");
     expect(rec(s, "p2", "steward")).toMatchObject({ command: null, budget: { share: 0 } });
     const long = createGame(ctx, { gameId: "g", seed: "x", players: [{ id: "p1", name: "Y", leaderName: "x".repeat(60) }, { id: "p2", name: "B" }] });
@@ -200,7 +202,8 @@ describe("budgets and purses", () => {
     expect(player(r.state, "p1").gold).toBe(50 + 14 + 2);
     // Your own order pays from the treasury as before.
     const mine = resolveTurn(ctx, s, { p1: [{ id: "c", kind: "invest", territory: "a" }] });
-    expect(player(mine.state, "p1").gold).toBe(50 - 3 + 14);
+    // (Its culture level pays as the turn ends: +1 gold a level since session 19.)
+    expect(player(mine.state, "p1").gold).toBe(50 - 3 + 14 + Math.floor(ctx.rules.culture.incomePerLevel));
     expect(find(mine.events, "invested")!.by).toBeUndefined();
   });
 
@@ -411,5 +414,14 @@ describe("determinism", () => {
       return stateFingerprint(s);
     };
     expect(play()).toBe(play());
+  });
+});
+
+describe("your Steward's share at the start (session 19)", () => {
+  it("is 20% on a roomy table and 10% on a crowded one (at most 12 territories a player)", () => {
+    expect(startingStewardShare(defaultRules, 120, 6)).toBe(0.2);
+    expect(startingStewardShare(defaultRules, 40, 3)).toBe(0.2);
+    expect(startingStewardShare(defaultRules, 40, 4)).toBe(0.1);
+    expect(startingStewardShare(defaultRules, 80, 10)).toBe(0.1);
   });
 });

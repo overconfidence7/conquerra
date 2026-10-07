@@ -160,9 +160,13 @@ describe("Stewards", () => {
   });
 
   it("Grow the economy: a market on quiet land; Raise culture: levels across the province; Build up: only in its province", () => {
-    const { ctx, s } = grid(6, 4, { a0: ["p1", 4], a1: ["p1", 3], b0: ["p1", 3], b1: ["p1", 3], c0: ["p1", 2], f3: ["p2", 5] }, ["a0", "f3"]);
+    const { ctx: ctx0, s } = grid(6, 4, { a0: ["p1", 4], a1: ["p1", 3], b0: ["p1", 3], b1: ["p1", 3], c0: ["p1", 2], f3: ["p2", 5] }, ["a0", "f3"]);
+    // Whichever pays back fastest: with culture at +½ gold a level (before session 19) a market...
+    const ctx: GameContext = { ...ctx0, rules: { ...ctx0.rules, culture: { ...ctx0.rules.culture, incomePerLevel: 0.5 } } };
     lead(s, "steward", { kind: "economy" }, 6);
     expect(plan(ctx, s).orders[0]).toMatchObject({ kind: "build", building: "market", steward: "p1" });
+    // ...and at +1 gold a level (session 19) a first level of culture pays as well as a market (1 for 3, 2 for 6).
+    expect(plan(ctx0, s).orders.some((o) => o.kind === "invest")).toBe(true);
     lead(s, "steward", { kind: "culture", province: "p00" }, 10);
     const c = plan(ctx, s).orders;
     expect(c.length).toBeGreaterThanOrEqual(3);
