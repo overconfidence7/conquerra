@@ -7,6 +7,7 @@
  *    remembers; a Marshal: its own rule on its estimates and memory), and how many name someone else when nobody truly is;
  *  - joint wars aimed at it, and the Fallen's world events on it.
  *   npx tsx apps/sim/scripts/s17-runaway.ts [games=300] [stand-in=sighted:marshal-blitzer] [others=marshal|captain] [rotate]
+ * TWEAK='<json>' tries a change to the Marshals (as `pnpm tournament --tweak`).
  * Stand-ins: `expander` (session 16's), any tournament seat kind; `sighted:` plans with fog off (a sharp person piecing
  * everything together). `rotate`: the stand-in takes every seat in turn.
  */
@@ -61,7 +62,8 @@ function playOne(standIn: string, others: string, i: number, rotate: boolean): R
   const kinds = seatsFor(spec, rotate ? i : 0, seed);
   const exSeat = kinds.indexOf(standIn);
   const ex = `p${exSeat + 1}`;
-  const bots = kinds.map((k) => botFor(k));
+  // TWEAK (JSON, as `pnpm tournament --tweak`): try a change to the Marshals' judgement or personalities.
+  const bots = kinds.map((k) => botFor(k, process.env.TWEAK ? JSON.parse(process.env.TWEAK) : undefined));
   const row: Row = { won: false, turns: 0, trueAt: null, seenAt: null, trueTurns: 0, seeing: 0, looking: 0, calmLooking: 0, falseAlarms: 0, wars: [], fallenOnIt: 0, fallenOnOthers: 0, at12: 0, peak: 0 };
   let truth: string | null = null;
   let views: ReadonlyMap<string, PlayerView> = new Map();

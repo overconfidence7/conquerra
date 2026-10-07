@@ -89,7 +89,33 @@ Winners grow fastest early, lose the least land early, attack more than one riva
 
 ## 4. Stopping a runaway (Part 3)
 
-<!-- PART3 -->
+Session 16 found why nobody ganged up on Nate: under fog each Captain counts only the land it sees or remembers, so on a big map it named a runaway in about a fifth of its turns, about 8 turns late. The Marshal reads it its own way, still never cheating (only its own view, its memory and public facts):
+
+1. **Land it can't see is estimated** from what it can: land it last saw stays whose it was (land last seen neutral only counts as neutral for 4 turns, since that's what everyone takes first); a knocked-out player's land goes to whoever knocked them out (public); land it knows nothing about goes 40% to whoever holds the nearest land it knows of and 60% spread evenly among the living rivals, scaled by how much of the land it can see is held by anyone.
+2. **Pace, not only size:** the rival that gained the most land over the last 3 turns (on its estimates, and what it watched them take in the replays), twice as fast as the next and already holding 18% of the map, is a runaway before it holds 40%.
+3. **A lower bar at big tables:** from 6 players, a third of the map, or 22% and 1.6 times anyone else (4–5 players: the Captain's 40%, or a quarter and 1.75 times).
+4. **Joint wars come early and stick:** once it names a runaway it keeps naming it for 3 turns unless the runaway falls back; it proposes a joint war against it first, for the longest a war can run (6 turns), with a rival that borders it, and again as soon as one ends; every Marshal accepts one; its fronts with the runaway come first and the runaway's land is worth 1.4 times as much (its joint war's target 1.6 times).
+
+**The strong stand-in:** session 16's "fast expander" won only 16% against Captains; Nate won in 12 turns. The new stand-in is the strongest personality on this table, **the Conqueror, playing with fog off** (it plans from the whole board, as a sharp person piecing things together would), with the Marshal's attack-hard judgement. Wyrmland, 6 players, the stand-in rotated through every seat, 300 games each, everything on:
+
+| | Stand-in vs 5 Captains | Stand-in vs 5 Marshals | Fast expander vs 5 Captains | Fast expander vs 5 Marshals |
+|---|---|---|---|---|
+| **It wins** (fair 17%) | **35%** | **24%** | 23% | 5% |
+| It became a true runaway (the Captain's rule on the real land) | 39% of games, from turn 19.1 | 34%, from turn 17.1 | 29%, from turn 16.3 | 18%, from turn 19.1 |
+| While it was, the others named it | 29% of their turns | **77%** | 23% | 79% |
+| Someone named it, how late | in 94% of those games, **8.5 turns late** | in 100%, **0.5 turns late** | 87%, 10.1 turns late | 100%, 0.1 turns late |
+| Joint wars against it | 1.27 a game (36% of games), first on turn 29 | **2.14 a game (60% of games), first on turn 10** | 0.77 (25%), turn 28 | 1.84 (60%), turn 10 |
+| The Fallen's world events on it | 3.83 a game (others, all five together, 10.81) | 3.88 (15.57) | 3.13 (11.61) | 1.51 (15.86) |
+| Seat-turns naming a runaway when nobody truly was one | 1% | 23% | 0% | 31%* |
+| Game length (turns) | 47.5 | 44.9 | 45.6 | 43.9 |
+
+\* Before the stricter bar below.
+
+- **The Marshals spot a runaway at once** (77% of their turns while it is one, half a turn late, against the Captains' 29% and 8.5 turns late) and **gang up early** (the first joint war on turn 10, not 29).
+- **The strong stand-in still wins 24%** against Marshals (fair 17%), down from 35% against Captains. That's the same strength as a strong player against a table that fights back; not quite fair yet. Against session 16's weaker stand-in, Marshals hold it to 5%.
+- **"False alarms":** Marshals name someone in about a quarter of their turns when nobody yet meets the Captain's strict rule. Most of these are the leader caught early on pace or the big-table bar (that's the point); a stricter bar (`bigShare` 0.33, `bigMinShare` 0.22, `bigLead` 1.6, `paceLead` 2, `paceMinShare` 0.18, now the default) cut them from 29% to 23% with no loss of spotting. Each false alarm costs the Marshal a little (on the tight 80-territory maps the first, looser rule cost it 3 points of win rate).
+- **The Fallen** were left as they are (rule changes go to the balance pass). They do turn on the runaway: about 3.9 world events a game on the stand-in, against about 3 on each other player; they only exist once someone is knocked out (around turn 14), so they act late. Switching the Fallen bots to the Marshal wouldn't help: they already see the whole political map, which is better than any estimate.
+
 
 ## 5. The headline numbers (Part 5)
 

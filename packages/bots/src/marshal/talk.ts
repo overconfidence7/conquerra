@@ -105,11 +105,26 @@ export function marshalPropose(ctx: GameContext, view: PlayerView, P: Personalit
   if (!cap || !view.settings.diplomacy || view.winner || view.turn < 2) return [];
   const b = marshalBoard(ctx, view, insight, lastTurn);
   if (!b) return [];
-  const out = proposeOffers(ctx, view, "captain", lastTurn, b);
-  if (out.length >= cap) return out;
   const me = view.me.id;
   const n = namesFor(ctx, view);
   const R = insight.runaway;
+  // A joint war against the runaway leader comes first and sticks (Part 3): for as long as a war can run, with a rival
+  // that borders it (or anyone, if we border it ourselves), and again as soon as one ends (no waiting a few turns).
+  const runawayWar = (): Offer | null => {
+    if (!R || !b.alive.some((x) => x.id === R) || view.deals.some((d) => between(d, me, R) && (d.kind === "truce" || d.kind === "war"))) return null;
+    if (view.deals.some((d) => d.kind === "war" && d.target === R && (d.a === me || d.b === me))) return null;
+    const bordersR = (q: PlayerId) => b.idx.ids.some((x) => b.look0(x) === q && b.idx.neighbors.get(x)!.some((y) => b.look0(y) === R));
+    const partner = b.alive
+      .map((x) => x.id)
+      .filter((q) => q !== R && q !== me && !view.deals.some((d) => between(d, me, q) && d.kind === "war") && !view.deals.some((d) => between(d, q, R) && (d.kind === "truce" || d.kind === "war")))
+      .filter((q) => trustIn(ctx, view, q).score >= rules.diplomacy.bots.trustMin && (bordersR(q) || b.facing.has(R)))
+      .filter((q) => !(lastTurn ?? []).some((e) => e.type === "offerLapsed" && e.offer.from === me && e.offer.to === q && e.offer.terms.kind === "war"))
+      .sort((x, y) => Number(bordersR(y)) - Number(bordersR(x)) || (b.knownLand.get(y) ?? 0) - (b.knownLand.get(x) ?? 0) || (x < y ? -1 : 1))[0];
+    return partner ? { id: `${me}-t${view.turn}-ow`, from: me, to: partner, terms: { kind: "war", target: R, turns: rules.diplomacy.war.maxTurns }, bond: "handshake", note: `${n.name(R)} is running away with the map; let's stop them together.` } : null;
+  };
+  const first = runawayWar();
+  const out = first ? [first, ...proposeOffers(ctx, view, "captain", lastTurn, b).filter((o) => !(o.terms.kind === "war" && o.terms.target === R))].slice(0, cap) : proposeOffers(ctx, view, "captain", lastTurn, b);
+  if (out.length >= cap) return out;
   const has = (q: PlayerId, kind: DealKind) => view.deals.some((d) => between(d, me, q) && d.kind === kind);
   const recent = (q: PlayerId, kind: DealKind) => view.record.some((x) => x.kind === kind && between(x, me, q) && x.end >= view.turn - 3);
   const askedLast = (q: PlayerId, kind: DealKind) => (lastTurn ?? []).some((e) => e.type === "offerLapsed" && e.offer.from === me && e.offer.to === q && e.offer.terms.kind === kind);

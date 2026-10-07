@@ -94,10 +94,12 @@ export function runTournament(spec: TournamentSpec, workers = Math.max(1, cpus()
   ).then((parts) => parts.flat().sort((a, b) => a.seed.localeCompare(b.seed, "en", { numeric: true })));
 }
 
-if (args.includes("--worker")) {
+/** Run as a program (not imported by another script, such as s17-runaway.ts with its own workers). */
+const isMain = !!process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isMain && args.includes("--worker")) {
   const { spec, w, n } = JSON.parse(arg("worker", "{}")) as { spec: TournamentSpec; w: number; n: number };
   for (let i = w; i < spec.games; i += n) process.stdout.write(`${JSON.stringify(playOne(spec, i))}\n`);
-} else if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+} else if (isMain) {
   const [map, players] = arg("table", "embervale:4").split(":") as [string, string];
   const spec: TournamentSpec = {
     map,

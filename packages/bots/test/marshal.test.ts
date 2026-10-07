@@ -177,15 +177,37 @@ describe("the Marshal's reading of the board", () => {
     const est = new Map([["p2", 30], ["p3", 14], ["p4", 12]]);
     // 120 territories: 30 is a quarter, and 2.1 times the next: a runaway at 6 players (bigLead 1.5), and at 4 (lead 1.75).
     expect(readRunaway(J.runaway, est, 12, 120, 6, 4, new Map(), mem, 10)).toEqual({ runaway: "p2", why: "size" });
-    // 24 of 120 at 6 players: 20%, 1.7 times the next: the big-table bar names it; at 4 players it doesn't.
-    const est2 = new Map([["p2", 24], ["p3", 14], ["p4", 12]]);
+    // 28 of 120 at 6 players: 23%, 2 times the next: the big-table bar names it; at 4 players it doesn't.
+    const est2 = new Map([["p2", 28], ["p3", 14], ["p4", 12]]);
     expect(readRunaway(J.runaway, est2, 12, 120, 6, 4, new Map(), mem, 10).runaway).toBe("p2");
     expect(readRunaway(J.runaway, est2, 12, 120, 4, 4, new Map(), mem, 10).runaway).toBeNull();
-    // Pace: p3 took 9 territories lately, the next fastest 2, and already holds 20 of 120.
-    const est3 = new Map([["p2", 22], ["p3", 20], ["p4", 12]]);
+    // Pace: p3 took 9 territories lately, the next fastest 2, and already holds 22 of 120.
+    const est3 = new Map([["p2", 24], ["p3", 22], ["p4", 12]]);
     expect(readRunaway(J.runaway, est3, 15, 120, 4, 4, new Map([["p3", 9], ["p2", 2]]), mem, 10)).toEqual({ runaway: "p3", why: "pace" });
     // Still: named two turns ago, still the biggest.
     expect(readRunaway(J.runaway, est3, 15, 120, 4, 4, new Map(), { ...mem, runaway: { player: "p2", since: 7, last: 8, named: 9 } }, 10)).toEqual({ runaway: "p2", why: "still" });
     expect(readRunaway(J.runaway, est3, 15, 120, 4, 4, new Map(), { ...mem, runaway: { player: "p2", since: 2, last: 4, named: 5 } }, 10).runaway).toBeNull();
   });
 });
+
+describe("the Marshal against a runaway (Part 3)", () => {
+  it("proposes a joint war against the runaway first, for as long as a war can run, and every Marshal says yes", () => {
+    // p2 holds most of a 12-territory line; p1 and p3 sit either side of it.
+    const sc = scenario({
+      line: "abcdefghijkl",
+      layout: { a: ["p1", 8], b: ["p1", 8], c: ["p2", 4], d: ["p2", 4], e: ["p2", 4], f: ["p2", 4], g: ["p2", 4], h: ["p2", 4], i: ["p2", 4], j: ["p3", 8], k: ["p3", 8], l: ["p4", 8] },
+      memory: { d: ["p2", 4], e: ["p2", 4], f: ["p2", 4], g: ["p2", 4], h: ["p2", 4], i: ["p2", 4], j: ["p3", 8], k: ["p3", 8], l: ["p4", 8] },
+      caps: ["a", "e", "k", "l"],
+      gold: 20,
+    });
+    sc.s.turn = 5;
+    const view = viewFor(sc.ctx, sc.s, "p1");
+    const offers = makeMarshalBot("merchant").diplomat.propose(sc.ctx, view);
+    expect(offers[0]).toMatchObject({ to: "p3", terms: { kind: "war", target: "p2", turns: defaultRules.diplomacy.war.maxTurns } });
+    for (const p of PERSONALITY_IDS) {
+      const a = judgeBy(sc.ctx, makeMarshalBot(p).diplomat, viewFor(sc.ctx, sc.s, "p3"), { ...offers[0]!, to: "p3" });
+      expect(a.accept, p).toBe(true);
+    }
+  });
+});
+
