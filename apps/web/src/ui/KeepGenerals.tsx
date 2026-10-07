@@ -1,41 +1,65 @@
-import type { GameContext, PlayerView } from "@conquerra/engine";
+import type { GameContext, LeaderKind, PlayerView } from "@conquerra/engine";
 import { namer } from "../logic/text";
+import { overCap } from "../logic/generals";
 import { useGame } from "../store";
-import { GeneralPortrait } from "./Command";
 import { Frame } from "./Frame";
+import { LeaderPortrait } from "./LeadersPanel";
 
 /**
- * A third captured general arrived: you may keep two (rules.generals.maxCaptured). Pick which to let go; if you
- * don't, the ones nearest your front stay when the turn plays.
+ * One captured leader too many (of either kind): you may keep `maxOfKind - 1` captured Leaders and as many captured
+ * Stewards. Pick which to let go; if you don't, the Leaders nearest your front and the Stewards with the fullest
+ * purses stay when the turn plays (the engine's rule).
  */
 export default function KeepGenerals({ ctx, view, onDone }: { ctx: GameContext; view: PlayerView; onDone(): void }) {
   const { releases, toggleRelease } = useGame();
   const n = namer(ctx, view);
   const max = ctx.rules.leaders.maxOfKind - 1;
-  const over = view.me.captured.length - max;
-  const chosen = releases.filter((g) => view.me.captured.some((c) => c.of === g)).length;
+  const over = overCap(ctx, view);
+  // Release keys: a Leader by its player id (as before), a Steward as "steward:<id>".
+  const keyFor = (kind: LeaderKind, of: string) => (kind === "steward" ? `steward:${of}` : of);
+  const groups = (["leader", "steward"] as const)
+    .filter((kind) => over[kind] > 0)
+    .map((kind) => {
+      const list =
+        kind === "leader"
+          ? view.me.captured.map((g) => ({ of: g.of, where: `at ${n.place(g.territory)}` }))
+          : (view.me.leaders ?? []).filter((l) => l.kind === "steward" && l.of !== view.me.id).map((l) => ({ of: l.of, where: `purse ${l.purse} gold` }));
+      const chosen = list.filter((x) => releases.includes(keyFor(kind, x.of))).length;
+      return { kind, list, chosen, over: over[kind] };
+    });
+  const nameOf = (kind: LeaderKind, of: string) => (view.me.leaders ?? []).find((l) => l.kind === kind && l.of === of)?.name ?? n.who(of);
+  const done = groups.every((g) => g.chosen === g.over);
+  const words = (k: LeaderKind, count: number) => (k === "leader" ? (count === 1 ? "Leader" : "Leaders") : count === 1 ? "Steward" : "Stewards");
+  const title = groups.length === 2 ? `You may keep ${max} captured Leaders and ${max} Stewards` : `You may keep ${max} captured ${words(groups[0]?.kind ?? "leader", 2)}`;
   return (
     <div className="overlay">
-      <Frame className="dialog" role="dialog" label="Choose your captured generals" title={`You may keep ${max} captured generals`}>
-        <p>Choose {over === 1 ? "one" : over} to let go. If you don't, the {max} nearest your front stay.</p>
-        <ul className="general-lines keep-list">
-          {view.me.captured.map((g) => {
-            const going = releases.includes(g.of);
-            return (
-              <li key={g.of}>
-                <button className={`general-line keep ${going ? "going" : ""}`} aria-pressed={going} onClick={() => toggleRelease(g.of)} disabled={!going && chosen >= over}>
-                  <GeneralPortrait view={view} general={g.of} size={36} />
-                  <span>
-                    <b>{n.who(g.of)}</b> <span className="muted small">at {n.place(g.territory)}</span>
-                    <span className="block small">{going ? "Letting go" : "Keeping"}</span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-        <button className="primary wide" onClick={onDone} disabled={chosen !== over}>
-          Keep the other {max}
+      <Frame className="dialog" role="dialog" label="Choose your captured leaders" title={title}>
+        {groups.map((g) => (
+          <section key={g.kind}>
+            <p>
+              Choose {g.over === 1 ? "one" : g.over} {words(g.kind, g.over)} to let go. If you don't, {g.kind === "leader" ? `the ${max} nearest your front stay` : `the ${max} with the fullest purses stay (a Steward you let go hands its purse back to your treasury)`}.
+            </p>
+            <ul className="general-lines keep-list">
+              {g.list.map((x) => {
+                const key = keyFor(g.kind, x.of);
+                const going = releases.includes(key);
+                return (
+                  <li key={key}>
+                    <button className={`general-line keep ${going ? "going" : ""}`} aria-pressed={going} onClick={() => toggleRelease(key)} disabled={!going && g.chosen >= g.over}>
+                      <LeaderPortrait view={view} l={{ kind: g.kind, of: x.of }} size={36} />
+                      <span>
+                        <b>{nameOf(g.kind, x.of)}</b> <span className="muted small">({g.kind === "steward" ? "Steward" : "Leader"} of {n.who(x.of)}, {x.where})</span>
+                        <span className="block small">{going ? "Letting go" : "Keeping"}</span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ))}
+        <button className="primary wide" onClick={onDone} disabled={!done}>
+          Keep the others
         </button>
         <button className="link" onClick={onDone}>
           Decide later

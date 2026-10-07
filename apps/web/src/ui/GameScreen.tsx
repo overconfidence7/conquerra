@@ -5,7 +5,7 @@ import { passageLines, passageNow, truceLines, waitingOffers } from "../logic/de
 import { colorOf } from "./colors";
 import { incomeEstimate } from "../logic/actions";
 import { planQueue, queueFor } from "../logic/orders";
-import { arrangeQueue, asIfYouOrderFrom, standing } from "../logic/generals";
+import { arrangeQueue, asIfYouOrderFrom, overCap, standing } from "../logic/generals";
 import { commandArea } from "../logic/leaderArea";
 import { planPath } from "../logic/paths";
 import { clearInsets, landFrame, type Insets, type Rect } from "../map/camera";
@@ -435,7 +435,7 @@ export function GameScreen() {
           <KnockedOutChoice view={view} />
         </Suspense>
       )}
-      {act && !showReport && view.me.captured.length > ctx.rules.leaders.maxOfKind - 1 && keptOn !== view.turn && (
+      {act && !showReport && (overCap(ctx, view).leader > 0 || overCap(ctx, view).steward > 0) && keptOn !== view.turn && (
         <Suspense fallback={null}>
           <KeepGenerals ctx={ctx} view={view} onDone={() => setKeptOn(view.turn)} />
         </Suspense>

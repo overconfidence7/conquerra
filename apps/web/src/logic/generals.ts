@@ -1,3 +1,4 @@
+import type { GameContext } from "@conquerra/engine";
 import { findLeader, leaderAt, leaderKey, type Instruction, type InstructionKind, type LeaderKind, type LeaderRef, type Order, type PlayerId, type PlayerView, type TerritoryId } from "@conquerra/engine";
 
 /**
@@ -127,3 +128,10 @@ export const INSTRUCTIONS: { kind: InstructionKind; name: string; help: string; 
   { kind: "push", name: "Push toward a place", help: "March toward a place you pick, taking land along the way.", needs: "place" },
   { kind: "raid", name: "Raid a rival", help: "Take a rival's weakly held land and keep clear of its big armies.", needs: "rival" },
 ];
+
+/** How many captured leaders of each kind you have over the cap (rules.leaders.maxOfKind, your own included). */
+export function overCap(ctx: GameContext, view: PlayerView): { leader: number; steward: number } {
+  const max = ctx.rules.leaders.maxOfKind - 1;
+  const stewards = (view.me.leaders ?? []).filter((l) => l.kind === "steward" && l.of !== view.me.id).length;
+  return { leader: Math.max(0, view.me.captured.length - max), steward: Math.max(0, stewards - max) };
+}

@@ -196,3 +196,17 @@ describe("the Leaders panel's logic (session 18)", () => {
     expect(marshalData.leaders.expand.width).toBe(1);
   });
 });
+
+describe("keep or let go (session 19)", () => {
+  it("counts captured Stewards over the cap as well as captured Leaders", async () => {
+    const { overCap } = await import("../src/logic/generals");
+    const view = game();
+    const max = ctx.rules.leaders.maxOfKind - 1;
+    const steward = (of: string) => ({ kind: "steward" as const, of, name: `S-${of}`, command: null, budget: { share: 0 }, purse: 0 });
+    const leaders = [...view.me.leaders, ...Array.from({ length: max + 1 }, (_, i) => steward(`x${i}`))];
+    expect(overCap(ctx, { ...view, me: { ...view.me, leaders } })).toEqual({ leader: 0, steward: 1 });
+    expect(overCap(ctx, view)).toEqual({ leader: 0, steward: 0 });
+    const captured = Array.from({ length: max + 2 }, (_, i) => ({ of: `y${i}`, territory: t(i) }));
+    expect(overCap(ctx, { ...view, me: { ...view.me, captured } as typeof view.me })).toEqual({ leader: 2, steward: 0 });
+  });
+});
