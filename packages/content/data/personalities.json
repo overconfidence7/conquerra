@@ -31,7 +31,15 @@
       "followThroughSpare": 4
     },
     "provinceDrive": 1,
-    "endSafe": 2
+    "endSafe": 2,
+    "queue": "armies",
+    "capitalGuard": {
+      "steps": 3,
+      "reach": 0.5,
+      "turns": 3,
+      "opening": 0.5,
+      "crowded": 12
+    }
   },
   "personalities": [
     {

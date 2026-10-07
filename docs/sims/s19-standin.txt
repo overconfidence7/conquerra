@@ -1,0 +1,4 @@
+wyrmland:6 sighted:marshal-conqueror vs captain: won 32.4% (x1.94 fair) | 47.0 turns, half-map at 10 1.4%, halfway leader won 72.1% | land10 20.5, troops 1593.4g, buildings 52.9g, culture 12.8g, wars 6.0, truces 7.1 (35s)
+wyrmland:6 sighted:marshal-conqueror vs marshal: won 24.2% (x1.45 fair) | 43.9 turns, half-map at 10 10.4%, halfway leader won 76.8% | land10 17.4, troops 1314.1g, buildings 36.7g, culture 6.5g, wars 4.4, truces 4.1 (31s)
+wyrmland:6 sighted:marshal-conqueror vs captain: won 42.2% (x2.53 fair) | 48.3 turns, half-map at 10 1.2%, halfway leader won 70.5% | land10 22.7, troops 1941.4g, buildings 46.3g, culture 14.5g, wars 6.3, truces 7.6 (37s)
+wyrmland:6 sighted:marshal-conqueror vs marshal: won 19.6% (x1.18 fair) | 43.7 turns, half-map at 10 9.0%, halfway leader won 74.7% | land10 16.6, troops 1266.8g, buildings 32.0g, culture 6.3g, wars 4.6, truces 4.1 (33s)

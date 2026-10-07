@@ -211,3 +211,66 @@ describe("the Marshal against a runaway (Part 3)", () => {
   });
 });
 
+
+describe("the Marshal's queue (session 19)", () => {
+  it("queues troops first, then its armies' moves, then everything else it buys (each order takes a round, so rivals would move first)", () => {
+    const { snapshots } = play("m-queue", fourOf(["turtle", "merchant", "schemer", "conqueror"]), 14);
+    let mixed = 0;
+    for (const { s, last } of snapshots.slice(2)) {
+      for (const p of s.players.filter((x) => x.eliminatedTurn === null)) {
+        for (const id of ["turtle", "merchant"] as const) {
+          const orders = planMarshal({ ctx: ember, view: viewFor(ember, s, p.id), personality: personality(id), judgement: J, memory: freshMemory(), lastTurn: last.get(p.id) }).orders.filter((o) => o.kind !== "break");
+          const rank = (o: Order) => (o.kind === "spoils" || o.kind === "recruit" ? 0 : o.kind === "move" || o.kind === "retreat" || o.kind === "advance" ? 1 : 2);
+          const ranks = orders.map(rank);
+          expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
+          if (ranks.includes(1) && ranks.includes(2)) mixed++;
+        }
+      }
+    }
+    // Plans with both moves and purchases, all in that order.
+    expect(mixed).toBeGreaterThan(5);
+  });
+});
+
+describe("the Marshal's capital guard (session 19)", () => {
+  const sentFrom = (orders: Order[], t: string, troops: number) => orders.reduce((a, o) => a + (o.kind === "move" && o.from === t ? (o.troops === "all" ? troops : typeof o.troops === "number" ? o.troops : 0) : 0), 0);
+  const firstTurn = (ctx: GameContext, players: number) => {
+    const s = createGame(ctx, { gameId: "guard", seed: "guard", players: Array.from({ length: players }, (_, i) => ({ id: `p${i + 1}`, name: `P${i + 1}` })) });
+    const view = viewFor(ctx, s, "p1");
+    const orders = planMarshal({ ctx, view, personality: personality("blitzer"), judgement: J, memory: freshMemory() }).orders;
+    const recruited = orders.reduce((a, o) => a + (o.kind === "recruit" && o.territory === view.me.capital && typeof o.count === "number" ? o.count : 0), 0);
+    const stack = (view.territories[view.me.capital] as { troops: number }).troops + recruited;
+    return { stack, sent: sentFrom(orders, view.me.capital, stack) };
+  };
+
+  it("on a crowded table (Embervale, 4 players: capitals 3 steps apart) even the Blitzer keeps half its capital's stack home in the first turns", () => {
+    const { stack, sent } = firstTurn(ember, 4);
+    expect(sent).toBeGreaterThan(0);
+    expect(stack - sent).toBeGreaterThanOrEqual(Math.ceil(stack * J.capitalGuard!.opening));
+  });
+
+  it("on a roomy table (Wyrmland, 6 players) it doesn't: everything spare goes out", () => {
+    const { stack, sent } = firstTurn({ map: maps.wyrmland!, rules: defaultRules }, 6);
+    expect(stack - sent).toBeLessThan(Math.ceil(stack * J.capitalGuard!.opening));
+  });
+
+  it("keeps half of a rival army it knows of within reach of its capital (3 steps)", () => {
+    const ctx = ember;
+    const s = createGame(ctx, { gameId: "guard2", seed: "guard2", players: ["p1", "p2", "p3", "p4"].map((id) => ({ id, name: id })) });
+    s.turn = 8;
+    const view0 = viewFor(ctx, s, "p1");
+    const cap = view0.me.capital;
+    // A rival army of 24 two steps from the capital, in land p1 can see (it holds the land between).
+    const idx = ctx.map.borders;
+    const nbs = (t: string) => idx.flatMap((b) => (b.a === t ? [b.b] : b.b === t ? [b.a] : []));
+    const mid = nbs(cap).find((t) => !Object.values(s.players).some((p) => p.capital === t))!;
+    const far = nbs(mid).find((t) => t !== cap && !s.players.some((p) => p.capital === t))!;
+    s.territories[mid] = { owner: "p1", troops: 2, specialists: [], building: null, construction: null, culture: 0 };
+    s.territories[far] = { owner: "p2", troops: 24, specialists: [], building: null, construction: null, culture: 0 };
+    s.territories[cap]!.troops = 30;
+    s.players[0]!.gold = 0;
+    const view = viewFor(ctx, s, "p1");
+    const orders = planMarshal({ ctx, view, personality: personality("blitzer"), judgement: J, memory: freshMemory() }).orders;
+    expect(30 - sentFrom(orders, cap, 30)).toBeGreaterThanOrEqual(Math.ceil(24 * J.capitalGuard!.reach));
+  });
+});

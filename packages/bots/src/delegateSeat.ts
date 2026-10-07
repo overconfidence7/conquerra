@@ -2,6 +2,7 @@ import { leaderKey, type Budget, type Instruction, type Order, type PlayerView }
 import { makeCaptainBot } from "./captain";
 import { freshMemory, type MarshalMemory } from "./marshal/memory";
 import { planLeaders } from "./marshal/leaders";
+import type { Diplomat } from "./diplomacy";
 import type { Bot } from "./recruit";
 
 /**
@@ -60,11 +61,24 @@ function setUp(view: PlayerView, want: { leader?: { command: Instruction; budget
   return { orders, commands };
 }
 
+/**
+ * One-change tests (session 19, why a delegating player beat the Marshals): how it talks (as a Captain, the
+ * simulator's default for a seat with no diplomat, or as a Marshal in the leaders' style), whether its Leader goes
+ * with its attacks, and whether its Steward's purchases come before its Leader's orders in the queue.
+ */
+export interface DelegateOptions {
+  diplomat?: Diplomat;
+  leaderStays?: boolean;
+  stewardFirst?: boolean;
+  id?: string;
+}
+
 /** A delegating player: its Leader runs the military on `leaderShare` of its income, its Steward the realm on the rest. */
-export function makeDelegateSeat(leaderShare = 0.8): Bot {
+export function makeDelegateSeat(leaderShare = 0.8, opts: DelegateOptions = {}): Bot {
   const mem = seatMemory();
   return {
-    id: `delegate-${Math.round(leaderShare * 100)}`,
+    ...(opts.diplomat ? { diplomat: opts.diplomat } : {}),
+    id: opts.id ?? `delegate-${Math.round(leaderShare * 100)}`,
     name: `Delegates everything (Leader ${Math.round(leaderShare * 100)}%, Steward ${Math.round((1 - leaderShare) * 100)}%)`,
     plan(ctx, view, lastTurn) {
       const { orders: setup, commands } = setUp(view, { leader: { command: { kind: "military" }, budget: { share: leaderShare } }, steward: { command: { kind: "realm" }, budget: { share: Math.round((1 - leaderShare) * 100) / 100 } } });
@@ -74,7 +88,10 @@ export function makeDelegateSeat(leaderShare = 0.8): Bot {
       const own: Order[] = view.me.gold >= ctx.rules.troops.cost && view.territories[view.me.capital]?.detail === "full" && (view.territories[view.me.capital] as { owner: string | null }).owner === view.me.id
         ? [{ id: `${view.me.id}-t${view.turn}-treasury`, kind: "recruit", territory: view.me.capital, count: "all" }]
         : [];
-      return [...setup, ...own, ...plan.orders];
+      let leaders = plan.orders;
+      if (opts.leaderStays) leaders = leaders.map((o) => (o.kind === "move" && o.withLeader ? (({ withLeader: _w, ...rest }) => rest as Order)(o) : o));
+      if (opts.stewardFirst) leaders = [...leaders.filter((o) => o.steward), ...leaders.filter((o) => !o.steward)];
+      return [...setup, ...own, ...leaders];
     },
   };
 }
@@ -94,6 +111,30 @@ export function makeStewardSeat(share = 0.2): Bot {
       const mine = captain.plan(ctx, view, lastTurn);
       const places = new Set(mine.flatMap((o) => (o.kind === "build" || o.kind === "invest" ? [o.territory] : [])));
       return [...setup, ...plan.orders.filter((o) => !((o.kind === "build" || o.kind === "invest") && places.has(o.territory))), ...mine];
+    },
+  };
+}
+
+/**
+ * For the simulator (session 19's one-change tests): a seat that plans its whole turn the way a Leader on "Run the
+ * military" does (`planLeaders` with that command), paid from its treasury, with no Steward, no Spoils turned in by
+ * hand and no spies. Talks with `diplomat` (a Captain's talk without one).
+ */
+export function makeLeaderPathSeat(id: string, diplomat?: Diplomat, opts: { homeGuard?: number } = {}): Bot {
+  const mem = seatMemory();
+  return {
+    id,
+    name: "Plans like a Leader running the military",
+    ...(diplomat ? { diplomat } : {}),
+    plan(ctx, view, lastTurn) {
+      const key = leaderKey({ kind: "leader", of: view.me.id });
+      // `homeGuard`: the first turns' gold goes to troops that stay at the capital (as a delegating player's does).
+      const guard = opts.homeGuard && view.turn <= opts.homeGuard;
+      const plan = planLeaders({ ctx, view, memory: mem.recall(view), commands: { [key]: { kind: "military" } }, purses: { [key]: guard ? 0 : view.me.gold }, only: [key], ...(lastTurn ? { lastTurn } : {}) });
+      mem.keep(view, plan.memory);
+      const home: Order[] = guard && view.me.gold >= ctx.rules.troops.cost ? [{ id: `${view.me.id}-t${view.turn}-home`, kind: "recruit", territory: view.me.capital, count: "all" }] : [];
+      // Paid from the treasury, not a purse.
+      return [...home, ...plan.orders.map((o) => (({ general: _g, ...rest }) => rest as Order)(o))];
     },
   };
 }

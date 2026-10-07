@@ -1,0 +1,228 @@
+=== Embervale, 4 players, seats marshal-conqueror,captain,captain,captain, fog on: 500 games in 11s ===
+Win rate per seat by kind (fair 25.0%): captain 21.0%, marshal-conqueror 37.0%
+All Marshal seats: 37.0% per seat
+Game length: avg 23.8, median 22; 95.6% within 40; draws 0.0%
+Runaways: half the map after turn 10 43.9%; the halfway leader won 80.0%; comebacks 28.4%
+Win rate by seat: 22.6% / 24.4% / 24.6% / 28.4%
+Planning per seat per turn: marshal-conqueror avg 1.72 ms, worst 81.8 ms | captain avg 1.25 ms, worst 131.2 ms
+=== Embervale, 4 players, seats marshal-blitzer,captain,captain,captain, fog on: 500 games in 11s ===
+Win rate per seat by kind (fair 25.0%): captain 21.1%, marshal-blitzer 36.8%
+All Marshal seats: 36.8% per seat
+Game length: avg 22.8, median 21; 95.2% within 40; draws 0.0%
+Runaways: half the map after turn 10 45.9%; the halfway leader won 82.0%; comebacks 25.9%
+Win rate by seat: 22.2% / 24.4% / 24.8% / 28.6%
+Planning per seat per turn: marshal-blitzer avg 1.54 ms, worst 175.9 ms | captain avg 1.30 ms, worst 198.0 ms
+=== Embervale, 4 players, seats marshal-turtle,captain,captain,captain, fog on: 500 games in 13s ===
+Win rate per seat by kind (fair 25.0%): captain 26.3%, marshal-turtle 21.2%
+All Marshal seats: 21.2% per seat
+Game length: avg 24.4, median 23; 94.0% within 40; draws 0.0%
+Runaways: half the map after turn 10 36.2%; the halfway leader won 79.4%; comebacks 28.3%
+Win rate by seat: 24.8% / 24.6% / 22.6% / 28.0%
+Planning per seat per turn: marshal-turtle avg 1.74 ms, worst 111.5 ms | captain avg 1.46 ms, worst 169.5 ms
+=== Embervale, 4 players, seats marshal-schemer,captain,captain,captain, fog on: 500 games in 12s ===
+Win rate per seat by kind (fair 25.0%): captain 22.1%, marshal-schemer 33.4%
+All Marshal seats: 33.4% per seat
+Game length: avg 24.0, median 22; 93.4% within 40; draws 0.2%
+Runaways: half the map after turn 10 41.9%; the halfway leader won 82.8%; comebacks 26.0%
+Win rate by seat: 24.6% / 24.0% / 22.4% / 28.8%
+Planning per seat per turn: marshal-schemer avg 1.73 ms, worst 116.0 ms | captain avg 1.29 ms, worst 110.9 ms
+=== Embervale, 4 players, seats marshal-opportunist,captain,captain,captain, fog on: 500 games in 12s ===
+Win rate per seat by kind (fair 25.0%): captain 22.4%, marshal-opportunist 32.8%
+All Marshal seats: 32.8% per seat
+Game length: avg 23.5, median 22; 95.6% within 40; draws 0.0%
+Runaways: half the map after turn 10 44.2%; the halfway leader won 77.8%; comebacks 26.6%
+Win rate by seat: 23.0% / 23.2% / 23.0% / 30.8%
+Planning per seat per turn: marshal-opportunist avg 1.70 ms, worst 163.5 ms | captain avg 1.25 ms, worst 207.1 ms
+=== Embervale, 4 players, seats marshal-merchant,captain,captain,captain, fog on: 500 games in 12s ===
+Win rate per seat by kind (fair 25.0%): captain 23.3%, marshal-merchant 30.0%
+All Marshal seats: 30.0% per seat
+Game length: avg 23.3, median 22; 95.2% within 40; draws 0.0%
+Runaways: half the map after turn 10 40.8%; the halfway leader won 75.6%; comebacks 29.5%
+Win rate by seat: 20.8% / 24.2% / 24.2% / 30.8%
+Planning per seat per turn: marshal-merchant avg 1.75 ms, worst 145.0 ms | captain avg 1.25 ms, worst 137.6 ms
+=== The Twin Realms, 6 players, seats marshal-conqueror,captain,captain,captain,captain,captain, fog on: 500 games in 23s ===
+Win rate per seat by kind (fair 16.7%): captain 14.4%, marshal-conqueror 28.2%
+All Marshal seats: 28.2% per seat
+Game length: avg 34.0, median 33; 81.4% within 40; draws 0.0%
+Runaways: half the map after turn 10 2.2%; the halfway leader won 83.4%; comebacks 38.6%
+Win rate by seat: 14.8% / 15.4% / 16.2% / 18.6% / 16.8% / 18.2%
+Planning per seat per turn: marshal-conqueror avg 1.90 ms, worst 138.1 ms | captain avg 1.21 ms, worst 199.4 ms
+=== The Twin Realms, 6 players, seats marshal-blitzer,captain,captain,captain,captain,captain, fog on: 500 games in 23s ===
+Win rate per seat by kind (fair 16.7%): captain 13.8%, marshal-blitzer 31.0%
+All Marshal seats: 31.0% per seat
+Game length: avg 33.0, median 31; 80.4% within 40; draws 0.0%
+Runaways: half the map after turn 10 6.8%; the halfway leader won 83.8%; comebacks 35.0%
+Win rate by seat: 14.0% / 17.0% / 14.8% / 18.0% / 17.6% / 18.6%
+Planning per seat per turn: marshal-blitzer avg 1.96 ms, worst 151.9 ms | captain avg 1.27 ms, worst 221.0 ms
+=== The Twin Realms, 6 players, seats marshal-turtle,captain,captain,captain,captain,captain, fog on: 500 games in 24s ===
+Win rate per seat by kind (fair 16.7%): captain 17.6%, marshal-turtle 12.2%
+All Marshal seats: 12.2% per seat
+Game length: avg 33.8, median 32; 80.2% within 40; draws 0.0%
+Runaways: half the map after turn 10 3.2%; the halfway leader won 82.8%; comebacks 35.4%
+Win rate by seat: 14.6% / 14.6% / 17.8% / 19.6% / 14.0% / 19.4%
+Planning per seat per turn: marshal-turtle avg 1.86 ms, worst 187.4 ms | captain avg 1.25 ms, worst 162.5 ms
+=== The Twin Realms, 6 players, seats marshal-schemer,captain,captain,captain,captain,captain, fog on: 500 games in 22s ===
+Win rate per seat by kind (fair 16.7%): captain 15.7%, marshal-schemer 21.4%
+All Marshal seats: 21.4% per seat
+Game length: avg 34.1, median 33; 81.2% within 40; draws 0.0%
+Runaways: half the map after turn 10 2.8%; the halfway leader won 81.6%; comebacks 40.8%
+Win rate by seat: 17.6% / 14.4% / 18.2% / 14.4% / 16.2% / 19.2%
+Planning per seat per turn: marshal-schemer avg 1.76 ms, worst 93.5 ms | captain avg 1.19 ms, worst 107.8 ms
+=== The Twin Realms, 6 players, seats marshal-opportunist,captain,captain,captain,captain,captain, fog on: 500 games in 23s ===
+Win rate per seat by kind (fair 16.7%): captain 15.2%, marshal-opportunist 23.8%
+All Marshal seats: 23.8% per seat
+Game length: avg 33.7, median 32; 82.4% within 40; draws 0.0%
+Runaways: half the map after turn 10 3.2%; the halfway leader won 83.4%; comebacks 36.6%
+Win rate by seat: 17.0% / 16.8% / 15.6% / 15.4% / 16.2% / 19.0%
+Planning per seat per turn: marshal-opportunist avg 1.87 ms, worst 179.6 ms | captain avg 1.23 ms, worst 261.0 ms
+=== The Twin Realms, 6 players, seats marshal-merchant,captain,captain,captain,captain,captain, fog on: 500 games in 24s ===
+Win rate per seat by kind (fair 16.7%): captain 15.3%, marshal-merchant 23.4%
+All Marshal seats: 23.4% per seat
+Game length: avg 33.7, median 32; 79.4% within 40; draws 0.0%
+Runaways: half the map after turn 10 3.2%; the halfway leader won 83.0%; comebacks 35.4%
+Win rate by seat: 12.2% / 15.2% / 16.6% / 19.0% / 17.4% / 19.6%
+Planning per seat per turn: marshal-merchant avg 1.94 ms, worst 278.4 ms | captain avg 1.19 ms, worst 312.5 ms
+=== Wyrmland, 6 players, seats marshal-conqueror,captain,captain,captain,captain,captain, fog on: 500 games in 35s ===
+Win rate per seat by kind (fair 16.7%): captain 13.2%, marshal-conqueror 34.2%
+All Marshal seats: 34.2% per seat
+Game length: avg 45.6, median 45; 37.0% within 40; draws 0.0%
+Runaways: half the map after turn 10 1.2%; the halfway leader won 75.2%; comebacks 39.8%
+Win rate by seat: 14.2% / 16.4% / 15.8% / 17.8% / 20.2% / 15.6%
+Planning per seat per turn: marshal-conqueror avg 2.57 ms, worst 252.8 ms | captain avg 1.47 ms, worst 217.5 ms
+=== Wyrmland, 6 players, seats marshal-blitzer,captain,captain,captain,captain,captain, fog on: 500 games in 35s ===
+Win rate per seat by kind (fair 16.7%): captain 13.9%, marshal-blitzer 30.6%
+All Marshal seats: 30.6% per seat
+Game length: avg 45.1, median 44; 37.4% within 40; draws 0.0%
+Runaways: half the map after turn 10 2.0%; the halfway leader won 80.0%; comebacks 37.4%
+Win rate by seat: 15.2% / 16.6% / 15.0% / 16.4% / 18.6% / 18.2%
+Planning per seat per turn: marshal-blitzer avg 2.17 ms, worst 227.6 ms | captain avg 1.47 ms, worst 367.0 ms
+=== Wyrmland, 6 players, seats marshal-turtle,captain,captain,captain,captain,captain, fog on: 500 games in 35s ===
+Win rate per seat by kind (fair 16.7%): captain 15.1%, marshal-turtle 24.4%
+All Marshal seats: 24.4% per seat
+Game length: avg 45.1, median 44; 38.4% within 40; draws 0.2%
+Runaways: half the map after turn 10 0.6%; the halfway leader won 75.4%; comebacks 39.7%
+Win rate by seat: 14.8% / 17.0% / 18.8% / 16.2% / 17.0% / 16.0%
+Planning per seat per turn: marshal-turtle avg 2.25 ms, worst 202.3 ms | captain avg 1.45 ms, worst 267.1 ms
+=== Wyrmland, 6 players, seats marshal-schemer,captain,captain,captain,captain,captain, fog on: 500 games in 34s ===
+Win rate per seat by kind (fair 16.7%): captain 14.7%, marshal-schemer 26.6%
+All Marshal seats: 26.6% per seat
+Game length: avg 45.2, median 44; 40.4% within 40; draws 0.0%
+Runaways: half the map after turn 10 0.6%; the halfway leader won 76.4%; comebacks 38.0%
+Win rate by seat: 11.2% / 17.4% / 18.4% / 16.8% / 17.2% / 19.0%
+Planning per seat per turn: marshal-schemer avg 2.26 ms, worst 152.2 ms | captain avg 1.44 ms, worst 180.7 ms
+=== Wyrmland, 6 players, seats marshal-opportunist,captain,captain,captain,captain,captain, fog on: 500 games in 34s ===
+Win rate per seat by kind (fair 16.7%): captain 14.4%, marshal-opportunist 27.6%
+All Marshal seats: 27.6% per seat
+Game length: avg 44.8, median 43; 40.0% within 40; draws 0.2%
+Runaways: half the map after turn 10 0.8%; the halfway leader won 77.2%; comebacks 38.3%
+Win rate by seat: 12.8% / 15.8% / 18.0% / 16.2% / 19.6% / 17.4%
+Planning per seat per turn: marshal-opportunist avg 2.24 ms, worst 189.1 ms | captain avg 1.43 ms, worst 261.9 ms
+=== Wyrmland, 6 players, seats marshal-merchant,captain,captain,captain,captain,captain, fog on: 500 games in 37s ===
+Win rate per seat by kind (fair 16.7%): captain 14.5%, marshal-merchant 27.4%
+All Marshal seats: 27.4% per seat
+Game length: avg 45.3, median 44; 38.6% within 40; draws 0.0%
+Runaways: half the map after turn 10 0.6%; the halfway leader won 75.2%; comebacks 37.6%
+Win rate by seat: 14.0% / 15.8% / 16.2% / 16.0% / 18.6% / 19.4%
+Planning per seat per turn: marshal-merchant avg 2.32 ms, worst 191.2 ms | captain avg 1.50 ms, worst 236.0 ms
+=== Wyrmland, 8 players, seats marshal-conqueror,captain,captain,captain,captain,captain,captain,captain, fog on: 500 games in 48s ===
+Win rate per seat by kind (fair 12.5%): captain 10.1%, marshal-conqueror 29.2%
+All Marshal seats: 29.2% per seat
+Game length: avg 49.8, median 50; 21.4% within 40; draws 0.0%
+Runaways: half the map after turn 10 0.2%; the halfway leader won 65.2%; comebacks 58.6%
+Win rate by seat: 13.2% / 11.0% / 10.8% / 11.8% / 12.6% / 10.6% / 13.4% / 16.6%
+Planning per seat per turn: marshal-conqueror avg 2.21 ms, worst 205.1 ms | captain avg 1.29 ms, worst 282.5 ms
+=== Wyrmland, 8 players, seats marshal-blitzer,captain,captain,captain,captain,captain,captain,captain, fog on: 500 games in 46s ===
+Win rate per seat by kind (fair 12.5%): captain 10.9%, marshal-blitzer 23.2%
+All Marshal seats: 23.2% per seat
+Game length: avg 50.2, median 52; 22.8% within 40; draws 0.2%
+Runaways: half the map after turn 10 0.0%; the halfway leader won 67.3%; comebacks 54.9%
+Win rate by seat: 13.0% / 11.6% / 10.4% / 13.8% / 14.4% / 10.2% / 12.8% / 13.6%
+Planning per seat per turn: marshal-blitzer avg 1.98 ms, worst 210.2 ms | captain avg 1.28 ms, worst 220.4 ms
+=== Wyrmland, 8 players, seats marshal-turtle,captain,captain,captain,captain,captain,captain,captain, fog on: 500 games in 48s ===
+Win rate per seat by kind (fair 12.5%): captain 10.8%, marshal-turtle 24.2%
+All Marshal seats: 24.2% per seat
+Game length: avg 50.1, median 52; 23.2% within 40; draws 0.2%
+Runaways: half the map after turn 10 0.0%; the halfway leader won 67.3%; comebacks 59.3%
+Win rate by seat: 12.4% / 11.4% / 8.8% / 11.4% / 13.4% / 13.2% / 15.0% / 14.2%
+Planning per seat per turn: marshal-turtle avg 2.08 ms, worst 229.5 ms | captain avg 1.27 ms, worst 244.2 ms
+=== Wyrmland, 8 players, seats marshal-schemer,captain,captain,captain,captain,captain,captain,captain, fog on: 500 games in 47s ===
+Win rate per seat by kind (fair 12.5%): captain 11.1%, marshal-schemer 21.8%
+All Marshal seats: 21.8% per seat
+Game length: avg 51.2, median 54; 18.0% within 40; draws 0.4%
+Runaways: half the map after turn 10 0.0%; the halfway leader won 66.9%; comebacks 59.0%
+Win rate by seat: 11.4% / 11.0% / 12.0% / 14.4% / 12.4% / 10.8% / 11.8% / 15.8%
+Planning per seat per turn: marshal-schemer avg 1.94 ms, worst 119.6 ms | captain avg 1.28 ms, worst 139.3 ms
+=== Wyrmland, 8 players, seats marshal-opportunist,captain,captain,captain,captain,captain,captain,captain, fog on: 500 games in 45s ===
+Win rate per seat by kind (fair 12.5%): captain 11.1%, marshal-opportunist 22.4%
+All Marshal seats: 22.4% per seat
+Game length: avg 50.1, median 51; 20.2% within 40; draws 0.2%
+Runaways: half the map after turn 10 0.0%; the halfway leader won 68.9%; comebacks 57.1%
+Win rate by seat: 12.6% / 10.0% / 12.6% / 13.0% / 12.6% / 11.2% / 14.0% / 13.8%
+Planning per seat per turn: marshal-opportunist avg 1.90 ms, worst 153.6 ms | captain avg 1.24 ms, worst 187.2 ms
+=== Wyrmland, 8 players, seats marshal-merchant,captain,captain,captain,captain,captain,captain,captain, fog on: 500 games in 45s ===
+Win rate per seat by kind (fair 12.5%): captain 10.5%, marshal-merchant 26.2%
+All Marshal seats: 26.2% per seat
+Game length: avg 49.5, median 50; 24.2% within 40; draws 0.0%
+Runaways: half the map after turn 10 0.0%; the halfway leader won 66.6%; comebacks 62.4%
+Win rate by seat: 12.4% / 9.6% / 8.8% / 13.4% / 14.4% / 13.0% / 14.6% / 13.8%
+Planning per seat per turn: marshal-merchant avg 2.09 ms, worst 157.8 ms | captain avg 1.23 ms, worst 185.9 ms
+=== Greatmarch, 10 players, seats marshal-conqueror,captain,captain,captain,captain,captain,captain,captain,captain,captain, fog on: 500 games in 38s ===
+Win rate per seat by kind (fair 10.0%): captain 9.8%, marshal-conqueror 11.8%
+All Marshal seats: 11.8% per seat
+Game length: avg 46.8, median 47; 31.0% within 40; draws 0.0%
+Runaways: half the map after turn 10 0.2%; the halfway leader won 70.8%; comebacks 60.2%
+Win rate by seat: 7.6% / 10.2% / 8.2% / 8.2% / 10.6% / 10.6% / 12.4% / 10.8% / 9.6% / 11.8%
+Planning per seat per turn: marshal-conqueror avg 1.47 ms, worst 162.5 ms | captain avg 0.88 ms, worst 172.8 ms
+C:\Users\nkurt\AppData\Local\Temp\claude\C--Users-nkurt-Claude-Projects-Strategy-Game\a4c1c97e-b94a-4fb1-8a3b-d3d667e7c8ed\scratchpad\base\apps\sim\src\tournament.ts:95
+        child.on("exit", (code) => (code === 0 ? resolve(out.split("\n").filter(Boolean).map((l) => JSON.parse(l))) : reject(new Error(`worker ${w} exited ${code}`))));
+                                                                                                                             ^
+
+
+Error: worker 0 exited 3221225794
+    at ChildProcess.<anonymous> (C:\Users\nkurt\AppData\Local\Temp\claude\C--Users-nkurt-Claude-Projects-Strategy-Game\a4c1c97e-b94a-4fb1-8a3b-d3d667e7c8ed\scratchpad\base\apps\sim\src\tournament.ts:95:126)
+    at ChildProcess.emit (node:events:518:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+
+Node.js v22.18.0
+=== Greatmarch, 10 players, seats marshal-conqueror,captain,captain,captain,captain,captain,captain,captain,captain,captain, fog on: 500 games in 38s ===
+Win rate per seat by kind (fair 10.0%): captain 9.8%, marshal-conqueror 11.8%
+All Marshal seats: 11.8% per seat
+Game length: avg 46.8, median 47; 31.0% within 40; draws 0.0%
+Runaways: half the map after turn 10 0.2%; the halfway leader won 70.8%; comebacks 60.2%
+Win rate by seat: 7.6% / 10.2% / 8.2% / 8.2% / 10.6% / 10.6% / 12.4% / 10.8% / 9.6% / 11.8%
+Planning per seat per turn: marshal-conqueror avg 1.66 ms, worst 195.7 ms | captain avg 0.91 ms, worst 209.3 ms
+=== Greatmarch, 10 players, seats marshal-blitzer,captain,captain,captain,captain,captain,captain,captain,captain,captain, fog on: 500 games in 38s ===
+Win rate per seat by kind (fair 10.0%): captain 9.8%, marshal-blitzer 12.2%
+All Marshal seats: 12.2% per seat
+Game length: avg 46.9, median 47; 29.6% within 40; draws 0.0%
+Runaways: half the map after turn 10 0.6%; the halfway leader won 68.8%; comebacks 58.0%
+Win rate by seat: 9.4% / 8.2% / 10.6% / 10.6% / 9.4% / 12.6% / 10.0% / 10.0% / 8.6% / 10.6%
+Planning per seat per turn: marshal-blitzer avg 1.43 ms, worst 168.4 ms | captain avg 0.90 ms, worst 169.4 ms
+=== Greatmarch, 10 players, seats marshal-turtle,captain,captain,captain,captain,captain,captain,captain,captain,captain, fog on: 500 games in 36s ===
+Win rate per seat by kind (fair 10.0%): captain 10.0%, marshal-turtle 10.2%
+All Marshal seats: 10.2% per seat
+Game length: avg 46.0, median 45; 34.4% within 40; draws 0.0%
+Runaways: half the map after turn 10 0.2%; the halfway leader won 66.0%; comebacks 57.6%
+Win rate by seat: 7.6% / 8.2% / 10.4% / 7.4% / 10.2% / 9.0% / 12.6% / 12.6% / 13.2% / 8.8%
+Planning per seat per turn: marshal-turtle avg 1.47 ms, worst 165.0 ms | captain avg 0.88 ms, worst 261.1 ms
+=== Greatmarch, 10 players, seats marshal-schemer,captain,captain,captain,captain,captain,captain,captain,captain,captain, fog on: 500 games in 38s ===
+Win rate per seat by kind (fair 10.0%): captain 10.0%, marshal-schemer 10.0%
+All Marshal seats: 10.0% per seat
+Game length: avg 46.1, median 46; 33.0% within 40; draws 0.0%
+Runaways: half the map after turn 10 0.8%; the halfway leader won 69.8%; comebacks 62.4%
+Win rate by seat: 7.6% / 12.6% / 9.8% / 9.6% / 10.2% / 10.6% / 8.6% / 10.4% / 11.0% / 9.6%
+Planning per seat per turn: marshal-schemer avg 1.36 ms, worst 178.3 ms | captain avg 0.95 ms, worst 233.7 ms
+=== Greatmarch, 10 players, seats marshal-opportunist,captain,captain,captain,captain,captain,captain,captain,captain,captain, fog on: 500 games in 37s ===
+Win rate per seat by kind (fair 10.0%): captain 9.8%, marshal-opportunist 11.6%
+All Marshal seats: 11.6% per seat
+Game length: avg 46.1, median 45; 33.8% within 40; draws 0.0%
+Runaways: half the map after turn 10 1.2%; the halfway leader won 66.2%; comebacks 59.6%
+Win rate by seat: 7.8% / 8.8% / 11.0% / 9.2% / 9.4% / 11.6% / 12.6% / 10.6% / 10.4% / 8.6%
+Planning per seat per turn: marshal-opportunist avg 1.43 ms, worst 187.7 ms | captain avg 0.93 ms, worst 273.7 ms
+=== Greatmarch, 10 players, seats marshal-merchant,captain,captain,captain,captain,captain,captain,captain,captain,captain, fog on: 500 games in 36s ===
+Win rate per seat by kind (fair 10.0%): captain 10.0%, marshal-merchant 9.6%
+All Marshal seats: 9.6% per seat
+Game length: avg 45.7, median 45; 35.8% within 40; draws 0.2%
+Runaways: half the map after turn 10 0.2%; the halfway leader won 68.1%; comebacks 61.1%
+Win rate by seat: 10.0% / 9.4% / 7.6% / 9.4% / 12.0% / 10.6% / 8.6% / 12.4% / 9.8% / 10.0%
+Planning per seat per turn: marshal-merchant avg 1.34 ms, worst 130.3 ms | captain avg 0.89 ms, worst 214.8 ms

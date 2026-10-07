@@ -14,7 +14,7 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { defaultRules, marshalData, MarshalJudgement, Personality, type PersonalityId } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
-import { dealPersonalities, makeCaptainBot, makeDelegateSeat, makeMarshalBot, makeRecruitBot, makeStewardSeat, personality, PERSONALITY_IDS, type Bot } from "@conquerra/bots";
+import { dealPersonalities, makeCaptainBot, makeDelegateSeat, makeLeaderPathSeat, makeMarshalBot, makeRecruitBot, makeStewardSeat, personality, PERSONALITY_IDS, type Bot } from "@conquerra/bots";
 import { playTable, type TableResult } from "@conquerra/simcore";
 import type { GameContext } from "@conquerra/engine";
 
@@ -34,6 +34,10 @@ export interface TournamentSpec {
   diplomacy: boolean;
   /** Trying a change (Part 2's A/B tests): merged into the shared judgement and into named personalities. */
   tweak?: { judgement?: Record<string, unknown>; personalities?: Record<string, Record<string, unknown>> };
+  /** Trying a rule change (session 19's balance levers): merged into the game's rules. */
+  rules?: Record<string, unknown>;
+  /** Game settings beyond fog and diplomacy (switching a system off, for its cost in turns). */
+  settings?: Record<string, unknown>;
 }
 
 /** `b` merged into `a`, objects deep (arrays and numbers replaced). */
@@ -44,8 +48,48 @@ function merge<T>(a: T, b: unknown): T {
   return out as T;
 }
 
+/**
+ * Session 19's one-change seats, as `<kind>+<option>+...`:
+ *  - `delegate-80+mtalk` (talks as a Marshal in the leaders' style), `+stays` (its Leader stays home), `+stewfirst`
+ *    (its Steward's purchases first in the queue);
+ *  - `marshal-<p>+<judgement change>` and `marshal+...` (personality dealt): `goes` (its Leader goes with its attacks),
+ *    `armies` (troops and armies first in its queue), `style` (plays in the leaders' neutral style, keeping its
+ *    personality's name for dealing).
+ */
+const SEAT_JUDGEMENT: Record<string, Record<string, unknown>> = { goes: { leaderGoes: true }, armies: { queue: "armies" }, nogoes: { leaderGoes: false }, spending: { queue: "spending" } };
+
 export function botFor(kind: string, tweak?: TournamentSpec["tweak"]): Bot {
-  const k = kind.replace(/^sighted:/, "");
+  const [head, ...opts] = kind.replace(/^sighted:/, "").split("+");
+  const k = head!;
+  if (opts.length && /^delegate-\d+$/.test(k)) {
+    const share = Number(k.slice(9)) / 100;
+    return makeDelegateSeat(share, {
+      id: kind.replace(/^sighted:/, ""),
+      ...(opts.includes("mtalk") ? { diplomat: makeMarshalBot(marshalData.leaders.style).diplomat } : {}),
+      ...(opts.includes("stays") ? { leaderStays: true } : {}),
+      ...(opts.includes("stewfirst") ? { stewardFirst: true } : {}),
+    });
+  }
+  if (opts.length && k.startsWith("marshal-") && PERSONALITY_IDS.includes(k.slice(8) as PersonalityId)) {
+    const id = k.slice(8) as PersonalityId;
+    if (opts.includes("lead")) return makeLeaderPathSeat(kind.replace(/^sighted:/, ""), makeMarshalBot(id).diplomat);
+    if (opts.includes("leadn")) return makeLeaderPathSeat(kind.replace(/^sighted:/, ""), makeMarshalBot(marshalData.leaders.style).diplomat);
+    if (opts.includes("leadc")) return makeLeaderPathSeat(kind.replace(/^sighted:/, ""));
+    const hg = opts.find((o) => /^leadh\d+$/.test(o));
+    if (hg) return makeLeaderPathSeat(kind.replace(/^sighted:/, ""), makeMarshalBot(id).diplomat, { homeGuard: Number(hg.slice(5)) });
+    let J = MarshalJudgement.parse(merge(marshalData.judgement, tweak?.judgement));
+    for (const o of opts) if (SEAT_JUDGEMENT[o]) J = MarshalJudgement.parse(merge(J, SEAT_JUDGEMENT[o]));
+    // `guard-<steps>-<reach>-<turns>-<opening>`: a capital guard (session 19).
+    const gd = opts.find((o) => o.startsWith("guard-"));
+    if (gd) {
+      const [steps, reach, turns, opening, crowded = 12] = gd.slice(6).split("-").map(Number) as [number, number, number, number, number?];
+      J = { ...J, capitalGuard: { steps, reach, turns, opening, crowded } };
+    }
+    const offs = opts.filter((o) => o.startsWith("off-")).map((o) => o.slice(4));
+    if (offs.length) J = { ...J, off: offs };
+    const P = opts.includes("style") ? { ...marshalData.leaders.style, id } : Personality.parse(merge(merge(personality(id), tweak?.personalities?.["*"]), tweak?.personalities?.[id]));
+    return { ...makeMarshalBot(P as Personality, J), id: kind.replace(/^sighted:/, "") };
+  }
   if (k === "captain") return makeCaptainBot();
   if (k === "recruit") return makeRecruitBot();
   // Session 16's stand-in for a person running away: the Captain with its caution turned down.
@@ -67,18 +111,19 @@ export function botFor(kind: string, tweak?: TournamentSpec["tweak"]): Bot {
 /** Game `i`'s seat kinds (rotated), with "marshal" seats given personalities from the seed. */
 export function seatsFor(spec: TournamentSpec, i: number, seed: string): string[] {
   const kinds = Array.from({ length: spec.players }, (_, k) => spec.seats[(k + i) % spec.seats.length]!);
-  const marshals = kinds.flatMap((k, s) => (k.replace(/^sighted:/, "") === "marshal" ? [`s${s}`] : []));
+  const isDealt = (k: string) => k.replace(/^sighted:/, "").split("+")[0] === "marshal";
+  const marshals = kinds.flatMap((k, s) => (isDealt(k) ? [`s${s}`] : []));
   const dealt = dealPersonalities(seed, marshals);
-  return kinds.map((k, s) => (k.replace(/^sighted:/, "") === "marshal" ? k.replace("marshal", `marshal-${dealt[`s${s}`]}`) : k));
+  return kinds.map((k, s) => (isDealt(k) ? k.replace("marshal", `marshal-${dealt[`s${s}`]}`) : k));
 }
 
 export function playOne(spec: TournamentSpec, i: number): TableResult & { kinds: string[] } {
-  const ctx: GameContext = { map: maps[spec.map]!, rules: defaultRules };
+  const ctx: GameContext = { map: maps[spec.map]!, rules: spec.rules ? merge(defaultRules, spec.rules) : defaultRules };
   const seed = `${spec.seed}-${spec.map}-${spec.players}p-${i}`;
   const kinds = seatsFor(spec, i, seed);
   const bots = kinds.map((k) => botFor(k, spec.tweak));
   const sighted = kinds.flatMap((k, s) => (k.startsWith("sighted:") ? [s] : []));
-  const r = playTable(ctx, seed, bots, { settings: { fog: spec.fog, diplomacy: spec.diplomacy }, sighted });
+  const r = playTable(ctx, seed, bots, { settings: { fog: spec.fog, diplomacy: spec.diplomacy, ...(spec.settings ?? {}) }, sighted });
   return { ...r, kinds };
 }
 

@@ -21,7 +21,7 @@ import { respectDeals } from "../diplomacy";
 import { launchesFrom, planGeneral } from "../generals";
 import { think } from "./judge";
 import { freshMemory, type MarshalMemory } from "./memory";
-import { marshalBoard, planMarshal, type Steer } from "./plan";
+import { carryLeader, marshalBoard, planMarshal, type Steer } from "./plan";
 import { planSteward } from "./steward";
 
 /**
@@ -206,7 +206,7 @@ function planMilitary(
 
   // Expand, Command this front, Run the military: the Marshal's planner, steered.
   const commands = (t: TerritoryId) => claims.armies.get(t) === key;
-  const steer: Steer = { commands, buys: { troops: true, specialists: true, barracks: command.kind !== "expand" }, timing: isOwn };
+  const steer: Steer = { commands, buys: { troops: true, specialists: true, barracks: command.kind !== "expand" }, timing: isOwn, guardsCapital: command.kind === "military" };
   if (command.kind === "front") {
     const provinces = new Set(command.provinces);
     const inFront = (t: TerritoryId) => provinces.has(b.idx.byId.get(t)!.province);
@@ -236,22 +236,6 @@ function planMilitary(
   const plan = planMarshal({ ctx, view, personality: STYLE(), judgement: J, memory: thought.memory, insight: thought, ...(lastTurn ? { lastTurn } : {}), scope: { kind: "leader", steer }, purse });
   const orders = plan.orders.filter((o) => o.kind !== "break");
   return at && commands(at) ? carryLeader(orders, at, goes, command.kind === "expand" ? distancesFrom(b.idx, command.territory) : null) : orders;
-}
-
-/**
- * The leader goes with its army's main move (its own Leader adds +20%): the biggest attack out of where it stands (for
- * Expand, the one that gets closest), and on through that attack's chain. With no attack, a march carrying most of
- * the army takes it along.
- */
-function carryLeader(orders: Order[], at: TerritoryId, goes: Partial<Order>, toward: Map<TerritoryId, number> | null): Order[] {
-  const moves = orders.filter((o): o is Extract<Order, { kind: "move" }> => o.kind === "move" && o.from === at);
-  if (!moves.length) return orders;
-  const size = (o: Extract<Order, { kind: "move" }>) => (typeof o.troops === "number" ? o.troops : 1e6);
-  const main = [...moves].sort((x, y) => (toward ? (toward.get(x.to) ?? 0) - (toward.get(y.to) ?? 0) : 0) || size(y) - size(x) || (x.to < y.to ? -1 : 1))[0]!;
-  const along = new Set<string>([main.id]);
-  let head = main.to;
-  for (const o of orders) if (o.kind === "move" && o.from === head && o.troops === "all") (along.add(o.id), (head = o.to));
-  return orders.map((o) => (along.has(o.id) ? ({ ...o, ...goes } as Order) : o));
 }
 
 /** The view as it will be once `count` recruits stand in `t` (so the army that marches counts them). */

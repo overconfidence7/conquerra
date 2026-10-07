@@ -152,6 +152,24 @@ export const MarshalJudgement = z.object({
    * turn (`reach`); and it builds a fort there when it can afford one (`fort`).
    */
   anticipate: z.object({ guard: z.boolean(), reach: z.boolean(), fort: z.boolean() }).optional(),
+  /** Session 19: its own Leader goes with the main attack out of where it stands, and on through that attack's chain (+20%), as your leaders' does. */
+  leaderGoes: z.boolean().optional(),
+  /**
+   * Session 19: the order of its queue. Each player's orders run one a round, so every purchase queued before the
+   * attacks lets the rivals move first. "armies" queues troops (the Spoils, recruits) first, then the armies' moves,
+   * then everything else it buys (buildings, specialists, culture, spies), as your leaders' orders come out.
+   */
+  queue: z.enum(["spending", "armies"]).optional(),
+  /**
+   * Session 19: a guard at the capital. Embervale's capitals are 3 steps apart, and an all-out opening that leaves one
+   * troop at home lets a rival's chain walk in on turn 1. The capital keeps `reach` times the biggest rival army it knows
+   * of within `steps` steps (what it sees, or last saw), and for the first `turns` turns, while it can't see that far,
+   * `opening` times its own stack, on a crowded table (at most `crowded` territories a player: capitals start about 3
+   * steps apart there; on roomier tables the opening guard only slowed games down).
+   */
+  capitalGuard: z.object({ steps: z.number().int().min(1), reach: z.number().min(0), turns: z.number().int().min(0), opening: z.number().min(0).max(1), crowded: z.number().min(0) }).optional(),
+  /** TEMPORARY (session 19 tests): parts of the realm plan switched off. */
+  off: z.array(z.string()).optional(),
 });
 export type MarshalJudgement = z.infer<typeof MarshalJudgement>;
 

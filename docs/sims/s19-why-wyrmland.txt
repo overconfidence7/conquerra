@@ -1,0 +1,5 @@
+wyrmland:6 delegate-80 vs marshal: won 19.8% (x1.19 fair) | 43.5 turns, half-map at 10 9.2%, halfway leader won 76.6% | land10 15.5, troops 1494.6g, buildings 165.3g, culture 9.9g, wars 2.8, truces 3.6 (36s)
+wyrmland:6 delegate-100 vs marshal: won 19.5% (x1.17 fair) | 45.2 turns, half-map at 10 10.3%, halfway leader won 73.8% | land10 18.0, troops 1487.3g, buildings 3.9g, culture 0.0g, wars 3.3, truces 4.1 (38s)
+wyrmland:6 delegate-80 vs marshal: won 18.2% (x1.09 fair) | 42.7 turns, half-map at 10 11.2%, halfway leader won 76.8% | land10 16.1, troops 1418.0g, buildings 162.7g, culture 12.5g, wars 3.0, truces 3.7 (38s)
+wyrmland:6 delegate-100 vs marshal: won 19.2% (x1.15 fair) | 44.6 turns, half-map at 10 10.2%, halfway leader won 76.5% | land10 18.7, troops 1443.2g, buildings 3.6g, culture 0.0g, wars 3.2, truces 3.9 (39s)
+wyrmland:6 marshal+style vs marshal: won 15.7% (x0.94 fair) | 43.7 turns, half-map at 10 10.3%, halfway leader won 78.9% | land10 17.4, troops 1242.2g, buildings 28.5g, culture 1.7g, wars 3.7, truces 3.9 (38s)
