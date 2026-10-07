@@ -62,14 +62,15 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first, simul
 1. **Session 19** (`docs/prompts/claude-code-session-19.md`, written): find why a fully delegating player beats Marshals (37% on Embervale, fair 25%) and lift the Marshal to at least that level; culture and buildings that pay (three levers tested: more culture income, bigger markets, cheaper forts; the best becomes the default **pending Nate's pick**); the default Steward share set where it helps; **the Fallen act from their first turn out**; the small-map snowball and runaways fixed in the bots first; **two bigger maps** (about 160 and 200 territories; Nate OKs the Far picture); the balance table, each system's cost in turns, the speed check before M4, an **M3 checklist**.
 2. **Nate's play test** right after 19, from "Things to test after session 19" in `PROGRESS.md`. Record his notes there (as with "Nate's play test of sessions 11–15"), and ask him which culture lever he picks if he doesn't say.
 3. **Session 20: the polish pass** (`docs/09-polish-and-effects-plan.md`) with art batch 4's import, plus his play-test fixes. Probably more than one usage window: ask Nate whether he'd rather have a 20 and a 21. **Ask him about sound** (polish plan §9).
-4. **After M3: decided after Nate plays** (a play-test fixes session if needed, then **M4**: online with friends, $5/month Workers Paid, multiplayer pause by vote, deals between people, each player picks a colour, bot takeover for quitters).
+4. **Session 21: the language pass** (Nate, Oct 7; `04-design-additions.md` §13): all the game's writing in Nate's own voice (his writing-style skill, "nate-voice"; the session should load it if it's available on his computer, or ask him for it), with a tone for each bot personality.
+5. **After M3: decided after Nate plays** (a play-test fixes session if needed, then **M4**: online with friends, $5/month Workers Paid, multiplayer pause by vote, deals between people, each player picks a colour, bot takeover for quitters).
 
 **Session 18's questions, answered with orchestrator defaults until Nate plays:** the default Steward share stays at 20% until session 19 resets it; Expand stays careful where rival armies stand; leaders' orders stay "Mixed in". Check his play-test notes on all three.
 
 **Libraries (decided Oct 6, at Nate's request):** stay on PixiJS v8 (MIT); add pixi-filters v6 (MIT) in the polish pass and @pixi/sound v6 (MIT) if Nate wants sound; build particles and effects in-house on PixiJS's `ParticleContainer`, seeded and driven by the replay's clock; no tweening library.
 
 **Then (the milestones):**
-- **M4:** online with friends ($5/month Workers Paid), multiplayer pause by vote, deals between people
+- **M4:** online with friends ($5/month Workers Paid), multiplayer pause by vote, deals between people, and **chat** (§13: people chat normally; bots and leaders by multiple choice, with personality, grudges and occasional trash talk)
 - **M5:** public launch, random maps, blackout fog, 50 players, **tutorials** (short games already in progress that teach one thing, including treaties, spies and leaders) and scenarios, built on the saved-game format; the map lab switched off (`VITE_LABS=off`)
 - **M6:** native apps, the player map builder (it may come sooner, after M4)
 

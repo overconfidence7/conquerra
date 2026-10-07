@@ -366,3 +366,24 @@ Nate's notes: his test game on Wyrmland against 5 Captains lasted only 12 turns,
 - **BUILT (session 16):** everything above, the end of the game included, with these details: the Leader choice sits right under the troop chips; Initiative and Wait are under More…; on a phone the Chronicle is a scroll button with the map buttons (not a fifth sheet tab); the path box is reached with a **Path…** button (a long-press already shows the card on phones); Near tiles use bigger copies of the art loaded after the first paint. Details in `docs/decisions.md`.
 - **Bigger maps (Nate):** Wyrmland (120) felt right but small for 6 players. Two new official maps: about **160 territories** (6–8 players) and **200** (8–10), made in the map lab, Nate OKs the Far picture, and speed-checked on phones (session 19).
 
+## 13. Voice and chat (Nate, Oct 7; future)
+### A language pass
+- **Make every piece of writing in the game feel less like AI wrote it:** menus, tooltips, reports, the Chronicle, deal reasons, bot offers, the rules reference.
+- **Written in Nate's own voice** (his writing-style skill, "nate-voice"), with **a different tone for each bot personality** (the Conqueror, Blitzer, Turtle, Schemer, Opportunist and Merchant each sound like themselves) and, later, for leaders' temperaments.
+- **When:** session 21, after the polish pass and before M4 (the chat below reuses these voices). Nate can move it.
+
+### Chat (with M4, the multiplayer milestone; it works in single player too)
+- **People with people:** a normal chat. One-to-one chats, and group chats with the players you pick.
+- **The look:** like any chat app. Open the chat and a **left sidebar lists your chats** (bold when unread), the **selected chat fills the main area**, and **a small pop-up notification** shows when a message comes in. Easy to bring up and to dismiss. On a phone, the list and the chat are two screens.
+- **Your leaders' group chat:** your Leader, your Steward and any captured leaders tell you what they did, **in their own words and personality** ("Took Ashfell and Yewmarch. Morwen's lot ran before we got there.").
+- **Bots and leaders never chat like an open-ended AI:** your replies are **multiple choice**, quick and light:
+  - **negotiating a deal** when a bot asks for one (accept, counter, decline, a cheeky answer)
+  - **directing a leader** when it asks you something ("Lady Morwen burned our fort at Pinemark. Do we go after her?" → "Yes, take everything she has" / "Hold for now" / "Only if it's easy")
+  - each choice does something in the game (a deal, a command, a budget) or just sets the mood
+- **Personality and variety, baked in:** a large library of situations and lines so every game feels different:
+  - leaders **hold grudges** (a rival who wiped out their army or took their home province) and **ask to go after them**; they boast after a good turn, worry when the capital is threatened, grumble when their purse is empty, and needle captured leaders who used to be rivals
+  - opponents **threaten** your land, **brag** when they've taken several of your territories, and answer your choices in character
+  - **fun trash talk, never childish or nasty,** and **not every turn:** only when something happens that calls for it (a big capture, a broken truce, a comeback), with limits on how often each bot speaks
+  - leaders get a temperament of their own (loyal, hot-headed, cautious, ambitious, dry), dealt from the game's seed
+- **Fair:** a bot's message never gives away anything you couldn't know (no bragging about land in your fog), and every choice is an ordinary game action, so nothing in chat is extra power.
+- **Not heavy:** reading and answering should add seconds to a turn, not minutes. Messages can be ignored; a deal offer left unanswered lapses as today.

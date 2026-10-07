@@ -103,7 +103,8 @@ Research, outline v0.1, v0.2 additions, and decisions.
   - **19:** **bigger maps** (about 160 and 200 territories) and the **balance pass** (length, runaways and the small-map snowball in the bots first, culture and buildings that pay (three levers tested, Nate picks), the Fallen acting from their first turn out, seat fairness, each system's cost in turns, a speed check before M4), and the Marshal lifted to at least the level of your leaders.
   - **20: the polish pass** (`docs/09-polish-and-effects-plan.md`): effects, the cinematic replay, the living map, menus with weight, title and game-over art. **Art batch 4** (Gemini, `docs/prompts/gemini-art-session-04.md`) must be made before it.
 - **Nate's next play test: after 19** (the list is in `PROGRESS.md`).
-- After 20, M3 is done. **What comes next is decided after Nate plays** (a play-test fixes session if needed, then M4).
+  - **21: the language pass** (Nate, Oct 7): every piece of writing in the game in Nate's own voice, with a tone for each bot personality (`04-design-additions.md` §13).
+- After 21, M3 is done. **What comes next is decided after Nate plays** (a play-test fixes session if needed, then M4).
 - Orchestrator prompts: orchestrator-07 was written after session 18; the next is due after session 21.
 - Leader-as-general (standing instructions) and captured generals.
 - Spoils and Fate decks (events and missions).
@@ -116,6 +117,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
 - **Map lab** (dev-only, early in M3): seed and knobs in, the real illustrated map out, with its quality checks, a 12-seed gallery and the art test bench. See `docs/07-map-tooling.md`.
 
 ### M4: Online with friends (Cloudflare)
+- **Chat** (Nate, Oct 7; `04-design-additions.md` §13): one-to-one and group chats between people; your leaders' group chat; bots and leaders answered by multiple choice; personality, grudges and occasional trash talk. It works in single player too.
 - Live 5-minute turns, plus a longer-timer option.
 - Durable Object per game, WebSockets for the live replay.
 - Google sign-in via the existing Cloudflare Access setup (Google login already configured), invite links.
