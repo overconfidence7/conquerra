@@ -8,7 +8,8 @@ import { inProcessHost } from "./inProcessHost";
 
 /** A 4-player Embervale game, with a rival that borders you (for the truce warnings). */
 async function start() {
-  useGame.getState().setLobby({ mapId: "embervale", bots: 3, botLevel: "captain", turnSeconds: null });
+  // (Three players: a table whose capitals have stayed put since session 18, so the games these tests play are the same.)
+  useGame.getState().setLobby({ mapId: "embervale", bots: 2, botLevel: "captain", turnSeconds: null });
   await useGame.getState().start();
   return useGame.getState();
 }

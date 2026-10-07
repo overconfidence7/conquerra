@@ -19,6 +19,9 @@ export const MAP_CONFIGS: MapGenOptions[] = [
     minSeaLanes: 2,
     rivers: 3,
     minChokePoints: 5,
+    // Session 19: the 4-player capitals chosen with the simulator from Embervale's own capital spots (the map maker's
+    // layout let one spot win 53% of equal-bot games and another 1%; this one 13-38%: docs/sims/s19-fair-all-embervale4.txt).
+    capitals: { 4: ["t02", "t20", "t28", "t37"] },
   },
   {
     id: "greatmarch",

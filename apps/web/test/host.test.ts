@@ -205,10 +205,12 @@ describe("saved games", () => {
   };
 
   it("save, load and carry on gives exactly the same game as playing straight through", () => {
-    const straight = new LocalGame(map, settings, "continue-test");
+    // (Three players: the seat you play stays in for all 12 turns here. Session 19 moved Embervale's 4-player capitals.)
+    const three = { ...settings, bots: 2 };
+    const straight = new LocalGame(map, three, "continue-test");
     const end = play(straight, 12);
 
-    const first = new LocalGame(map, settings, "continue-test");
+    const first = new LocalGame(map, three, "continue-test");
     play(first, 5);
     // Through JSON, as it is on the device or in a file.
     const read = readSave(JSON.parse(JSON.stringify(first.snapshot())));

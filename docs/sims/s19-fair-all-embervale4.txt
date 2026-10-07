@@ -1,1 +1,7 @@
 43 layouts pass the paper check
+today's layout: Eldermere 14%, Galeholt 32%, Embercrest 1%, Wolfcrest 53% | spread 52 pts, 28.8 turns
+checked: Eldermere 13%, Wildford 38%, Sunshire 13%, Wolfcrest 36% | spread 24 pts, 29.5 turns -> ["t02","t20","t28","t37"]
+checked: Yewmarch 3%, Dawnrest 30%, Larkfell 36%, Deephollow 32% | spread 34 pts, 29.9 turns -> ["t03","t14","t16","t34"]
+checked: Yewmarch 11%, Embercrest 6%, Wildford 38%, Wolfcrest 45% | spread 39 pts, 29.9 turns -> ["t03","t19","t20","t37"]
+checked: Yewmarch 16%, Wildford 48%, Sunshire 9%, Wolfcrest 28% | spread 39 pts, 30.5 turns -> ["t03","t20","t28","t37"]
+checked: Galeholt 32%, Embercrest 2%, Wildford 41%, Deephollow 25% | spread 39 pts, 30.0 turns -> ["t05","t19","t20","t34"]

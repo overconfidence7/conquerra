@@ -5,7 +5,8 @@ import type { GameContext } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { playTable, type SeatStats } from "../src";
 
-const ember: GameContext = { map: maps.embervale!, rules: defaultRules };
+/** Embervale with its 4-player capitals as before session 19 moved them (the signatures below replay fixed games). */
+const ember: GameContext = { map: { ...maps.embervale!, capitalLayouts: maps.embervale!.capitalLayouts!.map((l) => (l.players === 4 ? { players: 4, slots: ["t02", "t05", "t19", "t37"] } : l)) }, rules: defaultRules };
 
 /**
  * Each personality's signature shows up in play (session 17). Four personalities at a table, rotated through the seats
