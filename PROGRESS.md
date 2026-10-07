@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–19 are done and reviewed. Next: Nate's play test (the list is under "Things to test after session 19"); then the next coding session (his fixes, the Marshal builds like the Steward, fair seats) and the polish pass.**
+**Phase: M3 (depth and balance). Sessions 7–19 are done and reviewed. Next: Nate's play test (the list is under "Things to test after session 19"); then session 20 (his fixes, the Marshal builds like the Steward, fair seats), 21 (the polish pass), 22 (the language pass).**
 
 Claude Code sessions completed: **19** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -982,7 +982,8 @@ All five parts are done, each committed and pushed. Art batch 4 wasn't imported 
   - **The capital spot decides a lot on every map** (among equal bots, 0–76% between spots; a person starting in Embervale's Embercrest or Krakenmere's Rookstone is at a real disadvantage). Session 19 fixed Embervale at 4 players and built the tools; the other maps and table sizes need a smarter search, an exposure-aware fairness check in the map maker, and a start bonus as the fallback. It matters most once friends play online (M4).
   - **Bot games on the big maps run to the 60-turn cap,** and 8+ players default to Conquest (20 turns). Nate said long bot games are fine because his own run much shorter; whether 20 turns is right on a 200-territory map is on his play-test list (item 6).
 - **Session 19's questions:** the culture lever and sound are Nate's (asked with his play test); the Recruit stays as it is until the capital spots are fairer (orchestrator default: 46% against three Recruits is easy enough for now); Conquest's default on big maps waits for his play test.
-- **Next:** Nate plays from "Things to test after session 19"; then the next coding session takes his fixes plus the two balance leftovers (the Marshal builds like the Steward; fair seats), and the polish pass follows.
+- **Nate's calls (Oct 7, after the review):** culture +1 gold a level stays the default; sound gets its own session after the language pass; **session 20 = his play-test fixes + the Marshal builds like the Steward + fair seats**, so the polish pass becomes **21** and the language pass **22**; the polish pass stays one session, parts in priority order.
+- **Next:** Nate plays from "Things to test after session 19"; then session 20.
 
 ### Things to test after session 19 (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop: 6 players on Wyrmland, you in red; phone: the same checks where they apply.*

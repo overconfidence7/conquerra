@@ -202,7 +202,7 @@ Icons as in Tier 2 (bold, simple, reads at 24 px, thin light-gold rim, magenta, 
 | `art-victory.png` | A triumphant army on a green hilltop at sunrise, seen from behind and a little above: ranks of soldiers raising spears, a tall plain gold-and-white banner at the front, a castle on the next hill with smoke clearing, golden light breaking through clouds. No text. |
 | `art-defeat.png` | A lone torn banner on a broken pole in the mud of a quiet battlefield at dusk, a fallen shield and helmet beside it, smoke drifting over a burned-out castle in the distance, crows on a dead tree, cold blue-grey light. No text. |
 
-#### 6. Scenery additions (for the polish pass, session 20)
+#### 6. Scenery additions (for the polish pass, session 21)
 | File | Prompt (after the style line) |
 |---|---|
 | `peak-narrow-1.png` … `-3.png` | A single tall, narrow mountain peak, much taller than it is wide, cold blue-grey granite with heavy snow on the upper third, small dark pines at the base. (Make 3 different peaks.) For ranges that run up and down the screen. |

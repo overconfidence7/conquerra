@@ -1,6 +1,6 @@
 # The polish pass: replay effects, a living map and menus with weight
 
-*Written by the orchestrator on Oct 6, at Nate's request: "I want this game to look like a large development team with a good budget made it, so visuals are important. Special effects would be a fun add too for the playback portion of the game." The art comes from Gemini in **art batch 4** (`docs/art/asset-list-and-prompts.md`, Tier 3, "Batch 4"). The code comes in **Claude Code session 20**, after the Marshal (17), the leaders (18) and the bigger maps and balance pass (19). Nate can cut or reorder anything here.*
+*Written by the orchestrator on Oct 6, at Nate's request: "I want this game to look like a large development team with a good budget made it, so visuals are important. Special effects would be a fun add too for the playback portion of the game." The art comes from Gemini in **art batch 4** (`docs/art/asset-list-and-prompts.md`, Tier 3, "Batch 4"). The code comes in **Claude Code session 21**, after the Marshal (17), the leaders (18), the bigger maps and balance pass (19) and the play-test fixes and balance follow-up (20). Nate can cut or reorder anything here.*
 
 ## What "a big team made this" means here
 Big-studio strategy games feel polished for a handful of reasons, and most are about motion and consistency rather than more detail:
@@ -91,10 +91,10 @@ Under fog, all of these are the same soft "something stirs" pulse.
 - **Title screen:** the new key art (`art-title`) with slow drifting clouds over it (parallax). The lobby sits over it.
 - **Game over:** full illustrations for victory (`art-victory`) and defeat (`art-defeat`), with drifting embers or petals.
 
-## 9. Sound (Nate's call, not part of session 20 unless he says so)
+## 9. Sound (Nate, Oct 7: its own session, after the language pass; not part of the polish pass)
 Sound is the other half of feeling expensive: a march drum, the clash of steel, a fanfare on a capture, the thud of the wax seal, coins, and quiet music under planning. It needs a source (a licensed sound pack, or an AI audio tool whose terms allow commercial use) and a volume setting.
 
-## How it's built (for Claude Code, session 20)
+## How it's built (for Claude Code, session 21)
 - **An effects layer in Pixi** with a small pooled particle system (sprites with normal, additive and screen blending), driven by the replay timeline's progress so effects pause, scrub and skip with it.
 - **Effect recipes as data** (one per beat kind and event: which textures, how many, how they move and fade, and how they scale with troop counts), so tuning doesn't need code changes.
 - **The importer learns "fx-" art:** these are painted on pure black. The importer turns brightness into transparency and keeps the colour, so smoke and flames have soft edges with no fringe. Magenta-background `fx-` pieces (coin, arrow, stone, rocks, leaf, wheat, scroll, storm cloud, birds) are cut out as usual.
@@ -103,7 +103,7 @@ Sound is the other half of feeling expensive: a march drum, the clash of steel, 
 - **Filters, only where they're worth their cost:** a shockwave ripple for siege impacts and a capital falling; a soft glow on gold; a displacement shimmer on water. Check the frame rate on a phone after each one.
 - **Checks:** frame rate in the replay on a 384 px phone profile (aim for at least 50 fps on Full); the replay's length unchanged; the bundle at start-up unchanged; screenshots and a short screen recording (GIF) of a turn's replay for Nate.
 
-## Order of work in session 20 (most visible first)
+## Order of work in session 21 (most visible first; one session, stop cleanly at a part boundary if it runs low)
 1. The importer's `fx-` rule, the effects layer and the Effects setting.
 2. Armies on the move and battles (§2, §3), the capital falling and knock-outs.
 3. The cinematic replay (§1).

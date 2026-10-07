@@ -370,7 +370,7 @@ Nate's notes: his test game on Wyrmland against 5 Captains lasted only 12 turns,
 ### A language pass
 - **Make every piece of writing in the game feel less like AI wrote it:** menus, tooltips, reports, the Chronicle, deal reasons, bot offers, the rules reference.
 - **Written in Nate's own voice** (his writing-style skill, "nate-voice"), with **a different tone for each bot personality** (the Conqueror, Blitzer, Turtle, Schemer, Opportunist and Merchant each sound like themselves) and, later, for leaders' temperaments.
-- **When:** session 21, after the polish pass and before M4 (the chat below reuses these voices). Nate can move it.
+- **When:** session 22, after the polish pass (21) and before M4 (the chat below reuses these voices). Nate can move it.
 
 ### Chat (with M4, the multiplayer milestone; it works in single player too)
 - **People with people:** a normal chat. One-to-one chats, and group chats with the players you pick.
