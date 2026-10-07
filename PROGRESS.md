@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–15 are done. Next: session 16 (`docs/prompts/claude-code-session-16.md`): Nate's play-test fixes (controls, sharp zoom, provinces on demand, orders along a path, Spoils, the Chronicle); then 17 the Marshal and bot personalities, 18 leaders you delegate to, 19 bigger maps and the balance pass, 20 the polish pass. Art batch 4 can be made in Gemini any time before 20.**
+**Phase: M3 (depth and balance). Sessions 7–16 are done. Next: Nate plays session 16 on the preview; then 17 the Marshal and bot personalities, 18 leaders you delegate to, 19 bigger maps and the balance pass, 20 the polish pass. Art batch 4 can be made in Gemini any time before 20.**
 
-Claude Code sessions completed: **15** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
+Claude Code sessions completed: **16** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
 ---
 
@@ -803,3 +803,37 @@ Nate played a full game on Wyrmland against 5 Captain bots. His notes, in his wo
 - **@pixi/sound** (MIT; v6 for PixiJS v8) if Nate wants sound.
 - **Particles and effects are built in-house** on PixiJS's own fast particle container. Off-the-shelf emitters simulate frame by frame with random numbers, so a replay's effects couldn't be scrubbed, skipped or played again identically. Ours are worked out from the replay's clock and the game's seed.
 - **The blurry zoom is ours to fix, not an engine's:** the whole map is painted once at about 1.75 pixels per map unit on desktop (1.3 on a phone) for Wyrmland, and fully zoomed in that's stretched about three times. The art is also stored small (trees 192 px, castles 384 px) though the originals are 2048 px. Session 16 paints sharper tiles where you're looking and keeps the art bigger.
+
+### Oct 6: Claude Code session 16 (M3: Nate's play-test fixes)
+All six parts are done (Part 6, the end of the game, too), each committed and pushed. No art batch 4 was imported (that's session 20).
+- **Controls and rules (Part 1):**
+  - **Your Leader goes with the attack** by default: "Leader goes (+20%) / Stays home" sits right under the troop chips. It **carries on through a chain** (each hop you add from where it lands takes it on, and so does Follow through). The report says "with 10 troops and your Leader".
+  - **Initiative and Wait** are now plain buttons (under More…). Hover on a laptop, or press and hold on a phone, for the full explanation. (The odd bubbles were the buttons accidentally picking up the Leader card's layout.)
+  - **Room at the map's edges:** the game measures its menus, and fully zoomed out the whole map sits clear of them, on a laptop and a phone. You can pan any edge into the clear part at every zoom.
+  - **You are red (Gules) by default**, and the lobby lets you pick any of the ten House colours (remembered on your device and kept in saves). The bots take the rest.
+  - **Culture is lost when land changes hands** (a capture, a trade, or rebels); buildings stay. The card says "Lost if you take it" on a rival's land. Games are as long as before (4 players 27.9 → 27.7 turns, 6 players 37.1 → 37.4; 300 games each).
+  - **Spy upkeep only while away:** free at home or guarding a province, 1 gold a turn while travelling or in land you don't hold.
+- **Sharp at every zoom (Part 2):**
+  - When you zoom in, the land where you're looking is painted again at up to 3 times the detail (in about a quarter of a second). The art is also kept twice as big: those bigger copies load after the map is on screen, so the first paint isn't slower.
+  - Side-by-side before/after pictures: `docs/art/screens/compare/s16-near-{capital,forest,mountain,coast}-{desktop,phone}.png`. The phone pictures went from blocky to clean.
+  - **Speed** (phone emulation, processor slowed 4×): panning 95–101 → 97–102 frames a second; laptop 130–184 → 121–154. Texture memory 51 → 88–95 MB. The phone's replay ran at 35 frames a second before and 39–43 after (the marker layout got cheaper), still under the 50 goal; the rest is in how the replay redraws its lines, which the polish pass rebuilds anyway.
+  - **Art download:** 2.7 MB at first (unchanged), plus 3.0 MB of bigger copies afterwards.
+  - **Provinces on demand:** province names on the land only at Far zoom. Tap any territory (yours, a rival's, fogged) and its whole province lights up with a bright band and its plaque. The card says "The Oak Downs +3: you hold 2 of 5".
+- **Orders along a path (Part 3):** select your land, **Path…**, tap where to go. The box offers the **shortest way** or the **full sweep** (it takes everything in between), draws the chain on the map and says "9 orders: take 8 territories, end at Wildstead". Confirm adds ordinary hops you can change. It never attacks anyone you have a deal with. Taps on a phone: 4 (shortest), 5 (sweep).
+- **Spoils, the Chronicle, and ganging up (Part 4):**
+  - **Spoils rework:** every set gives gold, and **one of each is the best** (6 troops over your front, a building of your choice, 10 gold). The Spoils sheet always shows the table, with the sets you can make lit. Games are no longer (27.7 → 27.5, 37.4 → 36.7).
+  - **The Chronicle:** every turn so far, newest first, with what touched you on top. It holds only what you saw; fog fighting is grouped ("Battles in Mistreach ×3"). Tap a line to see the place. Button in the top bar (laptop) or the scroll button by the map buttons (phone). It's kept with saved games.
+  - **Louder Fate and Fallen:** an event on your land gets a big banner, the replay camera goes there, and it's the first line of the report: "The Fallen have turned on you: a plague in Old March."
+  - **Why nobody ganged up on Nate:** not a bug. People and bots are judged the same way, and the Fallen do target a runaway once there are Fallen. The problem is fog: each Captain counts only the land it sees or remembers, so on Wyrmland it recognised a runaway in only 21% of its turns (100% with fog off), about 8–9 turns late, and joint wars against the runaway fell from 4.3 to 0.6 a game. The ideas for the Marshal (session 17) are in `docs/sim-results-s16.md`. Nate's game wasn't saved to a file, so a "fast expander" bot stood in for him.
+- **The end of the game (Part 6):** the game-over screen has a **power graph** (each House's share of the map by turn, House colours with their banner patterns, winner strongest) and **awards** with portraits: Best Military, Best Culture, Master Builder, Spymaster, Diplomat, Survivor, plus Iron Wall, Kingslayer, Fortune's Favourite, Quartermaster and Oathbreaker. Nobody sees any land counts until the game ends.
+- **Taps (384 px phone):** a basic turn is still **6**. Path order 4 (shortest) or 5 (sweep). Command 3, propose a truce 4, accept 1, hire a spy 3, send a spy 3.
+- **Start-up bundle:** 441.1 → 451.4 KB (gzip 135.1 → 138.1).
+- **Saves:** game state version 9 (House colours, then the game's record), with migrations. The session 13 and 14 saves still load.
+- **Screenshots** (desktop and 384 px phone), in `docs/art/screens/s16-*.png`: the lobby colour choice, fully zoomed out, an attack with the Leader, Initiative/Wait (phone, with its explanation), a lit province, both path boxes, the Spoils sheet, the Chronicle, the game-over graph and the awards. Scripts: `s16-shots.mjs`, `s16-over.mjs`, `s16-zoom.mjs`.
+- **Tests and deploy:** 722 automated tests pass. Deployed twice to the private preview: after Part 5 (version `558bb993`) and after Part 6 (version `a7a4ebf6`). The lock check passed both times. Nate: please check the repo's Actions page for the last commit.
+- **Asked Nate to play on the preview:**
+  - **Laptop, 6 players on Wyrmland, Captain bots, you in red:** zoom all the way in (sharp now?) and all the way out (can you see everything?); tap a few territories you don't own (do provinces read clearly?); make a path order both ways; attack with your Leader and chain on; turn in one of each in Spoils; open the Chronicle after a few turns (did anything happen to you that you'd have missed?); look at the graph and awards at the end.
+  - **Phone:** the same zoom checks, and how smooth it feels.
+  - How many turns did the game take?
+
+  His notes go below once he's played.
