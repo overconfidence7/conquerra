@@ -59,7 +59,7 @@ function copyBoard(s: GameState): GameState {
     territories[id] = { ...t, specialists: t.specialists.map((x) => ({ ...x })), construction: t.construction ? { ...t.construction } : null };
   return {
     ...s,
-    players: s.players.map((p) => ({ ...p, leader: { ...p.leader }, cooldowns: { ...p.cooldowns }, captured: p.captured.map((g) => ({ ...g })) })),
+    players: s.players.map((p) => ({ ...p, leader: { ...p.leader }, cooldowns: { ...p.cooldowns }, captured: p.captured.map((g) => ({ ...g })), leaders: (p.leaders ?? []).map((l) => ({ ...l })) })),
     territories,
     intel: {},
   };

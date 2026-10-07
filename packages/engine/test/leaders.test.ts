@@ -249,6 +249,19 @@ describe("budgets and purses", () => {
     expect(player(tv.board, "p1").gold).toBe(player(r.state, "p1").gold);
     expect(player(tv.board, "p1").leaders.map((l) => l.purse)).toEqual(player(r.state, "p1").leaders.map((l) => l.purse));
   });
+
+  it("a turn never changes the game it started from, purses included (session 20: the replay's board used to share them)", () => {
+    const s = two();
+    s.settings.fog = true;
+    player(s, "p1").gold = 20;
+    rec(s, "p1", "steward")!.purse = 7;
+    rec(s, "p1", "leader")!.budget = { share: 0.3 };
+    const before = JSON.stringify(s);
+    const r = resolveTurn(ctx, s, { p1: [{ id: "m", kind: "build", territory: "b", building: "market", steward: "p1" }] });
+    replayFor(ctx, s, r, "p1");
+    expect(JSON.stringify(s)).toBe(before);
+    expect(rec(r.state, "p1", "leader")!.purse).toBeGreaterThan(0);
+  });
 });
 
 describe("captured leaders", () => {

@@ -68,6 +68,8 @@ export interface TableResult {
   leaderHalfway: PlayerId | null;
   /** Planning time per seat per turn (ms), by bot id. */
   planMs: Record<string, number[]>;
+  /** The position at the end (or where `stop` stopped it). */
+  final?: GameState;
   /** Per turn (ms): resolving the turn, and every seat's planning together (diplomacy and the Fallen included). */
   resolveMs: number[];
   turnPlanMs: number[];
@@ -82,6 +84,10 @@ export interface TableOptions {
   /** Called with each turn's events after it resolves. */
   onEvents?: (before: GameState, events: readonly StepEvent[]) => void;
   maxTurns?: number;
+  /** Start from this position instead of a new game (session 20's mop-up fixtures). */
+  start?: GameState;
+  /** Stop before this turn is planned (the position is returned as `final`). */
+  stop?: (s: GameState) => boolean;
 }
 
 const blank = (seat: number, player: PlayerId, bot: string): SeatStats => ({
@@ -95,7 +101,7 @@ const blank = (seat: number, player: PlayerId, bot: string): SeatStats => ({
 export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], opts: TableOptions = {}): TableResult {
   const idx = indexMap(ctx.map);
   const players = bots.map((_, i) => ({ id: `p${i + 1}`, name: `Bot ${i + 1}` }));
-  let s = createGame(ctx, { gameId: `sim-${seed}`, seed, players, settings: opts.settings ?? {} });
+  let s = opts.start ?? createGame(ctx, { gameId: `sim-${seed}`, seed, players, settings: opts.settings ?? {} });
   const stats = bots.map((b, i) => ({ ...blank(i, players[i]!.id, b.id), capital: s.players.find((p) => p.id === players[i]!.id)!.capital }));
   const byId = new Map(stats.map((x) => [x.player, x]));
   const sighted = new Set(opts.sighted ?? []);
@@ -110,6 +116,7 @@ export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], 
   const level = (b: Bot) => b.diplomat ?? (b.id === "recruit" ? ("recruit" as const) : ("captain" as const));
   const viewOf = (st: GameState, p: PlayerId, seat: number) => (sighted.has(seat) && st.settings.fog ? viewFor(ctx, { ...st, settings: { ...st.settings, fog: false } }, p) : viewFor(ctx, st, p));
   while (!s.winner && (opts.maxTurns === undefined || s.turn <= opts.maxTurns)) {
+    if (opts.stop?.(s)) break;
     const st = s;
     const living = st.players.filter((p) => p.eliminatedTurn === null);
     const views = new Map(living.map((p) => [p.id, viewOf(st, p.id, st.players.indexOf(p))]));
@@ -273,5 +280,6 @@ export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], 
     planMs,
     resolveMs,
     turnPlanMs,
+    ...(opts.start || opts.stop ? { final: s } : {}),
   };
 }
