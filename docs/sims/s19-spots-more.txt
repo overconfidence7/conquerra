@@ -1,0 +1,6 @@
+ashwing:8 marshal: 8 capital spots used; fair 12.5%; spots with 20+ games:
+Thornmere 34.3% (300) · Glenthorpe 26.3% (300) · Greyden 16.7% (300) · Galewell 11.3% (300) · Sorrowrest 4.0% (300) · Saltbury 3.0% (300) · Coldcrest 2.7% (300) · Amberfield 1.7% (300)
+sundered-crowns:8 marshal: 8 capital spots used; fair 12.5%; spots with 20+ games:
+Ravenkeep 42.3% (300) · Stonemere 20.0% (300) · Rookreach 11.7% (300) · Thornhurst 9.7% (300) · Coldreach 9.0% (300) · Wolfholt 6.7% (300) · Redstone 0.3% (300) · Moonden 0.3% (300)
+rootholm:10 marshal: 10 capital spots used; fair 10.0%; spots with 20+ games:
+Deepton 30.0% (300) · Kingsmarch 19.0% (300) · Wolfhold 13.3% (300) · Kingshelm 11.7% (300) · Fenbury 8.0% (300) · Emberwick 6.0% (300) · Mistmark 5.3% (300) · Nettlehold 3.0% (300) · Hallowmarch 1.7% (300) · Silverfield 1.0% (300)

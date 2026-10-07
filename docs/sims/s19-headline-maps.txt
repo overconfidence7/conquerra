@@ -1,0 +1,16 @@
+marshals       embervale:4    29.9 turns (median 28), 82.2% within 40 | half-map at 10 36.2%, halfway leader won 67.6%, comebacks 41.8% | seats 19–29%, by capital spot 12–41% | out by 6 3.0% | draws 0.0%
+marshals       embervale:6    39.3 turns (median 37), 59.4% within 40 | half-map at 10 9.4%, halfway leader won 51.6%, comebacks 61.6% | seats 15–18%, by capital spot 1–39% | out by 6 3.5% | draws 0.0%
+marshals       shattered-isles:4 34.0 turns (median 31), 75.8% within 40 | half-map at 10 15.2%, halfway leader won 70.0%, comebacks 51.2% | seats 19–31%, by capital spot 4–67% | out by 6 2.1% | draws 0.0%
+marshals       shattered-isles:6 44.8 turns (median 43), 41.0% within 40 | half-map at 10 6.6%, halfway leader won 58.9%, comebacks 61.7% | seats 14–19%, by capital spot 0–52% | out by 6 2.7% | draws 0.2%
+marshals       twin-realms:4  29.3 turns (median 27), 88.4% within 40 | half-map at 10 34.4%, halfway leader won 86.4%, comebacks 27.2% | seats 22–27%, by capital spot 17–33% | out by 6 2.6% | draws 0.0%
+marshals       twin-realms:8  44.3 turns (median 43), 43.8% within 40 | half-map at 10 0.4%, halfway leader won 71.3%, comebacks 57.4% | seats 11–14%, by capital spot 2–41% | out by 6 2.2% | draws 0.4%
+marshals       moon-coast:4   34.7 turns (median 33), 76.4% within 40 | half-map at 10 15.0%, halfway leader won 70.8%, comebacks 48.0% | seats 20–27%, by capital spot 1–75% | out by 6 0.4% | draws 0.0%
+marshals       moon-coast:8   47.0 turns (median 47), 32.0% within 40 | half-map at 10 0.6%, halfway leader won 59.3%, comebacks 72.1% | seats 11–15%, by capital spot 3–40% | out by 6 2.6% | draws 0.2%
+marshals       wyrmland:6     48.0 turns (median 50), 31.4% within 40 | half-map at 10 2.4%, halfway leader won 62.7%, comebacks 60.4% | seats 13–20%, by capital spot 3–38% | out by 6 2.2% | draws 0.4%
+marshals       wyrmland:8     54.5 turns (median 60), 10.2% within 40 | half-map at 10 0.2%, halfway leader won 47.0%, comebacks 76.9% | seats 11–15%, by capital spot 1–33% | out by 6 1.3% | draws 0.4%
+marshals       greatmarch:8   48.8 turns (median 50), 26.2% within 40 | half-map at 10 0.4%, halfway leader won 58.2%, comebacks 75.4% | seats 10–14%, by capital spot 3–23% | out by 6 2.5% | draws 0.0%
+marshals       greatmarch:10  51.3 turns (median 55), 18.8% within 40 | half-map at 10 0.2%, halfway leader won 53.0%, comebacks 79.2% | seats 7–12%, by capital spot 1–27% | out by 6 3.7% | draws 0.0%
+marshals       ringsea:6      47.8 turns (median 49), 30.6% within 40 | half-map at 10 2.0%, halfway leader won 61.9%, comebacks 65.9% | seats 15–18%, by capital spot 6–30% | out by 6 1.6% | draws 0.2%
+marshals       ringsea:10     53.1 turns (median 59), 13.2% within 40 | half-map at 10 0.2%, halfway leader won 55.4%, comebacks 68.4% | seats 8–12%, by capital spot 1–35% | out by 6 2.6% | draws 0.0%
+marshals       crownlands:6   46.0 turns (median 45), 38.2% within 40 | half-map at 10 1.6%, halfway leader won 65.3%, comebacks 66.5% | seats 14–19%, by capital spot 2–42% | out by 6 2.8% | draws 0.2%
+marshals       crownlands:10  50.9 turns (median 53), 15.6% within 40 | half-map at 10 0.0%, halfway leader won 62.3%, comebacks 71.0% | seats 8–12%, by capital spot 0–45% | out by 6 1.9% | draws 0.8%

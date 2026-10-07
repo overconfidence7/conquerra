@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–18 are done. Next: session 19 (`docs/prompts/claude-code-session-19.md`): the balance pass and bigger maps; then Nate's play test (the list is under "Things to test after session 19"); then 20, the polish pass.**
+**Phase: M3 (depth and balance). Sessions 7–19 are done. Next: Nate's play test (the list is under "Things to test after session 19"); then session 20, the polish pass.**
 
-Claude Code sessions completed: **18** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
+Claude Code sessions completed: **19** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
 ---
 
@@ -958,8 +958,29 @@ All four parts are done, each committed and pushed. Art batch 4 wasn't imported 
 - **Eighteen Claude Code sessions are done,** so there's a fresh orchestrator prompt: `docs/prompts/orchestrator-07.md`.
 - **Next:** session 19 (`docs/prompts/claude-code-session-19.md`, run it locally), then Nate's play test.
 
+### Oct 7: Claude Code session 19 (M3: the balance pass, and bigger maps)
+All five parts are done, each committed and pushed. Art batch 4 wasn't imported (session 20). Full write-up: `docs/sim-results-m3-balance.md`.
+- **Step 0:** the "keep or let go" dialog lists captured Stewards too (they used to go by default without a choice).
+- **Why a delegating player beat the Marshals (Part 1):** not diplomacy and not the Leader's +20%. The Marshal queued its purchases before its attacks (each order takes a round, so rivals moved first), bought cavalry on a whim, and in its all-out opening left one troop at home: on Embervale, where capitals are 3 steps apart, **14% of Marshals were knocked out on turn 1** (a delegating player's starting gold stayed home as troops, by accident). Now the Marshal queues troops and attacks first, skips the whim cavalry, and keeps a **guard at its capital** (half of any rival army within 3 steps, and half its stack for the first 3 turns). A player who hands everything to their leaders now wins 20% against Marshals on Embervale (fair 25%; was 30–37%) and 1.09× fair on Wyrmland (was 1.46×). One Marshal beats Captains more often on every table (Embervale 32% → 40%, Greatmarch 11% → 21%).
+- **Culture and buildings that pay (Part 2), pending Nate's pick:** three levers tested alone and in pairs. All but quick forts make building pay on big maps; on a 4-player Embervale nothing makes 20% on buildings pay before the game is decided; bigger or cheaper markets made the Merchant too strong. **Picked: culture +1 gold a turn a level** (was +½). Your Steward's default is now **20% with room, 10% on a crowded table** (12 or fewer territories a player), and "Run the realm" buys culture where it pays.
+- **The Fallen, the snowball, runaways (Part 3):** a knocked-out player starts with **8 Influence** (9+ on the first turn out: a storm, a famine or mercenaries), the dialog and panel say what you can do this very turn, and Fallen bots strike the biggest realm on their first turn. **The 4-player snowball is gone, from the bots alone:** half the map by turn 10 in 71% → 30% of games, 21 → 29 turns, comebacks 22% → 45%. The capital's opening guard now holds on every table (knocked out by turn 6: 15–24% → 1–2%); the halfway leader wins 47–79% (was 59–87%). Stronger gang-ups and an earlier runaway reading made no difference; catch-up rules are listed as options only.
+- **Bigger maps (Part 4), Nate's OK:** **Ashwing** (a phoenix, 160, 6–8 players), **The Sundered Crowns** (twin continents, 160, 6–8), **Krakenmere** (a kraken, 200, 8–10) and **Rootholm** (a tree of life, 200, 8–10; redrawn after Nate said the first looked like a uvula). The lobby says who each map suits. On a phone they paint in 3.5–4.4 s and pan at 74–105 fps; the replay at 10 players is 43–44 fps (goal 50, the polish pass) and memory 225–263 MB (a fix is suggested).
+- **A finding that touches every map:** among equal bots, **the capital spot decides a lot** (Embervale 4: one spot won 53%, another 1%). Earlier sessions measured seats by number, which are shuffled, so it stayed hidden. Embervale's 4-player capitals were re-chosen with the simulator (now 13–38%); the other maps are listed for a later session.
+- **Nate's notes during the session:** both 160 maps official, Krakenmere official, the tree redrawn ("more of a tree of life look") and then OK'd; **long bot games are fine** ("all of my runs on the maps, even big ones, go for significantly less turns than your tests").
+- **Screenshots** (desktop and 384 px phone), `docs/art/screens/s19-*.png`: each new map at Far and Mid, the Fallen's choice and their first turn out. Galleries and Far pictures: `docs/maps/s19/`.
+- **Tests and deploy:** see the end of the write-up; Nate: please check the repo's Actions page for the last commit.
+
 ### Things to test after session 19 (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop: 6 players on Wyrmland, you in red; phone: the same checks where they apply.*
+- **From session 19 (the balance pass and bigger maps), most important first:**
+  1. **Embervale against 3 Marshals:** does the game last longer (the sims say about 29 turns, was 21), and does someone run away less? Does anyone get knocked out in the first few turns (they shouldn't now)?
+  2. **A 6–8 player game on a new ~160 map** (Ashwing or The Sundered Crowns): how many turns, does the size feel right for big battles, and do the neck (Ashwing) and the strait (Sundered Crowns) matter?
+  3. **Does culture or building now feel worth it?** Culture gives +1 gold a turn a level now. Raise culture on safe land early and see if it pays; watch what your Steward builds on its own. (The three levers are in the write-up if you'd pick another.)
+  4. **Get knocked out on purpose once** and try the Fallen's first turn: is it obvious what you can do straight away? Did your event land, and did it feel worth staying for?
+  5. **Try to run away against Marshals** on Wyrmland: do they team up on you, and when?
+  6. **An 8–10 player game on Krakenmere or Rootholm** (the lobby defaults to Conquest, 20 turns, at 8+ players): is 20 turns enough on a 200 map? On the phone: is it smooth enough?
+  7. **Your starting spot:** did it feel fair? (Sims found some capital spots much stronger; Embervale's 4-player spots were re-chosen.)
+  8. **Never touch your Steward** on Embervale with 4 (it starts at 10% there) and on Wyrmland (20%): does it feel like the right amount?
 - **From session 16:**
   - zoom all the way in (sharp?) and all the way out (everything visible clear of the menus? the province names readable, not piled up?)
   - tap territories you don't own: does the province light up clearly, with its name and bonus?

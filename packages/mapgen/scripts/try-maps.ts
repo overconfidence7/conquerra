@@ -48,7 +48,9 @@ for (const shape of shapes)
         if (process.env.DEBUG_MAPS) console.error(e);
         failed++;
         times.push(performance.now() - t0);
-        const msg = (e as Error).message.split("\n").slice(1);
+        const lines = (e as Error).message.split("\n");
+        // A one-line error (not a list of failed checks) is a bug or a bad recipe: say it (session 19).
+        const msg = lines.length > 1 ? lines.slice(1) : [`error: ${lines[0]}`];
         for (const why of msg) {
           const k = why.replace(/^[^:]+: /, "").replace(/t\d+/g, "tN").replace(/\d+(\.\d+)?/g, "#").slice(0, 70);
           reasons.set(k, (reasons.get(k) ?? 0) + 1);

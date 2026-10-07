@@ -3,7 +3,13 @@
 *Fog on, diplomacy on, every system on unless a line says otherwise, seats rotated every game. Raw outputs: `docs/sims/s19-*.txt`. Scripts: `apps/sim/scripts/s19-lines.ts` (one seat against a table, one line per test), `s19-early.ts` (early knock-outs), `s19-compare.ts` (two seats side by side), `s19-levers.ts` (Part 2), and the session 17 tournament script for the headline.*
 
 ## What changed and why (short)
-PART-SUMMARY
+- **The Marshal (Part 1):** a player who handed everything to their leaders beat the Marshals because the Marshal queued its purchases before its attacks, bought cavalry on a whim, and left one troop at home in its all-out opening (14% of Marshals were knocked out on turn 1 on Embervale). Now it queues armies first, skips the whim cavalry and keeps a guard at its capital. The delegating player is at or below its fair share; one Marshal beats Captains more often on every table.
+- **Culture pays (Part 2, pending Nate's pick):** +1 gold a turn a level (was +½), the best of three levers for the game as a whole. Your Steward starts at 20% where there's room and 10% on a crowded table.
+- **The Fallen (Part 3):** start with 8 Influence, so they can strike on their first turn out; the screens say what you can do right now.
+- **The snowball and runaways (Part 3):** the capital guard ended the turn-1 knock-outs; on Embervale with 4 Marshals, half the map by turn 10 fell from 71% to about 30–36% of games and games went from 21 to about 29 turns. The halfway leader wins less at every table. No rule change was needed.
+- **Bigger maps (Part 4):** Ashwing and The Sundered Crowns (160), Krakenmere and Rootholm (200), with Nate's OK; fine on a phone apart from the replay's frame rate at 10 players and memory.
+- **Seat fairness (Part 4):** a new finding: the capital spot decides a lot among equal bots on every map. Embervale's 4-player capitals were re-chosen with the simulator; the rest is listed for later.
+- **Long bot games are fine** (Nate): his own games run much shorter.
 
 ## Part 1: why a delegating player beat the Marshals, and the fix
 
@@ -216,3 +222,77 @@ Laptop, and a 384 px phone with its processor slowed 4 times (session 16's way),
   - **The replay at 10 players runs at 43–44 frames a second** (goal 50; Wyrmland at 6 players 84). The cause is how many armies and moves it draws at once with 10 players; the polish pass (session 20) rebuilds how the replay draws its lines and markers, so that's the place to fix it.
   - **JavaScript memory on the phone is 225–263 MB** on the big maps (Wyrmland 133). The causes: the map's data is 1.4–2.0 MB (413–552 KB to download, compressed; Wyrmland 1.15 MB, 321 KB) and is kept as plain objects (8,000+ decoration spots on a 200 map), and 10 players' views, memories and replays. A mid-range phone copes; an old 2–3 GB phone may struggle. **Suggested fix (not built):** keep the decorations and outlines as packed number arrays after loading instead of thousands of small objects, and drop the raw map file once the map is painted.
 - **Planning time at 10 players** (Krakenmere and Rootholm, Marshals, every system on, 20 games each, `docs/sims/s19-speed.txt`): resolving a turn **6.5 ms on average, 95% under 12 ms, worst 25 ms**; all ten bots planning a turn together (diplomacy and the Fallen included) **7.6 ms, worst 33 ms**; one Marshal 0.7 ms (worst 8 ms).
+
+## Part 5: the headline balance table
+
+### Every official map at its suggested table sizes
+Tables of Marshals (personalities dealt from each game's seed), every system on, fog on, 500 games a line (`docs/sims/s19-headline-maps.txt`, `s19-new-maps.txt`; seat fairness by capital spot from the same games, or `s19-spots*.txt` at 300 games for the new maps). Bot games run long; Nate's own games run much shorter, which he's happy with.
+
+| Map (territories), players | Turns (median) | Within 40 | Half the map after turn 10 | Halfway leader won | Comebacks | Win rate by capital spot (fair) |
+|---|---|---|---|---|---|---|
+| Embervale (40), 4 | 29.9 (28) | 82% | 36% | 68% | 42% | 12–41% (25%) |
+| Embervale (40), 6 | 39.3 (37) | 59% | 9% | 52% | 62% | 1–39% (17%) |
+| The Shattered Isles (60), 4 | 34.0 (31) | 76% | 15% | 70% | 51% | 4–67% (25%) |
+| The Shattered Isles (60), 6 | 44.8 (43) | 41% | 7% | 59% | 62% | 0–52% (17%) |
+| The Twin Realms (80), 4 | 29.3 (27) | 88% | 34% | 86% | 27% | 17–33% (25%) |
+| The Twin Realms (80), 8 | 44.3 (43) | 44% | 0% | 71% | 57% | 2–41% (12.5%) |
+| The Moon Coast (80), 4 | 34.7 (33) | 76% | 15% | 71% | 48% | 1–75% (25%) |
+| The Moon Coast (80), 8 | 47.0 (47) | 32% | 1% | 59% | 72% | 3–40% (12.5%) |
+| Greatmarch (80), 8 | 48.8 (50) | 26% | 0% | 58% | 75% | 3–23% (12.5%) |
+| Greatmarch (80), 10 | 51.3 (55) | 19% | 0% | 53% | 79% | 1–27% (10%) |
+| The Ringsea (100), 6 | 47.8 (49) | 31% | 2% | 62% | 66% | 6–30% (17%) |
+| The Ringsea (100), 10 | 53.1 (59) | 13% | 0% | 55% | 68% | 1–35% (10%) |
+| The Crownlands (100), 6 | 46.0 (45) | 38% | 2% | 65% | 67% | 2–42% (17%) |
+| The Crownlands (100), 10 | 50.9 (53) | 16% | 0% | 62% | 71% | 0–45% (10%) |
+| Wyrmland (120), 6 | 48.0 (50) | 31% | 2% | 63% | 60% | 3–38% (17%) |
+| Wyrmland (120), 8 | 54.5 (60) | 10% | 0% | 47% | 77% | 1–33% (12.5%) |
+| Ashwing (160), 6 | 57.8 (60) | 2% | 0% | 49% | 78% | 2–31% (17%) |
+| Ashwing (160), 8 | 58.5 (60) | 1% | 0% | 44% | 82% | 2–34% (12.5%) |
+| The Sundered Crowns (160), 6 | 46.6 (46) | 29% | 0% | 92% | 33% | 1–76% (17%) |
+| The Sundered Crowns (160), 8 | 54.3 (58) | 5% | 0% | 77% | 59% | 0–42% (12.5%) |
+| Krakenmere (200), 8 | 58.9 (60) | 0% | 0% | 54% | 80% | 0–57% (12.5%) |
+| Krakenmere (200), 10 | 59.4 (60) | 0% | 0% | 55% | 81% | 0–47% (10%) |
+| Rootholm (200), 8 | 59.4 (60) | 0% | 0% | 47% | 79% | 1–35% (12.5%) |
+| Rootholm (200), 10 | 59.9 (60) | 0% | 0% | 37% | 87% | 1–30% (10%) |
+
+**By table size** (averages of the lines above): **4 players** 32 turns, halfway leader wins 74%, comebacks 42%; **6 players** 47 turns, 63%, 61%; **8 players** 53 turns, 57%, 73%; **10 players** 55 turns, 52%, 77%. Games at 4 players sit inside Nate's 30–40; bigger tables run longer between bots, and the runaway measures improve with table size.
+
+### Each system's cost in turns
+Everything on against that one system switched off (Marshal tables, 500 games a line, `docs/sims/s19-system-costs.txt`). "Cost" = how many turns longer the game is with the system on.
+
+| System | Embervale 4 | Wyrmland 6 | Greatmarch 10 | Also |
+|---|---|---|---|---|
+| Everything on | 29.9 turns | 48.0 | 51.3 | |
+| **Diplomacy** | **+3.8** | **+5.6** | **+6.9** | Without it the snowball returns (Embervale half-map by turn 10: 36% → 49%; halfway leader 68% → 75%). |
+| **Spoils** | +2.6 | +3.0 | +3.0 | Without it, more runaways on Embervale (42% half-map). |
+| The Fallen | +0.3 | +1.8 | +2.4 | |
+| Fate | +0.3 | +1.7 | +0.4 | More comebacks without it on Embervale (50% vs 42%): noise or its luck helping the leader; worth a look. |
+| Spies | +0.2 | +0.3 | −0.8 | No real cost in turns. |
+| Leaders | 0 | 0 | 0 | Bots plan their own realm and don't use leaders, so bot tables can't show a cost; a person's leaders play at a Marshal's level (Part 1). |
+
+### The Recruit stays easy
+A stand-in for a new player (the Captain) against three Recruits on Embervale, 500 games: **45.6%** (fair 25%; before this session 35.4%). So the stand-in wins nearly twice its share, more than before, but not quite "most games": on Embervale the capital spot still swings games more than skill does among bots (12–41% between spots even for equal bots). With 2 Recruits it's 26.8% (fair 33%), for the same reason. **For Nate:** make the Recruit weaker still (it could hold back part of its gold or chain less), or wait for fairer capital spots?
+
+### Speed before M4
+10 players on Krakenmere and Rootholm, every system on (Part 4): resolving a turn 6.5 ms on average (95% under 12 ms, worst 25 ms); all ten bots planning together 7.6 ms (worst 33 ms); one Marshal 0.7 ms (worst 8 ms). Over Cloudflare's free 10 ms a request at the worst turns, so the plan's Workers Paid at the start of M4 stands.
+
+## The M3 checklist (for the orchestrator, to close M3 after session 20)
+Each M3 item in `docs/03-build-plan.md`, as of the end of session 19:
+
+| M3 item | State | Notes |
+|---|---|---|
+| Leader-as-general (standing instructions) and captured generals | **Done** | Sessions 12, 15, 18 (grown into leaders you delegate to, with Stewards, budgets and purses). |
+| Spoils and Fate decks | **Done** | Session 13; Spoils reworked in 16. |
+| Preset diplomacy with counteroffers and the re-confirm rule | **Done** | Sessions 14–15 (truces, trades, joint wars, right of passage; handshake and binding; Oathbreaker). Deals between people wait for M4. |
+| The Fallen | **Done** | Session 12; acting from the first turn out in 19. |
+| Specialist unlocks via culture | **Done** | Session 15's culture ladder. |
+| Spies | **Done** | Session 15 (upkeep only while away, 16). |
+| Smarter bots (passes, choke points, sea landings) | **Done**, the length target moved | The Captain (8–9), the Marshal (17, lifted in 19). The old aim "4–6 player games under 25 turns" no longer holds: Nate wants up to 30–40 turns, and his own games run shorter than bot games. Bot tables now run 28–38 turns at 4–6 players on the small and middle maps. |
+| Balance pass using the sim | **Done** (19), **two things moved** | Length, runaways, the small-map snowball, culture and buildings that pay (culture +1, pending Nate's pick), the Fallen's first turn, each system's cost, the Recruit, speed. **Moved to a later session:** seat fairness by capital spot on every map but Embervale-4 (the finding and the tools are in; the search for big maps needs a smarter method), and catch-up rules for runaways (options listed, not built). |
+| Map lab, 12-seed gallery, art test bench | **Done** | Sessions 10–11; used for the four big maps in 19. |
+| Bigger maps (about 160 and 200) | **Done** | Ashwing, The Sundered Crowns, Krakenmere, Rootholm (Nate's OK). |
+| Single-player pause and saved games | **Done** | Session 13 (saves migrate; old fixtures load). |
+| The polish pass (effects, cinematic replay, art batch 4) | **Partly done: session 20** | Not started; the replay's frame rate at 10 players on a phone (43–44 fps, goal 50) belongs there. |
+| The language pass | **Not started: session 21** | Nate's own voice, a tone per bot personality. |
+| Speed check before M4 | **Done** | 10 players on a 200 map: resolving 6.5 ms average (worst 25 ms), all bots planning 7.6 ms (worst 33 ms) on Nate's PC. Over Cloudflare's free 10 ms per request at the worst turns, so the plan's "Workers Paid at the start of M4" stands. |
+| Phone memory on the biggest maps | **Watch** | 225–263 MB of JavaScript memory on a phone (Wyrmland 133); a packed-array fix is suggested, not built. |
