@@ -2,7 +2,7 @@ import { mapCatalog, suggestedMode } from "@conquerra/content";
 import { BOT_NAMES } from "../host/names";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { prewarmHost, useGame } from "../store";
-import type { BotLevel } from "../host/protocol";
+import type { BotChoice } from "../host/protocol";
 import { mapChoiceLabel } from "../logic/text";
 import { TIMER_CHOICES, timerLabel } from "../logic/timer";
 import { useArtUrl } from "./art";
@@ -14,9 +14,11 @@ import { DEFAULT_HOUSE, HOUSE_PLAIN, HOUSES } from "../map/houses";
 /** Load game: loaded the first time it's opened. */
 const SavesDialog = lazy(() => import("./Saves"));
 
-const BOT_LEVELS: { value: BotLevel; label: string; note: string }[] = [
+const BOT_LEVELS: { value: BotChoice; label: string; note: string }[] = [
   { value: "recruit", label: "Recruit (easy)", note: "Straightforward: grabs what it can and rarely plans ahead." },
-  { value: "captain", label: "Captain", note: "Holds passes, gathers before breaking through, and finishes off the weak." },
+  { value: "captain", label: "Captain", note: "Medium: holds passes, gathers before breaking through, and finishes off the weak." },
+  { value: "marshal", label: "Marshal (hard)", note: "The default. Attacks hard, each with its own personality (you learn which by how it plays), and spots a runaway early and teams up against it." },
+  { value: "mixed", label: "Mixed", note: "Some Marshals, the rest Captains, seated at random." },
 ];
 
 const LUCK = [
@@ -38,6 +40,8 @@ export function Lobby() {
   const auto = slots.find((s) => s.slot === "auto");
   const map = mapCatalog.find((m) => m.id === lobby.mapId) ?? mapCatalog[0]!;
   const players = lobby.bots + 1;
+  // A mixed table: how many Marshals (half the bots, rounded up, until you choose).
+  const marshals = Math.min(lobby.bots, lobby.marshals ?? Math.ceil(lobby.bots / 2));
   const rec = map.recommendedPlayers;
   const emblem = useArtUrl("emblem");
   return (
@@ -119,6 +123,25 @@ export function Lobby() {
           ))}
         </span>
         <span className="muted small">{BOT_LEVELS.find((b) => b.value === lobby.botLevel)?.note}</span>
+        {lobby.botLevel === "mixed" && (
+          <span className="seg mix-count">
+            <button aria-label="Fewer Marshals" disabled={marshals <= 0} onClick={() => setLobby({ marshals: marshals - 1 })}>
+              −
+            </button>
+            <span className="mix-line">
+              {marshals} Marshal{marshals === 1 ? "" : "s"} and {lobby.bots - marshals} Captain{lobby.bots - marshals === 1 ? "" : "s"}
+            </span>
+            <button aria-label="More Marshals" disabled={marshals >= lobby.bots} onClick={() => setLobby({ marshals: marshals + 1 })}>
+              +
+            </button>
+          </span>
+        )}
+        {(lobby.botLevel === "marshal" || lobby.botLevel === "mixed") && (
+          <label className="check small">
+            <input type="checkbox" checked={!!lobby.showPersonalities} onChange={(e) => setLobby({ showPersonalities: e.target.checked })} />
+            Show personalities <span className="muted">(off: you find out by how they play, and at the end)</span>
+          </label>
+        )}
       </div>
 
       <div className="field">

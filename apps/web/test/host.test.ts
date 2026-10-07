@@ -223,6 +223,47 @@ describe("saved games", () => {
     expect(stateFingerprint(carried.snapshot().state)).toBe(stateFingerprint(straight.snapshot().state));
   });
 
+  it("Marshals and mixed tables (session 17): save, load and carry on plays exactly as straight through, each bot keeping its level, personality and memory", () => {
+    for (const lobby of [{ ...settings, botLevel: "marshal" as const }, { ...settings, botLevel: "mixed" as const, marshals: 2 }]) {
+      const straight = new LocalGame(map, lobby, "marshal-continue");
+      const end = play(straight, 12);
+      const first = new LocalGame(map, lobby, "marshal-continue");
+      play(first, 5);
+      const host = first.snapshot().host as { seats: Record<string, { level: string; personality?: string }>; memories: Record<string, unknown> };
+      const levels = Object.values(host.seats).map((x) => x.level);
+      if (lobby.botLevel === "marshal") expect(levels).toEqual(["marshal", "marshal", "marshal"]);
+      else expect(levels.sort()).toEqual(["captain", "marshal", "marshal"]);
+      const personalities = Object.values(host.seats).flatMap((x) => (x.personality ? [x.personality] : []));
+      expect(new Set(personalities).size).toBe(personalities.length);
+      expect(Object.keys(host.memories)).toHaveLength(personalities.length);
+      const read = readSave(JSON.parse(JSON.stringify(first.snapshot())));
+      if (!read.ok) throw new Error("save didn't read");
+      const carried = LocalGame.restore(map, read.save);
+      expect((carried.snapshot().host as typeof host).seats).toEqual(host.seats);
+      const end2 = play(carried, 7);
+      expect(end2.view).toEqual(end.view);
+      expect(stateFingerprint(carried.snapshot().state)).toBe(stateFingerprint(straight.snapshot().state));
+    }
+  });
+
+  it("personalities stay hidden during play, and show at the end (or all along with Show personalities)", () => {
+    const g = new LocalGame(map, { ...settings, botLevel: "marshal" }, "marshal-hidden");
+    expect(g.update().seats).toBeUndefined();
+    const shown = new LocalGame(map, { ...settings, botLevel: "marshal", showPersonalities: true }, "marshal-hidden");
+    const seats = shown.update().seats!;
+    expect(Object.values(seats).every((x) => x.level === "marshal" && /^the [A-Z]/.test(x.personality!))).toBe(true);
+    // A save from before session 17 (no seats in it): every bot plays at the game's one level.
+    const old = shown.snapshot();
+    const h = old.host as Record<string, unknown>;
+    delete h.seats;
+    delete h.memories;
+    h.botLevel = "captain";
+    const read = readSave(JSON.parse(JSON.stringify(old)));
+    if (!read.ok) throw new Error("save didn't read");
+    const back = LocalGame.restore(map, read.save);
+    expect(Object.values((back.snapshot().host as { seats: Record<string, { level: string }> }).seats).map((x) => x.level)).toEqual(["captain", "captain", "captain"]);
+  });
+
   it("the game saves itself at the start of every turn's planning; Continue picks up where you were; a finished game leaves", async () => {
     const store = memorySaveStore();
     const core = new HostCore(store, async (id) => maps[id]!);

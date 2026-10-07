@@ -18,6 +18,14 @@ async function playUntilKnockedOut() {
   }
 }
 
+describe("the lobby's bots (session 17)", () => {
+  it("the Marshal is the default level; a mixed table and Show personalities are off until chosen", () => {
+    const l = useGame.getState().lobby;
+    expect(l.botLevel).toBe("marshal");
+    expect(l.showPersonalities ?? false).toBe(false);
+  });
+});
+
 describe("game screen state", () => {
   beforeEach(() => {
     setHostFactory(() => inProcessHost("store-idle-4"));

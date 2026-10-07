@@ -10,13 +10,26 @@ import type { SlotId, SlotInfo } from "./saves";
  * The UI only ever gets what a server would send: the map and rules once at the start, then this player's
  * fogged view and fog-trimmed replay each turn.
  */
-/** How the bots play: Recruit (easy) or Captain (the default). */
-export type BotLevel = "recruit" | "captain";
+/** How a bot plays: Recruit (easy), Captain (medium) or Marshal (hard, with a personality, the default; session 17). */
+export type BotLevel = "recruit" | "captain" | "marshal";
+/** The lobby's choice: one level for every bot, or a mixed table (some Marshals, the rest Captains). */
+export type BotChoice = BotLevel | "mixed";
+
+/** One bot seat as the game-over screen (or "Show personalities") tells it: its level, and a Marshal's personality. */
+export interface SeatInfo {
+  level: BotLevel;
+  /** A Marshal's personality ("the Turtle"). */
+  personality?: string;
+}
 
 export interface LobbySettings {
   mapId: string;
   bots: number;
-  botLevel: BotLevel;
+  botLevel: BotChoice;
+  /** A mixed table: how many of the bots are Marshals (the rest are Captains). */
+  marshals?: number;
+  /** Show each Marshal's personality during the game (off by default: you learn them by how they play; revealed at the end). */
+  showPersonalities?: boolean;
   /** 0..1 share of combat that is luck. */
   luck: number;
   fog: boolean;
@@ -58,6 +71,8 @@ export interface HostUpdate {
   queued?: { orders: Order[]; paused: PlayerId[] };
   /** Deals the bots offered you this turn (session 14): accept, counter or decline before you lock in, or they lapse. */
   offers?: Offer[];
+  /** Each bot seat's level and personality: once the game is over, or all along with "Show personalities" on. */
+  seats?: Record<PlayerId, SeatInfo>;
 }
 
 /**

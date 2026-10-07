@@ -14,7 +14,7 @@ describe("spies on the page (session 15)", () => {
   });
 
   it("nothing about spies shows until you hire one; Hire offers a spy at your capital; then Send is 3 taps", async () => {
-    useGame.getState().setLobby({ mapId: "embervale", bots: 3, turnSeconds: null });
+    useGame.getState().setLobby({ mapId: "embervale", bots: 3, botLevel: "captain", turnSeconds: null });
     await useGame.getState().start();
     const { ctx, view } = s();
     const cap = view!.me.capital;
@@ -47,7 +47,7 @@ describe("spies on the page (session 15)", () => {
   });
 
   it("at most 5 spies (counting the ones queued this turn)", async () => {
-    useGame.getState().setLobby({ mapId: "embervale", bots: 3, turnSeconds: null });
+    useGame.getState().setLobby({ mapId: "embervale", bots: 3, botLevel: "captain", turnSeconds: null });
     await useGame.getState().start();
     const { ctx, view } = s();
     const cap = view!.me.capital;
@@ -57,7 +57,7 @@ describe("spies on the page (session 15)", () => {
   });
 
   it("with fog off there are no spies to hire", async () => {
-    useGame.getState().setLobby({ mapId: "embervale", bots: 3, turnSeconds: null, fog: false });
+    useGame.getState().setLobby({ mapId: "embervale", bots: 3, botLevel: "captain", turnSeconds: null, fog: false });
     await useGame.getState().start();
     const { ctx, view } = s();
     expect(spyHireOption(ctx!, view!, planQueue(ctx!, view!, []), view!.me.capital)).toBeNull();

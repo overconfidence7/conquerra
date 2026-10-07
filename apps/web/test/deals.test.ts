@@ -8,7 +8,7 @@ import { inProcessHost } from "./inProcessHost";
 
 /** A 4-player Embervale game, with a rival that borders you (for the truce warnings). */
 async function start() {
-  useGame.getState().setLobby({ mapId: "embervale", bots: 3, turnSeconds: null });
+  useGame.getState().setLobby({ mapId: "embervale", bots: 3, botLevel: "captain", turnSeconds: null });
   await useGame.getState().start();
   return useGame.getState();
 }
@@ -179,7 +179,7 @@ describe("diplomacy on the page", () => {
   });
 
   it("Diplomacy: Off in the lobby (Nate): no Propose, no offers, no deals, and the setting is in the game (so saves keep it)", async () => {
-    useGame.getState().setLobby({ mapId: "embervale", bots: 3, turnSeconds: null, diplomacy: false });
+    useGame.getState().setLobby({ mapId: "embervale", bots: 3, botLevel: "captain", turnSeconds: null, diplomacy: false });
     await useGame.getState().start();
     for (let turn = 0; turn < 6; turn++) {
       const v = s().view!;

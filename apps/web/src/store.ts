@@ -5,7 +5,7 @@ import { indexMap, isShare, type DealKind, type GameContext, type Instruction, t
 import { asIfYouOrderFrom, instructOrders, takeControl, withGeneralOrders } from "./logic/generals";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
-import type { GameHost, HostStart, HostUpdate, LoadSource, LobbySettings, TurnReport } from "./host/protocol";
+import type { GameHost, HostStart, HostUpdate, LoadSource, LobbySettings, SeatInfo, TurnReport } from "./host/protocol";
 import { listSlots, type SlotId, type SlotInfo } from "./host/saves";
 import { dueTurnIn, withTurnIn } from "./logic/spoils";
 import { namer } from "./logic/text";
@@ -38,6 +38,8 @@ interface GameStore {
   report: TurnReport | null;
   showReport: boolean;
   fastForwarded: number;
+  /** Each bot seat's level and personality (session 17): sent once the game is over, or all along with "Show personalities". */
+  seats: Record<string, SeatInfo> | null;
   /** Knocked out and chose "Watch to the end". */
   watching: boolean;
   /** The turn timer (null with No timer). */
@@ -223,7 +225,8 @@ function rememberedHouse(): number {
 
 const defaultLobby = (): LobbySettings => {
   const bots = 3;
-  return { mapId: "embervale", bots, botLevel: "captain", luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER, fate: true, diplomacy: true, house: rememberedHouse() };
+  // The Marshal is the default bot (session 17: it beats the Captain and gangs up on a runaway early).
+  return { mapId: "embervale", bots, botLevel: "marshal", luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER, fate: true, diplomacy: true, house: rememberedHouse() };
 };
 
 export const useGame = create<GameStore>((set, get) => ({
@@ -240,6 +243,7 @@ export const useGame = create<GameStore>((set, get) => ({
   report: null,
   showReport: false,
   fastForwarded: 0,
+  seats: null,
   watching: false,
   clock: null,
   replay: null,
@@ -617,7 +621,7 @@ export const useGame = create<GameStore>((set, get) => ({
       const before = get().view!;
       const u = await host.watchNext(get().fallenOrders);
       const chronicle = get().chronicle;
-      set({ view: u.view, report: u.report, chronicle: u.report && !chronicle.some((r) => r.turn === u.report!.turn) ? [...chronicle, chronicleOf(u.report)] : chronicle, lastBefore: before, replay: u.report ? { before, report: u.report, key: Date.now() } : null, clock: null, fallenOrders: [], aiming: null });
+      set({ view: u.view, seats: u.seats ?? null, report: u.report, chronicle: u.report && !chronicle.some((r) => r.turn === u.report!.turn) ? [...chronicle, chronicleOf(u.report)] : chronicle, lastBefore: before, replay: u.report ? { before, report: u.report, key: Date.now() } : null, clock: null, fallenOrders: [], aiming: null });
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
     } finally {
@@ -631,7 +635,7 @@ export const useGame = create<GameStore>((set, get) => ({
     set({ busy: true, error: null });
     try {
       const u = await host.finish();
-      set({ view: u.view, report: u.report ?? get().report, fastForwarded: u.fastForwarded, screen: "over", watching: false });
+      set({ view: u.view, seats: u.seats ?? null, report: u.report ?? get().report, fastForwarded: u.fastForwarded, screen: "over", watching: false });
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
     } finally {
@@ -650,7 +654,7 @@ export const useGame = create<GameStore>((set, get) => ({
     get().host?.dispose();
     // Back in the lobby: the game you left is the autosave (Continue).
     void get().refreshSlots();
-    set({ screen: "lobby", host: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null, diplomacy: [], offers: [], answers: {}, deal: null, dealPick: null });
+    set({ screen: "lobby", host: null, seats: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null, diplomacy: [], offers: [], answers: {}, deal: null, dealPick: null });
   },
 }));
 
@@ -682,6 +686,7 @@ async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: G
       // The map's geometry comes from the host, never from an import here.
       ctx: { map: u.map, rules: u.rules },
       view: u.view,
+      seats: u.seats ?? null,
       chronicle: u.chronicle ?? [],
       queue: kept ? kept.queue : openingQueue({ map: u.map, rules: u.rules }, u),
       instructions: kept?.instructions ?? {},
@@ -811,6 +816,7 @@ function applyTurn(u: HostUpdate, auto: boolean) {
   const chronicle = useGame.getState().chronicle;
   useGame.setState({
     view: u.view,
+    seats: u.seats ?? null,
     report: u.report,
     // The Chronicle grows by this turn's report (session 16).
     chronicle: u.report && !chronicle.some((r) => r.turn === u.report!.turn) ? [...chronicle, chronicleOf(u.report)] : chronicle,

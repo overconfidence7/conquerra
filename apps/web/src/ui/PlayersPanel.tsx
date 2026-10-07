@@ -1,4 +1,5 @@
 import type { PlayerView } from "@conquerra/engine";
+import type { SeatInfo } from "../host/protocol";
 import { useState } from "react";
 import { canProposeTo, dealMarks, isOathbreaker, markText, type DealMark } from "../logic/deals";
 import { HOUSES, houseOf } from "../map/houses";
@@ -8,6 +9,9 @@ import { colorOf } from "./colors";
 import { Frame } from "./Frame";
 
 const portraitOf = (seat: number) => `leader-${String((seat % 10) + 1).padStart(2, "0")}`;
+
+/** A bot's level and personality, once it's shown (session 17): "Marshal, the Turtle", "Captain". */
+export const personaLine = (s: SeatInfo) => (s.level === "marshal" ? `Marshal, ${s.personality ?? "the Marshal"}` : s.level === "captain" ? "Captain" : "Recruit");
 
 const MARK_GLYPH: Record<DealMark["kind"], string> = { truce: "🤝", trade: "⚖", war: "⚔", passage: "↝" };
 
@@ -29,7 +33,8 @@ function Marks({ view, marks }: { view: PlayerView; marks: DealMark[] }) {
 }
 
 function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: string; seat: number; open: boolean; onToggle(): void }) {
-  const { pageDeals, openPropose } = useGame();
+  const { pageDeals, openPropose, seats } = useGame();
+  const persona = id !== view.me.id ? seats?.[id] : undefined;
   const p = view.players.find((x) => x.id === id)!;
   const house = houseOf(view, id);
   const shield = useShield(house);
@@ -44,6 +49,7 @@ function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: s
       {portrait ? <img className="portrait" src={portrait} alt="" /> : <span />}
       <span className="who">
         <span className="pname">{id === view.me.id ? "You" : p.name}</span>
+        {persona && <span className="persona">{personaLine(persona)}</span>}
         <span className="house">
           House {house.name}
           {oath && <span className="oath" title={`Broke a deal: Oathbreaker until turn ${p.oathbreaker}`}>Oathbreaker</span>}

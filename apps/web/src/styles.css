@@ -128,6 +128,12 @@ p.good { color: var(--good); margin: 0; }
 .seg { display: flex; gap: 6px; flex-wrap: wrap; }
 .seg button { min-width: 52px; }
 .seg button.on { background: linear-gradient(#e3c77e, #c9a45c); color: var(--navy); border-color: #f1dca2; }
+/* A mixed table's count (session 17): − 2 Marshals and 3 Captains + */
+.seg.mix-count { align-items: center; flex-wrap: nowrap; }
+.seg.mix-count button { min-width: 44px; }
+.mix-line { font: 600 0.9rem var(--font-body); padding: 0 4px; }
+.field label.check { display: flex; gap: 8px; align-items: center; min-height: 44px; }
+.field label.check input { width: 20px; height: 20px; accent-color: var(--gold); }
 .over-map { border-radius: 6px; overflow: hidden; position: relative; height: 58vh; border: 1px solid var(--gold); }
 .over-map .map-host { height: 100%; }
 .standings { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
@@ -208,6 +214,8 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .player .who { min-width: 0; }
 .player .pname { font: 600 0.95rem var(--font-body); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .player .house { font: 600 var(--fs-label) var(--font-head); color: var(--muted); display: block; }
+/* A bot's level and personality, once shown (session 17): "Marshal, the Turtle". */
+.player .persona { font: italic 600 var(--fs-label) var(--font-body); color: var(--gold); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .player .state { font: 700 var(--fs-label) var(--font-head); color: var(--good); }
 .player.out { opacity: 0.5; }
 .player.out .state { color: var(--bad); }

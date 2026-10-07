@@ -112,7 +112,7 @@ describe("Govern this province on the page (session 15)", () => {
   });
 
   it("Command offers Govern only where you hold most of the province; the general's line shows its progress, never a gold total", async () => {
-    useGame.getState().setLobby({ mapId: "embervale", bots: 3, turnSeconds: null });
+    useGame.getState().setLobby({ mapId: "embervale", bots: 3, botLevel: "captain", turnSeconds: null });
     await useGame.getState().start();
     const { ctx, view: v } = useGame.getState();
     const cap = v!.me.capital;

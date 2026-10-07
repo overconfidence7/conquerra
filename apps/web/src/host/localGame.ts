@@ -1,7 +1,28 @@
-import { agreedIn, answerOrder, captainBot, fallenBot, generalsOf, judgeOffer, negotiate, planGeneral, recruitBot, withAgreed, type Answer, type Bot } from "@conquerra/bots";
-import { defaultRules, type MapDef } from "@conquerra/content";
+import {
+  agreedIn,
+  answerOrder,
+  captainBot,
+  dealPersonalities,
+  fallenBot,
+  generalsOf,
+  judgeBy,
+  makeMarshalBot,
+  negotiate,
+  personality,
+  PERSONALITY_IDS,
+  planGeneral,
+  recruitBot,
+  withAgreed,
+  type Answer,
+  type Bot,
+  type MarshalBot,
+  type MarshalMemory,
+} from "@conquerra/bots";
+import { defaultRules, type MapDef, type PersonalityId } from "@conquerra/content";
 import {
   createGame,
+  Rng,
+  seedRng,
   makeSave,
   replayFor,
   resolveTurn,
@@ -21,15 +42,55 @@ import { buildTimeline } from "../replay/timeline";
 import { chronicleOf } from "../logic/chronicleKeep";
 import { BOT_NAMES } from "./names";
 import { DEFAULT_HOUSE } from "../map/houses";
-import type { BotLevel, HostStart, HostUpdate, LobbySettings, TurnReport } from "./protocol";
+import type { BotChoice, BotLevel, HostStart, HostUpdate, LobbySettings, SeatInfo, TurnReport } from "./protocol";
 import type { TurnClock } from "../logic/timer";
 
 export { BOT_NAMES };
 
 export const HUMAN_ID = "you";
 
-/** The bot for each lobby level. */
-export const BOTS: Record<BotLevel, Bot> = { recruit: recruitBot, captain: captainBot };
+/** The Recruit and the Captain: one bot plays every seat of that level. (A Marshal is one bot per seat: it has a personality and a memory.) */
+export const BOTS: Record<Exclude<BotLevel, "marshal">, Bot> = { recruit: recruitBot, captain: captainBot };
+const LEVELS: readonly BotLevel[] = ["recruit", "captain", "marshal"];
+const PERSONALITY_SET = new Set<string>(PERSONALITY_IDS);
+
+/** A bot seat: its level, a Marshal's personality, and the bot that plays it. */
+interface BotSeat {
+  level: BotLevel;
+  personality?: PersonalityId;
+  bot: Bot;
+}
+
+/** The bot for a seat of this level (a Marshal gets its own, with its personality). */
+function seatBot(level: BotLevel, p?: PersonalityId): BotSeat {
+  if (level === "marshal") {
+    const id = p ?? "conqueror";
+    return { level, personality: id, bot: makeMarshalBot(id) };
+  }
+  return { level, bot: BOTS[level] };
+}
+
+/**
+ * Each bot seat's level for a new game: one level for all, or a mixed table (`marshals` Marshals, the rest Captains,
+ * seated at random from the game's seed); Marshals' personalities dealt from the seed (no two alike until all six
+ * are used).
+ */
+export function seatLevels(choice: BotChoice, marshals: number, seats: readonly PlayerId[], seed: string): Record<PlayerId, { level: BotLevel; personality?: PersonalityId }> {
+  let levels: BotLevel[];
+  if (choice === "mixed") {
+    const k = Math.max(0, Math.min(seats.length, Math.floor(marshals)));
+    const order = seats.map((_, i) => i);
+    const rng = new Rng(seedRng(`${seed}|mixed`));
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = rng.int(i + 1);
+      [order[i], order[j]] = [order[j]!, order[i]!];
+    }
+    const chosen = new Set(order.slice(0, k));
+    levels = seats.map((_, i) => (chosen.has(i) ? "marshal" : "captain"));
+  } else levels = seats.map(() => (LEVELS.includes(choice) ? choice : "captain"));
+  const dealt = dealPersonalities(seed, seats.filter((_, i) => levels[i] === "marshal"));
+  return Object.fromEntries(seats.map((s, i) => [s, levels[i] === "marshal" ? { level: "marshal" as const, personality: dealt[s]! } : { level: levels[i]! }]));
+}
 
 /**
  * A whole single-player game: the full state, the bots and turn resolution.
@@ -41,7 +102,14 @@ export const REPORT_GRACE_MS = 3000;
 
 /** What this host keeps in a save besides the game itself (`SaveFile.host`). */
 export interface LocalHostData {
-  botLevel: BotLevel;
+  /** The lobby's choice (kept for saves from before session 17, whose seats all played at this level). */
+  botLevel: BotChoice;
+  /** Each bot seat's level and, for a Marshal, its personality (session 17). */
+  seats?: Record<PlayerId, { level: BotLevel; personality?: PersonalityId }>;
+  /** What each Marshal remembers (session 17): so a loaded game plays on exactly as it would have. */
+  memories?: Record<PlayerId, MarshalMemory>;
+  /** "Show personalities" (session 17): the Marshals' personalities are shown during play, not only at the end. */
+  showPersonalities?: boolean;
   /** The turn timer in seconds, or null for No timer. */
   turnSeconds: number | null;
   /** What each seat watched in the last replay (its own view), for the bots' and your generals' next plans. */
@@ -85,8 +153,10 @@ export class LocalGame {
   private savedPaused: PlayerId[] = [];
   /** Your queue as a save brought it back (Continue), sent to the page once with the first update. */
   private restored: { orders: Order[]; paused: PlayerId[] } | null = null;
-  private bot: Bot;
-  private readonly botLevel: BotLevel;
+  /** Each bot seat's level, personality and bot (session 17: tables can mix levels). */
+  private seats = new Map<PlayerId, BotSeat>();
+  private readonly botLevel: BotChoice;
+  private readonly showPersonalities: boolean;
   /** How the game was set up, the rules and every turn's orders, so `pnpm sim --replay` can play a save back. */
   private history: { setup: NewGameOptions; rules: typeof defaultRules; turns: OrdersByPlayer[] } | null;
   private readonly autosave?: (save: SaveFile) => void;
@@ -114,8 +184,20 @@ export class LocalGame {
       if (restore.mapId !== map.id || restore.mapVersion !== (map.generator?.version ?? null))
         throw new Error("This save's map has changed since it was saved, so it can't be loaded.");
       const host = (restore.host ?? {}) as Partial<LocalHostData>;
-      this.botLevel = host.botLevel && host.botLevel in BOTS ? host.botLevel : "captain";
+      this.botLevel = host.botLevel && (LEVELS.includes(host.botLevel as BotLevel) || host.botLevel === "mixed") ? host.botLevel : "captain";
+      this.showPersonalities = !!host.showPersonalities;
       this.state = restore.state;
+      // Each seat as it was saved (a save from before session 17: every bot at the game's one level).
+      for (const p of this.state.players) {
+        if (p.id === HUMAN_ID) continue;
+        const saved = host.seats?.[p.id];
+        const level = saved && LEVELS.includes(saved.level) ? saved.level : this.botLevel === "mixed" ? "captain" : this.botLevel;
+        const known = saved?.personality && PERSONALITY_SET.has(saved.personality) ? saved.personality : undefined;
+        const seat = seatBot(level, known);
+        const mem = host.memories?.[p.id];
+        if (mem && seat.level === "marshal") (seat.bot as MarshalBot).restore(this.state.gameId, p.id, mem);
+        this.seats.set(p.id, seat);
+      }
       const seconds = host.turnSeconds === undefined ? null : host.turnSeconds;
       this.turnMs = seconds === null ? null : seconds * 1000;
       this.lastTurn = new Map(Object.entries(host.lastTurn ?? {}));
@@ -125,7 +207,8 @@ export class LocalGame {
       const h = restore.history;
       this.history = h && JSON.stringify(h.rules) === JSON.stringify(defaultRules) ? h : null;
     } else {
-      this.botLevel = settings.botLevel in BOTS ? settings.botLevel : "captain";
+      this.botLevel = LEVELS.includes(settings.botLevel as BotLevel) || settings.botLevel === "mixed" ? settings.botLevel : "captain";
+      this.showPersonalities = !!settings.showPersonalities;
       const bots = Math.max(1, Math.min(map.maxPlayers - 1, BOT_NAMES.length, Math.floor(settings.bots)));
       const players = [
         // You are Gules (red) unless you chose another House; the bots take the rest in order.
@@ -147,10 +230,11 @@ export class LocalGame {
         },
       };
       this.state = createGame(this.ctx, setup);
+      const levels = seatLevels(this.botLevel, settings.marshals ?? Math.ceil(bots / 2), players.slice(1).map((p) => p.id), seed);
+      for (const [id, s] of Object.entries(levels)) this.seats.set(id, seatBot(s.level, s.personality));
       this.history = { setup, rules: defaultRules, turns: [] };
       this.turnMs = settings.turnSeconds === null || settings.turnSeconds === undefined ? null : settings.turnSeconds * 1000;
     }
-    this.bot = BOTS[this.botLevel];
     // A game just loaded doesn't save itself again until its next turn starts.
     this.startClock(0, !restore);
     // Continue puts back the orders you'd queued on this turn.
@@ -235,7 +319,19 @@ export class LocalGame {
       clock: this.clock,
       generalOrders: this.generalOrders(),
       offers: this.talk.turn === this.state.turn ? this.talk.toHuman : [],
+      ...(this.state.winner || this.showPersonalities ? { seats: this.seatInfo() } : {}),
     };
+  }
+
+  /** Each bot seat's level and personality ("the Turtle"), for the game-over screen (or "Show personalities"). */
+  private seatInfo(): Record<PlayerId, SeatInfo> {
+    return Object.fromEntries([...this.seats].map(([id, s]) => [id, { level: s.level, ...(s.personality ? { personality: personality(s.personality).title } : {}) }]));
+  }
+
+  /** How a seat talks: a Marshal with its own diplomacy, the others by their level. */
+  private diplomatOf(id: PlayerId) {
+    const s = this.seats.get(id);
+    return s?.bot.diplomat ?? (s?.level === "recruit" ? ("recruit" as const) : ("captain" as const));
   }
 
   /**
@@ -245,7 +341,7 @@ export class LocalGame {
   private botTalks() {
     this.talk = { turn: this.state.turn, orders: {}, toHuman: [] };
     if (!this.state.settings.diplomacy || this.state.winner) return;
-    const bots = this.state.players.filter((p) => p.id !== HUMAN_ID && p.eliminatedTurn === null).map((p) => ({ id: p.id, level: this.botLevel }));
+    const bots = this.state.players.filter((p) => p.id !== HUMAN_ID && p.eliminatedTurn === null).map((p) => ({ id: p.id, level: this.diplomatOf(p.id) }));
     const t = negotiate(this.ctx, bots, (id) => viewFor(this.ctx, this.state, id), (id) => this.lastTurn.get(id), this.knockedOut ? null : HUMAN_ID);
     this.talk = { turn: this.state.turn, orders: t.orders, toHuman: t.toHuman };
   }
@@ -264,7 +360,7 @@ export class LocalGame {
     if (offer.from !== HUMAN_ID || !bot || bot.id === HUMAN_ID || bot.eliminatedTurn !== null || this.state.winner || this.knockedOut || !this.state.settings.diplomacy)
       return { accept: false, reason: "That offer can't be made." };
     const view = withAgreed(viewFor(this.ctx, this.state, bot.id), this.agreed());
-    const answer = judgeOffer(this.ctx, view, offer, this.botLevel, this.lastTurn.get(bot.id));
+    const answer = judgeBy(this.ctx, this.diplomatOf(bot.id), view, offer, this.lastTurn.get(bot.id));
     // A later answer to the same offer replaces an earlier one.
     const list = (this.talk.orders[bot.id] ?? []).filter((o) => !(o.kind === "answer" && o.from === HUMAN_ID && o.offer === offer.id) && !(o.kind === "propose" && o.offer.counterTo === offer.id));
     list.push(answerOrder(offer, answer.accept));
@@ -299,7 +395,7 @@ export class LocalGame {
     for (const p of this.state.players) {
       if (p.id === HUMAN_ID) continue;
       if (p.eliminatedTurn === null)
-        orders[p.id] = [...((now && this.talk.orders[p.id]) || []), ...this.bot.plan(this.ctx, withAgreed(viewFor(this.ctx, this.state, p.id), agreed), this.lastTurn.get(p.id))];
+        orders[p.id] = [...((now && this.talk.orders[p.id]) || []), ...(this.seats.get(p.id)?.bot ?? captainBot).plan(this.ctx, withAgreed(viewFor(this.ctx, this.state, p.id), agreed), this.lastTurn.get(p.id))];
       // Knocked-out bots are the Fallen: they play world events against whoever leads.
       else if (this.state.settings.fallen) orders[p.id] = fallenBot.plan(this.ctx, viewFor(this.ctx, this.state, p.id));
     }
@@ -370,8 +466,16 @@ export class LocalGame {
    * everyone's orders).
    */
   snapshot(notes?: Record<string, string>): SaveFile {
+    const memories: Record<PlayerId, MarshalMemory> = {};
+    for (const [id, s] of this.seats) {
+      const m = s.level === "marshal" ? (s.bot as MarshalBot).memoryOf(this.state.gameId, id) : null;
+      if (m) memories[id] = m;
+    }
     const host: LocalHostData = {
       botLevel: this.botLevel,
+      seats: Object.fromEntries([...this.seats].map(([id, s]) => [id, { level: s.level, ...(s.personality ? { personality: s.personality } : {}) }])),
+      memories,
+      showPersonalities: this.showPersonalities,
       turnSeconds: this.turnMs === null ? null : this.turnMs / 1000,
       lastTurn: Object.fromEntries(this.lastTurn),
       queued: { turn: this.state.turn, orders: this.saved, paused: this.savedPaused },
@@ -381,14 +485,14 @@ export class LocalGame {
     return makeSave(this.ctx, this.state, HUMAN_ID, this.now(), {
       host: host as unknown as Record<string, unknown>,
       ...(this.history ? { history: this.history } : {}),
-      notes: { bots: this.bot.id, ...notes },
+      notes: { bots: this.botLevel, ...notes },
     });
   }
 
-  /** A bot's orders for you this turn (the game's level), planned from your own view only. */
+  /** A bot's orders for you this turn (the Captain; the Recruit at a Recruit table), planned from your own view only. */
   suggest(): Order[] {
     if (this.state.winner || this.knockedOut) return [];
-    return this.bot.plan(this.ctx, viewFor(this.ctx, this.state, HUMAN_ID));
+    return (this.botLevel === "recruit" ? recruitBot : captainBot).plan(this.ctx, viewFor(this.ctx, this.state, HUMAN_ID));
   }
 
   /** Knocked out: the bots play on to the end (the engine's turn cap guarantees one). */
