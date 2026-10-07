@@ -335,6 +335,12 @@ Nate's notes: his test game on Wyrmland against 5 Captains lasted only 12 turns,
 - **Your leaders and captured leaders plan with the Marshal's brain** (§4, session 18).
 - **Seeing a bot's personality (orchestrator's default for session 17; Nate can change it):** hidden while you play (you learn it from how it plays), revealed on the game-over screen ("Lady Morwen, the Turtle"), with a lobby option "Show personalities" (off by default).
 - **The Marshal never cheats:** it judges only from what a person in its seat could know (its view and memory, what the replays showed, public facts). No pooled sight between bots.
+- **BUILT (session 17):** the Marshal and the six personalities above, as data (`packages/content/data/personalities.json`: one block each, plus the shared judgement), dealt from each game's seed. Details settled while building:
+  - **What wins, from about 30,000 simulated games** (`docs/sim-results-m3-marshal.md`): attack hard (chain whenever the next hop is likely to win, every spare troop in), don't hold troops back on quiet fronts, expand hardest in the first 14 turns, and choose targets on what you know. Built in under every personality. Culture on safe land loses games and markets make no difference: Nate wants culture and buildings worth doing, a rule question for the balance pass (session 19).
+  - **Nate's additions during the session:** whole provinces and ending chains on defensible ground are in; reading the border and fortifying ahead of threats was tried and is off (it held troops back and cost wins), to try again after the balance pass.
+  - **The runaway:** estimates of land it can't see (from what it remembers and who knocked out whom), pace, a lower bar at 6+ players, and joint wars at once that stick. Against the strong stand-in on Wyrmland at 6 players, Marshals name it half a turn after it runs away (Captains 8.5 turns late), start a joint war on turn 10 (29), and hold it to 24% (Captains 35%, fair 17%).
+  - **The lobby:** Recruit, Captain, Marshal (the default) and Mixed (a count of Marshals, the rest Captains); personalities revealed at the end, or all along with "Show personalities".
+  - **The planner takes a scope** (the realm, one army, one front, or the realm's building) **and a purse**, for session 18's leaders. Its memory is plain data, kept in saves.
 
 ## 12. Controls and map clarity (Nate, Oct 6 play test), for session 16
 - **Your Leader goes with the attacking army by default** (one tap to leave it home), and **stays with the army through a chain** of attacks.

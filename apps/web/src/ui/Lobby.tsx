@@ -137,10 +137,13 @@ export function Lobby() {
           </span>
         )}
         {(lobby.botLevel === "marshal" || lobby.botLevel === "mixed") && (
-          <label className="check small">
-            <input type="checkbox" checked={!!lobby.showPersonalities} onChange={(e) => setLobby({ showPersonalities: e.target.checked })} />
-            Show personalities <span className="muted">(off: you find out by how they play, and at the end)</span>
-          </label>
+          <>
+            <label className="check small">
+              <input type="checkbox" checked={!!lobby.showPersonalities} onChange={(e) => setLobby({ showPersonalities: e.target.checked })} />
+              Show personalities
+            </label>
+            <span className="muted small">{lobby.showPersonalities ? "Each Marshal's personality shows in the Houses panel." : "Hidden: you find out by how they play, and at the end."}</span>
+          </>
         )}
       </div>
 

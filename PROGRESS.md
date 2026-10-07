@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–16 are done. Next: session 17 (`docs/prompts/claude-code-session-17.md`): the Marshal and bot personalities; then 18 leaders you delegate to; Nate's next play test after 18 (the list is under "Things to test after session 18" below); then 19 bigger maps and the balance pass, 20 the polish pass.**
+**Phase: M3 (depth and balance). Sessions 7–17 are done. Next: session 18, leaders you delegate to (they plan with the Marshal's brain); Nate's next play test after 18 (the list is under "Things to test after session 18" below); then 19 bigger maps and the balance pass, 20 the polish pass.**
 
-Claude Code sessions completed: **16** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
+Claude Code sessions completed: **17** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
 ---
 
@@ -854,6 +854,50 @@ All six parts are done (Part 6, the end of the game, too), each committed and pu
   - the 11 awards (Oathbreaker tongue-in-cheek): keep them
 - **Nate's call:** his next play test comes **after session 18.** The things to try collect in the list below.
 
+### Oct 6–7: Claude Code session 17 (M3: the Marshal, a hard bot level with personalities)
+All five parts are done, each committed and pushed. Nate added two notes during the session (below).
+- **Step 0, the red tests and the Far names:**
+  - **The fog-leak check** failed because the spies' end-of-turn report was fogging over land again that the turn's own sightings had already fogged (an uprising had just taken that land from the player). Nothing leaked. The report now leaves that land alone. The failing case (seed `"{T"`, 5 players) is a fixed regression case.
+  - **The spy test's "at least 10 fooled" bar** now has four fixed cases that are always fooled (20 fooled views on their own), so it can't fail by luck.
+  - The rule from now on: property tests keep random inputs, and every failing case they find becomes a fixed test.
+  - **Province names at Far:** small, with a dark rim and no plaque, only where they fit (bigger provinces first, never over an army, another name or the screen's edge); tap a territory for its full plaque as before. The old painted names are gone. Checked on Wyrmland and Embervale, desktop and phone.
+- **The Marshal (Part 1):** a new bot built beside the Captain (the Captain is unchanged: its fingerprint test passes, and a new one pins it with everything on). Six personalities as data in `packages/content/data/personalities.json`, dealt from each game's seed:
+  - **the Conqueror:** one front at a time
+  - **the Blitzer:** all-out expansion
+  - **the Turtle:** forts, culture and markets, a late strike
+  - **the Schemer:** deals it may break, and spies
+  - **the Opportunist:** hits whoever just fought
+  - **the Merchant:** markets from turn 1, then a rich push
+
+  Each answers deals in its own voice ("Peace suits me; my walls aren't finished."). It never cheats: tests show that hidden changes, or a view stripped to what a person could know, give the same orders, and that bots never pool what they see. Its planner takes a scope (the realm, one army, one front, or building) and a purse, for session 18's leaders.
+- **What wins (Part 2):** a parallel tournament (`pnpm tournament`, about 30,000 games in all) recorded each seat's behaviours. Winners grow fastest early, lose the least land early, attack more than one rival, and spend on troops before buildings. Tests that change one thing at a time showed what really causes wins:
+  - **attacking hard** (chaining whenever the next hop is likely to win, every spare troop in): 25% → 31% on Embervale, 14% → 30% on Wyrmland
+  - **not holding troops back:** holding them back cost 6 points
+  - **a hard first 14 turns** on big maps
+  - **choosing targets on what you know**, not on guesses about the fog
+
+  All of that is built in under every personality. One Marshal against Captains went from 22% to 33–35% on Embervale (fair 25%) and from 19% to 25–28% on Wyrmland 6 (fair 17%).
+- **Nate's notes during the session:**
+  1. **Make culture and buildings worth doing.** The sims agree they don't pay yet (culture on safe land loses games; markets make no difference). That's a rule change, so it's for the balance pass (session 19), with the numbers.
+  2. **Marshals should go for whole provinces, end on defensible ground, and read the border.** The first two are built in (no cost on average). Reading the border and fortifying ahead of threats was tried and is off for now: it holds troops back and cost 2–3 points. Worth another try once forts and culture are worth more.
+- **Stopping a runaway (Part 3):** the Marshal estimates land it can't see (from what it remembers and who knocked out whom), watches pace, uses a lower bar at 6+ players, and proposes joint wars at once that stick. The strong stand-in for a person (the Conqueror playing with fog off) on Wyrmland at 6 players:
+  - it wins **35% against Captains, 24% against Marshals** (fair 17%)
+  - Marshals name it **half a turn** after it truly runs away (Captains: 8.5 turns late)
+  - their first joint war against it comes on **turn 10** (Captains: turn 29)
+
+  The Fallen are unchanged; they do turn on the runaway once they exist.
+- **The lobby (Part 4):** Recruit (easy), Captain (medium), **Marshal (hard, now the default)**, and **Mixed** ("2 Marshals and 3 Captains", with − and +). Personalities are hidden while you play and revealed at the end ("Baron Krell wins", with "Marshal, the Schemer" underneath, and in the Houses panel). "Show personalities" in the lobby (off by default) shows them all along. Saves keep each bot's level, personality and memory.
+- **Headline numbers (Part 5):**
+  - One Marshal against Captains: **35% at 4 players** (fair 25%), **25% at 6** (17%), **11% at 10** (10%).
+  - Tables of Marshals play about as long as Captains at 6 and 10 players. At 4 players on Embervale they snowball: half the map by turn 10 in 70% of games, about 21 turns a game (Captains: 28). A balance-pass question.
+  - Planning speed: **0.4 ms a turn on average, worst 5 ms** (10 players, Wyrmland; the limit is 50 ms).
+  - Write-up: `docs/sim-results-m3-marshal.md`.
+- **Screenshots** (desktop and 384 px phone), in `docs/art/screens/`:
+  - `s17-lobby-bots*.png`: the lobby's bot choice
+  - `s17-game-over-winner*.png` and `s17-game-over-personalities*.png`: the game-over screen revealing personalities
+  - `s17-far-wyrmland*.png` and `s17-far-embervale*.png`: zoomed out, with the uncluttered names
+- **Tests and deploy:** see the end of this entry.
+
 ### Things to test after session 18 (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop: 6 players on Wyrmland, you in red; phone: the same checks where they apply.*
 - **From session 16:**
@@ -869,4 +913,11 @@ All six parts are done (Part 6, the end of the game, too), each committed and pu
   - the power graph and the awards at the end
   - spies cost gold only while away
   - on the phone: how smooth do panning and the replay feel?
+- **From session 17 (the Marshal):**
+  - a 6-player Wyrmland game against Marshals (the lobby's default now): **try to run away.** Do they team up on you, and when? (A Marshal offers the others a joint war against you as soon as it reads you as running away; the sims say about turn 10.) Do the offers you get say so?
+  - **do the personalities feel different?** Guess each bot's personality while you play, then check at the end (the game-over screen reveals them: "Marshal, the Turtle"). Or turn on "Show personalities" in the lobby.
+  - a **Mixed** table ("2 Marshals and 3 Captains"): can you tell which are which?
+  - are Marshals **too hard**, or just right? (One Marshal beats Captains about 1.4 times as often as its fair share.)
+  - fully zoomed out on Wyrmland: are the province names readable and no longer piled up?
+  - on Embervale with 3 Marshals: do games end too fast? (The sims say about 21 turns.)
 - **How many turns did the game take?**

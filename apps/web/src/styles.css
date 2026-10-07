@@ -132,6 +132,8 @@ p.good { color: var(--good); margin: 0; }
 .seg.mix-count { align-items: center; flex-wrap: nowrap; }
 .seg.mix-count button { min-width: 44px; }
 .mix-line { font: 600 0.9rem var(--font-body); padding: 0 4px; }
+/* The winner's level and personality, under the headline (session 17). */
+.over .persona-line { font: italic 600 1.05rem var(--font-body); color: var(--gold); margin: -4px 0 4px; }
 .field label.check { display: flex; gap: 8px; align-items: center; min-height: 44px; }
 .field label.check input { width: 20px; height: 20px; accent-color: var(--gold); }
 .over-map { border-radius: 6px; overflow: hidden; position: relative; height: 58vh; border: 1px solid var(--gold); }

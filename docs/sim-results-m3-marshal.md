@@ -35,7 +35,7 @@ The tables: **Embervale** (40 territories, 4 players), **the Twin Realms** (80, 
 | Greatmarch, 10 | 7.9% | **19.2%** | 7.3% | 7.1% | 8.5% | 9.0% |
 
 - **The first Marshal was no better than the Captain**, except the Blitzer. The personalities played differently, as meant to (the Turtle built the most forts and culture by turn 10, the Merchant markets from turn 1, the Blitzer held the most land by turn 8 and lost the most), but most styles cost wins.
-- **Tables of Marshals ran long:** Wyrmland 6 52.2 turns (Captains 45.1), the Twin Realms 47.4 (33.8), Greatmarch 57.3 (46.5). Part 3 has why (it named runaways too often).
+- **Tables of Marshals ran long:** Wyrmland 6 52.2 turns (Captains 45.1), the Twin Realms 47.4 (33.8), Greatmarch 57.3 (46.5). Part 3 found part of why: the first runaway rule named runaways too often.
 
 
 ## 2. What wins
@@ -85,7 +85,44 @@ Winners grow fastest early, lose the least land early, attack more than one riva
 
 ## 3. Built in, and the tournament again
 
-<!-- PART2-AFTER -->
+**Built into the shared judgement, under every personality** (`judgement` in `packages/content/data/personalities.json`; a Turtle that wins more is still a Turtle: it still builds the most forts and culture, the Merchant still builds markets from turn 1):
+- `attackFloor`: every Marshal chains on at 1.0 (whenever the next hop is likely to win), up to 6 hops, sending every spare troop, all game.
+- `garrisonScale` 0: no troops held back on quiet fronts (a personality's honest garrisons are switched off; the Captain's choke points, threatened capital and fronts with a runaway still hold).
+- `opening`: the first 14 turns, every Marshal expands as hard, and even a calm personality takes neutral land without waiting for it to be safe.
+- Targets chosen on known land; the estimate of land it can't see only for the runaway rule (`unseenSpread` 0.6).
+- **Nate's ideas, tested the same way** (600 games, all six personalities, against Captains; fair 25 / 16.7 / 10%):
+
+| | Embervale 4 | Wyrmland 6 | Greatmarch 10 |
+|---|---|---|---|
+| The judgement above | 32.6% | 29.1% | 11.0% |
+| + whole provinces (`provinceDrive` 1) and ending chains on defensible ground (`endSafe` 2) | **35.1%** | 28.2% | 9.3% |
+| + reading the border: reinforce and fort where a rival army two steps away could strike next turn | 33.5% | 25.7% | 8.0% |
+| + guarding a province held whole (300 games, one at a time) | 31.5% | 24.2% | 9.8% |
+
+  Whole provinces and defensible endings are in (they cost nothing on average and play the way Nate asked). Reading the border and guarding are in the code but off: they hold troops back, which loses. Worth trying again after the balance pass makes forts and culture worth more.
+
+**The tournament again** (Part 2's judgement, 300 games per row; before → after):
+
+| One Marshal against Captains | Conqueror | Blitzer | Turtle | Schemer | Opportunist | Merchant | Average (fair) |
+|---|---|---|---|---|---|---|---|
+| Embervale, 4 | 22.7 → **38.7%** | 33.3 → 37.3% | 10.3 → 22.3% | 19.3 → 33.7% | 24.3 → 35.0% | 23.3 → 28.0% | 22.2 → **32.5%** (25%) |
+| Twin Realms, 6 | 8.0 → 21.3% | 17.0 → 28.3% | 3.3 → 9.7% | 5.3 → 20.3% | 11.7 → 22.3% | 9.0 → 20.3% | 9.1 → **20.4%** (16.7%) |
+| Wyrmland, 6 | 17.0 → 29.7% | 32.3 → 31.0% | 15.3 → 25.7% | 14.3 → 27.0% | 15.3 → 24.7% | 18.3 → 28.7% | 18.8 → **27.8%** (16.7%) |
+| Wyrmland, 8 | 15.0 → 26.0% | 20.0 → 26.7% | 8.0 → 21.7% | 10.7 → 21.7% | 12.7 → 22.3% | 15.3 → 20.7% | 13.6 → **23.2%** (12.5%) |
+| Greatmarch, 10 | 6.0 → 11.3% | 8.7 → 12.3% | 5.0 → 7.3% | 7.0 → 11.0% | 4.7 → 8.7% | 7.0 → 12.0% | 6.4 → **10.4%** (10%) |
+
+| A table of Marshals: each personality per seat | Conqueror | Blitzer | Turtle | Schemer | Opportunist | Merchant | Game length (Captains) |
+|---|---|---|---|---|---|---|---|
+| Embervale, 4 | 31.0% | 32.2% | 11.9% | 22.4% | 23.4% | 28.6% | 20.5 turns (28.3) |
+| Twin Realms, 6 | 19.3% | 22.0% | 11.3% | 19.0% | 15.7% | 12.7% | 33.8 (33.8) |
+| Wyrmland, 6 | 15.7% | 22.0% | 16.0% | 14.3% | 13.3% | 18.7% | 41.9 (45.1) |
+| Wyrmland, 8 | 14.4% | 6.6% | 11.1% | 12.8% | 11.2% | 18.6% | 52.1 (49.6) |
+| Greatmarch, 10 | 8.8% | 12.5% | 7.5% | 9.9% | 9.3% | 11.8% | 46.1 (46.5) |
+
+- **One Marshal now beats the Captains at every table up to 8 players by a wide margin** (1.3 to 1.9 times its fair share) and matches them at 10 (10.4%, fair 10%). Every personality gained; the Turtle most (it was the weakest by far).
+- **Among Marshals the personalities are closer** than before; the Turtle is still the weakest (its calm start costs it against players who attack hard), and a Blitzer, Conqueror or Merchant does best. No personality wins everywhere: the Blitzer is worst at 8 players on Wyrmland, the Merchant best there.
+- **Tables of Marshals no longer run long:** about the Captains' length or shorter (Embervale 20.5 turns against 28.3: they fight harder).
+
 
 ## 4. Stopping a runaway (Part 3)
 
@@ -119,4 +156,35 @@ Session 16 found why nobody ganged up on Nate: under fog each Captain counts onl
 
 ## 5. The headline numbers (Part 5)
 
-<!-- PART5 -->
+With everything from Parts 1–3 (the final code), 300 games per row.
+
+**One Marshal (each personality) against Captains** (its win rate; fair 25 / 16.7 / 10%):
+
+| | Conqueror | Blitzer | Turtle | Schemer | Opportunist | Merchant | Average |
+|---|---|---|---|---|---|---|---|
+| 4 players (Embervale) | 36.3% | 41.3% | 29.3% | 33.0% | 39.7% | 32.3% | **35.3% (1.41× fair)** |
+| 6 players (Wyrmland) | 30.3% | 26.0% | 27.0% | 20.0% | 22.7% | 21.7% | **24.6% (1.48×)** |
+| 10 players (Greatmarch) | 13.0% | 12.3% | 10.7% | 8.3% | 13.0% | 9.0% | **11.1% (1.11×)** |
+
+**A table of Marshals against a table of Captains:**
+
+| | Embervale 4: Marshals / Captains | Wyrmland 6 | Greatmarch 10 |
+|---|---|---|---|
+| Game length (turns) | 20.6 / 28.3 | 44.2 / 45.1 | 45.7 / 46.5 |
+| Within 40 turns | 96% / 88% | 44% / 38% | 38% / 32% |
+| One player with over half the map after turn 10 | **70.5%** / 23.7% | 8.0% / 0.0% | 3.0% / 0.7% |
+| The halfway leader went on to win | 87% / 76% | 79% / 82% | 65% / 65% |
+| Comebacks (winner wasn't leading after turn 10) | 17% / 34% | 47% / 32% | 59% / 61% |
+| Win rate by seat (fair 25 / 16.7 / 10%) | 23–31% / 20–32% | 15–19% / 13–20% | 8–13% / 8–12% |
+| Each personality per seat | Blitzer 32%, Conqueror 32%, Opportunist 29%, Merchant 23%, Schemer 21%, Turtle 13% | Merchant 21%, Conqueror 19%, Blitzer 18%, Opportunist 15%, Turtle 14%, Schemer 13% | Conqueror 12%, Blitzer 11%, Schemer 10%, Merchant 10%, Opportunist 10%, Turtle 8% |
+
+- At 6 and 10 players a table of Marshals plays about as long as Captains, with more comebacks at 6 (the runaway gets ganged up on).
+- **At 4 players on Embervale, Marshals snowball:** they attack so hard that someone holds half the small map by turn 10 in 70% of games, and games are 8 turns shorter. With 4 players nobody is left to gang up once one falls behind. Seats stay fair. For the balance pass (Nate felt games were too short): small maps at 4 players are where it shows.
+- **The Turtle is the weakest personality** at every table of Marshals (its calm start), but against Captains it now wins its fair share or better. That's its style: a person who reads it can exploit it.
+
+**The strong stand-in** (Wyrmland, 6 players, the Conqueror with fog off, its seat rotated): **35% against Captains, 24% against Marshals** (fair 17%); Marshals name it half a turn after it truly runs away (Captains 8.5 turns late) and start their first joint war against it on turn 10 (Captains turn 29). Details in section 4.
+
+**Planning speed** (one process, 10 players on Wyrmland, 24 games, every seat a Marshal): **0.4 ms a turn on average, worst 5.0 ms**, for one seat's whole plan (the limit for Cloudflare is 50 ms). Its diplomacy (proposing and answering) reads the same board and adds about as much again. In the busy parallel runs above (19 games at once on one machine) the averages are 1.5–2.6 ms, with rare spikes to about 180 ms when the machine was busy; the Captain spikes the same way in those runs.
+
+**Is the Marshal the default?** Yes (Part 4): one Marshal of each personality beats Captains well above its share at 4, 6 and 8 players and holds its own at 10, and a table of Marshals holds the strong stand-in to 24% where Captains allow 35%. Not yet at its fair share (17%). What's missing: the stand-in sees the whole board while the Marshals estimate, and their remaining false alarms (about a quarter of turns) still send some attacks at the wrong rival; the Fallen, who see everything, only arrive once someone is knocked out (the balance pass could let them act sooner).
+

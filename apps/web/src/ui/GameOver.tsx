@@ -2,7 +2,7 @@ import type { PlayerView } from "@conquerra/engine";
 import { awardsFor, type Award } from "../logic/awards";
 import { houseOf } from "../map/houses";
 import { PowerGraph } from "./PowerGraph";
-import { portraitOf } from "./PlayersPanel";
+import { personaLine, portraitOf } from "./PlayersPanel";
 import { useGame } from "../store";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
@@ -51,9 +51,9 @@ export function GameOver() {
   if (!ctx || !view) return null;
   const me = view.players.find((p) => p.id === view.me.id)!;
   const winner = view.winner;
-  // A Marshal's personality is revealed now (session 17): "Lady Morwen, the Turtle, wins".
-  const winnerPersona = winner && winner !== "draw" ? seats?.[winner]?.personality : undefined;
-  const winnerName = winner === "draw" ? null : `${view.players.find((p) => p.id === winner)?.name ?? ""}${winnerPersona ? `, ${winnerPersona},` : ""}`;
+  // A bot's level and personality are revealed now (session 17): "Lady Morwen wins", then "Marshal, the Turtle".
+  const winnerSeat = winner && winner !== "draw" ? seats?.[winner] : undefined;
+  const winnerName = winner === "draw" ? null : view.players.find((p) => p.id === winner)?.name;
   const youWon = winner === view.me.id;
   const outBy = me.eliminatedBy ? view.players.find((p) => p.id === me.eliminatedBy)?.name : null;
   return (
@@ -65,6 +65,7 @@ export function GameOver() {
             {youWon ? "Victory!" : winner === "draw" ? "A draw" : `${winnerName} wins`}
           </h1>
         </div>
+        {winnerSeat && <p className="persona-line">{personaLine(winnerSeat)}</p>}
         <p>
           {view.turn} turns played.
           {me.eliminatedTurn !== null && ` You were knocked out on turn ${me.eliminatedTurn}${outBy ? ` by ${outBy}` : ""}.`}

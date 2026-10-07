@@ -15,7 +15,7 @@
 - Capitals come from the map's **fair layout** for that many players: every capital is about as far from its nearest rival as the others, has land around it worth about the same, and stands on plains (see §12).
 - Every other territory starts neutral with **1 troop**.
 - **Your House colour** (session 16): you are **Gules (red)** unless you pick another of the ten in the lobby (it's remembered on your device and kept in saves). The bots take the other colours. Colours never change how the game plays. (Online, each player picks: M4.)
-- The host also sets: the **turn timer** (see §3), an optional **turn limit**, the **luck level** (30% by default), **fog** (on by default), the **Fate deck** (on by default, §19), **diplomacy** (on by default, §20), and how the **bots** play: **Captain** (the default) or **Recruit** (easy).
+- The host also sets: the **turn timer** (see §3), an optional **turn limit**, the **luck level** (30% by default), **fog** (on by default), the **Fate deck** (on by default, §19), **diplomacy** (on by default, §20), and how the **bots** play: **Marshal** (hard, the default), **Captain** (medium), **Recruit** (easy), or **Mixed** (some Marshals, the rest Captains; see §13).
 
 ## 3. A turn
 1. **Orders (the timer runs).** Everyone writes as many orders as they like, in secret.
@@ -237,8 +237,21 @@ Maps are made by the **map maker** (same seed, same map) and look like a real pl
 
 ## 13. Bots
 Bots play by exactly the same rules as people, and only from their own view (including their "last seen" memory). They never peek.
+- **The lobby (session 17):** Recruit (easy), Captain (medium), **Marshal (hard, the default)**, or **Mixed**: choose how many Marshals with − and + ("2 Marshals and 3 Captains"); they're seated at random. A saved game keeps each bot's level, personality and memory.
 - **Recruit (easy):** grabs the most valuable land it can probably take, piles troops at the front and rarely plans ahead.
-- **Captain (the default):** a short list of priorities:
+- **Marshal (hard, the default; session 17):** the Captain's priorities below, with what the simulator found wins, and a personality.
+  - **What every Marshal does** (whatever its personality): it **attacks hard**, chaining on whenever the next hop is likely to win, up to 6 hops, and throws every spare troop in; it doesn't hold troops back on quiet fronts (it still holds choke points, a threatened capital and its fronts with a runaway); it **expands hardest in the first 14 turns**; it goes for **whole provinces** (land that would complete one is worth more); and it prefers to **end a chain on defensible ground** (where few open borders face it).
+  - **It reads a runaway better than the Captain, without cheating:** it estimates land it can't see (land it remembers stays whose it was; a knocked-out player's land goes to whoever knocked them out; land it knows nothing about goes partly to whoever holds the nearest land it knows of and partly evenly to everyone), and names a runaway by **size** (as the Captain from 4–5 players; from 6 players a third of the map, or 22% and 1.6 times anyone else), by **pace** (it gained the most land in the last 3 turns, twice as fast as the next, and holds 18% already), and keeps naming it for 3 turns. Then it proposes a **joint war** against it at once, for 6 turns, and again as soon as one ends; every Marshal accepts one; its fronts with the runaway come first.
+  - **It never cheats:** it judges only from its own view, what it remembers of the replays it watched, and public facts. No pooled sight between bots.
+  - **Personalities** (each game deals them from its seed, no two the same until all six are used; hidden while you play, revealed at the end, or shown all along with "Show personalities" in the lobby). Style only: every one plays by the same rules and gold.
+    - **The Conqueror:** picks one front and masses there, holds its other borders with just enough.
+    - **The Blitzer:** expands as fast as it can and chains everything; builds nothing and defends little.
+    - **The Turtle:** forts, culture and markets first; takes only safe land and attacks rivals only with a big edge until turn 14, then strikes.
+    - **The Schemer:** lives on deals (truces it may break when the gain is worth the Oathbreaker penalty, joint wars that serve itself) and up to 3 spies.
+    - **The Opportunist:** a vulture: hits whoever just fought (as it watched in the replays), the weakened and the overstretched.
+    - **The Merchant:** markets from turn 1, trades and peace early, attacks rivals only with an edge until turn 10, then a rich push.
+  - **In its own voice:** every answer to a deal still has one plain reason; when its style decides, it says so its way ("Peace suits me; my walls aren't finished.").
+- **Captain (medium):** a short list of priorities:
   1. **Holds choke points cheaply.** On a pass or sea-lane landing facing a rival, it keeps just enough troops to hold (the crossing penalty does the rest) and builds a fort there when it can afford one.
   2. **Breaks through with force.** It only attacks through a pass or across a sea lane with a real army (half as much again as the attack needs), gathering at the crossing until it has one, and brings siege for a fort when it can hire it. Once through, it chains on.
   3. **Lands from the sea** where the far side is weak.
@@ -252,7 +265,7 @@ Bots play by exactly the same rules as people, and only from their own view (inc
   9. **Turns on a fast attacker.** If last turn's replay (exactly what that seat watched) showed one rival taking **2 or more of its territories**, that rival becomes its target (a chain is thinly held behind it): it recruits on that front, marches nearby troops there, keeps the choke points facing it held, and armies within two steps stop grabbing neutral land. (Just digging in was tried first: it cut runaways too, but Recruit bots then beat the Captain far more often.)
 - The same rules apply to every seat: nobody gangs up on you because you're human, only because you're ahead.
 - **Bots don't use generals** (they already plan every army). A bot that knocks someone out still gets a captured general; it stands where it was placed, and goes if its land falls. The Captain sets a captured general to **Govern** a province it holds whole that no rival borders (session 15).
-- **Knocked-out bots are Fallen bots** (§16): they aim world events at whoever looks to be leading, by the same runaway rule as priority 8, judged from their political map. With fewer than three players left, they aim at the leader once it holds 1.25 times the land of the next. They pick, best first: an uprising in the leader's quietest land, a plague where it holds the most of a province, a famine, mercenaries next to its land that borders neutral land, a storm on its border with another player. Every Fallen bot judges the same way, so they often pool.
+- **Knocked-out bots are Fallen bots** (§16), whatever their level (the Fallen see the whole political map, so they don't need the Marshal's estimates): they aim world events at whoever looks to be leading, by the same runaway rule as priority 8, judged from their political map. With fewer than three players left, they aim at the leader once it holds 1.25 times the land of the next. They pick, best first: an uprising in the leader's quietest land, a plague where it holds the most of a province, a famine, mercenaries next to its land that borders neutral land, a storm on its border with another player. Every Fallen bot judges the same way, so they often pool.
 - If a realm loses its capital and has no barracks, it builds one straight away.
 - **Cards (session 13):** bots judge cards only from their own view (their own hand, how many cards rivals hold, their own missions). See §18 and §19.
 
@@ -489,7 +502,7 @@ Spies see deep behind the lines. They never fight and never change a battle: the
 
 ## 22. Seeing the map (session 16)
 - **Fully zoomed out, the whole map is clear of the menus** (desktop: the top bar, the map buttons, the right column, the selected-territory panel and the dock; phone: the top bar, the action bar and an open sheet). You can pan any edge of the map into the clear part at every zoom.
-- **Provinces on demand:** province names are painted on the land only at Far zoom, with every province's plaque as before. At Mid and Near, **tap any territory** (yours, a rival's, or fogged land) and its whole province lights up with a bright band round its border and its plaque ("The Oak Downs +3"), until you tap elsewhere. The card's province chip says the same: "The Oak Downs +3: you hold 2 of 5". The province's shape, name and bonus are public; "you hold" counts only your own land.
+- **Provinces on demand:** at Far zoom each province's name and bonus show small, without a plaque, and only where they fit: bigger provinces first, never over an army, another name or the edge of the screen (session 17: a crowded map shows fewer names, not a pile of them). At every zoom, **tap any territory** (yours, a rival's, or fogged land) and its whole province lights up with a bright band round its border and its plaque ("The Oak Downs +3"), until you tap elsewhere. The card's province chip says the same: "The Oak Downs +3: you hold 2 of 5". The province's shape, name and bonus are public; "you hold" counts only your own land.
 - **Sharp at every zoom:** zoom in past the Mid detail and the land where you're looking is painted again at up to three times the detail (a moment after you stop, nearest the middle first), with bigger copies of the art that arrive after the game is on screen.
 
 ## 23. The end of the game (session 16)
