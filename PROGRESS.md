@@ -896,7 +896,7 @@ All five parts are done, each committed and pushed. Nate added two notes during 
   - `s17-lobby-bots*.png`: the lobby's bot choice
   - `s17-game-over-winner*.png` and `s17-game-over-personalities*.png`: the game-over screen revealing personalities
   - `s17-far-wyrmland*.png` and `s17-far-embervale*.png`: zoomed out, with the uncluttered names
-- **Tests and deploy:** see the end of this entry.
+- **Tests and deploy:** 741 automated tests pass (the full run twice, as property tests use random inputs). Deployed to the private preview (version `49f5dfd1`); the lock check passed. Nate: please check the repo's Actions page for the last commit.
 
 ### Things to test after session 18 (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop: 6 players on Wyrmland, you in red; phone: the same checks where they apply.*
