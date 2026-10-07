@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–19 are done. Next: Nate's play test (the list is under "Things to test after session 19"); then session 20, the polish pass.**
+**Phase: M3 (depth and balance). Sessions 7–19 are done and reviewed. Next: Nate's play test (the list is under "Things to test after session 19"); then the next coding session (his fixes, the Marshal builds like the Steward, fair seats) and the polish pass.**
 
 Claude Code sessions completed: **19** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -972,6 +972,18 @@ All five parts are done, each committed and pushed. Art batch 4 wasn't imported 
 - **Tests and deploy:** 844 automated tests pass (the full run twice). Deployed to the private preview (version `36e80125`); the lock check passed. Nate: please check the repo's Actions page for the last commit.
 - **Questions for Nate:** keep culture +1 a level, or another lever (table in the write-up)? Should Conquest's 20-turn default grow on the 160–200 maps? Make the Recruit weaker still (a new player wins 46% against three)? Fairer capital spots for the other maps next (a later session)?
 
+### Oct 7: Orchestrator review of session 19
+- **Checked the work:**
+  - GitHub's checks pass on all ten session 19 commits (Step 0 through the last `PROGRESS` note), so `main` is green.
+  - The screenshots look right: the phoenix, the twin continents, the kraken and the tree all read at Far (unexplored land in grey), Mid is clean, and the Fallen's first-turn screen says plainly what you can do now ("Ready now: Storm, Famine, Mercenaries. Pick one, then tap Queen Isolde's land"). One note for the polish pass, not a bug: on a phone the wide maps sit small at Far (Ashwing fills about a quarter of the screen).
+  - **Re-run and confirmed:** a table of four Marshals on Embervale: half the map by turn 10 in 34% of games (the write-up: 30–36%), 31 turns (29.9), the halfway leader wins 70% (68%). The snowball fix is real.
+  - **Re-run and not confirmed: the delegating player.** Session 19 reported that a player who hands everything to their leaders now wins 20.1% against Marshals on Embervale and 1.09× fair on Wyrmland. That was measured right after Part 1. On the finished code (500 and 300 games) it wins **29.8% on Embervale (1.19× fair) and 25.0% on Wyrmland at 6 (1.50× fair)**; a player who gives the Leader everything wins 38.6%. What changed in between: Part 2 made culture pay (+1 gold a level) and taught the Steward to buy it where it pays, and your leaders took that up (the delegating player's culture spend went from about 10 gold a game to 156), while the Marshals' personalities mostly didn't. **So "the Marshal is at least as good as your leaders" doesn't hold today.** The fix is in the bots (every Marshal should spend on culture and buildings the way the Steward does, in its own style), not the rules; it goes into the next coding session. Nate can still play: it only means a heavily delegating player has an edge over the bots for now.
+- **Two findings worth a plan of their own:**
+  - **The capital spot decides a lot on every map** (among equal bots, 0–76% between spots; a person starting in Embervale's Embercrest or Krakenmere's Rookstone is at a real disadvantage). Session 19 fixed Embervale at 4 players and built the tools; the other maps and table sizes need a smarter search, an exposure-aware fairness check in the map maker, and a start bonus as the fallback. It matters most once friends play online (M4).
+  - **Bot games on the big maps run to the 60-turn cap,** and 8+ players default to Conquest (20 turns). Nate said long bot games are fine because his own run much shorter; whether 20 turns is right on a 200-territory map is on his play-test list (item 6).
+- **Session 19's questions:** the culture lever and sound are Nate's (asked with his play test); the Recruit stays as it is until the capital spots are fairer (orchestrator default: 46% against three Recruits is easy enough for now); Conquest's default on big maps waits for his play test.
+- **Next:** Nate plays from "Things to test after session 19"; then the next coding session takes his fixes plus the two balance leftovers (the Marshal builds like the Steward; fair seats), and the polish pass follows.
+
 ### Things to test after session 19 (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop: 6 players on Wyrmland, you in red; phone: the same checks where they apply.*
 - **From session 19 (the balance pass and bigger maps), most important first:**
@@ -982,7 +994,8 @@ All five parts are done, each committed and pushed. Art batch 4 wasn't imported 
   5. **Try to run away against Marshals** on Wyrmland: do they team up on you, and when?
   6. **An 8–10 player game on Krakenmere or Rootholm** (the lobby defaults to Conquest, 20 turns, at 8+ players): is 20 turns enough on a 200 map? On the phone: is it smooth enough?
   7. **Your starting spot:** did it feel fair? (Sims found some capital spots much stronger; Embervale's 4-player spots were re-chosen.)
-  8. **Never touch your Steward** on Embervale with 4 (it starts at 10% there) and on Wyrmland (20%): does it feel like the right amount?
+  8. **Never touch your Steward** on Embervale with 4 (it starts at 10% there) and on Wyrmland (20%): does it feel like the right amount? What did it build? Then give it a **bigger budget** (30–50%) and see what it builds.
+  9. *(Known, being fixed next session: if you hand most of your gold to your leaders, they currently outplay the Marshals, because they build culture now and the Marshals don't yet. Play your own way; don't judge the Marshals' strength from a heavily delegated game.)*
 - **From session 16:**
   - zoom all the way in (sharp?) and all the way out (everything visible clear of the menus? the province names readable, not piled up?)
   - tap territories you don't own: does the province light up clearly, with its name and bonus?
@@ -1002,12 +1015,10 @@ All five parts are done, each committed and pushed. Art batch 4 wasn't imported 
   - a **Mixed** table ("2 Marshals and 3 Captains"): can you tell which are which?
   - are Marshals **too hard**, or just right? (One Marshal beats Captains about 1.4 times as often as its fair share.)
   - fully zoomed out on Wyrmland: are the province names readable and no longer piled up?
-  - on Embervale with 3 Marshals: do games end too fast? (The sims say about 21 turns.)
-- **How many turns did the game take?**
+- **How many turns did each game take?** (Note the map and the player count.)
 - **From session 18 (leaders you delegate to):**
   - **name your Leader** in the lobby (and your Steward if you like); do the names show in the Leaders panel and the report?
   - give your Leader **"Expand our empire in this direction"** toward somewhere 4–6 steps away, with a budget (say 30%), and watch it for a few turns: does it race through empty land, slow down where rivals stand, take whole provinces on the way, and stop when it gets there?
-  - **never touch your Steward** for a few turns: what did it build? Then give it a **bigger budget** (30–50%) and see what it builds. Does 20% feel right as the default, or should it start lower?
   - **"Run the military"** for a few turns while you only do the diplomacy: is it as good as you'd hope?
   - **capture a player** and command their Leader and Steward (try "Command this front" on a captured Leader)
   - the **"Leaders' orders: Mixed in / After mine"** switch: which reads better?
