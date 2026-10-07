@@ -1,0 +1,5 @@
+delegate-80 vs marshal on wyrmland:10, 6 games: won 0 (0%, fair 10%), 60.0 turns a game
+orders a turn: Leader 6.9, Steward 0.7, most in one turn 26
+planning a turn: average 0.7 ms, 95th 1.4 ms, worst 6.3 ms
+its leaders bought (all games): {"forts":32,"markets":30,"barracks":9,"culture":10,"troops":1638}
+8 leaders, every one commanded, Wyrmland 10 players, turns 20-30 (44 plans): average 3.2 ms, 95th 6.7 ms, worst 8.1 ms; most orders in one plan 38

@@ -1,4 +1,4 @@
-# Conquerra Rules Reference (Milestone 3, session 15)
+# Conquerra Rules Reference (Milestone 3, session 18)
 
 *A 10-minute read. This is how the engine actually plays today. Numbers are the current balance settings from `packages/content/data/rules.json`; they will change as we tune.*
 
@@ -159,7 +159,9 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
 - **Land:** your first 10 territories are free; after that, upkeep climbs faster than your land does (0.35 × extra territories^1.25, rounded). This is the main brake on runaway leaders.
 - **Specialists:** their upkeep from the table above.
 
-**Unrest:** if you can't pay, one troop deserts for every gold you're short, starting with your lowest-culture land. Culture talks some of them out of it (its protection share is forgiven). Every territory still keeps its 1-troop garrison.
+**Leaders' purses (session 18, §14):** each turn, after upkeep, each leader's budget is paid from your treasury into its purse. If you can't pay your upkeep, the purses pay it first (the fullest first), before anyone deserts.
+
+**Unrest:** if you can't pay (and your leaders' purses are empty), one troop deserts for every gold you're short, starting with your lowest-culture land. Culture talks some of them out of it (its protection share is forgiven). Every territory still keeps its 1-troop garrison.
 
 ## 9. Combat (about 70% skill, 30% luck)
 - **Attack strength** = attacking troops × border (river crossing ×0.8, mountain pass ×0.85, sea lane ×0.75) × Leader bonus (+20% if your Leader goes along). See §12.
@@ -170,7 +172,7 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
 - If **both sides are wiped out**, the last defender holds on: the land keeps 1 troop. (Land is never left owned with 0 troops.)
 - A Leader in a captured territory, or in an attacking army that's wiped out, **falls**.
 - **Leaders come back for free.** At the end of the turn it fell, your Leader returns at your capital, or at your strongest territory (most troops) if you've lost the capital. So it's waiting for you when you plan your next turn. Seize the Initiative and Lie in Wait cooldowns carry on as before.
-- When a player is knocked out, the game records **who knocked them out**, and that player gets the loser's Leader as a **captured general** (§15). The knocked-out player becomes one of **the Fallen** (§16).
+- When a player is knocked out, the game records **who knocked them out**, and that player gets the loser's **Leader and Steward** (§15). The knocked-out player becomes one of **the Fallen** (§16).
 - **Odds preview:** before you commit, the game shows "guaranteed / likely / possible / impossible" from the same math the engine uses.
 - **Provably fair:** the game's secret random seed is fingerprinted when the game starts and revealed when it ends, so anyone can re-run the game and check every roll.
 
@@ -264,39 +266,58 @@ Bots play by exactly the same rules as people, and only from their own view (inc
      - it stops attacking weaker rivals whose land touches the leader's (they're holding it off)
   9. **Turns on a fast attacker.** If last turn's replay (exactly what that seat watched) showed one rival taking **2 or more of its territories**, that rival becomes its target (a chain is thinly held behind it): it recruits on that front, marches nearby troops there, keeps the choke points facing it held, and armies within two steps stop grabbing neutral land. (Just digging in was tried first: it cut runaways too, but Recruit bots then beat the Captain far more often.)
 - The same rules apply to every seat: nobody gangs up on you because you're human, only because you're ahead.
-- **Bots don't use generals** (they already plan every army). A bot that knocks someone out still gets a captured general; it stands where it was placed, and goes if its land falls. The Captain sets a captured general to **Govern** a province it holds whole that no rival borders (session 15).
+- **Bots don't use leaders** (they already plan every army and all their spending): their Steward has no command and no budget, and they keep the leaders they capture (a captured Leader stands where it was placed, and goes if its land falls) so that knocking a bot out still gives you its Leader and Steward. (Session 15's Govern for captured generals is gone with session 18; the Captain plays exactly as before otherwise.)
+- **Your leaders plan with the Marshal's brain** (session 18, §14): its shared judgement (attack hard, chain on, whole provinces, end on defensible ground) in a neutral style, steered by each command, from your view only.
 - **Knocked-out bots are Fallen bots** (§16), whatever their level (the Fallen see the whole political map, so they don't need the Marshal's estimates): they aim world events at whoever looks to be leading, by the same runaway rule as priority 8, judged from their political map. With fewer than three players left, they aim at the leader once it holds 1.25 times the land of the next. They pick, best first: an uprising in the leader's quietest land, a plague where it holds the most of a province, a famine, mercenaries next to its land that borders neutral land, a storm on its border with another player. Every Fallen bot judges the same way, so they often pool.
 - If a realm loses its capital and has no barracks, it builds one straight away.
 - **Cards (session 13):** bots judge cards only from their own view (their own hand, how many cards rivals hold, their own missions). See §18 and §19.
 
-## 14. Generals (session 12)
-- **A general leads one army:** the troops in the territory where it stands. It goes with them when they move.
-- **Your Leader is your first general.** You can order its army yourself, as always, or hand it a **standing instruction**. It keeps its +20% (it goes along on its attacks) and its timing tricks either way: as a general it uses Seize the Initiative on its first attack on a rival when that's ready.
-- **The five instructions:**
-  - **Hold here:** keep this territory. If a rival army next door could take it, the general pulls spare troops in from your land next to it. It never attacks.
-  - **Defend this border:** toward a rival, or toward a place you pick. It marches to the most threatened stretch of that border through your own land and holds it like Hold here. It hits back at that rival's armies next door with troops it doesn't need there; the general itself stays at its post.
-  - **Push toward a place:** it marches toward the place and takes land along the way, with the Captain's odds and chaining, but every hop must get closer. It never stops next to a rival army that would throw it straight back out. Blocked, it waits and gathers spare troops from your quiet land behind it. If it's stranded somewhere it can't hold, it pulls back a step. Once there, it holds.
-  - **Govern this province** (session 15): only for a general standing in a province where you hold most of the land. Its army stays in the province and defends it, as Hold here does across the whole province (troops go where the province is short, the general's own spare troops first; it never attacks). As income comes in, it **keeps a quarter of that province's own income** (its territories and its holding bonus; `rules.generals.govern.share`) and spends it there the same turn: **a fort** on the most threatened frontier territory first, **else culture** where the province is most exposed, **else troops** where it stands. The rest of your income comes home as usual; generals never spend your own gold. What it can't spend yet is held toward its next purchase and shown only as progress ("Governing Old March. A fort at Pinemark: 5 of 8 gold"), never as a second gold total. If the general leaves the province, is lost, or gets another instruction, that progress goes home. The report says what it did: "Your Leader governs Old March: kept 3 gold, raised culture in Pinemark." The Command menu offers it only where you hold most of the province.
-  - **Raid a rival:** it takes that rival's weakly held land next to it and chains on through more of it. It never goes into land next to one of that rival's armies big enough to throw it out. Not touching that rival yet, it marches toward the rival's nearest land you know of, taking neutral land on the way (never a third player's).
-- **How it decides:**
-  - It writes its orders with the Captain bot's brain, judging only from your view (it can't see through fog), and the same view and instruction always give the same orders.
-  - **Its army is the troops with it when it plans:** it moves them by number, so troops you recruit there that turn stay behind.
-  - It never leaves a threatened capital bare.
-  - **It never spends gold:** you still recruit, build and raise culture yourself.
-- **When its orders are written:** as planning starts, from your view. They show at the top of your queue with the general's portrait, before you lock in, and you can delete any of them. If the timer runs out, they go in as they are.
-- **Taking control back:** give an order of your own to the general's army (anything out of the territory it stands in) and its orders all step aside for the turn. Its instruction is still there next turn. An order of yours out of a territory it meant to pull troops from just drops that one order. One tap ("You give the orders") switches the instruction off.
-- **On screen:**
-  - Select the territory where your Leader stands: the panel shows what it's doing and **Command**. Command, an instruction, then a rival or a place on the map: 3 taps at most. (On a phone, the sheet folds away while you pick a place, with a banner saying what to tap.)
-  - The Leader card says what it's doing ("Pushing toward Old March").
-  - The replay and the report tell its story ("Your Leader, pushing toward Old March, took Ashfell"; "Your Leader, holding Galeholt, drove back Lady Morwen's attack").
+## 14. Leaders and Stewards (session 18)
+You have **two leaders from the start**, and you can hand either of them a command, a budget, or both. They write their orders every turn with the Marshal's brain (§13), from your view only, and they're good at it.
 
-## 15. Captured generals (session 12)
-- **Knock a player out and their Leader joins you** as a captured general. It appears at your capital (your strongest territory if you've lost it), with no army until troops are there or move with it.
-- It takes instructions exactly like your Leader, and goes with its army.
-- **Command only:** it adds no +20% fighting bonus and has no timing tricks.
-- **You keep at most 2** (`rules.generals.maxCaptured`). When a third arrives, you choose which to let go. If you don't choose, the two nearest your front stay (bots always keep those two).
-- **Gone for good** if its army is wiped out attacking, or the territory it stands in is taken. Only your own Leader comes back.
-- **On screen:** the knocked-out Leader's portrait on a gold ring above its army's marker, and a line under your Leader in the right column (click it to go there).
+- **Your Leader** (military) stands on the map with an army and goes with it. It keeps its **+20%** in battle and its timing tricks (Seize the Initiative, Lie in Wait), and comes back for free when it falls (§9). You name it in the lobby (a sensible name is filled in, and remembered on your device).
+- **Your Steward** runs culture, buildings, forts and the economy. It never stands on the map and can't be lost. Naming it is optional; left blank, it gets a name from the game's seed. Until Steward portraits are made, it shows as your House's shield with a quill.
+- **Purses.** Each leader has a purse: your gold, set aside.
+  - **Its budget** is paid in each turn as income comes in: **a share of the turn's income** (after upkeep; rounded down) or **an exact amount** (up to 99 gold a turn). Budgets are paid in order (your Leader, your Steward, then captured ones) and never more than your treasury holds.
+  - **It saves up:** gold it doesn't spend stays in the purse for bigger things.
+  - **It pays for its leader's orders** (troops, specialists, buildings, culture), never your treasury, and your gold never pays for them. If the purse is short, the order waits like any order you can't afford.
+  - **Take back** brings a purse home in one tap. It arrives as the turn starts, in time for your own orders that turn.
+  - **No dodging costs:** if you can't pay your upkeep, the purses pay it (the fullest first) before anyone deserts (§8). Purses also count as your gold in the score.
+- **Defaults:** your **Steward starts on "Run the realm" with 20% of your income**, so building and culture happen even if you never open the Leaders panel. Your **Leader starts with no command and no budget**: you order its army yourself, as before.
+- **The commands** (with the taps on a 384 px phone, from your Leader's portrait):
+
+| Leader | What it does | Taps |
+|---|---|---|
+| **Hold here** | Keeps the territory it stands in, pulling in spare troops from next door if a rival army could take it. Never attacks. | 3 |
+| **Defend this border** | Toward a rival, or a place you pick: marches to the most threatened stretch through your land, holds it, and hits back with troops it doesn't need there. | 4 |
+| **Push toward a place** | Marches toward the place, taking land on the way (every hop closer), never stopping next to an army that would throw it out. | 4 |
+| **Raid a rival** | Takes that rival's weakly held land and chains on, keeping clear of its big armies (never a partner). | 4 |
+| **Expand our empire in this direction** (Nate's) | Pick a target territory. It commands its own army and yours in the provinces on the way. Through empty, weak land it chains fast; where rival armies stand it's careful (only where what arrives would hold, with honest garrisons behind it); it takes and secures whole provinces on the way rather than a thin line. At the target it stops and holds. | 4 |
+| **Command this front** | Mark provinces on the map, then Confirm: it commands every army of yours there and recruits for them (with nowhere to recruit, it builds a barracks). | 4 + 1 a province |
+| **Run the military** | Every army and all the recruiting, except armies another leader commands or that you order. Only one leader at a time. | 3 |
+
+| Steward | What it does | Taps |
+|---|---|---|
+| **Run the realm** | Forts where an army masses (a threatened capital, choke points), markets where they pay, a barracks where there's nowhere to recruit, and a level of culture a turn where it protects (the capital and choke points facing an army). It saves up for an urgent fort rather than buy lesser things. Only one Steward at a time. | 4 |
+| **Build up this province** | Forts where a rival threatens it, a barracks if it has nowhere to recruit near its front, markets on its quiet land, then culture where it holds. | 5 |
+| **Fortify this frontier** | Facing anyone, or one rival: forts where you're most threatened, then garrisons (troops recruited at the nearest recruit site and marched in where the border is short). | 5 |
+| **Raise culture here** | Culture across a province you pick: where it protects first, then the lowest. | 5 |
+| **Grow the economy** | Markets and culture, whichever pays back fastest, on land that's safe. | 4 |
+
+  A budget takes 3 taps for your Leader (its portrait, Budget, a share) and 4 for your Steward. On a laptop the Leaders panel is always open, so every count is one less.
+- **How they decide:** every command is planned by the Marshal's planner with the command's scope (which armies, which places, what it may buy) and the leader's purse. They write **several orders a turn** where it fits: a chain of attacks, recruits that march with the army, building in several places. The same view and command always give the same orders.
+- **Overlaps:** a narrower command keeps its armies over a wider one: a leader's own army first, then fronts, then the way an Expand leader is taking, then Run the military. A leader of yours with **no command keeps its army for you**: Run the military never moves it.
+- **Your orders come first:** an order of yours out of a territory takes that army back from its leader for the turn (a leader leading just its own army, on Hold, Defend, Push or Raid, steps aside altogether); a build or culture of yours on a place takes that place back from your Steward. Seize the Initiative and Lie in Wait stay yours.
+- **Seeing their orders:** they're written into your order queue as planning starts, each with its leader's portrait, and you can change or delete any of them. **"Leaders' orders: Mixed in / After mine"** (in Settings, and at the top of the queue; mixed in by default) chooses where they play: one of yours, then one of theirs, or all of yours first. If the timer runs out, they go in as they are.
+- **On screen:** the **Leaders panel** (laptop: the right column; phone: the Leaders sheet, from your Leader's portrait by the map buttons) lists every leader with its portrait, name, kind, what it's doing, its purse and budget, and how many orders it wrote this turn. Tap one for **Command**, **Budget** (chips: 0, 10, 20, 30, 50%, or an exact amount) and **Take back**. While a leader is open, its command shows on the map: the target glows and the provinces it works in get a gold band. The top bar shows your treasury, and the purses' total beside it, smaller.
+- **The report and the Chronicle** tell their story: "Your Leader, Aldric, expanding toward Old March, took three territories: Ashfell, Galeholt and Pinemark (you lost 4, they lost 9)." "Your Steward, Odo, running the realm, finished a market at Pinemark (6 gold)." "Into purses: 2 gold to your Steward."
+- **Govern this province** (session 15) is gone: the Steward does it better. In older saves a governing general becomes a Leader on Hold here, with the gold it was saving in its purse.
+
+## 15. Captured leaders (sessions 12 and 18)
+- **Knock a player out and their Leader and their Steward join you**, with no command and no budget. The Leader appears at your capital (your strongest territory if you've lost it), with no army until troops are there or move with it.
+- **Up to 4 of each kind, your own included** (`rules.leaders.maxOfKind`). Take over two players and you command three military leaders and three Stewards. With one too many, you choose who goes; if you don't, the military leaders nearest your front stay, and the Stewards with the most in their purses. A leader let go sends its purse home.
+- **A captured Leader commands only:** no +20% and no timing tricks (only your own Leader has those). It's **gone for good** if its army is wiped out attacking or the land it stands in is taken (its purse comes home). Only your own Leader comes back. **Stewards can't be lost.**
+- A knocked-out player's own captured leaders are gone with them; only their own two pass on.
 
 ## 16. The Fallen (session 12)
 - **When you're knocked out you become one of the Fallen.** You see the political map (§11) and choose **Watch to the end** or **Leave the game** (the others play on and you see who won).
@@ -439,7 +460,7 @@ Preset deals between two players. Every number is in `rules.diplomacy`.
 **Handshake and binding**
 - **Handshake:** free. You can break one, by attacking across it, missing a payment, or making a truce with your joint war's target. Breaking it brings a public **Oathbreaker** mark for 5 turns, a gold fine and unrest (troops desert from your land next to the player you wronged; culture protects as usual). All three scale with the deal's size: how much land it covers, how long it runs, how much it trades; "until X is knocked out" counts as big. **The fine is 4 gold + 1.4 per point of size, and up to 0.8 troops per point desert** (Nate doubled both in session 15). A truce everywhere for 3 turns over 6 territories (size 9) costs about 17 gold and 7 troops. The offer card says it in plain words: "Handshake: free. Breaking it brings the Oathbreaker mark, about 17 gold and unrest."
 - **Binding:** each side pays gold up front, more for longer and bigger deals. The game won't let you queue an attack across it (the order panel says why), and any attack that would cross it the turn it starts is called off with a line in the report. Gold owed each turn is taken automatically; if you're short, troops desert for it as with upkeep. It can't be broken.
-- **Limits:** every deal ends after 8 turns at most. One deal of each kind between the same two players at a time. When a player is knocked out, their deals end; the Fallen don't make deals. A general can't be told to raid a partner.
+- **Limits:** every deal ends after 8 turns at most. One deal of each kind between the same two players at a time. When a player is knocked out, their deals end; the Fallen don't make deals. A leader can't be told to raid a partner.
 
 **What everyone sees**
 - Who has which deal with whom, for how long, and a joint war's target: a small mark next to each player in the Players panel (a seal on a binding one) with the turns left, and the Oathbreaker mark.
@@ -511,4 +532,4 @@ Spies see deep behind the lines. They never fight and never change a battle: the
 - Both come from the game's own record, kept every turn (and in saved games). **Nobody sees it until the game is over**, when everything is revealed: during play, land counts stay hidden.
 
 ## Not in yet (later milestones)
-The Marshal and bot personalities (session 17), leaders you delegate to with their own purses (session 18), bigger maps (about 160 and 200 territories) and the balance pass (session 19), the polish pass with replay effects (session 20). Factions, pause by vote, deals between people and colours chosen by each player in online games (M4), tutorials and scenarios (M5). Not planned: shared vision between partners, and spies that sabotage or affect combat.
+Steward portraits (a later art batch; until then the House shield with a quill), bigger maps (about 160 and 200 territories) and the balance pass (session 19), the polish pass with replay effects (session 20). Factions, pause by vote, deals between people and colours chosen by each player in online games (M4), tutorials and scenarios (M5). Not planned: shared vision between partners, and spies that sabotage or affect combat.

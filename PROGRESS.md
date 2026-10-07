@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–17 are done. Next: session 18 (`docs/prompts/claude-code-session-18.md`): leaders you delegate to; then Nate's play test (the list is under "Things to test after session 18"); then 19 bigger maps and the balance pass, 20 the polish pass.**
+**Phase: M3 (depth and balance). Sessions 7–18 are done. Next: Nate's play test (the list is under "Things to test after session 18"); then 19 bigger maps and the balance pass, 20 the polish pass.**
 
-Claude Code sessions completed: **17** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
+Claude Code sessions completed: **18** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
 ---
 
@@ -911,6 +911,40 @@ All five parts are done, each committed and pushed. Nate added two notes during 
   - **The 4-player snowball** (Marshals: half of Embervale by turn 10 in 70% of games, about 21 turns): **bots first** (Marshals gang up sooner at small tables); rule changes only with numbers for Nate.
   - **The Fallen act from their first turn out:** "the goal is to keep people knocked out still engaged in the game so everyone is still having fun; that could also help the balance." Session 19.
 
+### Oct 7: Claude Code session 18 (M3: leaders you delegate to)
+All four parts are done, each committed and pushed. Art batch 4 wasn't imported (that's session 20).
+- **Two leaders from the start (Part 1):** your **Leader** (military, on the map, +20%) and your **Steward** (culture, buildings, forts, the economy; never on the map, can't be lost).
+  - **Names:** you name your Leader in the lobby (a name is filled in); the Steward's name is optional. Bots' leaders get names from the game's seed.
+  - **Purses:** each leader has a purse: its budget (a share of your income, or an exact amount) goes in as income comes in, it saves up, it pays for its leader's orders, you can take it back in one tap, and purses pay your upkeep before anyone deserts.
+  - **Defaults:** your Steward starts on **Run the realm with 20%**; your Leader has no command and no budget until you give it one.
+  - **Captured leaders:** knocking a player out gives you their Leader and Steward, up to 4 of each kind (your own included).
+  - **Govern is gone;** old saves come up to date (a governing general's saved gold goes into its purse). A real session 17 save is a new test fixture.
+- **They plan with the Marshal (Part 2):** every command goes through the Marshal's planner with its scope and the leader's purse, from your view only, and writes several orders where it fits.
+  - **Expand our empire in this direction** (Nate's): pick a target. It chains fast through empty land, is careful where rival armies stand (only where what arrives would hold), takes whole provinces on the way, and holds at the target.
+  - Also: Command this front, Run the military, Hold, Defend, Push, Raid; and the Steward's Run the realm, Build up, Fortify, Raise culture, Grow the economy.
+  - **Your orders come first:** an order of yours takes that army (or a place you build on) back from the leader for the turn.
+  - The Captain plays exactly as before (checked against session 17's code).
+- **The sims** (`docs/sim-results-m3-leaders.md`, 300 games a line):
+  - **A player who hands everything to their leaders** (80% to the Leader, 20% to the Steward) wins **1.48 times its fair share against Marshals on Embervale, 1.46 on Wyrmland**: the leaders are at least as good as a Marshal. Half and half does badly (0.35–0.5×): buildings don't pay yet.
+  - **The default Steward** builds now: about 2.5 times the forts by turn 10, and markets the Captain never builds. On Wyrmland it pays for itself (a Captain with it wins 18.3%, without 17.3%); on Embervale it costs wins (16% against 23%), because small games end before buildings pay back. The first version of Run the realm also bought culture for its income and did much worse (11%), so it now buys urgent forts, markets, a barracks where needed, and culture only where it protects.
+  - **Orders:** a Leader running the military writes about 7–8 orders a turn, the Steward 1–2 every few turns (it saves up).
+  - **Speed:** 0.7 ms a turn on average (worst 6.3 ms) at 10 players on Wyrmland; with all 8 leaders commanded, 3.2 ms (worst 8.1 ms). The limit is 50 ms.
+- **The screens (Part 3):**
+  - **The lobby:** name fields for your Leader and Steward.
+  - **The Leaders panel** (laptop: the right column; phone: the Leaders sheet, from your Leader's portrait by the map buttons): every leader with its portrait (Stewards show the House shield with a quill), name, what it's doing, purse, budget and orders this turn.
+  - **Controls:** Command, Budget (0/10/20/30/50% chips or an exact amount) and Take back. While a leader is open, its target glows and the provinces it works in get a gold band.
+  - **The queue:** leaders' orders show with their portraits, with **"Leaders' orders: Mixed in / After mine"** in Settings and at the top of the queue. The top bar shows the purses' total next to your gold.
+- **Taps** on a 384 px phone, from your Leader's portrait:
+  - the basic turn is still **6**
+  - Expand toward **4**, Command this front **5** (one province), Run the military **3**, Hold **3**, Raid **4**
+  - Run the realm **4**, Grow the economy **4**, Build up / Fortify / Raise culture **5**
+  - a budget **3** (your Leader) or **4** (your Steward)
+  - (On a laptop, one fewer each.)
+- **Start-up bundle:** 462.1 → 474.1 KB (gzip 141.6 → 145.1).
+- **Saves:** game state version 10, with a migration; the session 13, 14 and 17 saves load.
+- **Screenshots** (desktop and 384 px phone), `docs/art/screens/s18-*.png`: `lobby-names`, `leaders-panel`, `command-menu` (Steward), `command-military`, `expand` (the target glowing, the way outlined), `budget`, `queue-mixed`. Script: `apps/web/scripts/s18-shots.mjs`.
+- **Tests and deploy:** 772 automated tests pass (the full run twice, as property tests use random inputs). Deployed to the private preview (version `2b6282f3`); the lock check passed. Nate: please check the repo's Actions page for the last commit.
+
 ### Things to test after session 18 (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop: 6 players on Wyrmland, you in red; phone: the same checks where they apply.*
 - **From session 16:**
@@ -934,4 +968,13 @@ All five parts are done, each committed and pushed. Nate added two notes during 
   - fully zoomed out on Wyrmland: are the province names readable and no longer piled up?
   - on Embervale with 3 Marshals: do games end too fast? (The sims say about 21 turns.)
 - **How many turns did the game take?**
-- **From session 18 (leaders you delegate to):** the orchestrator adds this after session 18.
+- **From session 18 (leaders you delegate to):**
+  - **name your Leader** in the lobby (and your Steward if you like); do the names show in the Leaders panel and the report?
+  - give your Leader **"Expand our empire in this direction"** toward somewhere 4–6 steps away, with a budget (say 30%), and watch it for a few turns: does it race through empty land, slow down where rivals stand, take whole provinces on the way, and stop when it gets there?
+  - **never touch your Steward** for a few turns: what did it build? Then give it a **bigger budget** (30–50%) and see what it builds. Does 20% feel right as the default, or should it start lower?
+  - **"Run the military"** for a few turns while you only do the diplomacy: is it as good as you'd hope?
+  - **capture a player** and command their Leader and Steward (try "Command this front" on a captured Leader)
+  - the **"Leaders' orders: Mixed in / After mine"** switch: which reads better?
+  - **Take back** a purse and spend it yourself the same turn
+  - change or delete one of a leader's orders in the queue (it's yours to edit)
+  - on the phone: open the Leaders sheet from your Leader's portrait; is everything reachable in a few taps?

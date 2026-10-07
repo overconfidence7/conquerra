@@ -146,6 +146,14 @@
   - **When:** session 18, after the Marshal (session 17), because the leaders use its brain.
   - **Orchestrator's defaults for session 18 (Nate can change any of them after playing):** the Steward doesn't stand on the map and can't be lost; your Steward starts on "Run the realm" with 20% of your income, so building and culture happen even if you never open the menu, while your Leader starts with no command or budget; you can take gold back from a purse at any time; purses pay upkeep before anyone deserts (no dodging costs); a narrower command keeps its armies and places over a wider one; leaders' orders go into your queue mixed in with yours by default (or after yours, a setting); bots keep the leaders they capture but plan their realm as one; Stewards show their House's shield with a quill until Steward portraits are made.
 
+- **BUILT (session 18, Oct 7)** as above, with every orchestrator default. Details settled while building:
+  - **Budgets:** a share is of the turn's income after upkeep (a bad turn pays shares nothing); an exact amount is at most 99 gold; budgets are paid in roster order (your Leader, your Steward, captured ones) and never more than the treasury holds. Take back arrives as the turn starts, in time for your own orders.
+  - **Commands, by kind:** Leaders: Hold, Defend, Push, Raid (their own army, with recruits from the purse marching with it), **Expand our empire in this direction** (its own army and ours in the provinces on the way; fast chains through weak land, careful where rival armies stand, whole provinces on the way; it holds at the target), Command this front, Run the military. Stewards: Run the realm, Build up this province, Fortify this frontier (forts, then garrisons marched in), Raise culture here, Grow the economy.
+  - **Run the realm buys what pays:** urgent forts, markets, a barracks where needed, a level of culture a turn where it protects (culture bought for its income cost a Captain half its wins in the sims).
+  - **The Steward's portrait:** the House shield with a quill, drawn in the page.
+  - **Sims** (`docs/sim-results-m3-leaders.md`): a player who hands everything to their leaders (80% Leader, 20% Steward) wins 1.48 and 1.46 times the fair share against Marshals (Embervale 4, Wyrmland 6). The default Steward builds 2.5 times the forts and a few markets by turn 10; it costs a Captain wins on Embervale (16% vs 23%) and pays for itself on Wyrmland (18.3% vs 17.3%).
+  - **Taps** on a 384 px phone, from your Leader's portrait: Expand 4, a front 5, Run the military 3; the Steward's commands 4–5; a budget 3 (Leader) or 4 (Steward). The basic turn is still 6.
+
 ## 5. Military vs. culture
 - Income can go to **military** (troops, forts) or **culture**.
 - Culture protects against events (uprisings, plague, storms) and against the Fallen's revenge events, and it boosts holding bonuses.

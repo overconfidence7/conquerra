@@ -70,7 +70,7 @@ for (const phone of [false, true]) {
   const target = await p.evaluate(async () => {
     const st = window.__conquerraStore.getState();
     const { ctx, view, host } = st;
-    const at = view.me.leader.territory;
+    const at = view.me.leader.territory ?? view.me.capital;
     const nb = (t) => ctx.map.borders.flatMap((b) => (b.a === t ? [b.b] : b.b === t ? [b.a] : []));
     const d = new Map([[at, 0]]);
     const q = [at];
@@ -82,7 +82,7 @@ for (const phone of [false, true]) {
       if (!best || n > best.n) best = { t, n };
       if (n >= 3) break;
     }
-    return best.t;
+    return best?.t ?? [...d].find(([, k]) => k === 4)[0];
   });
   await p.evaluate(async (t) => {
     const st = window.__conquerraStore.getState();
@@ -108,7 +108,7 @@ for (const phone of [false, true]) {
   await p.evaluate((t) => {
     const st = window.__conquerraStore.getState();
     const g = st.ctx.map.geometry;
-    const a = g.territories.find((x) => x.id === st.view.me.leader.territory).label, b = g.territories.find((x) => x.id === t).label;
+    const a = g.territories.find((x) => x.id === (st.view.me.leader.territory ?? st.view.me.capital)).label, b = g.territories.find((x) => x.id === t).label;
     window.__conquerraMap.centreOn((a.x + b.x) / 2, (a.y + b.y) / 2);
   }, target);
   await sleep(1500);
