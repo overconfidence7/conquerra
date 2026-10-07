@@ -68,12 +68,21 @@ export function runawayLeader(estimates: readonly [PlayerId, number][], ownLand:
 }
 
 /**
+ * What another bot can tell the board instead of the Captain's own reading (session 17: the Marshal estimates land it
+ * can't see and names a runaway its own way, from the same view and what it remembers). Left out, the Captain's.
+ */
+export interface BoardOverrides {
+  knownLand?: ReadonlyMap<PlayerId, number>;
+  runaway?: PlayerId | null;
+}
+
+/**
  * Everything the Captain works out from one seat's view before it decides anything: what it sees and remembers, who
  * it borders, who it's focused on, how many troops each place needs to hold, what an attack would cost and what land
  * is worth. Generals (generals.ts) read the board the same way, so they judge exactly as the Captain does, and only
  * from their owner's view. Null if the seat holds no land.
  */
-export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn?: readonly ReplayEvent[]) {
+export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn?: readonly ReplayEvent[], overrides: BoardOverrides = {}) {
   const { rules } = ctx;
   const idx = indexMap(ctx.map);
   const me = view.me;
@@ -111,11 +120,12 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
     return v.detail === "full" ? v.owner : (v.lastSeen?.owner ?? null);
   };
   /** Land each rival holds as far as we know: what we see, plus what we last saw. */
-  const knownLand = new Map<PlayerId, number>();
+  const counted = new Map<PlayerId, number>();
   for (const t of idx.ids) {
     const o = look0(t);
-    if (o && o !== me.id) knownLand.set(o, (knownLand.get(o) ?? 0) + 1);
+    if (o && o !== me.id) counted.set(o, (counted.get(o) ?? 0) + 1);
   }
+  const knownLand: ReadonlyMap<PlayerId, number> = overrides.knownLand ?? counted;
   const facing = new Map<PlayerId, number>();
   for (const f of frontier) for (const nb of idx.neighbors.get(f)!) {
     const r = rivalAt(nb);
@@ -128,7 +138,7 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
   // it looks to hold RUNAWAY_SHARE of the land, or far more than anyone else (us included). Only with at least two
   // rivals left (head to head, the other player is always the target anyway). The same rule for every seat.
   const estimates = landEstimates(knownLand, alive.map((p) => p.id));
-  const runaway = on("runaway") ? runawayLeader(estimates, mine.length, idx.ids.length, alive.length, opts) : null;
+  const runaway = "runaway" in overrides ? (overrides.runaway ?? null) : on("runaway") ? runawayLeader(estimates, mine.length, idx.ids.length, alive.length, opts) : null;
   /** Rivals whose land touches the runaway's: they're holding it off, so weakening them only helps it. */
   const shieldsLeader = new Set<PlayerId>();
   if (runaway)
@@ -368,13 +378,16 @@ export function chainOn(
     extra?: Partial<Order>;
     /** A hop only goes where what arrives would be safe (a general's army doesn't stop next to a bigger one). */
     safe?: (to: TerritoryId, arriving: number) => boolean;
+    /** Hops in all, and the spare troops that add Follow through (the Marshal's personalities; else MAX_HOPS and FOLLOW_THROUGH_SPARE). */
+    maxHops?: number;
+    followThroughSpare?: number;
   } = {},
 ) {
   const { idx, garrison, owned, look, shieldsLeader, me, crossing, expectAt, specsAt } = b;
   const value = pick.value ?? b.valueOf;
   const specs = specsAt(first.from);
   let from = first.to, sent = first.troops, prevFrom = first.attackFrom ?? first.from, last = first.order;
-  for (let hop = 0; hop < MAX_HOPS - 1; hop++) {
+  for (let hop = 0; hop < (pick.maxHops ?? MAX_HOPS) - 1; hop++) {
     const e = expectAt(prevFrom, from, sent, specs, pick.leader);
     if (!e.captureLikely) break;
     const avail = Math.floor(sent - e.expectedAttackerLosses) - garrison;
@@ -400,7 +413,7 @@ export function chainOn(
     sent = avail;
   }
   const end = expectAt(prevFrom, from, sent, specs, pick.leader);
-  if (end.captureLikely && Math.floor(sent - end.expectedAttackerLosses) - garrison >= FOLLOW_THROUGH_SPARE) {
+  if (end.captureLikely && Math.floor(sent - end.expectedAttackerLosses) - garrison >= (pick.followThroughSpare ?? FOLLOW_THROUGH_SPARE)) {
     last.preset = { id: "followThrough" };
     last.conditions = [{ kind: "odds", atLeast: "likely" }];
   }

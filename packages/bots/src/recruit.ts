@@ -15,7 +15,7 @@ import {
   type TerritoryDetail,
   type TerritoryId,
 } from "@conquerra/engine";
-import { respectDeals } from "./diplomacy";
+import { respectDeals, type Diplomat } from "./diplomacy";
 
 export interface Bot {
   id: string;
@@ -26,6 +26,8 @@ export interface Bot {
    * without ever reading beyond its own view.
    */
   plan(ctx: GameContext, view: PlayerView, lastTurn?: readonly ReplayEvent[]): Order[];
+  /** Its own diplomacy (the Marshal); without one, a bot talks as the Captain (or the Recruit, by its id). */
+  diplomat?: Diplomat;
 }
 
 type Seen = TerritoryDetail & { detail: "full" };

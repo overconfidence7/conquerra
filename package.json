@@ -17,7 +17,8 @@
     "ui-check": "node apps/web/scripts/ui-check.mjs",
     "deploy:preview": "pnpm test && pnpm build && node apps/web/scripts/bundle-size.mjs && wrangler deploy --config apps/web/wrangler.jsonc && node apps/web/scripts/check-preview.mjs",
     "check:preview": "node apps/web/scripts/check-preview.mjs",
-    "bundle-size": "node apps/web/scripts/bundle-size.mjs"
+    "bundle-size": "node apps/web/scripts/bundle-size.mjs",
+    "tournament": "tsx apps/sim/src/tournament.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

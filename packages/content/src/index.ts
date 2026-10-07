@@ -1,8 +1,11 @@
 import rulesJson from "../data/rules.json";
 import catalogJson from "../data/maps/catalog.json";
+import personalitiesJson from "../data/personalities.json";
 import { Rules } from "./schemas";
+import { MarshalData } from "./personalities";
 
 export * from "./schemas";
+export * from "./personalities";
 
 /**
  * The victory mode the lobby suggests for a table of this size (the host can change it).
@@ -13,6 +16,9 @@ export function suggestedMode(playerCount: number, rules: Rules = defaultRules):
 }
 
 export const defaultRules: Rules = Rules.parse(rulesJson);
+
+/** The Marshal's personalities and shared judgement (session 17): `data/personalities.json`. */
+export const marshalData: MarshalData = MarshalData.parse(personalitiesJson);
 
 /** What the lobby needs to list the built-in maps, without loading them. (`pnpm build-maps` writes it.) */
 export interface MapListing {

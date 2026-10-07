@@ -10,9 +10,11 @@ import type { Board } from "./board";
  *  - a spy already there, or on its way, is left alone.
  * The Recruit doesn't use spies. Every number is in `rules.spies` (`bots`).
  */
-export function captainSpies(b: Board, newId: () => string, gold: number): { orders: Order[]; spent: number } {
+export function captainSpies(b: Board, newId: () => string, gold: number, limits?: { max: number; fromTurn: number; reserve: number }): { orders: Order[]; spent: number } {
   const { view, rules, idx, me, look0, owned } = b;
   const r = rules.spies;
+  // (The Marshal's personalities set their own limits; the Captain's are the rules' `spies.bots`.)
+  const lim = limits ?? r?.bots;
   const out: Order[] = [];
   if (!spiesOn(view) || !r || !b.on("spies")) return { orders: out, spent: 0 };
   const province = (t: TerritoryId) => idx.byId.get(t)!.province;
@@ -53,7 +55,7 @@ export function captainSpies(b: Board, newId: () => string, gold: number): { ord
   // Hire one when there's gold to spare (and something to do with it), at the capital or a barracks.
   let spent = 0;
   const site = owned(me.capital) ? me.capital : b.mine.find((t) => b.seen(t)?.building === "barracks");
-  if (site && jobs.length > spies.length && spies.length < Math.min(r.max, r.bots.max) && view.turn >= r.bots.fromTurn && gold >= r.cost + r.bots.reserve) {
+  if (site && lim && jobs.length > spies.length && spies.length < Math.min(r.max, lim.max) && view.turn >= lim.fromTurn && gold >= r.cost + lim.reserve) {
     out.push({ id: newId(), kind: "hireSpy", territory: site });
     spent = r.cost;
   }

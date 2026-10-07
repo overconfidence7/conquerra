@@ -138,7 +138,7 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
     fateEvents: 0, fateGood: 0, fateBad: 0, fateStrong: 0, missionsDrawn: 0, missionsDone: 0, fateNet: {}, winnerGoodShare: null, winnerLandShare: null, winnerLuck: null, winnerLuckiest: null, winnerMissions: 0, othersMissions: 0,
     offers: 0, accepted: 0, countered: 0, dealsMade: 0, dealsBinding: 0, dealsByKind: {}, dealsBroken: 0, warsVsLeader: 0, marchesThrough: 0, spiesHired: 0, spyIn: 0, spyFooled: 0, spyBlocked: 0, spyKilled: 0, spyGold: 0, reasons: [],
   };
-  const level = (b: Bot) => (b.id === "recruit" ? ("recruit" as const) : ("captain" as const));
+  const level = (b: Bot) => b.diplomat ?? (b.id === "recruit" ? ("recruit" as const) : ("captain" as const));
   const name = (id: string) => players.find((p) => p.id === id)?.name ?? id;
   /** Turns (1-based) on which each player turned in a set; missions each completed; good Fate events each received. */
   const setTurns = new Map<string, Set<number>>();

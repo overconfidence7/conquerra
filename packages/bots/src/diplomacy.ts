@@ -47,6 +47,19 @@ import { CAPTAIN_CHAIN_MARGIN, readBoard, type Board } from "./board";
 
 export type DiplomatLevel = "captain" | "recruit";
 
+/**
+ * A bot with diplomacy of its own (session 17: the Marshal, with its memory and personality): it answers offers and
+ * proposes deals itself. The Captain and the Recruit are named by their level.
+ */
+export interface Diplomat {
+  judge(ctx: GameContext, view: PlayerView, offer: Offer, lastTurn?: readonly ReplayEvent[]): Answer;
+  propose(ctx: GameContext, view: PlayerView, lastTurn?: readonly ReplayEvent[]): Offer[];
+}
+
+/** A bot's answer to an offer, whoever it is. */
+export const judgeBy = (ctx: GameContext, who: DiplomatLevel | Diplomat, view: PlayerView, offer: Offer, lastTurn?: readonly ReplayEvent[]): Answer =>
+  typeof who === "string" ? judgeOffer(ctx, view, offer, who, lastTurn) : who.judge(ctx, view, offer, lastTurn);
+
 /** A bot's answer: yes or no, the one line it says, and (sometimes) a counteroffer instead of a plain no. */
 export interface Answer {
   accept: boolean;
@@ -68,7 +81,7 @@ const AFFORD = 1.5;
 
 // ---------- Names and directions, for the reason lines ----------
 
-function namesFor(ctx: GameContext, view: PlayerView) {
+export function namesFor(ctx: GameContext, view: PlayerView) {
   const idx = indexMap(ctx.map);
   return {
     name: (p: PlayerId) => (p === view.me.id ? "me" : (view.players.find((x) => x.id === p)?.name ?? p)),
@@ -78,7 +91,7 @@ function namesFor(ctx: GameContext, view: PlayerView) {
 }
 
 /** "the west", "the north-east": where `land` lies from the middle of our realm. */
-function direction(ctx: GameContext, mine: readonly TerritoryId[], land: readonly TerritoryId[]): string {
+export function direction(ctx: GameContext, mine: readonly TerritoryId[], land: readonly TerritoryId[]): string {
   const idx = indexMap(ctx.map);
   const mid = (ts: readonly TerritoryId[]) => {
     const ps = ts.map((t) => idx.byId.get(t)!);
@@ -133,7 +146,7 @@ export function trustIn(ctx: GameContext, view: PlayerView, p: PlayerId): { scor
 // ---------- Reading the board for a deal ----------
 
 /** The board as a deal check needs it, from what this bot can see. */
-function dealBoard(view: PlayerView): DealBoard {
+export function dealBoard(view: PlayerView): DealBoard {
   const seen = (t: TerritoryId) => {
     const v = view.territories[t];
     return v && v.detail === "full" ? v : null;
@@ -152,7 +165,7 @@ function dealBoard(view: PlayerView): DealBoard {
 }
 
 /** Troops of ours on the land next to `rival`'s, and theirs next to ours, as far as we see. */
-function frontWith(b: Board, rival: PlayerId) {
+export function frontWith(b: Board, rival: PlayerId) {
   let mine = 0;
   const land: TerritoryId[] = [];
   for (const t of b.frontier)
@@ -167,7 +180,7 @@ function frontWith(b: Board, rival: PlayerId) {
  * The clear leader as far as this bot can tell (for deals only; attacks keep the Captain's runaway rule): the most
  * land it knows of, a good third more than anyone else's (its own included), and at least a fifth of the map.
  */
-function leads(b: Board, p: PlayerId): boolean {
+export function leads(b: Board, p: PlayerId): boolean {
   const est = [...b.knownLand].filter(([q]) => b.alive.some((x) => x.id === q)).sort((x, y) => y[1] - x[1] || (x[0] < y[0] ? -1 : 1));
   if (b.alive.length < 3 || est[0]?.[0] !== p) return false;
   const land = est[0][1];
@@ -178,7 +191,7 @@ const LEAD_OVER = 1.35;
 const LEAD_SHARE = 0.2;
 
 /** Does a deal on these terms help the proposer (so a runaway may not have it)? */
-function helpsProposer(t: DealTerms): boolean {
+export function helpsProposer(t: DealTerms): boolean {
   if (t.kind !== "trade") return true;
   const g = t.get;
   return (g.gold ?? 0) > 0 || (g.perTurn ?? 0) > 0 || (g.land?.length ?? 0) > 0;
@@ -244,8 +257,8 @@ export function judgeOffer(ctx: GameContext, view: PlayerView, offer: Offer, lev
   return no(strongest(-1) ?? "That doesn't help me.");
 }
 
-/** What the Captain weighs for each kind of deal. */
-function captainWeighs(ctx: GameContext, view: PlayerView, b: Board, offer: Offer, cost: number): { factors: Factor[]; counter?: { terms: DealTerms; why: string } } {
+/** What the Captain weighs for each kind of deal (the Marshal weighs the same, plus its personality). */
+export function captainWeighs(ctx: GameContext, view: PlayerView, b: Board, offer: Offer, cost: number): { factors: Factor[]; counter?: { terms: DealTerms; why: string } } {
   const p = offer.from;
   const t = offer.terms;
   const n = namesFor(ctx, view);
@@ -352,7 +365,7 @@ function captainWeighs(ctx: GameContext, view: PlayerView, b: Board, offer: Offe
  * Is `p` attacking a partner of this bot's (someone it has a truce, a joint war or passage with)? From what it watched
  * last turn (a battle by `p` on that partner's land), and from the public deals (a joint war aimed at that partner).
  */
-function attackingPartner(view: PlayerView, p: PlayerId, lastTurn?: readonly ReplayEvent[]): PlayerId | null {
+export function attackingPartner(view: PlayerView, p: PlayerId, lastTurn?: readonly ReplayEvent[]): PlayerId | null {
   const me = view.me.id;
   const partners = new Set(view.deals.filter((d) => isParty(d, me) && d.kind !== "trade").map((d) => otherSide(d, me)));
   partners.delete(p);
@@ -478,11 +491,12 @@ function askedLastTurn(lastTurn: readonly ReplayEvent[] | undefined, me: PlayerI
  *    afford while fighting elsewhere, a trade for land that completes a province, or one when it's short of gold
  *  - the Recruit: only a truce with a stronger neighbour (it never proposes trades)
  */
-export function proposeOffers(ctx: GameContext, view: PlayerView, level: DiplomatLevel, lastTurn?: readonly ReplayEvent[]): Offer[] {
+export function proposeOffers(ctx: GameContext, view: PlayerView, level: DiplomatLevel, lastTurn?: readonly ReplayEvent[], read?: Board): Offer[] {
   const rules = ctx.rules;
   const cap = rules.diplomacy.bots.offersPerTurn;
   if (!cap || !view.settings.diplomacy || view.winner || view.turn < 2) return [];
-  const b = readBoard(ctx, view, OPTS, lastTurn);
+  // (The Marshal reads the board its own way and passes it in; the Captain and the Recruit read it here.)
+  const b = read ?? readBoard(ctx, view, OPTS, lastTurn);
   if (!b) return [];
   const me = view.me.id;
   const out: Offer[] = [];
@@ -677,7 +691,7 @@ export const answerOrder = (o: Offer, accept: boolean): Order => ({ id: `answer-
  */
 export function negotiate(
   ctx: GameContext,
-  bots: readonly { id: PlayerId; level: DiplomatLevel }[],
+  bots: readonly { id: PlayerId; level: DiplomatLevel | Diplomat }[],
   viewOf: (p: PlayerId) => PlayerView,
   lastTurn: (p: PlayerId) => readonly ReplayEvent[] | undefined,
   human: PlayerId | null,
@@ -694,7 +708,8 @@ export function negotiate(
   for (const bot of bots) {
     const view = viewOf(bot.id);
     if (view.players.find((p) => p.id === bot.id)?.eliminatedTurn !== null) continue;
-    for (const o of proposeOffers(ctx, view, bot.level, lastTurn(bot.id))) {
+    const offers = typeof bot.level === "string" ? proposeOffers(ctx, view, bot.level, lastTurn(bot.id)) : bot.level.propose(ctx, view, lastTurn(bot.id));
+    for (const o of offers) {
       const k = key(o.from, o.to, o.terms.kind);
       if (engaged.has(k)) continue;
       if (o.to === human) {
@@ -709,14 +724,14 @@ export function negotiate(
       const to = level.get(o.to);
       if (!to) continue;
       push(bot.id, proposeOrder(o));
-      const ans = judgeOffer(ctx, viewOf(o.to), o, to, lastTurn(o.to));
+      const ans = judgeBy(ctx, to, viewOf(o.to), o, lastTurn(o.to));
       talks.push({ offer: o, answer: ans });
       engaged.add(k);
       if (ans.accept) push(o.to, answerOrder(o, true));
       else if (ans.counter) {
         push(o.to, answerOrder(o, false));
         push(o.to, proposeOrder(ans.counter));
-        const back = judgeOffer(ctx, view, ans.counter, bot.level, lastTurn(bot.id));
+        const back = judgeBy(ctx, bot.level, view, ans.counter, lastTurn(bot.id));
         talks.push({ offer: ans.counter, answer: back });
         if (back.accept) push(bot.id, answerOrder(ans.counter, true));
       } else push(o.to, answerOrder(o, false));

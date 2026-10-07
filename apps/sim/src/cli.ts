@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { indexMap, replaySavedGame, stateFingerprint, type GameContext, type GameMode, type SaveFile, type SavedGameV1 } from "@conquerra/engine";
-import { CAPTAIN_CHAIN_MARGIN, makeCaptainBot, makeGeneralSeat, makeRecruitBot, type Bot, type CaptainFeature } from "@conquerra/bots";
+import { CAPTAIN_CHAIN_MARGIN, dealPersonalities, makeCaptainBot, makeGeneralSeat, makeMarshalBot, makeRecruitBot, PERSONALITY_IDS, type Bot, type CaptainFeature } from "@conquerra/bots";
+import type { PersonalityId } from "@conquerra/content";
 import type { InstructionKind } from "@conquerra/engine";
 import { narrate } from "./narrate";
 import { runGame, type GameSummary } from "./runGame";
@@ -19,6 +20,9 @@ import { runGame, type GameSummary } from "./runGame";
  *   pnpm sim --replay game.json                play a saved game (Settings → "Save to a file") turn by turn
  *   pnpm sim --mix general-push,captain,captain,captain   one seat's Leader runs on a standing instruction
  *                                              (general-hold, -defend, -push or -raid); the rest play as the Captain
+ *   pnpm sim --bots marshal                    all-Marshal tables (session 17), personalities dealt from each game's seed
+ *   pnpm sim --mix marshal-turtle,captain,captain,captain   one Marshal of a given personality (conqueror, blitzer,
+ *                                              turtle, schemer, opportunist, merchant), or "marshal" (dealt from the seed)
  * Options: --fallen on|off (knocked-out seats play world events; on by default), --rules a.b=1,c.d=2 (any rule number),
  *          --spoils on|off, --fate on|off (the card decks; both on by default), --diplomacy on|off (deals; on by default),
  *          --spies on|off (spies; on by default),
@@ -65,10 +69,18 @@ const makeBot = (kind: string): Bot => {
   if (kind.startsWith("captain-no-")) return { ...makeCaptainBot({ chainMargin: margin ?? CAPTAIN_CHAIN_MARGIN, off: [kind.slice("captain-no-".length) as CaptainFeature] }), id: kind };
   // "general-push" etc.: a Captain whose Leader's army runs on that standing instruction (session 12).
   if (kind.startsWith("general-")) return makeGeneralSeat(kind.slice("general-".length) as InstructionKind, { chainMargin: margin ?? CAPTAIN_CHAIN_MARGIN });
-  throw new Error(`Unknown bot "${kind}" (recruit, captain, captain-no-<priority>, or general-hold|defend|push|raid)`);
+  // "marshal-turtle" etc.: the Marshal with that personality (session 17).
+  if (kind.startsWith("marshal-") && PERSONALITY_IDS.includes(kind.slice("marshal-".length) as PersonalityId)) return makeMarshalBot(kind.slice("marshal-".length) as PersonalityId);
+  throw new Error(`Unknown bot "${kind}" (recruit, captain, captain-no-<priority>, general-hold|defend|push|raid, marshal, or marshal-<personality>)`);
 };
-const mix = arg("mix", "") ? arg("mix", "").split(",").map((k) => k.trim()) : null;
-const label = mix ? `mixed table (${mix.join(", ")})` : `${botKind === "captain" ? "Captain" : "Recruit"} bots${marginArg ? ` (chain margin ${marginArg})` : ""}`;
+/** One game's seats: "marshal" seats get personalities dealt from the game's seed (no two alike until all six are used). */
+const seatBots = (kinds: readonly string[], seed: string): Bot[] => {
+  const marshals = kinds.flatMap((k, i) => (k === "marshal" ? [`s${i}`] : []));
+  const dealt = dealPersonalities(seed, marshals);
+  return kinds.map((k, i) => makeBot(k === "marshal" ? `marshal-${dealt[`s${i}`]}` : k));
+};
+const mix = arg("mix", "") ? arg("mix", "").split(",").map((k) => k.trim()) : botKind === "marshal" ? ["marshal"] : null;
+const label = mix ? `mixed table (${mix.join(", ")})` : `${botKind === "captain" ? "Captain" : botKind === "marshal" ? "Marshal" : "Recruit"} bots${marginArg ? ` (chain margin ${marginArg})` : ""}`;
 
 /** Balance experiments: --culture-defense 0.08 (defense per culture level), --culture-costs 3,4,5,6,7. */
 const rules = JSON.parse(JSON.stringify(defaultRules)) as typeof defaultRules;
@@ -154,7 +166,7 @@ for (const players of playerCounts) {
     const seed = `${seedPrefix}-${players}p-${i}`;
     try {
       // Mixed tables: rotate who sits where each game, so seat luck evens out.
-      const bots = mix ? Array.from({ length: players }, (_, k) => makeBot(mix[(k + i) % mix.length]!)) : makeBot(botKind);
+      const bots = mix ? seatBots(Array.from({ length: players }, (_, k) => mix[(k + i) % mix.length]!), seed) : makeBot(botKind);
       results.push(runGame(ctx, seed, players, settings, false, bots));
     } catch (e) {
       errors.push({ seed, error: e instanceof Error ? (e.stack ?? e.message) : String(e) });
@@ -183,7 +195,9 @@ for (const players of playerCounts) {
   if (mix) {
     const kinds = [...new Set(mix)];
     // Each kind's share of seats, so "fair" is clear (1 Captain at a 4-player table: fair = 25%).
-    console.log(`Win rate by bot: ${kinds.map((k) => `${k} ${pct(results.filter((g) => g.winnerBot === k).length)} (fair ${((100 * mix.filter((x) => x === k).length) / mix.length).toFixed(0)}%)`).join(", ")}`);
+    const isKind = (bot: string | null, k: string) => bot === k || (k === "marshal" && !!bot?.startsWith("marshal-"));
+    console.log(`Win rate by bot: ${kinds.map((k) => `${k} ${pct(results.filter((g) => isKind(g.winnerBot, k)).length)} (fair ${((100 * mix.filter((x) => x === k).length) / mix.length).toFixed(0)}%)`).join(", ")}`);
+    if (kinds.includes("marshal")) console.log(`Marshal wins by personality: ${PERSONALITY_IDS.map((p) => `${p} ${pct(results.filter((g) => g.winnerBot === `marshal-${p}`).length)}`).join(", ")}`);
   }
   const perBot = new Map<string, number[]>();
   for (const g of results) for (const [k, v] of Object.entries(g.planMsByBot)) perBot.set(k, [...(perBot.get(k) ?? []), ...v]);

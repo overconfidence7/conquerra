@@ -340,6 +340,11 @@ describe("bots' diplomacy: bots dealing with each other", () => {
     expect(stateFingerprint(s as unknown as GameState)).toBe("58795a25c817994f");
   });
 
+  it("with everything on, the Captain plays exactly as at the end of session 16 (its fingerprint; session 17 adds the Marshal beside it, unchanged)", () => {
+    const a = play("captain-s16", true, 30, true);
+    expect(stateFingerprint(a.s)).toBe("fa5f10adce2a6b11");
+  });
+
   it("never floods anyone: at most one offer a turn per bot, and at most one to the human from all of them", () => {
     let s = createGame(ctx, { gameId: "flood", seed: "flood", players: ["you", "b1", "b2", "b3"].map((id) => ({ id, name: id })) });
     s.turn = 6;

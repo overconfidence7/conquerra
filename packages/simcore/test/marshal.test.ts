@@ -1,0 +1,58 @@
+import { defaultRules } from "@conquerra/content";
+import { maps } from "@conquerra/content/maps";
+import { makeCaptainBot, makeMarshalBot, type Bot } from "@conquerra/bots";
+import type { GameContext } from "@conquerra/engine";
+import { describe, expect, it } from "vitest";
+import { playTable, type SeatStats } from "../src";
+
+const ember: GameContext = { map: maps.embervale!, rules: defaultRules };
+
+/**
+ * Each personality's signature shows up in play (session 17). Four personalities at a table, rotated through the seats
+ * over a few fixed games (the games are deterministic, so this can't fail by luck).
+ */
+describe("the Marshal's personalities play differently", () => {
+  const kinds = ["turtle", "blitzer", "merchant", "conqueror"] as const;
+  const seats: Record<string, SeatStats[]> = {};
+  for (let g = 0; g < 8; g++) {
+    const order = kinds.map((_, i) => kinds[(i + g) % kinds.length]!);
+    const r = playTable(ember, `sig-${g}`, order.map((k) => makeMarshalBot(k)), { maxTurns: 16 });
+    r.seats.forEach((s, i) => (seats[order[i]!] ??= []).push(s));
+  }
+  const avg = (k: string, f: (s: SeatStats) => number) => seats[k]!.reduce((a, s) => a + f(s), 0) / seats[k]!.length;
+
+  it("the Turtle builds more forts and culture by turn 10", () => {
+    const turtle = avg("turtle", (s) => s.forts10 + s.culture10);
+    for (const k of ["blitzer", "conqueror"]) expect(turtle).toBeGreaterThan(avg(k, (s) => s.forts10 + s.culture10) + 1);
+  });
+
+  it("the Blitzer holds more land by turn 8, and loses more of it", () => {
+    for (const k of ["turtle", "merchant", "conqueror"]) {
+      expect(avg("blitzer", (s) => s.land8 ?? 0)).toBeGreaterThan(avg(k, (s) => s.land8 ?? 0));
+      expect(avg("blitzer", (s) => s.lost8)).toBeGreaterThan(avg(k, (s) => s.lost8));
+    }
+  });
+
+  it("the Merchant builds markets early, and the Blitzer none", () => {
+    expect(avg("merchant", (s) => s.markets10)).toBeGreaterThan(2);
+    expect(avg("merchant", (s) => s.firstMarket ?? 60)).toBeLessThan(3);
+    expect(avg("blitzer", (s) => s.markets10)).toBe(0);
+  });
+
+  it("the Conqueror fights fewer rivals at once than the Blitzer", () => {
+    expect(avg("conqueror", (s) => s.frontsPerTurn)).toBeLessThan(avg("blitzer", (s) => s.frontsPerTurn));
+  });
+}, 60000);
+
+describe("the Schemer", () => {
+  it("spends more on spies by turn 10 than a Captain does (on average)", () => {
+    let schemerSpies = 0, captainSpies = 0;
+    for (let g = 0; g < 4; g++) {
+      const bots: Bot[] = [makeMarshalBot("schemer"), makeCaptainBot(), makeMarshalBot("opportunist"), makeCaptainBot()];
+      const r = playTable(ember, `sch-${g}`, bots, { maxTurns: 14 });
+      schemerSpies += r.seats[0]!.gold10.spies;
+      captainSpies += r.seats[1]!.gold10.spies + r.seats[3]!.gold10.spies;
+    }
+    expect(schemerSpies).toBeGreaterThan(captainSpies / 2);
+  });
+}, 60000);

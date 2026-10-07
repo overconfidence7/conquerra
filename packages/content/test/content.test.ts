@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { defaultRules, mapCatalog, suggestedMode } from "../src";
+import { defaultRules, mapCatalog, marshalData, suggestedMode } from "../src";
 import { maps } from "../src/maps";
 
 describe("content", () => {
   it("rules parse", () => {
     expect(defaultRules.combat.luck).toBe(0.3);
+  });
+  it("the Marshal's six personalities parse, each with its own voice (session 17)", () => {
+    expect(marshalData.personalities.map((p) => p.id)).toEqual(["conqueror", "blitzer", "turtle", "schemer", "opportunist", "merchant"]);
+    for (const p of marshalData.personalities) {
+      expect(p.title).toMatch(/^the [A-Z]/);
+      for (const line of Object.values(p.voice)) expect(line.length).toBeGreaterThan(5);
+    }
   });
   it("every map lists the player counts it suits (about 6–7 territories each at the top end)", () => {
     for (const m of Object.values(maps)) {
