@@ -1,0 +1,12 @@
+now            embervale:4    28.6 turns (median 26), 86.8% within 40 | half-map at 10 29.5%, halfway leader won 65.0%, comebacks 45.1% | seats 22–29% | out by 6 3.6% | draws 0.0%
+now            wyrmland:6     43.2 turns (median 42), 45.8% within 40 | half-map at 10 7.0%, halfway leader won 75.8%, comebacks 46.6% | seats 13–19% | out by 6 16.2% | draws 0.0%
+now            greatmarch:10  51.3 turns (median 55), 18.8% within 40 | half-map at 10 0.2%, halfway leader won 53.0%, comebacks 79.2% | seats 7–12% | out by 6 3.7% | draws 0.0%
+pull-2         embervale:4    28.7 turns (median 26), 86.8% within 40 | half-map at 10 28.9%, halfway leader won 62.2%, comebacks 46.3% | seats 24–28% | out by 6 3.7% | draws 0.0%
+pull-2         wyrmland:6     43.1 turns (median 42), 47.8% within 40 | half-map at 10 6.2%, halfway leader won 76.4%, comebacks 47.0% | seats 13–20% | out by 6 16.3% | draws 0.0%
+pull-2         greatmarch:10  50.8 turns (median 53), 18.0% within 40 | half-map at 10 0.2%, halfway leader won 52.3%, comebacks 74.2% | seats 7–12% | out by 6 3.7% | draws 0.6%
+read-early     embervale:4    29.8 turns (median 27), 82.6% within 40 | half-map at 10 32.2%, halfway leader won 69.2%, comebacks 42.6% | seats 22–27% | out by 6 4.2% | draws 0.0%
+read-early     wyrmland:6     43.7 turns (median 42), 44.0% within 40 | half-map at 10 10.4%, halfway leader won 78.8%, comebacks 50.3% | seats 15–18% | out by 6 16.6% | draws 0.2%
+read-early     greatmarch:10  53.0 turns (median 60), 12.0% within 40 | half-map at 10 0.0%, halfway leader won 49.5%, comebacks 78.3% | seats 7–13% | out by 6 3.1% | draws 0.6%
+both           embervale:4    29.4 turns (median 27), 83.6% within 40 | half-map at 10 33.6%, halfway leader won 71.6%, comebacks 41.6% | seats 23–27% | out by 6 4.3% | draws 0.0%
+both           wyrmland:6     43.8 turns (median 42), 45.8% within 40 | half-map at 10 9.0%, halfway leader won 77.0%, comebacks 48.5% | seats 15–18% | out by 6 16.6% | draws 0.2%
+both           greatmarch:10  53.8 turns (median 60), 10.2% within 40 | half-map at 10 0.4%, halfway leader won 47.3%, comebacks 78.2% | seats 6–13% | out by 6 3.4% | draws 0.2%

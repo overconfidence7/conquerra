@@ -20,7 +20,8 @@ if (process.env.LAB) {
   const { readFileSync } = await import("node:fs");
   const src = readFileSync(new globalThis.URL("../../../packages/mapgen/src/configs.ts", import.meta.url), "utf8");
   const line = src.split(/\r?\n/).find((l) => l.includes(`id: "${mapId}"`));
-  const recipe = Function(`return (${line.trim().replace(/,$/, "")})`)();
+  // RECIPE='<json>': a candidate's whole recipe instead (session 19: maps not in configs.ts yet).
+  const recipe = process.env.RECIPE ? JSON.parse(process.env.RECIPE) : Function(`return (${line.trim().replace(/,$/, "")})`)();
   // SEED=<seed>: the same recipe with another seed (to compare seeds before making one official).
   if (process.env.SEED) recipe.seed = process.env.SEED;
   await page.goto(`${URL}?lab=maps&recipe=${encodeURIComponent(JSON.stringify(recipe))}&full=1`, { waitUntil: "networkidle0" });

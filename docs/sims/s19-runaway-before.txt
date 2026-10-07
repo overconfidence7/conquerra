@@ -1,0 +1,25 @@
+=== Embervale, 4 players, seats marshal, fog on: 500 games in 25s ===
+Win rate per seat by kind (fair 25.0%): marshal-blitzer 32.3%, marshal-conqueror 29.4%, marshal-merchant 24.6%, marshal-opportunist 25.4%, marshal-schemer 24.1%, marshal-turtle 14.1%
+All Marshal seats: 25.0% per seat
+Game length: avg 20.7, median 18; 95.2% within 40; draws 0.0%
+Runaways: half the map after turn 10 71.2%; the halfway leader won 81.6%; comebacks 21.9%
+=== Wyrmland, 6 players, seats marshal, fog on: 500 games in 69s ===
+Win rate per seat by kind (fair 16.7%): marshal-blitzer 16.4%, marshal-conqueror 18.0%, marshal-merchant 20.4%, marshal-opportunist 13.4%, marshal-schemer 16.0%, marshal-turtle 15.8%
+All Marshal seats: 16.7% per seat
+Game length: avg 43.1, median 41; 46.0% within 40; draws 0.0%
+Runaways: half the map after turn 10 8.8%; the halfway leader won 80.6%; comebacks 39.4%
+=== Wyrmland, 8 players, seats marshal, fog on: 500 games in 102s ===
+Win rate per seat by kind (fair 12.5%): marshal-blitzer 10.2%, marshal-conqueror 14.7%, marshal-merchant 16.1%, marshal-opportunist 9.0%, marshal-schemer 12.3%, marshal-turtle 12.3%
+All Marshal seats: 12.4% per seat
+Game length: avg 51.0, median 55; 21.0% within 40; draws 0.6%
+Runaways: half the map after turn 10 0.8%; the halfway leader won 58.8%; comebacks 68.4%
+=== Greatmarch, 10 players, seats marshal, fog on: 500 games in 79s ===
+Win rate per seat by kind (fair 10.0%): marshal-blitzer 11.9%, marshal-conqueror 11.9%, marshal-merchant 10.8%, marshal-opportunist 10.9%, marshal-schemer 8.6%, marshal-turtle 6.0%
+All Marshal seats: 10.0% per seat
+Game length: avg 45.0, median 44; 40.2% within 40; draws 0.0%
+Runaways: half the map after turn 10 2.8%; the halfway leader won 67.4%; comebacks 59.0%
+=== The Twin Realms, 6 players, seats marshal, fog on: 500 games in 50s ===
+Win rate per seat by kind (fair 16.7%): marshal-blitzer 20.4%, marshal-conqueror 22.6%, marshal-merchant 11.2%, marshal-opportunist 21.2%, marshal-schemer 16.2%, marshal-turtle 8.4%
+All Marshal seats: 16.7% per seat
+Game length: avg 32.9, median 30; 79.2% within 40; draws 0.0%
+Runaways: half the map after turn 10 25.2%; the halfway leader won 87.2%; comebacks 30.2%

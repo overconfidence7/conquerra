@@ -698,6 +698,9 @@ class Turn {
     p.eliminatedBy = this.lastCapturer.get(pid) ?? null;
     p.leader = { alive: false, territory: null };
     p.captured = [];
+    // One of the Fallen from now on: enough Influence for one of the cheaper world events on their very first turn out
+    // (session 19), with the turn's own Influence still to come at its end.
+    if (this.s.settings.fallen) p.influence = Math.max(p.influence, this.ctx.rules.fallen.startInfluence ?? 0);
     // Their spies are gone with them.
     this.s.spies = this.s.spies.filter((x) => x.owner !== pid);
     this.emit({ type: "eliminated", player: pid, by: p.eliminatedBy });

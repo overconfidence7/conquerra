@@ -299,11 +299,12 @@ describe("bots' diplomacy: bots dealing with each other", () => {
   const ctx: GameContext = { map: maps.embervale!, rules: defaultRules };
   const ember = ctx;
   /**
-   * The rules as they were before session 19's balance changes (culture +½ gold a level):
+   * The rules as they were before session 19's balance changes (culture +½ gold a level, the Fallen starting with no
+   * Influence):
    * the Captain's fingerprints below check its own play is unchanged, so they play under the rules they
    * were pinned with.
    */
-  const s18: GameContext = { map: maps.embervale!, rules: { ...defaultRules, culture: { ...defaultRules.culture, incomePerLevel: 0.5 } } };
+  const s18: GameContext = { map: maps.embervale!, rules: { ...defaultRules, culture: { ...defaultRules.culture, incomePerLevel: 0.5 }, fallen: { ...defaultRules.fallen, startInfluence: 0 } } };
   /** A whole 4-Captain game on Embervale, bots negotiating every turn (as the host and the simulator do). */
   function play(seed: string, diplomacy = true, turns = 30, spies = true, bot = captainBot, ctx: GameContext = ember) {
     let s = createGame(ctx, { gameId: "fp", seed, players: ["p1", "p2", "p3", "p4"].map((id) => ({ id, name: id })), settings: { diplomacy, spies } });

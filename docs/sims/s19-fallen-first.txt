@@ -1,0 +1,6 @@
+fallen-later   embervale:4    28.3 turns (median 26), 88.8% within 40 | half-map at 10 28.9%, halfway leader won 64.6%, comebacks 45.1% | seats 21–29% | out by 6 3.6% | draws 0.0%
+fallen-later   wyrmland:6     43.4 turns (median 42), 46.8% within 40 | half-map at 10 8.4%, halfway leader won 75.6%, comebacks 49.4% | seats 13–20% | out by 6 16.1% | draws 0.0%
+fallen-later   greatmarch:10  50.7 turns (median 53), 19.6% within 40 | half-map at 10 0.2%, halfway leader won 50.2%, comebacks 75.4% | seats 7–13% | out by 6 3.7% | draws 0.8%
+fallen-first   embervale:4    28.6 turns (median 26), 86.8% within 40 | half-map at 10 29.5%, halfway leader won 65.0%, comebacks 45.1% | seats 22–29% | out by 6 3.6% | draws 0.0%
+fallen-first   wyrmland:6     43.2 turns (median 42), 45.8% within 40 | half-map at 10 7.0%, halfway leader won 75.8%, comebacks 46.6% | seats 13–19% | out by 6 16.2% | draws 0.0%
+fallen-first   greatmarch:10  51.3 turns (median 55), 18.8% within 40 | half-map at 10 0.2%, halfway leader won 53.0%, comebacks 79.2% | seats 7–12% | out by 6 3.7% | draws 0.0%

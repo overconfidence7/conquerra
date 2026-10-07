@@ -111,3 +111,46 @@ Taking forts off the Steward's list on Embervale gained only 2 points (19.4% at 
 **The default now depends on the table** (`rules.leaders.stewardShare` 20%, `stewardShareCrowded` 10%, `crowdedTerritories` 12): **20% where there's room** (Wyrmland, the Crownlands, the Ringsea, Embervale with 3), **10% on a crowded table** (12 or fewer territories a player: Embervale with 4 or more, the Twin Realms with 8, Greatmarch with 8–10). Someone who never opens the Leaders panel is ahead of a plain Captain on roomy maps, level at 10 players, and a little behind (0.82×) on Embervale with 4, against 0.58× before this session. They still build and raise culture everywhere.
 
 The Steward's "Run the realm" now also buys culture for its income where a level pays back as well as a market (`leaders.steward.culturePays` 0.3 gold a turn per gold): under the old rules that never happened; with +1 a level it buys first levels on safe land.
+
+## Part 3: the Fallen from their first turn, the small-map snowball, and runaways
+
+### The Fallen act from their first turn out
+- **The rule:** a player knocked out starts with **8 Influence** (`rules.fallen.startInfluence`), plus the turn's own Influence at its end: **9 or more on their first turn out**, enough for a storm (6), a famine (8) or mercenaries (9). The caps are unchanged (no capitals, no knock-outs, one event per living player per turn, each kind rests after it's played).
+- **The Fallen bots** do the same: on their first turn out, with nobody clearly ahead, they strike whoever holds the most land with what they can afford (before, they saved up until someone ran away).
+- **The screens:** the moment you're knocked out, the dialog says "You are one of the Fallen … **You have 9 Influence now: enough for a storm, a famine or mercenaries this very turn.** Queen Isolde holds the most land." with **Strike as one of the Fallen** (or Leave the game). The Fallen panel then starts with "**Ready now: Storm, Mercenaries. Pick one, then tap Lady Morwen's land (they hold the most).**" (or, when saving up, which event comes next and in how many turns). Screenshots: `docs/art/screens/s19-fallen-choice*.png`, `s19-fallen-first-turn*.png`.
+- **What it does to the game** (Marshal tables, 500 games, `docs/sims/s19-fallen-first.txt`): nothing measurable. Embervale 4: 28.3 → 28.6 turns, halfway leader won 64.6% → 65.0%; Wyrmland 6: 43.4 → 43.2 turns, 75.6% → 75.8%; Greatmarch 10: 50.7 → 51.3 turns, comebacks 75.4% → 79.2%. Its job is keeping a knocked-out person playing, not balance.
+
+### The small-map snowball (Part 1's capital guard did it)
+4 Marshals on Embervale, 500 games:
+
+| | Before this session | After |
+|---|---|---|
+| One player holds half the map by turn 10 | **71.2%** | **29.5%** |
+| Game length | 20.7 turns | **28.6 turns** (median 26) |
+| Knocked out by turn 6 | 23% | 3.6% |
+| Halfway leader won | 81.6% | 65.0% |
+| Comebacks (the turn-10 leader didn't win) | 21.9% | 45.1% |
+
+No rule change was needed: the cause was the turn-1 walk into an emptied capital (Part 1).
+
+### Runaways at every table
+Tried on top (500 games a line, Embervale 4, Wyrmland 6, Greatmarch 10; `docs/sims/s19-runaway-tests.txt`): a stronger pull toward the runaway's land and joint-war targets (1.4/1.6 → 2.0/2.2: `judgement.pull`), and reading a runaway sooner (lower size and pace bars, sticking 5 turns). **Neither moved the measures beyond the noise** (halfway leader 65.0 → 62.2% / 69.2% on Embervale), and the earlier reading made 10-player games longer still. Both are left at session 17's values (`pull` stays a setting for later).
+
+What did work: **the capital's opening guard on every table**, not only crowded ones (`docs/sims/s19-guard-all.txt`): players knocked out by turn 6 fell from 16% (Wyrmland 6), 24% (Wyrmland 8) and 15% (Twin Realms 6) to 1–2%, and the halfway leader won less (Wyrmland 6: 75.8% → 62.7%; Wyrmland 8: 53.5% → 47.0%; Twin Realms 6: 82.4% → 79.4%), for about 4 more turns a game. Nate (Oct 7): his own games run much shorter than the bots', so longer bot games are fine. It's now on everywhere.
+
+**The three runaway measures, Marshal tables, before this session → after (500 games each):**
+
+| Table | Half the map after turn 10 | Halfway leader won | Comebacks | Turns |
+|---|---|---|---|---|
+| Embervale 4 | 71.2% → **29.5%** | 81.6% → **65.0%** | 21.9% → **45.1%** | 20.7 → 28.6 |
+| Twin Realms 6 | 25.2% → **5.8%** | 87.2% → **79.4%** | 30.2% → **45.9%** | 32.9 → 38.9 |
+| Wyrmland 6 | 8.8% → **2.4%** | 80.6% → **62.7%** | 39.4% → **60.4%** | 43.1 → 48.0 |
+| Wyrmland 8 | 0.8% → **0.2%** | 58.8% → **47.0%** | 68.4% → **76.9%** | 51.0 → 54.5 |
+| Greatmarch 10 | 2.8% → **0.2%** | 67.4% → **53.0%** | 59.0% → **79.2%** | 45.0 → 51.3 |
+
+*(Before: session 18's code, `docs/sims/s19-runaway-before.txt`. After: the "now" and "guard-all" lines.)* The halfway leader now wins 47–79% (it was 59–87%). The rest of the gap is mostly real: whoever leads halfway is usually ahead because they played better, and the bots can't tell more from the fog.
+
+**If Nate wants runaways lower still, rule options (not built):**
+- **Catch-up income:** +1 gold a turn for every 10% of the map you're below the leader. Not simulated yet; the obvious next lever.
+- **Larger upkeep for big realms** (`economy.upkeepRate` 0.35 → 0.5): slows a runaway's army; it also lengthens every game.
+- **The Fallen's Influence by the leader's lead** (more Influence the more one player holds): aims the knocked-out players at the runaway harder.

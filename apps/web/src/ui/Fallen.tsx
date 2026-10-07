@@ -2,7 +2,7 @@ import { WORLD_EVENT_KINDS, type GameContext, type PlayerView, type WorldEventKi
 import { describeOrder, namer, WORLD_EVENT_NAME } from "../logic/text";
 import { useGame } from "../store";
 import { Frame } from "./Frame";
-import { influencePerTurn } from "../logic/fallen";
+import { influencePerTurn, landLeader, readyEvents } from "../logic/fallen";
 import { ReportBody } from "./TurnReport";
 
 /** What each event does, in one plain line, with this game's numbers. */
@@ -35,11 +35,25 @@ export function FallenPanel({ ctx, view, replaying }: { ctx: GameContext; view: 
   const cfg = ctx.rules.fallen;
   const pledged = fallenOrders.reduce((a, o) => a + (o.kind === "worldEvent" ? o.influence : 0), 0);
   const left = Math.floor(view.me.influence) - pledged;
+  // What you can do right now (session 19: from your first turn out), and whom the Fallen usually aim at.
+  const now = readyEvents(ctx, view, left);
+  const lead = landLeader(ctx, view);
+  const each = influencePerTurn(ctx, view);
+  const nextUp = WORLD_EVENT_KINDS.map((k) => ({ k, turns: Math.max(view.eventCooldowns[k], Math.ceil(Math.max(0, cfg.events[k].cost - left) / Math.max(0.5, each))) }))
+    .filter((x) => x.turns > 0)
+    .sort((a, b) => a.turns - b.turns || cfg.events[a.k].cost - cfg.events[b.k].cost)[0];
   return (
     <Frame className="watch-panel fallen-panel" title={`One of the Fallen · turn ${view.turn}`}>
       <div className="influence">
         <b>{Math.floor(view.me.influence)}</b> Influence <span className="muted small">(+{influencePerTurn(ctx, view)} a turn{pledged ? `, ${left} left after this turn's events` : ""})</span>
       </div>
+      {!aiming && !replaying && fallenOrders.length === 0 && (
+        <p className="arriving fallen-now">
+          {now.length
+            ? `Ready now: ${now.map((k) => WORLD_EVENT_NAME[k]).join(", ")}. Pick one, then tap ${lead ? `${n.who(lead.player)}'s land (they hold the most)` : "a living player's land"}.`
+            : `Saving up: ${nextUp ? `${WORLD_EVENT_NAME[nextUp.k]} in ${nextUp.turns} turn${nextUp.turns === 1 ? "" : "s"}` : "every event is resting"}.`}
+        </p>
+      )}
       {aiming ? (
         <p className="arriving">
           {aiming.event === "storm" && aiming.target ? `Now tap the land across the border from ${n.place(aiming.target)}.` : `Tap a living player's land to aim the ${WORLD_EVENT_NAME[aiming.event].toLowerCase()} at.`}{" "}

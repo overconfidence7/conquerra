@@ -243,15 +243,22 @@ describe("the Marshal's capital guard (session 19)", () => {
     return { stack, sent: sentFrom(orders, view.me.capital, stack) };
   };
 
-  it("on a crowded table (Embervale, 4 players: capitals 3 steps apart) even the Blitzer keeps half its capital's stack home in the first turns", () => {
+  it("even the Blitzer keeps half its capital's stack home in the first turns (Embervale, 4 players: capitals 3 steps apart)", () => {
     const { stack, sent } = firstTurn(ember, 4);
     expect(sent).toBeGreaterThan(0);
     expect(stack - sent).toBeGreaterThanOrEqual(Math.ceil(stack * J.capitalGuard!.opening));
   });
 
-  it("on a roomy table (Wyrmland, 6 players) it doesn't: everything spare goes out", () => {
-    const { stack, sent } = firstTurn({ map: maps.wyrmland!, rules: defaultRules }, 6);
-    expect(stack - sent).toBeLessThan(Math.ceil(stack * J.capitalGuard!.opening));
+  it("so it does on a roomy table (Wyrmland, 6 players); limited to crowded tables, there it wouldn't", () => {
+    const wyrm = { map: maps.wyrmland!, rules: defaultRules };
+    const { stack, sent } = firstTurn(wyrm, 6);
+    expect(stack - sent).toBeGreaterThanOrEqual(Math.ceil(stack * J.capitalGuard!.opening));
+    const crowdedOnly = { ...J, capitalGuard: { ...J.capitalGuard!, crowded: 12 } };
+    const s = createGame(wyrm, { gameId: "guard", seed: "guard", players: Array.from({ length: 6 }, (_, i) => ({ id: `p${i + 1}`, name: `P${i + 1}` })) });
+    const view = viewFor(wyrm, s, "p1");
+    const orders = planMarshal({ ctx: wyrm, view, personality: personality("blitzer"), judgement: crowdedOnly, memory: freshMemory() }).orders;
+    const all = (view.territories[view.me.capital] as { troops: number }).troops + orders.reduce((a, o) => a + (o.kind === "recruit" && o.territory === view.me.capital && typeof o.count === "number" ? o.count : 0), 0);
+    expect(all - sentFrom(orders, view.me.capital, all)).toBeLessThan(Math.ceil(all * J.capitalGuard!.opening));
   });
 
   it("keeps half of a rival army it knows of within reach of its capital (3 steps)", () => {

@@ -5,7 +5,8 @@ import type { Bot } from "./recruit";
 /**
  * A Fallen bot (session 12): a knocked-out seat that spends its Influence on world events aimed at whoever looks to
  * be leading, judged with the Captain's runaway rule from its own view (the political map: who holds what, no troop
- * numbers). With nobody clearly ahead it saves its Influence. Every Fallen bot sees the same map and judges the same
+ * numbers). With nobody clearly ahead it saves its Influence, except on its first turn out, when it strikes whoever
+ * holds the most land with what it can afford (session 19). Every Fallen bot sees the same map and judges the same
  * way, so they tend to pick the same event and place, and their Influence pools into a stronger one.
  *
  * Which event, best first, where the leader has a place for it and it isn't resting:
@@ -30,8 +31,10 @@ export function planFallen(ctx: GameContext, view: PlayerView): Order[] {
     if (o) land.set(o, (land.get(o) ?? 0) + 1);
   }
   const est = landEstimates(land, living);
-  // The runaway leader if there is one; with fewer players left, whoever leads by a clear margin.
-  const leader = runawayLeader(est, 0, idx.ids.length, living.length) ?? (est[0] && est[0][1] >= CLEAR_LEAD * (est[1]?.[1] ?? 0) ? est[0][0] : null);
+  // The runaway leader if there is one; with fewer players left, whoever leads by a clear margin; and on its very first
+  // turn out (session 19: the Fallen act from their first turn), whoever holds the most land.
+  const firstTurn = view.turn === me.eliminatedTurn + 1;
+  const leader = runawayLeader(est, 0, idx.ids.length, living.length) ?? (est[0] && (firstTurn || est[0][1] >= CLEAR_LEAD * (est[1]?.[1] ?? 0)) ? est[0][0] : null);
   if (!leader) return [];
   const theirs = idx.ids.filter((t) => owner(t) === leader);
   const capital = (t: TerritoryId) => isKnownCapital(view, t);

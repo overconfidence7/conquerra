@@ -1,0 +1,8 @@
+now            wyrmland:6     43.2 turns (median 42), 45.8% within 40 | half-map at 10 7.0%, halfway leader won 75.8%, comebacks 46.6% | seats 13–19% | out by 6 16.2% | draws 0.0%
+now            wyrmland:8     51.1 turns (median 56), 19.8% within 40 | half-map at 10 0.4%, halfway leader won 53.5%, comebacks 68.9% | seats 11–14% | out by 6 23.7% | draws 0.2%
+now            twin-realms:6  35.0 turns (median 33), 73.2% within 40 | half-map at 10 17.6%, halfway leader won 82.4%, comebacks 35.2% | seats 13–19% | out by 6 15.4% | draws 0.0%
+now            embervale:3    22.5 turns (median 20), 95.8% within 40 | half-map at 10 78.3%, halfway leader won 76.6%, comebacks 26.5% | seats 31–37% | out by 6 5.1% | draws 0.0%
+guard-all      wyrmland:6     48.0 turns (median 50), 31.4% within 40 | half-map at 10 2.4%, halfway leader won 62.7%, comebacks 60.4% | seats 13–20% | out by 6 2.2% | draws 0.4%
+guard-all      wyrmland:8     54.5 turns (median 60), 10.2% within 40 | half-map at 10 0.2%, halfway leader won 47.0%, comebacks 76.9% | seats 11–15% | out by 6 1.3% | draws 0.4%
+guard-all      twin-realms:6  38.9 turns (median 37), 60.8% within 40 | half-map at 10 5.8%, halfway leader won 79.4%, comebacks 45.9% | seats 14–19% | out by 6 1.8% | draws 0.2%
+guard-all      embervale:3    23.0 turns (median 21), 93.8% within 40 | half-map at 10 75.1%, halfway leader won 74.8%, comebacks 27.3% | seats 30–37% | out by 6 1.8% | draws 0.0%

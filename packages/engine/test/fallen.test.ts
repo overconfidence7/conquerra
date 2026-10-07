@@ -202,3 +202,34 @@ describe("the Fallen: fog and fairness", () => {
     expect(viewFor(ctx, r.state, "p3").territories.a!.detail).toBe("full");
   });
 });
+
+describe("the Fallen from their first turn out (session 19)", () => {
+  it("a player knocked out this turn starts with enough Influence for one of the cheaper events, and can play it straight away", () => {
+    // p2 holds only f (its capital); p1 takes it with a big army. p3 is still in (holding c), so the game goes on.
+    const s = game(0);
+    for (const t of ["d", "e"]) s.territories[t] = { owner: "p1", troops: 30, specialists: [], building: null, construction: null, culture: 0 };
+    s.territories.c = { owner: "p3", troops: 8, specialists: [], building: null, construction: null, culture: 0 };
+    s.players.find((p) => p.id === "p3")!.eliminatedTurn = null;
+    s.territories.f!.troops = 1;
+    const r = resolveTurn(ctx, s, { p1: [mv("e", "f", 29)] });
+    const p2 = r.state.players.find((p) => p.id === "p2")!;
+    expect(p2.eliminatedTurn).toBe(s.turn);
+    // Its start, plus the turn's own Influence (two Fallen now: p2 and p4).
+    expect(p2.influence).toBe(cfg.startInfluence + cfg.influenceBase + cfg.influencePerOtherFallen);
+    const cheap = (["storm", "famine", "mercenaries"] as const).filter((k) => cfg.events[k].cost <= p2.influence);
+    expect(cheap.length).toBeGreaterThanOrEqual(2);
+    // Its very first turn out: a famine on p1 lands.
+    const next = resolveTurn(ctx, r.state, { p2: [ev("famine", "b", cfg.events.famine.cost)] });
+    expect(find(next.events, "worldEvent")).toMatchObject({ event: "famine", against: "p1", by: ["p2"] });
+  });
+
+  it("with the Fallen switched off, a knocked-out player gets no Influence", () => {
+    const s = game(0, { fallen: false });
+    for (const t of ["d", "e"]) s.territories[t] = { owner: "p1", troops: 30, specialists: [], building: null, construction: null, culture: 0 };
+    s.territories.c = { owner: "p3", troops: 8, specialists: [], building: null, construction: null, culture: 0 };
+    s.players.find((p) => p.id === "p3")!.eliminatedTurn = null;
+    s.territories.f!.troops = 1;
+    const r = resolveTurn(ctx, s, { p1: [mv("e", "f", 29)] });
+    expect(r.state.players.find((p) => p.id === "p2")!.influence).toBe(0);
+  });
+});

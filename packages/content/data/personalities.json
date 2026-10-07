@@ -37,8 +37,7 @@
       "steps": 3,
       "reach": 0.5,
       "turns": 3,
-      "opening": 0.5,
-      "crowded": 12
+      "opening": 0.5
     }
   },
   "personalities": [

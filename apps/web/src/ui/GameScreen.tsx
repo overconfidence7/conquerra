@@ -432,7 +432,7 @@ export function GameScreen() {
       )}
       {out && !watching && !replaying && (
         <Suspense fallback={null}>
-          <KnockedOutChoice view={view} />
+          <KnockedOutChoice ctx={ctx} view={view} />
         </Suspense>
       )}
       {act && !showReport && (overCap(ctx, view).leader > 0 || overCap(ctx, view).steward > 0) && keptOn !== view.turn && (

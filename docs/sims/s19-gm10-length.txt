@@ -1,0 +1,9 @@
+no-opening     greatmarch:10  46.7 turns (median 47), 34.4% within 40 | half-map at 10 2.4%, halfway leader won 61.2%, comebacks 68.0% | seats 8–13% | out by 6 20.6% | draws 0.0%
+no-guard       greatmarch:10  45.6 turns (median 45), 39.8% within 40 | half-map at 10 2.4%, halfway leader won 64.3%, comebacks 61.3% | seats 8–12% | out by 6 20.9% | draws 0.2%
+queue-old      greatmarch:10  51.2 turns (median 54), 17.6% within 40 | half-map at 10 0.0%, halfway leader won 51.4%, comebacks 75.5% | seats 8–12% | out by 6 3.4% | draws 0.4%
+open2-0.5      greatmarch:10  50.6 turns (median 53), 20.4% within 40 | half-map at 10 0.0%, halfway leader won 54.3%, comebacks 74.1% | seats 8–11% | out by 6 5.0% | draws 0.2%
+open2-0.5      embervale:4    28.0 turns (median 25), 88.2% within 40 | half-map at 10 34.9%, halfway leader won 69.4%, comebacks 39.5% | seats 23–29% | out by 6 4.8% | draws 0.0%
+open3-0.3      greatmarch:10  48.8 turns (median 50), 25.0% within 40 | half-map at 10 0.8%, halfway leader won 54.6%, comebacks 71.5% | seats 7–13% | out by 6 11.2% | draws 0.4%
+open3-0.3      embervale:4    22.6 turns (median 21), 96.2% within 40 | half-map at 10 67.5%, halfway leader won 80.6%, comebacks 20.6% | seats 22–28% | out by 6 26.0% | draws 0.0%
+open1-0.5      greatmarch:10  50.7 turns (median 53), 20.2% within 40 | half-map at 10 0.2%, halfway leader won 52.4%, comebacks 76.1% | seats 7–12% | out by 6 6.4% | draws 0.4%
+open1-0.5      embervale:4    26.4 turns (median 24), 89.8% within 40 | half-map at 10 47.6%, halfway leader won 66.8%, comebacks 36.5% | seats 24–27% | out by 6 11.5% | draws 0.0%

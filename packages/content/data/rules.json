@@ -155,6 +155,7 @@
     "nameMaxLength": 20
   },
   "fallen": {
+    "startInfluence": 8,
     "influenceBase": 1,
     "influencePerOtherFallen": 0.5,
     "maxStrength": 1.5,

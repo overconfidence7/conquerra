@@ -323,6 +323,8 @@ export const Rules = z.object({
    * cooldown (turns, for everyone).
    */
   fallen: z.object({
+    /** Influence a player has the moment they're knocked out (session 19, Nate: the Fallen act from their first turn out). */
+    startInfluence: z.number().min(0).default(0),
     influenceBase: z.number().min(0),
     influencePerOtherFallen: z.number().min(0),
     maxStrength: z.number().min(1),

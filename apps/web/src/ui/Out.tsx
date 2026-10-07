@@ -1,4 +1,6 @@
 import type { GameContext, PlayerView } from "@conquerra/engine";
+import { landLeader, readyEvents } from "../logic/fallen";
+import { WORLD_EVENT_NAME } from "../logic/text";
 import { useGame } from "../store";
 import { FallenPanel } from "./Fallen";
 import { Frame } from "./Frame";
@@ -9,24 +11,34 @@ import { ReportBody } from "./TurnReport";
  * Fallen off, watching the bots play on).
  */
 
+/** "a, b or c". */
+const listOf = (xs: string[]) => (xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} or ${xs[xs.length - 1]}`);
+
 /** Shown once when you're knocked out while the game goes on. */
-export function KnockedOutChoice({ view }: { view: PlayerView }) {
+export function KnockedOutChoice({ ctx, view }: { ctx: GameContext; view: PlayerView }) {
   const { watch, seeResult, busy } = useGame();
   const me = view.players.find((p) => p.id === view.me.id)!;
   const by = me.eliminatedBy ? view.players.find((p) => p.id === me.eliminatedBy)?.name : null;
-  // One of the Fallen: you keep playing, with Influence.
+  // One of the Fallen: you keep playing, with Influence, from this very turn (session 19).
   const fallen = view.settings.fallen && view.settings.fog;
-  if (fallen)
+  if (fallen) {
+    const now = readyEvents(ctx, view, Math.floor(view.me.influence));
+    const lead = landLeader(ctx, view);
     return (
       <div className="overlay">
         <Frame className="dialog" role="dialog" label="You are one of the Fallen" title="You are one of the Fallen">
-          <p>Spend Influence to shake the living.</p>
           <p className="muted small">
-            {by ? `${by} took your last territory` : "You lost your last territory"} on turn {me.eliminatedTurn}. You see who holds what, but not their armies. You earn Influence every turn (more the more Fallen there are) and spend it on plagues, storms, uprisings, mercenaries and famines.
+            {by ? `${by} took your last territory` : "You lost your last territory"} on turn {me.eliminatedTurn}. Your war isn't over: the Fallen strike the living with world events.
           </p>
+          <p>
+            <b>You have {Math.floor(view.me.influence)} Influence now</b>
+            {now.length ? `: enough for ${listOf(now.map((k) => (k === "mercenaries" ? "mercenaries" : `a ${WORLD_EVENT_NAME[k].toLowerCase()}`)))} this very turn.` : "."}
+            {lead ? ` ${view.players.find((p) => p.id === lead.player)?.name ?? "The leader"} holds the most land.` : ""}
+          </p>
+          <p className="muted small">You earn more Influence every turn (more the more Fallen there are). No event touches a capital or knocks anyone out.</p>
           <div className="choice">
             <button className="primary wide" onClick={watch} disabled={busy} autoFocus>
-              Watch to the end
+              Strike as one of the Fallen
             </button>
             <button className="wide" onClick={seeResult} disabled={busy}>
               {busy ? "The others are finishing the game…" : "Leave the game"}
@@ -36,6 +48,7 @@ export function KnockedOutChoice({ view }: { view: PlayerView }) {
         </Frame>
       </div>
     );
+  }
   return (
     <div className="overlay">
       <Frame className="dialog" role="dialog" label="You have been knocked out" title="You've been knocked out">

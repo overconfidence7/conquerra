@@ -161,13 +161,19 @@ export const MarshalJudgement = z.object({
    */
   queue: z.enum(["spending", "armies"]).optional(),
   /**
+   * Session 19: how much more the Marshal values land of the runaway leader (`leader`, on top of the Captain's own
+   * priority) and of a joint war's target it's in (`war`). Defaults: 1.4 and 1.6 (session 17's).
+   */
+  pull: z.object({ leader: z.number().min(1), war: z.number().min(1) }).optional(),
+  /**
    * Session 19: a guard at the capital. Embervale's capitals are 3 steps apart, and an all-out opening that leaves one
    * troop at home lets a rival's chain walk in on turn 1. The capital keeps `reach` times the biggest rival army it knows
    * of within `steps` steps (what it sees, or last saw), and for the first `turns` turns, while it can't see that far,
-   * `opening` times its own stack, on a crowded table (at most `crowded` territories a player: capitals start about 3
-   * steps apart there; on roomier tables the opening guard only slowed games down).
+   * `opening` times its own stack: on every table, or (with `crowded`) only where there are at most that many
+   * territories a player. On every table, players knocked out by turn 6 fell from 16-24% to 1-2% and the halfway leader
+   * won less, for about 4 more turns a game (fine, Nate: his own games run shorter than the bots').
    */
-  capitalGuard: z.object({ steps: z.number().int().min(1), reach: z.number().min(0), turns: z.number().int().min(0), opening: z.number().min(0).max(1), crowded: z.number().min(0) }).optional(),
+  capitalGuard: z.object({ steps: z.number().int().min(1), reach: z.number().min(0), turns: z.number().int().min(0), opening: z.number().min(0).max(1), crowded: z.number().min(0).optional() }).optional(),
 });
 export type MarshalJudgement = z.infer<typeof MarshalJudgement>;
 

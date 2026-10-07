@@ -214,8 +214,8 @@ function planMoves(
     }
     const owner = b.look(t).owner;
     if (owner && owner !== me.id) {
-      if (owner === runaway) v *= LEADER_PULL;
-      if (insight.warTargets.has(owner)) v *= WAR_PULL;
+      if (owner === runaway) v *= J.pull?.leader ?? LEADER_PULL;
+      if (insight.warTargets.has(owner)) v *= J.pull?.war ?? WAR_PULL;
       if (A.vulture && insight.fought.has(owner)) v *= 1 + A.vulture * 0.5;
       if (A.oneFront && main && owner !== main && !calm) v *= OFF_FRONT;
     }
@@ -377,7 +377,7 @@ function planMoves(
       }
     }
     capGuard = Math.ceil(reach * G.reach);
-    const crowded = ctx.map.territories.length / view.players.length <= G.crowded;
+    const crowded = G.crowded === undefined || ctx.map.territories.length / view.players.length <= G.crowded;
     if (crowded && view.turn <= G.turns) capGuard = Math.max(capGuard, Math.ceil((troopsAt(capital) + (site === capital ? recruited : 0)) * G.opening));
   }
   const keep = (t: TerritoryId) => Math.max(keep0(t), t === capital ? capGuard : 0);
