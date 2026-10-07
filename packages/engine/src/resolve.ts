@@ -36,6 +36,7 @@ import { anyDealAcross, attackAcross, diplomacyEndOfTurn, diplomacyStart, partne
 import { visibleTerritories } from "./vision";
 import { hireSpy, spiesEndOfTurn, spyOrders, spyReports } from "./spies";
 import { canGovern, governEndOfTurn } from "./govern";
+import { recordTurn } from "./history";
 
 /** Called after every event with the live board (tests use it to check the replay against the real game). */
 export type TurnObserver = (e: StepEvent, live: Readonly<GameState>) => void;
@@ -806,6 +807,8 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
   const s: GameState = JSON.parse(JSON.stringify(state));
   const T = new Turn(ctx, s, state, observe);
   const { rules } = ctx;
+  /** How many deals had ended before this turn (the record's new entries are this turn's). */
+  const recordFrom = s.record.length;
 
   const active = s.players.filter((p) => p.eliminatedTurn === null).map((p) => p.id);
   const seats = T.rng.shuffle(active);
@@ -972,6 +975,8 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
   }
 
   s.rng = T.rng.state;
+  // The game's record for its end (session 16): the land held as the turn ended, and what each House did.
+  recordTurn(s, T.events, recordFrom);
   if (!s.winner) s.turn += 1;
   s.closures = s.closures.filter((c) => c.turn >= s.turn);
   // Everything you saw during the turn goes into your memory, as it was when you saw it (land that came into view

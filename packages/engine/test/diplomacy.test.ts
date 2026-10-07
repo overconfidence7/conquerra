@@ -437,7 +437,7 @@ describe("diplomacy: knocked-out players, fog, saves, determinism", () => {
     const s = game();
     const old = JSON.parse(JSON.stringify(s)) as Record<string, unknown>;
     old.version = 4;
-    for (const k of ["spies", "nextSpy", "spyIntel"]) delete old[k];
+    for (const k of ["spies", "nextSpy", "spyIntel", "history", "stats"]) delete old[k];
     delete (old.decks as Record<string, unknown>).spies;
     delete (old.settings as Record<string, unknown>).spies;
     delete old.deals;
@@ -453,7 +453,8 @@ describe("diplomacy: knocked-out players, fog, saves, determinism", () => {
     expect([st.version, st.deals, st.nextDeal, st.record, st.settings.diplomacy]).toEqual([STATE_VERSION, [], 1, [], true]);
     expect(st.players.every((p) => p.oathbreaker === 0)).toBe(true);
     // (Spies' own random sequence is made from the game's dice when an old save is brought up to date.)
-    expect(stateFingerprint({ ...st, decks: { ...st.decks, spies: s.decks.spies } })).toBe(stateFingerprint(s));
+    // (The graph's starting point is the land as saved; this test rearranged the board after the game began.)
+    expect(stateFingerprint({ ...st, decks: { ...st.decks, spies: s.decks.spies }, history: s.history })).toBe(stateFingerprint(s));
     // And it plays on, with deals.
     expect(resolveTurn(ctx, st, agreed(offer("p1", "p2", truce()))).state.deals).toHaveLength(1);
   });

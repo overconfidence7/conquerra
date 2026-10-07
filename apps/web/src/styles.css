@@ -328,6 +328,32 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { border-radius: 999px; padding: 5px 12px; font-size: var(--fs-small); min-height: 44px; }
 .chip.on { background: linear-gradient(#e3c77e, #c9a45c); color: var(--navy); border-color: #f1dca2; }
+/* The end of the game (session 16): the power graph and the awards. */
+.power-graph { margin: 12px 0; text-align: left; }
+.power-graph h3, .awards h3 { margin: 0 0 6px; }
+.graph-wrap { position: relative; }
+.graph-wrap > svg { display: block; touch-action: pan-y; }
+.power-graph svg.swatch { display: inline-block; width: 26px; height: 10px; flex: none; }
+.graph-legend li { display: inline-flex; align-items: center; gap: 5px; }
+.power-graph .grid { stroke: rgba(201, 164, 92, 0.18); stroke-width: 1; }
+.power-graph .axis { fill: var(--muted); font: 500 11px var(--font-body); }
+.power-graph .end-label { fill: var(--parch); font: 600 11px var(--font-body); }
+.power-graph .end-label.win { fill: var(--gold-hi); font-weight: 800; }
+.power-graph .crosshair { stroke: rgba(243, 234, 210, 0.55); stroke-width: 1; stroke-dasharray: 3 3; }
+.graph-tip { position: absolute; top: 4px; z-index: 2; width: 160px; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; font-size: var(--fs-label); background: rgba(10, 16, 24, 0.94); border: 1px solid var(--gold); border-radius: 6px; pointer-events: none; }
+.graph-legend { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--fs-small); }
+.graph-legend li.win { color: var(--gold-hi); font-weight: 700; }
+.graph-legend .swatch, .graph-tip .swatch { vertical-align: middle; }
+.table-scroll { overflow-x: auto; max-height: 240px; overflow-y: auto; }
+.graph-table { border-collapse: collapse; font-size: var(--fs-label); }
+.graph-table th, .graph-table td { padding: 2px 8px; text-align: right; white-space: nowrap; border-bottom: 1px solid rgba(201, 164, 92, 0.15); }
+.awards ul { list-style: none; margin: 0 0 12px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.award { display: flex; gap: 10px; align-items: center; padding: 8px 10px; text-align: left; background: rgba(15, 22, 32, 0.6); border: 1px solid rgba(201, 164, 92, 0.35); border-left: 5px solid var(--gold); border-radius: 8px; }
+.award img { width: 46px; height: 46px; border-radius: 6px; border: 1.5px solid var(--gold); object-fit: cover; flex: none; }
+.award > span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.award b { font: 700 var(--fs-small) var(--font-head); color: var(--gold-hi); letter-spacing: 0.03em; }
+.award .who { font-weight: 700; }
+.award.mine { background: rgba(227, 199, 126, 0.12); }
 /* The Chronicle (session 16). */
 .chronicle-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 4px 12px; font: 700 var(--fs-small) var(--font-head); }
 .chronicle-btn svg { width: 18px; height: 18px; }

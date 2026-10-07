@@ -332,7 +332,7 @@ describe("bots' diplomacy: bots dealing with each other", () => {
     // (Session 16 changed the rules underneath it on purpose: culture is lost when land changes hands, the Captain values
     // a rival's culture only as what taking it denies them, Follow through carries the Leader on, and the Spoils rework. Pinned again then.)
     const s = structuredClone(play("captain-fingerprint", false, 25, false, makeCaptainBot({ chainMargin: CAPTAIN_CHAIN_MARGIN, off: ["govern"] })).s) as unknown as Record<string, unknown>;
-    for (const k of ["spies", "nextSpy", "spyIntel"]) delete s[k];
+    for (const k of ["spies", "nextSpy", "spyIntel", "history", "stats"]) delete s[k];
     delete (s.decks as Record<string, unknown>).spies;
     delete (s.settings as Record<string, unknown>).spies;
     for (const p of s.players as Record<string, unknown>[]) (delete p.purse, delete p.house);

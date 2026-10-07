@@ -1,10 +1,49 @@
+import type { PlayerView } from "@conquerra/engine";
+import { awardsFor, type Award } from "../logic/awards";
 import { houseOf } from "../map/houses";
+import { PowerGraph } from "./PowerGraph";
+import { portraitOf } from "./PlayersPanel";
 import { useGame } from "../store";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
 import { MapView, readTactical } from "./MapView";
 import { PlayersPanel } from "./PlayersPanel";
 import { ReportBody } from "./TurnReport";
+
+/** The awards, each with the winner's portrait and House colour. */
+function Awards({ view }: { view: PlayerView }) {
+  const awards = awardsFor(view);
+  if (!awards.length) return null;
+  return (
+    <section className="awards">
+      <h3>Awards</h3>
+      <ul>
+        {awards.map((a) => (
+          <AwardCard key={a.id} view={view} award={a} />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function AwardCard({ view, award }: { view: PlayerView; award: Award }) {
+  const first = award.winners[0]!;
+  const seat = Math.max(0, view.players.findIndex((p) => p.id === first));
+  const portrait = useArtUrl(portraitOf(seat));
+  const names = award.winners.map((p) => (p === view.me.id ? "You" : (view.players.find((x) => x.id === p)?.name ?? p)));
+  return (
+    <li className={`award ${award.winners.includes(view.me.id) ? "mine" : ""}`} style={{ borderLeftColor: houseOf(view, first).color }}>
+      {portrait && <img src={portrait} alt="" />}
+      <span>
+        <b>{award.title}</b>
+        <span className="who">{names.join(" and ")}{award.winners.length > 1 ? " (shared)" : ""}</span>
+        <span className="small muted">
+          {award.for}: {award.value}
+        </span>
+      </span>
+    </li>
+  );
+}
 
 export function GameOver() {
   const { ctx, view, report, fastForwarded, playAgain } = useGame();
@@ -32,6 +71,9 @@ export function GameOver() {
         <button className="primary big" onClick={playAgain}>
           Play again
         </button>
+        {/* The end of the game (session 16): the power graph and the awards (everything is revealed now). */}
+        <PowerGraph view={view} territories={ctx.map.territories.length} />
+        <Awards view={view} />
         <PlayersPanel view={view} />
         <div className="over-map">
           <MapView ctx={ctx} view={view} queue={[]} selected={null} draft={null} showTargets={false} onTap={() => {}} tactical={readTactical()} tools />

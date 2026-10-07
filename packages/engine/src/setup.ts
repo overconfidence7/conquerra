@@ -4,6 +4,7 @@ import { updateIntel } from "./intel";
 import { distancesFrom, indexMap } from "./mapIndex";
 import { Rng, seedRng } from "./rng";
 import type { GameContext, GameSettings, GameState, PlayerState, TerritoryState } from "./types";
+import { emptyStats, landHeld } from "./history";
 
 export interface NewGameOptions {
   gameId: string;
@@ -110,7 +111,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   players.sort((a, b) => opts.players.findIndex((p) => p.id === a.id) - opts.players.findIndex((p) => p.id === b.id));
 
   const state: GameState = {
-    version: 8,
+    version: 9,
     gameId: opts.gameId,
     mapId: map.id,
     turn: 1,
@@ -134,6 +135,8 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
     spies: [],
     nextSpy: 1,
     spyIntel: {},
+    history: [{ turn: 0, land: landHeld(territories, players.map((p) => p.id)) }],
+    stats: Object.fromEntries(players.map((p) => [p.id, emptyStats()])),
   };
   updateIntel(ctx, state);
   return state;

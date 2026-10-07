@@ -3,6 +3,7 @@ export { createGame, type NewGameOptions } from "./setup";
 export { resolveTurn, type TurnObserver } from "./resolve";
 export { viewFor, trueDetail, copyDetail, seesPolitically, dealView, type PlayerView, type TerritoryView, type TerritoryDetail, type DealView, type SpyView } from "./view";
 export { spreadTroops, buildingSpot, type SpreadLand } from "./spoils";
+export { emptyStats, landHeld } from "./history";
 export { spiesOn, wholeHolder, forgedDetails, spyReports, spiesEndOfTurn } from "./spies";
 export { spyLine, type SpyNames } from "./spyText";
 export {

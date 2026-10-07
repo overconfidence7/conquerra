@@ -307,8 +307,43 @@ export interface GameSettings {
   spies: boolean;
 }
 
+/**
+ * What each House did over the game (session 16), for the awards on the game-over screen: tallied from every turn's
+ * events, so it's exact and needs no memory. Only shown once the game is over (view.ts).
+ */
+export interface PlayerStats {
+  /** Battles won: land taken, plus attacks held off. */
+  battlesWon: number;
+  /** Land taken in battle. */
+  captures: number;
+  /** Attacks held off. */
+  holds: number;
+  /** Levels of culture raised (with gold, Laurels, Fate and missions). */
+  culture: number;
+  /** Buildings finished (built, a fort or building from Spoils, a Fate gift). */
+  buildings: number;
+  /** Spies that got into a rival's province. */
+  infiltrations: number;
+  /** Deals that ran their course (both sides count it). */
+  dealsKept: number;
+  /** Handshake deals broken. */
+  dealsBroken: number;
+  /** Rival Leaders who fell to your attacks. */
+  leadersKilled: number;
+  /** Good Fate events on your land. */
+  fateGood: number;
+  /** Troops recruited. */
+  recruited: number;
+}
+
+/** How much of the map each House held at the end of each turn (turn 0: the start), for the power graph. */
+export interface HistoryPoint {
+  turn: number;
+  land: Record<PlayerId, number>;
+}
+
 export interface GameState {
-  version: 8;
+  version: 9;
   gameId: string;
   mapId: string;
   turn: number;
@@ -350,6 +385,10 @@ export interface GameState {
    * sees directly isn't in it: what you see yourself always wins. Never sent whole to a client.
    */
   spyIntel: Record<PlayerId, Record<TerritoryId, TerritoryDetail>>;
+  /** Land each House held, turn by turn (session 16): the end-of-game power graph. Hidden until the game ends. */
+  history: HistoryPoint[];
+  /** What each House did (session 16): the end-of-game awards. Hidden until the game ends. */
+  stats: Record<PlayerId, PlayerStats>;
 }
 
 // ---------- Orders ----------

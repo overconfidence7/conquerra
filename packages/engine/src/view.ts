@@ -68,6 +68,12 @@ export interface PlayerView {
   record: DealRecord[];
   /** Your own spies (session 15). Never anyone else's. */
   spies: SpyView[];
+  /**
+   * The game's record (session 16): land each House held turn by turn, and what each did. Only once the game is over
+   * (everything is revealed then); during play nobody is shown land counts.
+   */
+  history?: GameState["history"];
+  stats?: GameState["stats"];
 }
 
 /** One of your own spies, as you see it (nobody else ever does). A fooled spy looks exactly like one that got in. */
@@ -196,6 +202,7 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
     deals: (state.deals ?? []).map((d) => dealView(ctx, state, d, player, (t) => !state.settings.fog || political || vision.has(t))),
     record: (state.record ?? []).filter((r) => r.how === "broken" || isParty(r, player)).map((r) => ({ ...r })),
     spies: (state.spies ?? []).filter((x) => x.owner === player).map((x) => ({ id: x.id, at: x.at, target: x.target, recalled: x.recalled, status: x.status })),
+    ...(state.winner ? { history: JSON.parse(JSON.stringify(state.history ?? [])) as GameState["history"], stats: JSON.parse(JSON.stringify(state.stats ?? {})) as GameState["stats"] } : {}),
   };
 }
 

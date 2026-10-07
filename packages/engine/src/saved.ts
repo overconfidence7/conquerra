@@ -3,6 +3,7 @@ import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils";
 import type { Rules } from "@conquerra/content";
 import { resolveTurn } from "./resolve";
 import { seedRng } from "./rng";
+import { emptyStats, landHeld } from "./history";
 import { createGame, type NewGameOptions } from "./setup";
 import type { GameContext, GameState, OrdersByPlayer, PlayerId, TurnResult } from "./types";
 
@@ -72,7 +73,7 @@ export interface SavedGameV1 {
 }
 
 /** The game state's current shape. Bump it (and add a migration below) whenever GameState changes. */
-export const STATE_VERSION: GameState["version"] = 8;
+export const STATE_VERSION: GameState["version"] = 9;
 
 /**
  * How to bring an older game state up to date, one version at a time: `STATE_MIGRATIONS[n]` turns a version-n
@@ -123,6 +124,15 @@ export const STATE_MIGRATIONS: Record<number, (s: Record<string, unknown>) => Re
   6: (s) => ({ ...s, players: (s.players as Record<string, unknown>[]).map((p) => ({ ...p, purse: [] })) }),
   /** 7 -> 8 (session 16): Houses chosen in the lobby. An older game keeps the colours it had (one per seat, in order). */
   7: (s) => ({ ...s, players: (s.players as Record<string, unknown>[]).map((p, i) => ({ ...p, house: i })) }),
+  /**
+   * 8 -> 9 (session 16): the game's record for its end. An older game's graph starts from where it was saved (the land
+   * held then), and its awards count from then on.
+   */
+  8: (s) => {
+    const players = (s.players as { id: string }[]).map((p) => p.id);
+    const land = landHeld(s.territories as Record<string, { owner: string | null }>, players);
+    return { ...s, history: [{ turn: Math.max(0, Number(s.turn) - 1), land }], stats: Object.fromEntries(players.map((p) => [p, emptyStats()])) };
+  },
 };
 
 export function stateFingerprint(s: GameState): string {
