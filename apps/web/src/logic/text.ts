@@ -236,6 +236,22 @@ export interface LogLine {
 }
 
 /** One line per map in the lobby's map list: "The Ringsea · 100 territories · suits 6–10 players". */
+/** One line per map in the lobby: who it suits and what it plays like (session 19). */
+export const MAP_SUITS: Record<string, string> = {
+  embervale: "The quick map, for 4–6: close quarters, so hold your capital early.",
+  greatmarch: "A crowded continent for 8–10: many neighbours, long wars.",
+  "shattered-isles": "Islands for 4–6: every crossing is by sea, so choke points decide the game.",
+  "twin-realms": "Two continents for 4–8, joined by one land bridge: a natural front line.",
+  "moon-coast": "A crescent for 4–8: short fronts, long marches, lots of comebacks.",
+  ringsea: "A ring of land round an inland sea, for 6–10; the island in the middle reaches every shore.",
+  crownlands: "A crown for 6–10: five peninsula points, each a natural stronghold.",
+  wyrmland: "The dragon, for 6–8: a long neck and tail mean long marches.",
+  ashwing: "A phoenix for 6–8: wide wings to grow in, and a narrow neck worth holding.",
+  "sundered-crowns": "Two great continents for 6–8, joined only by islets and sea lanes: big battles at the crossing.",
+  krakenmere: "One of the two biggest maps, for 8–10: a kraken's six arms, each a long peninsula with a choke where it joins.",
+  rootholm: "One of the two biggest maps, for 8–10: a tree of life with a broad crown, one trunk to fight over, and roots far below.",
+};
+
 export function mapChoiceLabel(m: { name: string; territories: number; recommendedPlayers: { min: number; max: number } }): string {
   return `${m.name} · ${m.territories} territories · suits ${m.recommendedPlayers.min}–${m.recommendedPlayers.max} players`;
 }

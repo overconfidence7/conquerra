@@ -182,7 +182,7 @@ describe("Recruit panel", () => {
 });
 
 describe("the lobby's map list", () => {
-  it("lists all eight official maps with their size and suggested players, and each one loads only when picked", async () => {
+  it("lists all twelve official maps with their size and suggested players, and each one loads only when picked", async () => {
     const { mapCatalog } = await import("@conquerra/content");
     const { loadMap, loadableMaps } = await import("@conquerra/content/loadMap");
     expect(mapCatalog.map(mapChoiceLabel)).toEqual([
@@ -194,6 +194,10 @@ describe("the lobby's map list", () => {
       "The Ringsea · 100 territories · suits 6–10 players",
       "The Crownlands · 100 territories · suits 6–10 players",
       "Wyrmland · 120 territories · suits 6–8 players",
+      "Ashwing · 160 territories · suits 6–8 players",
+      "The Sundered Crowns · 160 territories · suits 6–8 players",
+      "Krakenmere · 200 territories · suits 8–10 players",
+      "Rootholm · 200 territories · suits 8–10 players",
     ]);
     expect(loadableMaps.sort()).toEqual(mapCatalog.map((m) => m.id).sort());
     expect((await loadMap("wyrmland")).territories.length).toBe(120);

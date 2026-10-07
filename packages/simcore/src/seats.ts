@@ -1,5 +1,5 @@
 import { agreedIn, fallenBot, negotiate, withAgreed, type Bot } from "@conquerra/bots";
-import { createGame, indexMap, replayFor, resolveTurn, viewFor, type GameContext, type GameSettings, type GameState, type OrdersByPlayer, type PlayerId, type PlayerView, type ReplayEvent, type StepEvent } from "@conquerra/engine";
+import { createGame, indexMap, replayFor, resolveTurn, viewFor, type GameContext, type GameSettings, type GameState, type OrdersByPlayer, type PlayerId, type PlayerView, type ReplayEvent, type StepEvent, type TerritoryId } from "@conquerra/engine";
 
 /** Timing only (never game logic): the same clock in Node and in a browser worker. */
 declare const performance: { now(): number };
@@ -13,6 +13,8 @@ export interface SeatStats {
   player: PlayerId;
   /** The bot's id ("captain", "marshal-turtle"...). */
   bot: string;
+  /** Where its capital was (session 19: seat fairness by capital spot). */
+  capital: TerritoryId;
   won: boolean;
   /** Turn it was knocked out (null: it lasted). */
   out: number | null;
@@ -80,7 +82,7 @@ export interface TableOptions {
 }
 
 const blank = (seat: number, player: PlayerId, bot: string): SeatStats => ({
-  seat, player, bot, won: false, out: null, land5: null, land8: null, land10: null, land15: null, peak: 0, lost8: 0, lost: 0, took8: 0, took: 0,
+  seat, player, bot, capital: "", won: false, out: null, land5: null, land8: null, land10: null, land15: null, peak: 0, lost8: 0, lost: 0, took8: 0, took: 0,
   attacks: 0, frontsPerTurn: 0, rivalsAttacked: 0, concentration: 0, concentration10: 0, leaderAttacks: 0, leaderShare: 0,
   firstFort: null, firstMarket: null, firstCulture: null, forts10: 0, markets10: 0, culture10: 0,
   gold: { troops: 0, buildings: 0, culture: 0, specialists: 0, spies: 0 }, gold10: { troops: 0, buildings: 0, culture: 0, specialists: 0, spies: 0 }, deals: 0, broken: 0, wars: 0, truces: 0,
@@ -91,7 +93,7 @@ export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], 
   const idx = indexMap(ctx.map);
   const players = bots.map((_, i) => ({ id: `p${i + 1}`, name: `Bot ${i + 1}` }));
   let s = createGame(ctx, { gameId: `sim-${seed}`, seed, players, settings: opts.settings ?? {} });
-  const stats = bots.map((b, i) => blank(i, players[i]!.id, b.id));
+  const stats = bots.map((b, i) => ({ ...blank(i, players[i]!.id, b.id), capital: s.players.find((p) => p.id === players[i]!.id)!.capital }));
   const byId = new Map(stats.map((x) => [x.player, x]));
   const sighted = new Set(opts.sighted ?? []);
   const fronts = new Map<PlayerId, { turns: number; sum: number; all: Set<PlayerId>; players: number }>();

@@ -154,3 +154,41 @@ What did work: **the capital's opening guard on every table**, not only crowded 
 - **Catch-up income:** +1 gold a turn for every 10% of the map you're below the leader. Not simulated yet; the obvious next lever.
 - **Larger upkeep for big realms** (`economy.upkeepRate` 0.35 → 0.5): slows a runaway's army; it also lengthens every game.
 - **The Fallen's Influence by the leader's lead** (more Influence the more one player holds): aims the knocked-out players at the runaway harder.
+
+## Part 4: bigger maps
+
+### Four new official maps (Nate's OK, Oct 7)
+**Ashwing** (a phoenix, 160 territories, 6–8 players), **The Sundered Crowns** (twin continents, 160, 6–8), **Krakenmere** (a kraken, 200, 8–10) and **Rootholm** (a tree of life, 200, 8–10). How they were made, galleries, Far pictures and recipes: `docs/maps/candidates.md` (session 19 section). The lobby now has a line under the map choice for every map, saying who it suits and what it plays like.
+
+### Sims on the new maps (Marshal tables, 500 games a line, `docs/sims/s19-new-maps.txt`)
+| Map, players | Turns (median) | Within 40 | Half the map after turn 10 | Halfway leader won | Comebacks | Knocked out by turn 6 |
+|---|---|---|---|---|---|---|
+| Ashwing 6 | 57.8 (60) | 1.6% | 0.2% | 48.9% | 78.3% | 0.2% |
+| Ashwing 8 | 58.5 (60) | 1.0% | 0.0% | 43.5% | 82.4% | 1.1% |
+| The Sundered Crowns 6 | 46.6 (46) | 28.8% | 0.2% | 91.8% | 33.4% | 4.5% |
+| The Sundered Crowns 8 | 54.3 (58) | 5.2% | 0.0% | 77.4% | 59.3% | 4.2% |
+| Krakenmere 8 | 58.9 (60) | 0.0% | 0.0% | 53.7% | 79.5% | 0.1% |
+| Krakenmere 10 | 59.4 (60) | 0.0% | 0.0% | 55.1% | 80.7% | 0.5% |
+| Rootholm 8 | 59.4 (60) | 0.0% | 0.0% | 46.6% | 79.4% | 0.3% |
+| Rootholm 10 | 59.9 (60) | 0.0% | 0.0% | 36.8% | 86.7% | 0.7% |
+
+- **Bot games on the big maps run to the 60-turn cap** (then the best score wins). Nate (Oct 7): his own games run much shorter than the bots', so this is fine. In the lobby, 8 or more players defaults to **Conquest** (20 turns, the best score wins), so most 8–10 player games on these maps are 20-turn games unless the host picks Classic. **Question for Nate:** is 20 turns right for a 200-territory map, or should Conquest's default grow with the map (say 30 turns at 160–200)?
+- **The Sundered Crowns** is decided by who wins their own continent (halfway leader 92% at 6 players): the strait is a real front line, as intended, but a runaway there is hard to stop. Fine for a 6–8 player "two halves" map; worth Nate's eye in play.
+
+### Seat fairness: a finding that touches every map
+The sims always reported win rate by seat number, but seats are dealt to the capital spots at random every game, so that hid something: **among equal bots, the capital spot decides a lot, on every map** (Marshal tables, 300 games, `docs/sims/s19-spots.txt`):
+
+| Map, players | Best spot | Worst spot | Fair |
+|---|---|---|---|
+| Embervale 4 | Wolfcrest 53% | Embercrest 3% | 25% |
+| Wyrmland 6 | Kingsholt 40% | Hallowstone 3% | 17% |
+| Greatmarch 10 | Dawnhollow 25% | Galeford 2% | 10% |
+| Ashwing 6 | Dunkeep 31% | Ambergate 2% | 17% |
+| The Sundered Crowns 6 | Nettlehurst 76% | Northrest 1% | 17% |
+| Rootholm 8 | Nettlehelm 35% | Larkfield 1% | 12.5% |
+| Krakenmere 8 | Amberhelm 57% | Rookstone 0% | 12.5% |
+| Krakenmere 10 | Rookton 47% | Moonford 0% | 10% |
+
+It's the map, not a bot quirk: Captains, Recruits and Marshals with the fog off show the same spots on Embervale (Embercrest 0.4–5.4% for all of them). It's exaggerated by equal bots (whoever gets a small early edge snowballs, and every bot reacts the same way), but a person starting in Embercrest is at a real disadvantage. The map maker's own fairness check (each capital about as far from its nearest rival, and about as much gold within 2 steps) passes all of these; it doesn't see exposure (how many borders and rival capitals press on a spot) or what lies beyond 2 steps. The winning spot isn't simply the one with the most land around it (Krakenmere's Amberhelm has little; the land-rich centre never wins).
+
+**What I tried:** a recipe can now pin capital layouts per table size, chosen from the map's own capital spots (`capitals` in `configs.ts`; `apps/sim/scripts/s19-fair-seats.ts` and `s19-fair-all.ts` search them with the simulator). On Embervale 4, swapping one spot at a time took the spread from 59 to 36 points; trying every layout is in `docs/sims/s19-fair-all-embervale4.txt` (see the next part for what was pinned).

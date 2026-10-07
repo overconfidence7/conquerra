@@ -4,7 +4,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { prewarmHost, useGame } from "../store";
 import { suggestLeaderName } from "@conquerra/engine";
 import type { BotChoice } from "../host/protocol";
-import { mapChoiceLabel } from "../logic/text";
+import { MAP_SUITS, mapChoiceLabel } from "../logic/text";
 import { TIMER_CHOICES, timerLabel } from "../logic/timer";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
@@ -79,6 +79,7 @@ export function Lobby() {
             </option>
           ))}
         </select>
+        {MAP_SUITS[map.id] && <span className="muted small block">{MAP_SUITS[map.id]}</span>}
       </div>
 
       <div className="field">

@@ -1,0 +1,5 @@
+start: Eldermere 12%, Galeholt 25%, Embercrest 2%, Wolfcrest 61% | spread 59 pts
+  better: Eldermere 18%, Galeholt 33%, Sunshire 5%, Wolfcrest 45% | spread 40 pts
+  better: Eldermere 6%, Galeholt 42%, Pinethorpe 38%, Wolfcrest 14% | spread 36 pts
+best: Eldermere 5%, Galeholt 41%, Pinethorpe 40%, Wolfcrest 14% | spread 36 pts
+recipe: capitals: {4: ["t02","t05","t36","t37"]}

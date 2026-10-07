@@ -159,3 +159,30 @@ A plain 80-territory continent and a shield silhouette, so there's one Far view 
 - **Size sets the 10-player length:** at 10 players, the 100-territory maps run 38–39 turns (inside the target); 120-territory maps run 41.5–45; Greatmarch (80) runs about 35. So 10-player games fit best on about 100 territories.
 - **Runaways:** shape matters less than table size. Early runaways (half the map by turn 10) are rare on every new map at 6+ players (0–1%) and highest on the archipelago at 4 players (24%: whoever owns the biggest island early snowballs). The crescent gives the most comebacks at 8 players (53%, and the halfway leader wins only 64% of games, the least predictable of all).
 - **Seats stay fair** on every candidate within the noise of 200 games.
+
+# Session 19: the bigger maps (about 160 and 200 territories)
+
+**Nate's OK (Oct 7): all four are official.** He picked both ~160 maps, and both ~200 maps once the world tree was redrawn ("the world tree looks more like a uvula than a tree, it needs a design update to have more of a tree of life look"). The redrawn tree is the one below.
+
+**How they were made:** three new silhouettes drawn in code (`packages/mapgen/src/masks.ts`: a phoenix, a kraken and a tree of life), plus twin continents at 160. Each shape was tried on 12 seeds (`pnpm --filter @conquerra/mapgen try-maps --shapes mask --mask <id> --sizes <n> --seeds 12`), the best seed of each drawn at Far in the map lab, and shown to Nate. Galleries: `docs/maps/s19/gallery-*.png` (phoenix 8 of 12 seeds pass every check, twin continents 12 of 12, kraken 4 of 12, tree of life 12 of 12). Far pictures: `docs/maps/s19/far-*.png`; in the game: `docs/art/screens/s19-<map>-{far,mid}{,-phone}.png`.
+
+**The recipes start at the seed try that passed** (`mask-160-12#21`, `mask-200-3#2`): the same map byte for byte as the one Nate saw (only its label changes), made in one go so the tests stay quick.
+
+| Map | Shape, size | Suggested players | Real geography | Why |
+|---|---|---|---|---|
+| **Ashwing** | phoenix, 160 (36 provinces) | 6–8 | 11 passes, 8 sea lanes, 31 river borders, 19 choke points | Wide wings to grow in, a narrow neck between head and body worth holding, a three-feathered tail of peninsulas. |
+| **The Sundered Crowns** | twin continents, 160 (36) | 6–8 | 13 passes, 3 sea lanes, 32 river borders, 16 choke points | Two great continents joined only through two islets in the strait: big battles at the crossing. |
+| **Krakenmere** | kraken, 200 (44) | 8–10 | 23 passes, 6 sea lanes, 19 river borders, 29 choke points | A mantle and six thick arms: each arm a long peninsula, choked where it joins the body. |
+| **Rootholm** | tree of life, 200 (44) | 8–10 | 24 passes, 9 sea lanes, 12 river borders, 2 land bridges, 35 choke points | A round crown with drooping branches and sea between them, one trunk to fight over, and roots far below. |
+
+All four pass every check (connected, even territory sizes, provinces in one piece, fair capitals for every player count from 2 to 10, no hairline borders, wide passes, sea lanes, choke points). The sims at their suggested sizes are in `docs/sim-results-m3-balance.md` (Part 4).
+
+<details><summary>Recipes</summary>
+
+```json
+{"id":"ashwing","name":"Ashwing","seed":"mask-160-12#21","shape":"mask","territories":160,"provinces":36,"players":{"min":2,"max":10,"recommended":{"min":6,"max":8}},"seas":0,"lakes":4,"islandChains":1,"mountainRanges":5,"seaLanes":6,"minSeaLanes":2,"rivers":8,"minChokePoints":13,"roughness":0.38,"mask":"phoenix"}
+{"id":"sundered-crowns","name":"The Sundered Crowns","seed":"twinContinents-160-7","shape":"twinContinents","territories":160,"provinces":36,"players":{"min":2,"max":10,"recommended":{"min":6,"max":8}},"seas":0,"lakes":4,"islandChains":1,"mountainRanges":5,"seaLanes":6,"minSeaLanes":2,"rivers":8,"minChokePoints":13,"roughness":0.6}
+{"id":"krakenmere","name":"Krakenmere","seed":"mask-200-4","shape":"mask","territories":200,"provinces":44,"players":{"min":2,"max":10,"recommended":{"min":8,"max":10}},"seas":0,"lakes":5,"islandChains":1,"mountainRanges":7,"seaLanes":8,"minSeaLanes":2,"rivers":10,"minChokePoints":17,"roughness":0.38,"mask":"kraken"}
+{"id":"rootholm","name":"Rootholm","seed":"mask-200-3#2","shape":"mask","territories":200,"provinces":44,"players":{"min":2,"max":10,"recommended":{"min":8,"max":10}},"seas":0,"lakes":5,"islandChains":1,"mountainRanges":7,"seaLanes":8,"minSeaLanes":2,"rivers":10,"minChokePoints":17,"roughness":0.38,"mask":"worldtree"}
+```
+</details>

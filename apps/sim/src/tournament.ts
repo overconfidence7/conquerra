@@ -38,6 +38,8 @@ export interface TournamentSpec {
   rules?: Record<string, unknown>;
   /** Game settings beyond fog and diplomacy (switching a system off, for its cost in turns). */
   settings?: Record<string, unknown>;
+  /** A capital layout to try for this many players (session 19's fair seats), instead of the map's own. */
+  layout?: string[];
 }
 
 /** `b` merged into `a`, objects deep (arrays and numbers replaced). */
@@ -116,7 +118,9 @@ export function seatsFor(spec: TournamentSpec, i: number, seed: string): string[
 }
 
 export function playOne(spec: TournamentSpec, i: number): TableResult & { kinds: string[] } {
-  const ctx: GameContext = { map: maps[spec.map]!, rules: spec.rules ? merge(defaultRules, spec.rules) : defaultRules };
+  const base = maps[spec.map]!;
+  const map = spec.layout ? { ...base, capitalLayouts: [...(base.capitalLayouts ?? []).filter((l) => l.players !== spec.players), { players: spec.players, slots: spec.layout }] } : base;
+  const ctx: GameContext = { map, rules: spec.rules ? merge(defaultRules, spec.rules) : defaultRules };
   const seed = `${spec.seed}-${spec.map}-${spec.players}p-${i}`;
   const kinds = seatsFor(spec, i, seed);
   const bots = kinds.map((k) => botFor(k, spec.tweak));

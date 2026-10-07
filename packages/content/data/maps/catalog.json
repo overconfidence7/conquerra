@@ -86,5 +86,49 @@
       "min": 6,
       "max": 8
     }
+  },
+  {
+    "id": "ashwing",
+    "name": "Ashwing",
+    "territories": 160,
+    "minPlayers": 2,
+    "maxPlayers": 10,
+    "recommendedPlayers": {
+      "min": 6,
+      "max": 8
+    }
+  },
+  {
+    "id": "sundered-crowns",
+    "name": "The Sundered Crowns",
+    "territories": 160,
+    "minPlayers": 2,
+    "maxPlayers": 10,
+    "recommendedPlayers": {
+      "min": 6,
+      "max": 8
+    }
+  },
+  {
+    "id": "krakenmere",
+    "name": "Krakenmere",
+    "territories": 200,
+    "minPlayers": 2,
+    "maxPlayers": 10,
+    "recommendedPlayers": {
+      "min": 8,
+      "max": 10
+    }
+  },
+  {
+    "id": "rootholm",
+    "name": "Rootholm",
+    "territories": 200,
+    "minPlayers": 2,
+    "maxPlayers": 10,
+    "recommendedPlayers": {
+      "min": 8,
+      "max": 10
+    }
   }
 ]

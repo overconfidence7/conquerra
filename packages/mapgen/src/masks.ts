@@ -28,6 +28,17 @@ export interface MaskDef {
 /** Points written in a 0..100-high box, scaled to height 1. */
 const ring = (...pts: number[]) => pts.map((v) => v / 100);
 
+/**
+ * A left-right symmetric outline in a 0..100-high box `width` wide: the right half's points, clockwise from the top
+ * middle to the bottom middle; the left half is its mirror image (session 19).
+ */
+const sym = (width: number, ...right: number[]) => {
+  const pts: [number, number][] = [];
+  for (let i = 0; i < right.length; i += 2) pts.push([right[i]!, right[i + 1]!]);
+  const left = pts.slice(1, -1).reverse().map(([x, y]) => [width - x, y] as [number, number]);
+  return ring(...[...pts, ...left].flat());
+};
+
 export const MASKS: MaskDef[] = [
   {
     id: "shield",
@@ -55,6 +66,55 @@ export const MASKS: MaskDef[] = [
         110, 28, 116, 18, 124, 26, 134, 52, // fourth point
         142, 32, 148, 24, 154, 32, 152, 60, 152, 92, // right point and down
         120, 86, 80, 94, 40, 86,
+      ),
+    ],
+  },
+  {
+    id: "phoenix",
+    name: "The Phoenix",
+    aspect: 1.8,
+    // A phoenix rising (session 19): a small head on a neck, wings spread wide with scalloped trailing feathers, and a
+    // fanned tail of three feathers.
+    rings: [
+      sym(180,
+        90, 3, 97, 6, 99, 13, 95, 19, 96, 28, 104, 34, // head and neck
+        118, 26, 136, 14, 156, 6, 176, 4, // the wing's leading edge, out to its tip
+        172, 14, 160, 18, 164, 26, 148, 27, 150, 36, 132, 37, 132, 46, 112, 48, // the scalloped trailing feathers, back in
+        110, 57, 106, 65, // the body
+        122, 77, 134, 93, 118, 89, 110, 81, 106, 96, 96, 86, 90, 98, // the tail feathers
+      ),
+    ],
+  },
+  {
+    id: "kraken",
+    name: "The Kraken",
+    aspect: 1.5,
+    // A kraken (session 19): a round mantle, and six thick arms: the outer pair curling up, the next pair reaching down
+    // and out, the inner pair straight down.
+    rings: [
+      sym(150,
+        75, 2, 88, 4, 98, 12, 102, 24, 100, 36, // the mantle
+        116, 33, 130, 25, 138, 13, 147, 15, 142, 30, 127, 42, 108, 50, // the outer arm, curling up
+        121, 56, 133, 67, 139, 83, 135, 97, 124, 95, 124, 79, 114, 68, 100, 61, // the middle arm, down and out
+        98, 78, 93, 97, 83, 95, 84, 77, 80, 65, 75, 67, // the inner arm, straight down
+      ),
+    ],
+  },
+  {
+    id: "worldtree",
+    name: "The Tree of Life",
+    aspect: 1.2,
+    // A tree of life (session 19, redrawn at Nate's word: the first read as a uvula): a round crown with a scalloped,
+    // leafy rim and deep sea inlets cutting up between its branches, a sturdy trunk (a natural choke point), and two
+    // pairs of roots splaying out below with sea between them.
+    rings: [
+      sym(120,
+        60, 1, 68, 2, 74, 1, 82, 4, 88, 4, 95, 9, 101, 11, 106, 17, 110, 21, 113, 28, 113, 35, 110, 41, 106, 46, // the crown's leafy rim
+        101, 48, 97, 33, 92, 49, 86, 50, 81, 35, 76, 50, 70, 52, // under the crown: three branches, with deep inlets between
+        68, 58, 68, 68, // the trunk
+        74, 70, 86, 70, 100, 73, 111, 80, 117, 92, 107, 93, 97, 82, 86, 78, // the outer root
+        78, 85, 86, 97, 76, 99, 71, 87, // the middle root
+        60, 79, // between the middle roots
       ),
     ],
   },

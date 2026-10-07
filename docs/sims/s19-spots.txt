@@ -1,0 +1,14 @@
+embervale:4: 4 capital spots used; fair 25.0%; spots with 20+ games:
+Wolfcrest 53.0% (300) · Galeholt 30.0% (300) · Eldermere 14.0% (300) · Embercrest 3.0% (300)
+wyrmland:6: 6 capital spots used; fair 16.7%; spots with 20+ games:
+Kingsholt 40.3% (300) · Whitemarch 20.3% (300) · Hallowhaven 17.7% (300) · Rookhome 15.3% (300) · Oakstone 3.3% (300) · Hallowstone 2.7% (300)
+greatmarch:10: 10 capital spots used; fair 10.0%; spots with 20+ games:
+Dawnhollow 25.0% (300) · Kingswick 14.0% (300) · Northcrest 11.7% (300) · Brightby 11.0% (300) · Northmark 10.0% (300) · Oakshire 8.3% (300) · Goldcrest 8.0% (300) · Mistmore 4.7% (300) · Rookthorpe 4.0% (300) · Galeford 2.3% (300)
+ashwing:6: 6 capital spots used; fair 16.7%; spots with 20+ games:
+Dunkeep 31.0% (300) · Oldrest 27.0% (300) · Dawnhaven 16.3% (300) · Northgarth 15.3% (300) · Rushkeep 8.7% (300) · Ambergate 1.7% (300)
+sundered-crowns:6: 6 capital spots used; fair 16.7%; spots with 20+ games:
+Nettlehurst 75.7% (300) · Stonemere 12.3% (300) · Sorrowgarth 4.7% (300) · Oldwood 4.3% (300) · Moonden 2.0% (300) · Northrest 1.0% (300)
+rootholm:8: 8 capital spots used; fair 12.5%; spots with 20+ games:
+Nettlehelm 34.7% (300) · Brightfield 24.0% (300) · Westerford 15.7% (300) · Coldreach 11.3% (300) · Wolfhold 7.3% (300) · Glenleigh 3.0% (300) · Fairfall 2.3% (300) · Larkfield 0.7% (300)
+krakenmere:10: 10 capital spots used; fair 10.0%; spots with 20+ games:
+Rookton 47.3% (300) · Emberfall 19.3% (300) · Glenby 10.0% (300) · Oldfell 8.0% (300) · Willowfall 6.0% (300) · Coldwick 4.0% (300) · Stagwood 2.7% (300) · Dundale 0.7% (300) · Rookstone 0.7% (300) · Moonford 0.0% (300)

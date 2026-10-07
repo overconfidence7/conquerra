@@ -47,6 +47,12 @@ export interface MapGenOptions {
   territories: number;
   provinces: number;
   players: { min: number; max: number; recommended: { min: number; max: number } };
+  /**
+   * Capital layouts chosen by hand for some table sizes (session 19: picked from the map's own capital spots with the
+   * simulator, `apps/sim/scripts/s19-fair-seats.ts`, because spots that look fair on paper can win far more or less
+   * often than others). By player count; every spot must be one of the map's capital spots.
+   */
+  capitals?: Record<number, string[]>;
   /** Share of the map that is water (default 0.38). */
   water?: number;
   /** Inland seas or big gulfs (default 1). */
@@ -481,7 +487,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
     ...draft(),
     provinces,
     capitalSlots: [...slotSet].sort(),
-    capitalLayouts: [...layouts].map(([players, slots]) => ({ players, slots })),
+    capitalLayouts: [...layouts].map(([players, slots]) => ({ players, slots: o.capitals?.[players] ? [...o.capitals[players]!] : slots })),
     generator: { version: MAPGEN_VERSION, seed: o.seed, attempt },
     geometry: {
       width,

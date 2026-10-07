@@ -45,6 +45,7 @@ for (const shape of shapes)
           writeFileSync(join(resolve(out), `${recipe.id}.png`), png);
         }
       } catch (e) {
+        if (process.env.DEBUG_MAPS) console.error(e);
         failed++;
         times.push(performance.now() - t0);
         const msg = (e as Error).message.split("\n").slice(1);

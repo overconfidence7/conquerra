@@ -13,6 +13,10 @@ const LOADERS: Record<string, () => Promise<{ default: unknown }>> = {
   ringsea: () => import("../data/maps/ringsea.json"),
   crownlands: () => import("../data/maps/crownlands.json"),
   wyrmland: () => import("../data/maps/wyrmland.json"),
+  ashwing: () => import("../data/maps/ashwing.json"),
+  "sundered-crowns": () => import("../data/maps/sundered-crowns.json"),
+  krakenmere: () => import("../data/maps/krakenmere.json"),
+  rootholm: () => import("../data/maps/rootholm.json"),
 };
 
 export const loadableMaps = Object.keys(LOADERS);

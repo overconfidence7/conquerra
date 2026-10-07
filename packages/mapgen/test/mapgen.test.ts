@@ -30,7 +30,7 @@ describe("map maker", () => {
   }, 60_000);
 
   it("every official map's committed file is exactly what its recipe makes, and the lobby lists them all", () => {
-    expect(MAP_CONFIGS.map((c) => c.id)).toEqual(["embervale", "greatmarch", "shattered-isles", "twin-realms", "moon-coast", "ringsea", "crownlands", "wyrmland"]);
+    expect(MAP_CONFIGS.map((c) => c.id)).toEqual(["embervale", "greatmarch", "shattered-isles", "twin-realms", "moon-coast", "ringsea", "crownlands", "wyrmland", "ashwing", "sundered-crowns", "krakenmere", "rootholm"]);
     expect(Object.keys(maps).sort()).toEqual(MAP_CONFIGS.map((c) => c.id).sort());
     for (const c of MAP_CONFIGS.slice(2)) expect(JSON.stringify(generateMap(c, defaultRules).map), c.id).toBe(JSON.stringify(maps[c.id]));
   }, 180_000);

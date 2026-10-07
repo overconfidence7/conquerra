@@ -93,7 +93,7 @@ describe("painted scenery (ranges, cliffs, bridges, gates, landmarks, forests)",
     expect(cliffs.filter((n) => n > 0).length).toBeGreaterThanOrEqual(6);
     const kinds = new Set(all.flatMap((m) => sceneryFor(m).bridges.map((b) => b.kind)));
     expect([...kinds].sort()).toEqual(["stone", "wood"]);
-  });
+  }, 60_000); // (twelve maps since session 19, up to 200 territories)
 });
 
 describe("forests on the art test bench", () => {

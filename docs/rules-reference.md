@@ -1,4 +1,4 @@
-# Conquerra Rules Reference (Milestone 3, session 18)
+# Conquerra Rules Reference (Milestone 3, session 19)
 
 *A 10-minute read. This is how the engine actually plays today. Numbers are the current balance settings from `packages/content/data/rules.json`; they will change as we tune.*
 
@@ -127,7 +127,7 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
 - Each territory has **one culture number, from 0 to 5**. Raise it one level at a time with gold: **3, 4, 6, 8, 10** gold for levels 1–5 (was 4, 6, 8, 10, 12 before session 9).
 - **What it does ("loyal land"):**
   - **Defense:** each level makes that territory defend **6% better** (+30% at level 5). It multiplies with terrain and forts (§9).
-  - **Holding bonus:** +0.5 gold per turn per level on that territory, and a full province's bonus grows by 0.5 per level of its average culture.
+  - **Holding bonus:** **+1 gold per turn per level** on that territory (session 19, was +½; pending Nate's pick of the three levers tested), and a full province's bonus grows by 0.5 per level of its average culture.
   - **Protection:** each level blocks 15% of bad effects there (up to 75%): **unrest** (§8), the Fallen's world events (§16) and bad **Fate events** (§19). An all-or-nothing event (a fire, a flooded ford) is shrugged off with that chance.
   - **Unlocks** the fancier specialists in that province (§6): **the culture ladder** below.
 - **Culture is lost when land changes hands** (session 16, Nate): a captured territory drops to **culture 0** for its new owner; so does land traded in a deal, or taken by rebels. **Buildings stay** (a fort keeps standing for the new owner). Culture is an investment in land you mean to keep. The territory card says so on someone else's land ("Lost if you take it"), and the report says when a capture wiped some out. (The share kept is `rules.culture.keptOnCapture`, 0.)
@@ -235,6 +235,7 @@ Maps are made by the **map maker** (same seed, same map) and look like a real pl
   - **Embervale**: 40 territories, 8 provinces, suits 4–6 players. 3 passes, 3 sea lanes.
   - **Greatmarch**: 80 territories, 20 provinces, suits 8–10 players. 8 passes, 3 sea lanes.
   - Both were rebuilt in session 9 (map maker v2) from the same seeds: same coasts, lakes, islands and ranges, but no hairline borders, wider passes, and new place names.
+- **The bigger maps (session 19, Nate's OK):** **Ashwing** (a phoenix, 160 territories, suits 6–8), **The Sundered Crowns** (twin continents, 160, suits 6–8), **Krakenmere** (a kraken, 200, suits 8–10) and **Rootholm** (a tree of life, 200, suits 8–10). The lobby shows a line under the map choice saying who each map suits and what it plays like. Details: `docs/maps/candidates.md`.
 - **Map shapes and sizes (session 10):** the map maker can now make island chains (every island joined by sea lanes), twin continents, land ringing an inland sea, a crescent, or land in a silhouette (a dragon, a shield, a crown), from 40 to 120 territories, with provinces sized to match and fair capitals for every player count a map claims. Candidates are in `docs/maps/candidates.md`; none is in the lobby until Nate picks.
 
 ## 13. Bots
@@ -244,6 +245,7 @@ Bots play by exactly the same rules as people, and only from their own view (inc
 - **Marshal (hard, the default; session 17):** the Captain's priorities below, with what the simulator found wins, and a personality.
   - **What every Marshal does** (whatever its personality): it **attacks hard**, chaining on whenever the next hop is likely to win, up to 6 hops, and throws every spare troop in; it doesn't hold troops back on quiet fronts (it still holds choke points, a threatened capital and its fronts with a runaway); it **expands hardest in the first 14 turns**; it goes for **whole provinces** (land that would complete one is worth more); and it prefers to **end a chain on defensible ground** (where few open borders face it).
   - **It reads a runaway better than the Captain, without cheating:** it estimates land it can't see (land it remembers stays whose it was; a knocked-out player's land goes to whoever knocked them out; land it knows nothing about goes partly to whoever holds the nearest land it knows of and partly evenly to everyone), and names a runaway by **size** (as the Captain from 4–5 players; from 6 players a third of the map, or 22% and 1.6 times anyone else), by **pace** (it gained the most land in the last 3 turns, twice as fast as the next, and holds 18% already), and keeps naming it for 3 turns. Then it proposes a **joint war** against it at once, for 6 turns, and again as soon as one ends; every Marshal accepts one; its fronts with the runaway come first.
+  - **What it learned in session 19:** it queues troops first, then its armies' moves, then everything else it buys (each order takes a round, so a purchase queued first lets rivals move first); it doesn't hire cavalry on a whim; and it keeps a **guard at its capital**: half of the biggest rival army it knows of within 3 steps, and for the first 3 turns half its own stack (capitals on Embervale are 3 steps apart: without the guard, 14% of Marshals were knocked out on turn 1). A Leader you put on "Run the military" keeps the same guard.
   - **It never cheats:** it judges only from its own view, what it remembers of the replays it watched, and public facts. No pooled sight between bots.
   - **Personalities** (each game deals them from its seed, no two the same until all six are used; hidden while you play, revealed at the end, or shown all along with "Show personalities" in the lobby). Style only: every one plays by the same rules and gold.
     - **The Conqueror:** picks one front and masses there, holds its other borders with just enough.
@@ -268,7 +270,7 @@ Bots play by exactly the same rules as people, and only from their own view (inc
 - The same rules apply to every seat: nobody gangs up on you because you're human, only because you're ahead.
 - **Bots don't use leaders** (they already plan every army and all their spending): their Steward has no command and no budget, and they keep the leaders they capture (a captured Leader stands where it was placed, and goes if its land falls) so that knocking a bot out still gives you its Leader and Steward. (Session 15's Govern for captured generals is gone with session 18; the Captain plays exactly as before otherwise.)
 - **Your leaders plan with the Marshal's brain** (session 18, §14): its shared judgement (attack hard, chain on, whole provinces, end on defensible ground) in a neutral style, steered by each command, from your view only.
-- **Knocked-out bots are Fallen bots** (§16), whatever their level (the Fallen see the whole political map, so they don't need the Marshal's estimates): they aim world events at whoever looks to be leading, by the same runaway rule as priority 8, judged from their political map. With fewer than three players left, they aim at the leader once it holds 1.25 times the land of the next. They pick, best first: an uprising in the leader's quietest land, a plague where it holds the most of a province, a famine, mercenaries next to its land that borders neutral land, a storm on its border with another player. Every Fallen bot judges the same way, so they often pool.
+- **Knocked-out bots are Fallen bots** (§16), whatever their level (the Fallen see the whole political map, so they don't need the Marshal's estimates): on their **first turn out they strike whoever holds the most land** with what they can afford (session 19); after that they aim world events at whoever looks to be leading, by the same runaway rule as priority 8, judged from their political map. With fewer than three players left, they aim at the leader once it holds 1.25 times the land of the next. They pick, best first: an uprising in the leader's quietest land, a plague where it holds the most of a province, a famine, mercenaries next to its land that borders neutral land, a storm on its border with another player. Every Fallen bot judges the same way, so they often pool.
 - If a realm loses its capital and has no barracks, it builds one straight away.
 - **Cards (session 13):** bots judge cards only from their own view (their own hand, how many cards rivals hold, their own missions). See §18 and §19.
 
@@ -283,7 +285,7 @@ You have **two leaders from the start**, and you can hand either of them a comma
   - **It pays for its leader's orders** (troops, specialists, buildings, culture), never your treasury, and your gold never pays for them. If the purse is short, the order waits like any order you can't afford.
   - **Take back** brings a purse home in one tap. It arrives as the turn starts, in time for your own orders that turn.
   - **No dodging costs:** if you can't pay your upkeep, the purses pay it (the fullest first) before anyone deserts (§8). Purses also count as your gold in the score.
-- **Defaults:** your **Steward starts on "Run the realm" with 20% of your income**, so building and culture happen even if you never open the Leaders panel. Your **Leader starts with no command and no budget**: you order its army yourself, as before.
+- **Defaults:** your **Steward starts on "Run the realm" with 20% of your income** (session 19: **10% on a crowded table**, 12 or fewer territories a player, such as Embervale with 4 or more or Greatmarch with 8–10, where buildings pay back too slowly for more), so building and culture happen even if you never open the Leaders panel. "Run the realm" buys urgent forts, markets, a barracks where needed, culture where it protects, and (session 19) culture for its income where a level pays back as well as a market. Your **Leader starts with no command and no budget**: you order its army yourself, as before.
 - **The commands** (with the taps on a 384 px phone, from your Leader's portrait):
 
 | Leader | What it does | Taps |
@@ -320,8 +322,8 @@ You have **two leaders from the start**, and you can hand either of them a comma
 - A knocked-out player's own captured leaders are gone with them; only their own two pass on.
 
 ## 16. The Fallen (session 12)
-- **When you're knocked out you become one of the Fallen.** You see the political map (§11) and choose **Watch to the end** or **Leave the game** (the others play on and you see who won).
-- **Influence:** each of the Fallen earns 1 Influence a turn, plus 0.5 for each other Fallen player. Several Fallen aiming the same event at the same place pool their Influence. Putting more than the cost toward an event makes it stronger, up to 1.5 times.
+- **When you're knocked out you become one of the Fallen,** and you can act **from your very first turn out** (session 19, Nate): you start with **8 Influence**, and with the turn's own Influence you have 9 or more on your first turn, enough for a storm, a famine or mercenaries. The dialog says so ("You have 9 Influence now: enough for a storm, a famine or mercenaries this very turn", and who holds the most land) with **Strike as one of the Fallen** or **Leave the game** (the others play on and you see who won). You see the political map (§11).
+- **Influence:** you start with 8 (`rules.fallen.startInfluence`); each of the Fallen earns 1 Influence a turn, plus 0.5 for each other Fallen player. Several Fallen aiming the same event at the same place pool their Influence. Putting more than the cost toward an event makes it stronger, up to 1.5 times.
 - **Five world events, each aimed at a living player's land:**
 
 | Event | Cost | Rests for | What it does |
@@ -341,6 +343,7 @@ You have **two leaders from the start**, and you can hand either of them a comma
 - **What the living see:** an event on your own land is always in your replay and report. Anyone else's shows only if you could see where it happened.
 - **On screen (the Fallen):**
   - your Influence;
+  - a line on what you can do now ("Ready now: Storm, Mercenaries. Pick one, then tap Lady Morwen's land (they hold the most)"), or, while saving up, which event comes next and in how many turns;
   - the five events as cards (cost, what it does, ready or resting);
   - tap a card, then the land (a storm takes a second tap, across the border);
   - "Stronger" to put more toward it;
@@ -532,4 +535,4 @@ Spies see deep behind the lines. They never fight and never change a battle: the
 - Both come from the game's own record, kept every turn (and in saved games). **Nobody sees it until the game is over**, when everything is revealed: during play, land counts stay hidden.
 
 ## Not in yet (later milestones)
-Steward portraits (a later art batch; until then the House shield with a quill), bigger maps (about 160 and 200 territories) and the balance pass (session 19), the polish pass with replay effects (session 20). Factions, pause by vote, deals between people and colours chosen by each player in online games (M4), tutorials and scenarios (M5). Not planned: shared vision between partners, and spies that sabotage or affect combat.
+Steward portraits (a later art batch; until then the House shield with a quill), the polish pass with replay effects and art batch 4 (session 20). Catch-up rules for a runaway (options listed in `docs/sim-results-m3-balance.md`, not built). Factions, pause by vote, deals between people and colours chosen by each player in online games (M4), tutorials and scenarios (M5). Not planned: shared vision between partners, and spies that sabotage or affect combat.

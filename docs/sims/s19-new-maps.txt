@@ -1,0 +1,8 @@
+marshals       ashwing:6      57.8 turns (median 60), 1.6% within 40 | half-map at 10 0.2%, halfway leader won 48.9%, comebacks 78.3% | seats 14–19% | out by 6 0.2% | draws 0.6%
+marshals       ashwing:8      58.5 turns (median 60), 1.0% within 40 | half-map at 10 0.0%, halfway leader won 43.5%, comebacks 82.4% | seats 11–15% | out by 6 1.1% | draws 0.2%
+marshals       sundered-crowns:6 46.6 turns (median 46), 28.8% within 40 | half-map at 10 0.2%, halfway leader won 91.8%, comebacks 33.4% | seats 14–18% | out by 6 4.5% | draws 0.0%
+marshals       sundered-crowns:8 54.3 turns (median 58), 5.2% within 40 | half-map at 10 0.0%, halfway leader won 77.4%, comebacks 59.3% | seats 11–14% | out by 6 4.2% | draws 0.2%
+marshals       krakenmere:8   58.9 turns (median 60), 0.0% within 40 | half-map at 10 0.0%, halfway leader won 53.7%, comebacks 79.5% | seats 9–16% | out by 6 0.1% | draws 0.6%
+marshals       krakenmere:10  59.4 turns (median 60), 0.0% within 40 | half-map at 10 0.0%, halfway leader won 55.1%, comebacks 80.7% | seats 7–12% | out by 6 0.5% | draws 0.6%
+marshals       rootholm:8     59.4 turns (median 60), 0.0% within 40 | half-map at 10 0.0%, halfway leader won 46.6%, comebacks 79.4% | seats 10–15% | out by 6 0.3% | draws 0.0%
+marshals       rootholm:10    59.9 turns (median 60), 0.0% within 40 | half-map at 10 0.0%, halfway leader won 36.8%, comebacks 86.7% | seats 9–11% | out by 6 0.7% | draws 0.6%
