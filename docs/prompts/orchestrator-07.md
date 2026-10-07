@@ -58,12 +58,14 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first, simul
 
 **Art batch 4** is made: 42 of about 50 pieces (all effects, key art, the specialists and spies, the redo pieces), waiting in `art/incoming/` for session 20. The scenery additions (narrow peaks, diagonal ridges, side cliffs, bushes, glades, paper grain) wait for a later batch. Steward portraits are listed for later too.
 
-**What happens next, in order:**
-1. **Session 19** (`docs/prompts/claude-code-session-19.md`, written): find why a fully delegating player beats Marshals (37% on Embervale, fair 25%) and lift the Marshal to at least that level; culture and buildings that pay (three levers tested: more culture income, bigger markets, cheaper forts; the best becomes the default **pending Nate's pick**); the default Steward share set where it helps; **the Fallen act from their first turn out**; the small-map snowball and runaways fixed in the bots first; **two bigger maps** (about 160 and 200 territories; Nate OKs the Far picture); the balance table, each system's cost in turns, the speed check before M4, an **M3 checklist**.
-2. **Nate's play test** right after 19, from "Things to test after session 19" in `PROGRESS.md`. Record his notes there (as with "Nate's play test of sessions 11–15"), and ask him which culture lever he picks if he doesn't say.
-3. **Session 20: the polish pass** (`docs/09-polish-and-effects-plan.md`) with art batch 4's import, plus his play-test fixes. Probably more than one usage window: ask Nate whether he'd rather have a 20 and a 21. **Ask him about sound** (polish plan §9).
-4. **Session 21: the language pass** (Nate, Oct 7; `04-design-additions.md` §13): all the game's writing in Nate's own voice (his writing-style skill, "nate-voice"; the session should load it if it's available on his computer, or ask him for it), with a tone for each bot personality.
-5. **After M3: decided after Nate plays** (a play-test fixes session if needed, then **M4**: online with friends, $5/month Workers Paid, multiplayer pause by vote, deals between people, each player picks a colour, bot takeover for quitters).
+**What happens next, in order (updated Oct 7 evening, after Nate's play test):**
+1. **Session 20** (`docs/prompts/claude-code-session-20.md`, written): leaders that finish the job (never hoard, spend the budget, many orders, finish rivals; "Clean up", "Push back <player>", "Report to <leader>"; budgets cap at 100%), the Marshal plays like a person (Nate's playbook, builds culture like the Steward so a delegating player is back at fair, finishes games), Enter confirms, the full sweep reworked.
+2. **Session 20b** (`docs/prompts/claude-code-session-20b.md`, written): **Walls** (`04-design-additions.md` §16; the sims pick the limits, pending Nate) and **fair seats** on every map (a smarter search, an exposure-aware check, a start bonus listed as the fallback). Nate plays after 20b.
+3. **Session 21: the polish pass** (`docs/09-polish-and-effects-plan.md`) with art batch 4's import; Fate and the Fallen made visible (Nate: the events are fine). One session, parts in priority order.
+4. **Session 22: the language pass** (`04-design-additions.md` §13). Then **sound as its own session** (Nate, Oct 7).
+5. **After M3: decided after Nate plays** (then **M4**: online with friends, $5/month Workers Paid, multiplayer pause by vote, deals between people, chat, each player picks a colour, bot takeover for quitters).
+
+**Nate's play test after session 19** (Rootholm, 9 Marshals, 30–40 turns) is recorded in `PROGRESS.md`; his calls are in `docs/decisions.md` (Oct 7). The orchestrator found that session 19's "the Marshal is at least as good as your leaders" no longer held on the finished code (culture pays, the Steward buys it, the Marshals didn't): session 20 fixes it.
 
 **Session 18's questions, answered with orchestrator defaults until Nate plays:** the default Steward share stays at 20% until session 19 resets it; Expand stays careful where rival armies stand; leaders' orders stay "Mixed in". Check his play-test notes on all three.
 
@@ -75,7 +77,7 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first, simul
 - **M6:** native apps, the player map builder (it may come sooner, after M4)
 
 **Open items:**
-- **Sound** (polish plan §9): Nate hasn't answered yet.
+- **Sound:** its own session after the language pass (Nate, Oct 7).
 - **The phone replay** runs at 39–43 fps (goal 50); the polish pass rebuilds the replay.
 - **Fooled spies never happen between bots,** so only the tests exercise them.
 - **Art:** the built-in browser downloads half-size images (1024 px); prefer Claude in Chrome for the next batch. The next batch: the scenery additions and Steward portraits.
@@ -117,7 +119,7 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first, simul
    - Tests; **"run the full `pnpm test` twice before your last push"** (property tests use random inputs).
    - Exit criteria: screenshots for visual work, `pnpm deploy:preview`, and either a play test for Nate or additions to the "Things to test" list.
    - The end-of-session summary format.
-6. **Every 3 Claude Code sessions** (the next one is due after session 21), write a fresh `docs/prompts/orchestrator-NN.md` and give Nate both prompts together.
+6. **Every 3 Claude Code sessions** (the next one is due after session 21; 20 and 20b count as one), write a fresh `docs/prompts/orchestrator-NN.md` and give Nate both prompts together.
 
 ## Design guardrails (from Nate)
 - **Simple to play, deep to master.** A basic turn takes about 60 seconds (6 taps today), and a deep turn fits the 5-minute default. Watch the tap count. Today: proposing a truce 4 taps, accepting an offer 1, hiring or sending a spy 3, a path order 4–5, a leader's command 3–5, turning in Spoils 2, the Fate draw 0.
@@ -160,4 +162,4 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first, simul
 Nate is a business leader, not a full-time developer. Use plain language and short answers, recommend a choice, and keep him moving. Keep `PROGRESS.md` simple.
 
 ## Right now
-Session 18 is done (its review is in `PROGRESS.md`). Nate has session 19's prompt (the balance pass and bigger maps). **He plays right after session 19**, from "Things to test after session 19". When session 19's summary comes in, run the loop, make sure the test list is complete and ordered, and hand it to him. When his notes come in, record them, ask about his culture lever and sound, and write session 20 (the polish pass plus his fixes).
+Session 19 is done and reviewed, and Nate has played (notes in `PROGRESS.md`). He has the prompts for **session 20** and **20b**. When each summary comes in, run the loop. **The orchestrator-08 prompt is due after session 21.**

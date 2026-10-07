@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–19 are done and reviewed. Next: Nate's play test (the list is under "Things to test after session 19"); then session 20 (his fixes, the Marshal builds like the Steward, fair seats), 21 (the polish pass), 22 (the language pass).**
+**Phase: M3 (depth and balance). Sessions 7–19 are done and reviewed. Nate has played. Next: **session 20** (leaders that finish the job, the Marshal plays like a person, controls) and **20b** (Walls, fair seats), then 21 (the polish pass), 22 (the language pass).**
 
 Claude Code sessions completed: **19** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -984,6 +984,18 @@ All five parts are done, each committed and pushed. Art batch 4 wasn't imported 
 - **Session 19's questions:** the culture lever and sound are Nate's (asked with his play test); the Recruit stays as it is until the capital spots are fairer (orchestrator default: 46% against three Recruits is easy enough for now); Conquest's default on big maps waits for his play test.
 - **Nate's calls (Oct 7, after the review):** culture +1 gold a level stays the default; sound gets its own session after the language pass; **session 20 = his play-test fixes + the Marshal builds like the Steward + fair seats**, so the polish pass becomes **21** and the language pass **22**; the polish pass stays one session, parts in priority order.
 - **Next:** Nate plays from "Things to test after session 19"; then session 20.
+
+### Oct 7: Nate's play test after session 19 (Rootholm, 9 Marshals)
+One game: **Rootholm (200 territories) with 9 Marshals, Classic, on the laptop; 30–40 turns**, "only because I dragged it out testing the generals". Details in `docs/04-design-additions.md` §15–16.
+- **Good:** the length; a fair starting spot and a good size; the Marshals teamed up on him and he noticed it (joint wars, offers that said so); the path order ("a great addition"); his Steward slowly building up on its own ("I just set it to run the realm and forgot about it, and liked that").
+- **The leaders (and the Marshal) aren't organised, and the leaders seem worse.** His example: he held **95% of the map** with three rivals left (2, 3 and 6 territories) and his Leader on "Run the military". With that income it could have ended the game in one or two turns (recruit all round the remnants and close in, or mass on one territory with the Leader and sweep every territory). Instead it **hoarded income, moved troops far from the fighting and wrote few orders** (Nate writes 50+ a turn; all his leaders together about 20), and the 2-territory player won back a large part of the map over 4 turns. His asks: leaders never hoard without a good reason, spend their whole budget on troops, push forward or move through our land to anticipate and counter what the enemy might do, or fortify; a **"Clean up"** that has every leader work together to finish the remnants (and Run the military does it on its own); a **"Push back <player>"** command that sets a leader on one rival; leaders and Marshals should look at the players they can see, guess what they'll do and counter it. The bots should learn the way he plays: grab along the path of least resistance finishing provinces, take and fortify a choke point and attack again two turns later, then take the best region of the map, clear it, fortify it and move carefully through the rest.
+- **New command: "Report to <leader>":** a new general works under the one running the military (the senior directs it and uses its budget); the same for Stewards under Run the realm.
+- **Budgets could add up to more than 100%:** the options should only offer what's left.
+- **Culture:** "troops still felt like they were worth way more." **Walls** (his idea): max out a territory's culture and buildings (a fort among them) and it gets a wall; walls join up and share their spare defenders (three walled territories with 4 troops each: an attacker faces 10). Session 20 builds it (design with defaults in §16).
+- **Controls:** **Enter** (a hotkey) to confirm an attack as shown, instead of mousing to the corner; the **full sweep** should leave no unclaimed land between the two points: a band about 3 wide, branching to finish provinces.
+- **Fate and the Fallen are still easy to notice too late**; he never got knocked out and never noticed the Fallen doing anything to him. Nate: the events are fine; make them visible (the polish pass).
+- **Not tried this time:** the phone, the 160 maps, Embervale with 4, getting knocked out, Conquest's 20-turn default.
+- **Nate's calls (Oct 7 evening):** culture +1 stays; sound is its own session later; **session 20 = his fixes above + the Marshal builds like the Steward + Walls + fair seats, split into 20 and 20b** (two usage windows), each ending with a deploy; the polish pass is **21**, the language pass **22**.
 
 ### Things to test after session 19 (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop: 6 players on Wyrmland, you in red; phone: the same checks where they apply.*
