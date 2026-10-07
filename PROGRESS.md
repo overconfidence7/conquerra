@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–18 are done. Next: Nate's play test (the list is under "Things to test after session 18"); then 19 bigger maps and the balance pass, 20 the polish pass.**
+**Phase: M3 (depth and balance). Sessions 7–18 are done. Next: session 19 (`docs/prompts/claude-code-session-19.md`): the balance pass and bigger maps; then Nate's play test (the list is under "Things to test after session 19"); then 20, the polish pass.**
 
 Claude Code sessions completed: **18** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -945,7 +945,20 @@ All four parts are done, each committed and pushed. Art batch 4 wasn't imported 
 - **Screenshots** (desktop and 384 px phone), `docs/art/screens/s18-*.png`: `lobby-names`, `leaders-panel`, `command-menu` (Steward), `command-military`, `expand` (the target glowing, the way outlined), `budget`, `queue-mixed`. Script: `apps/web/scripts/s18-shots.mjs`.
 - **Tests and deploy:** 772 automated tests pass (the full run twice, as property tests use random inputs). Deployed to the private preview (version `2b6282f3`); the lock check passed. Nate: please check the repo's Actions page for the last commit.
 
-### Things to test after session 18 (Nate's next play test)
+### Oct 7: Orchestrator review of session 18
+- **Checked the work:**
+  - GitHub's checks pass on all four session 18 commits.
+  - The screenshots look right: the lobby's name fields, the Leaders panel (Aldric expanding toward Northdale with a 12-gold purse and 7 orders this turn; Odo the Steward running the realm), the command menus, the Expand target outlined on the map, the budget chips (0–50% or an exact amount), and the leaders' orders in your queue with their portraits under "Mixed in / After mine".
+  - **One surprising number, re-run and confirmed:** a player who hands everything to their leaders (Leader on "Run the military" with 80%, Steward on "Run the realm" with 20%) **beats a table of Marshals 37.0% of the time on Embervale (fair 25%)**, exactly as session 18 reported. The leaders plan with the Marshal's own brain on less gold, so either the leaders' way of planning is better than the Marshal's, or a delegating player gets an edge a Marshal doesn't. **Session 19 finds out**, and the Marshal must play at least as well as your leaders.
+- **Session 18's questions, orchestrator's defaults until Nate plays after session 19:**
+  - the default Steward share stays at 20% for now; the balance pass makes buildings and culture pay and then sets the default where it helps
+  - "Expand our empire in this direction" stays careful where rival armies stand (Nate judges it in his play test)
+  - leaders' orders stay "Mixed in" by default
+- **Nate's call (Oct 7):** his next play test comes **after session 19**, once the balance pass is in. The list below is now "Things to test after session 19".
+- **Eighteen Claude Code sessions are done,** so there's a fresh orchestrator prompt: `docs/prompts/orchestrator-07.md`.
+- **Next:** session 19 (`docs/prompts/claude-code-session-19.md`, run it locally), then Nate's play test.
+
+### Things to test after session 19 (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop: 6 players on Wyrmland, you in red; phone: the same checks where they apply.*
 - **From session 16:**
   - zoom all the way in (sharp?) and all the way out (everything visible clear of the menus? the province names readable, not piled up?)
