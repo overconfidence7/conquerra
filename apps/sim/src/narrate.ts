@@ -38,7 +38,13 @@ export function narrate(ctx: GameContext, e: StepEvent, name: (id: string | null
     case "generalLost":
       return `${name(e.player)} loses captured general ${name(e.general)} at ${place(e.territory)}`;
     case "generalReleased":
-      return `${name(e.player)} lets captured general ${name(e.general)} go`;
+      return `${name(e.player)} lets captured ${e.steward ? "Steward" : "Leader"} ${name(e.general)} go${e.gold ? ` (${e.gold}g home)` : ""}`;
+    case "stewardCaptured":
+      return `${name(e.steward)}'s Steward joins ${name(e.player)}`;
+    case "purseTaken":
+      return `${name(e.player)} takes ${e.gold}g back from ${name(e.leader.of)}'s ${e.leader.kind === "steward" ? "Steward" : "Leader"}`;
+    case "purses":
+      return `${name(e.player)}'s purses: ${[...e.upkeep.map((x) => `${x.gold}g to upkeep`), ...e.paid.map((x) => `${x.gold}g to ${name(x.of)}'s ${x.kind === "steward" ? "Steward" : "Leader"}`)].join(", ")} → treasury ${e.goldAfter}g`;
     case "worldEvent":
       return `☄ The Fallen (${e.by.map(name).join(", ")}, ${e.spent} influence): ${e.event} on ${place(e.target)} (${name(e.against)})${e.losses ? `, losses ${e.losses.map((l) => `${place(l.territory)} -${l.troops}`).join(", ")}` : ""}${e.flipped !== undefined ? `, ${e.rebels} rebels ${e.flipped ? "take it" : "fail"}` : ""}${e.at ? `, ${e.troops} mercenaries at ${place(e.at)}` : ""}${e.cut !== undefined ? `, income cut ${Math.round(e.cut * 100)}%` : ""}${e.border ? `, border ${place(e.border[0])}–${place(e.border[1])} closed` : ""}`;
     case "worldEventFailed":

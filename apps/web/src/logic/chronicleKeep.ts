@@ -19,6 +19,7 @@ export function keepForChronicle(e: ReplayEvent): boolean {
     case "spyCaught":
     case "governed":
     case "generalCaptured":
+    case "stewardCaptured":
     case "generalLost":
     case "leaderKilled":
     case "eliminated":
@@ -33,6 +34,12 @@ export function keepForChronicle(e: ReplayEvent): boolean {
     // A general's own marches (your leaders' work).
     case "moved":
       return !!e.general;
+    // What your leaders bought from their purses (session 18).
+    case "recruited":
+    case "hired":
+    case "built":
+    case "invested":
+      return !!e.by;
     default:
       return false;
   }

@@ -82,4 +82,24 @@ export {
 } from "./saved";
 export { indexMap, distancesFrom, type MapIndex } from "./mapIndex";
 export { Rng, seedRng, type RngState } from "./rng";
-export { canGovern, goalLine, governLine, holdsMost, nextGoal, provinceIncome, type GovernNames } from "./govern";
+export { goalLine, governLine, type GovernNames } from "./govern";
+export {
+  authorOf,
+  budgetAmount,
+  cleanBudget,
+  cleanName,
+  commandFits,
+  dealLeaderNames,
+  findLeader,
+  isMilitaryCommand,
+  isShareBudget,
+  isStewardCommand,
+  leaderAt,
+  leaderKey,
+  NO_BUDGET,
+  pursesTotal,
+  refOf,
+  sameLeader,
+  startingLeaders,
+  suggestLeaderName,
+} from "./leaders";

@@ -444,7 +444,7 @@ describe("diplomacy: knocked-out players, fog, saves, determinism", () => {
     delete old.nextDeal;
     delete old.record;
     delete (old.settings as Record<string, unknown>).diplomacy;
-    for (const p of old.players as Record<string, unknown>[]) (delete p.oathbreaker, delete p.purse, delete p.house);
+    for (const p of old.players as Record<string, unknown>[]) (delete p.oathbreaker, delete p.house, delete p.leaders, (p.command = null));
     const save = { ...makeSave(ctx, s, "p1", 0), state: old };
     const read = readSave(JSON.parse(JSON.stringify(save)));
     expect(read.ok).toBe(true);
@@ -454,7 +454,9 @@ describe("diplomacy: knocked-out players, fog, saves, determinism", () => {
     expect(st.players.every((p) => p.oathbreaker === 0)).toBe(true);
     // (Spies' own random sequence is made from the game's dice when an old save is brought up to date.)
     // (The graph's starting point is the land as saved; this test rearranged the board after the game began.)
-    expect(stateFingerprint({ ...st, decks: { ...st.decks, spies: s.decks.spies }, history: s.history })).toBe(stateFingerprint(s));
+    // (Session 18's leaders are named from the game's id when an old save comes up to date: the seed isn't kept.)
+    const named = { ...st, players: st.players.map((p, i) => ({ ...p, leaders: s.players[i]!.leaders })) };
+    expect(stateFingerprint({ ...named, decks: { ...st.decks, spies: s.decks.spies }, history: s.history })).toBe(stateFingerprint(s));
     // And it plays on, with deals.
     expect(resolveTurn(ctx, st, agreed(offer("p1", "p2", truce()))).state.deals).toHaveLength(1);
   });
@@ -490,9 +492,9 @@ describe("diplomacy: knocked-out players, fog, saves, determinism", () => {
     const s = game();
     const st = resolveTurn(ctx, s, agreed(offer("p1", "p2", truce()))).state;
     const r = resolveTurn(ctx, st, { p1: [{ id: "i", kind: "instruct", general: "p1", instruction: { kind: "raid", player: "p2" } }] });
-    expect(player(r.state, "p1").command).toBeNull();
+    expect(player(r.state, "p1").leaders[0]!.command).toBeNull();
     const ok = resolveTurn(ctx, st, { p1: [{ id: "i", kind: "instruct", general: "p1", instruction: { kind: "raid", player: "p3" } }] });
-    expect(player(ok.state, "p1").command).toEqual({ kind: "raid", player: "p3" });
+    expect(player(ok.state, "p1").leaders[0]!.command).toEqual({ kind: "raid", player: "p3" });
   });
 });
 

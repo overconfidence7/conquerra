@@ -5,13 +5,19 @@ import { distancesFrom, indexMap } from "./mapIndex";
 import { Rng, seedRng } from "./rng";
 import type { GameContext, GameSettings, GameState, PlayerState, TerritoryState } from "./types";
 import { emptyStats, landHeld } from "./history";
+import { cleanName, dealLeaderNames, startingLeaders } from "./leaders";
 
 export interface NewGameOptions {
   gameId: string;
   /** Secret until the game ends. Use a long random string in production. */
   seed: string;
-  /** `house`: which House colour (an index into the ten; default: the first not taken, in this order). */
-  players: { id: string; name: string; house?: number }[];
+  /**
+   * `house`: which House colour (an index into the ten; default: the first not taken, in this order).
+   * `leaderName` / `stewardName` (session 18): what you named your Leader and Steward (default: dealt from the seed).
+   * `delegate`: a person's seat: their Steward starts on "Run the realm" with `rules.leaders.stewardShare` of their
+   * income (a bot plans its whole realm itself, so its Steward starts idle).
+   */
+  players: { id: string; name: string; house?: number; leaderName?: string; stewardName?: string; delegate?: boolean }[];
   settings?: Partial<GameSettings>;
 }
 
@@ -85,6 +91,8 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   for (const t of map.territories)
     territories[t.id] = { owner: null, troops: rules.setup.neutralTroops, specialists: [], building: null, construction: null, culture: 0 };
 
+  // Names for everyone's Leader and Steward, from the seed (its own sequence: the dice never change), unless named.
+  const dealt = dealLeaderNames(opts.seed, opts.players.map((p) => p.id));
   const players: PlayerState[] = seats.map((p, i) => {
     const cap = capitals[i]!;
     territories[cap] = { owner: p.id, troops: rules.setup.startTroops, specialists: [], building: null, construction: null, culture: 0 };
@@ -97,13 +105,12 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
       capital: cap,
       leader: { alive: true, territory: cap },
       cooldowns: { seize: 0, lie: 0 },
-      command: null,
       captured: [],
+      leaders: startingLeaders(rules, p.id, { leader: cleanName(rules, p.leaderName) ?? dealt[p.id]!.leader, steward: cleanName(rules, p.stewardName) ?? dealt[p.id]!.steward }, !!p.delegate),
       influence: 0,
       spoils: [],
       missions: [],
       oathbreaker: 0,
-      purse: [],
       house: houses.get(p.id)!,
     };
   });
@@ -111,7 +118,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   players.sort((a, b) => opts.players.findIndex((p) => p.id === a.id) - opts.players.findIndex((p) => p.id === b.id));
 
   const state: GameState = {
-    version: 9,
+    version: 10,
     gameId: opts.gameId,
     mapId: map.id,
     turn: 1,

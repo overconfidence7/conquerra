@@ -1,4 +1,5 @@
 import { cultureProtection } from "./economy";
+import { loseCaptured } from "./leaders";
 import type { MapIndex } from "./mapIndex";
 import { WORLD_EVENT_KINDS, type GameContext, type GameEvent, type GameState, type Order, type OrdersByPlayer, type PlayerId, type TerritoryId, type WorldEventKind } from "./types";
 
@@ -95,8 +96,9 @@ export function worldEventEffect(h: WorldEventHost, event: WorldEventKind, targe
           });
         for (const g of p.captured.filter((g) => g.territory === target))
           then.push(() => {
-            p.captured = p.captured.filter((x) => x.of !== g.of);
-            return { type: "generalLost", player: against, general: g.of, territory: target, by: null };
+            // Its purse comes home (session 18).
+            const gold = loseCaptured(p, g.of);
+            return { type: "generalLost", player: against, general: g.of, territory: target, by: null, ...(gold ? { gold } : {}) };
           });
         h.visionChanged();
       }

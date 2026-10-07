@@ -99,6 +99,10 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     case "initiative":
     case "fizzled":
     case "generalReleased":
+    // Leaders' purses (session 18): in the turn report.
+    case "stewardCaptured":
+    case "purseTaken":
+    case "purses":
     case "worldEventFailed":
     case "spoilsEarned":
     case "missionDrawn":

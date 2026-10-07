@@ -5,6 +5,8 @@ import { maps } from "@conquerra/content/maps";
 import { createGame, makeSave, readSave, replaySavedGame, resolveTurn, SAVE_PROBLEMS, STATE_VERSION, stateFingerprint, viewFor, type GameState } from "../src";
 
 const ctx = { map: maps.embervale!, rules: defaultRules };
+/** A migrated state with `like`'s leaders (an old save's are named from the game's id, as the seed isn't kept). */
+export const sameLeaders = (st: GameState, like: GameState): GameState => ({ ...st, players: st.players.map((p, i) => ({ ...p, leaders: like.players[i]!.leaders })) });
 const fixture = () => JSON.parse(readFileSync(new URL("./fixtures/save-v2-session13.json", import.meta.url), "utf8")) as unknown;
 
 describe("saved games: the snapshot format", () => {
@@ -115,9 +117,10 @@ describe("Houses chosen in the lobby (session 16)", () => {
     const s = createGame(ctx, { gameId: "g", seed: "h", players: two() });
     const old = JSON.parse(JSON.stringify(s)) as Record<string, unknown>;
     old.version = 7;
-    for (const p of old.players as Record<string, unknown>[]) delete p.house;
+    for (const p of old.players as Record<string, unknown>[]) (delete p.house, delete p.leaders, (p.command = null), (p.purse = []));
     const read = readSave(JSON.parse(JSON.stringify({ ...makeSave(ctx, s, "a", 0), state: old })));
     expect(read.ok).toBe(true);
-    if (read.ok) expect(stateFingerprint(read.save.state)).toBe(stateFingerprint(s));
+    // (Session 18's leaders are named from the game's id when an old save comes up to date: the seed isn't kept.)
+    if (read.ok) expect(stateFingerprint(sameLeaders(read.save.state, s))).toBe(stateFingerprint(s));
   });
 });

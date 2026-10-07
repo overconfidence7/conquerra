@@ -1,5 +1,5 @@
 import type { BuildingType, SpecialistType, Terrain } from "@conquerra/content";
-import { amountLabel, recruitLabel, indexMap, PRESETS, DEAL_NAME, type ArmySnapshot, type DealNames, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView } from "@conquerra/engine";
+import { amountLabel, findLeader, leaderAt, recruitLabel, indexMap, PRESETS, DEAL_NAME, type ArmySnapshot, type Budget, type DealNames, type GameContext, type Instruction, type LeaderRef, type Order, type PlayerId, type PlayerView } from "@conquerra/engine";
 import { SET_NAME } from "./cards";
 
 export const SPECIALIST_ICON: Record<SpecialistType, string> = { cavalry: "🐎", siege: "🎯", scouts: "🔭", engineers: "🔨", healers: "⚕️", rangers: "🏹", standardBearer: "🚩" };
@@ -75,10 +75,16 @@ export function describeOrder(o: Order, n: Namer, attack: boolean, sending?: str
       return `Advance from ${n.place(o.from)}`;
     case "move":
       return `${attack ? "Attack" : "Move"} ${n.place(o.to)} from ${n.place(o.from)}${o.via ? ` via ${n.place(o.via)}` : ""}${o.through?.length ? ` through ${o.through.map((t) => n.place(t)).join(", ")}` : ""} with ${sending ?? amountLabel(o.troops)}`;
-    case "instruct":
-      return `${generalName(n, o.general)}: ${o.instruction ? instructionName(o.instruction, n) : "you give the orders"}`;
+    case "instruct": {
+      const ref: LeaderRef = { kind: o.role === "steward" ? "steward" : "leader", of: o.general };
+      return `${leaderName(n, ref)}: ${o.instruction ? instructionName(o.instruction, n) : ref.kind === "steward" ? "no command" : "you give the orders"}`;
+    }
+    case "budget": {
+      const ref: LeaderRef = { kind: o.role === "steward" ? "steward" : "leader", of: o.general };
+      return `${leaderName(n, ref)}: ${[o.budget ? `budget ${budgetLabel(o.budget)}` : "", o.takeBack ? "take its purse back" : ""].filter(Boolean).join(", ")}`;
+    }
     case "release":
-      return `Let ${generalName(n, o.general)} go`;
+      return `Let ${leaderName(n, { kind: o.role === "steward" ? "steward" : "leader", of: o.general })} go`;
     case "worldEvent":
       return `${WORLD_EVENT_NAME[o.event]} on ${n.place(o.target)}${o.across ? ` and ${n.place(o.across)}` : ""} (${o.influence} influence)`;
     case "spoils":
@@ -110,12 +116,33 @@ export function dealNames(n: Namer): DealNames {
 
 export const WORLD_EVENT_NAME = { plague: "Plague", storm: "Storm", uprising: "Uprising", mercenaries: "Mercenaries", famine: "Famine" } as const;
 
-/** A general's name: "Your Leader", or a captured general by the name of the player whose Leader it was. */
-export function generalName(n: Namer, general: PlayerId): string {
-  return n.isMe(general) ? "Your Leader" : n.who(general);
+/** "Leader" or "Steward". */
+export const KIND_NAME = { leader: "Leader", steward: "Steward" } as const;
+
+/**
+ * A leader of yours, as the start of a sentence (session 18): "Your Leader, Aldric", "Your Steward, Odo", or a captured
+ * one, "Aldric, Lady Morwen's old Leader". Without a name to hand: "Your Leader", "Lady Morwen's Leader".
+ */
+export function leaderName(n: Namer, r: LeaderRef): string {
+  const name = n.view ? findLeader(n.view.me, r)?.name : undefined;
+  if (n.isMe(r.of)) return name ? `Your ${KIND_NAME[r.kind]}, ${name}` : `Your ${KIND_NAME[r.kind]}`;
+  return name ? `${name}, ${n.who(r.of)}'s old ${KIND_NAME[r.kind]}` : `${n.who(r.of)}'s ${KIND_NAME[r.kind]}`;
 }
 
-/** An instruction as a command ("Push toward Old March"). */
+/** A leader's name alone ("Aldric"), else what it is ("Your Leader"). */
+export function leaderShortName(n: Namer, r: LeaderRef): string {
+  return (n.view ? findLeader(n.view.me, r)?.name : undefined) ?? (n.isMe(r.of) ? `Your ${KIND_NAME[r.kind]}` : `${n.who(r.of)}'s ${KIND_NAME[r.kind]}`);
+}
+
+/** A military leader's name (the session 12 wording, by whose Leader it was). */
+export function generalName(n: Namer, general: PlayerId): string {
+  return leaderName(n, { kind: "leader", of: general });
+}
+
+const provinceName = (n: Namer, id: string) => n.ctx?.map.provinces.find((p) => p.id === id)?.name ?? id;
+const provinceList = (n: Namer, ids: readonly string[]) => (ids.length > 2 ? `${ids.slice(0, 2).map((x) => provinceName(n, x)).join(", ")} and ${ids.length - 2} more` : ids.map((x) => provinceName(n, x)).join(" and "));
+
+/** A command, as you'd give it ("Push toward Old March", "Run the realm"). */
 export function instructionName(i: Instruction, n: Namer): string {
   switch (i.kind) {
     case "hold":
@@ -126,12 +153,26 @@ export function instructionName(i: Instruction, n: Namer): string {
       return `Push toward ${n.place(i.territory)}`;
     case "raid":
       return `Raid ${n.who(i.player)}`;
-    case "govern":
-      return "Govern this province";
+    case "expand":
+      return `Expand toward ${n.place(i.territory)}`;
+    case "front":
+      return `Command the front in ${provinceList(n, i.provinces)}`;
+    case "military":
+      return "Run the military";
+    case "buildUp":
+      return `Build up ${provinceName(n, i.province)}`;
+    case "fortify":
+      return i.player ? `Fortify the frontier with ${n.who(i.player)}` : "Fortify the frontier";
+    case "culture":
+      return `Raise culture in ${provinceName(n, i.province)}`;
+    case "economy":
+      return "Grow the economy";
+    case "realm":
+      return "Run the realm";
   }
 }
 
-/** What a general is doing, as on the Leader card ("Holding Galeholt", "Pushing toward Old March"). */
+/** What a leader is doing ("Holding Galeholt", "Expanding toward Old March", "Running the realm"). */
 export function instructionDoing(i: Instruction, n: Namer, at: string | null): string {
   switch (i.kind) {
     case "hold":
@@ -142,18 +183,40 @@ export function instructionDoing(i: Instruction, n: Namer, at: string | null): s
       return `Pushing toward ${n.place(i.territory)}`;
     case "raid":
       return `Raiding ${n.who(i.player)}`;
-    case "govern": {
-      const province = at ? n.ctx?.map.provinces.find((p) => p.id === n.ctx?.map.territories.find((t) => t.id === at)?.province)?.name : null;
-      return province ? `Governing ${province}` : "Governing its province";
-    }
+    case "expand":
+      return `Expanding toward ${n.place(i.territory)}`;
+    case "front":
+      return `Commanding the front in ${provinceList(n, i.provinces)}`;
+    case "military":
+      return "Running the military";
+    case "buildUp":
+      return `Building up ${provinceName(n, i.province)}`;
+    case "fortify":
+      return i.player ? `Fortifying the frontier with ${n.who(i.player)}` : "Fortifying the frontier";
+    case "culture":
+      return `Raising culture in ${provinceName(n, i.province)}`;
+    case "economy":
+      return "Growing the economy";
+    case "realm":
+      return "Running the realm";
   }
 }
 
-/** Where a general stands now and its instruction, from your view (null if it isn't yours or has none). */
+/** A budget in words: "20% of income", "8 gold a turn", "no budget". */
+export function budgetLabel(b: Budget): string {
+  if ("share" in b) return b.share > 0 ? `${Math.round(b.share * 100)}% of income` : "no budget";
+  return b.gold > 0 ? `${b.gold} gold a turn` : "no budget";
+}
+
+/** Where a leader stands now and its command, from your view (null if it isn't yours). */
+export function leaderStatus(view: PlayerView, r: LeaderRef): { at: string | null; instruction: Instruction | null } | null {
+  const l = findLeader(view.me, r);
+  return l ? { at: leaderAt(view.me, r), instruction: l.command } : null;
+}
+
+/** Where a military leader stands now and its command (session 12's name for it). */
 export function generalStatus(view: PlayerView, general: PlayerId): { at: string | null; instruction: Instruction | null } | null {
-  if (general === view.me.id) return { at: view.me.leader.alive ? view.me.leader.territory : null, instruction: view.me.command };
-  const g = view.me.captured.find((x) => x.of === general);
-  return g ? { at: g.territory, instruction: g.instruction } : null;
+  return leaderStatus(view, { kind: "leader", of: general });
 }
 
 /** Little tags under a queued order: preset, leader, timing. */

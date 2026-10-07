@@ -1,9 +1,15 @@
 import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
-import { createGame, resolveTurn, viewFor, type GameContext, type Instruction, type Order } from "@conquerra/engine";
+import { createGame, resolveTurn, viewFor, type GameContext, type GameState, type Instruction, type Order } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { captainBot, mergeGeneralOrders, planGeneral } from "../src";
 import { scenario } from "./scenario";
+
+/** p1 holds a captured Leader of `of`, standing at `at`. */
+function capture(s: GameState, of: string, at: string) {
+  s.players[0]!.captured.push({ of, territory: at });
+  s.players[0]!.leaders.push({ kind: "leader", of, name: of, command: null, budget: { share: 0 }, purse: 0 });
+}
 
 type Move = Extract<Order, { kind: "move" }>;
 const moves = (orders: Order[]) => orders.filter((o): o is Move => o.kind === "move");
@@ -179,7 +185,7 @@ describe("captured generals", () => {
     const sc = scenario({ line: "abc", islands: "y", extra: [["a", "y"]], layout: { a: ["p1", 4], b: ["p2", 2], c: ["p2", 40], y: ["p2", 2] }, caps: ["a", "c"] });
     sc.s.territories.y = { owner: "p1", troops: 20, specialists: [], building: null, construction: null, culture: 0 };
     sc.s.territories.a!.troops = 4;
-    sc.s.players[0]!.captured = [{ of: "p9", territory: "y", instruction: null }];
+    capture(sc.s, "p9", "y");
     // y (captured general, 20) - a (Leader, 4) - b (rival, 2) - c (rival, 40); y is next to a only.
     sc.s.territories.b!.troops = 2;
     const view = viewFor(sc.ctx, sc.s, "p1");
@@ -190,29 +196,7 @@ describe("captured generals", () => {
 
   it("a captured general with no army (only the garrison) has nothing to write", () => {
     const sc = scenario({ line: "abc", layout: { a: ["p1", 1], b: [null, 1], c: ["p2", 5] }, caps: ["a", "c"] });
-    sc.s.players[0]!.captured = [{ of: "p9", territory: "a", instruction: null }];
+    capture(sc.s, "p9", "a");
     expect(planGeneral(sc.ctx, viewFor(sc.ctx, sc.s, "p1"), "p9", { kind: "push", territory: "c" })).toEqual([]);
-  });
-});
-
-describe("Govern this province (session 15)", () => {
-  it("holds the whole province: troops go where it's short, the general's own spare troops first", () => {
-    // Province p0 is a, b, c (p1 holds all). A big rival army at d threatens c; the general stands at b with 20.
-    const sc = scenario({ line: "abcdef", layout: { a: ["p1", 3], b: ["p1", 20], c: ["p1", 2], d: ["p2", 15], e: ["p2", 3], f: ["p2", 3] }, caps: ["a", "f"], gold: 0 });
-    sc.s.players[0]!.leader = { alive: true, territory: "b" };
-    const orders = planGeneral(sc.ctx, viewFor(sc.ctx, sc.s, "p1"), "p1", { kind: "govern" });
-    const moves = orders.filter((o) => o.kind === "move");
-    expect(moves).toEqual([expect.objectContaining({ from: "b", to: "c", general: "p1" })]);
-    // It never attacks.
-    expect(moves.every((o) => o.kind === "move" && sc.s.territories[o.to]!.owner === "p1")).toBe(true);
-  });
-
-  it("the Captain sets a captured general to govern a province it holds safely", () => {
-    const sc = scenario({ line: "abcdefg", layout: { a: ["p1", 5], b: ["p1", 5], c: ["p1", 5], d: [null, 1], e: ["p2", 3], f: ["p2", 3], g: ["p2", 3] }, caps: ["a", "g"], players: 2, gold: 0 });
-    sc.s.players[0]!.captured = [{ of: "p9", territory: "b", instruction: null }];
-    expect(sc.plan()).toContainEqual(expect.objectContaining({ kind: "instruct", general: "p9", instruction: { kind: "govern" } }));
-    // Not where a rival borders the province.
-    sc.s.territories.d = { owner: "p2", troops: 4, specialists: [], building: null, construction: null, culture: 0 };
-    expect(sc.plan().some((o) => o.kind === "instruct")).toBe(false);
   });
 });

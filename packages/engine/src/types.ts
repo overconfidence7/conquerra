@@ -18,54 +18,86 @@ export interface Specialist {
 }
 
 /**
- * A general's standing instruction (session 12). Each turn the general writes its army's orders from its owner's
- * view (the planner is in @conquerra/bots); the engine only stores the instruction.
+ * A leader's command (session 12's standing instructions, grown in session 18). Each turn the leader writes orders
+ * from its owner's view (the planner is in @conquerra/bots); the engine stores the command and pays for the leader's
+ * orders out of its purse.
+ *
+ * Military Leaders (they stand on the map with an army):
  *  - hold: keep the territory it stands in, pulling in troops from next door if it's threatened
- *  - defend: hold the border toward a rival, or toward a chosen neighbouring place
+ *  - defend: hold the border toward a rival, or toward a chosen place
  *  - push: march toward a place, taking land along the way
  *  - raid: take a rival's weakly held land, avoiding its strong armies
- *  - govern (session 15): hold the province it stands in (one where you hold most of the land) and spend a share of
- *    the province's income on it (govern.ts)
+ *  - expand (Nate's): expand the empire toward a place: fast through weak land, slow and safe where it's contested,
+ *    taking whole provinces on the way; it holds once it's there
+ *  - front: command every army of yours in these provinces, and recruit for them
+ *  - military: run the military: every army and all the recruiting
+ * Stewards (culture, buildings and the economy; they never stand on the map):
+ *  - buildUp: forts, markets and barracks where they help, in one province
+ *  - fortify: forts and garrisons where you're most threatened (facing one rival, or anyone)
+ *  - culture: raise culture in one province
+ *  - economy: markets and culture where they pay most
+ *  - realm: run the realm: all building and culture
  */
-export type Instruction =
+export type MilitaryCommand =
   | { kind: "hold" }
   | { kind: "defend"; player: PlayerId }
   | { kind: "defend"; territory: TerritoryId }
   | { kind: "push"; territory: TerritoryId }
   | { kind: "raid"; player: PlayerId }
-  | { kind: "govern" };
+  | { kind: "expand"; territory: TerritoryId }
+  | { kind: "front"; provinces: string[] }
+  | { kind: "military" };
+export type StewardCommand =
+  | { kind: "buildUp"; province: string }
+  | { kind: "fortify"; player?: PlayerId }
+  | { kind: "culture"; province: string }
+  | { kind: "economy" }
+  | { kind: "realm" };
+/** Any leader's command (the name stays from session 12, when only generals had them). */
+export type Instruction = MilitaryCommand | StewardCommand;
 export type InstructionKind = Instruction["kind"];
+export const MILITARY_COMMANDS = ["hold", "defend", "push", "raid", "expand", "front", "military"] as const;
+export const STEWARD_COMMANDS = ["buildUp", "fortify", "culture", "economy", "realm"] as const;
+
+/** A military Leader, or a Steward. */
+export type LeaderKind = "leader" | "steward";
+/** Which leader: its kind, and whose it was first (your own id for your own Leader and Steward). */
+export interface LeaderRef {
+  kind: LeaderKind;
+  of: PlayerId;
+}
+
+/** A leader's budget each turn: a share of your income (0..1), or an exact amount of gold. */
+export type Budget = { share: number } | { gold: number };
 
 /**
- * A rival's Leader you captured by knocking them out. It commands an army like your own Leader (it goes with the
- * troops where it stands), but adds no fighting bonus and has no timing tricks. Lost for good if its army is wiped
- * out or the territory it stands in is taken.
+ * One of your leaders (session 18): your own Leader and Steward, and the ones you captured. The purse is your gold,
+ * set aside: it's paid in as income comes in, pays for the leader's orders, can be taken back at any time, and pays
+ * your upkeep before anyone deserts.
+ */
+export interface LeaderRecord extends LeaderRef {
+  name: string;
+  command: Instruction | null;
+  budget: Budget;
+  purse: number;
+}
+
+/**
+ * A rival's military Leader you captured by knocking them out: where it stands. It commands an army like your own
+ * Leader (it goes with the troops where it stands), but adds no fighting bonus and has no timing tricks. Lost for good
+ * if its army is wiped out or the territory it stands in is taken. (Its name, command and purse are in `leaders`.)
  */
 export interface CapturedGeneral {
   /** Whose Leader it was (the knocked-out player): its id and portrait. */
   of: PlayerId;
   territory: TerritoryId;
-  instruction: Instruction | null;
 }
 
-/** What a governing general buys next for its province, and its price. */
+/** What a governing general was buying (session 15; kept only so old replays and Chronicles still read). */
 export interface PurseGoal {
   what: "fort" | "culture" | "troops";
   territory: TerritoryId;
   cost: number;
-}
-
-/**
- * A governing general's progress toward its next purchase for the province (session 15): never a second gold total,
- * only progress ("A fort at Pinemark: 5 of 8 gold"). Goes home if the general leaves, is lost, or stops governing.
- */
-export interface Purse {
-  /** Whose Leader the general is (your own id for your Leader). */
-  general: PlayerId;
-  province: string;
-  saved: number;
-  /** What it's saving toward (worked out as the turn ends). */
-  goal: PurseGoal | null;
 }
 
 /** The Fallen's world events (session 12). Built as data, so a Fate deck could draw them later. */
@@ -204,10 +236,13 @@ export interface PlayerState {
   leader: { alive: boolean; territory: TerritoryId | null };
   /** Turns remaining before each leader ability can be used again (0 = ready). */
   cooldowns: { seize: number; lie: number };
-  /** Your Leader's standing instruction as a general (null: you order its army yourself). */
-  command: Instruction | null;
-  /** Captured generals, at most `rules.generals.maxCaptured` (one more while you choose which to let go). */
+  /** Captured military Leaders: where each stands (at most `rules.leaders.maxOfKind` - 1, one more while you choose). */
   captured: CapturedGeneral[];
+  /**
+   * Your leaders (session 18): your Leader and Steward first, then captured ones, with their names, commands, budgets
+   * and purses. Only you see them.
+   */
+  leaders: LeaderRecord[];
   /** The Fallen: Influence to spend on world events (0 while you're still in). */
   influence: number;
   /** Your Spoils cards (session 13), in the order you earned them. Others only ever see how many. */
@@ -216,8 +251,6 @@ export interface PlayerState {
   missions: Mission[];
   /** Oathbreaker (session 14): you broke a handshake deal; the public mark shows through this turn (0: none). */
   oathbreaker: number;
-  /** Governing generals' progress toward their next purchase (session 15). Only you see it. */
-  purse: Purse[];
   /**
    * Which House you are (session 16): an index into the ten House colours and banners (0 Azure, 1 Gules, ...), chosen
    * in the lobby. Only how the game looks: the rules never read it. Public.
@@ -343,7 +376,7 @@ export interface HistoryPoint {
 }
 
 export interface GameState {
-  version: 9;
+  version: 10;
   gameId: string;
   mapId: string;
   turn: number;
@@ -461,12 +494,19 @@ export type OrderBody =
   /** Pull the army back to the safest neighbouring territory you hold. */
   | { kind: "retreat"; from: TerritoryId }
   /**
-   * Give a general a standing instruction (null: order its army yourself). `general` is whose Leader it is: your own
-   * id for your Leader, the knocked-out player's id for a captured general. Applied as the turn starts; takes no slot.
+   * Give a leader a command (null: none; you order its army yourself). `general` is whose leader it was first: your
+   * own id for your own, the knocked-out player's id for a captured one; `role: "steward"` says it's that player's Steward (else
+   * their military Leader).
+   * Applied as the turn starts; takes no slot.
    */
-  | { kind: "instruct"; general: PlayerId; instruction: Instruction | null }
-  /** Let a captured general go (when a third arrives, you choose which two to keep). Applied as the turn starts. */
-  | { kind: "release"; general: PlayerId }
+  | { kind: "instruct"; general: PlayerId; role?: "steward"; instruction: Instruction | null }
+  /**
+   * A leader's budget (session 18), and gold taken back from its purse into your treasury (`takeBack`: how much; more
+   * than it holds takes it all). Applied as the turn starts; takes no slot.
+   */
+  | { kind: "budget"; general: PlayerId; role?: "steward"; budget?: Budget; takeBack?: number }
+  /** Let a captured leader go (with one too many of a kind, you choose who goes). Applied as the turn starts. */
+  | { kind: "release"; general: PlayerId; role?: "steward" }
   /**
    * The Fallen: put `influence` toward a world event on `target` (a living player's territory; for a storm, the
    * border between `target` and `across`). Pledges from several Fallen on the same event and place are pooled.
@@ -506,8 +546,13 @@ export type Order = OrderBody & {
   timing?: "first" | "last";
   /** A named preset; expanded by the engine when the turn starts. */
   preset?: PresetRef;
-  /** Written by a general (whose Leader: your own id for your Leader), for the queue, the replay and the report. */
+  /**
+   * Written by a military leader (whose Leader it was: your own id for yours), for the queue, the replay and the
+   * report. Its purse pays for the order (recruiting, hiring).
+   */
   general?: PlayerId;
+  /** Written by a Steward (whose Steward it was: your own id for yours). Its purse pays for the order. */
+  steward?: PlayerId;
 };
 
 export type OrdersByPlayer = Record<PlayerId, Order[]>;
@@ -596,8 +641,9 @@ export type GameEvent =
   | { type: "turnStart"; turn: number; seats: PlayerId[] }
   | { type: "initiative"; player: PlayerId; timing: "first" | "last"; orderId: string }
   | { type: "fizzled"; player: PlayerId; orderId: string; reason: FizzleCode; detail: FizzleDetail; order: FizzledOrder; usedFallback: boolean }
-  | { type: "recruited"; player: PlayerId; orderId: string; territory: TerritoryId; count: number; cost: number }
-  | { type: "hired"; player: PlayerId; orderId: string; territory: TerritoryId; specialist: SpecialistType; cost: number }
+  /** `by`: the leader whose purse paid (session 18), for orders a leader wrote; otherwise your treasury paid. */
+  | { type: "recruited"; player: PlayerId; orderId: string; territory: TerritoryId; count: number; cost: number; by?: LeaderRef }
+  | { type: "hired"; player: PlayerId; orderId: string; territory: TerritoryId; specialist: SpecialistType; cost: number; by?: LeaderRef }
   /** You hired a spy (only you see it). */
   | { type: "spyHired"; player: PlayerId; orderId: string; territory: TerritoryId; spy: string; cost: number }
   /**
@@ -607,7 +653,8 @@ export type GameEvent =
    */
   | { type: "spy"; player: PlayerId; spies: string[]; province: string; outcome: "in" | "blocked" | "killed" | "home"; territory: TerritoryId }
   /**
-   * A governing general (session 15), as the turn's income came in: the share of the province's income it kept, what
+   * Old saves only (session 15's Govern, replaced by purses in session 18; kept so their replays and Chronicles still
+   * read). A governing general, as the turn's income came in: the share of the province's income it kept, what
    * it bought there (`land`: the land afterwards), and what it's saving toward. Only its owner hears of it; the land
    * changes show to whoever can see them.
    */
@@ -621,13 +668,13 @@ export type GameEvent =
       toward: (PurseGoal & { saved: number }) | null;
       land: LandChange[];
     }
-  /** A governing general's progress went home (it left the province, was lost, or stopped governing). Only its owner sees it. */
+  /** Old saves only (session 15): a governing general's progress went home. Only its owner sees it. */
   | { type: "purseHome"; player: PlayerId; general: PlayerId; province: string; gold: number }
   /** A spy was caught in your province (only you see it; never who sent it, and never a spy that fooled you... you fooled it). */
   | { type: "spyCaught"; player: PlayerId; province: string; outcome: "blocked" | "killed"; spies: number }
-  | { type: "built"; player: PlayerId; orderId: string; territory: TerritoryId; building: BuildingType; cost: number; /** null = ready now (engineers). */ doneAtEndOfTurn: number | null }
+  | { type: "built"; player: PlayerId; orderId: string; territory: TerritoryId; building: BuildingType; cost: number; /** null = ready now (engineers). */ doneAtEndOfTurn: number | null; by?: LeaderRef }
   | { type: "completed"; player: PlayerId; territory: TerritoryId; building: BuildingType }
-  | { type: "invested"; player: PlayerId; orderId: string; territory: TerritoryId; culture: number; cost: number }
+  | { type: "invested"; player: PlayerId; orderId: string; territory: TerritoryId; culture: number; cost: number; by?: LeaderRef }
   | {
       type: "moved";
       player: PlayerId;
@@ -678,10 +725,20 @@ export type GameEvent =
   | { type: "eliminated"; player: PlayerId; by: PlayerId | null }
   /** The knocked-out player's Leader joins whoever knocked them out, as a captured general at `territory`. */
   | { type: "generalCaptured"; player: PlayerId; general: PlayerId; territory: TerritoryId }
+  /** The knocked-out player's Steward joins whoever knocked them out (session 18). Only they hear of it. */
+  | { type: "stewardCaptured"; player: PlayerId; steward: PlayerId }
   /** A captured general is gone for good: its army was wiped out, or the land it stood in was taken. */
-  | { type: "generalLost"; player: PlayerId; general: PlayerId; territory: TerritoryId; by: PlayerId | null }
+  | { type: "generalLost"; player: PlayerId; general: PlayerId; territory: TerritoryId; by: PlayerId | null; /** Gold its purse held, back in your treasury. */ gold?: number }
   /** You let a captured general go (you may keep only so many). */
-  | { type: "generalReleased"; player: PlayerId; general: PlayerId }
+  | { type: "generalReleased"; player: PlayerId; general: PlayerId; /** A Steward let go (session 18). */ steward?: boolean; /** Gold its purse held, back in your treasury. */ gold?: number }
+  /** Gold you took back from a leader's purse into your treasury (session 18), as the turn starts. Only you see it. */
+  | { type: "purseTaken"; player: PlayerId; leader: LeaderRef; gold: number }
+  /**
+   * Leaders' purses as income came in (session 18): what purses paid toward upkeep you couldn't pay (before anyone
+   * deserted), then each leader's budget paid in. `goldAfter` and `purses` are your treasury and every purse
+   * afterwards. Only you see it.
+   */
+  | { type: "purses"; player: PlayerId; upkeep: (LeaderRef & { gold: number })[]; paid: (LeaderRef & { gold: number })[]; goldAfter: number; purses: (LeaderRef & { purse: number })[] }
   /**
    * A world event the Fallen played on `against`'s land. `strength` is how much stronger than the base it was
    * (pooled Influence beyond the cost), after culture's protection where it applies.
@@ -722,6 +779,8 @@ export type GameEvent =
       upkeep: number;
       goldAfter: number;
       deserted: number;
+      /** Upkeep your leaders' purses paid (session 18): they pay before anyone deserts. */
+      fromPurses?: number;
       /** Gold lost to a famine this turn. */
       famine?: number;
       /** Where the deserters left from (so the turn can be replayed exactly from the event log). */

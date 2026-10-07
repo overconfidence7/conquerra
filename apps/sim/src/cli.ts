@@ -2,9 +2,8 @@ import { readFileSync } from "node:fs";
 import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { indexMap, replaySavedGame, stateFingerprint, type GameContext, type GameMode, type SaveFile, type SavedGameV1 } from "@conquerra/engine";
-import { CAPTAIN_CHAIN_MARGIN, dealPersonalities, makeCaptainBot, makeGeneralSeat, makeMarshalBot, makeRecruitBot, PERSONALITY_IDS, type Bot, type CaptainFeature } from "@conquerra/bots";
+import { CAPTAIN_CHAIN_MARGIN, dealPersonalities, makeCaptainBot, makeGeneralSeat, makeMarshalBot, makeRecruitBot, PERSONALITY_IDS, type Bot, type CaptainFeature, type GeneralSeatKind } from "@conquerra/bots";
 import type { PersonalityId } from "@conquerra/content";
-import type { InstructionKind } from "@conquerra/engine";
 import { narrate } from "./narrate";
 import { runGame, type GameSummary } from "./runGame";
 
@@ -68,7 +67,7 @@ const makeBot = (kind: string): Bot => {
   // "captain-no-culture" etc.: a Captain with one priority switched off, under its own name (for mixed tables).
   if (kind.startsWith("captain-no-")) return { ...makeCaptainBot({ chainMargin: margin ?? CAPTAIN_CHAIN_MARGIN, off: [kind.slice("captain-no-".length) as CaptainFeature] }), id: kind };
   // "general-push" etc.: a Captain whose Leader's army runs on that standing instruction (session 12).
-  if (kind.startsWith("general-")) return makeGeneralSeat(kind.slice("general-".length) as InstructionKind, { chainMargin: margin ?? CAPTAIN_CHAIN_MARGIN });
+  if (kind.startsWith("general-")) return makeGeneralSeat(kind.slice("general-".length) as GeneralSeatKind, { chainMargin: margin ?? CAPTAIN_CHAIN_MARGIN });
   // "marshal-turtle" etc.: the Marshal with that personality (session 17).
   if (kind.startsWith("marshal-") && PERSONALITY_IDS.includes(kind.slice("marshal-".length) as PersonalityId)) return makeMarshalBot(kind.slice("marshal-".length) as PersonalityId);
   throw new Error(`Unknown bot "${kind}" (recruit, captain, captain-no-<priority>, general-hold|defend|push|raid, marshal, or marshal-<personality>)`);

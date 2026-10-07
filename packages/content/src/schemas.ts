@@ -296,11 +296,19 @@ export const Rules = z.object({
     seizeInitiativeCooldown: z.number().int().min(1),
     lieInWaitCooldown: z.number().int().min(1),
   }),
-  /** Generals (session 12): captured generals you may keep (when one more arrives, you choose which to let go). */
-  generals: z.object({
-    maxCaptured: z.number().int().min(0),
-    /** "Govern this province" (session 15): the share of the province's own income the general keeps to spend there. */
-    govern: z.object({ share: z.number().min(0).max(1) }),
+  /**
+   * Leaders (session 18, replacing session 12's generals and session 15's Govern): your Leader (military) and your
+   * Steward (culture, buildings, the economy) from the start, and the ones you capture, up to `maxOfKind` of each kind
+   * (your own included; one more while you choose who goes). Each has a purse it's paid into every turn as income
+   * comes in: a share of your income or an exact amount (at most `maxGoldBudget`). Your Steward starts on "Run the
+   * realm" with `stewardShare` of your income. `shareChips`: the shares the budget control offers.
+   */
+  leaders: z.object({
+    maxOfKind: z.number().int().min(1),
+    stewardShare: z.number().min(0).max(1),
+    shareChips: z.array(z.number().min(0).max(1)).min(1),
+    maxGoldBudget: z.number().int().min(0),
+    nameMaxLength: z.number().int().min(1),
   }),
   /**
    * The Fallen (session 12): knocked-out players earn Influence each turn (base, plus a little more for each other
@@ -458,3 +466,10 @@ export const Rules = z.object({
   }
 });
 export type Rules = z.infer<typeof Rules>;
+
+/** Names for leaders (session 18): one list for military Leaders, one for Stewards. */
+export const LeaderNames = z.object({
+  leaders: z.array(z.string().min(1)).min(10),
+  stewards: z.array(z.string().min(1)).min(10),
+});
+export type LeaderNames = z.infer<typeof LeaderNames>;

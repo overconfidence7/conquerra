@@ -1,6 +1,6 @@
 import { partnersOf, type Deal, type Instruction, type InstructionKind, type PlayerId, type PlayerView } from "@conquerra/engine";
 import { useState } from "react";
-import { canGovernHere, generalAt, INSTRUCTIONS } from "../logic/generals";
+import { INSTRUCTIONS } from "../logic/generals";
 import { useGame } from "../store";
 import { colorOf } from "./colors";
 
@@ -9,9 +9,8 @@ import { colorOf } from "./colors";
  * instruction needs one. Loaded the first time Command is opened.
  */
 export default function CommandMenu({ view, general, current, onDone }: { view: PlayerView; general: PlayerId; current: Instruction | null; onDone(): void }) {
-  const { setInstruction, pickPlace, pageDeals, ctx } = useGame();
-  // Govern only where you hold most of the province's land.
-  const offered = INSTRUCTIONS.filter((i) => i.kind !== "govern" || (!!ctx && canGovernHere(ctx, view, generalAt(view, general))));
+  const { setInstruction, pickPlace, pageDeals } = useGame();
+  const offered = INSTRUCTIONS;
   const [choosing, setChoosing] = useState<InstructionKind | null>(null);
   const done = (i: Instruction | null) => {
     void setInstruction(general, i);
@@ -22,7 +21,7 @@ export default function CommandMenu({ view, general, current, onDone }: { view: 
   const rivals = view.players.filter((p) => p.id !== view.me.id && p.eliminatedTurn === null).sort((a, b) => Number(known.has(b.id)) - Number(known.has(a.id)));
   const choose = (kind: InstructionKind) => {
     const def = INSTRUCTIONS.find((x) => x.kind === kind)!;
-    if (def.needs === "nothing") return done({ kind: kind as "hold" | "govern" });
+    if (def.needs === "nothing") return done({ kind: "hold" });
     if (def.needs === "place") {
       pickPlace(general, "push");
       onDone();

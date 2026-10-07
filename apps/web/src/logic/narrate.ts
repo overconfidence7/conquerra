@@ -1,6 +1,6 @@
-import { dealLine, explainFizzle, explainHold, fizzleIsQuiet, governLine, spyLine, type GameContext, type PlayerId, type PlayerView, type ReplayEvent } from "@conquerra/engine";
+import { dealLine, explainFizzle, explainHold, fizzleIsQuiet, governLine, spyLine, type GameContext, type LeaderRef, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 import { fateLine, fateTone, MARK_NAME, missionLine, SET_NAME, troopWord } from "./cards";
-import { army, BUILDING_NAME, dealNames, generalName, generalStatus, instructionDoing, SPECIALIST_NAME, WORLD_EVENT_NAME, type LogLine, type Namer, type Tone } from "./text";
+import { army, BUILDING_NAME, dealNames, generalName, instructionDoing, KIND_NAME, leaderName, leaderShortName, leaderStatus, SPECIALIST_NAME, WORLD_EVENT_NAME, type LogLine, type Namer, type Tone } from "./text";
 
 /**
  * The turn report's lines (split from text.ts in session 14): plain English for every replay event. Loaded with the
@@ -43,12 +43,31 @@ export function worldEventLine(e: Extract<ReplayEvent, { type: "worldEvent" }>, 
   }
 }
 
-/** "Your Leader, holding Galeholt," for a replay line about an order a general wrote (or a fight where it stood). */
-function generalPhrase(view: PlayerView | undefined, n: Namer, general: PlayerId | undefined, at?: string): string | null {
-  if (!general || !view) return null;
-  const st = generalStatus(view, general);
+/**
+ * "Your Leader, Aldric, holding Galeholt," for a replay line about an order a leader wrote (or a fight where it
+ * stood); a Steward's: "Your Steward, Odo, running the realm,".
+ */
+function leaderPhrase(view: PlayerView | undefined, n: Namer, r: LeaderRef | null | undefined, at?: string): string | null {
+  if (!r || !view) return null;
+  const st = leaderStatus(view, r);
   const doing = st?.instruction ? instructionDoing(st.instruction, n, at ?? st.at).replace(/^./, (c) => c.toLowerCase()) : null;
-  return doing ? `${generalName(n, general)}, ${doing},` : generalName(n, general);
+  return doing ? `${leaderName(n, r)}, ${doing},` : leaderName(n, r);
+}
+const generalPhrase = (view: PlayerView | undefined, n: Namer, general: string | undefined, at?: string) => (general ? leaderPhrase(view, n, { kind: "leader", of: general }, at) : null);
+
+/** A purchase a leader of yours made from its purse: "Your Steward, Odo, running the realm, finished a market at Pinemark (6 gold)." */
+function boughtBy(ctx: GameContext, e: Extract<ReplayEvent, { type: "recruited" | "hired" | "built" | "invested" }>, n: Namer): LogLine | null {
+  if (!e.by || !n.isMe(e.player)) return null;
+  const who = leaderPhrase(n.view, n, e.by) ?? leaderName(n, e.by);
+  const did =
+    e.type === "recruited"
+      ? `recruited ${e.count} at ${n.place(e.territory)}`
+      : e.type === "hired"
+        ? `hired ${SPECIALIST_NAME[e.specialist].toLowerCase()} at ${n.place(e.territory)}`
+        : e.type === "invested"
+          ? `raised culture at ${n.place(e.territory)} to ${e.culture}`
+          : `${e.doneAtEndOfTurn === null || ctx.rules.buildings[e.building].buildTurns <= 1 ? "finished" : "began"} a ${BUILDING_NAME[e.building].toLowerCase()} at ${n.place(e.territory)}`;
+  return { text: `${who} ${did} (${e.cost} gold).`, tone: "info" };
 }
 
 /**
@@ -76,18 +95,18 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       };
     }
     case "recruited":
-      return { text: `${who(e.player)} recruited ${e.count} at ${place(e.territory)}.`, tone: isMe(e.player) ? "info" : "quiet" };
+      return boughtBy(ctx, e, n) ?? { text: `${who(e.player)} recruited ${e.count} at ${place(e.territory)}.`, tone: isMe(e.player) ? "info" : "quiet" };
     case "hired":
-      return { text: `${who(e.player)} hired ${SPECIALIST_NAME[e.specialist].toLowerCase()} at ${place(e.territory)}.`, tone: isMe(e.player) ? "info" : "quiet" };
+      return boughtBy(ctx, e, n) ?? { text: `${who(e.player)} hired ${SPECIALIST_NAME[e.specialist].toLowerCase()} at ${place(e.territory)}.`, tone: isMe(e.player) ? "info" : "quiet" };
     case "built":
-      return {
+      return boughtBy(ctx, e, n) ?? {
         text: `${who(e.player)} ${e.doneAtEndOfTurn === null ? "built" : "started building"} a ${BUILDING_NAME[e.building].toLowerCase()} at ${place(e.territory)}.`,
         tone: isMe(e.player) ? "info" : "quiet",
       };
     case "completed":
       return { text: `${isMe(e.player) ? "Your" : `${who(e.player)}'s`} ${BUILDING_NAME[e.building].toLowerCase()} at ${place(e.territory)} is finished.`, tone: "quiet" };
     case "invested":
-      return { text: `${who(e.player)} raised culture at ${place(e.territory)} to ${e.culture}.`, tone: "quiet" };
+      return boughtBy(ctx, e, n) ?? { text: `${who(e.player)} raised culture at ${place(e.territory)} to ${e.culture}.`, tone: "quiet" };
     case "moved":
       // Right of passage: "You marched 8 troops from Ashfell through Galeholt and Pinemark to Oakcrest." (Land on the
       // way that changed hands: it stopped short, and says where it meant to go.)
@@ -119,7 +138,7 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
           text: `${g} ${e.captured ? "took" : "attacked"} ${place(e.to)} (${defenders}) with ${army(e.attackers)}${e.captured ? "" : " and was driven back"}: you lost ${e.result.attackerLosses}, they lost ${e.result.defenderLosses}.${lostCulture}`,
           tone: e.captured ? "good" : "bad",
         };
-      const guard = vsMe && !e.captured && e.defense.leader && n.view?.me.command ? generalPhrase(n.view, n, n.view.me.id, e.to) : null;
+      const guard = vsMe && !e.captured && e.defense.leader && n.view && leaderStatus(n.view, { kind: "leader", of: n.view.me.id })?.instruction ? generalPhrase(n.view, n, n.view.me.id, e.to) : null;
       if (guard)
         return { text: `${guard} drove back ${who(e.player)}'s attack on ${place(e.to)} (${army(e.attackers)}): you lost ${e.result.defenderLosses}, they lost ${e.result.attackerLosses}.`, tone: "good" };
       const result = e.captured ? "and took it" : verb(e.player, "and were driven back", "and was driven back");
@@ -143,14 +162,23 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       };
     case "generalCaptured":
       return isMe(e.player)
-        ? { text: `${who(e.general)} joins you as a captured general, at ${place(e.territory)}. Give them an instruction, or move troops there for them to command.`, tone: "good" }
-        : { text: `${who(e.general)} now serves ${who(e.player)} as a captured general.`, tone: "info" };
+        ? { text: `${leaderShortName(n, { kind: "leader", of: e.general })}, ${who(e.general)}'s Leader, joins you at ${place(e.territory)}. Give it a command and a budget in the Leaders panel, or move troops there for it to lead.`, tone: "good" }
+        : { text: `${who(e.general)}'s Leader now serves ${who(e.player)}.`, tone: "info" };
+    case "stewardCaptured":
+      return { text: `${leaderShortName(n, { kind: "steward", of: e.steward })}, ${who(e.steward)}'s Steward, joins you too. Give it a command and a budget in the Leaders panel.`, tone: "good" };
     case "generalLost":
       return isMe(e.player)
-        ? { text: `${who(e.general)}, your captured general, is gone for good: ${place(e.territory)} ${e.by ? `fell to ${who(e.by)}` : "was lost"}.`, tone: "bad" }
-        : { text: `${who(e.player)}'s captured general ${who(e.general)} is gone for good, at ${place(e.territory)}.`, tone: isMe(e.by) ? "good" : "quiet" };
+        ? { text: `${leaderShortName(n, { kind: "leader", of: e.general })}, your captured Leader, is gone for good: ${place(e.territory)} ${e.by ? `fell to ${who(e.by)}` : "was lost"}.${e.gold ? ` The ${e.gold} gold in its purse came home.` : ""}`, tone: "bad" }
+        : { text: `${who(e.player)}'s captured Leader (once ${who(e.general)}'s) is gone for good, at ${place(e.territory)}.`, tone: isMe(e.by) ? "good" : "quiet" };
     case "generalReleased":
-      return { text: `You let ${who(e.general)} go (you may keep two captured generals).`, tone: "info" };
+      return { text: `You let ${who(e.general)}'s ${e.steward ? "Steward" : "Leader"} go (you may keep ${(n.ctx?.rules.leaders.maxOfKind ?? 4)} of each kind, your own included).${e.gold ? ` The ${e.gold} gold in its purse came home.` : ""}`, tone: "info" };
+    case "purseTaken":
+      return { text: `You took ${e.gold} gold back from ${leaderShortName(n, e.leader)}'s purse (${n.isMe(e.leader.of) ? "your" : `${who(e.leader.of)}'s old`} ${KIND_NAME[e.leader.kind]}).`, tone: "info" };
+    case "purses": {
+      // (Upkeep the purses paid is on the income line.)
+      if (!e.paid.length) return null;
+      return { text: `Into purses: ${e.paid.map((x) => `${x.gold} gold to ${x.of === n.view?.me.id ? `your ${KIND_NAME[x.kind]}` : leaderShortName(n, x)}`).join(", ")}.`, tone: "quiet" };
+    }
     case "worldEvent":
       // Aimed at you (session 16): said plainly first. "The Fallen have turned on you: a plague in Old March."
       return {
@@ -189,7 +217,7 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       return { text: `Mission ${e.why === "lost" ? "failed (you lost the land)" : "lapsed"}: ${missionLine(ctx, e.mission, n)}.`, tone: "info" };
     case "income":
       return {
-        text: `Income +${e.income}${e.famine ? `, famine −${e.famine}` : ""}, upkeep −${e.upkeep}: you now have ${e.goldAfter} gold.${e.deserted ? ` ${e.deserted} troops deserted (unpaid upkeep).` : ""}`,
+        text: `Income +${e.income}${e.famine ? `, famine −${e.famine}` : ""}, upkeep −${e.upkeep}: you now have ${e.goldAfter} gold.${e.fromPurses ? ` Your leaders' purses paid ${e.fromPurses} of it.` : ""}${e.deserted ? ` ${e.deserted} troops deserted (unpaid upkeep).` : ""}`,
         tone: e.deserted ? "bad" : "info",
       };
     case "gameOver":
@@ -206,7 +234,7 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       return { text: dealLine(e, dealNames(n))!, tone: "quiet" };
     case "tribute":
       return { text: dealLine(e, dealNames(n))!, tone: e.short ? "bad" : "info" };
-    // "Govern this province" (session 15): "Your Leader governs Old March: kept 3 gold, raised culture in Pinemark."
+    // "Govern this province" (session 15, old saves only): "Your Leader governs Old March: kept 3 gold, raised culture in Pinemark."
     case "governed":
     case "purseHome":
       return { text: governLine(e, { general: (g) => generalName(n, g), place, province: (id) => ctx.map.provinces.find((p) => p.id === id)?.name ?? id }), tone: "info" };
@@ -232,10 +260,24 @@ export function narrateTurn(ctx: GameContext, events: readonly ReplayEvent[], n:
   const lines: LogLine[] = [];
   const fog = new Map<string, number>();
   let fallen = 0;
+  // A leader of yours that took several territories reads as one line, where it took the first (session 18):
+  // "Your Leader, Aldric, expanding toward Old March, took three territories: Ashfell, Galeholt and Pinemark."
+  type Win = Extract<ReplayEvent, { type: "battle" }>;
+  const wins = new Map<string, Win[]>();
+  for (const e of events) if (e.type === "battle" && e.captured && e.general && n.isMe(e.player)) wins.set(e.general, [...(wins.get(e.general) ?? []), e]);
   for (const e of events) {
     if (e.type === "surface" && e.what !== "fate") {
       if (e.what === "battle") fog.set(e.province, (fog.get(e.province) ?? 0) + 1);
       else fallen++;
+      continue;
+    }
+    const run = e.type === "battle" && e.captured && e.general ? wins.get(e.general) : undefined;
+    if (run && run.length > 1) {
+      if (run[0] === e) {
+        const who = generalPhrase(n.view, n, e.general) ?? generalName(n, e.general!);
+        const lost = run.reduce((a, x) => a + x.result.attackerLosses, 0), killed = run.reduce((a, x) => a + x.result.defenderLosses, 0);
+        lines.push({ text: `${who} took ${COUNT_WORD[run.length] ?? run.length} territories: ${listPlaces(run.map((x) => n.place(x.to)))} (you lost ${lost}, they lost ${killed}).`, tone: "good" });
+      }
       continue;
     }
     const line = narrate(ctx, e, n);
@@ -253,4 +295,5 @@ export function narrateTurn(ctx: GameContext, events: readonly ReplayEvent[], n:
   return lines;
 }
 
+const COUNT_WORD: Record<number, string> = { 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten" };
 const listPlaces = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}` : (xs[0] ?? ""));

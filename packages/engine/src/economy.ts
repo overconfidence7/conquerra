@@ -135,6 +135,8 @@ export function scoreFor(ctx: GameContext, state: GameState, player: PlayerId): 
     const members = idx.provinceMembers.get(prov.id) ?? [];
     if (members.every((m) => state.territories[m]!.owner === player)) provinces++;
   }
-  const gold = state.players.find((p) => p.id === player)!.gold;
+  // Leaders' purses are your gold too (session 18).
+  const p = state.players.find((x) => x.id === player)!;
+  const gold = p.gold + (p.leaders ?? []).reduce((a, l) => a + l.purse, 0);
   return owned + provinces * 3 + Math.floor(gold / 10);
 }

@@ -331,18 +331,29 @@ describe("bots' diplomacy: bots dealing with each other", () => {
     // (And without session 15's governing captured generals, which changes how the Captain plays on purpose.)
     // (Session 16 changed the rules underneath it on purpose: culture is lost when land changes hands, the Captain values
     // a rival's culture only as what taking it denies them, Follow through carries the Leader on, and the Spoils rework. Pinned again then.)
-    const s = structuredClone(play("captain-fingerprint", false, 25, false, makeCaptainBot({ chainMargin: CAPTAIN_CHAIN_MARGIN, off: ["govern"] })).s) as unknown as Record<string, unknown>;
+    const s = structuredClone(play("captain-fingerprint", false, 25, false, makeCaptainBot({ chainMargin: CAPTAIN_CHAIN_MARGIN })).s) as unknown as Record<string, unknown>;
     for (const k of ["spies", "nextSpy", "spyIntel", "history", "stats"]) delete s[k];
     delete (s.decks as Record<string, unknown>).spies;
     delete (s.settings as Record<string, unknown>).spies;
-    for (const p of s.players as Record<string, unknown>[]) (delete p.purse, delete p.house);
+    // (Session 18's leaders replaced the Leader's command: back to session 14's shape, where nobody had a command.)
+    s.players = (s.players as Record<string, unknown>[]).map((p) => {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(p)) {
+        if (k === "house" || k === "leaders") continue;
+        if (k === "captured") out.command = null;
+        out[k] = v;
+      }
+      return out;
+    });
     s.version = 5;
     expect(stateFingerprint(s as unknown as GameState)).toBe("58795a25c817994f");
   });
 
   it("with everything on, the Captain plays exactly as at the end of session 16 (its fingerprint; session 17 adds the Marshal beside it, unchanged)", () => {
+    // Pinned again in session 18: Govern is gone and the game's shape changed (leaders). Checked first with
+    // apps/sim/scripts/s18-captain-same.ts: the board, gold, deals and dice match session 17's Captain with Govern off.
     const a = play("captain-s16", true, 30, true);
-    expect(stateFingerprint(a.s)).toBe("fa5f10adce2a6b11");
+    expect(stateFingerprint(a.s)).toBe("c86498c32b7f525a");
   });
 
   it("never floods anyone: at most one offer a turn per bot, and at most one to the human from all of them", () => {

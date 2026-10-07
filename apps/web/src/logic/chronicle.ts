@@ -50,8 +50,13 @@ function kindOf(e: ReplayEvent): ChronicleKind {
       return "spy";
     case "governed":
     case "generalCaptured":
+    case "stewardCaptured":
     case "generalLost":
     case "moved":
+    case "recruited":
+    case "hired":
+    case "built":
+    case "invested":
       return "leader";
     case "surface":
       return e.what === "fate" ? "fate" : e.what === "battle" ? "battle" : "other";
@@ -74,6 +79,10 @@ function placeOf(ctx: GameContext, e: ReplayEvent): TerritoryId | null {
     case "leaderKilled":
     case "generalCaptured":
     case "generalLost":
+    case "recruited":
+    case "hired":
+    case "built":
+    case "invested":
       return e.territory;
     case "dealBroken":
       return e.at ?? null;

@@ -1,8 +1,9 @@
 import type { SpecialistType } from "@conquerra/content";
+import { findLeader } from "./leaders";
 import type { LastSeen } from "./intel";
 import { recordSighting } from "./intel";
 import { indexMap, type MapIndex } from "./mapIndex";
-import type { GameContext, GameState, LandChange, PlayerId, Specialist, StepEvent, TerritoryId } from "./types";
+import type { GameContext, GameState, LandChange, LeaderRef, PlayerId, Specialist, StepEvent, TerritoryId } from "./types";
 
 /**
  * Vision through the turn (decided Oct 4: "the fog lifts during the replay").
@@ -241,20 +242,26 @@ export class TurnVision {
       terr(from).specialists = terr(from).specialists.filter((s) => !ids.has(s.id));
       return out;
     };
+    /** A purchase: from the purse of the leader that wrote it (session 18), else the treasury. */
+    const pay = (e: { player: PlayerId; cost: number; by?: LeaderRef }) => {
+      const r = e.by ? findLeader(player(e.player), e.by) : undefined;
+      if (r) r.purse -= e.cost;
+      else player(e.player).gold -= e.cost;
+    };
     switch (e.type) {
       case "recruited":
         terr(e.territory).troops += e.count;
-        player(e.player).gold -= e.cost;
+        pay(e);
         break;
       case "hired":
         terr(e.territory).specialists.push({ id: `s${b.nextId++}`, type: e.specialist });
-        player(e.player).gold -= e.cost;
+        pay(e);
         break;
       case "built": {
         const t = terr(e.territory);
         if (e.doneAtEndOfTurn === null) t.building = e.building;
         else t.construction = { building: e.building, doneAtEndOfTurn: e.doneAtEndOfTurn };
-        player(e.player).gold -= e.cost;
+        pay(e);
         break;
       }
       case "completed":
@@ -263,7 +270,7 @@ export class TurnVision {
         break;
       case "invested":
         terr(e.territory).culture = e.culture;
-        player(e.player).gold -= e.cost;
+        pay(e);
         break;
       case "moved": {
         const specs = take(e.from, e.army.specialists);
@@ -309,10 +316,11 @@ export class TurnVision {
         p.eliminatedBy = e.by;
         p.leader = { alive: false, territory: null };
         p.captured = [];
+        p.leaders = [];
         break;
       }
       case "generalCaptured":
-        player(e.player).captured.push({ of: e.general, territory: e.territory, instruction: null });
+        player(e.player).captured.push({ of: e.general, territory: e.territory });
         break;
       case "worldEvent":
         for (const l of e.losses ?? []) terr(l.territory).troops -= l.troops;
@@ -328,7 +336,27 @@ export class TurnVision {
       case "generalLost":
       case "generalReleased": {
         const p = player(e.player);
-        p.captured = p.captured.filter((g) => g.of !== e.general);
+        if (e.type === "generalLost" || !e.steward) p.captured = p.captured.filter((g) => g.of !== e.general);
+        const kind = e.type === "generalReleased" && e.steward ? "steward" : "leader";
+        p.leaders = (p.leaders ?? []).filter((l) => !(l.kind === kind && l.of === e.general));
+        p.gold += e.gold ?? 0;
+        break;
+      }
+      // Leaders' purses (session 18): gold taken back as the turn starts, and the purses as income came in.
+      case "purseTaken": {
+        const p = player(e.player);
+        const r = findLeader(p, e.leader);
+        if (r) r.purse -= e.gold;
+        p.gold += e.gold;
+        break;
+      }
+      case "purses": {
+        const p = player(e.player);
+        p.gold = e.goldAfter;
+        for (const x of e.purses) {
+          const r = findLeader(p, x);
+          if (r) r.purse = x.purse;
+        }
         break;
       }
       case "income":

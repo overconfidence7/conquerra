@@ -16,7 +16,7 @@ import type {
   GameContext,
   GameEvent,
   GameState,
-  Instruction,
+  LeaderRef,
   Order,
   OrderBody,
   Offer,
@@ -35,7 +35,7 @@ import { checkMissions, drawFate } from "./fate";
 import { anyDealAcross, attackAcross, diplomacyEndOfTurn, diplomacyStart, partnersOf, passageFor } from "./diplomacy";
 import { visibleTerritories } from "./vision";
 import { hireSpy, spiesEndOfTurn, spyOrders, spyReports } from "./spies";
-import { canGovern, governEndOfTurn } from "./govern";
+import { authorOf, captureLeaders, commandLeaders, findLeader, loseCaptured, payBudgets, pursesPayUpkeep } from "./leaders";
 import { recordTurn } from "./history";
 
 /** Called after every event with the live board (tests use it to check the replay against the real game). */
@@ -320,10 +320,23 @@ class Turn {
     return canRecruitAt(this.ctx, this.s, p.id, t);
   }
 
+  /**
+   * Who pays for an order: the purse of the leader that wrote it (session 18), else your treasury. A leader that's
+   * gone has an empty purse.
+   */
+  wallet(p: PlayerState, o: Order): { gold: number; spend(n: number): void; by?: LeaderRef } {
+    const by = authorOf(o);
+    if (!by) return { gold: p.gold, spend: (n) => void (p.gold -= n) };
+    const r = findLeader(p, by);
+    return { gold: r?.purse ?? 0, spend: (n) => void (r!.purse -= n), by };
+  }
+
   /** Executes the order. Returns null on success, or the reason it couldn't happen (state untouched). */
   apply(pid: PlayerId, o: Order): Fizzle | null {
     const { rules } = this.ctx;
     const p = this.player(pid);
+    const w = this.wallet(p, o);
+    const paidBy = w.by ? { by: w.by } : {};
     switch (o.kind) {
       case "recruit": {
         if (this.terr(o.territory)?.owner !== pid) return fz("notHeld", { territory: o.territory });
@@ -331,12 +344,12 @@ class Turn {
         const t = this.terr(o.territory)!;
         // All, a share of the gold you have now, or a number (ask for more than you can afford and you get what you can pay for).
         if (recruitCount(o.count, Number.MAX_SAFE_INTEGER, 1) < 1) return fz("badCount");
-        const count = recruitCount(o.count, p.gold, rules.troops.cost);
-        if (count < 1) return fz("notEnoughGold", { gold: p.gold, cost: rules.troops.cost });
+        const count = recruitCount(o.count, w.gold, rules.troops.cost);
+        if (count < 1) return fz("notEnoughGold", { gold: w.gold, cost: rules.troops.cost });
         const cost = count * rules.troops.cost;
-        p.gold -= cost;
+        w.spend(cost);
         t.troops += count;
-        this.emit({ type: "recruited", player: pid, orderId: o.id, territory: o.territory, count, cost });
+        this.emit({ type: "recruited", player: pid, orderId: o.id, territory: o.territory, count, cost, ...paidBy });
         return null;
       }
       case "hire": {
@@ -349,11 +362,11 @@ class Turn {
         if (t.troops < 1) return fz("noTroopsForSpecialist", { territory: o.territory });
         if (!specialistUnlocked(this.ctx, this.s, pid, o.territory, o.specialist))
           return fz("cultureLocked", { territory: o.territory, need: def.cultureRequired, have: provinceCulture(this.ctx, this.s, pid, o.territory) });
-        if (p.gold < def.cost) return fz("notEnoughGold", { gold: p.gold, cost: def.cost });
-        p.gold -= def.cost;
+        if (w.gold < def.cost) return fz("notEnoughGold", { gold: w.gold, cost: def.cost });
+        w.spend(def.cost);
         t.specialists.push({ id: `s${this.s.nextId++}`, type: o.specialist });
         if (o.specialist === "scouts") this.visionChanged();
-        this.emit({ type: "hired", player: pid, orderId: o.id, territory: o.territory, specialist: o.specialist, cost: def.cost });
+        this.emit({ type: "hired", player: pid, orderId: o.id, territory: o.territory, specialist: o.specialist, cost: def.cost, ...paidBy });
         return null;
       }
       case "build": {
@@ -362,8 +375,8 @@ class Turn {
         if (t.building || t.construction) return fz("hasBuilding", { territory: o.territory });
         const def = rules.buildings[o.building];
         if (!def) return fz("invalid");
-        if (p.gold < def.cost) return fz("notEnoughGold", { gold: p.gold, cost: def.cost });
-        p.gold -= def.cost;
+        if (w.gold < def.cost) return fz("notEnoughGold", { gold: w.gold, cost: def.cost });
+        w.spend(def.cost);
         // Engineers finish any building on the spot.
         const turns = t.specialists.some((s) => s.type === "engineers") ? 0 : def.buildTurns;
         const doneAtEndOfTurn = this.s.turn + Math.max(0, turns - 1);
@@ -371,7 +384,7 @@ class Turn {
           t.building = o.building;
           this.visionChanged();
         } else t.construction = { building: o.building, doneAtEndOfTurn };
-        this.emit({ type: "built", player: pid, orderId: o.id, territory: o.territory, building: o.building, cost: def.cost, doneAtEndOfTurn: turns === 0 ? null : doneAtEndOfTurn });
+        this.emit({ type: "built", player: pid, orderId: o.id, territory: o.territory, building: o.building, cost: def.cost, doneAtEndOfTurn: turns === 0 ? null : doneAtEndOfTurn, ...paidBy });
         return null;
       }
       case "invest": {
@@ -379,10 +392,10 @@ class Turn {
         if (!t || t.owner !== pid) return fz("notHeld", { territory: o.territory });
         const cost = investCost(rules, t.culture);
         if (cost === null) return fz("cultureMax", { territory: o.territory });
-        if (p.gold < cost) return fz("notEnoughGold", { gold: p.gold, cost });
-        p.gold -= cost;
+        if (w.gold < cost) return fz("notEnoughGold", { gold: w.gold, cost });
+        w.spend(cost);
         t.culture += 1;
-        this.emit({ type: "invested", player: pid, orderId: o.id, territory: o.territory, culture: t.culture, cost });
+        this.emit({ type: "invested", player: pid, orderId: o.id, territory: o.territory, culture: t.culture, cost, ...paidBy });
         return null;
       }
       case "move":
@@ -639,8 +652,9 @@ class Turn {
     }
     for (const l of lost) {
       const at = this.generalOf(l.owner, l.of)!.territory;
-      l.owner.captured = l.owner.captured.filter((g) => g.of !== l.of);
-      this.emit({ type: "generalLost", player: l.owner.id, general: l.of, territory: at, by: l.by });
+      // Its purse comes home (session 18).
+      const gold = loseCaptured(l.owner, l.of);
+      this.emit({ type: "generalLost", player: l.owner.id, general: l.of, territory: at, by: l.by, ...(gold ? { gold } : {}) });
     }
     if (captured && defenderId) this.checkEliminated(defenderId);
     return null;
@@ -687,16 +701,14 @@ class Turn {
     // Their spies are gone with them.
     this.s.spies = this.s.spies.filter((x) => x.owner !== pid);
     this.emit({ type: "eliminated", player: pid, by: p.eliminatedBy });
-    // Their Leader joins whoever knocked them out, as a captured general at that player's capital (or, if it's lost,
-    // their strongest territory), with no army until troops are there.
+    // Their Leader and Steward join whoever knocked them out (the Leader at that player's capital, or, if it's lost,
+    // their strongest territory, with no army until troops are there). Everything else of theirs is gone.
     const captor = p.eliminatedBy ? this.player(p.eliminatedBy) : null;
     if (captor && captor.eliminatedTurn === null) {
       const home = this.homeOf(captor);
-      if (home) {
-        captor.captured.push({ of: pid, territory: home, instruction: null });
-        this.emit({ type: "generalCaptured", player: captor.id, general: pid, territory: home });
-      }
+      if (home) captureLeaders(this, p, captor, home);
     }
+    p.leaders = [];
   }
 
   generalOf(p: PlayerState, of: PlayerId) {
@@ -728,66 +740,6 @@ function queueFollowThrough(T: Turn, pid: PlayerId, q: Queued[], next: Queued) {
     return;
   }
   q.unshift(next);
-}
-
-/**
- * Is this a sensible instruction for `p`'s general standing at `at` (places exist, rivals are other players still in,
- * and it can only govern a province where `p` holds most of the land)?
- */
-function validInstruction(T: Turn, p: PlayerState, i: Instruction, at: TerritoryId | null): boolean {
-  const rival = (id: PlayerId) => id !== p.id && T.s.players.some((x) => x.id === id && x.eliminatedTurn === null);
-  switch (i.kind) {
-    case "hold":
-      return true;
-    case "push":
-      return T.idx.byId.has(i.territory);
-    case "raid":
-      // Never a player you have a truce or a joint war with.
-      return rival(i.player) && !partnersOf(T.s.deals, p.id).includes(i.player);
-    case "defend":
-      return "territory" in i ? T.idx.byId.has(i.territory) : rival(i.player);
-    case "govern":
-      return canGovern(T.idx, T.s, p.id, at);
-  }
-}
-
-/**
- * As the turn starts: captured generals you chose to let go, then (if you still have more than you may keep) the
- * ones farthest from your front go, then standing instructions. A general you don't have, or an instruction that
- * makes no sense, is ignored.
- */
-function commandGenerals(T: Turn, p: PlayerState, list: readonly Order[]) {
-  for (const o of list)
-    if (o.kind === "release" && T.generalOf(p, o.general)) {
-      p.captured = p.captured.filter((g) => g.of !== o.general);
-      T.emit({ type: "generalReleased", player: p.id, general: o.general });
-    }
-  const max = T.ctx.rules.generals.maxCaptured;
-  if (p.captured.length > max) {
-    // Keep the ones nearest the front: the fewest borders from land another player holds (ties: the earlier ones).
-    const front = T.idx.ids.filter((t) => {
-      const o = T.s.territories[t]!.owner;
-      return o !== null && o !== p.id;
-    });
-    const far = (t: TerritoryId) => {
-      const d = distancesFrom(T.idx, t);
-      return front.length ? Math.min(...front.map((f) => d.get(f) ?? 1e9)) : 0;
-    };
-    const ranked = p.captured.map((g, i) => ({ g, i, d: far(g.territory) })).sort((a, b) => a.d - b.d || a.i - b.i);
-    const keep = new Set(ranked.slice(0, max).map((r) => r.g.of));
-    for (const g of p.captured.filter((g) => !keep.has(g.of))) T.emit({ type: "generalReleased", player: p.id, general: g.of });
-    p.captured = p.captured.filter((g) => keep.has(g.of));
-  }
-  for (const o of list) {
-    if (o.kind !== "instruct") continue;
-    const at = o.general === p.id ? (p.leader.alive ? p.leader.territory : null) : (T.generalOf(p, o.general)?.territory ?? null);
-    if (o.instruction && !validInstruction(T, p, o.instruction, at)) continue;
-    if (o.general === p.id) p.command = o.instruction;
-    else {
-      const g = T.generalOf(p, o.general);
-      if (g) g.instruction = o.instruction;
-    }
-  }
 }
 
 /**
@@ -823,10 +775,10 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
     const p = T.player(pid);
     const q: Queued[] = [];
     const list = Array.isArray(orders[pid]) ? orders[pid]! : [];
-    // Generals first: who to let go, then standing instructions. Neither takes a slot.
-    commandGenerals(T, p, list);
+    // Leaders first: who to let go, then commands, budgets and gold taken back. None takes a slot.
+    commandLeaders(T, p, list, partnersOf(s.deals, pid));
     for (const raw of list) {
-      if (raw.kind === "instruct" || raw.kind === "release" || raw.kind === "propose" || raw.kind === "answer" || raw.kind === "break" || raw.kind === "spy") continue;
+      if (raw.kind === "instruct" || raw.kind === "release" || raw.kind === "budget" || raw.kind === "propose" || raw.kind === "answer" || raw.kind === "break" || raw.kind === "spy") continue;
       const o = expandPreset(raw);
       if (o.timing === "first" && !firsts.has(pid) && p.leader.alive && p.cooldowns.seize === 0) firsts.set(pid, o);
       else if (o.timing === "last" && !lasts.has(pid) && p.leader.alive && p.cooldowns.lie === 0) lasts.set(pid, o);
@@ -909,9 +861,14 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
     // A famine the Fallen sent cuts this turn's income (before upkeep).
     const gross = inc.net + inc.upkeep + inc.specialistUpkeep;
     const famine = Math.floor(Math.max(0, gross) * (T.famine.get(pid) ?? 0));
-    // Governing generals keep their share of their province's income and spend it there (session 15).
-    const governed = governEndOfTurn(T, p);
-    p.gold += inc.net - famine - governed;
+    p.gold += inc.net - famine;
+    // Leaders' purses are your gold too: they pay upkeep you can't before anyone deserts (session 18).
+    let fromPurses: (LeaderRef & { gold: number })[] = [];
+    if (p.gold < 0) {
+      const covered = pursesPayUpkeep(p, -p.gold);
+      fromPurses = covered.paid;
+      p.gold = -covered.short;
+    }
     if (p.gold < 0) {
       // Unrest: one troop deserts per gold short, lowest-culture land first. Culture talks some of them out of it.
       let short = -p.gold;
@@ -935,7 +892,12 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
         if (lose > 0) deserters.push({ territory: id, troops: lose });
       }
     }
-    T.emit({ type: "income", player: pid, income: gross, upkeep: inc.upkeep + inc.specialistUpkeep, goldAfter: p.gold, deserted, deserters, ...(famine ? { famine } : {}) });
+    const covered = fromPurses.reduce((a, x) => a + x.gold, 0);
+    T.emit({ type: "income", player: pid, income: gross, upkeep: inc.upkeep + inc.specialistUpkeep, goldAfter: p.gold, deserted, deserters, ...(covered ? { fromPurses: covered } : {}), ...(famine ? { famine } : {}) });
+    // Then each leader's budget goes into its purse: a share of what the turn earned, or an exact amount.
+    const paid = payBudgets(p, inc.net - famine);
+    if (paid.length || fromPurses.length)
+      T.emit({ type: "purses", player: pid, upkeep: fromPurses, paid, goldAfter: p.gold, purses: (p.leaders ?? []).map((l) => ({ kind: l.kind, of: l.of, purse: l.purse })) });
     p.cooldowns.seize = Math.max(0, p.cooldowns.seize - 1);
     p.cooldowns.lie = Math.max(0, p.cooldowns.lie - 1);
   }

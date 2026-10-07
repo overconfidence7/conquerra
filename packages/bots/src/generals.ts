@@ -1,4 +1,4 @@
-import { distancesFrom, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type ReplayEvent, type TerritoryId } from "@conquerra/engine";
+import { distancesFrom, leaderAt, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type ReplayEvent, type TerritoryId } from "@conquerra/engine";
 import { BREAKTHROUGH_MARGIN, CAPTAIN_CHAIN_MARGIN, chainOn, readBoard, type Board, type CaptainOptions } from "./board";
 import { respectDeals } from "./diplomacy";
 
@@ -36,12 +36,9 @@ export function generalAt(view: PlayerView, general: PlayerId): TerritoryId | nu
   return view.me.captured.find((g) => g.of === general)?.territory ?? null;
 }
 
-/** Your generals and their standing instructions, as your view has them. */
+/** Your military leaders and their commands, as your view has them (your Leader first). */
 export function generalsOf(view: PlayerView): { general: PlayerId; at: TerritoryId | null; instruction: Instruction | null }[] {
-  return [
-    { general: view.me.id, at: generalAt(view, view.me.id), instruction: view.me.command },
-    ...view.me.captured.map((g) => ({ general: g.of, at: g.territory, instruction: g.instruction })),
-  ];
+  return (view.me.leaders ?? []).filter((l) => l.kind === "leader").map((l) => ({ general: l.of, at: leaderAt(view.me, l), instruction: l.command }));
 }
 
 /** The orders one general writes for its army this turn (empty with no instruction, or with no army to lead). */
@@ -71,9 +68,11 @@ export function planGeneral(
     case "raid":
       g.raid(instruction.player);
       break;
-    case "govern":
-      g.govern();
+    case "expand":
+      g.push(instruction.territory);
       break;
+    default:
+      return [];
   }
   // A general honours every deal of its owner's (session 14).
   return respectDeals(ctx, view, g.orders);
@@ -151,33 +150,6 @@ class General {
     const { b, home } = this;
     const short = b.holdNeed(home) - b.troopsAt(home);
     if (short > 0) this.pullIn(home, short);
-  }
-
-  // ---------- Govern this province ----------
-  govern() {
-    const { b, home } = this;
-    const province = b.idx.byId.get(home)!.province;
-    const land = (b.idx.provinceMembers.get(province) ?? []).filter(b.owned);
-    const short = land
-      .map((t) => ({ t, need: b.holdNeed(t) - b.troopsAt(t) }))
-      .filter((x) => x.need > 0)
-      .sort((x, y) => Number(y.t === home) - Number(x.t === home) || y.need - x.need || (x.t < y.t ? -1 : 1));
-    let spareHere = b.troopsAt(home) - Math.max(this.keepHome, b.holdNeed(home));
-    for (const { t, need } of short) {
-      if (t === home) {
-        this.pullIn(home, need);
-        continue;
-      }
-      // The general's own spare troops go next door first (the general stays at its post).
-      let want = need;
-      if (spareHere > 0 && b.idx.neighbors.get(home)!.includes(t)) {
-        const send = Math.min(spareHere, want);
-        this.add({ kind: "move", from: home, to: t, troops: send });
-        spareHere -= send;
-        want -= send;
-      }
-      if (want > 0) this.pullIn(t, want);
-    }
   }
 
   // ---------- Defend this border ----------

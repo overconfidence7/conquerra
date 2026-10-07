@@ -56,29 +56,9 @@ function plan(ctx: GameContext, dealt: PlayerView, opts: CaptainOptions, lastTur
   // plans as if that deal were gone, and every order honours the rest.
   const breaks = captainBreaks(ctx, dealt, lastTurn);
   const view = withoutDeals(dealt, breaks.map((o) => (o.kind === "break" ? o.deal : "")));
-  return [...breaks, ...(opts.off?.includes("govern") ? [] : governing(ctx, view)), ...respectDeals(ctx, view, planMoves(ctx, view, opts, lastTurn))];
-}
-
-/**
- * "Govern this province" (session 15): the Captain sets a captured general to govern when it stands in a province the
- * Captain holds whole and no rival borders (it holds it safely). Its own play is otherwise unchanged.
- */
-function governing(ctx: GameContext, view: PlayerView): Order[] {
-  const idx = indexMap(ctx.map);
-  const ownerOf = (t: TerritoryId) => {
-    const v = view.territories[t];
-    return v?.detail === "full" ? v.owner : (v?.lastSeen?.owner ?? null);
-  };
-  const owned = (t: TerritoryId) => ownerOf(t) === view.me.id;
-  /** No rival next to it, as far as it knows. */
-  const quiet = (t: TerritoryId) => idx.neighbors.get(t)!.every((n) => ownerOf(n) === null || owned(n));
-  const out: Order[] = [];
-  for (const g of view.me.captured) {
-    if (g.instruction?.kind === "govern") continue;
-    const members = idx.provinceMembers.get(idx.byId.get(g.territory)!.province) ?? [];
-    if (members.every(owned) && members.every(quiet)) out.push({ id: `${view.me.id}-t${view.turn}-govern-${g.of}`, kind: "instruct", general: g.of, instruction: { kind: "govern" } });
-  }
-  return out;
+  // (Session 15's "Govern this province" for captured generals is gone with session 18's leaders: bots keep the
+  // leaders they capture but plan their whole realm themselves.)
+  return [...breaks, ...respectDeals(ctx, view, planMoves(ctx, view, opts, lastTurn))];
 }
 
 function planMoves(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn?: readonly ReplayEvent[]): Order[] {

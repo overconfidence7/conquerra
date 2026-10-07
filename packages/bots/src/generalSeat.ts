@@ -1,4 +1,4 @@
-import { distancesFrom, type Instruction, type InstructionKind, type Order, type PlayerId, type TerritoryId } from "@conquerra/engine";
+import { distancesFrom, type Instruction, type Order, type PlayerId, type TerritoryId } from "@conquerra/engine";
 import { CAPTAIN_CHAIN_MARGIN, readBoard, type Board, type CaptainOptions } from "./board";
 import { makeCaptainBot } from "./captain";
 import { generalAt, launchesFrom, planGeneral } from "./generals";
@@ -21,7 +21,10 @@ import type { Bot } from "./recruit";
 /** The seat starts commanding through its general from this turn (a person would, once the realm has grown). */
 export const GENERAL_FROM_TURN = 6;
 
-export function makeGeneralSeat(kind: InstructionKind, opts: CaptainOptions = { chainMargin: CAPTAIN_CHAIN_MARGIN }): Bot {
+/** The session 12 instructions a general seat plays with. */
+export type GeneralSeatKind = "hold" | "defend" | "push" | "raid";
+
+export function makeGeneralSeat(kind: GeneralSeatKind, opts: CaptainOptions = { chainMargin: CAPTAIN_CHAIN_MARGIN }): Bot {
   const captain = makeCaptainBot(opts);
   return {
     id: `general-${kind}`,
@@ -31,8 +34,9 @@ export function makeGeneralSeat(kind: InstructionKind, opts: CaptainOptions = { 
       const b = readBoard(ctx, view, opts, lastTurn);
       const home = generalAt(view, view.me.id);
       if (!b || !home || view.turn < GENERAL_FROM_TURN) return own;
-      const instruction = chooseInstruction(b, kind, home, view.me.command);
-      const off: Order[] = view.me.command ? [{ id: `${view.me.id}-t${view.turn}-instruct`, kind: "instruct", general: view.me.id, instruction: null }] : [];
+      const command = view.me.leaders.find((l) => l.kind === "leader" && l.of === view.me.id)?.command ?? null;
+      const instruction = chooseInstruction(b, kind, home, command);
+      const off: Order[] = command ? [{ id: `${view.me.id}-t${view.turn}-instruct`, kind: "instruct", general: view.me.id, instruction: null }] : [];
       if (!instruction) return [...off, ...own];
       const general = planGeneral(ctx, view, view.me.id, instruction, lastTurn, opts);
       // The general commands its army; the Captain's other orders keep their own armies (a pull-in from one of them steps aside).
@@ -43,7 +47,7 @@ export function makeGeneralSeat(kind: InstructionKind, opts: CaptainOptions = { 
       const busy = new Set(rest.map(launchesFrom));
       const timings = new Set(rest.map((o) => o.timing).filter(Boolean));
       const kept = general.filter((o) => launchesFrom(o) === home || !busy.has(launchesFrom(o))).map((o) => (o.timing && timings.has(o.timing) ? { ...o, timing: undefined } : o));
-      const same = JSON.stringify(instruction) === JSON.stringify(view.me.command);
+      const same = JSON.stringify(instruction) === JSON.stringify(command);
       const instruct: Order[] = same ? [] : [{ id: `${view.me.id}-t${view.turn}-instruct`, kind: "instruct", general: view.me.id, instruction }];
       return [...instruct, ...kept, ...rest];
     },
@@ -51,7 +55,7 @@ export function makeGeneralSeat(kind: InstructionKind, opts: CaptainOptions = { 
 }
 
 /** A sensible instruction of this kind for the seat's Leader, from its own view: the current one if it still fits. */
-export function chooseInstruction(b: Board, kind: InstructionKind, home: TerritoryId, current: Instruction | null): Instruction | null {
+export function chooseInstruction(b: Board, kind: GeneralSeatKind, home: TerritoryId, current: Instruction | null): Instruction | null {
   const { idx, alive, look0, me, facing, knownLand } = b;
   const living = (p: PlayerId) => p !== me.id && alive.some((x) => x.id === p);
   const fromHome = distancesFrom(idx, home);
@@ -89,10 +93,6 @@ export function chooseInstruction(b: Board, kind: InstructionKind, home: Territo
         .sort((x, y) => b.valueOf(y) - b.valueOf(x) || (fromHome.get(x) ?? 0) - (fromHome.get(y) ?? 0) || (x < y ? -1 : 1))[0];
       const t = capital ?? nearest(null) ?? out;
       return t ? { kind: "push", territory: t } : null;
-    }
-    case "govern": {
-      const members = idx.provinceMembers.get(idx.byId.get(home)!.province) ?? [];
-      return members.filter((t) => b.owned(t)).length * 2 > members.length ? { kind: "govern" } : null;
     }
     case "raid": {
       if (current?.kind === "raid" && living(current.player) && knownLand.has(current.player)) return current;

@@ -1,6 +1,7 @@
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils";
-import type { Rules } from "@conquerra/content";
+import { defaultRules, type Rules } from "@conquerra/content";
+import { dealLeaderNames } from "./leaders";
 import { resolveTurn } from "./resolve";
 import { seedRng } from "./rng";
 import { emptyStats, landHeld } from "./history";
@@ -73,13 +74,14 @@ export interface SavedGameV1 {
 }
 
 /** The game state's current shape. Bump it (and add a migration below) whenever GameState changes. */
-export const STATE_VERSION: GameState["version"] = 9;
+export const STATE_VERSION: GameState["version"] = 10;
 
 /**
  * How to bring an older game state up to date, one version at a time: `STATE_MIGRATIONS[n]` turns a version-n
  * state into version n+1. Each is small and only adds what's new, with the value an old game would have had.
+ * `you` is the save's own seat (the person), where a migration needs to know it.
  */
-export const STATE_MIGRATIONS: Record<number, (s: Record<string, unknown>) => Record<string, unknown>> = {
+export const STATE_MIGRATIONS: Record<number, (s: Record<string, unknown>, you?: PlayerId) => Record<string, unknown>> = {
   /**
    * 3 -> 4 (session 13): the card decks. A game saved before them carries on without them (both switched off, as
    * they were), with empty hands and their own random sequences (from the game's dice, since the seed isn't kept).
@@ -132,6 +134,40 @@ export const STATE_MIGRATIONS: Record<number, (s: Record<string, unknown>) => Re
     const players = (s.players as { id: string }[]).map((p) => p.id);
     const land = landHeld(s.territories as Record<string, { owner: string | null }>, players);
     return { ...s, history: [{ turn: Math.max(0, Number(s.turn) - 1), land }], stats: Object.fromEntries(players.map((p) => [p, emptyStats()])) };
+  },
+  /**
+   * 9 -> 10 (session 18): leaders you delegate to. Every general becomes a military leader with its instruction ("Govern
+   * this province" becomes "Hold here"), and a governing general's saved-up progress goes into its purse. Everyone gets
+   * a Steward; yours starts on "Run the realm" with its usual share (bots plan their own realm). Names are dealt from
+   * the game's id (the seed isn't kept). No budgets yet, except your Steward's.
+   */
+  9: (s, you) => {
+    type Old = { id: string; command?: Record<string, unknown> | null; captured?: { of: string; territory: string; instruction?: Record<string, unknown> | null }[]; purse?: { general: string; saved: number }[] };
+    const players = s.players as (Record<string, unknown> & Old)[];
+    const names = dealLeaderNames(String(s.gameId), players.map((p) => p.id));
+    const command = (i: Record<string, unknown> | null | undefined) => (!i ? null : i.kind === "govern" ? { kind: "hold" } : i);
+    return {
+      ...s,
+      players: players.map((p) => {
+        const { command: own, purse: progress, captured, ...rest } = p;
+        const saved = (g: string) => (progress ?? []).filter((x) => x.general === g).reduce((a, x) => a + (Number(x.saved) || 0), 0);
+        const yours = p.id === you;
+        const leaders = [
+          { kind: "leader", of: p.id, name: names[p.id]!.leader, command: command(own), budget: { share: 0 }, purse: saved(p.id) },
+          { kind: "steward", of: p.id, name: names[p.id]!.steward, command: yours ? { kind: "realm" } : null, budget: { share: yours ? defaultRules.leaders.stewardShare : 0 }, purse: 0 },
+          ...(captured ?? []).map((g) => ({ kind: "leader", of: g.of, name: names[g.of]?.leader ?? "Captured Leader", command: command(g.instruction), budget: { share: 0 }, purse: saved(g.of) })),
+        ];
+        // The fields in the order a new game has them: captured, then leaders, where captured was.
+        const ordered: Record<string, unknown> = {};
+        for (const k of Object.keys(p)) {
+          if (k === "captured") {
+            ordered.captured = (captured ?? []).map((g) => ({ of: g.of, territory: g.territory }));
+            ordered.leaders = leaders;
+          } else if (k in rest) ordered[k] = rest[k];
+        }
+        return ordered;
+      }),
+    };
   },
 };
 
@@ -196,7 +232,7 @@ export function readSave(raw: unknown): ReadSave {
     const step = STATE_MIGRATIONS[v];
     if (!step) return { ok: false, why: SAVE_PROBLEMS.older };
     try {
-      state = { ...step(JSON.parse(JSON.stringify(state)) as Record<string, unknown>), version: v + 1 };
+      state = { ...step(JSON.parse(JSON.stringify(state)) as Record<string, unknown>, typeof raw.you === "string" ? raw.you : undefined), version: v + 1 };
     } catch {
       return { ok: false, why: SAVE_PROBLEMS.damaged };
     }

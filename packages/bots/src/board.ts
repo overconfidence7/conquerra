@@ -20,7 +20,7 @@ export type Seen = TerritoryDetail & { detail: "full" };
 export type Guess = Pick<Seen, "owner" | "troops" | "building" | "culture" | "leaders" | "capitalOf"> & { specialists: SpecialistType[] };
 
 /** The Captain's priorities, each of which the simulator can switch off to measure what it's worth. */
-export type CaptainFeature = "chokes" | "breakthrough" | "focus" | "capital" | "forts" | "culture" | "runaway" | "raider" | "spies" | "govern";
+export type CaptainFeature = "chokes" | "breakthrough" | "focus" | "capital" | "forts" | "culture" | "runaway" | "raider" | "spies";
 
 export interface CaptainOptions {
   /** Chain on when the army that should arrive is at least this many times what the next hop needs. */

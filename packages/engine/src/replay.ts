@@ -111,6 +111,10 @@ export function replayFor(ctx: GameContext, before: GameState, result: TurnResul
       case "spy":
       case "spyCaught":
       case "generalReleased":
+      // Leaders (session 18): a Steward you captured, gold taken back, and your purses as income came in.
+      case "stewardCaptured":
+      case "purseTaken":
+      case "purses":
       case "worldEventFailed":
       case "spoilsEarned":
       case "missionDrawn":

@@ -1,4 +1,4 @@
-import type { GameContext, Instruction, InstructionKind, Order, PlayerId, PlayerView, TerritoryId } from "@conquerra/engine";
+import { findLeader, type Instruction, type InstructionKind, type Order, type PlayerId, type PlayerView, type TerritoryId } from "@conquerra/engine";
 
 /**
  * Generals on the page (session 12). Small and pure, so the tap count and "taking control back" are tested without a
@@ -17,10 +17,9 @@ export const myGenerals = (view: PlayerView): PlayerId[] => [view.me.id, ...view
 /** The general of yours standing in `t` (your Leader first), or null. */
 export const generalIn = (view: PlayerView, t: TerritoryId | null): PlayerId | null => (t ? (myGenerals(view).find((g) => generalAt(view, g) === t) ?? null) : null);
 
-/** A general's standing instruction as the game has it (before any change this turn). */
+/** A military leader's command as the game has it (before any change this turn). */
 export function standing(view: PlayerView, general: PlayerId): Instruction | null {
-  if (general === view.me.id) return view.me.command;
-  return view.me.captured.find((g) => g.of === general)?.instruction ?? null;
+  return findLeader(view.me, { kind: "leader", of: general })?.command ?? null;
 }
 
 /** The territory an order sends troops out of (moves, retreats, advances). */
@@ -78,22 +77,4 @@ export const INSTRUCTIONS: { kind: InstructionKind; name: string; help: string; 
   { kind: "defend", name: "Defend this border", help: "Guard the border with a rival (or toward a place): hold it and hit back.", needs: "rivalOrPlace" },
   { kind: "push", name: "Push toward a place", help: "March toward a place you pick, taking land along the way.", needs: "place" },
   { kind: "raid", name: "Raid a rival", help: "Take a rival's weakly held land and keep clear of its big armies.", needs: "rival" },
-  {
-    kind: "govern",
-    name: "Govern this province",
-    help: "Hold the province, and spend a quarter of its income on it: a fort where it's threatened, else culture, else troops.",
-    needs: "nothing",
-  },
 ];
-
-/** Can this general govern where it stands: a province where you hold most of the land (from your view)? */
-export function canGovernHere(ctx: GameContext, view: PlayerView, at: TerritoryId | null): boolean {
-  if (!at) return false;
-  const province = ctx.map.territories.find((t) => t.id === at)?.province;
-  const members = ctx.map.territories.filter((t) => t.province === province);
-  const mine = members.filter((t) => {
-    const v = view.territories[t.id];
-    return v?.detail === "full" && v.owner === view.me.id;
-  });
-  return members.length > 0 && mine.length * 2 > members.length;
-}

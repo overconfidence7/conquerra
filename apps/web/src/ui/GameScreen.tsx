@@ -403,7 +403,7 @@ export function GameScreen() {
           <KnockedOutChoice view={view} />
         </Suspense>
       )}
-      {act && !showReport && view.me.captured.length > ctx.rules.generals.maxCaptured && keptOn !== view.turn && (
+      {act && !showReport && view.me.captured.length > ctx.rules.leaders.maxOfKind - 1 && keptOn !== view.turn && (
         <Suspense fallback={null}>
           <KeepGenerals ctx={ctx} view={view} onDone={() => setKeptOn(view.turn)} />
         </Suspense>

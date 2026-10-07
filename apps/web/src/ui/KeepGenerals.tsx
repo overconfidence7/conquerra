@@ -11,7 +11,7 @@ import { Frame } from "./Frame";
 export default function KeepGenerals({ ctx, view, onDone }: { ctx: GameContext; view: PlayerView; onDone(): void }) {
   const { releases, toggleRelease } = useGame();
   const n = namer(ctx, view);
-  const max = ctx.rules.generals.maxCaptured;
+  const max = ctx.rules.leaders.maxOfKind - 1;
   const over = view.me.captured.length - max;
   const chosen = releases.filter((g) => view.me.captured.some((c) => c.of === g)).length;
   return (

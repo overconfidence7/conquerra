@@ -145,9 +145,12 @@
     "seizeInitiativeCooldown": 3,
     "lieInWaitCooldown": 2
   },
-  "generals": {
-    "maxCaptured": 2,
-    "govern": { "share": 0.25 }
+  "leaders": {
+    "maxOfKind": 4,
+    "stewardShare": 0.2,
+    "shareChips": [0, 0.1, 0.2, 0.3, 0.5],
+    "maxGoldBudget": 99,
+    "nameMaxLength": 20
   },
   "fallen": {
     "influenceBase": 1,

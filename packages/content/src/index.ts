@@ -1,7 +1,8 @@
 import rulesJson from "../data/rules.json";
 import catalogJson from "../data/maps/catalog.json";
 import personalitiesJson from "../data/personalities.json";
-import { Rules } from "./schemas";
+import leaderNamesJson from "../data/leader-names.json";
+import { LeaderNames, Rules } from "./schemas";
 import { MarshalData } from "./personalities";
 
 export * from "./schemas";
@@ -19,6 +20,12 @@ export const defaultRules: Rules = Rules.parse(rulesJson);
 
 /** The Marshal's personalities and shared judgement (session 17): `data/personalities.json`. */
 export const marshalData: MarshalData = MarshalData.parse(personalitiesJson);
+
+/**
+ * Names for leaders (session 18): bots' Leaders and Stewards are dealt from these by the game's seed, and the lobby
+ * suggests one for yours. `data/leader-names.json`.
+ */
+export const leaderNames: LeaderNames = LeaderNames.parse(leaderNamesJson);
 
 /** What the lobby needs to list the built-in maps, without loading them. (`pnpm build-maps` writes it.) */
 export interface MapListing {
