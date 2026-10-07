@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–16 are done. Next: Nate plays session 16 on the preview; then 17 the Marshal and bot personalities, 18 leaders you delegate to, 19 bigger maps and the balance pass, 20 the polish pass. Art batch 4 can be made in Gemini any time before 20.**
+**Phase: M3 (depth and balance). Sessions 7–16 are done. Next: session 17 (`docs/prompts/claude-code-session-17.md`): the Marshal and bot personalities; then 18 leaders you delegate to; Nate's next play test after 18 (the list is under "Things to test after session 18" below); then 19 bigger maps and the balance pass, 20 the polish pass.**
 
 Claude Code sessions completed: **16** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -837,3 +837,36 @@ All six parts are done (Part 6, the end of the game, too), each committed and pu
   - How many turns did the game take?
 
   His notes go below once he's played.
+
+### Oct 6: Orchestrator review of session 16
+- **Checked the work:**
+  - GitHub's checks pass on Parts 1–6, but **the last commit (`7dff410`, only `PROGRESS.md`) failed:** two tests that use random inputs failed on that run.
+    - **The fog-leak check** (`replay-fog.test.ts`) found a case (seed `"{T"`, 5 players, turn 4): a spy's end-of-turn report and an uprising on the same player's land land on the same step, and the test can't tell a mixed event from ordinary sight. The orchestrator reproduced it: the revealed land matches the spy's real report exactly, so **it's not a leak**, but the test (or how the two are grouped) needs fixing.
+    - **A spy test's pass bar** ("at least 10 fooled spies seen") depends on luck: 6 on that run.
+    - Neither is a game bug, but `main` shows red until they're fixed. Session 17's Step 0.
+  - **Zoom is sharp now:** the before/after pictures at Near show a crisp castle, walls and trees where they were soft.
+  - The screenshots look right: the colour picker, the attack with "Leader goes (+20%)" and "Stays home", Initiative/Wait, a lit province, both path boxes with the numbered chain, the Spoils table, the Chronicle, the power graph and awards.
+  - **One new problem, from the zoomed-out picture:** on Wyrmland at Far zoom, the province plaques pile on top of each other across the whole map (the clutter Nate disliked). Session 17's Step 0: fewer, smaller, non-overlapping names at Far.
+  - **Why nobody ganged up on Nate:** not a bug. Under fog each Captain counts only the land it sees or remembers, so on a big map it spotted a runaway in only 21% of its turns, 8.6 turns late (100% at once with fog off); joint wars against the runaway fell from 4.3 to 0.6 a game. The Fallen do target a runaway, but only once someone is knocked out. This is the Marshal's first job (`docs/sim-results-s16.md`).
+- **Session 16's questions, answered with defaults** (Nate can change them when he plays):
+  - the Chronicle as a scroll button by the phone's map buttons: keep it
+  - the phone replay's frame rate (39–43, goal 50): acceptable until the polish pass rebuilds the replay
+  - the 11 awards (Oathbreaker tongue-in-cheek): keep them
+- **Nate's call:** his next play test comes **after session 18.** The things to try collect in the list below.
+
+### Things to test after session 18 (Nate's next play test)
+*The orchestrator adds to this list after each session. Laptop: 6 players on Wyrmland, you in red; phone: the same checks where they apply.*
+- **From session 16:**
+  - zoom all the way in (sharp?) and all the way out (everything visible clear of the menus? the province names readable, not piled up?)
+  - tap territories you don't own: does the province light up clearly, with its name and bonus?
+  - a path order, both Shortest way and Full sweep
+  - attack with your Leader and chain on (it should go along by default and stay with the army)
+  - the Initiative and Wait buttons (hover, or press and hold on the phone)
+  - pick a House colour in the lobby
+  - capture land that had culture (it should drop to 0; buildings stay)
+  - Spoils: is it clear now, and does one of each feel like the best?
+  - the Chronicle after a few turns: did anything happen to you that you'd have missed? Do Fate and the Fallen feel loud enough?
+  - the power graph and the awards at the end
+  - spies cost gold only while away
+  - on the phone: how smooth do panning and the replay feel?
+- **How many turns did the game take?**

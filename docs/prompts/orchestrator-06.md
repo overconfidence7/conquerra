@@ -152,4 +152,4 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first, simul
 Nate is a business leader, not a full-time developer. Use plain language and short answers, recommend a choice, and keep him moving. Keep `PROGRESS.md` simple.
 
 ## Right now
-Nate has session 16's prompt (his play-test fixes), and the Gemini prompt for art batch 4 (any time before session 20). He'll bring session 16's summary next, perhaps with the art chat's report. Run the loop. Then write session 17 (the Marshal) from `04-design-additions.md` §11, using session 16's findings on why nobody ganged up on him.
+Session 16 is done (its review is in `PROGRESS.md`). Nate has session 17's prompt (the Marshal). **Nate doesn't play again until after session 18:** keep adding things to try to "Things to test after session 18" in `PROGRESS.md` after each review, and hand him the whole list after 18. After session 17, write session 18 (leaders you delegate to) from `04-design-additions.md` §4 "REDESIGN", using the Marshal's brain. The art chat for batch 4 can run alongside 17 or 18 (not 16, 19 or 20, which touch art or need the whole usage window).

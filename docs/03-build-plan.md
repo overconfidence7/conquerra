@@ -97,11 +97,12 @@ Research, outline v0.1, v0.2 additions, and decisions.
   - **13 ✅:** single-player pause and saved games (Nate, Oct 6), then the Spoils and Fate decks
   - **14 ✅:** Nate's calls on the decks and Continue, then preset diplomacy: truces, trades and joint wars, handshake and binding, with bots that accept or decline for clear reasons (`04-design-additions.md` §2). Right of passage's moves moved to 15.
   - **15 ✅:** a harsher Oathbreaker and a Diplomacy lobby switch, right of passage's moves, spies, the richer culture ladder (Rangers, Standard-bearer), and "Govern this province" (`04-design-additions.md` §2, §4, §5, §8).
-  - **16:** Nate's play-test fixes (`04-design-additions.md` §12, §5, §6): the Leader goes with an attack and stays through a chain, "Initiative"/"Wait" buttons, room at the map's edges, provinces on demand, red by default and colours in the lobby, sharp zoom, orders along a path, culture wiped on capture, the Spoils rework, the Chronicle and louder Fate/Fallen notices, a check of why nobody ganged up on Nate, the end-of-game graph; batch 4's drop-in art if it's made; spy upkeep only while away.
+  - **16 ✅:** Nate's play-test fixes (`04-design-additions.md` §12, §5, §6): the Leader goes with an attack and stays through a chain, "Initiative"/"Wait" buttons, room at the map's edges, provinces on demand, red by default and colours in the lobby, sharp zoom, orders along a path, culture wiped on capture, the Spoils rework, the Chronicle and louder Fate/Fallen notices, a check of why nobody ganged up on Nate, the end-of-game graph; batch 4's drop-in art if it's made; spy upkeep only while away.
   - **17:** the **Marshal** (a new hard level) and **bot personalities**, built from what wins in the sims (§11).
   - **18:** **leaders you delegate to:** your named Leader and a Steward, budgets and purses, the big command list, the Marshal's brain (§4).
   - **19:** **bigger maps** (about 160 and 200 territories) and the **balance pass** (length, runaways, seat fairness, each system's cost in turns, a speed check before M4).
   - **20: the polish pass** (`docs/09-polish-and-effects-plan.md`): effects, the cinematic replay, the living map, menus with weight, title and game-over art. **Art batch 4** (Gemini, `docs/prompts/gemini-art-session-04.md`) must be made before it.
+- **Nate's next play test: after 18** (the list is in `PROGRESS.md`).
 - After 20, M3 is done. **What comes next is decided after Nate plays** (a play-test fixes session if needed, then M4).
 - Orchestrator prompts: orchestrator-06 was written after session 15 (updated after Nate's play test); the next is due after session 18.
 - Leader-as-general (standing instructions) and captured generals.

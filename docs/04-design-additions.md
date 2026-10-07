@@ -333,7 +333,8 @@ Nate's notes: his test game on Wyrmland against 5 Captains lasted only 12 turns,
 - **Learn what wins:** session 17 runs the personalities against each other and the Captain across maps and table sizes, measures which behaviours win most (early expansion pace, when to fortify, focus on one front, culture timing, deals), and builds the winning behaviours into the Marshal's judgement on top of its personality.
 - **Stops a runaway, including a person:** the Marshal reads a fast-growing player (human or bot) early, forms joint wars against them, and the Fallen aim at them. Session 17 first checks why that didn't happen in Nate's game.
 - **Your leaders and captured leaders plan with the Marshal's brain** (§4, session 18).
-- **Open for session 17:** whether players can see a bot's personality (a title like "Lady Morwen the Bold", or only learn it by playing).
+- **Seeing a bot's personality (orchestrator's default for session 17; Nate can change it):** hidden while you play (you learn it from how it plays), revealed on the game-over screen ("Lady Morwen, the Turtle"), with a lobby option "Show personalities" (off by default).
+- **The Marshal never cheats:** it judges only from what a person in its seat could know (its view and memory, what the replays showed, public facts). No pooled sight between bots.
 
 ## 12. Controls and map clarity (Nate, Oct 6 play test), for session 16
 - **Your Leader goes with the attacking army by default** (one tap to leave it home), and **stays with the army through a chain** of attacks.
