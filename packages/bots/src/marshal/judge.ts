@@ -71,7 +71,7 @@ export function think(ctx: GameContext, view: PlayerView, j: MarshalJudgement, m
   const living = view.players.filter((p) => p.eliminatedTurn === null).length;
   const total = indexMap(ctx.map).ids.length;
   const { runaway, why } = readRunaway(j.runaway, est, mine, total, view.players.length, living, gains, mem, view.turn);
-  if (runaway) mem = { ...mem, runaway: { player: runaway, since: mem.runaway?.player === runaway ? mem.runaway.since : view.turn, last: why === "still" ? (mem.runaway?.last ?? view.turn) : view.turn } };
+  if (runaway) mem = { ...mem, runaway: { player: runaway, since: mem.runaway?.player === runaway ? mem.runaway.since : view.turn, last: why === "still" ? (mem.runaway?.last ?? view.turn) : view.turn, named: view.turn } };
   const fought = new Set<PlayerId>();
   for (const e of lastTurn ?? [])
     if (e.type === "battle") {

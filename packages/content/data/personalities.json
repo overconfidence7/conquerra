@@ -14,17 +14,66 @@
       "stickTurns": 3
     },
     "neutralFreshTurns": 4,
-    "leaderWar": true
+    "leaderWar": true,
+    "unseenSpread": 0.6,
+    "attackFloor": {
+      "chainMargin": 1,
+      "sendShare": 1,
+      "maxHops": 6,
+      "followThroughSpare": 4
+    },
+    "garrisonScale": 0,
+    "opening": {
+      "turns": 14,
+      "chainMargin": 1,
+      "sendShare": 1,
+      "maxHops": 6,
+      "followThroughSpare": 4
+    },
+    "provinceDrive": 1,
+    "endSafe": 2
   },
   "personalities": [
     {
       "id": "conqueror",
       "title": "the Conqueror",
       "summary": "Picks one front and masses there, outmanoeuvres the armies in front of it, and holds its other borders with just enough.",
-      "attack": { "chainMargin": 1.25, "maxHops": 4, "followThroughSpare": 6, "sendShare": 0.7, "calmMargin": 1, "strikeTurn": 0, "oneFront": true, "vulture": 0 },
-      "defend": { "frontGarrison": 0.8, "retreatAt": 2.5 },
-      "build": { "fortAt": 0, "forts": 0, "marketsFrom": 3, "markets": 1, "marketReserve": 10, "cultureFrom": 3, "cultureReserve": 8, "cultureEverywhere": false, "spies": 1, "spiesFrom": 6, "spyReserve": 12 },
-      "deals": { "truce": 1, "war": 1, "trade": 0, "passage": 0, "breakGain": 2, "offersTruces": true, "offersWars": true },
+      "attack": {
+        "chainMargin": 1.25,
+        "maxHops": 4,
+        "followThroughSpare": 6,
+        "sendShare": 0.7,
+        "calmMargin": 1,
+        "strikeTurn": 0,
+        "oneFront": true,
+        "vulture": 0
+      },
+      "defend": {
+        "frontGarrison": 0.8,
+        "retreatAt": 2.5
+      },
+      "build": {
+        "fortAt": 0,
+        "forts": 0,
+        "marketsFrom": 3,
+        "markets": 1,
+        "marketReserve": 10,
+        "cultureFrom": 3,
+        "cultureReserve": 8,
+        "cultureEverywhere": false,
+        "spies": 1,
+        "spiesFrom": 6,
+        "spyReserve": 12
+      },
+      "deals": {
+        "truce": 1,
+        "war": 1,
+        "trade": 0,
+        "passage": 0,
+        "breakGain": 2,
+        "offersTruces": true,
+        "offersWars": true
+      },
       "voice": {
         "truceYes": "My war is elsewhere; peace on our border suits me.",
         "truceNo": "My armies go where I send them; no truce.",
@@ -43,10 +92,42 @@
       "id": "blitzer",
       "title": "the Blitzer",
       "summary": "Expands as fast as it can every turn and chains everything it can; it defends little.",
-      "attack": { "chainMargin": 1, "maxHops": 6, "followThroughSpare": 4, "sendShare": 1, "calmMargin": 1, "strikeTurn": 0, "oneFront": false, "vulture": 0 },
-      "defend": { "frontGarrison": 0, "retreatAt": 0 },
-      "build": { "fortAt": 0, "forts": 0, "marketsFrom": 99, "markets": 0, "marketReserve": 0, "cultureFrom": 99, "cultureReserve": 0, "cultureEverywhere": false, "spies": 0, "spiesFrom": 99, "spyReserve": 0 },
-      "deals": { "truce": -1, "war": 1, "trade": -1, "passage": 1, "breakGain": 2, "offersTruces": false, "offersWars": false },
+      "attack": {
+        "chainMargin": 1,
+        "maxHops": 6,
+        "followThroughSpare": 4,
+        "sendShare": 1,
+        "calmMargin": 1,
+        "strikeTurn": 0,
+        "oneFront": false,
+        "vulture": 0
+      },
+      "defend": {
+        "frontGarrison": 0,
+        "retreatAt": 0
+      },
+      "build": {
+        "fortAt": 0,
+        "forts": 0,
+        "marketsFrom": 99,
+        "markets": 0,
+        "marketReserve": 0,
+        "cultureFrom": 99,
+        "cultureReserve": 0,
+        "cultureEverywhere": false,
+        "spies": 0,
+        "spiesFrom": 99,
+        "spyReserve": 0
+      },
+      "deals": {
+        "truce": -1,
+        "war": 1,
+        "trade": -1,
+        "passage": 1,
+        "breakGain": 2,
+        "offersTruces": false,
+        "offersWars": false
+      },
       "voice": {
         "truceYes": "Fine: fewer borders to watch while I run.",
         "truceNo": "I don't stop for anyone.",
@@ -65,10 +146,42 @@
       "id": "turtle",
       "title": "the Turtle",
       "summary": "Slow and sure: forts, culture and markets first, expands only into safe land, then strikes late with a big army.",
-      "attack": { "chainMargin": 1.6, "maxHops": 3, "followThroughSpare": 10, "sendShare": 0.3, "calmMargin": 2.2, "strikeTurn": 14, "oneFront": true, "vulture": 0 },
-      "defend": { "frontGarrison": 1.2, "retreatAt": 0 },
-      "build": { "fortAt": 3, "forts": 3, "marketsFrom": 2, "markets": 3, "marketReserve": 4, "cultureFrom": 2, "cultureReserve": 4, "cultureEverywhere": true, "spies": 1, "spiesFrom": 5, "spyReserve": 10 },
-      "deals": { "truce": 3, "war": -1, "trade": 1, "passage": -2, "breakGain": 3, "offersTruces": true, "offersWars": false },
+      "attack": {
+        "chainMargin": 1.6,
+        "maxHops": 3,
+        "followThroughSpare": 10,
+        "sendShare": 0.3,
+        "calmMargin": 2.2,
+        "strikeTurn": 14,
+        "oneFront": true,
+        "vulture": 0
+      },
+      "defend": {
+        "frontGarrison": 1.2,
+        "retreatAt": 0
+      },
+      "build": {
+        "fortAt": 3,
+        "forts": 3,
+        "marketsFrom": 2,
+        "markets": 3,
+        "marketReserve": 4,
+        "cultureFrom": 2,
+        "cultureReserve": 4,
+        "cultureEverywhere": true,
+        "spies": 1,
+        "spiesFrom": 5,
+        "spyReserve": 10
+      },
+      "deals": {
+        "truce": 3,
+        "war": -1,
+        "trade": 1,
+        "passage": -2,
+        "breakGain": 3,
+        "offersTruces": true,
+        "offersWars": false
+      },
       "voice": {
         "truceYes": "Peace suits me; my walls aren't finished.",
         "truceNo": "My walls hold well enough without a truce.",
@@ -87,10 +200,42 @@
       "id": "schemer",
       "title": "the Schemer",
       "summary": "Lives on deals: truces it means to break at the right moment, joint wars that serve itself, and spies.",
-      "attack": { "chainMargin": 1.25, "maxHops": 4, "followThroughSpare": 6, "sendShare": 0.5, "calmMargin": 1, "strikeTurn": 0, "oneFront": false, "vulture": 0.5 },
-      "defend": { "frontGarrison": 0.5, "retreatAt": 2.5 },
-      "build": { "fortAt": 0, "forts": 0, "marketsFrom": 4, "markets": 1, "marketReserve": 10, "cultureFrom": 4, "cultureReserve": 8, "cultureEverywhere": false, "spies": 3, "spiesFrom": 3, "spyReserve": 8 },
-      "deals": { "truce": 2, "war": 2, "trade": 1, "passage": 1, "breakGain": 1.2, "offersTruces": true, "offersWars": true },
+      "attack": {
+        "chainMargin": 1.25,
+        "maxHops": 4,
+        "followThroughSpare": 6,
+        "sendShare": 0.5,
+        "calmMargin": 1,
+        "strikeTurn": 0,
+        "oneFront": false,
+        "vulture": 0.5
+      },
+      "defend": {
+        "frontGarrison": 0.5,
+        "retreatAt": 2.5
+      },
+      "build": {
+        "fortAt": 0,
+        "forts": 0,
+        "marketsFrom": 4,
+        "markets": 1,
+        "marketReserve": 10,
+        "cultureFrom": 4,
+        "cultureReserve": 8,
+        "cultureEverywhere": false,
+        "spies": 3,
+        "spiesFrom": 3,
+        "spyReserve": 8
+      },
+      "deals": {
+        "truce": 2,
+        "war": 2,
+        "trade": 1,
+        "passage": 1,
+        "breakGain": 1.2,
+        "offersTruces": true,
+        "offersWars": true
+      },
       "voice": {
         "truceYes": "Of course, friend. Peace between us.",
         "truceNo": "Not now; I have other plans for that border.",
@@ -109,10 +254,42 @@
       "id": "opportunist",
       "title": "the Opportunist",
       "summary": "A vulture: hits whoever just fought, the weakened and the overstretched, and the leader's exposed flank.",
-      "attack": { "chainMargin": 1.15, "maxHops": 4, "followThroughSpare": 6, "sendShare": 0.6, "calmMargin": 1, "strikeTurn": 0, "oneFront": false, "vulture": 2 },
-      "defend": { "frontGarrison": 0.5, "retreatAt": 2.5 },
-      "build": { "fortAt": 0, "forts": 0, "marketsFrom": 3, "markets": 1, "marketReserve": 10, "cultureFrom": 99, "cultureReserve": 0, "cultureEverywhere": false, "spies": 2, "spiesFrom": 4, "spyReserve": 10 },
-      "deals": { "truce": 0, "war": 2, "trade": 0, "passage": 1, "breakGain": 1.6, "offersTruces": false, "offersWars": true },
+      "attack": {
+        "chainMargin": 1.15,
+        "maxHops": 4,
+        "followThroughSpare": 6,
+        "sendShare": 0.6,
+        "calmMargin": 1,
+        "strikeTurn": 0,
+        "oneFront": false,
+        "vulture": 2
+      },
+      "defend": {
+        "frontGarrison": 0.5,
+        "retreatAt": 2.5
+      },
+      "build": {
+        "fortAt": 0,
+        "forts": 0,
+        "marketsFrom": 3,
+        "markets": 1,
+        "marketReserve": 10,
+        "cultureFrom": 99,
+        "cultureReserve": 0,
+        "cultureEverywhere": false,
+        "spies": 2,
+        "spiesFrom": 4,
+        "spyReserve": 10
+      },
+      "deals": {
+        "truce": 0,
+        "war": 2,
+        "trade": 0,
+        "passage": 1,
+        "breakGain": 1.6,
+        "offersTruces": false,
+        "offersWars": true
+      },
       "voice": {
         "truceYes": "Fine; I'll find easier pickings.",
         "truceNo": "I don't tie my hands while someone's bleeding.",
@@ -131,10 +308,42 @@
       "id": "merchant",
       "title": "the Merchant",
       "summary": "Trades, markets and peace early, then a rich late push.",
-      "attack": { "chainMargin": 1.3, "maxHops": 4, "followThroughSpare": 6, "sendShare": 0.5, "calmMargin": 1.6, "strikeTurn": 10, "oneFront": false, "vulture": 0 },
-      "defend": { "frontGarrison": 0.8, "retreatAt": 2.5 },
-      "build": { "fortAt": 5, "forts": 1, "marketsFrom": 1, "markets": 5, "marketReserve": 2, "cultureFrom": 3, "cultureReserve": 6, "cultureEverywhere": true, "spies": 1, "spiesFrom": 6, "spyReserve": 12 },
-      "deals": { "truce": 2, "war": 0, "trade": 2, "passage": 1, "breakGain": 2.5, "offersTruces": true, "offersWars": false },
+      "attack": {
+        "chainMargin": 1.3,
+        "maxHops": 4,
+        "followThroughSpare": 6,
+        "sendShare": 0.5,
+        "calmMargin": 1.6,
+        "strikeTurn": 10,
+        "oneFront": false,
+        "vulture": 0
+      },
+      "defend": {
+        "frontGarrison": 0.8,
+        "retreatAt": 2.5
+      },
+      "build": {
+        "fortAt": 5,
+        "forts": 1,
+        "marketsFrom": 1,
+        "markets": 5,
+        "marketReserve": 2,
+        "cultureFrom": 3,
+        "cultureReserve": 6,
+        "cultureEverywhere": true,
+        "spies": 1,
+        "spiesFrom": 6,
+        "spyReserve": 12
+      },
+      "deals": {
+        "truce": 2,
+        "war": 0,
+        "trade": 2,
+        "passage": 1,
+        "breakGain": 2.5,
+        "offersTruces": true,
+        "offersWars": false
+      },
       "voice": {
         "truceYes": "Peace is good for business; agreed.",
         "truceNo": "Peace with you would cost me more than it's worth.",

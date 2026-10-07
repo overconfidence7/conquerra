@@ -64,7 +64,7 @@ export function planMarshal(req: MarshalRequest): MarshalPlan {
   const breaks = scope.kind === "realm" ? marshalBreaks(ctx, req.view, P, insight, lastTurn) : [];
   const view = withoutDeals(req.view, breaks.map((o) => (o.kind === "break" ? o.deal : "")));
   const sources = new Map<string, Source>();
-  const moves = planMoves(ctx, view, P, insight, lastTurn, req.purse ?? view.me.gold, sources);
+  const moves = planMoves(ctx, view, P, judgement, insight, lastTurn, req.purse ?? view.me.gold, sources);
   const kept = moves.filter((o) => inScope(scope, sources.get(o.id), view, ctx));
   return { orders: [...breaks, ...respectDeals(ctx, view, kept)], memory, insight };
 }
@@ -83,18 +83,30 @@ function inScope(scope: MarshalScope, src: Source | undefined, view: PlayerView,
   });
 }
 
-/** The Marshal's board: the Captain's reading, with its own land estimates and runaway. */
+/**
+ * The Marshal's board: the Captain's reading, with its own runaway. Whom to attack and who's nearly beaten are judged
+ * on the land it sees and remembers (a knocked-out player's going to whoever knocked them out), as the Captain does:
+ * giving land it can't see to its neighbours made them look bigger than they are and cost it games (Part 2's tests);
+ * that estimate is only for spotting a runaway leader.
+ */
 export function marshalBoard(ctx: GameContext, view: PlayerView, insight: Insight, lastTurn?: readonly ReplayEvent[]): Board | null {
-  const knownLand = new Map([...insight.est].map(([p, n]) => [p, Math.round(n)]));
-  return readBoard(ctx, view, BASE, lastTurn, { knownLand, runaway: insight.runaway });
+  return readBoard(ctx, view, BASE, lastTurn, { knownLand: insight.known, runaway: insight.runaway });
 }
 
-function planMoves(ctx: GameContext, view: PlayerView, P: Personality, insight: Insight, lastTurn: readonly ReplayEvent[] | undefined, purse: number, sources: Map<string, Source>): Order[] {
+function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: MarshalJudgement, insight: Insight, lastTurn: readonly ReplayEvent[] | undefined, purse: number, sources: Map<string, Source>): Order[] {
   const b = marshalBoard(ctx, view, insight, lastTurn);
   if (!b) return [];
   const { rules, idx, me, garrison, seen, owned, rivalAt, troopsAt, specsAt, mine, crossing, isFrontier, frontier, enemyPressure, biggestEnemyNear } = b;
   const { endgame, raider, runaway, shieldsLeader, facesRival, facesRaider, holdNeed, chokeHolder, capital, capThreatened, needFor } = b;
-  const A = P.attack, D = P.defend, B = P.build;
+  const D = { ...P.defend, frontGarrison: P.defend.frontGarrison * (J.garrisonScale ?? 1) }, B = P.build;
+  // The opening: every Marshal expands at least this hard for the first few turns (what the sims found wins).
+  const o = J.opening && view.turn <= J.opening.turns ? J.opening : null;
+  // And all game, every Marshal attacks at least as hard as the shared floor (what the sims found wins).
+  const floor = (a: Personality["attack"], f: { chainMargin: number; sendShare: number; maxHops: number; followThroughSpare: number } | null | undefined) =>
+    f ? { ...a, chainMargin: Math.min(a.chainMargin, f.chainMargin), sendShare: Math.max(a.sendShare, f.sendShare), maxHops: Math.max(a.maxHops, f.maxHops), followThroughSpare: Math.min(a.followThroughSpare, f.followThroughSpare) } : a;
+  const A = floor(floor(P.attack, J.attackFloor), o);
+  /** Building for the long run waits until the opening's over, if the shared judgement says so. */
+  const longRun = view.turn >= (J.buildFrom ?? 0);
   const rng = new Rng(seedRng(`${view.gameId}|${me.id}|${view.turn}|marshal`));
   const orders: Order[] = [];
   let n = 0;
@@ -120,8 +132,17 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, insight: 
   /** One spearhead on the main front (one-front play, and the endgame): where the main rival's armies are weakest. */
   const opposition = (t: TerritoryId) => idx.neighbors.get(t)!.reduce((m, x) => (rivalAt(x) === main ? Math.max(m, troopsAt(x)) : m), 0);
   const spearhead = main && (A.oneFront || endgame) && !calm ? (frontier.filter(facesMain).sort((x, y) => opposition(x) - opposition(y) || (x < y ? -1 : 1))[0] ?? null) : null;
+  // Whole provinces (Nate): what each province is missing, and the land of the ones it holds whole.
+  const provinceOf = (t: TerritoryId) => idx.byId.get(t)!.province;
+  const missing = (prov: string) => (idx.provinceMembers.get(prov) ?? []).filter((m) => !owned(m)).length;
+  const whole = (t: TerritoryId) => owned(t) && missing(provinceOf(t)) === 0;
+  const bonusOf = new Map(ctx.map.provinces.map((p) => [p.id, p.bonus]));
   const value = (t: TerritoryId) => {
     let v = b.valueOf(t);
+    if (J.provinceDrive && !owned(t)) {
+      const left = missing(provinceOf(t)) - 1;
+      if (left <= 2) v += (J.provinceDrive * (bonusOf.get(provinceOf(t)) ?? 0) * (3 - left)) / 3;
+    }
     const owner = b.look(t).owner;
     if (owner && owner !== me.id) {
       if (owner === runaway) v *= LEADER_PULL;
@@ -150,11 +171,13 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, insight: 
   const fortSpots = [
     ...(capThreatened && capital ? [capital] : []),
     ...frontier.filter((t) => chokeHolder(t) && biggestEnemyNear(t) >= 4),
-    ...(B.fortAt > 0 && fortsUp < B.forts ? frontier.filter((t) => biggestEnemyNear(t) >= B.fortAt) : []),
+    ...(B.fortAt > 0 && fortsUp < B.forts && longRun ? frontier.filter((t) => biggestEnemyNear(t) >= B.fortAt) : []),
+    // Reading the border (Nate): a fort where a province held whole (or the capital) faces an army it can't hold off.
+    ...(J.anticipate?.fort ? frontier.filter((t) => (whole(t) || t === capital) && biggestEnemyNear(t) >= 5 && holdNeed(t) > troopsAt(t)) : []),
   ].filter((t) => !building(t));
   const fortBuilding = mine.some((t) => seen(t)!.construction?.building === "fort") || errand?.kind === "fort";
   const fortAt = fortSpots.sort((a, c) => (a === capital ? -1 : c === capital ? 1 : 0) || biggestEnemyNear(c) - biggestEnemyNear(a) || (a < c ? -1 : 1))[0];
-  if (fortAt && (!fortBuilding || B.fortAt > 0) && gold >= rules.buildings.fort.cost + troopCost * 3) {
+  if (fortAt && (!fortBuilding || B.fortAt > 0 || J.anticipate?.fort) && gold >= rules.buildings.fort.cost + troopCost * 3) {
     spend({ id: id(), kind: "build", territory: fortAt, building: "fort" });
     gold -= rules.buildings.fort.cost;
   }
@@ -179,7 +202,7 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, insight: 
   // Markets on safe land (no rival next to it as far as it knows), up to its number, keeping gold for troops.
   const quiet = (t: TerritoryId) => idx.neighbors.get(t)!.every((x) => owned(x) || b.look0(x) === null);
   const markets = mine.filter((t) => seen(t)!.building === "market" || seen(t)!.construction?.building === "market").length;
-  if (view.turn >= B.marketsFrom && markets < B.markets && !capThreatened) {
+  if (view.turn >= B.marketsFrom && longRun && markets < B.markets && !capThreatened) {
     const spot = mine.filter((t) => !building(t) && quiet(t)).sort((a, c) => Number(isFrontier(a)) - Number(isFrontier(c)) || (a < c ? -1 : 1))[0];
     if (spot && gold >= rules.buildings.market.cost + troopCost * B.marketReserve) {
       spend({ id: id(), kind: "build", territory: spot, building: "market" });
@@ -225,7 +248,7 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, insight: 
       : mine
           .filter((t) => (t === capital || chokeHolder(t)) && biggestEnemyNear(t) > garrison && worth(t) && seen(t)!.culture < rules.culture.max)
           .sort((a, c) => seen(a)!.culture - seen(c)!.culture || Number(c === capital) - Number(a === capital) || (a < c ? -1 : 1))[0];
-    const safe = B.cultureEverywhere ? mine.filter((t) => quiet(t) && seen(t)!.culture < rules.culture.max).sort((a, c) => seen(a)!.culture - seen(c)!.culture || Number(c === capital) - Number(a === capital) || (a < c ? -1 : 1))[0] : undefined;
+    const safe = B.cultureEverywhere && longRun ? mine.filter((t) => quiet(t) && seen(t)!.culture < rules.culture.max).sort((a, c) => seen(a)!.culture - seen(c)!.culture || Number(c === capital) - Number(a === capital) || (a < c ? -1 : 1))[0] : undefined;
     const spot = hold ?? safe;
     const cost = spot ? investCost(rules, seen(spot)!.culture) : null;
     if (spot && cost !== null && gold >= cost + troopCost * B.cultureReserve) {
@@ -252,6 +275,8 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, insight: 
   const keep = (t: TerritoryId) => {
     if (t === capital && capThreatened) return holdNeed(t);
     if (chokeHolder(t)) return holdNeed(t);
+    // Reading the border (Nate): a province held whole keeps its bonus only if its border holds.
+    if (J.anticipate?.guard && whole(t) && biggestEnemyNear(t) > garrison) return Math.max(garrison, holdNeed(t));
     if (runaway && facesRival(t, runaway)) return Math.max(garrison, holdNeed(t));
     // Its style: a share of what it takes to hold any front facing a rival (the Turtle more, the Blitzer nothing).
     if (D.frontGarrison > 0 && idx.neighbors.get(t)!.some((x) => rivalAt(x))) return Math.max(garrison, Math.ceil(holdNeed(t) * D.frontGarrison));
@@ -288,7 +313,7 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, insight: 
       if (need === null) continue;
       // Calm play: rival land only with a big margin; neutral land only where the army that takes it would be safe.
       if (calm && rival && avail < need * A.calmMargin) continue;
-      if (calm && !rival && b.exposed(to, Math.max(1, avail - need))) continue;
+      if (calm && !o && !rival && b.exposed(to, Math.max(1, avail - need))) continue;
       candidates.push({ from, to, troops: need, score: (v * missionPull(b, from, to)) / Math.max(1, need), vsPlayer: rival !== null, breakthrough: false });
     }
   }
@@ -344,7 +369,10 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, insight: 
     staging.delete(c.from);
   }
   // Chain on from where each attack should arrive, as far as its style goes.
-  const chainB: Board = { ...b, valueOf: value };
+  // Ending on defensible ground (Nate): a hop is worth more where few open borders would face the army that stops there.
+  const openSides = (t: TerritoryId) => idx.neighbors.get(t)!.filter((x) => !owned(x) && !targeted.has(x) && !crossing(t, x)).length;
+  const chainValue = J.endSafe ? (t: TerritoryId) => value(t) + J.endSafe! * (openSides(t) === 0 ? 1 : openSides(t) === 1 ? 0.5 : 0) : value;
+  const chainB: Board = { ...b, valueOf: chainValue };
   for (const first of queued)
     chainOn(chainB, first, targeted, calm ? Math.max(A.chainMargin, A.calmMargin) : A.chainMargin, id, (o) => army(o, first.from), { maxHops: A.maxHops, followThroughSpare: A.followThroughSpare });
 
@@ -364,6 +392,15 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, insight: 
     else want(t, enemyPressure(t) > 0 ? 5 + enemyPressure(t) / 20 : 1);
   }
   for (const [t, v] of staging) want(t, 40 + v);
+  // Reading the border (Nate): the capital and land of a province held whole draw troops when a rival army two steps
+  // away could reach it next turn (it would arrive bigger than what stands there).
+  if (J.anticipate?.reach)
+    for (const t of frontier) {
+      if (t !== capital && !whole(t)) continue;
+      let far = 0;
+      for (const x of idx.neighbors.get(t)!) if (!owned(x)) for (const y of idx.neighbors.get(x)!) if (y !== t && rivalAt(y)) far = Math.max(far, troopsAt(y));
+      if (Math.max(far, biggestEnemyNear(t)) > troopsAt(t) * 1.5) want(t, 25 + Math.max(far, biggestEnemyNear(t)) / 10);
+    }
   const distFrom = new Map<TerritoryId, Map<TerritoryId, number>>();
   for (const g of goals.keys()) {
     const d = new Map<TerritoryId, number>([[g, 0]]);

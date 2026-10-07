@@ -185,7 +185,7 @@ describe("the Marshal's reading of the board", () => {
     const est3 = new Map([["p2", 22], ["p3", 20], ["p4", 12]]);
     expect(readRunaway(J.runaway, est3, 15, 120, 4, 4, new Map([["p3", 9], ["p2", 2]]), mem, 10)).toEqual({ runaway: "p3", why: "pace" });
     // Still: named two turns ago, still the biggest.
-    expect(readRunaway(J.runaway, est3, 15, 120, 4, 4, new Map(), { ...mem, runaway: { player: "p2", since: 7, last: 8 } }, 10)).toEqual({ runaway: "p2", why: "still" });
-    expect(readRunaway(J.runaway, est3, 15, 120, 4, 4, new Map(), { ...mem, runaway: { player: "p2", since: 2, last: 4 } }, 10).runaway).toBeNull();
+    expect(readRunaway(J.runaway, est3, 15, 120, 4, 4, new Map(), { ...mem, runaway: { player: "p2", since: 7, last: 8, named: 9 } }, 10)).toEqual({ runaway: "p2", why: "still" });
+    expect(readRunaway(J.runaway, est3, 15, 120, 4, 4, new Map(), { ...mem, runaway: { player: "p2", since: 2, last: 4, named: 5 } }, 10).runaway).toBeNull();
   });
 });

@@ -12,9 +12,9 @@ import { spawn } from "node:child_process";
 import { cpus } from "node:os";
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { defaultRules, type PersonalityId } from "@conquerra/content";
+import { defaultRules, marshalData, MarshalJudgement, Personality, type PersonalityId } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
-import { CAPTAIN_CHAIN_MARGIN, dealPersonalities, makeCaptainBot, makeMarshalBot, makeRecruitBot, PERSONALITY_IDS, type Bot } from "@conquerra/bots";
+import { dealPersonalities, makeCaptainBot, makeMarshalBot, makeRecruitBot, personality, PERSONALITY_IDS, type Bot } from "@conquerra/bots";
 import { playTable, type TableResult } from "@conquerra/simcore";
 import type { GameContext } from "@conquerra/engine";
 
@@ -32,15 +32,31 @@ export interface TournamentSpec {
   seed: string;
   fog: boolean;
   diplomacy: boolean;
+  /** Trying a change (Part 2's A/B tests): merged into the shared judgement and into named personalities. */
+  tweak?: { judgement?: Record<string, unknown>; personalities?: Record<string, Record<string, unknown>> };
 }
 
-export function botFor(kind: string): Bot {
+/** `b` merged into `a`, objects deep (arrays and numbers replaced). */
+function merge<T>(a: T, b: unknown): T {
+  if (!b || typeof b !== "object" || Array.isArray(b) || typeof a !== "object" || a === null) return (b === undefined ? a : b) as T;
+  const out: Record<string, unknown> = { ...(a as Record<string, unknown>) };
+  for (const [k, v] of Object.entries(b)) out[k] = merge(out[k], v);
+  return out as T;
+}
+
+export function botFor(kind: string, tweak?: TournamentSpec["tweak"]): Bot {
   const k = kind.replace(/^sighted:/, "");
   if (k === "captain") return makeCaptainBot();
   if (k === "recruit") return makeRecruitBot();
   // Session 16's stand-in for a person running away: the Captain with its caution turned down.
   if (k === "expander") return { ...makeCaptainBot({ chainMargin: 1, off: ["chokes", "breakthrough", "forts", "culture"] }), id: "expander" };
-  if (k.startsWith("marshal-") && PERSONALITY_IDS.includes(k.slice(8) as PersonalityId)) return makeMarshalBot(k.slice(8) as PersonalityId);
+  if (k.startsWith("marshal-") && PERSONALITY_IDS.includes(k.slice(8) as PersonalityId)) {
+    const id = k.slice(8) as PersonalityId;
+    if (!tweak) return makeMarshalBot(id);
+    const all = tweak.personalities?.["*"];
+    const p = Personality.parse(merge(merge(personality(id), all), tweak.personalities?.[id]));
+    return makeMarshalBot(p, MarshalJudgement.parse(merge(marshalData.judgement, tweak.judgement)));
+  }
   throw new Error(`Unknown seat kind ${kind}`);
 }
 
@@ -56,7 +72,7 @@ export function playOne(spec: TournamentSpec, i: number): TableResult & { kinds:
   const ctx: GameContext = { map: maps[spec.map]!, rules: defaultRules };
   const seed = `${spec.seed}-${spec.map}-${spec.players}p-${i}`;
   const kinds = seatsFor(spec, i, seed);
-  const bots = kinds.map(botFor);
+  const bots = kinds.map((k) => botFor(k, spec.tweak));
   const sighted = kinds.flatMap((k, s) => (k.startsWith("sighted:") ? [s] : []));
   const r = playTable(ctx, seed, bots, { settings: { fog: spec.fog, diplomacy: spec.diplomacy }, sighted });
   return { ...r, kinds };
@@ -91,6 +107,7 @@ if (args.includes("--worker")) {
     seed: arg("seed", "t17"),
     fog: arg("fog", "on") !== "off",
     diplomacy: arg("diplomacy", "on") !== "off",
+    ...(arg("tweak", "") ? { tweak: JSON.parse(arg("tweak", "")) } : {}),
   };
   const t0 = Date.now();
   const results = await runTournament(spec, Number(arg("workers", String(Math.max(1, cpus().length - 1)))));

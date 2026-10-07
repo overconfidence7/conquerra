@@ -116,8 +116,41 @@ export const MarshalJudgement = z.object({
   }),
   /** Land it last saw as neutral counts as neutral for this many turns; after that it's land it doesn't know. */
   neutralFreshTurns: z.number().int().min(0),
+  /** How much land it can't see counts toward the nearest rival it knows of (1: as estimated; 0: only what it sees and remembers). */
+  unseenWeight: z.number().min(0).max(1).optional(),
+  /** Of that land, the share spread evenly among the living rivals rather than given to the nearest (0 to 1). */
+  unseenSpread: z.number().min(0).max(1).optional(),
   /** A joint war against the runaway: every Marshal accepts and proposes one, and fronts with the runaway come first. */
   leaderWar: z.boolean(),
+  /**
+   * The opening (Part 2, what wins): for the first `turns` turns every Marshal expands at least this hard, whatever its
+   * personality: chaining on at `chainMargin` or less, throwing in `sendShare` of its spare troops or more, up to
+   * `maxHops` hops, Follow through with `followThroughSpare` spare. A calm personality still doesn't attack rivals early.
+   */
+  opening: z.object({ turns: z.number().int().min(0), chainMargin: z.number().min(0), sendShare: z.number().min(0).max(1), maxHops: z.number().int().min(1), followThroughSpare: z.number().int().min(0) }).optional(),
+  /** Building for the long run (markets, culture on safe land, a personality's extra forts) waits until this turn (troops first). */
+  buildFrom: z.number().int().min(0).optional(),
+  /**
+   * What wins (Part 2): every Marshal attacks at least this hard all game, whatever its personality: chaining on at
+   * `chainMargin` or less, up to `maxHops` hops or more, throwing in `sendShare` of its spare troops or more.
+   */
+  attackFloor: z.object({ chainMargin: z.number().min(0), sendShare: z.number().min(0).max(1), maxHops: z.number().int().min(1), followThroughSpare: z.number().int().min(0) }).optional(),
+  /** What wins (Part 2): a personality's honest garrisons on its fronts are scaled by this (troops held back lose games). */
+  garrisonScale: z.number().min(0).max(1).optional(),
+  /**
+   * Whole provinces (Nate, during session 17): land that brings a province within reach of being held whole is worth
+   * `drive` times the province's bonus more (in full for the last territory, two thirds for the one before, a third
+   * for the one before that).
+   */
+  provinceDrive: z.number().min(0).optional(),
+  /** Ending on defensible ground (Nate): a chain prefers to stop where few open borders face it (this much more value with none, half with one). */
+  endSafe: z.number().min(0).optional(),
+  /**
+   * Reading the border (Nate): land in a province it holds whole keeps enough troops to hold against the army next to
+   * it (`guard`); its capital and that land draw reinforcements when a rival army two steps away could strike next
+   * turn (`reach`); and it builds a fort there when it can afford one (`fort`).
+   */
+  anticipate: z.object({ guard: z.boolean(), reach: z.boolean(), fort: z.boolean() }).optional(),
 });
 export type MarshalJudgement = z.infer<typeof MarshalJudgement>;
 

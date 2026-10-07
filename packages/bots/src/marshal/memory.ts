@@ -13,8 +13,11 @@ export interface MarshalMemory {
   land: { turn: number; est: Record<PlayerId, number> }[];
   /** Territories it watched each rival take in the replays, turn by turn (the last few turns). */
   taken: { turn: number; by: Record<PlayerId, number> }[];
-  /** The runaway leader it named, since when, and the last turn it still named it. */
-  runaway: { player: PlayerId; since: number; last: number } | null;
+  /**
+   * The runaway leader it named: since when, the last turn the rule itself named it (by size or pace), and the last
+   * turn it named it at all (including the few turns it sticks to it).
+   */
+  runaway: { player: PlayerId; since: number; last: number; named: number } | null;
 }
 
 export const freshMemory = (): MarshalMemory => ({ turn: -1, land: [], taken: [], runaway: null });
@@ -83,12 +86,20 @@ export function estimateLand(ctx: GameContext, view: PlayerView, judgement: Mars
         queue.push(nb);
       }
   }
-  const held = seenNow ? heldNow / seenNow : 0.5;
+  const held = (seenNow ? heldNow / seenNow : 0.5) * (judgement.unseenWeight ?? 1);
+  // Unseen land: `spread` of it shared evenly among the living rivals, the rest to whoever holds the nearest land it
+  // knows of (all by nearest overrates a neighbour whose land happens to face the part of the map it can't see).
+  const spread = judgement.unseenSpread ?? 0;
+  const rivals = view.players.filter((p) => p.eliminatedTurn === null && p.id !== me).map((p) => p.id);
   const est = new Map(known);
   for (const t of idx.ids) {
     if (owner.has(t)) continue;
     const o = near.get(t);
-    if (o && o !== me) est.set(o, (est.get(o) ?? 0) + held);
+    if (o === undefined) continue;
+    // Land nearest a neutral it knows of counts as neutral (no one's), as before.
+    if (o === null || o === me) continue;
+    est.set(o, (est.get(o) ?? 0) + held * (1 - spread));
+    for (const r of rivals) est.set(r, (est.get(r) ?? 0) + (held * spread) / rivals.length);
   }
   for (const [p] of est) if (!alive(p) || p === me) est.delete(p);
   return { est, known, mine };
