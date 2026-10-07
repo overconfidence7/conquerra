@@ -1,7 +1,8 @@
-import { mapCatalog, suggestedMode } from "@conquerra/content";
+import { defaultRules, mapCatalog, suggestedMode } from "@conquerra/content";
 import { BOT_NAMES } from "../host/names";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { prewarmHost, useGame } from "../store";
+import { suggestLeaderName } from "@conquerra/engine";
 import type { BotChoice } from "../host/protocol";
 import { mapChoiceLabel } from "../logic/text";
 import { TIMER_CHOICES, timerLabel } from "../logic/timer";
@@ -44,6 +45,8 @@ export function Lobby() {
   const marshals = Math.min(lobby.bots, lobby.marshals ?? Math.ceil(lobby.bots / 2));
   const rec = map.recommendedPlayers;
   const emblem = useArtUrl("emblem");
+  // Left blank, your Steward gets a name from the game's seed; this is the kind of name it'll be.
+  const [stewardSuggestion] = useState(() => suggestLeaderName("steward", String(Date.now())));
   return (
     <div className="lobby">
       <Frame>
@@ -111,6 +114,31 @@ export function Lobby() {
         <span className="muted small">
           {HOUSES[lobby.house ?? DEFAULT_HOUSE]!.name} ({HOUSE_PLAIN[lobby.house ?? DEFAULT_HOUSE]}). The bots take the other colours.
         </span>
+      </div>
+
+      <div className="field">
+        <span className="field-name">Your Leader</span>
+        <input
+          className="name-input"
+          aria-label="Your Leader's name"
+          value={lobby.leaderName ?? ""}
+          maxLength={defaultRules.leaders.nameMaxLength}
+          placeholder="Name your Leader"
+          onChange={(e) => setLobby({ leaderName: e.target.value })}
+        />
+        <span className="muted small">Leads your army (+20% in battle). Your Steward builds and raises culture for you.</span>
+      </div>
+
+      <div className="field">
+        <span className="field-name">Your Steward</span>
+        <input
+          className="name-input"
+          aria-label="Your Steward's name (optional)"
+          value={lobby.stewardName ?? ""}
+          maxLength={defaultRules.leaders.nameMaxLength}
+          placeholder={`Optional (otherwise ${stewardSuggestion})`}
+          onChange={(e) => setLobby({ stewardName: e.target.value })}
+        />
       </div>
 
       <div className="field">

@@ -59,6 +59,11 @@ export interface MapScene {
    * lit up with a bright band round its whole border and its plaque (name and bonus) shown at every zoom.
    */
   province?: string | null;
+  /**
+   * A leader's command (session 18), while that leader is open in the Leaders panel: the provinces it works in, outlined
+   * in gold (a front, the way an Expand leader is taking, the province a Steward builds up). Its target glows (`glow`).
+   */
+  area?: readonly string[];
 }
 
 export interface MapEvents {

@@ -1,11 +1,12 @@
-import { recruitSitesIn, type GameContext, type Order, type PlayerView } from "@conquerra/engine";
+import { pursesTotal, recruitSitesIn, type GameContext, type Order, type PlayerView } from "@conquerra/engine";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { missionTargets } from "../logic/cards";
 import { passageLines, passageNow, truceLines, waitingOffers } from "../logic/deals";
 import { colorOf } from "./colors";
 import { incomeEstimate } from "../logic/actions";
 import { planQueue, queueFor } from "../logic/orders";
-import { asIfYouOrderFrom } from "../logic/generals";
+import { arrangeQueue, asIfYouOrderFrom, standing } from "../logic/generals";
+import { commandArea } from "../logic/leaderArea";
 import { planPath } from "../logic/paths";
 import { clearInsets, landFrame, type Insets, type Rect } from "../map/camera";
 import type { Beat } from "../replay/timeline";
@@ -16,7 +17,7 @@ import { ActionBar, LockSeal } from "./ActionBar";
 import { BottomSheet, type SheetSize } from "./BottomSheet";
 import { Frame } from "./Frame";
 import { Icon } from "./icons";
-import { LeaderCard } from "./LeaderCard";
+import { LeaderPortrait, LeadersPanel, PlacementSwitch } from "./LeadersPanel";
 import { CardStack } from "./CardStack";
 import { influencePerTurn } from "../logic/fallen";
 import { MapView, readTactical, saveTactical } from "./MapView";
@@ -110,6 +111,7 @@ function useCovered(active: boolean, phone: boolean, reserveSelPanel: boolean, s
 function Settings({ tactical, onTactical, onFit, onReport, onSaves, onLeave, onClose }: { tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onClose(): void }) {
   return (
     <Frame className="popover" title="Settings" extra={<button className="link" onClick={onClose}>Close</button>}>
+      <PlacementSwitch />
       <button className="menu-item" onClick={onTactical} aria-pressed={tactical}>
         Tactical view <span className="muted">{tactical ? "On" : "Off"}</span>
       </button>
@@ -160,6 +162,17 @@ function LayoutSetting() {
 }
 
 let toastId = 0;
+
+const NO_AREA: readonly string[] = [];
+/** What the pick banner says while you choose on the map for a leader's command (a front counts its provinces). */
+const PICK_WORDS: Record<string, (n: number) => string> = {
+  push: () => "Tap the place to push toward",
+  defend: () => "Tap the place to defend toward",
+  expand: () => "Tap the territory to expand toward",
+  front: (n) => (n ? `${n} province${n === 1 ? "" : "s"} marked: tap more, or Confirm` : "Tap the provinces of the front"),
+  buildUp: () => "Tap the province to build up",
+  culture: () => "Tap the province to raise culture in",
+};
 
 export function GameScreen() {
   const g = useGame();
@@ -225,7 +238,10 @@ export function GameScreen() {
   // Orders along a path (session 16): while the path box is open, its orders show on the map as a numbered chain.
   const pathBox = g.path;
   const pathPlan = useMemo(() => (ctx && view && pathBox ? planPath(ctx, view, queue, g.pageDeals(), passageNow(view, g.pageDeals()), pathBox) : null), [ctx, view, queue, pathBox]); // eslint-disable-line react-hooks/exhaustive-deps
-  const shownQueue = useMemo(() => queueFor(view && draft ? asIfYouOrderFrom(view, queue, draft.from) : queue, draft), [view, queue, draft]);
+  // Your queue in the order it plays: your leaders' orders mixed in with yours, or after yours (the setting).
+  const placement = g.leaderPlacement;
+  const arranged = useMemo(() => arrangeQueue(queue, placement), [queue, placement]);
+  const shownQueue = useMemo(() => queueFor(view && draft ? asIfYouOrderFrom(view, arranged, draft.from) : arranged, draft), [view, arranged, draft]);
   /** What the map draws: your orders, plus the path being planned (not in your order list until you confirm). */
   const mapQueue = useMemo(() => (pathPlan ? [...shownQueue, ...pathPlan.orders.map((o, i) => ({ ...o, id: `path-preview-${i}` }) as Order)] : shownQueue), [shownQueue, pathPlan]);
   const plan = useMemo(() => (ctx && view ? planQueue(ctx, view, shownQueue) : null), [ctx, view, shownQueue]);
@@ -252,12 +268,21 @@ export function GameScreen() {
   }, [phone, pathBox]);
   // Recruit sites glow while the Recruit panel is open; a mission you tapped lights up its target.
   const missionId = g.mission;
+  // The leader open in the Leaders panel (or the one you're picking for): its command's target glows and the
+  // provinces it works in are outlined (session 18).
+  const leaderKeyShown = g.picking?.general ?? g.leaderOpen;
+  const area = useMemo(() => {
+    if (!ctx || !view || !leaderKeyShown) return null;
+    const command = leaderKeyShown in g.instructions ? g.instructions[leaderKeyShown]! : standing(view, leaderKeyShown);
+    return commandArea(ctx, view, leaderKeyShown, command, g.picking);
+  }, [ctx, view, leaderKeyShown, g.instructions, g.picking]);
   const glow = useMemo(() => {
     if (!ctx || !view) return NO_GLOW;
     if (recruitOpen) return recruitSitesIn(ctx, view);
     const m = missionId ? view.me.missions.find((x) => x.id === missionId) : undefined;
-    return m ? missionTargets(ctx, view, m) : NO_GLOW;
-  }, [ctx, view, recruitOpen, missionId]);
+    if (m) return missionTargets(ctx, view, m);
+    return area?.glow.length ? area.glow : NO_GLOW;
+  }, [ctx, view, recruitOpen, missionId, area]);
   useEffect(() => setSpendOpen(false), [selected]);
   // Diplomacy: truce borders on the map (in force, and agreed this turn), and offers to you still waiting.
   const { diplomacy, answers, offers, deal } = g;
@@ -296,6 +321,7 @@ export function GameScreen() {
         draft={act ? draft : null}
         showTargets={act && !recruitOpen && (plan.free.get(selected ?? "") ?? 0) > 0}
         glow={act ? glow : NO_GLOW}
+        area={act && area ? area.provinces : NO_AREA}
         truces={truces}
         passage={passage}
         open={open}
@@ -370,6 +396,7 @@ export function GameScreen() {
     <TopBar
       view={view}
       gold={view.me.gold}
+      purses={pursesTotal(view.me)}
       goldAfter={plan.goldLeft}
       income={income}
       clock={out ? null : clock}
@@ -384,7 +411,12 @@ export function GameScreen() {
   const minimap = <Minimap ctx={ctx} view={shownView} rect={rect} onJump={(x, y) => renderer.current?.centreOn(x, y)} />;
   const pickBanner = (picking || g.spyPick || g.pathPick) && act && (
     <Frame className="pick-banner slim" role="status">
-      <span>{g.pathPick ? "Tap where the army should go" : g.spyPick ? "Tap a province to send your spy there" : `Tap the place to ${picking!.kind === "push" ? "push toward" : "defend toward"}`}</span>
+      <span>{g.pathPick ? "Tap where the army should go" : g.spyPick ? "Tap a province to send your spy there" : PICK_WORDS[picking!.kind]!(picking!.provinces?.length ?? 0)}</span>
+      {picking?.kind === "front" && (
+        <button className="primary" onClick={() => g.confirmPick()} disabled={!picking.provinces?.length}>
+          Confirm
+        </button>
+      )}
       <button className="link" onClick={() => (g.pathPick ? g.cancelPath() : g.spyPick ? g.cancelSpyPick() : g.cancelPick())}>
         Cancel
       </button>
@@ -472,8 +504,10 @@ export function GameScreen() {
       { id: "army", label: "Army" },
       { id: "orders", label: `Orders (${queue.length})` },
       { id: "card", label: "Card" },
+      { id: "leaders", label: "Leaders" },
       ...(report ? [{ id: "report", label: "Report" }] : []),
     ];
+    const myLeader = view.me.leaders.find((l) => l.kind === "leader" && l.of === view.me.id);
     return (
       <div className={`game phone ${clock?.pausedLeft !== undefined ? "timer-paused" : ""}`}>
         {map}
@@ -489,6 +523,11 @@ export function GameScreen() {
             <Icon.scroll />
           </button>
           {act && <CardStack ctx={ctx} view={view} onOpen={() => setCardsOpen(true)} compact />}
+          {act && myLeader && (
+            <button className="icon-btn leader-btn" onClick={() => (setTab("leaders"), g.leaderOpen || g.openLeader(`leader:${view.me.id}`), setSheet((s) => (s === "closed" || tab !== "leaders" ? "half" : "closed")))} aria-label="Leaders" title="Your leaders">
+              <LeaderPortrait view={view} l={myLeader} size={34} />
+            </button>
+          )}
         </div>
         {minimapOn && <Frame className="mini-float slim">{minimap}</Frame>}
         {playersOn && (
@@ -508,8 +547,8 @@ export function GameScreen() {
           <BottomSheet size={replaying ? "closed" : sheet} onSize={setSheet} bottom={76} tabs={tabs} tab={tab} onTab={setTab}>
             {tab === "army" && army}
             {tab === "orders" && <OrderQueue ctx={ctx} view={view} plan={plan} queue={shownQueue} bare />}
+            {tab === "leaders" && <LeadersPanel ctx={ctx} view={view} queue={queue} onShow={(t) => g.select(t)} onCards={() => setCardsOpen(true)} />}
             {tab === "card" && (selected ? <TerritoryCard ctx={ctx} view={view} id={selected} /> : <p className="muted">Tap a territory to see its card. Tap and hold anywhere for a quick look.</p>)}
-            {tab === "card" && <LeaderCard ctx={ctx} view={view} queue={queue} onCards={() => setCardsOpen(true)} />}
             {tab === "report" && report && (
               <Suspense fallback={null}>
                 <ReportBody ctx={ctx} view={view} report={report} />
@@ -551,7 +590,7 @@ export function GameScreen() {
       </div>
       <aside className="rightcol" ref={moreCue}>
         <PlayersPanel view={view} />
-        {!out && <LeaderCard ctx={ctx} view={view} queue={queue} onCards={() => setCardsOpen(true)} />}
+        {!out && <LeadersPanel ctx={ctx} view={view} queue={queue} onShow={(t) => g.select(t)} onCards={() => setCardsOpen(true)} />}
       </aside>
       {settingsMenu}
       <Toasts toasts={toasts} />

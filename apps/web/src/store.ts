@@ -1,7 +1,7 @@
 import { defaultRules, mapCatalog, suggestedMode, type BuildingType } from "@conquerra/content";
 import { BOT_NAMES } from "./host/names";
 import { DEFAULT_HOUSE, HOUSES } from "./map/houses";
-import { findLeader, indexMap, isShare, type Budget, type DealKind, type GameContext, type Instruction, type Offer, type Order, type PlayerId, type PlayerView, type RecruitAmount, type SpoilsSet, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
+import { findLeader, indexMap, isShare, suggestLeaderName, type Budget, type DealKind, type GameContext, type Instruction, type Offer, type Order, type PlayerId, type PlayerView, type RecruitAmount, type SpoilsSet, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
 import { arrangeQueue, asIfYouOrderFrom, instructOrders, refFromKey, takeControl, withGeneralOrders, type LeaderPlacement } from "./logic/generals";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
@@ -15,7 +15,7 @@ import type { Answer } from "@conquerra/bots";
 import { agreedThisTurn, attackCheck, counterFrom, dealsNow, newOffer, passageNow, type PageDeal } from "./logic/deals";
 import type { PathKind } from "./logic/paths";
 import { chronicleOf } from "./logic/chronicleKeep";
-import { draftToOrder, isRecruitSite, type NewOrder, planQueue, queueFor, removeOrder, shiftOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
+import { draftToOrder, isRecruitSite, type NewOrder, planQueue, queueFor, removeOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
 
 export type Screen = "lobby" | "game" | "over";
 /** What a tap on the map picks for a leader's command. */
@@ -79,6 +79,9 @@ interface GameStore {
   picking: { general: string; kind: PickKind; provinces?: string[] } | null;
   /** Where your leaders' orders go in your queue (Nate's setting): mixed in with yours, or after yours. */
   leaderPlacement: LeaderPlacement;
+  /** The leader open in the Leaders panel (its command's area or target is outlined on the map), by leader key. */
+  leaderOpen: string | null;
+  openLeader(key: string | null): void;
   setLeaderPlacement(p: LeaderPlacement): void;
   /** A leader's budget (a share of income, or an exact amount), from this turn on. */
   setBudget(key: string, budget: Budget): Promise<void>;
@@ -253,10 +256,22 @@ function rememberedHouse(): number {
   }
 }
 
+/** Your Leader's name, remembered on this device (a sensible one filled in the first time; session 18). */
+const LEADER_NAME_KEY = "conquerra.leaderName";
+function rememberedLeaderName(): string {
+  try {
+    const saved = localStorage.getItem(LEADER_NAME_KEY);
+    if (saved && saved.trim()) return saved;
+  } catch {
+    // A private window: a fresh suggestion each visit.
+  }
+  return suggestLeaderName("leader", String(Date.now()));
+}
+
 const defaultLobby = (): LobbySettings => {
   const bots = 3;
   // The Marshal is the default bot (session 17: it beats the Captain and gangs up on a runaway early).
-  return { mapId: "embervale", bots, botLevel: "marshal", luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER, fate: true, diplomacy: true, house: rememberedHouse() };
+  return { mapId: "embervale", bots, botLevel: "marshal", luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER, fate: true, diplomacy: true, house: rememberedHouse(), leaderName: rememberedLeaderName() };
 };
 
 export const useGame = create<GameStore>((set, get) => ({
@@ -286,6 +301,8 @@ export const useGame = create<GameStore>((set, get) => ({
   paused: [],
   picking: null,
   leaderPlacement: rememberedPlacement(),
+  leaderOpen: null,
+  openLeader: (key) => set({ leaderOpen: key }),
   spyPick: null,
   pathPick: null,
   path: null,
@@ -370,6 +387,12 @@ export const useGame = create<GameStore>((set, get) => ({
     if (patch.house !== undefined)
       try {
         localStorage.setItem(HOUSE_KEY, String(patch.house));
+      } catch {
+        // A private window: it's remembered for this visit only.
+      }
+    if (patch.leaderName !== undefined)
+      try {
+        localStorage.setItem(LEADER_NAME_KEY, patch.leaderName);
       } catch {
         // A private window: it's remembered for this visit only.
       }
@@ -585,7 +608,19 @@ export const useGame = create<GameStore>((set, get) => ({
   },
 
   shift(id, dir) {
-    set({ queue: shiftOrder(get().queue, id, dir) });
+    // Your orders move among your own; a leader's among its leaders' (where they sit between yours is the setting).
+    const q = get().queue;
+    const o = q.find((x) => x.id === id);
+    if (!o) return;
+    const mine = !(o.general || o.steward);
+    const same = q.filter((x) => !(x.general || x.steward) === mine);
+    const at = same.findIndex((x) => x.id === id);
+    const other = same[at + dir];
+    if (!other) return;
+    const i = q.indexOf(o), j = q.indexOf(other);
+    const next = [...q];
+    [next[i], next[j]] = [next[j]!, next[i]!];
+    set({ queue: next });
   },
 
   async setInstruction(general, instruction) {

@@ -584,3 +584,36 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .mission-line .due.last { color: #ffb4a3; }
 .deal-sheet .scroll { padding-right: 6px; }
 .deal-until { min-height: 44px; max-width: 70%; background: rgba(15, 22, 32, 0.8); color: inherit; border: 1px solid rgba(201, 164, 92, 0.5); border-radius: 8px; padding: 4px 8px; font: inherit; }
+
+/* ---------- Leaders you delegate to (session 18) ---------- */
+.leader-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.leader-row { border: 1px solid rgba(201, 164, 92, 0.25); border-radius: 8px; background: rgba(15, 22, 32, 0.35); }
+.leader-row.open { border-color: var(--gold); background: rgba(201, 164, 92, 0.07); }
+.leader-head { display: flex; gap: 8px; align-items: center; width: 100%; min-height: 48px; padding: 6px 8px; text-align: left; background: none; border: none; color: inherit; font: inherit; line-height: 1.25; }
+.leader-who { display: block; min-width: 0; }
+.leader-who b { font-family: var(--font-head); }
+.purse-line { color: var(--parch); }
+.purse-line b { color: var(--gold-hi); }
+.leader-tools { padding: 0 8px 8px; display: flex; flex-direction: column; gap: 6px; }
+.row-buttons { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.row-buttons > button:not(.link) { min-height: 40px; padding: 4px 12px; }
+.row-buttons > button.on { border-color: var(--gold-hi); background: rgba(201, 164, 92, 0.18); }
+.leader-tools .powers { margin: 0; color: var(--muted); }
+.steward-seal { flex: none; vertical-align: middle; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5)); }
+.order-text .steward-seal { margin-right: 5px; }
+.command-group + .command-group { margin-top: 6px; }
+.command-group .field-name { margin: 0 0 3px; color: var(--muted); }
+.budget-exact { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.budget-exact input { width: 4.5em; min-height: 40px; font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--gold); background: var(--raised); color: var(--parch); }
+.stat .purses { color: var(--muted); font-size: 0.72rem; margin-left: 6px; white-space: nowrap; }
+.placement { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 6px; color: var(--muted); }
+.placement .seg button { min-height: 32px; padding: 2px 10px; font-size: var(--fs-small); }
+.name-input { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--gold); background: var(--raised); color: var(--parch); min-height: 44px; width: min(100%, 22em); box-sizing: border-box; }
+.leader-btn { padding: 2px; overflow: hidden; }
+.leader-btn .gen-portrait, .leader-btn .steward-seal { display: block; }
+.pick-banner .primary { min-height: 36px; padding: 2px 14px; }
+.leaders .grid-buttons { grid-template-columns: 1fr; gap: 4px; }
+.leaders .grid-buttons button { min-height: 40px; padding: 5px 10px; text-align: left; }
+.leaders .grid-buttons button .block { margin-top: 1px; line-height: 1.25; }
+.placement .seg { flex-wrap: nowrap; gap: 4px; }
+.placement .seg button { white-space: nowrap; }

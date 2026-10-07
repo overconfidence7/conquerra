@@ -45,8 +45,10 @@ export const isHireSite = (view: PlayerView, t: TerritoryId) => isMine(view, t) 
 // ---------- Walking the queue ----------
 
 export interface QueuePlan {
-  /** Gold left after everything queued is paid for. */
+  /** Gold left in your treasury after everything queued is paid for. */
   goldLeft: number;
+  /** Gold left in each leader's purse (by leader key) after its own orders (session 18). */
+  pursesLeft: Map<string, number>;
   /** Gold each order spends, in queue order (0 for moves). */
   costs: number[];
   /** Troops that can still be sent from each territory you hold or should hold by then (the 1-troop garrison always stays). */
@@ -96,8 +98,11 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
   const { rules } = ctx;
   const garrison = rules.setup.minGarrison;
   let gold = view.me.gold;
+  // Leaders' orders are paid from their own purses (session 18), never your treasury.
+  const purses = new Map((view.me.leaders ?? []).map((l) => [`${l.kind}:${l.of}`, l.purse]));
   const plan: QueuePlan = {
     goldLeft: 0,
+    pursesLeft: purses,
     costs: [],
     free: new Map(),
     army: new Map(),
@@ -135,6 +140,10 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
     let cost = 0;
     let sent = 0;
     plan.hop.push(null);
+    // Whose gold pays: a leader's purse for its own orders, else your treasury.
+    const payer = o.steward ? `steward:${o.steward}` : o.general ? `leader:${o.general}` : null;
+    const treasury = gold;
+    if (payer) gold = purses.get(payer) ?? 0;
     switch (o.kind) {
       case "recruit": {
         // All, a share of the gold left by then, or an exact number (as many as you can afford).
@@ -221,6 +230,10 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
     }
     if (cost > gold) cost = o.kind === "recruit" ? cost : 0; // the engine skips what you can't afford
     gold -= cost;
+    if (payer) {
+      purses.set(payer, gold);
+      gold = treasury;
+    }
     plan.costs.push(cost);
     plan.sent.push(sent);
   }

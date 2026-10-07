@@ -26,6 +26,8 @@ interface Props {
   glow?: readonly TerritoryId[];
   /** Truce borders to draw (where you can see them). */
   truces?: MapScene["truces"];
+  /** Provinces a leader's command covers, outlined (session 18). */
+  area?: readonly string[];
   /** Passage land to draw, and whose land you may march through (right of passage). */
   passage?: MapScene["passage"];
   open?: readonly PlayerId[];
@@ -61,6 +63,7 @@ export function buildScene(
   truces: MapScene["truces"] = [],
   passage: MapScene["passage"] = [],
   open: readonly PlayerId[] = passageOpen(view),
+  area: readonly string[] = [],
 ): MapScene {
   // Your spies, one badge per place (and kind).
   const spyAt = new Map<string, NonNullable<MapScene["spies"]>[number]>();
@@ -94,12 +97,14 @@ export function buildScene(
     spies: [...spyAt.values()],
     // The territory you tapped last (an attack's target while you draft it) lights up its province.
     province: ctx.map.territories.find((t) => t.id === (draft?.to ?? selected))?.province ?? null,
+    area,
   };
 }
 
 const NO_GLOW: readonly TerritoryId[] = [];
 const NO_TRUCES: MapScene["truces"] = [];
 const NO_PASSAGE: MapScene["passage"] = [];
+const NO_AREA: readonly string[] = [];
 
 interface CardState {
   id: TerritoryId;
@@ -108,13 +113,13 @@ interface CardState {
   how: "hover" | "hold";
 }
 
-export function MapView({ ctx, view, queue, selected, draft, showTargets, glow = NO_GLOW, truces = NO_TRUCES, passage = NO_PASSAGE, open, onTap, onBackground, insets, tactical, rendererRef, onViewMoved, tools = false }: Props) {
+export function MapView({ ctx, view, queue, selected, draft, showTargets, glow = NO_GLOW, truces = NO_TRUCES, passage = NO_PASSAGE, area = NO_AREA, open, onTap, onBackground, insets, tactical, rendererRef, onViewMoved, tools = false }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const ownRef = useRef<MapRenderer | null>(null);
   const renderer = rendererRef ?? ownRef;
   const [kind, setKind] = useState<MapRenderer["kind"] | null>(null);
   const [card, setCard] = useState<CardState | null>(null);
-  const scene = useMemo(() => buildScene(ctx, view, queue, selected, draft, showTargets, glow, truces, passage, open), [ctx, view, queue, selected, draft, showTargets, glow, truces, passage, open]);
+  const scene = useMemo(() => buildScene(ctx, view, queue, selected, draft, showTargets, glow, truces, passage, open, area), [ctx, view, queue, selected, draft, showTargets, glow, truces, passage, open, area]);
   // Latest handlers and scene, for the renderer's callbacks and its async start.
   const live = useRef({ onTap, onBackground, scene, onViewMoved, insets, tactical });
   live.current = { onTap, onBackground, scene, onViewMoved, insets, tactical };

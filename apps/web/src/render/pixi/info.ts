@@ -358,6 +358,14 @@ export class InfoLayer {
         ring(G, l, false).stroke({ width: 10 * px, color: INK, alpha: 0.85, join: "round", cap: "round" });
         ring(G, l, false).stroke({ width: 5 * px, color: 0xfff7d6, alpha: 1, join: "round", cap: "round" });
       }
+    // A leader's command (session 18): the provinces it works in, outlined with a gold band (dashed with ink, so it
+    // reads apart from the lit province's white one).
+    for (const p of this.scene!.area ?? [])
+      for (const l of this.provinceOutline(p)) {
+        ring(G, l, false).stroke({ width: 12 * px, color: GOLD_HI, alpha: 0.28, join: "round", cap: "round" });
+        ring(G, l, false).stroke({ width: 5 * px, color: INK, alpha: 0.8, join: "round", cap: "round" });
+        ring(G, l, false).stroke({ width: 3 * px, color: GOLD_HI, alpha: 1, join: "round", cap: "round" });
+      }
     // Where the selected army can go.
     for (const id of targets) {
       for (const r of this.rings.get(id) ?? []) {

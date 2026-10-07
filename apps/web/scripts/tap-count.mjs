@@ -5,6 +5,7 @@
  * Players panel (4 or fewer), and accepting an offer once it's open (1). Then spies (session 15): hiring one at your
  * capital, and next turn sending it to a province (about 3: its territory, Send…, a province on the map). Then orders
  * along a path (session 16): your land, Path…, a place three steps away, Confirm (and one more for the full sweep).
+ * Then leaders (session 18): every command and the budget, from your Leader's portrait (the Leaders sheet).
  *   node apps/web/scripts/tap-count.mjs [screenshot.png] [command-screenshot.png]
  * Needs the built game running (`pnpm build`, `pnpm --filter web preview`).
  */
@@ -13,7 +14,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const browser = await puppeteer.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true, args: ["--enable-gpu", "--use-angle=d3d11"] });
 const page = await browser.newPage();
 await page.emulate({ viewport: { width: 384, height: 832, deviceScaleFactor: 2.5, isMobile: true, hasTouch: true }, userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Mobile Safari/537.36" });
-await page.goto("http://localhost:4173/", { waitUntil: "networkidle0" });
+await page.goto(process.env.MAP_URL ?? "http://localhost:4173/", { waitUntil: "networkidle0" });
 await page.evaluate(() => window.__conquerraStore.getState().setLobby({ mapId: "ringsea", bots: 5 }));
 await page.evaluate(() => [...document.querySelectorAll("button")].find((x) => x.textContent?.trim() === "Start").click());
 await page.waitForFunction(() => { const s = window.__conquerraMap?.stats?.(); return s && s.firstMapMs > 0; }, { timeout: 120000 });
@@ -148,4 +149,66 @@ for (const kind of ["shortest", "sweep"]) {
   const added = await page.evaluate(() => window.__conquerraStore.getState().queue.filter((o) => o.kind === "move").length);
   console.log(`path (${kind}) taps:`, pathTaps, JSON.stringify({ box, ordersAdded: added }));
 }
+// Leaders (session 18): every command, from your Leader's portrait (it opens the Leaders sheet with your Leader open).
+const leaderTaps = {};
+const openLeaders = async (steward) => {
+  await page.evaluate(() => { const g = window.__conquerraStore.getState(); g.clearSelection(); g.openLeader(null); window.__conquerraStore.setState({ queue: [], instructions: {}, budgets: {} }); });
+  await sleep(500);
+  // Start from the map with the sheet closed (as after any other move).
+  if (await page.evaluate(() => !!document.querySelector(".leader-list")?.offsetParent)) (await page.tap('button[aria-label="Leaders"]'), await sleep(500));
+  await page.evaluate(() => window.__conquerraStore.getState().openLeader(null));
+  let n = 0;
+  const t = async (f, what) => { await f(); n++; await sleep(600); console.log(`  ${n} ${what}`); };
+  await t(async () => page.tap('button[aria-label="Leaders"]'), "your Leader's portrait");
+  if (steward) await t(async () => { const r = await page.evaluate(() => { const b = document.querySelectorAll(".leader-row .leader-head")[1]; b.scrollIntoView({ block: "center" }); const q = b.getBoundingClientRect(); return [q.x + q.width / 2, q.y + q.height / 2]; }); await page.touchscreen.tap(r[0], r[1]); }, "your Steward");
+  return { t, count: () => n };
+};
+const onScreen = async (from, steps) => page.evaluate(({ from, steps }) => {
+  const g = window.__conquerraStore.getState(); const r = window.__conquerraMap; const c = r.camera.cam;
+  const nb = (t) => g.ctx.map.borders.flatMap((b) => (b.a === t ? [b.b] : b.b === t ? [b.a] : []));
+  const d = new Map([[from, 0]]); const q = [from];
+  while (q.length) { const t = q.shift(); for (const n of nb(t)) if (!d.has(n)) (d.set(n, d.get(t) + 1), q.push(n)); }
+  return [...d].filter(([, k]) => k === steps).map(([id]) => { const t = g.ctx.map.geometry.territories.find((x) => x.id === id); return { id, x: t.label.x * c.scale + c.x, y: t.label.y * c.scale + c.y }; }).find((t) => t.x > 70 && t.x < 354 && t.y > 140 && t.y < 700);
+}, { from, steps });
+const commandTaps = async (name, steward, then) => {
+  const { t, count } = await openLeaders(steward);
+  await t(() => tapText("Command"), "Command");
+  await t(() => tapText(name), name);
+  if (then) await then(t);
+  await sleep(800);
+  const got = await page.evaluate(() => window.__conquerraStore.getState().instructions);
+  leaderTaps[name] = count();
+  console.log(`${name} taps:`, count(), JSON.stringify(got));
+};
+const capNow2 = await page.evaluate(() => window.__conquerraStore.getState().view.me.capital);
+await page.evaluate((id) => { const g = window.__conquerraStore.getState().ctx.map.geometry; const t = g.territories.find((x) => x.id === id); const r = window.__conquerraMap; r.centreOn(t.label.x, t.label.y); }, capNow2);
+await sleep(900);
+await commandTaps("Expand our empire in this direction", false, async (t) => { const x = await onScreen(capNow2, 3); await t(() => page.touchscreen.tap(x.x, x.y), `a territory on the map (${x.id})`); });
+await page.screenshot({ path: process.argv[3]?.replace(".png", "-expand.png") ?? "taps-expand.png" });
+await commandTaps("Command this front", false, async (t) => { const x = await onScreen(capNow2, 1); await t(() => page.touchscreen.tap(x.x, x.y), `a province on the map (${x.id})`); await t(() => tapText("Confirm"), "Confirm"); });
+await commandTaps("Run the military", false);
+await commandTaps("Hold here", false);
+await commandTaps("Raid a rival", false, async (t) => { await t(() => page.evaluate(() => document.querySelector(".rival-chip")?.click()), "a rival"); });
+await commandTaps("Run the realm", true);
+await commandTaps("Grow the economy", true);
+await commandTaps("Build up this province", true, async (t) => { const x = await onScreen(capNow2, 0) ?? await onScreen(capNow2, 1); await t(() => page.touchscreen.tap(x.x, x.y), `a province on the map (${x.id})`); });
+await commandTaps("Fortify this frontier", true, async (t) => { await t(() => tapText("Wherever most threatened"), "Wherever most threatened"); });
+await commandTaps("Raise culture here", true, async (t) => { const x = await onScreen(capNow2, 1); await t(() => page.touchscreen.tap(x.x, x.y), `a province on the map (${x.id})`); });
+// A budget: your Leader's portrait, Budget, 30%.
+{
+  const { t, count } = await openLeaders(false);
+  await t(() => tapText("Budget"), "Budget");
+  await t(() => tapText("30%"), "30%");
+  const b = await page.evaluate(() => window.__conquerraStore.getState().budgets);
+  leaderTaps["Budget (your Leader, 30%)"] = count();
+  console.log("budget taps:", count(), JSON.stringify(b));
+}
+{
+  const { t, count } = await openLeaders(true);
+  await t(() => tapText("Budget"), "Budget");
+  await t(() => tapText("30%"), "30%");
+  leaderTaps["Budget (your Steward, 30%)"] = count();
+  console.log("steward budget taps:", count());
+}
+console.log("LEADER TAPS", JSON.stringify(leaderTaps));
 await browser.close();

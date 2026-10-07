@@ -1,7 +1,14 @@
 import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { createGame, viewFor, type GameContext, type ReplayEvent } from "@conquerra/engine";
-import { describe, expect, it } from "vitest";
+import { marshalData } from "@conquerra/content";
+import { beforeEach, describe, expect, it } from "vitest";
+import { arrangeQueue, takeControl } from "../src/logic/generals";
+import { commandArea } from "../src/logic/leaderArea";
+import { planQueue } from "../src/logic/orders";
+import { setHostFactory, useGame } from "../src/store";
+import { inProcessHost } from "./inProcessHost";
+import type { Order } from "@conquerra/engine";
 import { chronicleOf } from "../src/logic/chronicleKeep";
 import { narrateTurn } from "../src/logic/narrate";
 import { budgetLabel, instructionName, namer } from "../src/logic/text";
@@ -77,5 +84,115 @@ describe("leaders in the report (session 18)", () => {
     expect(instructionName({ kind: "fortify" }, n)).toBe("Fortify the frontier");
     expect(instructionName({ kind: "front", provinces: [ctx.map.provinces[0]!.id] }, n)).toBe(`Command the front in ${ctx.map.provinces[0]!.name}`);
     expect([budgetLabel({ share: 0.2 }), budgetLabel({ gold: 8 }), budgetLabel({ share: 0 })]).toEqual(["20% of income", "8 gold a turn", "no budget"]);
+  });
+});
+
+describe("the Leaders panel's logic (session 18)", () => {
+  beforeEach(() => {
+    setHostFactory(() => inProcessHost("leaders-page"));
+    useGame.getState().playAgain();
+    useGame.getState().setLobby({ mapId: "embervale", bots: 3, botLevel: "captain", turnSeconds: null, leaderName: "Aldric", stewardName: "Odo" });
+  });
+
+  it("the lobby's names reach the game; your Steward starts running the realm on 20%", async () => {
+    await useGame.getState().start();
+    const v = useGame.getState().view!;
+    expect(v.me.leaders.map((l) => [l.kind, l.name, l.command, l.budget])).toEqual([
+      ["leader", "Aldric", null, { share: 0 }],
+      ["steward", "Odo", { kind: "realm" }, { share: 0.2 }],
+    ]);
+  });
+
+  it("a front: tap its provinces on the map (a second tap takes one back), then Confirm", async () => {
+    await useGame.getState().start();
+    const { ctx, view } = useGame.getState();
+    // Two territories in different provinces.
+    const a = ctx!.map.territories[0]!;
+    const b = ctx!.map.territories.find((t) => t.province !== a.province)!;
+    useGame.getState().pickPlace(`leader:${view!.me.id}`, "front");
+    useGame.getState().tap(a.id);
+    useGame.getState().tap(b.id);
+    useGame.getState().tap(b.id);
+    expect(useGame.getState().picking?.provinces).toEqual([a.province]);
+    useGame.getState().tap(b.id);
+    useGame.getState().confirmPick();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(useGame.getState().instructions[`leader:${view!.me.id}`]).toEqual({ kind: "front", provinces: [a.province, b.province] });
+    expect(useGame.getState().turnOrders()[0]).toMatchObject({ kind: "instruct", general: view!.me.id, instruction: { kind: "front" } });
+  });
+
+  it("a province command picks the province of the territory you tap; Expand picks the territory", async () => {
+    await useGame.getState().start();
+    const { ctx, view } = useGame.getState();
+    const t = ctx!.map.territories[7]!;
+    useGame.getState().pickPlace(`steward:${view!.me.id}`, "culture");
+    useGame.getState().tap(t.id);
+    useGame.getState().pickPlace(`leader:${view!.me.id}`, "expand");
+    useGame.getState().tap(t.id);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(useGame.getState().instructions).toEqual({ [`steward:${view!.me.id}`]: { kind: "culture", province: t.province }, [`leader:${view!.me.id}`]: { kind: "expand", territory: t.id } });
+  });
+
+  it("budgets and Take back go with the turn as orders; the purse taken back counts as empty for this turn's plans", async () => {
+    await useGame.getState().start();
+    for (let i = 0; i < 2; i++) await useGame.getState().lockIn();
+    useGame.getState().endReplay();
+    const me = useGame.getState().view!.me;
+    const steward = me.leaders.find((l) => l.kind === "steward")!;
+    expect(steward.purse).toBeGreaterThan(0);
+    await useGame.getState().setBudget(`leader:${me.id}`, { share: 0.3 });
+    await useGame.getState().takeBack(`steward:${me.id}`);
+    const orders = useGame.getState().turnOrders();
+    expect(orders).toContainEqual({ id: `budget-leader-${me.id}`, kind: "budget", general: me.id, budget: { share: 0.3 } });
+    expect(orders).toContainEqual({ id: `budget-steward-${me.id}`, kind: "budget", general: me.id, role: "steward", takeBack: steward.purse });
+    // The Steward writes nothing it would pay for with the purse you're taking back.
+    expect(useGame.getState().queue.some((o) => o.steward && (o.kind === "build" || o.kind === "invest" || o.kind === "recruit"))).toBe(false);
+    const gold = me.gold;
+    await useGame.getState().lockIn();
+    expect(useGame.getState().report!.events.find((e) => e.type === "purseTaken")).toMatchObject({ gold: steward.purse });
+    expect(useGame.getState().view!.me.leaders.find((l) => l.kind === "leader")!.budget).toEqual({ share: 0.3 });
+    expect(gold).toBeGreaterThanOrEqual(0);
+  });
+
+  it("Mixed in or After mine: the setting arranges the queue that plays (and is remembered)", async () => {
+    await useGame.getState().start();
+    const mine = [1, 2].map((i) => ({ id: `y${i}`, kind: "invest", territory: "x" }) as Order);
+    const theirs = [1, 2, 3].map((i) => ({ id: `s${i}`, kind: "invest", territory: "z", steward: "you" }) as Order);
+    useGame.setState({ queue: [...theirs, ...mine] });
+    useGame.getState().setLeaderPlacement("mixed");
+    expect(useGame.getState().arranged().map((o) => o.id)).toEqual(["y1", "s1", "y2", "s2", "s3"]);
+    useGame.getState().setLeaderPlacement("after");
+    expect(useGame.getState().arranged().map((o) => o.id)).toEqual(["y1", "y2", "s1", "s2", "s3"]);
+    expect(useGame.getState().leaderPlacement).toBe("after");
+    useGame.getState().setLeaderPlacement("mixed");
+    // Moving one of your orders up moves it among yours.
+    useGame.getState().shift("y2", -1);
+    expect(arrangeQueue(useGame.getState().queue, "mixed").map((o) => o.id)).toEqual(["y2", "s1", "y1", "s2", "s3"]);
+  });
+
+  it("a build or culture of yours takes that place back from your Steward; leaders' purchases don't touch your treasury's gold left", async () => {
+    await useGame.getState().start();
+    const { ctx, view } = useGame.getState();
+    const cap = view!.me.capital;
+    const queue = [{ id: "s1", kind: "invest", territory: cap, steward: view!.me.id } as Order];
+    expect(takeControl(view!, queue, { id: "y", kind: "invest", territory: cap }, []).queue).toEqual([]);
+    const v = structuredClone(view!);
+    v.me.leaders[1]!.purse = 5;
+    const plan = planQueue(ctx!, v, queue);
+    expect(plan.goldLeft).toBe(v.me.gold);
+    expect(plan.pursesLeft.get(`steward:${v.me.id}`)).toBe(5 - ctx!.rules.culture.investCost[0]!);
+  });
+
+  it("an open leader's command is outlined: Expand's target and the provinces on the way; a front's provinces", async () => {
+    await useGame.getState().start();
+    const { ctx, view } = useGame.getState();
+    const far = ctx!.map.territories[ctx!.map.territories.length - 1]!.id;
+    const a = commandArea(ctx!, view!, `leader:${view!.me.id}`, { kind: "expand", target: undefined, territory: far } as never);
+    expect(a.glow).toEqual([far]);
+    expect(a.provinces).toContain(ctx!.map.territories.find((t) => t.id === view!.me.capital)!.province);
+    expect(a.provinces).toContain(ctx!.map.territories.find((t) => t.id === far)!.province);
+    expect(commandArea(ctx!, view!, "leader:you", { kind: "front", provinces: ["p1", "p2"] }).provinces).toEqual(["p1", "p2"]);
+    // (The page outlines the same way the leader plans: the same width.)
+    expect(marshalData.leaders.expand.width).toBe(1);
   });
 });

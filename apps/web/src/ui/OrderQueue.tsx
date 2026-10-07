@@ -2,7 +2,7 @@ import { recruitLabel, type GameContext, type Order, type PlayerView } from "@co
 import { amountPill, isAttack, planQueue, recruitedBy, type QueuePlan } from "../logic/orders";
 import { describeOrder, namer, orderTags } from "../logic/text";
 import { useGame } from "../store";
-import { GeneralPortrait } from "./Command";
+import { LeaderPortrait, PlacementSwitch } from "./LeadersPanel";
 import { Frame } from "./Frame";
 import { moreCue } from "./moreCue";
 
@@ -12,6 +12,7 @@ export function OrderQueue({ ctx, view, plan, queue, bare = false, onFold }: { c
   const n = namer(ctx, view);
   const body = (
     <>
+      {queue.some((o) => o.general || o.steward) && <PlacementSwitch compact />}
       {queue.length === 0 && <p className="muted small">No orders yet. Tap your land, then a neighbour to attack; or use the round buttons.</p>}
       <ol ref={moreCue}>
         {queue.map((o, i) => {
@@ -25,8 +26,9 @@ export function OrderQueue({ ctx, view, plan, queue, bare = false, onFold }: { c
                 // A recruit can be edited: tap it to change where and how many.
                 {...(o.kind === "recruit" ? { role: "button", tabIndex: 0, title: "Change where and how many", onClick: () => openRecruit(o.id) } : {})}
               >
-                {/* Written by a general: its portrait first, so you're never surprised. */}
-                {o.general && <GeneralPortrait view={view} general={o.general} size={22} />}
+                {/* Written by one of your leaders: its portrait first, so you're never surprised (its purse pays). */}
+                {o.general && <LeaderPortrait view={view} l={{ kind: "leader", of: o.general }} size={22} />}
+                {o.steward && <LeaderPortrait view={view} l={{ kind: "steward", of: o.steward }} size={22} />}
                 {o.kind === "move" && before
                   ? describeOrder(o, n, isAttack(view, o, before), amountPill(plan.sent[i] ?? 0, o.troops, before.estimated.has(o.from)))
                   : o.kind === "recruit"

@@ -13,8 +13,10 @@ import type { Board } from "../board";
  *    recruited where the border is short and marched in.
  *  - Raise culture here: culture across one province, where it protects first, then the lowest.
  *  - Grow the economy: markets and culture, whichever pays back fastest, on land that's safe.
- *  - Run the realm: all of it: urgent forts first (a threatened capital, choke points facing an army), a barracks where
- *    there's nowhere to recruit, culture where it means to hold, then the economy.
+ *  - Run the realm: urgent forts first (a threatened capital, choke points facing an army), markets where they pay, a
+ *    barracks where there's nowhere to recruit, and a level of culture a turn where it protects (the capital and choke
+ *    points facing an army). Culture bought only for its income doesn't pay back under today's rules (session 18's
+ *    sims: it halved a Captain's wins), so "Run the realm" leaves it to "Raise culture here" and "Grow the economy".
  *
  * It only ever reads its owner's view (the board), and never builds where something is already going up or another
  * leader of yours is building this turn (`taken`).
@@ -121,7 +123,14 @@ export function planSteward(b: Board, cfg: LeaderPlanning["steward"], command: S
       break;
     case "realm": {
       const urgent = forts(mine).filter((w) => w.territory === capital || chokeHolder(w.territory) || w.urgent);
-      wishes = [...urgent, ...barracksFor(mine), ...culture(mine).filter((w) => holdCulture(w.territory)), ...economy(mine)];
+      // What pays (Part 2's sims): markets before culture bought for income, which doesn't pay back yet; culture only
+      // where it protects (the capital and choke points facing an army), a level a turn.
+      wishes = [
+        ...urgent,
+        ...economy(mine).filter((w) => w.order.kind === "build"),
+        ...barracksFor(mine),
+        ...culture(mine).filter((w) => (w.territory === capital || chokeHolder(w.territory)) && holdCulture(w.territory)).slice(0, 1),
+      ];
       break;
     }
   }

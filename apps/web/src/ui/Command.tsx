@@ -64,28 +64,3 @@ export function CommandRow({ ctx, view, general }: { ctx: GameContext; view: Pla
     </div>
   );
 }
-
-/** For the Leader card: one line per general (your Leader, then captured ones), with what it's doing. */
-export function GeneralLines({ ctx, view, onShow }: { ctx: GameContext; view: PlayerView; onShow(t: TerritoryId): void }) {
-  const { instructions, paused } = useGame();
-  const n = namer(ctx, view);
-  if (!view.me.captured.length) return null;
-  return (
-    <ul className="general-lines" aria-label="Captured generals">
-      {view.me.captured.map((g) => {
-        const i = `leader:${g.of}` in instructions ? instructions[`leader:${g.of}`]! : standing(view, g.of);
-        return (
-          <li key={g.of}>
-            <button className="link general-line" onClick={() => onShow(g.territory)} title="Show where it stands">
-              <GeneralPortrait view={view} general={g.of} size={30} />
-              <span>
-                <b>{n.who(g.of)}</b> <span className="muted small">captured, at {n.place(g.territory)}</span>
-                <span className="block small">{generalDoing(ctx, view, g.of, i, paused.includes(`leader:${g.of}`))}</span>
-              </span>
-            </button>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}

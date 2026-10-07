@@ -33,6 +33,8 @@ interface Props {
   view: PlayerView;
   gold: number;
   goldAfter: number;
+  /** Gold in your leaders' purses (session 18): shown smaller, next to your treasury. */
+  purses?: number;
   income: number;
   clock: TurnClock | null;
   replaying: boolean;
@@ -47,7 +49,7 @@ interface Props {
 }
 
 /** Logo · gold (+N per turn), or Influence for the Fallen · Turn N, the timer and Pause · settings. */
-export function TopBar({ view, gold, goldAfter, income, clock, replaying, phone, fallen, onPause, onChronicle, onSettings }: Props) {
+export function TopBar({ view, gold, goldAfter, purses = 0, income, clock, replaying, phone, fallen, onPause, onChronicle, onSettings }: Props) {
   const emblem = useArtUrl("emblem");
   const coin = useArtUrl("icon-gold");
   const isPaused = clock?.pausedLeft !== undefined;
@@ -66,6 +68,11 @@ export function TopBar({ view, gold, goldAfter, income, clock, replaying, phone,
           {gold}
           {goldAfter !== gold && <span className="after">→{goldAfter}</span>}
           <span className="plus">+{income}</span>
+          {purses > 0 && (
+            <span className="purses" title="Gold in your leaders' purses (yours: take it back any time)">
+              {purses} in purses
+            </span>
+          )}
         </span>
       )}
       <span className="spacer" />

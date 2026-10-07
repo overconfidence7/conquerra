@@ -94,6 +94,11 @@ class SvgMapRenderer implements MapRenderer {
     }
     for (const id of targets) el("path", { d: path(g.territories.find((t) => t.id === id)!.rings), fill: "rgba(255,255,255,0.15)", stroke: "#fff", "stroke-width": 2.5 * k, "stroke-dasharray": "6 4" }, this.dynamic);
     for (const id of glow) el("path", { d: path(g.territories.find((t) => t.id === id)!.rings), fill: "rgba(227,199,126,0.25)", stroke: "#fff1c1", "stroke-width": 2.5 * k }, this.dynamic);
+    // A leader's command (session 18): the land of the provinces it works in, edged in gold.
+    const area = new Set(scene.area ?? []);
+    if (area.size)
+      for (const t of this.opts.ctx.map.territories)
+        if (area.has(t.province)) el("path", { d: path(g.territories.find((x) => x.id === t.id)!.rings), fill: "none", stroke: "#e3c77e", "stroke-width": 2 * k, "stroke-dasharray": "5 3" }, this.dynamic);
     if (selected) el("path", { d: path(g.territories.find((t) => t.id === selected)!.rings), fill: "none", stroke: "#e3c77e", "stroke-width": 5 * k }, this.dynamic);
     // Truce borders (session 14), where you can see them.
     for (const tr of scene.truces ?? [])
