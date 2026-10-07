@@ -49,9 +49,11 @@ export function planGeneral(
   instruction: Instruction | null,
   lastTurn?: readonly ReplayEvent[],
   opts: CaptainOptions = { chainMargin: CAPTAIN_CHAIN_MARGIN },
+  /** The board to judge from (session 18's leaders pass the Marshal's reading); the Captain's by default. */
+  board?: Board | null,
 ): Order[] {
   if (!instruction) return [];
-  const b = readBoard(ctx, view, opts, lastTurn);
+  const b = board ?? readBoard(ctx, view, opts, lastTurn);
   const home = generalAt(view, general);
   if (!b || !home || !b.owned(home)) return [];
   const g = new General(b, general, home, opts);

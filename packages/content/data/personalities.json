@@ -358,5 +358,73 @@
         "offerWar": "{target} is bad for business; strike with me."
       }
     }
-  ]
+  ],
+  "leaders": {
+    "style": {
+      "id": "delegate",
+      "title": "your leaders",
+      "summary": "How your leaders plan: the Marshal's shared judgement (attack hard, chain on, whole provinces, end on defensible ground), steered by their command.",
+      "attack": {
+        "chainMargin": 1.25,
+        "maxHops": 4,
+        "followThroughSpare": 6,
+        "sendShare": 0.7,
+        "calmMargin": 1,
+        "strikeTurn": 0,
+        "oneFront": false,
+        "vulture": 0
+      },
+      "defend": {
+        "frontGarrison": 0,
+        "retreatAt": 2.5
+      },
+      "build": {
+        "fortAt": 0,
+        "forts": 0,
+        "marketsFrom": 99,
+        "markets": 0,
+        "marketReserve": 0,
+        "cultureFrom": 99,
+        "cultureReserve": 0,
+        "cultureEverywhere": false,
+        "spies": 0,
+        "spiesFrom": 99,
+        "spyReserve": 0
+      },
+      "deals": {
+        "truce": 1,
+        "war": 1,
+        "trade": 0,
+        "passage": 0,
+        "breakGain": 2,
+        "offersTruces": true,
+        "offersWars": true
+      },
+      "voice": {
+        "truceYes": "My war is elsewhere; peace on our border suits me.",
+        "truceNo": "My armies go where I send them; no truce.",
+        "warYes": "One front, one enemy: I'm with you.",
+        "warNo": "I fight one war at a time, and it isn't that one.",
+        "tradeYes": "A fair price; I'll take it.",
+        "tradeNo": "Land is won with armies, not gold.",
+        "passageYes": "March through; keep moving.",
+        "passageNo": "My land is my staging ground; find another road.",
+        "breaks": "{place} is mine for the taking; our deal isn't worth more than that.",
+        "offerTruce": "My war is elsewhere; let's have peace on our border.",
+        "offerWar": "Strike {target} with me; one front, one enemy."
+      }
+    },
+    "expand": {
+      "ahead": 3,
+      "level": 1.5,
+      "province": 1.5,
+      "width": 1
+    },
+    "steward": {
+      "fortThreat": 4,
+      "marketsStopBefore": 4,
+      "cultureFights": 4,
+      "exposedWorth": 0.5
+    }
+  }
 }

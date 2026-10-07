@@ -42,4 +42,14 @@ export {
   type MarshalPlan,
   type MarshalRequest,
   type MarshalScope,
+  claimArmies,
+  expandCorridor,
+  mergeLeaderOrders,
+  planLeaders,
+  planSteward,
+  type Claims,
+  type LeadersPlan,
+  type LeadersRequest,
+  type Steer,
 } from "./marshal";
+export { makeDelegateSeat, makeStewardSeat } from "./delegateSeat";

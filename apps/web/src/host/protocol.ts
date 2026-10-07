@@ -42,6 +42,9 @@ export interface LobbySettings {
   diplomacy?: boolean;
   /** Your House colour (session 16): an index into the ten Houses; Gules (red) by default. The bots take the rest. */
   house?: number;
+  /** What you named your Leader and (optionally) your Steward (session 18); a sensible name is filled in. */
+  leaderName?: string;
+  stewardName?: string;
 }
 
 export interface TurnReport {
@@ -111,8 +114,11 @@ export interface GameHost {
   watchNext(orders?: Order[]): Promise<HostUpdate>;
   /** Once you're knocked out: the bots play on to the end. */
   finish(): Promise<HostUpdate>;
-  /** Your generals' orders for this turn with these instructions (the ones you haven't changed keep theirs). */
-  planGenerals(instructions: Record<PlayerId, Instruction | null>): Promise<Order[]>;
+  /**
+   * Your leaders' orders for this turn with these commands (by leader key, "leader:you" / "steward:you"; the ones you
+   * haven't changed keep theirs), and their purses as they'll be once gold you take back is home.
+   */
+  planGenerals(instructions: Record<string, Instruction | null>, purses?: Record<string, number>): Promise<Order[]>;
   /**
    * Offer a bot a deal (session 14). It answers at once, from its own view, with one plain reason (and maybe a
    * counteroffer). Add the `propose` order to your orders so the deal starts if it said yes.
@@ -144,7 +150,7 @@ export type HostRequest =
   | { id: number; type: "watchNext"; orders?: Order[] }
   | { id: number; type: "finish" }
   | { id: number; type: "suggest" }
-  | { id: number; type: "planGenerals"; instructions: Record<PlayerId, Instruction | null> }
+  | { id: number; type: "planGenerals"; instructions: Record<string, Instruction | null>; purses?: Record<string, number> }
   | { id: number; type: "exportSave"; notes?: Record<string, string> }
   | { id: number; type: "propose"; offer: Offer };
 

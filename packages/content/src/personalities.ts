@@ -27,7 +27,8 @@ const Voice = z.object({
 });
 
 export const Personality = z.object({
-  id: z.enum(["conqueror", "blitzer", "turtle", "schemer", "opportunist", "merchant"]),
+  /** The six bots' personalities; "delegate" is the style your leaders plan with (session 18), never dealt to a bot. */
+  id: z.enum(["conqueror", "blitzer", "turtle", "schemer", "opportunist", "merchant", "delegate"]),
   /** "the Turtle": what the game-over screen says after a bot's name. */
   title: z.string(),
   /** One line for the rules reference and the lobby. */
@@ -154,9 +155,40 @@ export const MarshalJudgement = z.object({
 });
 export type MarshalJudgement = z.infer<typeof MarshalJudgement>;
 
+/**
+ * Your leaders (session 18): they plan with the Marshal's brain (the shared judgement, in this style), steered by
+ * their command. `expand`: how "Expand our empire in this direction" values land; `steward`: what a Steward buys.
+ */
+export const LeaderPlanning = z.object({
+  style: Personality,
+  expand: z.object({
+    /** Land closer to the target than our nearest land is worth this many times more (the leading edge). */
+    ahead: z.number().min(0),
+    /** Land as close as our nearest (widening the head of the advance): this many times. */
+    level: z.number().min(0),
+    /** Land in a province on the way that the advance is taking whole: this many times (behind the head too). */
+    province: z.number().min(0),
+    /** How many steps off the shortest way a province may lie and still be "on the way". */
+    width: z.number().int().min(0),
+  }),
+  steward: z.object({
+    /** A fort where a rival army of at least this many troops stands next door (and the fort would matter). */
+    fortThreat: z.number().int().min(1),
+    /** Markets stop this many turns before the turn cap (they'd never pay back). */
+    marketsStopBefore: z.number().int().min(0),
+    /** Culture "where it means to hold" pays when the troops there, this many fights over, beat its price in troops (the Marshal's rule). */
+    cultureFights: z.number().min(0),
+    /** A frontier land facing a rival is worth this share of a quiet one when judging what pays (it may be lost). */
+    exposedWorth: z.number().min(0).max(1),
+  }),
+});
+export type LeaderPlanning = z.infer<typeof LeaderPlanning>;
+
 export const MarshalData = z
-  .object({ judgement: MarshalJudgement, personalities: z.array(Personality).min(1) })
+  .object({ judgement: MarshalJudgement, personalities: z.array(Personality).min(1), leaders: LeaderPlanning })
   .superRefine((d, ctx) => {
     if (new Set(d.personalities.map((p) => p.id)).size !== d.personalities.length) ctx.addIssue({ code: "custom", message: "personality ids must be unique" });
+    if (d.personalities.some((p) => p.id === "delegate")) ctx.addIssue({ code: "custom", message: "the delegate style is your leaders', never a bot's" });
+    if (d.leaders.style.id !== "delegate") ctx.addIssue({ code: "custom", message: "leaders plan in the delegate style" });
   });
 export type MarshalData = z.infer<typeof MarshalData>;

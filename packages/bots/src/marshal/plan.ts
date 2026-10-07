@@ -15,7 +15,34 @@ import { marshalBreaks } from "./talk";
  *  - one front: every army on our land facing `rival` (their attacks and chains);
  *  - the realm's building: spending only (troops, buildings, culture, specialists, spies).
  */
-export type MarshalScope = { kind: "realm" } | { kind: "army"; at: TerritoryId } | { kind: "front"; rival: PlayerId } | { kind: "build" };
+export type MarshalScope =
+  | { kind: "realm" }
+  | { kind: "army"; at: TerritoryId }
+  | { kind: "front"; rival: PlayerId }
+  | { kind: "build" }
+  /** A leader's command (session 18): the armies and places it covers, what it may buy, what it's after (leaders.ts). */
+  | { kind: "leader"; steer: Steer };
+
+/**
+ * How a leader's command steers the Marshal's planner (session 18): which armies it commands, what it may buy, what
+ * it goes after, and how carefully. Everything else is the Marshal's own judgement (what wins).
+ */
+export interface Steer {
+  /** Our territories whose armies it commands (others' troops stay put; recruits it buys anywhere are its own). */
+  commands(t: TerritoryId): boolean;
+  /** What it may buy from its purse: troops, specialists, and a barracks where it has nowhere to recruit. */
+  buys: { troops: boolean; specialists: boolean; barracks: boolean };
+  /** Where it may recruit (default: where it commands; with none there, the recruit site nearest its armies). */
+  recruitAt?(t: TerritoryId): boolean;
+  /** What taking `t` is worth to this command (null: not a target). `base` is the Marshal's own value. */
+  aim?(t: TerritoryId, base: number): number | null;
+  /** Contested land (`t` faces a rival army): it only goes where what arrives would hold, and keeps honest garrisons. */
+  careful?(t: TerritoryId): boolean;
+  /** Where its reinforcements may go (default: anywhere). */
+  goal?(t: TerritoryId): boolean;
+  /** It may use your Leader's Seize the Initiative and Lie in Wait (your own Leader's commands only). */
+  timing: boolean;
+}
 
 export interface MarshalRequest {
   ctx: GameContext;
@@ -26,8 +53,10 @@ export interface MarshalRequest {
   lastTurn?: readonly ReplayEvent[];
   /** What to plan (the whole realm by default). */
   scope?: MarshalScope;
-  /** Gold it may spend (the treasury by default). */
+  /** Gold it may spend (the treasury by default; a leader's purse for a leader's command). */
   purse?: number;
+  /** Already worked out this turn (several leaders of one player share one look at the board). */
+  insight?: { insight: Insight; memory: MarshalMemory };
 }
 
 export interface MarshalPlan {
@@ -58,19 +87,20 @@ const OFF_FRONT = 0.45;
  */
 export function planMarshal(req: MarshalRequest): MarshalPlan {
   const { ctx, personality: P, judgement, lastTurn } = req;
-  const { insight, memory } = think(ctx, req.view, judgement, req.memory, lastTurn);
+  const { insight, memory } = req.insight ?? think(ctx, req.view, judgement, req.memory, lastTurn);
   const scope = req.scope ?? { kind: "realm" };
   // Deals: it keeps its word unless breaking a handshake deal clearly pays, by its own measure (the Schemer's is lower).
   const breaks = scope.kind === "realm" ? marshalBreaks(ctx, req.view, P, insight, lastTurn) : [];
   const view = withoutDeals(req.view, breaks.map((o) => (o.kind === "break" ? o.deal : "")));
   const sources = new Map<string, Source>();
-  const moves = planMoves(ctx, view, P, judgement, insight, lastTurn, req.purse ?? view.me.gold, sources);
-  const kept = moves.filter((o) => inScope(scope, sources.get(o.id), view, ctx));
+  const steer = scope.kind === "leader" ? scope.steer : undefined;
+  const moves = planMoves(ctx, view, P, judgement, insight, lastTurn, req.purse ?? view.me.gold, sources, steer);
+  const kept = steer ? moves : moves.filter((o) => inScope(scope, sources.get(o.id), view, ctx));
   return { orders: [...breaks, ...respectDeals(ctx, view, kept)], memory, insight };
 }
 
 function inScope(scope: MarshalScope, src: Source | undefined, view: PlayerView, ctx: GameContext): boolean {
-  if (scope.kind === "realm") return true;
+  if (scope.kind === "realm" || scope.kind === "leader") return true;
   if (!src) return false;
   if (scope.kind === "build") return "spend" in src;
   if ("spend" in src) return false;
@@ -93,7 +123,17 @@ export function marshalBoard(ctx: GameContext, view: PlayerView, insight: Insigh
   return readBoard(ctx, view, BASE, lastTurn, { knownLand: insight.known, runaway: insight.runaway });
 }
 
-function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: MarshalJudgement, insight: Insight, lastTurn: readonly ReplayEvent[] | undefined, purse: number, sources: Map<string, Source>): Order[] {
+function planMoves(
+  ctx: GameContext,
+  view: PlayerView,
+  P: Personality,
+  J: MarshalJudgement,
+  insight: Insight,
+  lastTurn: readonly ReplayEvent[] | undefined,
+  purse: number,
+  sources: Map<string, Source>,
+  steer?: Steer,
+): Order[] {
   const b = marshalBoard(ctx, view, insight, lastTurn);
   if (!b) return [];
   const { rules, idx, me, garrison, seen, owned, rivalAt, troopsAt, specsAt, mine, crossing, isFrontier, frontier, enemyPressure, biggestEnemyNear } = b;
@@ -154,12 +194,14 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
   };
 
   // ---------- Spending ----------
-  let gold = Math.min(purse, me.gold);
+  // A leader spends its own purse (session 18); the realm's planner, the treasury.
+  let gold = steer ? purse : Math.min(purse, me.gold);
   const troopCost = rules.troops.cost;
   const building = (t: TerritoryId) => !!seen(t)!.building || !!seen(t)!.construction;
-  const turnIn = spoilsOrder(view, id, captainSpoils(b));
+  // Spoils and missions are yours, not a leader's.
+  const turnIn = steer ? null : spoilsOrder(view, id, captainSpoils(b));
   if (turnIn) spend(turnIn);
-  const errand = missionSpend(b, gold);
+  const errand = steer ? null : missionSpend(b, gold);
   if (errand) {
     spend(errand.kind === "fort" ? { id: id(), kind: "build", territory: errand.territory, building: "fort" } : { id: id(), kind: "invest", territory: errand.territory });
     gold -= errand.cost;
@@ -177,21 +219,34 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
   ].filter((t) => !building(t));
   const fortBuilding = mine.some((t) => seen(t)!.construction?.building === "fort") || errand?.kind === "fort";
   const fortAt = fortSpots.sort((a, c) => (a === capital ? -1 : c === capital ? 1 : 0) || biggestEnemyNear(c) - biggestEnemyNear(a) || (a < c ? -1 : 1))[0];
-  if (fortAt && (!fortBuilding || B.fortAt > 0 || J.anticipate?.fort) && gold >= rules.buildings.fort.cost + troopCost * 3) {
+  // (Forts are the Steward's, not a military leader's.)
+  if (!steer && fortAt && (!fortBuilding || B.fortAt > 0 || J.anticipate?.fort) && gold >= rules.buildings.fort.cost + troopCost * 3) {
     spend({ id: id(), kind: "build", territory: fortAt, building: "fort" });
     gold -= rules.buildings.fort.cost;
   }
 
-  // Barracks, recruit and hire sites: as the Captain.
-  const recruitSites = mine.filter((t) => isRecruitSiteIn(ctx, view, t));
+  // Barracks, recruit and hire sites: as the Captain. A leader recruits where it commands (else the site nearest its armies).
+  const anySite = mine.filter((t) => isRecruitSiteIn(ctx, view, t));
+  const recruitSites = steer ? leaderSites(b, anySite, steer) : anySite;
   const hireSite = (t: TerritoryId) => t === me.capital || seen(t)?.building === "barracks";
   const frontRank = (t: TerritoryId) => (facesRaider(t) ? 2000 : 0) + (facesMain(t) ? 1000 : 0) + (t === spearhead ? 500 : 0) + enemyPressure(t);
   const hotFront = [...frontier].sort((a, c) => frontRank(c) - frontRank(a) || (a < c ? -1 : 1))[0];
   const nearSite = (t: TerritoryId) => recruitSites.some((r) => r === t || idx.neighbors.get(t)!.includes(r));
   const barracksBuilding = mine.some((t) => seen(t)!.construction?.building === "barracks");
   const homeless = !recruitSites.length && !barracksBuilding;
-  const shelter = homeless ? [...mine].filter((t) => !building(t)).sort((a, c) => enemyPressure(a) - enemyPressure(c) || troopsAt(c) - troopsAt(a) || (a < c ? -1 : 1))[0] : undefined;
-  if (shelter && gold >= rules.buildings.barracks.cost) {
+  const commandsHere = (t: TerritoryId) => !steer || steer.commands(t);
+  const shelter = homeless ? [...mine].filter((t) => !building(t) && commandsHere(t)).sort((a, c) => enemyPressure(a) - enemyPressure(c) || troopsAt(c) - troopsAt(a) || (a < c ? -1 : 1))[0] : undefined;
+  if (steer && !steer.buys.barracks) {
+    // (No building for this leader.)
+  } else if (steer) {
+    // A leader with nowhere of its own to recruit puts a barracks at its hottest front, if the purse allows and troops are left after.
+    const own = recruitSites.some((t) => steer.commands(t));
+    const spot = frontier.filter((t) => steer.commands(t) && !building(t)).sort((a, c) => frontRank(c) - frontRank(a) || (a < c ? -1 : 1))[0];
+    if (!own && !barracksBuilding && spot && gold >= rules.buildings.barracks.cost + troopCost * 4) {
+      spend({ id: id(), kind: "build", territory: spot, building: "barracks" });
+      gold -= rules.buildings.barracks.cost;
+    }
+  } else if (shelter && gold >= rules.buildings.barracks.cost) {
     spend({ id: id(), kind: "build", territory: shelter, building: "barracks" });
     gold -= rules.buildings.barracks.cost;
   } else if (hotFront && !nearSite(hotFront) && !barracksBuilding && mine.length >= 5 && !building(hotFront) && gold >= rules.buildings.barracks.cost + troopCost * 4) {
@@ -202,7 +257,7 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
   // Markets on safe land (no rival next to it as far as it knows), up to its number, keeping gold for troops.
   const quiet = (t: TerritoryId) => idx.neighbors.get(t)!.every((x) => owned(x) || b.look0(x) === null);
   const markets = mine.filter((t) => seen(t)!.building === "market" || seen(t)!.construction?.building === "market").length;
-  if (view.turn >= B.marketsFrom && longRun && markets < B.markets && !capThreatened) {
+  if (!steer && view.turn >= B.marketsFrom && longRun && markets < B.markets && !capThreatened) {
     const spot = mine.filter((t) => !building(t) && quiet(t)).sort((a, c) => Number(isFrontier(a)) - Number(isFrontier(c)) || (a < c ? -1 : 1))[0];
     if (spot && gold >= rules.buildings.market.cost + troopCost * B.marketReserve) {
       spend({ id: id(), kind: "build", territory: spot, building: "market" });
@@ -212,9 +267,9 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
 
   // Specialists: as the Captain.
   const byFront = (a: TerritoryId, c: TerritoryId) => Number(isFrontier(c)) - Number(isFrontier(a)) || frontRank(c) - frontRank(a) || (a < c ? -1 : 1);
-  const site = capThreatened ? capital! : [...recruitSites].sort(byFront)[0];
+  const site = steer ? (steer.buys.troops ? [...recruitSites].sort(byFront)[0] : undefined) : capThreatened ? capital! : [...recruitSites].sort(byFront)[0];
   const hireAt = site && hireSite(site) ? site : recruitSites.filter(hireSite).sort(byFront)[0];
-  if (hireAt) {
+  if (hireAt && (!steer || steer.buys.specialists)) {
     const here = seen(hireAt)!;
     const room = rules.specialists.maxPerArmy - here.specialists.length;
     const has = (t: SpecialistType) => here.specialists.some((s) => s.type === t);
@@ -237,7 +292,8 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
 
   // Culture: where it means to hold (its capital and choke points facing a rival, with enough troops there for the
   // bonus to pay), from its turn and keeping its reserve; a culture-minded personality also raises safe land.
-  if (view.turn >= B.cultureFrom) {
+  // (Culture is the Steward's, not a military leader's.)
+  if (!steer && view.turn >= B.cultureFrom) {
     const worth = (t: TerritoryId) => {
       const cost = investCost(rules, seen(t)!.culture);
       return cost !== null && troopsAt(t) * rules.culture.defensePerLevel * 4 >= cost / troopCost;
@@ -258,7 +314,7 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
   }
 
   // Spies: the Captain's choices of where (its main target's province, a province of ours to guard), its own number.
-  if (B.spies > 0) {
+  if (!steer && B.spies > 0) {
     const spying = captainSpies(b, id, gold, { max: B.spies, fromTurn: B.spiesFrom, reserve: troopCost * B.spyReserve });
     for (const o of spying.orders) spend(o);
     gold -= spying.spent;
@@ -274,6 +330,8 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
   // ---------- What each army keeps back ----------
   const keep = (t: TerritoryId) => {
     if (t === capital && capThreatened) return holdNeed(t);
+    // A careful command keeps honest garrisons where it's contested (it takes and holds, not a thin line).
+    if (steer?.careful?.(t) && idx.neighbors.get(t)!.some((x) => rivalAt(x))) return Math.max(garrison, holdNeed(t));
     if (chokeHolder(t)) return holdNeed(t);
     // Reading the border (Nate): a province held whole keeps its bonus only if its border holds.
     if (J.anticipate?.guard && whole(t) && biggestEnemyNear(t) > garrison) return Math.max(garrison, holdNeed(t));
@@ -283,7 +341,9 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
     return garrison;
   };
   const free = new Map<TerritoryId, number>();
-  for (const t of mine) free.set(t, Math.max(0, troopsAt(t) + (t === site ? recruited : 0) - keep(t)));
+  for (const t of mine)
+    // A leader moves only the armies it commands, and the troops it recruited this turn.
+    free.set(t, steer && !steer.commands(t) ? (t === site ? recruited : 0) : Math.max(0, troopsAt(t) + (t === site ? recruited : 0) - keep(t)));
 
   // ---------- Attacks ----------
   type Plan = { from: TerritoryId; to: TerritoryId; troops: number; score: number; vsPlayer: boolean; breakthrough: boolean; through?: TerritoryId[] };
@@ -298,8 +358,10 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
       if (rival && shieldsLeader.has(rival) && to !== me.capital) continue;
       if (b.blocked(from, to)) continue;
       // Near a front a fast attacker is pushing through: fight it, don't grab neutral land.
-      if (raider && facesRaider(from) && rival === null) continue;
-      const v = value(to);
+      if (raider && facesRaider(from) && rival === null && !steer?.aim) continue;
+      const v0 = value(to);
+      const v = steer?.aim ? steer.aim(to, v0) : v0;
+      if (v === null) continue;
       if (crossing(from, to)) {
         const need = needFor(from, to, Math.max(avail, troopsAt(from) * 4));
         if (need === null) continue;
@@ -311,6 +373,8 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
       if (avail <= 0) continue;
       const need = needFor(from, to, avail);
       if (need === null) continue;
+      // Careful where it's contested: only where what arrives would hold.
+      if (steer?.careful?.(to) && b.exposed(to, avail - b.expectAt(from, to, avail, specsAt(from)).expectedAttackerLosses)) continue;
       // Calm play: rival land only with a big margin; neutral land only where the army that takes it would be safe.
       if (calm && rival && avail < need * A.calmMargin) continue;
       if (calm && !o && !rival && b.exposed(to, Math.max(1, avail - need))) continue;
@@ -319,7 +383,7 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
   }
   // Right of passage: through a partner's land to a front it wants (as the Captain).
   const open = passageFor(view.deals.filter((d) => d.terms).map((d) => ({ a: d.a, b: d.b, terms: d.terms! })), me.id);
-  if (open.length && !calm) {
+  if (open.length && !calm && !steer) {
     const wanted = (p: PlayerId | null) => !!p && !open.includes(p) && (b.wantsFront(p) || insight.warTargets.has(p));
     const max = rules.diplomacy.passage.maxThrough;
     for (const from of mine) {
@@ -360,7 +424,7 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
     targeted.add(c.to);
     attackedFrom.add(c.from);
     const o: Order = { id: id(), kind: "move", from: c.from, to: c.to, troops: send, preset: { id: "onlyIfStronger" }, ...(c.through ? { through: c.through } : {}) };
-    if (!usedInitiative && c.vsPlayer && me.leader.alive && me.cooldowns.seize === 0) {
+    if (!usedInitiative && c.vsPlayer && me.leader.alive && me.cooldowns.seize === 0 && (!steer || steer.timing)) {
       o.timing = "first";
       usedInitiative = true;
     }
@@ -372,13 +436,19 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
   // Ending on defensible ground (Nate): a hop is worth more where few open borders would face the army that stops there.
   const openSides = (t: TerritoryId) => idx.neighbors.get(t)!.filter((x) => !owned(x) && !targeted.has(x) && !crossing(t, x)).length;
   const chainValue = J.endSafe ? (t: TerritoryId) => value(t) + J.endSafe! * (openSides(t) === 0 ? 1 : openSides(t) === 1 ? 0.5 : 0) : value;
-  const chainB: Board = { ...b, valueOf: chainValue };
+  const chainB: Board = { ...b, valueOf: steer?.aim ? (t) => steer.aim!(t, chainValue(t)) ?? -1e9 : chainValue };
+  const steered = steer
+    ? {
+        ...(steer.aim ? { allowed: (_f: TerritoryId, t: TerritoryId) => steer.aim!(t, value(t)) !== null } : {}),
+        ...(steer.careful ? { safe: (t: TerritoryId, arriving: number) => !steer.careful!(t) || !b.exposed(t, arriving) } : {}),
+      }
+    : {};
   for (const first of queued)
-    chainOn(chainB, first, targeted, calm ? Math.max(A.chainMargin, A.calmMargin) : A.chainMargin, id, (o) => army(o, first.from), { maxHops: A.maxHops, followThroughSpare: A.followThroughSpare });
+    chainOn(chainB, first, targeted, calm ? Math.max(A.chainMargin, A.calmMargin) : A.chainMargin, id, (o) => army(o, first.from), { maxHops: A.maxHops, followThroughSpare: A.followThroughSpare, ...steered });
 
   // ---------- Reinforcements ----------
   const goals = new Map<TerritoryId, number>();
-  const want = (t: TerritoryId, w: number) => goals.set(t, Math.max(goals.get(t) ?? 0, w));
+  const want = (t: TerritoryId, w: number) => (steer?.goal && !steer.goal(t) ? goals : goals.set(t, Math.max(goals.get(t) ?? 0, w)));
   if (capThreatened && capital && holdNeed(capital) > troopsAt(capital) + (site === capital ? recruited : 0)) want(capital, 100);
   for (const t of frontier) {
     if (chokeHolder(t)) {
@@ -437,7 +507,7 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
     const dg = distFrom.get(best.g)!;
     const step = idx.neighbors.get(t)!.filter((nb) => owned(nb) && dg.get(nb) === best!.d - 1).sort()[0];
     if (!step) continue;
-    if (!reserveUsed && best.d === 1 && !goals.has(capital ?? "") && biggestEnemyNear(step) > troopsAt(step) && me.leader.alive && me.cooldowns.lie === 0) {
+    if (!reserveUsed && best.d === 1 && !goals.has(capital ?? "") && biggestEnemyNear(step) > troopsAt(step) && me.leader.alive && me.cooldowns.lie === 0 && (!steer || steer.timing)) {
       reserveUsed = true;
       army({ id: id(), kind: "move", from: t, to: step, troops: send, preset: { id: "reinforceIfHit" }, timing: "last" }, t);
       continue;
@@ -448,9 +518,30 @@ function planMoves(ctx: GameContext, view: PlayerView, P: Personality, J: Marsha
   // ---------- Pull back stacks that would be crushed ----------
   if (D.retreatAt > 0)
     for (const t of frontier) {
-      if (t === capital || attackedFrom.has(t) || chokeHolder(t)) continue;
+      if (t === capital || attackedFrom.has(t) || chokeHolder(t) || (steer && !steer.commands(t))) continue;
       const here = troopsAt(t);
       if (here >= 6 && biggestEnemyNear(t) >= here * D.retreatAt) army({ id: id(), kind: "retreat", from: t, preset: { id: "retreatIfOutnumbered" } }, t);
     }
   return orders;
+}
+
+/**
+ * Where a leader recruits (session 18): recruit sites where it commands (or where its command allows); with none,
+ * the site of ours nearest its armies (through our own land), so its recruits can march to them.
+ */
+function leaderSites(b: Board, sites: readonly TerritoryId[], steer: Steer): TerritoryId[] {
+  const may = steer.recruitAt ?? steer.commands;
+  const here = sites.filter((t) => may(t));
+  if (here.length || steer.recruitAt) return here;
+  const d = new Map<TerritoryId, number>();
+  const q: TerritoryId[] = b.mine.filter((t) => steer.commands(t));
+  for (const t of q) d.set(t, 0);
+  for (let h = 0; h < q.length; h++)
+    for (const nb of b.idx.neighbors.get(q[h]!)!)
+      if (b.owned(nb) && !d.has(nb)) {
+        d.set(nb, d.get(q[h]!)! + 1);
+        q.push(nb);
+      }
+  const near = [...sites].filter((t) => d.has(t)).sort((x, y) => d.get(x)! - d.get(y)! || (x < y ? -1 : 1))[0];
+  return near ? [near] : [];
 }

@@ -129,7 +129,7 @@ export class HostCore {
   }
   suggest = (): Order[] => this.g.suggest();
   propose = (offer: Offer): Answer => this.g.propose(offer);
-  planGenerals = (instructions: Record<PlayerId, Instruction | null>): Order[] => this.g.generalOrders(instructions);
+  planGenerals = (instructions: Record<string, Instruction | null>, purses?: Record<string, number>): Order[] => this.g.generalOrders(instructions, purses);
   pause = (): HostUpdate => this.g.pause();
   resume = (): HostUpdate => this.g.resume();
 

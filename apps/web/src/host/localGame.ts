@@ -4,21 +4,22 @@ import {
   captainBot,
   dealPersonalities,
   fallenBot,
-  generalsOf,
   judgeBy,
   makeMarshalBot,
   negotiate,
   personality,
   PERSONALITY_IDS,
-  planGeneral,
+  freshMemory,
+  planLeaders,
   recruitBot,
+  think,
   withAgreed,
   type Answer,
   type Bot,
   type MarshalBot,
   type MarshalMemory,
 } from "@conquerra/bots";
-import { defaultRules, type MapDef, type PersonalityId } from "@conquerra/content";
+import { defaultRules, marshalData, type MapDef, type PersonalityId } from "@conquerra/content";
 import {
   createGame,
   Rng,
@@ -123,6 +124,8 @@ export interface LocalHostData {
   talk?: Talk;
   /** The Chronicle (session 16): every turn's report as you saw it, trimmed to what the Chronicle shows. */
   chronicle?: TurnReport[];
+  /** What your leaders remember (session 18: the Marshal's memory, for reading a runaway), as this turn's planning began. */
+  leaderMemory?: MarshalMemory;
 }
 
 /** The bots' diplomacy for one turn: their propose/answer orders, and the offers they made you. */
@@ -166,6 +169,8 @@ export class LocalGame {
   private chronicle: TurnReport[] = [];
   /** This turn's diplomacy: the bots' offers and answers (to each other and to you), worked out as planning starts. */
   private talk: Talk = { turn: 0, orders: {}, toHuman: [] };
+  /** What your leaders remember (session 18), as this turn's planning began. */
+  private leaderMemory: MarshalMemory = freshMemory();
 
   constructor(
     /** The map to play on (the worker loads it with `loadMap`; tests pass it straight from `maps`). */
@@ -202,6 +207,7 @@ export class LocalGame {
       this.turnMs = seconds === null ? null : seconds * 1000;
       this.lastTurn = new Map(Object.entries(host.lastTurn ?? {}));
       this.chronicle = Array.isArray(host.chronicle) ? host.chronicle : [];
+      if (host.leaderMemory) this.leaderMemory = host.leaderMemory;
       if (host.talk && host.talk.turn === restore.state.turn) this.talk = host.talk;
       // The history only replays exactly under the rules it was played with; a game carried on under new ones drops it.
       const h = restore.history;
@@ -212,7 +218,8 @@ export class LocalGame {
       const bots = Math.max(1, Math.min(map.maxPlayers - 1, BOT_NAMES.length, Math.floor(settings.bots)));
       const players = [
         // You are Gules (red) unless you chose another House; the bots take the rest in order.
-        { id: HUMAN_ID, name: "You", house: settings.house ?? DEFAULT_HOUSE },
+        // Your Leader and Steward carry the names you gave them; your Steward starts running the realm (session 18).
+        { id: HUMAN_ID, name: "You", house: settings.house ?? DEFAULT_HOUSE, delegate: true, ...(settings.leaderName ? { leaderName: settings.leaderName } : {}), ...(settings.stewardName ? { stewardName: settings.stewardName } : {}) },
         ...BOT_NAMES.slice(0, bots).map((name, i) => ({ id: `bot${i + 1}`, name })),
       ];
       const setup: NewGameOptions = {
@@ -370,17 +377,16 @@ export class LocalGame {
   }
 
   /**
-   * Your generals' orders for this turn, written from your view as planning starts (and again when you change an
-   * instruction: `instructions` overrides the standing ones). The same view and instructions always give the same
-   * orders, so it doesn't matter whether they're worked out here, on the page, or (M4) on the server.
+   * Your leaders' orders for this turn (session 18), written from your view as planning starts (and again when you
+   * change a command: `instructions` overrides the standing ones, by leader key; `purses` after gold you take back).
+   * The same view, memory and commands always give the same orders, so it doesn't matter whether they're worked out
+   * here, on the page, or (M4) on the server.
    */
-  generalOrders(instructions: Record<PlayerId, Instruction | null> = {}): Order[] {
+  generalOrders(instructions: Record<string, Instruction | null> = {}, purses?: Record<string, number>): Order[] {
     if (this.state.winner || this.knockedOut) return [];
-    // Your generals plan knowing the deals you've agreed this turn (they start before any move).
+    // Your leaders plan knowing the deals you've agreed this turn (they start before any move).
     const view = withAgreed(viewFor(this.ctx, this.state, HUMAN_ID), this.agreed());
-    return generalsOf(view).flatMap((g) =>
-      planGeneral(this.ctx, view, g.general, g.general in instructions ? instructions[g.general]! : g.instruction, this.lastTurn.get(HUMAN_ID)),
-    );
+    return planLeaders({ ctx: this.ctx, view, memory: this.leaderMemory, commands: instructions, ...(purses ? { purses } : {}), ...(this.lastTurn.get(HUMAN_ID) ? { lastTurn: this.lastTurn.get(HUMAN_ID)! } : {}) }).orders;
   }
 
   private get knockedOut(): boolean {
@@ -405,6 +411,8 @@ export class LocalGame {
   /** Resolve one turn and return your report of it. */
   private play(humanOrders: Order[] | null): HostUpdate["report"] {
     const before = this.state;
+    // Your leaders take this turn in (what they remember for next turn's plans).
+    if (!this.knockedOut) this.leaderMemory = think(this.ctx, viewFor(this.ctx, before, HUMAN_ID), marshalData.judgement, this.leaderMemory, this.lastTurn.get(HUMAN_ID)).memory;
     const orders = humanOrders ? { ...this.botOrders(humanOrders), [HUMAN_ID]: humanOrders } : this.botOrders();
     const result = resolveTurn(this.ctx, before, orders);
     this.history?.turns.push(orders);
@@ -481,6 +489,7 @@ export class LocalGame {
       queued: { turn: this.state.turn, orders: this.saved, paused: this.savedPaused },
       talk: this.talk,
       chronicle: this.chronicle,
+      leaderMemory: this.leaderMemory,
     };
     return makeSave(this.ctx, this.state, HUMAN_ID, this.now(), {
       host: host as unknown as Record<string, unknown>,

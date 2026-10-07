@@ -65,7 +65,7 @@ export function createLocalHost(): GameHost {
     finish: () => send({ type: "finish" }),
     suggest: () => send<Order[]>({ type: "suggest" }),
     propose: (offer) => send<Answer>({ type: "propose", offer }),
-    planGenerals: (instructions) => send<Order[]>({ type: "planGenerals", instructions }),
+    planGenerals: (instructions, purses) => send<Order[]>({ type: "planGenerals", instructions, ...(purses ? { purses } : {}) }),
     dispose: () => worker.terminate(),
   };
 }

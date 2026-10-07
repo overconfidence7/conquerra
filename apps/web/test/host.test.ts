@@ -308,7 +308,7 @@ describe("saved games", () => {
     const again = new HostCore(store, async (id) => maps[id]!);
     const back = await again.load({ slot: "auto" });
     expect(back.queued).toEqual({ orders, paused: [HUMAN_ID] });
-    expect(restoredQueue(back.queued!.orders)).toEqual({ queue: orders.slice(1), instructions: { [HUMAN_ID]: { kind: "hold" } }, releases: [], diplomacy: [] });
+    expect(restoredQueue(back.queued!.orders)).toEqual({ queue: orders.slice(1), instructions: { [`leader:${HUMAN_ID}`]: { kind: "hold" } }, budgets: {}, releases: [], diplomacy: [] });
     // They're also what locks in if the timer runs out, exactly as before closing the tab.
     expect(again.game!.snapshot().host).toMatchObject({ queued: { turn: 1, orders } });
     // Once the turn is played, a kept queue is never brought back into the next one.

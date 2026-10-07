@@ -34,7 +34,7 @@ describe("generals on the page", () => {
     const queue = [mv("g1", "a", "x", "you"), mv("g2", "b", "a", "you"), mv("g3", "c", "y", "bot2")];
     const r = takeControl(view, queue, mv("own", "a", "z"), []);
     expect(r.queue.map((o) => o.id)).toEqual(["g3"]);
-    expect(r.paused).toEqual(["you"]);
+    expect(r.paused).toEqual(["leader:you"]);
   });
 
   it("an order of your own out of a place a general meant to pull troops from drops just that order", () => {
@@ -47,14 +47,15 @@ describe("generals on the page", () => {
   it("fresh general orders go in front of yours, leaving out paused generals and places you've given orders", () => {
     const own = [mv("own", "b", "z")];
     const fresh = [mv("g1", "a", "x", "you"), mv("g2", "b", "a", "you"), mv("g3", "c", "y", "bot2")];
-    expect(withGeneralOrders(own, fresh, ["bot2"]).map((o) => o.id)).toEqual(["g1", "own"]);
+    expect(withGeneralOrders(own, fresh, ["leader:bot2"]).map((o) => o.id)).toEqual(["g1", "own"]);
   });
 
   it("only instructions you changed go to the host", () => {
-    expect(instructOrders(view, { you: { kind: "hold" }, bot2: null })).toEqual([]);
-    expect(instructOrders(view, { you: null, bot2: { kind: "raid", player: "bot1" } })).toEqual([
-      { id: "instruct-you", kind: "instruct", general: "you", instruction: null },
-      { id: "instruct-bot2", kind: "instruct", general: "bot2", instruction: { kind: "raid", player: "bot1" } },
+    expect(instructOrders(view, { "leader:you": { kind: "hold" }, "leader:bot2": null, "steward:you": { kind: "realm" } })).toEqual([]);
+    expect(instructOrders(view, { "leader:you": null, "leader:bot2": { kind: "raid", player: "bot1" }, "steward:you": { kind: "economy" } })).toEqual([
+      { id: "instruct-leader-you", kind: "instruct", general: "you", instruction: null },
+      { id: "instruct-leader-bot2", kind: "instruct", general: "bot2", instruction: { kind: "raid", player: "bot1" } },
+      { id: "instruct-steward-you", kind: "instruct", general: "you", role: "steward", instruction: { kind: "economy" } },
     ]);
   });
 });
@@ -75,13 +76,14 @@ describe("giving your Leader an instruction (in a real game)", () => {
     const q = useGame.getState().queue;
     expect(q.length).toBeGreaterThan(0);
     expect(q.every((o) => o.general === "you" && o.kind === "move")).toBe(true);
+    expect(q.length).toBeGreaterThan(0);
     expect(useGame.getState().turnOrders()[0]).toMatchObject({ kind: "instruct", general: "you" });
     await useGame.getState().lockIn();
     const s = useGame.getState();
     expect(s.view!.me.leaders[0]!.command).toEqual({ kind: "push", territory: far });
     expect(s.instructions).toEqual({});
-    // The new turn's queue starts with what the general wrote (if its army can do anything).
-    expect(s.queue.every((o) => o.general === "you")).toBe(true);
+    // The new turn's queue starts with what your leaders wrote (the Leader, and the Steward running the realm).
+    expect(s.queue.every((o) => o.general === "you" || o.steward === "you")).toBe(true);
     // Its orders say so in the replay.
     expect(s.report!.events.some((e) => (e.type === "battle" || e.type === "moved") && e.general === "you")).toBe(true);
   });
@@ -97,7 +99,7 @@ describe("giving your Leader an instruction (in a real game)", () => {
     useGame.getState().tap(nb.a === cap ? nb.b : nb.a);
     useGame.getState().addDraft();
     const s = useGame.getState();
-    expect(s.paused).toEqual(["you"]);
+    expect(s.paused).toEqual(["leader:you"]);
     expect(s.queue.some((o) => o.general)).toBe(false);
     await useGame.getState().setInstruction("you", null);
     // Set and switched off in the same turn: nothing to tell the host, and the general has no orders.
@@ -108,19 +110,19 @@ describe("giving your Leader an instruction (in a real game)", () => {
   it("letting a captured general go sends a release order with the turn", async () => {
     await useGame.getState().start();
     useGame.getState().toggleRelease("bot2");
-    expect(useGame.getState().turnOrders()[0]).toEqual({ id: "release-bot2", kind: "release", general: "bot2" });
+    expect(useGame.getState().turnOrders()[0]).toEqual({ id: "release-leader-bot2", kind: "release", general: "bot2" });
     useGame.getState().toggleRelease("bot2");
     expect(useGame.getState().turnOrders().some((o) => o.kind === "release")).toBe(false);
   });
 });
 
-describe("Govern this province on the page (session 15)", () => {
+describe("a leader that got where it was sent (session 15's Govern is gone)", () => {
   beforeEach(() => {
     setHostFactory(() => inProcessHost("govern-page"));
     useGame.getState().playAgain();
   });
 
-  it("Command offers Govern only where you hold most of the province; the general's line shows its progress, never a gold total", async () => {
+  it("an Expand leader at its target says it's holding there", async () => {
     useGame.getState().setLobby({ mapId: "embervale", bots: 3, botLevel: "captain", turnSeconds: null });
     await useGame.getState().start();
     const { ctx, view: v } = useGame.getState();

@@ -1,8 +1,8 @@
 import { defaultRules, mapCatalog, suggestedMode, type BuildingType } from "@conquerra/content";
 import { BOT_NAMES } from "./host/names";
 import { DEFAULT_HOUSE, HOUSES } from "./map/houses";
-import { indexMap, isShare, type DealKind, type GameContext, type Instruction, type Offer, type Order, type PlayerId, type PlayerView, type RecruitAmount, type SpoilsSet, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
-import { asIfYouOrderFrom, instructOrders, takeControl, withGeneralOrders } from "./logic/generals";
+import { findLeader, indexMap, isShare, type Budget, type DealKind, type GameContext, type Instruction, type Offer, type Order, type PlayerId, type PlayerView, type RecruitAmount, type SpoilsSet, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
+import { arrangeQueue, asIfYouOrderFrom, instructOrders, refFromKey, takeControl, withGeneralOrders, type LeaderPlacement } from "./logic/generals";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
 import type { GameHost, HostStart, HostUpdate, LoadSource, LobbySettings, SeatInfo, TurnReport } from "./host/protocol";
@@ -18,6 +18,20 @@ import { chronicleOf } from "./logic/chronicleKeep";
 import { draftToOrder, isRecruitSite, type NewOrder, planQueue, queueFor, removeOrder, shiftOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
 
 export type Screen = "lobby" | "game" | "over";
+/** What a tap on the map picks for a leader's command. */
+export type PickKind = "push" | "defend" | "expand" | "front" | "buildUp" | "culture";
+
+/** Your choice of where leaders' orders go, remembered on this device (mixed in, unless you chose "after mine"). */
+const PLACEMENT_KEY = "conquerra.leaderPlacement";
+function rememberedPlacement(): LeaderPlacement {
+  try {
+    return localStorage.getItem(PLACEMENT_KEY) === "after" ? "after" : "mixed";
+  } catch {
+    return "mixed";
+  }
+}
+/** A leader key from a key or a military leader's id. */
+const keyOf = (general: string) => (general.includes(":") ? general : `leader:${general}`);
 
 interface GameStore {
   screen: Screen;
@@ -52,14 +66,28 @@ interface GameStore {
   autoLocked: boolean;
   busy: boolean;
   error: string | null;
-  /** Your generals' instructions as you've set them this turn (starting from the standing ones). */
-  instructions: Record<PlayerId, Instruction | null>;
-  /** Generals whose army you gave an order of your own this turn: yours to command until the turn ends. */
-  paused: PlayerId[];
-  /** Choosing a place on the map for a general (Push toward, or Defend toward a place): the next tap picks it. */
-  picking: { general: PlayerId; kind: "push" | "defend" } | null;
-  /** Captured generals you chose to let go this turn (you may keep two). */
-  releases: PlayerId[];
+  /** Your leaders' commands as you've set them this turn, by leader key ("leader:you", "steward:you"; session 18). */
+  instructions: Record<string, Instruction | null>;
+  /** Budgets you changed this turn, and gold you're taking back from purses, by leader key (session 18). */
+  budgets: Record<string, { budget?: Budget; takeBack?: number }>;
+  /** Leaders (by key) leading one army you gave an order of your own this turn: yours to command until the turn ends. */
+  paused: string[];
+  /**
+   * Choosing on the map for a leader's command (session 18): a place (Push, Defend toward, Expand toward), a province
+   * (Build up, Raise culture), or provinces for a front (tap each, then Confirm).
+   */
+  picking: { general: string; kind: PickKind; provinces?: string[] } | null;
+  /** Where your leaders' orders go in your queue (Nate's setting): mixed in with yours, or after yours. */
+  leaderPlacement: LeaderPlacement;
+  setLeaderPlacement(p: LeaderPlacement): void;
+  /** A leader's budget (a share of income, or an exact amount), from this turn on. */
+  setBudget(key: string, budget: Budget): Promise<void>;
+  /** Take a leader's purse back into your treasury (one tap; as the turn starts). */
+  takeBack(key: string): Promise<void>;
+  /** Your queue in the order it plays (your leaders' orders mixed in or after yours). */
+  arranged(): Order[];
+  /** Captured leaders you chose to let go this turn: a military leader by whose it was, a Steward as "steward:<id>". */
+  releases: string[];
   /** Sending a spy (session 15): the next tap on the map picks the province it goes to. */
   spyPick: string | null;
   /** The Chronicle (session 16): your report of every turn so far, as you saw it (trimmed to what it shows). */
@@ -169,13 +197,15 @@ interface GameStore {
   /** Knocked out: skip ahead to the end and see the result. */
   seeResult(): Promise<void>;
   playAgain(): void;
-  /** Give a general a standing instruction (null: you give its army orders yourself). Its new orders replace its old ones in your queue. */
-  setInstruction(general: PlayerId, instruction: Instruction | null): Promise<void>;
-  /** Push toward / Defend toward a place: the next tap on the map picks the place. */
-  pickPlace(general: PlayerId, kind: "push" | "defend"): void;
+  /** Give a leader a command (null: none). Its new orders replace its old ones in your queue. `general`: a leader key, or a military leader's id. */
+  setInstruction(general: string, instruction: Instruction | null): Promise<void>;
+  /** Pick on the map for a command: the next tap picks the place or province (a front: tap provinces, then Confirm). */
+  pickPlace(general: string, kind: PickKind): void;
+  /** A front: the provinces picked so far become its command. */
+  confirmPick(): void;
   cancelPick(): void;
-  /** With a third captured general: let this one go (or keep it after all). */
-  toggleRelease(general: PlayerId): void;
+  /** With one leader too many: let this one go (or keep it after all). A military leader by id, a Steward as "steward:<id>". */
+  toggleRelease(general: string): void;
   /** The Fallen: choose an event, then tap the land to aim it at. */
   aimEvent(event: WorldEventKind | null): void;
   /** The Fallen: change how much Influence goes toward a planned event (more makes it stronger, up to its limit). */
@@ -252,8 +282,10 @@ export const useGame = create<GameStore>((set, get) => ({
   busy: false,
   error: null,
   instructions: {},
+  budgets: {},
   paused: [],
   picking: null,
+  leaderPlacement: rememberedPlacement(),
   spyPick: null,
   pathPick: null,
   path: null,
@@ -418,10 +450,19 @@ export const useGame = create<GameStore>((set, get) => ({
       const order = { id: nextOrderId(), kind: "worldEvent", event: aiming.event, target, ...(across ? { across } : {}), influence: Math.min(cost, Math.floor(view.me.influence)) } as Order;
       return set({ fallenOrders: [...get().fallenOrders, order], aiming: null, selected: target });
     }
-    // Choosing a place for a general: this tap is it.
+    // Choosing for a leader's command: this tap is the place (or the province; a front gathers provinces until Confirm).
     if (picking) {
-      set({ picking: null });
-      void get().setInstruction(picking.general, picking.kind === "push" ? { kind: "push", territory: t } : { kind: "defend", territory: t });
+      const province = indexMap(ctx.map).byId.get(t)?.province;
+      if (picking.kind === "front") {
+        if (!province) return;
+        const now = picking.provinces ?? [];
+        return set({ picking: { ...picking, provinces: now.includes(province) ? now.filter((p) => p !== province) : [...now, province] }, selected: t });
+      }
+      set({ picking: null, selected: t });
+      const k = picking.kind;
+      const i: Instruction | null =
+        k === "push" || k === "expand" ? { kind: k, territory: t } : k === "defend" ? { kind: "defend", territory: t } : province ? { kind: k, province } : null;
+      if (i) void get().setInstruction(picking.general, i);
       return;
     }
     // Recruit panel open: tapping a glowing site recruits there. Anything else closes the panel and taps as usual.
@@ -451,8 +492,8 @@ export const useGame = create<GameStore>((set, get) => ({
     // An attack across a binding pact can't be queued (the panel says why).
     const check = attackCheck(ctx, view, get().pageDeals(), d.through?.[d.through.length - 1] ?? d.via ?? d.from, d.to);
     if (check && "block" in check) return;
-    // An order of your own for a general's army takes control of it back for the turn (its orders step aside).
-    const taken = takeControl(view, get().queue, { id: "draft", kind: "move", from: d.from, to: d.to, troops: "all" }, get().paused);
+    // An order of your own for a leader's army takes control of it back for the turn (its orders step aside).
+    const taken = takeControl(view, get().queue, { id: "draft", kind: "move", from: d.from, to: d.to, troops: "all" }, get().paused, get().instructions);
     // A hop from an attack that sends Just enough raises that attack to All (the panel says so).
     const base = queueFor(taken.queue, d);
     if (troopsOf(ctx, view, planQueue(ctx, view, base), d) <= 0) return;
@@ -483,7 +524,7 @@ export const useGame = create<GameStore>((set, get) => ({
     let p = paused;
     for (const o of plan.orders) {
       const order = { ...o, id: nextOrderId() } as Order;
-      const taken = takeControl(view, next, order, p);
+      const taken = takeControl(view, next, order, p, get().instructions);
       next = [...taken.queue, order];
       p = taken.paused;
     }
@@ -497,7 +538,7 @@ export const useGame = create<GameStore>((set, get) => ({
   add(order) {
     const { view, queue, paused } = get();
     const added = { ...order, id: nextOrderId() } as Order;
-    const taken = view ? takeControl(view, queue, added, paused) : { queue: [...queue], paused };
+    const taken = view ? takeControl(view, queue, added, paused, get().instructions) : { queue: [...queue], paused };
     set({ queue: [...taken.queue, added], paused: taken.paused });
   },
 
@@ -548,22 +589,53 @@ export const useGame = create<GameStore>((set, get) => ({
   },
 
   async setInstruction(general, instruction) {
-    const { host, view, instructions } = get();
-    if (!host || !view) return;
-    const next = { ...instructions, [general]: instruction };
-    // Handing it an instruction gives the army back to the general (unless you give it an order again).
-    set({ instructions: next, paused: get().paused.filter((g) => g !== general), picking: null });
-    try {
-      const fresh = await host.planGenerals(next);
-      if (get().view?.turn !== view.turn) return;
-      set({ queue: withGeneralOrders(get().queue, fresh, get().paused) });
-    } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
-    }
+    const { view, instructions } = get();
+    if (!view) return;
+    const key = keyOf(general);
+    // Only one leader runs the military, and one the realm: handing it to this one takes it from another.
+    const next: Record<string, Instruction | null> = { ...instructions, [key]: instruction };
+    if (instruction?.kind === "military" || instruction?.kind === "realm")
+      for (const l of view.me.leaders) {
+        const k = `${l.kind}:${l.of}`;
+        if (k !== key && (k in next ? next[k] : l.command)?.kind === instruction.kind) next[k] = null;
+      }
+    // Handing it a command gives the army back to the leader (unless you give it an order again).
+    set({ instructions: next, paused: get().paused.filter((g) => g !== key), picking: null });
+    await replanGenerals();
   },
 
-  pickPlace: (general, kind) => set({ picking: { general, kind }, draft: null, recruit: null }),
+  pickPlace: (general, kind) => set({ picking: { general: keyOf(general), kind, ...(kind === "front" ? { provinces: [] } : {}) }, draft: null, recruit: null }),
+  confirmPick() {
+    const p = get().picking;
+    if (p?.kind !== "front" || !p.provinces?.length) return;
+    set({ picking: null });
+    void get().setInstruction(p.general, { kind: "front", provinces: p.provinces });
+  },
   cancelPick: () => set({ picking: null }),
+
+  setLeaderPlacement(p) {
+    try {
+      localStorage.setItem(PLACEMENT_KEY, p);
+    } catch {
+      // A private window: it's remembered for this visit only.
+    }
+    set({ leaderPlacement: p });
+  },
+
+  async setBudget(key, budget) {
+    set({ budgets: { ...get().budgets, [key]: { ...get().budgets[key], budget } } });
+  },
+
+  async takeBack(key) {
+    const { view } = get();
+    const l = view ? findLeader(view.me, refFromKey(key)) : undefined;
+    if (!l || l.purse <= 0) return;
+    set({ budgets: { ...get().budgets, [key]: { ...get().budgets[key], takeBack: l.purse } } });
+    // What the leader can buy this turn shrinks: its orders are written again with an empty purse.
+    await replanGenerals();
+  },
+
+  arranged: () => arrangeQueue(get().queue, get().leaderPlacement),
 
   toggleRelease(general) {
     const r = get().releases;
@@ -575,9 +647,17 @@ export const useGame = create<GameStore>((set, get) => ({
   removeFallenOrder: (id) => set({ fallenOrders: get().fallenOrders.filter((o) => o.id !== id) }),
 
   turnOrders() {
-    const { view, queue, instructions, releases, diplomacy } = get();
+    const { view, queue, instructions, releases, diplomacy, budgets } = get();
     if (!view) return [...queue];
-    return [...instructOrders(view, instructions), ...releases.map((g) => ({ id: `release-${g}`, kind: "release", general: g }) as Order), ...diplomacy, ...queue];
+    const budgetOrders = Object.entries(budgets).map(([k, b]) => {
+      const r = refFromKey(k);
+      return { id: `budget-${r.kind}-${r.of}`, kind: "budget", general: r.of, ...(r.kind === "steward" ? { role: "steward" } : {}), ...b } as Order;
+    });
+    const releaseOrders = releases.map((g) => {
+      const r = keyOf(g).startsWith("steward:") ? refFromKey(g) : { kind: "leader" as const, of: g.replace(/^leader:/, "") };
+      return { id: `release-${r.kind}-${r.of}`, kind: "release", general: r.of, ...(r.kind === "steward" ? { role: "steward" } : {}) } as Order;
+    });
+    return [...instructOrders(view, instructions), ...budgetOrders, ...releaseOrders, ...diplomacy, ...get().arranged()];
   },
 
   async lockIn() {
@@ -654,7 +734,7 @@ export const useGame = create<GameStore>((set, get) => ({
     get().host?.dispose();
     // Back in the lobby: the game you left is the autosave (Continue).
     void get().refreshSlots();
-    set({ screen: "lobby", host: null, seats: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null, diplomacy: [], offers: [], answers: {}, deal: null, dealPick: null });
+    set({ screen: "lobby", host: null, seats: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, budgets: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null, diplomacy: [], offers: [], answers: {}, deal: null, dealPick: null });
   },
 }));
 
@@ -690,6 +770,7 @@ async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: G
       chronicle: u.chronicle ?? [],
       queue: kept ? kept.queue : openingQueue({ map: u.map, rules: u.rules }, u),
       instructions: kept?.instructions ?? {},
+      budgets: kept?.budgets ?? {},
       paused: u.queued?.paused ?? [],
       picking: null,
       releases: kept?.releases ?? [],
@@ -733,30 +814,40 @@ export function withSpyOrder(queue: readonly Order[], o: Extract<NewOrder, { kin
   return [...queue.filter((x) => !(x.kind === "spy" && x.spy === o.spy)), { ...o, id }];
 }
 
-export function restoredQueue(orders: readonly Order[]): { queue: Order[]; instructions: Record<PlayerId, Instruction | null>; releases: PlayerId[]; diplomacy: Order[] } {
-  const instructions: Record<PlayerId, Instruction | null> = {};
-  const releases: PlayerId[] = [];
+export function restoredQueue(orders: readonly Order[]): { queue: Order[]; instructions: Record<string, Instruction | null>; budgets: Record<string, { budget?: Budget; takeBack?: number }>; releases: string[]; diplomacy: Order[] } {
+  const instructions: Record<string, Instruction | null> = {};
+  const budgets: Record<string, { budget?: Budget; takeBack?: number }> = {};
+  const releases: string[] = [];
   const queue: Order[] = [];
   const diplomacy: Order[] = [];
   for (const o of orders) {
-    if (o.kind === "instruct") instructions[o.general] = o.instruction;
-    else if (o.kind === "release") releases.push(o.general);
+    if (o.kind === "instruct") instructions[`${o.role === "steward" ? "steward" : "leader"}:${o.general}`] = o.instruction;
+    else if (o.kind === "budget") budgets[`${o.role === "steward" ? "steward" : "leader"}:${o.general}`] = { ...(o.budget ? { budget: o.budget } : {}), ...(o.takeBack ? { takeBack: o.takeBack } : {}) };
+    else if (o.kind === "release") releases.push(o.role === "steward" ? `steward:${o.general}` : o.general);
     else if (o.kind === "propose" || o.kind === "answer" || o.kind === "break") diplomacy.push(o);
     else queue.push(o);
     const n = /^o(\d+)$/.exec(o.id);
     if (n) orderCounter = Math.max(orderCounter, Number(n[1]));
   }
-  return { queue, instructions, releases, diplomacy };
+  return { queue, instructions, budgets, releases, diplomacy };
 }
 
 let offerCounter = 0;
 
-/** Your generals re-plan after you agree a deal (they never attack across it). */
+/**
+ * Your leaders write their orders again (a command changed, a purse taken back, a deal agreed: they never attack
+ * across it). Purses you're taking back count as empty.
+ */
 async function replanGenerals() {
-  const { host, view, instructions } = useGame.getState();
+  const { host, view, instructions, budgets } = useGame.getState();
   if (!host || !view) return;
+  const purses: Record<string, number> = {};
+  for (const l of view.me.leaders ?? []) {
+    const k = `${l.kind}:${l.of}`;
+    if (budgets[k]?.takeBack) purses[k] = Math.max(0, l.purse - budgets[k]!.takeBack!);
+  }
   try {
-    const fresh = await host.planGenerals(instructions);
+    const fresh = await host.planGenerals(instructions, purses);
     if (useGame.getState().view?.turn !== view.turn) return;
     useGame.setState({ queue: withGeneralOrders(useGame.getState().queue, fresh, useGame.getState().paused) });
   } catch {
@@ -825,6 +916,7 @@ function applyTurn(u: HostUpdate, auto: boolean) {
     // A new turn: your generals have already written their orders, and every army is theirs again.
     queue: openingQueue(useGame.getState().ctx, u),
     instructions: {},
+    budgets: {},
     paused: [],
     spyPick: null,
     pathPick: null,
@@ -851,7 +943,7 @@ function applyTurn(u: HostUpdate, auto: boolean) {
 // The host keeps your orders as you build them: they're what locks in if the timer runs out, and the autosave keeps
 // them for Continue.
 useGame.subscribe((s, prev) => {
-  if ((s.queue !== prev.queue || s.instructions !== prev.instructions || s.releases !== prev.releases || s.paused !== prev.paused || s.diplomacy !== prev.diplomacy) && s.host && s.view)
+  if ((s.queue !== prev.queue || s.instructions !== prev.instructions || s.budgets !== prev.budgets || s.leaderPlacement !== prev.leaderPlacement || s.releases !== prev.releases || s.paused !== prev.paused || s.diplomacy !== prev.diplomacy) && s.host && s.view)
     s.host.saveOrders(s.turnOrders(), s.view.turn, s.paused);
 });
 

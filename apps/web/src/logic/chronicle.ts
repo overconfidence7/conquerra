@@ -37,8 +37,9 @@ function kindOf(e: ReplayEvent): ChronicleKind {
       return e.general ? "leader" : "battle";
     case "fate":
     case "missionDone":
-    case "missionFailed":
       return "fate";
+    case "missionFailed":
+      return e.mission.territory || e.mission.province ? "fate" : "other";
     case "worldEvent":
       return "fallen";
     case "dealStarted":
@@ -88,6 +89,9 @@ function placeOf(ctx: GameContext, e: ReplayEvent): TerritoryId | null {
       return e.at ?? null;
     case "missionDone":
       return e.at;
+    // A mission that lapsed: its place, if it had one (a province: its first land).
+    case "missionFailed":
+      return e.mission.territory ?? (e.mission.province ? (ctx.map.territories.find((t) => t.province === e.mission.province)?.id ?? null) : null);
     case "governed":
       return e.land[0]?.territory ?? null;
     case "spyCaught":

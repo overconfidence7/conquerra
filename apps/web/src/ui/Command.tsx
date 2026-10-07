@@ -37,10 +37,11 @@ export function CommandRow({ ctx, view, general }: { ctx: GameContext; view: Pla
   const { instructions, paused, picking, cancelPick } = useGame();
   const [open, setOpen] = useState(false);
   const n = namer(ctx, view);
-  const current = general in instructions ? instructions[general]! : standing(view, general);
-  const isPaused = paused.includes(general);
+  const key = `leader:${general}`;
+  const current = key in instructions ? instructions[key]! : standing(view, general);
+  const isPaused = paused.includes(key);
   const captured = general !== view.me.id;
-  const pickingHere = picking?.general === general;
+  const pickingHere = picking?.general === key;
   return (
     <div className="command">
       <div className="command-head">
@@ -72,14 +73,14 @@ export function GeneralLines({ ctx, view, onShow }: { ctx: GameContext; view: Pl
   return (
     <ul className="general-lines" aria-label="Captured generals">
       {view.me.captured.map((g) => {
-        const i = g.of in instructions ? instructions[g.of]! : standing(view, g.of);
+        const i = `leader:${g.of}` in instructions ? instructions[`leader:${g.of}`]! : standing(view, g.of);
         return (
           <li key={g.of}>
             <button className="link general-line" onClick={() => onShow(g.territory)} title="Show where it stands">
               <GeneralPortrait view={view} general={g.of} size={30} />
               <span>
                 <b>{n.who(g.of)}</b> <span className="muted small">captured, at {n.place(g.territory)}</span>
-                <span className="block small">{generalDoing(ctx, view, g.of, i, paused.includes(g.of))}</span>
+                <span className="block small">{generalDoing(ctx, view, g.of, i, paused.includes(`leader:${g.of}`))}</span>
               </span>
             </button>
           </li>

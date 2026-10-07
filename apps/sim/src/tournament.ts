@@ -14,7 +14,7 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { defaultRules, marshalData, MarshalJudgement, Personality, type PersonalityId } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
-import { dealPersonalities, makeCaptainBot, makeMarshalBot, makeRecruitBot, personality, PERSONALITY_IDS, type Bot } from "@conquerra/bots";
+import { dealPersonalities, makeCaptainBot, makeDelegateSeat, makeMarshalBot, makeRecruitBot, makeStewardSeat, personality, PERSONALITY_IDS, type Bot } from "@conquerra/bots";
 import { playTable, type TableResult } from "@conquerra/simcore";
 import type { GameContext } from "@conquerra/engine";
 
@@ -50,6 +50,10 @@ export function botFor(kind: string, tweak?: TournamentSpec["tweak"]): Bot {
   if (k === "recruit") return makeRecruitBot();
   // Session 16's stand-in for a person running away: the Captain with its caution turned down.
   if (k === "expander") return { ...makeCaptainBot({ chainMargin: 1, off: ["chokes", "breakthrough", "forts", "culture"] }), id: "expander" };
+  // Session 18: a player who hands everything to their leaders ("delegate-80": the Leader on 80% of the income, the
+  // Steward on the rest), and a Captain with the default Steward ("captain-steward-20").
+  if (/^delegate-\d+$/.test(k)) return makeDelegateSeat(Number(k.slice(9)) / 100);
+  if (/^captain-steward-\d+$/.test(k)) return makeStewardSeat(Number(k.slice(16)) / 100);
   if (k.startsWith("marshal-") && PERSONALITY_IDS.includes(k.slice(8) as PersonalityId)) {
     const id = k.slice(8) as PersonalityId;
     if (!tweak) return makeMarshalBot(id);
