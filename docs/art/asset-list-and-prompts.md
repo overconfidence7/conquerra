@@ -8,7 +8,7 @@
 
 **Batch 3 (made Oct 6):** all 20 pieces are in `art/incoming/` (old versions of the redone files in `_old/`, contact sheet `_review/batch-3.png`, a paler chalk cliff in `_review/_alt/cliff-3-chalk.png`). Session 12 imports them. The pines came out as steep-angle fir clusters rather than straight overhead (Gemini wouldn't do overhead pines without making thistle-like stars); they read as pines at game size.
 
-**Batch 4 (Oct 6):** about 50 pieces for the polish pass (effects for the replay, key art, the new specialists and spies, scenery fixes), listed under Tier 3 below and made with `docs/prompts/gemini-art-session-04.md`.
+**Batch 4 (Oct 6–7):** 42 of about 50 pieces made (groups 1–5 complete; of group 6 only `peak-narrow-1`, when Gemini's daily limit ran out). In `art/incoming/`, not yet imported; contact sheets in `art/incoming/_review/batch-4-*.png`; report in `docs/art/batch-4-report.md`. Still to make: `peak-narrow-2`, `-3`, `ridge-diag-1`, `-2`, `cliff-side-1`, `-2`, `fringe-bush-1` … `-3`, `glade-1`, `-2`, `paper-grain`.
 
 **Before you start:** confirm your image tool's terms allow commercial use of the images, since the game will be sold.
 
@@ -48,6 +48,16 @@ The target look is `docs/art/reference-mockup.png` (realistic terrain) with the 
 - **Silhouettes (map masks):** "the whole [shape] is ONE single solid black shape, no white lines or gaps inside", or the inner lines split the land.
 - **Chat length:** start a fresh chat after about 6 images; the magenta drifts darker in long chats (past the importer's tolerance).
 - **Driving Gemini from Claude in Chrome:** pick menu items by element, not by screen position (the menu moves with the greeting text; one position click opened Deep Research).
+
+**Lessons from batch 4 (Oct 6–7, made through Claude's built-in browser; report in `docs/art/batch-4-report.md`):**
+- **Effects on black:** "floating alone in empty black space, like a photo of [it] against a black studio backdrop" plus "everything that is not the effect itself is pure black" worked first time on every piece.
+- **Flat textures:** Gemini's Pro mode gave broad diagonal light and dark bands that repeat; **Flash** with "uniform brightness across the whole frame, no slopes, no light or dark bands, no streaks" gave a flat, tileable texture first time.
+- **A new silhouette of a good piece:** ask Gemini to **edit the good image** ("remove the two trees on the left… add one more of the same kind") rather than describe the angle again.
+- **Cut-out parts** (windmill sails): "only the [part]… as a cut-out part… nothing behind the hub: no building, no post, no ground", with the whole object attached.
+- **Wide objects** (the scroll): "the whole object occupies only the middle 60% of the image, with a wide band of flat magenta around it".
+- **Key art:** end with "No words, no letters, no title, no logo, no watermark, no frame, no border".
+- **The built-in browser** (when Claude in Chrome isn't connected): references can only be attached from Google Drive (the anchors are in Drive as `Conquerra anchors/conq-anchor-*.png`, picked with "Add from Drive"); the hidden pane only repaints after a screenshot, so take one after Send before checking anything, and never press Send twice (the second press stops it); downloads land in Downloads as `<guid>.tmp` (a complete JPEG). **Its downloads are half size** (1024×1024, 1376×768), so prefer Claude in Chrome for pieces that need full resolution (textures, key art).
+- **Gemini's image limit** can run out mid-batch (it resets the next day). Put the most important pieces first.
 
 ---
 
@@ -128,6 +138,9 @@ File names: `vista-city.png` (castle city on a hill above fields), `vista-valley
 
 ## Tier 3: later
 Lobby and title background art, the game-over screen, faction-specific castles, extra building variants, seasonal textures and the marketing key art.
+
+### Later: Steward portraits (for session 18's Stewards)
+*Not to make yet. Session 18 gives each House a Steward (culture, building, the economy) beside its Leader; until these exist, a Steward shows its House's shield with a quill badge.* Ten square portraits, chest-up, dark navy background like the Leader portraits, but civic rather than military: a chancellor, a master builder, a scholar, a merchant prince, a priestess, a royal treasurer and the like, in fine robes and chains of office, holding a ledger, a quill, a set square or a key.
 
 ### Batch 4 (Oct 6): to make now, for sessions 16 and 20
 *About 50 images, for the polish pass (`docs/09-polish-and-effects-plan.md`) and the fixes found on the bench. Same rules as above: the style line first (except where noted), PNG into `art/incoming/` with the exact file name. Work in the order below; anything missing simply waits for a later batch. Session 20 (the polish pass) registers these names and moves this list into its own "## Batch 4" section after Batch 3 (it sits under Tier 3 until then, because a test counts the names from the Batch 3 heading onward against the game's registry).*

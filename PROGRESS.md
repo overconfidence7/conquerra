@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–17 are done. Next: session 18, leaders you delegate to (they plan with the Marshal's brain); Nate's next play test after 18 (the list is under "Things to test after session 18" below); then 19 bigger maps and the balance pass, 20 the polish pass.**
+**Phase: M3 (depth and balance). Sessions 7–17 are done. Next: session 18 (`docs/prompts/claude-code-session-18.md`): leaders you delegate to; then Nate's play test (the list is under "Things to test after session 18"); then 19 bigger maps and the balance pass, 20 the polish pass.**
 
 Claude Code sessions completed: **17** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -898,6 +898,19 @@ All five parts are done, each committed and pushed. Nate added two notes during 
   - `s17-far-wyrmland*.png` and `s17-far-embervale*.png`: zoomed out, with the uncluttered names
 - **Tests and deploy:** 741 automated tests pass (the full run twice, as property tests use random inputs). Deployed to the private preview (version `49f5dfd1`); the lock check passed. Nate: please check the repo's Actions page for the last commit.
 
+### Oct 7: Orchestrator review of session 17
+- **Checked the work:**
+  - GitHub's checks pass on all seven session 17 commits, so `main` is green again (the two red tests are fixed: the spies' report no longer fogs land a second time, with the failing case kept as a fixed test, and the spy test can't fail by luck).
+  - Re-ran one Marshal (the Blitzer) against 3 Captains on Embervale, 300 games: it won **39.0%** (session 17 reported 41.3%; within the ±2.5-point wobble of 300 games).
+  - The screenshots look right: province names at Far are small, plaque-free and no longer pile up on Wyrmland; the lobby's bot choice with Mixed ("2 Marshals and 3 Captains") and "Show personalities"; the game-over screen revealing each bot ("Marshal, the Turtle").
+- **What session 17 found wins** (built into every personality): attack hard and chain whenever the next hop is likely to win; don't hold troops back on quiet fronts; expand hardest in the first 14 turns on big maps; choose targets on what you know. **Culture and buildings don't pay back yet.**
+- **The Marshal is now the default bot level.** One Marshal beats Captains about 1.4 times its fair share; it spots a runaway half a turn after it happens (Captains: 8.5 turns late) and the first joint war against it comes on turn 10 (Captains: turn 29). Planning takes 0.4 ms a turn (worst 5 ms).
+- **Art batch 4 is made:** 42 of about 50 pieces (all effects, key art, the specialists and spies, the redo pieces; of the scenery additions only one narrow peak, when Gemini's daily limit ran out). The report is `docs/art/batch-4-report.md`; its lessons are in the art list. The built-in browser downloads half-size images (1024 px), so `terrain-hills` is 768 px.
+- **Nate's calls (Oct 7):**
+  - **Culture and buildings must pay:** the balance pass (session 19) tests more income per culture level, bigger markets and cheaper forts, and Nate picks.
+  - **The 4-player snowball** (Marshals: half of Embervale by turn 10 in 70% of games, about 21 turns): **bots first** (Marshals gang up sooner at small tables); rule changes only with numbers for Nate.
+  - **The Fallen act from their first turn out:** "the goal is to keep people knocked out still engaged in the game so everyone is still having fun; that could also help the balance." Session 19.
+
 ### Things to test after session 18 (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop: 6 players on Wyrmland, you in red; phone: the same checks where they apply.*
 - **From session 16:**
@@ -921,3 +934,4 @@ All five parts are done, each committed and pushed. Nate added two notes during 
   - fully zoomed out on Wyrmland: are the province names readable and no longer piled up?
   - on Embervale with 3 Marshals: do games end too fast? (The sims say about 21 turns.)
 - **How many turns did the game take?**
+- **From session 18 (leaders you delegate to):** the orchestrator adds this after session 18.

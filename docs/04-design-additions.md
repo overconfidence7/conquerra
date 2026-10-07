@@ -144,6 +144,7 @@
   - **Your Leader still fights:** its +20% stays with your own Leader only; captured Leaders command (no bonus), as today.
   - **Why it helps:** a big empire stays playable in 5 minutes, culture and buildings happen through the Steward even for a military-minded player, and spending on leaders becomes a real choice.
   - **When:** session 18, after the Marshal (session 17), because the leaders use its brain.
+  - **Orchestrator's defaults for session 18 (Nate can change any of them after playing):** the Steward doesn't stand on the map and can't be lost; your Steward starts on "Run the realm" with 20% of your income, so building and culture happen even if you never open the menu, while your Leader starts with no command or budget; you can take gold back from a purse at any time; purses pay upkeep before anyone deserts (no dodging costs); a narrower command keeps its armies and places over a wider one; leaders' orders go into your queue mixed in with yours by default (or after yours, a setting); bots keep the leaders they capture but plan their realm as one; Stewards show their House's shield with a quill until Steward portraits are made.
 
 ## 5. Military vs. culture
 - Income can go to **military** (troops, forts) or **culture**.
@@ -341,6 +342,8 @@ Nate's notes: his test game on Wyrmland against 5 Captains lasted only 12 turns,
   - **The runaway:** estimates of land it can't see (from what it remembers and who knocked out whom), pace, a lower bar at 6+ players, and joint wars at once that stick. Against the strong stand-in on Wyrmland at 6 players, Marshals name it half a turn after it runs away (Captains 8.5 turns late), start a joint war on turn 10 (29), and hold it to 24% (Captains 35%, fair 17%).
   - **The lobby:** Recruit, Captain, Marshal (the default) and Mixed (a count of Marshals, the rest Captains); personalities revealed at the end, or all along with "Show personalities".
   - **The planner takes a scope** (the realm, one army, one front, or the realm's building) **and a purse**, for session 18's leaders. Its memory is plain data, kept in saves.
+
+- **Nate's calls after session 17 (Oct 7), for session 19:** the Marshal snowball on small maps is fixed in the bots first; culture and buildings must pay (the balance pass tests three levers and Nate picks); **the Fallen act from their first turn out** (to keep knocked-out players engaged and having fun).
 
 ## 12. Controls and map clarity (Nate, Oct 6 play test), for session 16
 - **Your Leader goes with the attacking army by default** (one tap to leave it home), and **stays with the army through a chain** of attacks.
