@@ -23,8 +23,17 @@ for (const c of changes.length ? changes : ["today={}"]) {
     const past10 = won.filter((g) => g.leaderTurn10);
     const seatWins = Array.from({ length: spec.players }, (_, s) => r.filter((g) => g.seats[s]!.won).length / r.length);
     const out = r.flatMap((g) => g.seats).filter((s) => s.out !== null && s.out <= 6).length / r.flatMap((g) => g.seats).length;
+    // Seat fairness by capital spot (seats are dealt to spots at random each game).
+    const spots = new Map<string, { n: number; won: number }>();
+    for (const g of r) for (const s of g.seats) {
+      const x = spots.get(s.capital) ?? { n: 0, won: 0 };
+      x.n++;
+      if (s.won) x.won++;
+      spots.set(s.capital, x);
+    }
+    const spotRates = [...spots.values()].filter((x) => x.n >= 20).map((x) => x.won / x.n);
     console.log(
-      `${label.padEnd(14)} ${t.padEnd(14)} ${(turns.reduce((a, b) => a + b, 0) / turns.length).toFixed(1)} turns (median ${[...turns].sort((a, b) => a - b)[Math.floor(turns.length / 2)]}), ${pct(turns.filter((x) => x <= 40).length, turns.length)} within 40 | half-map at 10 ${pct(at10.filter((g) => g.topShareTurn10! > 0.5).length, at10.length)}, halfway leader won ${pct(half.filter((g) => g.leaderHalfway === g.winner).length, half.length)}, comebacks ${pct(past10.filter((g) => g.leaderTurn10 !== g.winner).length, past10.length)} | seats ${(100 * Math.min(...seatWins)).toFixed(0)}–${(100 * Math.max(...seatWins)).toFixed(0)}% | out by 6 ${(100 * out).toFixed(1)}% | draws ${pct(r.length - won.length, r.length)}`,
+      `${label.padEnd(14)} ${t.padEnd(14)} ${(turns.reduce((a, b) => a + b, 0) / turns.length).toFixed(1)} turns (median ${[...turns].sort((a, b) => a - b)[Math.floor(turns.length / 2)]}), ${pct(turns.filter((x) => x <= 40).length, turns.length)} within 40 | half-map at 10 ${pct(at10.filter((g) => g.topShareTurn10! > 0.5).length, at10.length)}, halfway leader won ${pct(half.filter((g) => g.leaderHalfway === g.winner).length, half.length)}, comebacks ${pct(past10.filter((g) => g.leaderTurn10 !== g.winner).length, past10.length)} | seats ${(100 * Math.min(...seatWins)).toFixed(0)}–${(100 * Math.max(...seatWins)).toFixed(0)}%, by capital spot ${(100 * Math.min(...spotRates)).toFixed(0)}–${(100 * Math.max(...spotRates)).toFixed(0)}% | out by 6 ${(100 * out).toFixed(1)}% | draws ${pct(r.length - won.length, r.length)}`,
     );
   }
 }

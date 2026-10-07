@@ -68,6 +68,9 @@ export interface TableResult {
   leaderHalfway: PlayerId | null;
   /** Planning time per seat per turn (ms), by bot id. */
   planMs: Record<string, number[]>;
+  /** Per turn (ms): resolving the turn, and every seat's planning together (diplomacy and the Fallen included). */
+  resolveMs: number[];
+  turnPlanMs: number[];
 }
 
 export interface TableOptions {
@@ -99,6 +102,8 @@ export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], 
   const fronts = new Map<PlayerId, { turns: number; sum: number; all: Set<PlayerId>; players: number }>();
   const conc = new Map<PlayerId, { turns: number; sum: number; turns10: number; sum10: number }>();
   const planMs: Record<string, number[]> = {};
+  const resolveMs: number[] = [];
+  const turnPlanMs: number[] = [];
   const leaders: (PlayerId | null)[] = [];
   let topShareTurn10: number | null = null;
   let lastTurn = new Map<PlayerId, ReplayEvent[]>();
@@ -129,6 +134,7 @@ export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], 
       conc.set(p, c);
     }
     const leader = [...held].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0]?.[0] ?? null;
+    const tPlan = performance.now();
     const talk = st.settings.diplomacy ? negotiate(ctx, living.map((p) => ({ id: p.id, level: level(bots[st.players.indexOf(p)]!) })), (id) => views.get(id)!, (id) => lastTurn.get(id), null) : null;
     const agreed = talk ? agreedIn(talk.orders) : [];
     const orders: OrdersByPlayer = {};
@@ -142,7 +148,10 @@ export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], 
       orders[p.id] = [...(talk?.orders[p.id] ?? []), ...b.plan(ctx, withAgreed(views.get(p.id)!, agreed), lastTurn.get(p.id))];
       (planMs[b.id] ??= []).push(performance.now() - t0);
     }
+    turnPlanMs.push(performance.now() - tPlan);
+    const tRes = performance.now();
     const r = resolveTurn(ctx, st, orders);
+    resolveMs.push(performance.now() - tRes);
     opts.onEvents?.(st, r.events);
     const turn = st.turn;
     const attacked = new Map<PlayerId, Set<PlayerId>>();
@@ -262,5 +271,7 @@ export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], 
     leaderTurn10: leaders.length > 10 ? (leaders[9] ?? null) : null,
     leaderHalfway: leaders[Math.ceil(leaders.length / 2) - 1] ?? null,
     planMs,
+    resolveMs,
+    turnPlanMs,
   };
 }

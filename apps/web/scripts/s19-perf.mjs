@@ -2,7 +2,7 @@
  * Session 19: speed and memory of the big maps, on a laptop and on a 384 px phone (CPU slowed 4x), the way session 16
  * measured Wyrmland: paint time, texture memory (with the Near tiles), art download, panning at Mid, Near and the
  * deepest zoom around your capital, how long the deepest zoom takes to sharpen, and the replay's frame rate.
- *   node apps/web/scripts/s19-perf.mjs [maps=wyrmland,<new maps>] [bots=5]
+ *   node apps/web/scripts/s19-perf.mjs [maps=wyrmland:5,ashwing:7,krakenmere:9]   (map:bots)
  * Prints a line per map and device and writes docs/art/screens/perf-s19.json.
  * Needs the built game running (`pnpm build`, `pnpm --filter web preview`).
  */
@@ -14,7 +14,7 @@ import puppeteer from "puppeteer-core";
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const URL = process.env.MAP_URL ?? "http://localhost:4173/";
 const CHROME = "C:/Program Files/Google/Chrome/Application/chrome.exe";
-const [mapsArg = "wyrmland", botsArg = "5"] = process.argv.slice(2);
+const [mapsArg = "wyrmland:5,ashwing:7,krakenmere:9"] = process.argv.slice(2);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const DESKTOP = { viewport: { width: 1440, height: 900, deviceScaleFactor: 1 } };
@@ -134,7 +134,7 @@ const capitalSpot = (page) =>
 
 const rows = [];
 const browser = await launch();
-for (const mapId of mapsArg.split(",")) {
+for (const [mapId, botsArg] of mapsArg.split(",").map((x) => x.split(":"))) {
   for (const [device, opts] of [["desktop", DESKTOP], ["phone", PHONE]]) {
     const page = await (await browser.createBrowserContext()).newPage();
     const cdp = await page.createCDPSession();
@@ -144,10 +144,10 @@ for (const mapId of mapsArg.split(",")) {
     let art = 0;
     cdp.on("Network.loadingFinished", (e) => { if (artReq.has(e.requestId)) art += e.encodedDataLength; });
     if (device === "phone") await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-    const t = await start(page, opts, mapId, Number(botsArg));
+    const t = await start(page, opts, mapId, Number(botsArg ?? 5));
     const spot = await capitalSpot(page);
     const s0 = await page.evaluate(() => window.__conquerraMap.stats());
-    const row = { map: mapId, device, firstMapMs: Math.round(t.firstMap), allPaintedMs: Math.round(t.allPainted), paintMs: s0.bakeMs, ppu: s0.ppu, nearPpu: s0.nearPpu ?? 0, artKB: Math.round(art / 1024), pan: {} };
+    const row = { map: mapId, players: Number(botsArg ?? 5) + 1, device, firstMapMs: Math.round(t.firstMap), allPaintedMs: Math.round(t.allPainted), paintMs: s0.bakeMs, ppu: s0.ppu, nearPpu: s0.nearPpu ?? 0, artKB: Math.round(art / 1024), pan: {} };
     for (const level of ["mid", "near", "deepest"]) {
       await zoomTo(page, PX[level], spot);
       if (level === "deepest") row.sharpenMs = await settle(page);

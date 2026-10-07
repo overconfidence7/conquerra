@@ -196,3 +196,23 @@ It's the map, not a bot quirk: Captains, Recruits and Marshals with the fog off 
 **Pinned for Embervale with 4 players** (Nate's most-played table): trying all 43 layouts that pass the paper check (100 games each, the best five again on 600, `docs/sims/s19-fair-all-embervale4.txt`), the fairest is Eldermere, Wildford, Sunshire and Wolfcrest: **13–38%** a spot, against **1–53%** for the map maker's layout (fair 25%), and games 29.5 turns. It's now in Embervale's recipe (`capitals: {4: [...]}`); only that line of the map changed. Tests that replay fixed 4-player Embervale games keep the old capitals.
 
 **Not done yet (session 20 or later):** the same search for the other maps and table sizes (the big maps take about a minute a layout at 100 games, and have tens of thousands of layouts, so it needs a smarter search than "try them all"), and a fairness check in the map maker that looks at exposure (borders and rival capitals within reach) as well as distance and gold. If even the best layout stays uneven, a small start bonus for the weaker spots (a few troops or gold) is the rule option.
+
+### Speed and memory on a phone (`apps/web/scripts/s19-perf.mjs`, raw: `docs/art/screens/perf-s19.json`)
+Laptop, and a 384 px phone with its processor slowed 4 times (session 16's way), fog off, panning around your capital:
+
+| Map, players | Device | First picture | Fully painted | Texture memory | JS memory | Panning Mid / Near / deepest (fps) | Replay (fps) | Deepest zoom sharpens in |
+|---|---|---|---|---|---|---|---|---|
+| Wyrmland 6 (120) | phone | 2.8 s | 3.2 s | 91 MB | 133 MB | 138 / 118 / 119 | **84** | 0.16 s |
+| Ashwing 8 (160) | phone | 3.1 s | 3.5 s | 64 MB | 225 MB | 105 / 86 / 89 | **59** | 0.16 s |
+| Krakenmere 10 (200) | phone | 3.8 s | 4.3 s | 73 MB | 263 MB | 102 / 76 / 79 | **44** | 0.18 s |
+| Rootholm 10 (200) | phone | 3.8 s | 4.4 s | 76 MB | 248 MB | 100 / 74 / 88 | **43** | 0.16 s |
+| Wyrmland 6 | laptop | 1.8 s | 2.0 s | 92 MB | 183 MB | 262 / 449 / 255 | 222 | 0.15 s |
+| Krakenmere 10 | laptop | 1.4 s | 1.5 s | 78 MB | 260 MB | 221 / 322 / 203 | 155 | 0.16 s |
+
+*(A first run, straight after a build, gave numbers several times worse on every map, Wyrmland included; re-running session 16's own script on Wyrmland gave the same healthy numbers as these, so that run was disturbed by something else on the machine.)*
+
+- **Painting and panning are fine on a phone:** the big maps paint at a little lower detail (0.96–1.05 pixels a map unit instead of Wyrmland's 1.32), so their texture memory is *lower* than Wyrmland's, and panning stays at 74–105 frames a second.
+- **Two things to watch, with causes:**
+  - **The replay at 10 players runs at 43–44 frames a second** (goal 50; Wyrmland at 6 players 84). The cause is how many armies and moves it draws at once with 10 players; the polish pass (session 20) rebuilds how the replay draws its lines and markers, so that's the place to fix it.
+  - **JavaScript memory on the phone is 225–263 MB** on the big maps (Wyrmland 133). The causes: the map's data is 1.4–2.0 MB (413–552 KB to download, compressed; Wyrmland 1.15 MB, 321 KB) and is kept as plain objects (8,000+ decoration spots on a 200 map), and 10 players' views, memories and replays. A mid-range phone copes; an old 2–3 GB phone may struggle. **Suggested fix (not built):** keep the decorations and outlines as packed number arrays after loading instead of thousands of small objects, and drop the raw map file once the map is painted.
+- **Planning time at 10 players** (Krakenmere and Rootholm, Marshals, every system on, 20 games each, `docs/sims/s19-speed.txt`): resolving a turn **6.5 ms on average, 95% under 12 ms, worst 25 ms**; all ten bots planning a turn together (diplomacy and the Fallen included) **7.6 ms, worst 33 ms**; one Marshal 0.7 ms (worst 8 ms).

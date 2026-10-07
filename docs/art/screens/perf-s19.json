@@ -1,0 +1,282 @@
+[
+  {
+    "map": "wyrmland",
+    "players": 6,
+    "device": "desktop",
+    "firstMapMs": 1849,
+    "allPaintedMs": 1965,
+    "paintMs": 880,
+    "ppu": 1.32,
+    "nearPpu": 3.93,
+    "artKB": 1823,
+    "pan": {
+      "mid": {
+        "fps": 261.9,
+        "p95ms": 4.7
+      },
+      "near": {
+        "fps": 448.7,
+        "p95ms": 2.8
+      },
+      "deepest": {
+        "fps": 254.7,
+        "p95ms": 5.5
+      }
+    },
+    "sharpenMs": 152,
+    "textureMB": 92.3,
+    "nearBaked": 17,
+    "nearKept": 17,
+    "jsHeapMB": 182.8,
+    "replay": {
+      "fps": 221.6,
+      "p95ms": 5.8,
+      "seconds": 8
+    }
+  },
+  {
+    "map": "wyrmland",
+    "players": 6,
+    "device": "phone",
+    "firstMapMs": 2803,
+    "allPaintedMs": 3196,
+    "paintMs": 1197,
+    "ppu": 1.32,
+    "nearPpu": 3.97,
+    "artKB": 1822,
+    "pan": {
+      "mid": {
+        "fps": 138.1,
+        "p95ms": 9
+      },
+      "near": {
+        "fps": 118.4,
+        "p95ms": 10.3
+      },
+      "deepest": {
+        "fps": 118.8,
+        "p95ms": 9.8
+      }
+    },
+    "sharpenMs": 160,
+    "textureMB": 91.2,
+    "nearBaked": 16,
+    "nearKept": 16,
+    "jsHeapMB": 133.3,
+    "replay": {
+      "fps": 83.6,
+      "p95ms": 12.6,
+      "seconds": 8
+    }
+  },
+  {
+    "map": "ashwing",
+    "players": 8,
+    "device": "desktop",
+    "firstMapMs": 1212,
+    "allPaintedMs": 1343,
+    "paintMs": 324,
+    "ppu": 0.96,
+    "nearPpu": 2.89,
+    "artKB": 1824,
+    "pan": {
+      "mid": {
+        "fps": 217.2,
+        "p95ms": 5.9
+      },
+      "near": {
+        "fps": 397.9,
+        "p95ms": 3.1
+      },
+      "deepest": {
+        "fps": 208,
+        "p95ms": 6.4
+      }
+    },
+    "sharpenMs": 152,
+    "textureMB": 71.7,
+    "nearBaked": 16,
+    "nearKept": 16,
+    "jsHeapMB": 281.4,
+    "replay": {
+      "fps": 179.8,
+      "p95ms": 8.3,
+      "seconds": 8
+    }
+  },
+  {
+    "map": "ashwing",
+    "players": 8,
+    "device": "phone",
+    "firstMapMs": 3101,
+    "allPaintedMs": 3531,
+    "paintMs": 1281,
+    "ppu": 0.96,
+    "nearPpu": 2.89,
+    "artKB": 1822,
+    "pan": {
+      "mid": {
+        "fps": 104.7,
+        "p95ms": 11.5
+      },
+      "near": {
+        "fps": 86.2,
+        "p95ms": 14
+      },
+      "deepest": {
+        "fps": 88.9,
+        "p95ms": 13
+      }
+    },
+    "sharpenMs": 158,
+    "textureMB": 64.3,
+    "nearBaked": 9,
+    "nearKept": 9,
+    "jsHeapMB": 224.9,
+    "replay": {
+      "fps": 59,
+      "p95ms": 15.1,
+      "seconds": 8.3
+    }
+  },
+  {
+    "map": "krakenmere",
+    "players": 10,
+    "device": "desktop",
+    "firstMapMs": 1362,
+    "allPaintedMs": 1513,
+    "paintMs": 394,
+    "ppu": 1.01,
+    "nearPpu": 3.04,
+    "artKB": 1824,
+    "pan": {
+      "mid": {
+        "fps": 221.1,
+        "p95ms": 6.2
+      },
+      "near": {
+        "fps": 322.1,
+        "p95ms": 3.8
+      },
+      "deepest": {
+        "fps": 202.8,
+        "p95ms": 6.8
+      }
+    },
+    "sharpenMs": 155,
+    "textureMB": 78,
+    "nearBaked": 14,
+    "nearKept": 14,
+    "jsHeapMB": 259.6,
+    "replay": {
+      "fps": 154.8,
+      "p95ms": 8.8,
+      "seconds": 8
+    }
+  },
+  {
+    "map": "krakenmere",
+    "players": 10,
+    "device": "phone",
+    "firstMapMs": 3771,
+    "allPaintedMs": 4315,
+    "paintMs": 1447,
+    "ppu": 1.01,
+    "nearPpu": 3.04,
+    "artKB": 1822,
+    "pan": {
+      "mid": {
+        "fps": 101.9,
+        "p95ms": 11.8
+      },
+      "near": {
+        "fps": 76.3,
+        "p95ms": 15.4
+      },
+      "deepest": {
+        "fps": 78.5,
+        "p95ms": 14.7
+      }
+    },
+    "sharpenMs": 176,
+    "textureMB": 72.7,
+    "nearBaked": 9,
+    "nearKept": 9,
+    "jsHeapMB": 263.4,
+    "replay": {
+      "fps": 43.7,
+      "p95ms": 28.8,
+      "seconds": 8.1
+    }
+  },
+  {
+    "map": "rootholm",
+    "players": 10,
+    "device": "desktop",
+    "firstMapMs": 1415,
+    "allPaintedMs": 1566,
+    "paintMs": 391,
+    "ppu": 1.05,
+    "nearPpu": 3.15,
+    "artKB": 1824,
+    "pan": {
+      "mid": {
+        "fps": 209.9,
+        "p95ms": 6.3
+      },
+      "near": {
+        "fps": 326.3,
+        "p95ms": 3.9
+      },
+      "deepest": {
+        "fps": 195.6,
+        "p95ms": 7
+      }
+    },
+    "sharpenMs": 160,
+    "textureMB": 83.8,
+    "nearBaked": 16,
+    "nearKept": 16,
+    "jsHeapMB": 237.4,
+    "replay": {
+      "fps": 162.2,
+      "p95ms": 9.3,
+      "seconds": 8.1
+    }
+  },
+  {
+    "map": "rootholm",
+    "players": 10,
+    "device": "phone",
+    "firstMapMs": 3757,
+    "allPaintedMs": 4352,
+    "paintMs": 1466,
+    "ppu": 1.05,
+    "nearPpu": 3.15,
+    "artKB": 1822,
+    "pan": {
+      "mid": {
+        "fps": 100.2,
+        "p95ms": 12.4
+      },
+      "near": {
+        "fps": 73.6,
+        "p95ms": 16.1
+      },
+      "deepest": {
+        "fps": 88.4,
+        "p95ms": 13.2
+      }
+    },
+    "sharpenMs": 155,
+    "textureMB": 76.4,
+    "nearBaked": 9,
+    "nearKept": 9,
+    "jsHeapMB": 247.8,
+    "replay": {
+      "fps": 42.9,
+      "p95ms": 28.7,
+      "seconds": 8.3
+    }
+  }
+]
