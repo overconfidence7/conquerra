@@ -2,9 +2,11 @@ import { leaderNames, type Rules } from "@conquerra/content";
 import { distancesFrom, type MapIndex } from "./mapIndex";
 import { Rng, seedRng } from "./rng";
 import {
+  ALL_STYLES,
   MILITARY_COMMANDS,
   STEWARD_COMMANDS,
   type Budget,
+  type LeaderStyle,
   type GameContext,
   type GameEvent,
   type GameState,
@@ -100,11 +102,16 @@ export function suggestLeaderName(kind: LeaderKind, seed: string): string {
  * the Steward on "Run the realm" with `stewardShare` of your income if `delegate` (a person's seat), else idle (a bot
  * plans its whole realm itself).
  */
-export function startingLeaders(rules: Rules, of: PlayerId, names: { leader: string; steward: string }, delegate: boolean, share = rules.leaders.stewardShare): LeaderRecord[] {
+export function startingLeaders(rules: Rules, of: PlayerId, names: { leader: string; steward: string }, delegate: boolean, share = rules.leaders.stewardShare, styles: { leader?: LeaderStyle | null; steward?: LeaderStyle | null } = {}): LeaderRecord[] {
   return [
-    { kind: "leader", of, name: names.leader, command: null, budget: { ...NO_BUDGET }, purse: 0 },
-    { kind: "steward", of, name: names.steward, command: delegate ? { kind: "realm" } : null, budget: delegate ? { share } : { ...NO_BUDGET }, purse: 0 },
+    { kind: "leader", of, name: names.leader, personality: styles.leader ?? null, command: null, budget: { ...NO_BUDGET }, purse: 0 },
+    { kind: "steward", of, name: names.steward, personality: styles.steward ?? null, command: delegate ? { kind: "realm" } : null, budget: delegate ? { share } : { ...NO_BUDGET }, purse: 0 },
   ];
+}
+
+/** A personality as given (session 20c): one of the six, else Neutral (null). */
+export function cleanStyle(p: unknown): LeaderStyle | null {
+  return typeof p === "string" && (ALL_STYLES as readonly string[]).includes(p) ? (p as LeaderStyle) : null;
 }
 
 /**
@@ -343,7 +350,8 @@ export function payBudgets(p: PlayerState, earned: number): (LeaderRef & { gold:
 export function captureLeaders(h: LeadersHost, loser: PlayerState, captor: PlayerState, home: TerritoryId) {
   const own = (kind: LeaderKind) => findLeader(loser, { kind, of: loser.id });
   captor.leaders ??= [];
-  const fresh = (kind: LeaderKind, fallback: string): LeaderRecord => ({ kind, of: loser.id, name: own(kind)?.name ?? fallback, command: null, budget: { ...NO_BUDGET }, purse: 0 });
+  // (It keeps its name and its personality: for life, session 20c.)
+  const fresh = (kind: LeaderKind, fallback: string): LeaderRecord => ({ kind, of: loser.id, name: own(kind)?.name ?? fallback, personality: own(kind)?.personality ?? null, command: null, budget: { ...NO_BUDGET }, purse: 0 });
   captor.captured.push({ of: loser.id, territory: home });
   captor.leaders.push(fresh("leader", `${loser.name}'s Leader`));
   h.emit({ type: "generalCaptured", player: captor.id, general: loser.id, territory: home });

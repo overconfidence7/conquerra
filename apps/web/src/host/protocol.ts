@@ -1,6 +1,6 @@
 import type { MapDef, Rules } from "@conquerra/content";
 import type { LeaderNote, Answer } from "@conquerra/bots";
-import type { GameMode, Instruction, Offer, Order, PlayerId, PlayerView, ReplayEvent, SaveFile } from "@conquerra/engine";
+import type { GameMode, Instruction, LeaderStyle, Offer, Order, PlayerId, PlayerView, ReplayEvent, SaveFile } from "@conquerra/engine";
 import type { TurnClock } from "../logic/timer";
 import type { SlotId, SlotInfo } from "./saves";
 
@@ -45,6 +45,9 @@ export interface LobbySettings {
   /** What you named your Leader and (optionally) your Steward (session 18); a sensible name is filled in. */
   leaderName?: string;
   stewardName?: string;
+  /** Session 20c: their personalities (Neutral when left out): war-minded for the Leader, building-minded for the Steward. */
+  leaderPersonality?: LeaderStyle | null;
+  stewardPersonality?: LeaderStyle | null;
 }
 
 export interface TurnReport {

@@ -22,7 +22,7 @@ import { botFor, seatsFor, type TournamentSpec } from "../src/tournament";
 const args = process.argv.slice(2);
 const self = fileURLToPath(import.meta.url);
 type Job = { map: string; players: number; seats: string[]; i: number; seed: string };
-interface Row { kind: string; won: boolean; turns: number; lost: number; back: number; dist: number; weight: number; attackTurns: number; leaderMain: number; orders: number; planned: number }
+interface Row { kind: string; won: boolean; turns: number; lost: number; back: number; dist: number; weight: number; attackTurns: number; leaderMain: number; orders: number; planned: number; hops: number; retreats: number; fronts: number; gold: { troops: number; buildings: number; culture: number; specialists: number; spies: number }; lateTurns: number; lateMain: number }
 
 function work(job: Job): Row[] {
   const ctx: GameContext = { map: maps[job.map]!, rules: defaultRules };
@@ -31,7 +31,7 @@ function work(job: Job): Row[] {
   const seed = `${spec.seed}-${spec.map}-${spec.players}p-${job.i}`;
   const kinds = seatsFor(spec, job.i, seed);
   const ids = kinds.map((_, k) => `p${k + 1}` as PlayerId);
-  const rows: Row[] = kinds.map((k) => ({ kind: k.replace(/^marshal-[a-z]+/, "marshal"), won: false, turns: 0, lost: 0, back: 0, dist: 0, weight: 0, attackTurns: 0, leaderMain: 0, orders: 0, planned: 0 }));
+  const rows: Row[] = kinds.map((k) => ({ kind: k.replace(/^marshal-[a-z]+/, "marshal"), won: false, turns: 0, lost: 0, back: 0, dist: 0, weight: 0, attackTurns: 0, leaderMain: 0, orders: 0, planned: 0, hops: 0, retreats: 0, fronts: 0, gold: { troops: 0, buildings: 0, culture: 0, specialists: 0, spies: 0 }, lateTurns: 0, lateMain: 0 }));
   let state: GameState | null = null;
   const bots = kinds.map((k, s) => {
     const b = botFor(k);
@@ -42,6 +42,9 @@ function work(job: Job): Row[] {
         const r = rows[s]!;
         r.orders += o.length;
         r.planned++;
+        // How it chains: hops on from an attack ("All" moves on), and pulling back.
+        r.hops += o.filter((x) => x.kind === "move" && x.troops === "all").length;
+        r.retreats += o.filter((x) => x.kind === "retreat").length;
         // The main chain: its biggest attack (by the army sent; "all" counts the whole stack) and the hops on from it.
         const moves = o.filter((x): x is Extract<Order, { kind: "move" }> => x.kind === "move");
         const troopsAt = (t: TerritoryId) => { const tv = v.territories[t]; return tv && tv.detail === "full" ? tv.troops : 0; };
@@ -54,7 +57,10 @@ function work(job: Job): Row[] {
           let head = main.to;
           for (const m of moves) if (m.from === head && m.troops === "all") (chain.add(m.id), (head = m.to));
           // (The Leader may also arrive with the march into the territory the main attack sets out from.)
-          if (moves.some((m) => m.withLeader && (chain.has(m.id) || m.to === main.from))) r.leaderMain++;
+          const rides = moves.some((m) => m.withLeader && (chain.has(m.id) || m.to === main.from));
+          if (rides) r.leaderMain++;
+          // (After the opening, when a Marshal's Leader leads the main effort.)
+          if (v.turn >= 15) (r.lateTurns++, rides && r.lateMain++);
         }
         return o;
       },
@@ -104,6 +110,8 @@ function work(job: Job): Row[] {
   for (const [k, row] of rows.entries()) {
     row.won = r.winner === ids[k];
     row.turns = r.seats[k]!.out ?? r.turns;
+    row.fronts = r.seats[k]!.frontsPerTurn;
+    row.gold = r.seats[k]!.gold;
   }
   return rows;
 }
@@ -137,7 +145,7 @@ if (args[0] === "--worker") {
   const parts = [...new Set(all.map((r) => r.kind))].map((k) => {
     const rs = all.filter((r) => r.kind === k);
     const sum = (g: (r: Row) => number) => rs.reduce((a, r) => a + g(r), 0);
-    return `${k}: won ${f((100 * rs.filter((r) => r.won).length) / rs.length)}% (${f((rs.filter((r) => r.won).length / rs.length) * players, 2)}x), lost ${f(sum((r) => r.lost) / sum((r) => r.planned), 2)}/turn, back within a turn ${f((100 * sum((r) => r.back)) / Math.max(1, sum((r) => r.lost)))}%, spare troops ${f(sum((r) => r.dist) / Math.max(1, sum((r) => r.weight)), 2)} steps from a rival army, Leader on the main chain ${f((100 * sum((r) => r.leaderMain)) / Math.max(1, sum((r) => r.attackTurns)))}% of attack turns, orders ${f(sum((r) => r.orders) / sum((r) => r.planned))}/turn`;
+    return `${k}: won ${f((100 * rs.filter((r) => r.won).length) / rs.length)}% (${f((rs.filter((r) => r.won).length / rs.length) * players, 2)}x), lost ${f(sum((r) => r.lost) / sum((r) => r.planned), 2)}/turn, back within a turn ${f((100 * sum((r) => r.back)) / Math.max(1, sum((r) => r.lost)))}%, spare troops ${f(sum((r) => r.dist) / Math.max(1, sum((r) => r.weight)), 2)} steps from a rival army, Leader on the main chain ${f((100 * sum((r) => r.leaderMain)) / Math.max(1, sum((r) => r.attackTurns)))}% of attack turns (${f((100 * sum((r) => r.lateMain)) / Math.max(1, sum((r) => r.lateTurns)))}% from turn 15), orders ${f(sum((r) => r.orders) / sum((r) => r.planned))}/turn${process.env.STYLE ? `, hops ${f(sum((r) => r.hops) / sum((r) => r.planned), 2)}/turn, retreats ${f(sum((r) => r.retreats) / sum((r) => r.planned), 2)}/turn, rivals fought ${f(sum((r) => r.fronts) / rs.length, 2)}/turn, spent: buildings ${f(sum((r) => r.gold.buildings) / rs.length, 0)}, culture ${f(sum((r) => r.gold.culture) / rs.length, 0)}, troops ${f(sum((r) => r.gold.troops) / rs.length, 0)} gold a game` : ""}`;
   });
   console.log(`${label.padEnd(10)} ${table.padEnd(12)} ${res.length} games | ${parts.join(" | ")} | ${((Date.now() - t0) / 1000).toFixed(0)}s`);
 }

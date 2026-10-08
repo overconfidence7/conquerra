@@ -5,7 +5,7 @@ import { distancesFrom, indexMap } from "./mapIndex";
 import { Rng, seedRng } from "./rng";
 import type { GameContext, GameSettings, GameState, PlayerState, TerritoryState } from "./types";
 import { emptyStats, landHeld } from "./history";
-import { cleanName, dealLeaderNames, startingLeaders, startingStewardShare } from "./leaders";
+import { cleanName, cleanStyle, dealLeaderNames, startingLeaders, startingStewardShare } from "./leaders";
 
 export interface NewGameOptions {
   gameId: string;
@@ -17,7 +17,7 @@ export interface NewGameOptions {
    * `delegate`: a person's seat: their Steward starts on "Run the realm" with `rules.leaders.stewardShare` of their
    * income (a bot plans its whole realm itself, so its Steward starts idle).
    */
-  players: { id: string; name: string; house?: number; leaderName?: string; stewardName?: string; delegate?: boolean }[];
+  players: { id: string; name: string; house?: number; leaderName?: string; stewardName?: string; leaderPersonality?: string | null; stewardPersonality?: string | null; delegate?: boolean }[];
   settings?: Partial<GameSettings>;
 }
 
@@ -107,7 +107,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
       leader: { alive: true, territory: cap },
       cooldowns: { seize: 0, lie: 0 },
       captured: [],
-      leaders: startingLeaders(rules, p.id, { leader: cleanName(rules, p.leaderName) ?? dealt[p.id]!.leader, steward: cleanName(rules, p.stewardName) ?? dealt[p.id]!.steward }, !!p.delegate, stewardShare),
+      leaders: startingLeaders(rules, p.id, { leader: cleanName(rules, p.leaderName) ?? dealt[p.id]!.leader, steward: cleanName(rules, p.stewardName) ?? dealt[p.id]!.steward }, !!p.delegate, stewardShare, { leader: cleanStyle(p.leaderPersonality), steward: cleanStyle(p.stewardPersonality) }),
       influence: 0,
       spoils: [],
       missions: [],
@@ -119,7 +119,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   players.sort((a, b) => opts.players.findIndex((p) => p.id === a.id) - opts.players.findIndex((p) => p.id === b.id));
 
   const state: GameState = {
-    version: 10,
+    version: 11,
     gameId: opts.gameId,
     mapId: map.id,
     turn: 1,

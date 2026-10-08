@@ -4,7 +4,7 @@ import { incomeEstimate } from "../logic/actions";
 import { lazy, Suspense, useState } from "react";
 import { authorKey } from "../logic/generals";
 import { missionGoal, rewardText, turnsLeft } from "../logic/cards";
-import { budgetLabel, instructionDoing, KIND_NAME, leaderNoteLine, namer } from "../logic/text";
+import { budgetLabel, instructionDoing, KIND_NAME, leaderNoteLine, namer, styledName } from "../logic/text";
 import { useGame } from "../store";
 import { CardStack } from "./CardStack";
 import { GeneralPortrait } from "./Command";
@@ -141,7 +141,7 @@ export function LeadersPanel({ ctx, view, queue, onShow, onCards }: { ctx: GameC
               <button className="leader-head" aria-expanded={open} onClick={() => (openLeader(open ? null : key), setMenu(null))}>
                 <LeaderPortrait view={view} l={l} size={own && l.kind === "leader" ? 44 : 36} />
                 <span className="leader-who">
-                  <b>{l.name}</b> <span className="muted small">{own ? `your ${KIND_NAME[l.kind]}` : `${n.who(l.of)}'s old ${KIND_NAME[l.kind]}`}</span>
+                  <b>{styledName(l.name, l.personality)}</b> <span className="muted small">{own ? `your ${KIND_NAME[l.kind]}` : `${n.who(l.of)}'s old ${KIND_NAME[l.kind]}`}</span>
                   <span className="block small">{doingLine(ctx, view, l, command, paused.includes(key), leaderNotes[key])}</span>
                   <span className="block small purse-line">
                     Purse <b>{purse}g</b>

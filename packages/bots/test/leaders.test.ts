@@ -105,7 +105,7 @@ describe("Command this front, and Run the military", () => {
     const { ctx, s } = board();
     lead(s, "leader", null);
     s.players[0]!.captured.push({ of: "p9", territory: "c0" });
-    s.players[0]!.leaders.push({ kind: "leader", of: "p9", name: "Brannoc", command: { kind: "front", provinces: ["p10"] }, budget: { share: 0 }, purse: 6 });
+    s.players[0]!.leaders.push({ kind: "leader", of: "p9", name: "Brannoc", personality: null, command: { kind: "front", provinces: ["p10"] }, budget: { share: 0 }, purse: 6 });
     const p = plan(ctx, s);
     const out = moves(p.orders);
     expect(out.length).toBeGreaterThan(0);
@@ -124,8 +124,8 @@ describe("Command this front, and Run the military", () => {
     lead(s, "leader", null);
     s.players[0]!.captured.push({ of: "p8", territory: "b1" }, { of: "p9", territory: "c0" });
     s.players[0]!.leaders.push(
-      { kind: "leader", of: "p8", name: "Ingram", command: { kind: "military" }, budget: { share: 0 }, purse: 0 },
-      { kind: "leader", of: "p9", name: "Brannoc", command: { kind: "front", provinces: ["p10"] }, budget: { share: 0 }, purse: 0 },
+      { kind: "leader", of: "p8", name: "Ingram", personality: null, command: { kind: "military" }, budget: { share: 0 }, purse: 0 },
+      { kind: "leader", of: "p9", name: "Brannoc", personality: null, command: { kind: "front", provinces: ["p10"] }, budget: { share: 0 }, purse: 0 },
     );
     const p = plan(ctx, s);
     const frontSites = p.orders.flatMap((o) => (o.kind === "recruit" && o.general === "p9" ? [o.territory] : []));

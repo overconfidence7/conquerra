@@ -75,6 +75,15 @@ export interface LeaderRef {
   of: PlayerId;
 }
 
+/**
+ * A leader's personality (session 20c): the Marshal's six. In the lobby your Leader can be the Conqueror, Blitzer,
+ * Opportunist or Schemer, your Steward the Turtle or Merchant; a Marshal's leaders carry its own, whichever it is.
+ */
+export type LeaderStyle = "conqueror" | "blitzer" | "turtle" | "schemer" | "opportunist" | "merchant";
+export const LEADER_STYLES = ["conqueror", "blitzer", "opportunist", "schemer"] as const satisfies readonly LeaderStyle[];
+export const STEWARD_STYLES = ["turtle", "merchant"] as const satisfies readonly LeaderStyle[];
+export const ALL_STYLES: readonly LeaderStyle[] = ["conqueror", "blitzer", "turtle", "schemer", "opportunist", "merchant"];
+
 /** A leader's budget each turn: a share of your income (0..1), or an exact amount of gold. */
 export type Budget = { share: number } | { gold: number };
 
@@ -85,6 +94,11 @@ export type Budget = { share: number } | { gold: number };
  */
 export interface LeaderRecord extends LeaderRef {
   name: string;
+  /**
+   * Session 20c (Nate): its personality, for life (it keeps it when captured): how it plays (the Marshal's personality
+   * of that name). Null: Neutral, your leaders' own style.
+   */
+  personality: LeaderStyle | null;
   command: Instruction | null;
   budget: Budget;
   purse: number;
@@ -384,7 +398,7 @@ export interface HistoryPoint {
 }
 
 export interface GameState {
-  version: 10;
+  version: 11;
   gameId: string;
   mapId: string;
   turn: number;

@@ -23,6 +23,9 @@ import {
 import { defaultRules, marshalData, type MapDef, type PersonalityId } from "@conquerra/content";
 import {
   createGame,
+  LEADER_STYLES,
+  STEWARD_STYLES,
+  type LeaderStyle,
   Rng,
   seedRng,
   makeSave,
@@ -217,11 +220,28 @@ export class LocalGame {
       this.botLevel = LEVELS.includes(settings.botLevel as BotLevel) || settings.botLevel === "mixed" ? settings.botLevel : "captain";
       this.showPersonalities = !!settings.showPersonalities;
       const bots = Math.max(1, Math.min(map.maxPlayers - 1, BOT_NAMES.length, Math.floor(settings.bots)));
+      // Who plays each bot seat (dealt from the seed, before the game exists: a Marshal's leaders carry its personality).
+      const botIds = BOT_NAMES.slice(0, bots).map((_, i) => `bot${i + 1}`);
+      const levels = seatLevels(this.botLevel, settings.marshals ?? Math.ceil(bots / 2), botIds, seed);
+      const style = (p: unknown): LeaderStyle | null => (typeof p === "string" && (LEADER_STYLES as readonly string[]).concat(STEWARD_STYLES).includes(p) ? (p as LeaderStyle) : null);
       const players = [
         // You are Gules (red) unless you chose another House; the bots take the rest in order.
-        // Your Leader and Steward carry the names you gave them; your Steward starts running the realm (session 18).
-        { id: HUMAN_ID, name: "You", house: settings.house ?? DEFAULT_HOUSE, delegate: true, ...(settings.leaderName ? { leaderName: settings.leaderName } : {}), ...(settings.stewardName ? { stewardName: settings.stewardName } : {}) },
-        ...BOT_NAMES.slice(0, bots).map((name, i) => ({ id: `bot${i + 1}`, name })),
+        // Your Leader and Steward carry the names (and, session 20c, the personalities) you gave them; your Steward
+        // starts running the realm (session 18).
+        {
+          id: HUMAN_ID,
+          name: "You",
+          house: settings.house ?? DEFAULT_HOUSE,
+          delegate: true,
+          ...(settings.leaderName ? { leaderName: settings.leaderName } : {}),
+          ...(settings.stewardName ? { stewardName: settings.stewardName } : {}),
+          ...(style(settings.leaderPersonality) ? { leaderPersonality: style(settings.leaderPersonality) } : {}),
+          ...(style(settings.stewardPersonality) ? { stewardPersonality: style(settings.stewardPersonality) } : {}),
+        },
+        ...BOT_NAMES.slice(0, bots).map((name, i) => {
+          const p = levels[botIds[i]!]?.level === "marshal" ? style(levels[botIds[i]!]!.personality) : null;
+          return { id: botIds[i]!, name, ...(p ? { leaderPersonality: p, stewardPersonality: p } : {}) };
+        }),
       ];
       const setup: NewGameOptions = {
         gameId: `local-${seed.slice(0, 8)}`,
@@ -238,7 +258,6 @@ export class LocalGame {
         },
       };
       this.state = createGame(this.ctx, setup);
-      const levels = seatLevels(this.botLevel, settings.marshals ?? Math.ceil(bots / 2), players.slice(1).map((p) => p.id), seed);
       for (const [id, s] of Object.entries(levels)) this.seats.set(id, seatBot(s.level, s.personality));
       this.history = { setup, rules: defaultRules, turns: [] };
       this.turnMs = settings.turnSeconds === null || settings.turnSeconds === undefined ? null : settings.turnSeconds * 1000;

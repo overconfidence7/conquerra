@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { defaultRules, type PersonalityId } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { makeDelegateSeat, makeMarshalBot, planLeaders, type Bot } from "@conquerra/bots";
-import { distancesFrom, indexMap, leaderKey, viewFor, type GameContext, type GameState, type Instruction, type PlayerId } from "@conquerra/engine";
+import { distancesFrom, indexMap, leaderKey, viewFor, type GameContext, type GameState, type Instruction, type PlayerId, type ReplayEvent } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { playTable } from "../src";
 
@@ -240,3 +240,70 @@ describe("the leaders' plans on the mop-up fixtures", () => {
     expect(checked).toBeGreaterThan(0);
   });
 }, 300000);
+
+describe("leaders with personalities on the mop-up fixtures (session 20c)", () => {
+  /** Every fixture's own Leader on Run the military with a purse, with this personality. */
+  const plans = (style: string | null) =>
+    fixtures.map((f) => {
+      const s = structuredClone(f.state);
+      const p = s.players.find((x) => x.id === f.top)!;
+      const l = p.leaders.find((x) => x.kind === "leader" && x.of === p.id)!;
+      l.purse = 40;
+      if (style !== undefined) (l as { personality?: string | null }).personality = style as never;
+      return planLeaders({ ctx: ctxOf(f), view: viewFor(ctxOf(f), s, f.top), commands: { [leaderKey({ kind: "leader", of: f.top })]: { kind: "military" } } }).orders;
+    });
+  const hash = (x: unknown) => {
+    let h = 2166136261;
+    for (const c of JSON.stringify(x)) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
+    return h.toString(16);
+  };
+
+  it("a Neutral leader plays as it did before personalities (its fingerprint), and an old save's leader (no personality yet) the same", () => {
+    const neutral = plans(null);
+    expect(hash(neutral)).toBe(NEUTRAL_FINGERPRINT);
+    const old = fixtures.map((f) => {
+      const s = structuredClone(f.state);
+      const p = s.players.find((x) => x.id === f.top)!;
+      const l = p.leaders.find((x) => x.kind === "leader" && x.of === p.id)! as { purse: number; personality?: unknown };
+      l.purse = 40;
+      delete l.personality;
+      return planLeaders({ ctx: ctxOf(f), view: viewFor(ctxOf(f), s, f.top), commands: { [leaderKey({ kind: "leader", of: f.top })]: { kind: "military" } } }).orders;
+    });
+    expect(old).toEqual(neutral);
+  });
+
+  it("the planner plays each personality's block: in the middle of a game each war-minded one writes orders Neutral wouldn't", () => {
+    // (On the mop-up fixtures the finish is the same for all: mass and sweep. Mid-game is where styles show.)
+    const ctx: GameContext = { map: maps.wyrmland!, rules: defaultRules };
+    // Each position with what every seat watched last turn (the Opportunist goes for whoever just fought).
+    const positions = [1, 2, 3].map((g) => {
+      let watched: ReadonlyMap<string, readonly ReplayEvent[]> = new Map();
+      const final = playTable(ctx, `styles-${g}`, Array.from({ length: 6 }, (_, i) => marshal(["conqueror", "blitzer", "turtle", "schemer", "opportunist", "merchant"][i]!)), {
+        stop: (s) => s.turn >= 16,
+        onTurn: (_s, _v, last) => (watched = last),
+      }).final!;
+      return { final, watched };
+    });
+    const orders = (style: string | null) =>
+      positions.flatMap(({ final: st, watched }) =>
+        st.players
+          .filter((p) => p.eliminatedTurn === null)
+          .map((p) => {
+            const s = structuredClone(st);
+            const me = s.players.find((x) => x.id === p.id)!;
+            const l = me.leaders.find((x) => x.kind === "leader" && x.of === me.id)!;
+            (l.purse = 40), (l.personality = style as never);
+            const lastTurn = watched.get(p.id);
+            return hash(planLeaders({ ctx, view: viewFor(ctx, s, p.id), ...(lastTurn ? { lastTurn } : {}), commands: { [leaderKey({ kind: "leader", of: p.id })]: { kind: "military" } } }).orders);
+          }),
+      );
+    const neutral = orders(null);
+    for (const style of ["conqueror", "blitzer", "opportunist", "schemer"]) {
+      const mine = orders(style);
+      expect(mine.filter((h, i) => h !== neutral[i]).length, style).toBeGreaterThan(0);
+    }
+  });
+}, 300000);
+
+/** Pinned in session 20c (Part 3) from the code as it stood after Part 2: personalities must leave Neutral alone. */
+const NEUTRAL_FINGERPRINT = "12cce2d3";

@@ -147,6 +147,18 @@ export function botFor(kind: string, tweak?: TournamentSpec["tweak"]): Bot {
 }
 
 /** Game `i`'s seat kinds (rotated), with "marshal" seats given personalities from the seed. */
+/**
+ * Session 20c: a seat's leaders' personalities. A Marshal's carry its own; a delegating seat's are named in its kind
+ * ("delegate-80+lead-conqueror+stew-turtle"); everyone else's are Neutral.
+ */
+export function stylesOf(kind: string): { leader?: string; steward?: string } | undefined {
+  const [head, ...opts] = kind.replace(/^sighted:/, "").split("+");
+  if (head!.startsWith("marshal-")) return { leader: head!.slice(8), steward: head!.slice(8) };
+  const lead = opts.find((o) => o.startsWith("lead-"))?.slice(5);
+  const stew = opts.find((o) => o.startsWith("stew-"))?.slice(5);
+  return lead || stew ? { ...(lead ? { leader: lead } : {}), ...(stew ? { steward: stew } : {}) } : undefined;
+}
+
 export function seatsFor(spec: TournamentSpec, i: number, seed: string): string[] {
   const kinds = Array.from({ length: spec.players }, (_, k) => spec.seats[(k + i) % spec.seats.length]!);
   const isDealt = (k: string) => k.replace(/^sighted:/, "").split("+")[0] === "marshal";
@@ -163,7 +175,7 @@ export function playOne(spec: TournamentSpec, i: number): TableResult & { kinds:
   const kinds = seatsFor(spec, i, seed);
   const bots = kinds.map((k) => botFor(k, spec.tweak));
   const sighted = kinds.flatMap((k, s) => (k.startsWith("sighted:") ? [s] : []));
-  const r = playTable(ctx, seed, bots, { settings: { fog: spec.fog, diplomacy: spec.diplomacy, ...(spec.settings ?? {}) }, sighted });
+  const r = playTable(ctx, seed, bots, { settings: { fog: spec.fog, diplomacy: spec.diplomacy, ...(spec.settings ?? {}) }, sighted, styles: kinds.map(stylesOf) });
   return { ...r, kinds };
 }
 

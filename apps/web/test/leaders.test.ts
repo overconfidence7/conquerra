@@ -203,7 +203,7 @@ describe("keep or let go (session 19)", () => {
     const { overCap } = await import("../src/logic/generals");
     const view = game();
     const max = ctx.rules.leaders.maxOfKind - 1;
-    const steward = (of: string) => ({ kind: "steward" as const, of, name: `S-${of}`, command: null, budget: { share: 0 }, purse: 0 });
+    const steward = (of: string) => ({ kind: "steward" as const, of, name: `S-${of}`, personality: null, command: null, budget: { share: 0 }, purse: 0 });
     const leaders = [...view.me.leaders, ...Array.from({ length: max + 1 }, (_, i) => steward(`x${i}`))];
     expect(overCap(ctx, { ...view, me: { ...view.me, leaders } })).toEqual({ leader: 0, steward: 1 });
     expect(overCap(ctx, view)).toEqual({ leader: 0, steward: 0 });

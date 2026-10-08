@@ -1,6 +1,6 @@
 import type { LeaderNote } from "@conquerra/bots";
 import type { BuildingType, SpecialistType, Terrain } from "@conquerra/content";
-import { amountLabel, findLeader, leaderAt, recruitLabel, indexMap, PRESETS, DEAL_NAME, type ArmySnapshot, type Budget, type DealNames, type GameContext, type Instruction, type LeaderRef, type Order, type PlayerId, type PlayerView } from "@conquerra/engine";
+import { amountLabel, findLeader, leaderAt, recruitLabel, indexMap, PRESETS, DEAL_NAME, type ArmySnapshot, type Budget, type DealNames, type GameContext, type Instruction, type LeaderRef, type LeaderStyle, type Order, type PlayerId, type PlayerView } from "@conquerra/engine";
 import { SET_NAME } from "./cards";
 
 export const SPECIALIST_ICON: Record<SpecialistType, string> = { cavalry: "🐎", siege: "🎯", scouts: "🔭", engineers: "🔨", healers: "⚕️", rangers: "🏹", standardBearer: "🚩" };
@@ -128,6 +128,30 @@ export function leaderName(n: Namer, r: LeaderRef): string {
   const name = n.view ? findLeader(n.view.me, r)?.name : undefined;
   if (n.isMe(r.of)) return name ? `Your ${KIND_NAME[r.kind]}, ${name}` : `Your ${KIND_NAME[r.kind]}`;
   return name ? `${name}, ${n.who(r.of)}'s old ${KIND_NAME[r.kind]}` : `${n.who(r.of)}'s ${KIND_NAME[r.kind]}`;
+}
+
+/** A leader's personality (session 20c) as the lobby shows it: "Neutral", "Conqueror". */
+export function styleLabel(p: LeaderStyle | null): string {
+  return p ? p[0]!.toUpperCase() + p.slice(1) : "Neutral";
+}
+
+/** What a leader's personality does, in a line, for the lobby. */
+export function styleNote(p: LeaderStyle | null, kind: LeaderRef["kind"]): string {
+  if (!p) return kind === "leader" ? "Neutral: the balanced way, as your Leader plays today." : "Neutral: what pays first, as your Steward builds today.";
+  return STYLE_NOTE[p];
+}
+const STYLE_NOTE: Record<LeaderStyle, string> = {
+  conqueror: "The Conqueror: picks one front and masses there, holding the others with just enough.",
+  blitzer: "The Blitzer: never stops and never pulls back.",
+  opportunist: "The Opportunist: goes for whoever just fought and is bleeding.",
+  schemer: "The Schemer: picks off the weakened, and keeps a little back on each front.",
+  turtle: "The Turtle: forts and culture first, then markets.",
+  merchant: "The Merchant: markets first, then forts and culture.",
+};
+
+/** A leader's name with its personality, as the Leaders panel shows it: "Aldric, the Conqueror" (just "Aldric" if Neutral). */
+export function styledName(name: string, p: LeaderStyle | null | undefined): string {
+  return p ? `${name}, the ${styleLabel(p)}` : name;
 }
 
 /** A leader's name alone ("Aldric"), else what it is ("Your Leader"). */

@@ -33,8 +33,8 @@ function capture(s: GameState, pid: string, of: string, at: string | null, purse
   const p = player(s, pid);
   if (at) {
     p.captured.push({ of, territory: at });
-    p.leaders.push({ kind: "leader", of, name: `L-${of}`, command: null, budget: { share: 0 }, purse });
-  } else p.leaders.push({ kind: "steward", of, name: `S-${of}`, command: null, budget: { share: 0 }, purse });
+    p.leaders.push({ kind: "leader", of, name: `L-${of}`, personality: null, command: null, budget: { share: 0 }, purse });
+  } else p.leaders.push({ kind: "steward", of, name: `S-${of}`, personality: null, command: null, budget: { share: 0 }, purse });
 }
 
 /** p1 holds a, b, c, d; p2 holds only e with 1 troop: one attack from d knocks p2 out. */
@@ -272,8 +272,8 @@ describe("captured leaders", () => {
     rec(s, "p2", "steward")!.purse = 12;
     const r = resolveTurn(ctx, s, { p1: [mv("d", "e", "all")] });
     expect(player(r.state, "p1").captured).toEqual([{ of: "p2", territory: "a" }]);
-    expect(rec(r.state, "p1", "leader", "p2")).toEqual({ kind: "leader", of: "p2", name: names[0], command: null, budget: { share: 0 }, purse: 0 });
-    expect(rec(r.state, "p1", "steward", "p2")).toEqual({ kind: "steward", of: "p2", name: names[1], command: null, budget: { share: 0 }, purse: 0 });
+    expect(rec(r.state, "p1", "leader", "p2")).toEqual({ kind: "leader", of: "p2", name: names[0], personality: null, command: null, budget: { share: 0 }, purse: 0 });
+    expect(rec(r.state, "p1", "steward", "p2")).toEqual({ kind: "steward", of: "p2", name: names[1], personality: null, command: null, budget: { share: 0 }, purse: 0 });
     expect(find(r.events, "generalCaptured")).toMatchObject({ player: "p1", general: "p2", territory: "a" });
     expect(find(r.events, "stewardCaptured")).toMatchObject({ player: "p1", steward: "p2" });
     expect(player(r.state, "p2").leaders).toEqual([]);

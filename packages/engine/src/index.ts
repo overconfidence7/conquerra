@@ -88,6 +88,7 @@ export {
   budgetAmount,
   cleanBudget,
   cleanName,
+  cleanStyle,
   commandFits,
   dealLeaderNames,
   findLeader,

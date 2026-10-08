@@ -2,7 +2,7 @@ import { keyIntent, type KeyLike } from "./logic/keys";
 import { defaultRules, mapCatalog, suggestedMode, type BuildingType } from "@conquerra/content";
 import { BOT_NAMES } from "./host/names";
 import { DEFAULT_HOUSE, HOUSES } from "./map/houses";
-import { findLeader, indexMap, isShare, suggestLeaderName, type Budget, type DealKind, type GameContext, type Instruction, type Offer, type Order, type PlayerId, type PlayerView, type RecruitAmount, type SpoilsSet, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
+import { findLeader, indexMap, isShare, LEADER_STYLES, STEWARD_STYLES, suggestLeaderName, type LeaderStyle, type Budget, type DealKind, type GameContext, type Instruction, type Offer, type Order, type PlayerId, type PlayerView, type RecruitAmount, type SpoilsSet, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
 import { arrangeQueue, asIfYouOrderFrom, instructOrders, refFromKey, takeControl, withGeneralOrders, type LeaderPlacement } from "./logic/generals";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
@@ -276,10 +276,22 @@ function rememberedLeaderName(): string {
   return suggestLeaderName("leader", String(Date.now()));
 }
 
+/** Your Leader's and Steward's personalities, remembered on this device like the names (session 20c; Neutral at first). */
+const LEADER_STYLE_KEY = "conquerra.leaderPersonality";
+const STEWARD_STYLE_KEY = "conquerra.stewardPersonality";
+function rememberedStyle(key: string, allowed: readonly string[]): LeaderStyle | null {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved && allowed.includes(saved) ? (saved as LeaderStyle) : null;
+  } catch {
+    return null;
+  }
+}
+
 const defaultLobby = (): LobbySettings => {
   const bots = 3;
   // The Marshal is the default bot (session 17: it beats the Captain and gangs up on a runaway early).
-  return { mapId: "embervale", bots, botLevel: "marshal", luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER, fate: true, diplomacy: true, house: rememberedHouse(), leaderName: rememberedLeaderName() };
+  return { mapId: "embervale", bots, botLevel: "marshal", luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER, fate: true, diplomacy: true, house: rememberedHouse(), leaderName: rememberedLeaderName(), leaderPersonality: rememberedStyle(LEADER_STYLE_KEY, LEADER_STYLES), stewardPersonality: rememberedStyle(STEWARD_STYLE_KEY, STEWARD_STYLES) };
 };
 
 export const useGame = create<GameStore>((set, get) => ({
@@ -405,6 +417,13 @@ export const useGame = create<GameStore>((set, get) => ({
       } catch {
         // A private window: it's remembered for this visit only.
       }
+    for (const [k, key] of [["leaderPersonality", LEADER_STYLE_KEY], ["stewardPersonality", STEWARD_STYLE_KEY]] as const)
+      if (patch[k] !== undefined)
+        try {
+          localStorage.setItem(key, patch[k] ?? "");
+        } catch {
+          // A private window: it's remembered for this visit only.
+        }
     set({ lobby: next, modeTouched: touched });
   },
 

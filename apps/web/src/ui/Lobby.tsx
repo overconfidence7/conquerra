@@ -2,7 +2,8 @@ import { defaultRules, mapCatalog, suggestedMode } from "@conquerra/content";
 import { BOT_NAMES } from "../host/names";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { prewarmHost, useGame } from "../store";
-import { suggestLeaderName } from "@conquerra/engine";
+import { LEADER_STYLES, STEWARD_STYLES, suggestLeaderName } from "@conquerra/engine";
+import { styleLabel, styleNote } from "../logic/text";
 import type { BotChoice } from "../host/protocol";
 import { MAP_SUITS, mapChoiceLabel } from "../logic/text";
 import { TIMER_CHOICES, timerLabel } from "../logic/timer";
@@ -127,7 +128,14 @@ export function Lobby() {
           placeholder="Name your Leader"
           onChange={(e) => setLobby({ leaderName: e.target.value })}
         />
-        <span className="muted small">Leads your army (+20% in battle). Your Steward builds and raises culture for you.</span>
+        <span className="seg styles" role="radiogroup" aria-label="Your Leader's personality">
+          {[null, ...LEADER_STYLES].map((p) => (
+            <button key={p ?? "neutral"} role="radio" aria-checked={(lobby.leaderPersonality ?? null) === p} className={(lobby.leaderPersonality ?? null) === p ? "on" : ""} onClick={() => setLobby({ leaderPersonality: p })}>
+              {styleLabel(p)}
+            </button>
+          ))}
+        </span>
+        <span className="muted small">Leads your army (+20% in battle). {styleNote(lobby.leaderPersonality ?? null, "leader")}</span>
       </div>
 
       <div className="field">
@@ -140,6 +148,14 @@ export function Lobby() {
           placeholder={`Optional (otherwise ${stewardSuggestion})`}
           onChange={(e) => setLobby({ stewardName: e.target.value })}
         />
+        <span className="seg styles" role="radiogroup" aria-label="Your Steward's personality">
+          {[null, ...STEWARD_STYLES].map((p) => (
+            <button key={p ?? "neutral"} role="radio" aria-checked={(lobby.stewardPersonality ?? null) === p} className={(lobby.stewardPersonality ?? null) === p ? "on" : ""} onClick={() => setLobby({ stewardPersonality: p })}>
+              {styleLabel(p)}
+            </button>
+          ))}
+        </span>
+        <span className="muted small">Builds and raises culture for you. {styleNote(lobby.stewardPersonality ?? null, "steward")}</span>
       </div>
 
       <div className="field">

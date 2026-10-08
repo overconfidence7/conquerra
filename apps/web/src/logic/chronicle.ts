@@ -2,7 +2,7 @@ import type { GameContext, ReplayEvent, TerritoryId } from "@conquerra/engine";
 export { chronicleOf, keepForChronicle } from "./chronicleKeep";
 import type { TurnReport } from "../host/protocol";
 import { keepForChronicle } from "./chronicleKeep";
-import { narrate } from "./narrate";
+import { leaderSays, narrate } from "./narrate";
 import { onYourLand } from "./report";
 import type { Namer, Tone } from "./text";
 
@@ -135,6 +135,13 @@ export function chronicleLines(ctx: GameContext, reports: readonly TurnReport[],
       if (!text) continue;
       const mine = onYourLand(e, n) || (e.type === "battle" ? n.isMe(e.player) || n.isMe(e.defender) : "player" in e && n.isMe(e.player as string));
       lines.push({ text, tone, kind: kindOf(e), at: placeOf(ctx, e), mine });
+    }
+    // Your leaders with a personality say a word in their own voice about the land they took (session 20c).
+    const wins = new Map<string, Extract<ReplayEvent, { type: "battle" }>[]>();
+    for (const e of r.events) if (e.type === "battle" && e.captured && e.general && n.isMe(e.player)) wins.set(e.general, [...(wins.get(e.general) ?? []), e]);
+    for (const [g, run] of wins) {
+      const said = leaderSays(n, g, run.map((x) => n.place(x.to)), run[0]!.defender ?? null);
+      if (said) lines.push({ text: said, tone: "info", kind: "leader", at: run[0]!.to, mine: true });
     }
     for (const f of fogged.values())
       f.line.text =

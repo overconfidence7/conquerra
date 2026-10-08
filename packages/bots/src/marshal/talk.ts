@@ -36,7 +36,8 @@ const WIN_GAIN = 1000;
 const RUNAWAY_GAIN = 30;
 
 /** The offer's kind, in the personality's voice: yes and no. */
-const VOICE: Record<DealKind, [keyof Personality["voice"], keyof Personality["voice"]]> = {
+type Line = Exclude<keyof Personality["voice"], "took">;
+const VOICE: Record<DealKind, [Line, Line]> = {
   truce: ["truceYes", "truceNo"],
   war: ["warYes", "warNo"],
   trade: ["tradeYes", "tradeNo"],

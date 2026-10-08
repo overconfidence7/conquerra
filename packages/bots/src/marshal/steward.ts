@@ -1,5 +1,5 @@
 import type { LeaderPlanning } from "@conquerra/content";
-import { investCost, isRecruitSiteIn, type Order, type PlayerId, type StewardCommand, type TerritoryId } from "@conquerra/engine";
+import { investCost, isRecruitSiteIn, type LeaderStyle, type Order, type PlayerId, type StewardCommand, type TerritoryId } from "@conquerra/engine";
 import type { Board } from "../board";
 
 /**
@@ -40,6 +40,8 @@ export function planSteward(
   maxTurns: number,
   /** Forts your military leaders asked for (session 20: where they guess a rival army strikes next). */
   asked: ReadonlySet<TerritoryId> = new Set(),
+  /** Its personality (session 20c): the Turtle and the Merchant run the realm their own way. */
+  style: LeaderStyle | null = null,
 ): Order[] {
   const { rules, idx, mine, seen, owned, rivalAt, troopsAt, biggestEnemyNear, holdNeed, chokeHolder, capital, capThreatened, look0, view } = b;
   const building = (t: TerritoryId) => !!seen(t)?.building || !!seen(t)?.construction || taken.has(t);
@@ -53,10 +55,12 @@ export function planSteward(
 
   // ---------- What could be bought, and what each is worth ----------
   /** A fort matters where a big enough rival army stands next door and the troops there couldn't hold alone. */
+  const turtle = style === "turtle" && command.kind === "realm" ? cfg.styles.turtle : null;
+  const merchant = style === "merchant" && command.kind === "realm" ? cfg.styles.merchant : null;
   const fortWorth = (t: TerritoryId, r?: PlayerId) => {
     if (building(t)) return 0;
     const threat = idx.neighbors.get(t)!.reduce((m, x) => (rivalAt(x) && (!r || rivalAt(x) === r) ? Math.max(m, troopsAt(x)) : m), 0);
-    if (threat < cfg.fortThreat) return 0;
+    if (threat < (turtle?.fortThreat ?? cfg.fortThreat)) return 0;
     const weight = (t === capital ? 3 : chokeHolder(t) ? 2 : holdsWhole(provinceOf(t)) ? 1.5 : 1) * (asked.has(t) ? 2 : 1);
     const short = holdNeed(t) > troopsAt(t) ? 1.5 : 1;
     return threat * weight * short;
@@ -135,14 +139,31 @@ export function planSteward(
       const urgent = forts(mine).filter((w) => w.territory === capital || chokeHolder(w.territory) || w.urgent || asked.has(w.territory));
       // What pays (Part 2's sims): markets before culture bought for income, which doesn't pay back yet; culture only
       // where it protects (the capital and choke points facing an army), a level a turn.
-      wishes = [
-        ...urgent,
-        ...economy(mine).filter((w) => w.order.kind === "build"),
-        ...barracksFor(mine),
-        ...culture(mine).filter((w) => (w.territory === capital || chokeHolder(w.territory)) && holdCulture(w.territory)).slice(0, 1),
-        // Culture for its income, where it pays back as well as a market would (session 19).
-        ...economy(mine).filter((w) => w.order.kind === "invest" && payback(w.territory, "culture") >= cfg.culturePays),
-      ];
+      wishes = turtle
+        ? [
+            // The Turtle (session 20c): forts wherever an army stands next door, and culture where it protects, first.
+            ...forts(mine),
+            ...culture(mine).filter((w) => holdCulture(w.territory)).slice(0, turtle.culture),
+            ...barracksFor(mine),
+            ...economy(mine).filter((w) => w.order.kind === "invest" && payback(w.territory, "culture") >= cfg.culturePays),
+            ...economy(mine).filter((w) => w.order.kind === "build"),
+          ]
+        : merchant
+          ? [
+              // The Merchant (session 20c): markets first, then the urgent forts, then culture for its income.
+              ...economy(mine).filter((w) => w.order.kind === "build"),
+              ...urgent,
+              ...barracksFor(mine),
+              ...economy(mine).filter((w) => w.order.kind === "invest" && payback(w.territory, "culture") >= merchant.culturePays),
+            ]
+          : [
+              ...urgent,
+              ...economy(mine).filter((w) => w.order.kind === "build"),
+              ...barracksFor(mine),
+              ...culture(mine).filter((w) => (w.territory === capital || chokeHolder(w.territory)) && holdCulture(w.territory)).slice(0, 1),
+              // Culture for its income, where it pays back as well as a market would (session 19).
+              ...economy(mine).filter((w) => w.order.kind === "invest" && payback(w.territory, "culture") >= cfg.culturePays),
+            ];
       break;
     }
   }

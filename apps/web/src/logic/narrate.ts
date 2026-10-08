@@ -1,6 +1,7 @@
-import { dealLine, explainFizzle, explainHold, fizzleIsQuiet, governLine, spyLine, type GameContext, type LeaderRef, type PlayerView, type ReplayEvent } from "@conquerra/engine";
+import { marshalData } from "@conquerra/content";
+import { dealLine, explainFizzle, explainHold, findLeader, fizzleIsQuiet, governLine, spyLine, type GameContext, type LeaderRef, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 import { fateLine, fateTone, MARK_NAME, missionLine, SET_NAME, troopWord } from "./cards";
-import { army, BUILDING_NAME, dealNames, generalName, instructionDoing, KIND_NAME, leaderName, leaderShortName, leaderStatus, SPECIALIST_NAME, WORLD_EVENT_NAME, type LogLine, type Namer, type Tone } from "./text";
+import { army, BUILDING_NAME, dealNames, generalName, instructionDoing, KIND_NAME, leaderName, leaderShortName, leaderStatus, SPECIALIST_NAME, styledName, WORLD_EVENT_NAME, type LogLine, type Namer, type Tone } from "./text";
 
 /**
  * The turn report's lines (split from text.ts in session 14): plain English for every replay event. Loaded with the
@@ -279,6 +280,8 @@ export function narrateTurn(ctx: GameContext, events: readonly ReplayEvent[], n:
         const who = generalPhrase(n.view, n, e.general) ?? generalName(n, e.general!);
         const lost = run.reduce((a, x) => a + x.result.attackerLosses, 0), killed = run.reduce((a, x) => a + x.result.defenderLosses, 0);
         lines.push({ text: `${who} took ${COUNT_WORD[run.length] ?? run.length} territories: ${listPlaces(run.map((x) => n.place(x.to)))} (you lost ${lost}, they lost ${killed}).`, tone: "good" });
+        const said = leaderSays(n, e.general!, run.map((x) => n.place(x.to)), e.defender ?? null);
+        if (said) lines.push({ text: said, tone: "info" });
       }
       continue;
     }
@@ -295,6 +298,19 @@ export function narrateTurn(ctx: GameContext, events: readonly ReplayEvent[], n:
     lines.splice(at < 0 ? lines.length : at, 0, { text: notes.join(" "), tone: "quiet" });
   }
   return lines;
+}
+
+/**
+ * A leader with a personality says something in its own voice when it took land (session 20c, Nate): "Aldric, the
+ * Conqueror: “Took Ashfell and Pinemark; Morwen's lot ran.”" A Neutral leader says nothing.
+ */
+export function leaderSays(n: Namer, general: string, places: string[], rival: string | null): string | null {
+  const l = n.view ? findLeader(n.view.me, { kind: "leader", of: general }) : undefined;
+  const line = l?.personality ? marshalData.personalities.find((p) => p.id === l.personality)?.voice.took : undefined;
+  if (!l || !line) return null;
+  const whose = rival ? `${n.who(rival).replace(/^(Lady|Lord|Baron|Baroness|Queen|King|Duke|Duchess|Count|Countess|Prince|Princess|Sir|Dame) /, "")}'s lot` : "the locals";
+  const text = line.replace("{places}", listPlaces(places)).replace("{rival}", whose);
+  return `${styledName(l.name, l.personality)}: “${text[0]!.toUpperCase()}${text.slice(1)}”`;
 }
 
 const COUNT_WORD: Record<number, string> = { 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten" };

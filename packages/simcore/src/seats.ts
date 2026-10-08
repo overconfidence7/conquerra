@@ -88,6 +88,8 @@ export interface TableOptions {
   start?: GameState;
   /** Stop before this turn is planned (the position is returned as `final`). */
   stop?: (s: GameState) => boolean;
+  /** Session 20c: each seat's Leader and Steward personalities (by seat; Neutral where left out). */
+  styles?: readonly ({ leader?: string | null; steward?: string | null } | undefined)[];
 }
 
 const blank = (seat: number, player: PlayerId, bot: string): SeatStats => ({
@@ -100,7 +102,7 @@ const blank = (seat: number, player: PlayerId, bot: string): SeatStats => ({
 /** Play one game with one bot per seat (in seat order), and record every seat's behaviours. */
 export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], opts: TableOptions = {}): TableResult {
   const idx = indexMap(ctx.map);
-  const players = bots.map((_, i) => ({ id: `p${i + 1}`, name: `Bot ${i + 1}` }));
+  const players = bots.map((_, i) => ({ id: `p${i + 1}`, name: `Bot ${i + 1}`, ...(opts.styles?.[i]?.leader ? { leaderPersonality: opts.styles[i]!.leader } : {}), ...(opts.styles?.[i]?.steward ? { stewardPersonality: opts.styles[i]!.steward } : {}) }));
   let s = opts.start ?? createGame(ctx, { gameId: `sim-${seed}`, seed, players, settings: opts.settings ?? {} });
   const stats = bots.map((b, i) => ({ ...blank(i, players[i]!.id, b.id), capital: s.players.find((p) => p.id === players[i]!.id)!.capital }));
   const byId = new Map(stats.map((x) => [x.player, x]));

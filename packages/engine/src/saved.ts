@@ -74,7 +74,7 @@ export interface SavedGameV1 {
 }
 
 /** The game state's current shape. Bump it (and add a migration below) whenever GameState changes. */
-export const STATE_VERSION: GameState["version"] = 10;
+export const STATE_VERSION: GameState["version"] = 11;
 
 /**
  * How to bring an older game state up to date, one version at a time: `STATE_MIGRATIONS[n]` turns a version-n
@@ -156,6 +156,7 @@ export const STATE_MIGRATIONS: Record<number, (s: Record<string, unknown>, you?:
           { kind: "leader", of: p.id, name: names[p.id]!.leader, command: command(own), budget: { share: 0 }, purse: saved(p.id) },
           { kind: "steward", of: p.id, name: names[p.id]!.steward, command: yours ? { kind: "realm" } : null, budget: { share: yours ? defaultRules.leaders.stewardShare : 0 }, purse: 0 },
           ...(captured ?? []).map((g) => ({ kind: "leader", of: g.of, name: names[g.of]?.leader ?? "Captured Leader", command: command(g.instruction), budget: { share: 0 }, purse: saved(g.of) })),
+          // (Personalities come with 10 -> 11.)
         ];
         // The fields in the order a new game has them: captured, then leaders, where captured was.
         const ordered: Record<string, unknown> = {};
@@ -169,6 +170,24 @@ export const STATE_MIGRATIONS: Record<number, (s: Record<string, unknown>, you?:
       }),
     };
   },
+  /**
+   * 10 -> 11 (session 20c): leaders with personalities. Every leader in an older game is Neutral (its personality
+   * just after its name, where a new game has it).
+   */
+  10: (s) => ({
+    ...s,
+    players: (s.players as Record<string, unknown>[]).map((p) => ({
+      ...p,
+      leaders: ((p.leaders as Record<string, unknown>[] | undefined) ?? []).map((l) => {
+        const out: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(l)) {
+          out[k] = v;
+          if (k === "name") out.personality = l.personality ?? null;
+        }
+        return out;
+      }),
+    })),
+  }),
 };
 
 export function stateFingerprint(s: GameState): string {

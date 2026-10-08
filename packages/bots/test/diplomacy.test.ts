@@ -362,7 +362,11 @@ describe("bots' diplomacy: bots dealing with each other", () => {
     // Pinned again in session 18: Govern is gone and the game's shape changed (leaders). Checked first with
     // apps/sim/scripts/s18-captain-same.ts: the board, gold, deals and dice match session 17's Captain with Govern off.
     const a = play("captain-s16", true, 30, true, captainBot, s18);
-    expect(stateFingerprint(a.s)).toBe("c86498c32b7f525a");
+    // (Session 20c gave every leader a personality: the game's shape again, not the Captain. Set aside, it's the same.)
+    const s = structuredClone(a.s) as unknown as { version: number; players: { leaders: Record<string, unknown>[] }[] };
+    s.version = 10;
+    for (const p of s.players) for (const l of p.leaders) delete l.personality;
+    expect(stateFingerprint(s as unknown as GameState)).toBe("c86498c32b7f525a");
   });
 
   it("never floods anyone: at most one offer a turn per bot, and at most one to the human from all of them", () => {

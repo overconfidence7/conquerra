@@ -104,7 +104,8 @@
         "passageNo": "My land is my staging ground; find another road.",
         "breaks": "{place} is mine for the taking; our deal isn't worth more than that.",
         "offerTruce": "My war is elsewhere; let's have peace on our border.",
-        "offerWar": "Strike {target} with me; one front, one enemy."
+        "offerWar": "Strike {target} with me; one front, one enemy.",
+        "took": "Took {places}; {rival} ran."
       }
     },
     {
@@ -159,7 +160,8 @@
         "passageNo": "My armies need every road.",
         "breaks": "{place} is right there; I'm not stopping.",
         "offerTruce": "Let's not waste time on each other.",
-        "offerWar": "Let's run {target} over together."
+        "offerWar": "Let's run {target} over together.",
+        "took": "{places}: taken. On to the next."
       }
     },
     {
@@ -214,7 +216,8 @@
         "passageNo": "No foreign army walks past my walls.",
         "breaks": "My army is ready, and {place} is the prize; our deal is over.",
         "offerTruce": "Peace suits us both; let's leave each other be.",
-        "offerWar": "Strike {target} with me, and I'll bring the big army."
+        "offerWar": "Strike {target} with me, and I'll bring the big army.",
+        "took": "{places} taken, and walls going up behind us."
       }
     },
     {
@@ -269,7 +272,8 @@
         "passageNo": "I'd rather know where your armies are.",
         "breaks": "{place} was always going to be mine; you should have read the terms more carefully.",
         "offerTruce": "Why fight? Let's have peace on our border.",
-        "offerWar": "{target} has it coming; strike with me."
+        "offerWar": "{target} has it coming; strike with me.",
+        "took": "{places} fell, as I planned; {rival} never saw it coming."
       }
     },
     {
@@ -324,7 +328,8 @@
         "passageNo": "I'll keep my roads to myself.",
         "breaks": "{place} is wide open; I'd be a fool not to take it.",
         "offerTruce": "Let's not bleed each other for the others' sake.",
-        "offerWar": "{target} is wounded; let's finish them."
+        "offerWar": "{target} is wounded; let's finish them.",
+        "took": "{rival} was bleeding; {places} came cheap."
       }
     },
     {
@@ -379,7 +384,8 @@
         "passageNo": "Armies on my roads scare off the traders.",
         "breaks": "{place} is worth more than our deal; business is business.",
         "offerTruce": "Peace is good for business; shall we?",
-        "offerWar": "{target} is bad for business; strike with me."
+        "offerWar": "{target} is bad for business; strike with me.",
+        "took": "{places} taken: good land, and it will pay."
       }
     }
   ],
@@ -449,7 +455,8 @@
       "marketsStopBefore": 4,
       "cultureFights": 4,
       "exposedWorth": 0.5,
-      "culturePays": 0.3
+      "culturePays": 0.3,
+      "styles": { "turtle": { "fortThreat": 3, "culture": 3 }, "merchant": { "culturePays": 0.2 } }
     }
   }
 }

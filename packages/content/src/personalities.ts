@@ -24,6 +24,11 @@ const Voice = z.object({
   /** Its own offers' notes: a truce, a joint war (`{target}`), a trade. */
   offerTruce: z.string(),
   offerWar: z.string(),
+  /**
+   * Session 20c: a leader of yours with this personality, in the report when it took land: `{places}` (the land it
+   * took) and `{rival}` (whose it was: "Morwen's lot", or "the locals" for empty land). None: it says nothing.
+   */
+  took: z.string().optional(),
 });
 
 export const Personality = z.object({
@@ -278,6 +283,15 @@ export const LeaderPlanning = z.object({
      * never did; with more income a level, it does.
      */
     culturePays: z.number().min(0).default(0.3),
+    /**
+     * Session 20c: a Steward's personality on "Run the realm". The Turtle: a fort wherever a rival army of at least
+     * `fortThreat` stands next door (not only urgent ones), and up to `culture` levels a turn where they protect, before
+     * markets. The Merchant: markets first (where they pay), then the urgent forts, then culture for its income. A
+     * Marshal's Steward of another personality runs the realm as Neutral does.
+     */
+    styles: z
+      .object({ turtle: z.object({ fortThreat: z.number().int().min(1), culture: z.number().int().min(0) }), merchant: z.object({ culturePays: z.number().min(0) }) })
+      .default({ turtle: { fortThreat: 3, culture: 3 }, merchant: { culturePays: 0.2 } }),
   }),
 });
 export type LeaderPlanning = z.infer<typeof LeaderPlanning>;

@@ -1,4 +1,4 @@
-import { marshalData, type MarshalJudgement } from "@conquerra/content";
+import { marshalData, type MarshalJudgement, type Personality } from "@conquerra/content";
 import {
   distancesFrom,
   isMilitaryCommand,
@@ -91,6 +91,12 @@ export interface Claims {
 }
 
 const STYLE = () => marshalData.leaders.style;
+/**
+ * How a military leader plays (session 20c, Nate: personalities change play style): a leader with a personality plans
+ * with that Marshal personality's block (its weights and switches), under its command's scope and purse; a Neutral
+ * one with your leaders' own style.
+ */
+const styleOf = (l: LeaderRecord): Personality => (l.personality ? (marshalData.personalities.find((p) => p.id === l.personality) ?? STYLE()) : STYLE());
 /** Commands a junior's army can work under (a leader that directs more than its own army). */
 const SENIOR = new Set(["military", "expand", "front", "cleanup", "pushBack"]);
 
@@ -254,7 +260,7 @@ export function planLeaders(req: LeadersRequest): LeadersPlan {
     // does one on Clean up that has joined the team (session 20c): its senior's orders spend its purse.
     if (command!.kind === "report" || pooled.has(key)) mine = [];
     else if (l.kind === "steward") {
-      if (!isMilitaryCommand(command!)) mine = own(planSteward(b, marshalData.leaders.steward, command as StewardCommand, purseOf(l), () => `${prefix}x${n++}`, taken, ctx.rules.game.maxTurnsHard, asked));
+      if (!isMilitaryCommand(command!)) mine = own(planSteward(b, marshalData.leaders.steward, command as StewardCommand, purseOf(l), () => `${prefix}x${n++}`, taken, ctx.rules.game.maxTurnsHard, asked, l.personality ?? null));
     } else if (isMilitaryCommand(command!)) {
       const juniors = commandsOf(view, req.commands).filter((x) => x.l.kind === "leader" && x.command?.kind === "report" && x.command.to === l.of).map((x) => x.l);
       const team0 = team && team.senior === l ? team.pooled : [];
@@ -321,7 +327,8 @@ function planMilitary(
   const at = leaderAt(view.me, l);
   const isOwn = l.of === view.me.id;
   const goes: Goes = isOwn ? { withLeader: true } : { withGeneral: l.of };
-  const margin = J.attackFloor?.chainMargin ?? STYLE().attack.chainMargin;
+  const P = styleOf(l);
+  const margin = J.attackFloor?.chainMargin ?? P.attack.chainMargin;
   // At the target, Expand stops and holds there (or marches the last steps through our own land).
   const reached = command.kind === "expand" && b.owned(command.territory);
   const single = command.kind === "hold" || command.kind === "defend" || command.kind === "push" || command.kind === "raid" || reached;
@@ -403,7 +410,7 @@ function planMilitary(
     steer.careful = (t) => b.idx.neighbors.get(t)!.some((x) => !!b.rivalAt(x) && b.troopsAt(x) > b.garrison);
     steer.goal = (t) => commands(t);
   }
-  const plan = planMarshal({ ctx, view, personality: STYLE(), judgement: J, memory: thought.memory, insight: thought, ...(lastTurn ? { lastTurn } : {}), scope: { kind: "leader", steer }, purse });
+  const plan = planMarshal({ ctx, view, personality: P, judgement: J, memory: thought.memory, insight: thought, ...(lastTurn ? { lastTurn } : {}), scope: { kind: "leader", steer }, purse });
   let orders: Order[] = plan.orders.filter((o) => o.kind !== "break");
   if (at && commands(at) && !plan.leaderPlaced) orders = carryLeader(orders, at, goes, command.kind === "expand" ? distancesFrom(b.idx, command.territory) : null);
   // A leader that reports to this one goes with its own army's main move (its portrait shows on that order).

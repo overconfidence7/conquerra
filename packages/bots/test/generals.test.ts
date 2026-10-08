@@ -8,7 +8,7 @@ import { scenario } from "./scenario";
 /** p1 holds a captured Leader of `of`, standing at `at`. */
 function capture(s: GameState, of: string, at: string) {
   s.players[0]!.captured.push({ of, territory: at });
-  s.players[0]!.leaders.push({ kind: "leader", of, name: of, command: null, budget: { share: 0 }, purse: 0 });
+  s.players[0]!.leaders.push({ kind: "leader", of, name: of, personality: null, command: null, budget: { share: 0 }, purse: 0 });
 }
 
 type Move = Extract<Order, { kind: "move" }>;
