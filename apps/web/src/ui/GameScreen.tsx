@@ -262,6 +262,14 @@ export function GameScreen() {
   useEffect(() => {
     if (phone && (picking || spyPicking)) setSheet("closed");
   }, [phone, picking, spyPicking]);
+  // Enter confirms an open attack, move or path box as shown; Esc cancels it (session 20, Nate).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (useGame.getState().pressKey(e as unknown as Parameters<ReturnType<typeof useGame.getState>["pressKey"]>[0])) e.preventDefault();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   // The path box opens the sheet again on a phone.
   useEffect(() => {
     if (phone && pathBox) (setTab("army"), setSheet((s) => (s === "closed" ? "half" : s)));

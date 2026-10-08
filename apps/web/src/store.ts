@@ -1,3 +1,4 @@
+import { keyIntent, type KeyLike } from "./logic/keys";
 import { defaultRules, mapCatalog, suggestedMode, type BuildingType } from "@conquerra/content";
 import { BOT_NAMES } from "./host/names";
 import { DEFAULT_HOUSE, HOUSES } from "./map/houses";
@@ -161,6 +162,11 @@ interface GameStore {
   select(t: TerritoryId): void;
   updateDraft(patch: Partial<MoveDraft>): void;
   addDraft(): void;
+  /**
+   * A key pressed on the game screen (session 20): with an attack, move or path box open, Enter confirms it as shown
+   * and Esc cancels it (what its buttons do). True if it did something (the page then keeps the key from the browser).
+   */
+  pressKey(e: KeyLike): boolean;
   add(order: NewOrder): void;
   /** Spies (session 15): Send (then tap a province), Recall, or stop picking. One order per spy, in the queue. */
   /** Orders along a path (session 16): pick where the army in `from` should go. */
@@ -531,6 +537,23 @@ export const useGame = create<GameStore>((set, get) => ({
       return o;
     });
     set({ queue: [...queue, draftToOrder(d, nextOrderId())], paused: taken.paused, draft: null, selected: d.from, recruit: null });
+  },
+
+  pressKey(e) {
+    const intent = keyIntent(e);
+    if (!intent) return false;
+    const { path, draft } = get();
+    if (path) {
+      if (intent === "confirm") void get().confirmPath();
+      else get().cancelPath();
+      return true;
+    }
+    if (draft) {
+      if (intent === "confirm") get().addDraft();
+      else get().clearSelection();
+      return true;
+    }
+    return false;
   },
 
   startPath: (from) => set({ pathPick: from, path: null, draft: null, recruit: null, picking: null, spyPick: null, selected: from }),

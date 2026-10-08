@@ -219,9 +219,19 @@ function PathPanel({ ctx, view, queue, path }: Props & { path: { from: Territory
       )}
       <button className="primary wide" disabled={!p.orders.length} onClick={confirmPath}>
         Confirm: add {p.orders.length} {p.orders.length === 1 ? "order" : "orders"}
+        <EnterHint />
       </button>
       <p className="muted small">They go in your orders as one chain: change or delete any step there.</p>
     </div>
+  );
+}
+
+/** "↵" on a confirm button: Enter does it (on a laptop; hidden on a phone, where there's no keyboard). */
+function EnterHint() {
+  return (
+    <kbd className="enter-hint" title="Enter confirms; Esc cancels">
+      ↵
+    </kbd>
   );
 }
 
@@ -362,6 +372,7 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
       {!more && !draft.timing && <p className="muted small">More… has an exact number{view.me.leader.alive ? ", Initiative and Wait" : ""} and the other backup plans.</p>}
       <button className="primary wide" disabled={troops <= 0 || blocked} onClick={addDraft}>
         Add {attack ? "attack" : "move"}
+        <EnterHint />
       </button>
       {draft.preset && <p className="muted small">{presetsFor(view, draft, plan).find((p) => p.id === draft.preset)?.description}</p>}
       {isMine(view, draft.to) && (

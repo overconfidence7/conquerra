@@ -60,6 +60,11 @@ button {
 button:hover:not(:disabled) { border-color: var(--gold-hi); }
 button:disabled { opacity: 0.4; cursor: default; }
 button.primary { background: linear-gradient(#e3c77e, #c9a45c); color: var(--navy); border-color: #f1dca2; font-weight: 700; }
+/* Enter confirms (session 20): a small hint on the confirm button, only where there's a mouse and a keyboard. */
+.enter-hint { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .enter-hint { display: inline-block; margin-left: 8px; padding: 0 5px; border: 1px solid rgba(20, 28, 48, 0.45); border-radius: 4px; font: 600 12px/16px system-ui, sans-serif; color: var(--navy); opacity: 0.75; vertical-align: 1px; }
+}
 button.wide { width: 100%; }
 button.big { padding: 12px 20px; font-size: 1.1rem; }
 button.link { background: none; border: none; color: var(--gold-hi); padding: 4px 6px; min-height: 0; text-decoration: underline; text-underline-offset: 3px; }

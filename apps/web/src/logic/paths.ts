@@ -1,4 +1,4 @@
-import { indexMap, type GameContext, type Order, type PlayerId, type PlayerView, type TerritoryId } from "@conquerra/engine";
+import { distancesFrom, indexMap, type GameContext, type Order, type PlayerId, type PlayerView, type TerritoryId } from "@conquerra/engine";
 import { typicalTerritorySize } from "../map/zoom";
 import { attackCheck, type PageDeal } from "./deals";
 import { isOwned, planQueue, type NewOrder, type QueuePlan } from "./orders";
@@ -7,8 +7,10 @@ import { isOwned, planQueue, type NewOrder, type QueuePlan } from "./orders";
  * Orders along a path (session 16, Nate #8): pick where an army sets out from and a place further away, and the game
  * writes the chain of orders to get there, one hop per order, as you'd write them by hand:
  *  - **Shortest way:** the fewest steps (through your own land where it can, then the weakest land it knows of).
- *  - **Full sweep:** every territory it can take between the two, in a corridor along the line between them, taken in
- *    an order that moves steadily toward the destination (never doubling back further than it must), then on to it.
+ *  - **Full sweep:** every territory it can take between the two, in a band about `rules.path.sweepWidth` territories
+ *    wide (session 20, Nate: no pocket of unclaimed land left between them), and the rest of a province the band
+ *    nearly covers, taken in an order that moves steadily toward the destination (never doubling back further than it
+ *    must), then on to it.
  * It works from your own view only (what you see and remember; land you've never seen counts as lightly held). Your
  * own land, and land taken earlier on the path, is walked through (a move); a partner's land you have right of passage
  * through is marched through on the way (a move's `through`, at most `rules.diplomacy.passage.maxThrough` of it); a
@@ -27,14 +29,16 @@ export interface PathPlan {
   orders: NewOrder[];
   /** Territories it would take (attacks). */
   takes: number;
+  /** The full sweep's band: the land it means to clear (its own included), for the map to show. */
+  band?: TerritoryId[];
   /** Null when it can't get there at all. */
   ok: boolean;
 }
 
-/** How wide the full sweep's corridor is, each side of the line, in typical territory widths. */
-export const SWEEP_WIDTH = 1.1;
 /** At most this many orders in one path (a long one is cut short; the box says so). */
 export const MAX_PATH_ORDERS = 24;
+/** A full sweep clears a whole band, so it may write more (session 20: Nate writes 50 a turn). */
+export const MAX_SWEEP_ORDERS = 120;
 /** Land never seen, counted as this many troops when choosing the weakest way. */
 const UNSEEN_TROOPS = 3;
 
@@ -125,7 +129,7 @@ function route(c: Ctx, from: TerritoryId, to: TerritoryId, taken: ReadonlySet<Te
 }
 
 /** The orders for walking `steps` (one move or attack per hop; a partner's land is folded into a move's `through`). */
-function ordersFor(c: Ctx, steps: readonly TerritoryId[]): { orders: NewOrder[]; takes: number; walked: TerritoryId[] } {
+function ordersFor(c: Ctx, steps: readonly TerritoryId[], max = MAX_PATH_ORDERS): { orders: NewOrder[]; takes: number; walked: TerritoryId[] } {
   const maxThrough = c.ctx.rules.diplomacy.passage.maxThrough;
   const orders: NewOrder[] = [];
   const taken = new Set<TerritoryId>();
@@ -144,7 +148,7 @@ function ordersFor(c: Ctx, steps: readonly TerritoryId[]): { orders: NewOrder[];
       through.push(t);
       continue;
     }
-    if (orders.length >= MAX_PATH_ORDERS) break;
+    if (orders.length >= max) break;
     const attack = k === "take";
     orders.push({
       kind: "move",
@@ -171,8 +175,36 @@ export function shortestPath(ctx: GameContext, view: PlayerView, queue: readonly
 }
 
 /**
- * The full sweep: every territory it can take in a corridor along the line from `from` to `to` (within SWEEP_WIDTH
- * territory widths of it), visited nearest first with a penalty for heading back toward the start, then on to `to`.
+ * The sweep's band (session 20): every territory within about `width` territories of a shortest way from `from` to
+ * `to` (its detour on the way there at most `width - 1` steps), and, where the band covers most of a province, the one
+ * or two of its territories left outside (taking them completes it). Not behind the start or past the end.
+ */
+export function sweepBand(ctx: GameContext, view: PlayerView, from: TerritoryId, to: TerritoryId, width = ctx.rules.path?.sweepWidth ?? 3): Set<TerritoryId> {
+  const idx = indexMap(ctx.map);
+  const pos = (t: TerritoryId) => idx.byId.get(t)!;
+  const a = pos(from), b = pos(to);
+  const len2 = (b.x - a.x) ** 2 + (b.y - a.y) ** 2 || 1;
+  const along = (t: TerritoryId) => ((pos(t).x - a.x) * (b.x - a.x) + (pos(t).y - a.y) * (b.y - a.y)) / len2;
+  const dFrom = distancesFrom(idx, from), dTo = distancesFrom(idx, to);
+  const D = dFrom.get(to) ?? 0;
+  const slack = Math.max(0, width - 1);
+  const band = new Set(idx.ids.filter((t) => (dFrom.get(t) ?? 1e9) + (dTo.get(t) ?? 1e9) <= D + slack && along(t) > -0.15 && along(t) < 1.15));
+  // Branches: the last one or two territories of a province the band covers most of.
+  const owned = (t: TerritoryId) => {
+    const v = view.territories[t];
+    return v?.detail === "full" && v.owner === view.me.id;
+  };
+  for (const [, members] of idx.provinceMembers) {
+    const inside = members.filter((m) => band.has(m) || owned(m));
+    const outside = members.filter((m) => !band.has(m) && !owned(m));
+    if (outside.length && outside.length <= 2 && inside.length >= outside.length && members.some((m) => band.has(m))) for (const m of outside) band.add(m);
+  }
+  return band;
+}
+
+/**
+ * The full sweep: every territory it can take in its band (`sweepBand`), visited nearest first with a penalty for
+ * heading back toward the start, then on to `to`.
  */
 export function sweepPath(ctx: GameContext, view: PlayerView, queue: readonly Order[], deals: readonly PageDeal[], open: readonly PlayerId[], from: TerritoryId, to: TerritoryId): PathPlan {
   const c = makeCtx(ctx, view, queue, deals, open);
@@ -180,15 +212,10 @@ export function sweepPath(ctx: GameContext, view: PlayerView, queue: readonly Or
   const pos = (t: TerritoryId) => idx.byId.get(t)!;
   const a = pos(from), b = pos(to);
   const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-  const width = SWEEP_WIDTH * typicalTerritorySize(ctx.map);
-  /** How far along the line (0 at the start, 1 at the end) and how far off it a territory is. */
+  /** How far along the line (0 at the start, 1 at the end) a territory is. */
   const along = (t: TerritoryId) => ((pos(t).x - a.x) * (b.x - a.x) + (pos(t).y - a.y) * (b.y - a.y)) / (len * len);
-  const off = (t: TerritoryId) => {
-    const u = Math.max(0, Math.min(1, along(t)));
-    const px = a.x + (b.x - a.x) * u, py = a.y + (b.y - a.y) * u;
-    return Math.hypot(pos(t).x - px, pos(t).y - py);
-  };
-  const corridor = new Set(idx.ids.filter((t) => t !== from && t !== to && along(t) > -0.15 && along(t) < 1.15 && off(t) <= width));
+  const band = sweepBand(ctx, view, from, to);
+  const corridor = new Set([...band].filter((t) => t !== from && t !== to));
   const taken = new Set<TerritoryId>();
   const targets = new Set([...corridor].filter((t) => !isOwned(view, c.plan, t) && stepKind(c, from, t, taken) !== "through"));
   // A step along the line, in the same units as a hop (for the "doubling back" penalty).
@@ -196,7 +223,7 @@ export function sweepPath(ctx: GameContext, view: PlayerView, queue: readonly Or
   const steps: TerritoryId[] = [from];
   let at = from;
   let mark = along(from);
-  for (let guard = 0; targets.size && guard < MAX_PATH_ORDERS * 2; guard++) {
+  for (let guard = 0; targets.size && guard < MAX_SWEEP_ORDERS * 2; guard++) {
     // The nearest target reachable through land already yours (or taken), with a penalty for heading back.
     let best: { way: TerritoryId[]; score: number; t: TerritoryId } | null = null;
     const out = explore(c, at, taken, false);
@@ -217,16 +244,16 @@ export function sweepPath(ctx: GameContext, view: PlayerView, queue: readonly Or
     taken.add(best.t);
     at = best.t;
     mark = Math.max(mark, along(at));
-    if (steps.length - 1 > MAX_PATH_ORDERS) break;
+    if (steps.length - 1 > MAX_SWEEP_ORDERS) break;
   }
   // Then on to the destination.
   const last = at === to ? [to] : route(c, at, to, taken);
-  return finish(c, "sweep", from, to, last ? [...steps, ...last.slice(1)] : steps.length > 1 ? steps : null, !!last);
+  return { ...finish(c, "sweep", from, to, last ? [...steps, ...last.slice(1)] : steps.length > 1 ? steps : null, !!last, MAX_SWEEP_ORDERS), band: [...band] };
 }
 
-function finish(c: Ctx, kind: PathKind, from: TerritoryId, to: TerritoryId, steps: TerritoryId[] | null, reached = true): PathPlan {
+function finish(c: Ctx, kind: PathKind, from: TerritoryId, to: TerritoryId, steps: TerritoryId[] | null, reached = true, max = MAX_PATH_ORDERS): PathPlan {
   if (!steps || steps.length < 2) return { kind, from, to, steps: [from], orders: [], takes: 0, ok: false };
-  const { orders, takes, walked } = ordersFor(c, steps);
+  const { orders, takes, walked } = ordersFor(c, steps, max);
   return { kind, from, to, steps: walked, orders, takes, ok: reached && walked[walked.length - 1] === to && orders.length > 0 };
 }
 

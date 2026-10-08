@@ -2,7 +2,7 @@ import { defaultRules, MapDef } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { createGame, indexMap, resolveTurn, viewFor, type GameContext, type GameState, type Order } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
-import { MAX_PATH_ORDERS, pathSummary, shortestPath, sweepPath } from "../src/logic/paths";
+import { MAX_PATH_ORDERS, MAX_SWEEP_ORDERS, pathSummary, shortestPath, sweepPath } from "../src/logic/paths";
 import type { PageDeal } from "../src/logic/deals";
 
 /** A grid of `cols` x `rows` territories, 100 map units apart (named "c,r"), one province per column. */
@@ -153,5 +153,70 @@ describe("orders along a path (session 16)", () => {
     const r = resolveTurn(ctx, s, { you: withIds(short.orders) });
     expect(r.state.territories[far]!.owner).toBe("you");
     s = r.state;
+  });
+});
+
+describe("the full sweep's band (session 20, Nate: no pocket of unclaimed land left between the two points)", () => {
+  /** A real map: you hold your capital with a big army; everything else is someone else's (fog off, so the band is known). */
+  const across = (mapId: string) => {
+    const ctx: GameContext = { map: maps[mapId]!, rules: defaultRules };
+    const s = createGame(ctx, { gameId: "sw", seed: "sweep", players: [{ id: "you", name: "You" }, { id: "bot", name: "Bot" }, { id: "ally", name: "Ally" }], settings: { luck: 0, fate: false, fog: false } });
+    const me = s.players.find((p) => p.id === "you")!;
+    s.territories[me.capital]!.troops = 400;
+    const idx = indexMap(ctx.map);
+    const far = [...idx.ids].sort((a, b) => {
+      const pa = idx.byId.get(a)!, pb = idx.byId.get(b)!, c = idx.byId.get(me.capital)!;
+      return Math.hypot(pb.x - c.x, pb.y - c.y) - Math.hypot(pa.x - c.x, pa.y - c.y);
+    })[0]!;
+    return { ctx, s, idx, from: me.capital, to: far };
+  };
+
+  for (const mapId of ["wyrmland", "rootholm"]) {
+    it(`${mapId}: a sweep across the map leaves no unclaimed land in its band, and branches only to complete a province`, () => {
+      const { ctx, s, idx, from, to } = across(mapId);
+      const view = viewFor(ctx, s, "you");
+      const plan = sweepPath(ctx, view, [], [], [], from, to);
+      expect(plan.orders.length).toBeGreaterThan(0);
+      const band = new Set(plan.band ?? []);
+      const walked = new Set(plan.steps);
+      const mine = (t: string) => s.territories[t]!.owner === "you";
+      // Every territory in the band (not yours already) is taken on the way, unless the order cap cut it short.
+      const left = [...band].filter((t) => !mine(t) && !walked.has(t));
+      expect(plan.orders.length).toBeLessThan(MAX_SWEEP_ORDERS);
+      expect(left).toEqual([]);
+      expect(plan.ok).toBe(true);
+      // About 3 wide: the band is a few times the length of the shortest way, not the whole map.
+      const shortest = shortestPath(ctx, view, [], [], [], from, to);
+      expect(band.size).toBeGreaterThan(shortest.steps.length);
+      expect(band.size).toBeLessThan(shortest.steps.length * 6);
+      // Land taken outside the core band (within a step of a shortest way) completes a province.
+      const dFrom = new Map<string, number>(), dTo = new Map<string, number>();
+      const bfs = (start: string, d: Map<string, number>) => {
+        d.set(start, 0);
+        const q = [start];
+        for (let h = 0; h < q.length; h++) for (const n of idx.neighbors.get(q[h]!) ?? []) if (!d.has(n)) (d.set(n, d.get(q[h]!)! + 1), q.push(n));
+      };
+      bfs(from, dFrom);
+      bfs(to, dTo);
+      const D = dFrom.get(to)!;
+      for (const t of walked) {
+        if (mine(t) || dFrom.get(t)! + dTo.get(t)! <= D + 2) continue;
+        const members = idx.provinceMembers.get(idx.byId.get(t)!.province)!;
+        expect(members.every((m) => mine(m) || walked.has(m) || band.has(m)), `${t} is off the band`).toBe(true);
+      }
+    });
+  }
+
+  it("never a partner's land: a truce's land in the band is left alone (and walked around)", () => {
+    const { ctx, s, from, to } = across("wyrmland");
+    const view = viewFor(ctx, s, "you");
+    const plan0 = sweepPath(ctx, view, [], [], [], from, to);
+    // Hand the ally a few territories in the band.
+    const theirs = (plan0.band ?? []).filter((t) => t !== from && t !== to).slice(3, 7);
+    for (const t of theirs) s.territories[t]!.owner = "ally";
+    const v2 = viewFor(ctx, s, "you");
+    const pact = { id: "d1", kind: "truce", bond: "binding", a: "you", b: "ally", start: 1, last: 5, borders: [], terms: { kind: "truce", scope: { kind: "all" }, turns: 5 }, size: 5 } as unknown as PageDeal;
+    const plan = sweepPath(ctx, v2, [], [pact], [], from, to);
+    for (const o of plan.orders) if (o.kind === "move") expect(theirs).not.toContain(o.to);
   });
 });

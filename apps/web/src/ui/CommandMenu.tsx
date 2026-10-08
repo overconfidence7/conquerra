@@ -1,5 +1,5 @@
 import { leaderKey, partnersOf, type Deal, type GameContext, type Instruction, type InstructionKind, type LeaderKind, type PlayerView } from "@conquerra/engine";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGame, type PickKind } from "../store";
 import { colorOf } from "./colors";
 
@@ -71,6 +71,23 @@ export default function CommandMenu({ view, general, kind = "leader", current, o
   const { setInstruction, pickPlace, pageDeals, ctx, instructions } = useGame();
   const key = general.includes(":") ? general : `${kind}:${general}`;
   const [choosing, setChoosing] = useState<Item | null>(null);
+  const list = useRef<HTMLDivElement>(null);
+  // Keys (session 20): the current command (else the first) is highlighted; Up and Down move it, Enter picks it, Esc closes.
+  useEffect(() => {
+    const items = [...(list.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])];
+    (items.find((b) => b.classList.contains("on")) ?? items[0])?.focus({ preventScroll: true });
+  }, [choosing]);
+  const onKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const items = [...(list.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])];
+    const at = items.indexOf(document.activeElement as HTMLButtonElement);
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      items[(at + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      onDone();
+    }
+  };
   const done = (i: Instruction | null) => {
     void setInstruction(key, i);
     onDone();
@@ -101,7 +118,7 @@ export default function CommandMenu({ view, general, kind = "leader", current, o
   }));
   if (!choosing)
     return (
-      <div className="command-list" role="menu" aria-label="Commands">
+      <div className="command-list" role="menu" aria-label="Commands" ref={list} onKeyDown={onKey}>
         {groups.map((g) => (
           <div key={g.group} className="command-group">
             <p className="field-name small">{g.group}</p>
