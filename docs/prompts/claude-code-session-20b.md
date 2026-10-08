@@ -26,7 +26,9 @@ The parts are in priority order. **Part 4 ends with the deploy, so the session i
 ## Step 0: sync, and session 20's leftovers
 1. Run `git --no-optional-locks status`, then `git pull` and `pnpm install`. Work on `main` and push to `main`.
 2. **Don't import art batch 4** (session 21 does).
-3. If session 20 left "Report to <leader>" or the sweep rework for this session (its summary says), do them first, with their tests.
+3. Session 20 left nothing behind. Two small things from its review:
+   - **The offer card warns when a deal would stop a finish:** when a rival your leader is finishing offers a truce (or you propose one), the card says "A truce with Baron Krell would stop Aldric finishing them". Diplomacy stays yours; the leader never refuses for you. A test.
+   - **Two harnesses, two numbers:** `s20-marshal.ts` gives all-in delegating (`delegate-100`) 34.6% against Marshals on Embervale 4 and `s19-lines.ts` gives 42.6% (500 games each). Find what differs in how the two set the seat up (the Steward's share on a crowded table? the seed rotation?), make them agree, and note the true number in the write-up. Don't chase the number itself: Nate has decided what to do about it (see `PROGRESS.md`, the review of session 20).
 4. **Commit and push.**
 
 ## Guardrails (all parts)

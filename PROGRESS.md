@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–20 are done (20 awaiting review). Next: **session 20b** (Walls, fair seats), then 21 (the polish pass), 22 (the language pass).**
+**Phase: M3 (depth and balance). Sessions 7–20 are done and reviewed. Next: **session 20b** (Walls, fair seats), then Nate's play test, 21 (the polish pass), 22 (the language pass).**
 
 Claude Code sessions completed: **20** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -1028,6 +1028,19 @@ All four parts are done, each committed and pushed. Art batch 4 wasn't imported 
 - **Tests and deploy:** 872 automated tests pass (the full run twice, as property tests use random inputs); typecheck and the web build pass. Deployed to the private preview (version `219fc605`); the lock check passed. Nate: please check the repo's Actions page for the last commit.
 - **Questions for Nate:** (1) all-in delegating (100% to your Leader) still beats Marshals on Embervale at 1.38× fair: worth more work, or fine since it's a crowded small map? (2) Clean up is offered from 75% of the map: right threshold? (3) Should a finishing Leader turn down truces from a rival it's finishing (today your diplomacy is yours)?
 
+### Oct 7: Orchestrator review of session 20
+- **Checked the work:**
+  - GitHub's checks pass on all seven session 20 commits, so `main` is green.
+  - The screenshots look right: Clean up and Push back in the command menu; "Finishing them off: Baron Krell (2 territories left), Queen Isolde (7 territories left) · 21 orders this turn"; "Reports to Aldric"; the budget chips stopping at what's left; "Add attack ↵"; a 49-order sweep band across Wyrmland. The phone sheets match.
+  - **Re-run and confirmed:** the 20 mop-up positions with a Leader on Run the military: median 3 turns, 80% within 4, none unfinished (exactly as reported); a delegating player (80/20) against Marshals **16.7% on Wyrmland 6 (fair 16.7%)** and 27–29% on Embervale 4 (fair 25%; the session said 27.2%). **So the gap found after session 19 is closed:** your leaders and the Marshal are level again.
+  - **One number depends on the seeds:** all-in delegating (100% to the Leader, nothing to the Steward) on Embervale 4 wins **34.6% with the session's seeds and 42.6% with the orchestrator's** (fair 25%); it is 0.6× fair on Wyrmland. The two harnesses set the seat up differently, which is worth a look, but either way an all-military player beats Marshals on the crowded small map. Session 19's one-change tests showed the same for an all-military Marshal (36% in a table of styled Marshals), so it's the small map rewarding pure troops, not a leaders bug. **Nate decides** (below).
+- **What session 20 found that nobody expected:** the real reason the Leader didn't finish Nate's game was that **captured leaders arrive with no command, and "a leader with no command keeps its army for you" froze the biggest army he had** (864 troops at his capital in one trace). That rule now applies to your own Leader only. Plus an engine bug (a turn changed the game it started from through shared purses), fixed with a test.
+- **Session 20's questions:**
+  - **All-in delegating on Embervale (1.4–1.7× fair):** Nate's call; the orchestrator's recommendation is to accept it for now (nobody plays 100/0 on a 40-territory map, and fair seats in 20b changes Embervale again) and look once more after 20b.
+  - **Clean up at 75% of the map:** orchestrator default: keep 75% until Nate has played with it (on his list).
+  - **Should a finishing Leader turn down truces from the rival it's finishing?** Orchestrator default: **no, diplomacy stays yours**; instead the offer card says "A truce with Baron Krell would stop Aldric finishing them" so you know what you're signing. Session 20b, Step 0 (a small screen change).
+- **Next:** session 20b (`docs/prompts/claude-code-session-20b.md`: Walls, fair seats), then Nate plays from the list below.
+
 ### Things to test after session 20 (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop first; the phone where it applies.*
 - **From session 20 (leaders that finish the job, the Marshal plays like a person, controls), most important first:**
@@ -1052,7 +1065,6 @@ All four parts are done, each committed and pushed. Art batch 4 wasn't imported 
   6. **An 8–10 player game on Krakenmere or Rootholm** (the lobby defaults to Conquest, 20 turns, at 8+ players): is 20 turns enough on a 200 map? On the phone: is it smooth enough?
   7. **Your starting spot:** did it feel fair? (Sims found some capital spots much stronger; Embervale's 4-player spots were re-chosen.)
   8. **Never touch your Steward** on Embervale with 4 (it starts at 10% there) and on Wyrmland (20%): does it feel like the right amount? What did it build? Then give it a **bigger budget** (30–50%) and see what it builds.
-  9. *(Known, being fixed next session: if you hand most of your gold to your leaders, they currently outplay the Marshals, because they build culture now and the Marshals don't yet. Play your own way; don't judge the Marshals' strength from a heavily delegated game.)*
 - **From session 16:**
   - zoom all the way in (sharp?) and all the way out (everything visible clear of the menus? the province names readable, not piled up?)
   - tap territories you don't own: does the province light up clearly, with its name and bonus?
