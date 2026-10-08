@@ -48,6 +48,7 @@ export {
   planLeaders,
   planSteward,
   type Claims,
+  type LeaderNote,
   type LeadersPlan,
   type LeadersRequest,
   type Steer,

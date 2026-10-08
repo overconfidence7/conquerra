@@ -211,3 +211,35 @@ describe("keep or let go (session 19)", () => {
     expect(overCap(ctx, { ...view, me: { ...view.me, captured } as typeof view.me })).toEqual({ leader: 2, steward: 0 });
   });
 });
+
+describe("session 20: Clean up, Push back, Report to, finishing, the 100% cap", () => {
+  it("Clean up is offered once you hold 75% of the map, not before", async () => {
+    const { cleanUpOffered } = await import("../src/ui/CommandMenu");
+    const s = createGame(ctx, { gameId: "g", seed: "cleanup", players: [{ id: "you", name: "You", delegate: true }, { id: "b1", name: "Lady Morwen" }] });
+    const ids = ctx.map.territories.map((x) => x.id);
+    const hold = (k: number) => ids.forEach((id, i) => (s.territories[id]!.owner = i < k ? "you" : "b1"));
+    hold(Math.ceil(ids.length * 0.75) - 1);
+    expect(cleanUpOffered(ctx, viewFor(ctx, s, "you"))).toBe(false);
+    hold(Math.ceil(ids.length * 0.75));
+    expect(cleanUpOffered(ctx, viewFor(ctx, s, "you"))).toBe(true);
+  });
+
+  it("the new commands and the leaders' reasons read plainly", async () => {
+    const { leaderNoteLine } = await import("../src/logic/text");
+    const view = game();
+    const n = namer(ctx, view);
+    expect(instructionName({ kind: "cleanup" }, n)).toBe("Clean up");
+    expect(instructionName({ kind: "pushBack", player: "b2" }, n)).toBe("Push back Baron Krell");
+    expect(instructionName({ kind: "report", to: "you" }, n)).toBe("Report to Aldric");
+    expect(instructionName({ kind: "report", to: "you" }, n, "steward")).toBe("Report to Odo");
+    expect(leaderNoteLine({ kind: "finishing", rivals: [{ rival: "b1", land: 3 }] }, n)).toBe("Finishing them off: Lady Morwen (3 territories left)");
+    expect(leaderNoteLine({ kind: "pushBack", rival: "b2", going: [t(4)], avoiding: { at: t(7), troops: 40 }, striking: false }, n)).toBe(`Going for ${name(4)}; Baron Krell's main army at ${name(7)} (40) is too big for now`);
+    expect(leaderNoteLine({ kind: "saving", gold: 14, for: "barracks", at: t(2) }, n)).toBe(`Saving 14 gold: nowhere to recruit until the barracks at ${name(2)} is up`);
+  });
+
+  it("the report: 'Your Leader, Aldric, finished Lady Morwen'", () => {
+    const view = game();
+    const lines = narrateTurn(ctx, [{ type: "eliminated", step: 9, player: "b1", by: "you", leader: { kind: "leader", of: "you" } } as ReplayEvent], namer(ctx, view)).map((l) => l.text);
+    expect(lines).toEqual(["Your Leader, Aldric, finished Lady Morwen."]);
+  });
+});

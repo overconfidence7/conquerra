@@ -1,8 +1,10 @@
 import { isShareBudget, leaderAt, leaderKey, pursesTotal, type Budget, type GameContext, type LeaderRecord, type Order, type PlayerView, type TerritoryId } from "@conquerra/engine";
+import type { LeaderNote } from "@conquerra/bots";
+import { incomeEstimate } from "../logic/actions";
 import { lazy, Suspense, useState } from "react";
 import { authorKey } from "../logic/generals";
 import { missionGoal, rewardText, turnsLeft } from "../logic/cards";
-import { budgetLabel, instructionDoing, KIND_NAME, namer } from "../logic/text";
+import { budgetLabel, instructionDoing, KIND_NAME, leaderNoteLine, namer } from "../logic/text";
 import { useGame } from "../store";
 import { CardStack } from "./CardStack";
 import { GeneralPortrait } from "./Command";
@@ -31,25 +33,47 @@ export function LeaderPortrait({ view, l, size = 36 }: { view: PlayerView; l: Pi
 }
 
 /** One line on what a leader is doing this turn. */
-function doingLine(ctx: GameContext, view: PlayerView, l: LeaderRecord, command: LeaderRecord["command"], paused: boolean): string {
+function doingLine(ctx: GameContext, view: PlayerView, l: LeaderRecord, command: LeaderRecord["command"], paused: boolean, note?: LeaderNote): string {
   const n = namer(ctx, view);
   const at = leaderAt(view.me, l);
   if (l.kind === "leader" && l.of === view.me.id && !view.me.leader.alive) return "Fallen: returns at the end of this turn.";
   if (!command) return l.kind === "leader" ? "No command: you order its army." : "No command: it waits, saving its purse.";
-  const doing = instructionDoing(command, n, at);
+  const doing = instructionDoing(command, n, at, l.kind);
   if (paused) return `${doing}, but you gave its army an order: yours to command this turn.`;
   if ((command.kind === "push" || command.kind === "expand") && at === command.territory) return `Holding ${n.place(at)}: it got there.`;
+  // Its reason for this turn (session 20): finishing a rival off, pushing one back, or what it's saving for.
+  if (note) return note.kind === "finishing" ? leaderNoteLine(note, n) : `${doing}. ${leaderNoteLine(note, n)}.`;
   return doing;
 }
 
-/** The budget control: a share of income (chips), or an exact amount each turn. */
-function BudgetControl({ ctx, budget, onSet }: { ctx: GameContext; budget: Budget; onSet(b: Budget): void }) {
+/** The share of your income other leaders' budgets take, and their exact amounts (this turn's changes included). */
+function othersBudgets(view: PlayerView, budgets: Record<string, { budget?: Budget }>, except: string): { share: number; gold: number } {
+  let share = 0, gold = 0;
+  for (const l of view.me.leaders ?? []) {
+    const k = leaderKey(l);
+    if (k === except) continue;
+    const b = budgets[k]?.budget ?? l.budget;
+    if (isShareBudget(b)) share += b.share;
+    else gold += b.gold;
+  }
+  return { share, gold };
+}
+
+/**
+ * The budget control: a share of income (chips), or an exact amount each turn. Budgets add up to at most all of your
+ * income (session 20): the chips offer only what's left, and the exact amount stops at the income that's left.
+ */
+function BudgetControl({ ctx, budget, left, leftGold, onSet }: { ctx: GameContext; budget: Budget; left: number; leftGold: number; onSet(b: Budget): void }) {
   const [exact, setExact] = useState(isShareBudget(budget) ? "" : String(budget.gold));
+  const max = Math.max(0, Math.min(ctx.rules.leaders.maxGoldBudget, leftGold));
+  const chips = ctx.rules.leaders.shareChips.filter((s) => s <= left + 1e-9);
+  // What's left exactly, when it isn't one of the chips (80% given away: "20%").
+  if (left > 1e-9 && !chips.some((s) => Math.abs(s - left) < 1e-9) && left < Math.max(...ctx.rules.leaders.shareChips)) chips.push(Math.round(left * 100) / 100);
   return (
     <div className="action budget">
-      <p className="small">Each turn, as income comes in, its purse gets:</p>
+      <p className="small">Each turn, as income comes in, its purse gets{left < 1 - 1e-9 ? ` (${Math.round(left * 100)}% of your income is left to give)` : ""}:</p>
       <div className="chips" role="radiogroup" aria-label="Share of your income">
-        {ctx.rules.leaders.shareChips.map((s) => (
+        {chips.map((s) => (
           <button key={s} role="radio" aria-checked={isShareBudget(budget) && Math.abs(budget.share - s) < 1e-9} className={`chip ${isShareBudget(budget) && Math.abs(budget.share - s) < 1e-9 ? "on" : ""}`} onClick={() => onSet({ share: s })}>
             {Math.round(s * 100)}%
           </button>
@@ -61,14 +85,14 @@ function BudgetControl({ ctx, budget, onSet }: { ctx: GameContext; budget: Budge
           type="number"
           inputMode="numeric"
           min={0}
-          max={ctx.rules.leaders.maxGoldBudget}
+          max={max}
           value={exact}
           placeholder="8"
           aria-label="An exact amount of gold each turn"
           onChange={(e) => {
             setExact(e.target.value);
             const v = Math.floor(Number(e.target.value));
-            if (e.target.value !== "" && Number.isFinite(v)) onSet({ gold: Math.max(0, Math.min(ctx.rules.leaders.maxGoldBudget, v)) });
+            if (e.target.value !== "" && Number.isFinite(v)) onSet({ gold: Math.max(0, Math.min(max, v)) });
           }}
         />
         gold a turn
@@ -83,7 +107,7 @@ function BudgetControl({ ctx, budget, onSet }: { ctx: GameContext; budget: Budge
  * column; phone: the Leaders sheet, opened from your Leader's portrait.
  */
 export function LeadersPanel({ ctx, view, queue, onShow, onCards }: { ctx: GameContext; view: PlayerView; queue: readonly Order[]; onShow(t: TerritoryId): void; /** Open your cards (Spoils and missions). */ onCards(): void }) {
-  const { instructions, budgets, paused, leaderOpen, openLeader, setBudget, takeBack, showMission, mission } = useGame();
+  const { instructions, budgets, paused, leaderOpen, openLeader, setBudget, takeBack, showMission, mission, leaderNotes } = useGame();
   const [menu, setMenu] = useState<"command" | "budget" | null>(null);
   const n = namer(ctx, view);
   const leaders = view.me.leaders ?? [];
@@ -94,8 +118,13 @@ export function LeadersPanel({ ctx, view, queue, onShow, onCards }: { ctx: GameC
     if (k) counts.set(k, (counts.get(k) ?? 0) + 1);
   }
   const ready = (k: number) => (k === 0 ? "ready" : `in ${k} turn${k === 1 ? "" : "s"}`);
+  const all = othersBudgets(view, budgets, "");
+  const income = Math.max(0, incomeEstimate(ctx, view));
   return (
     <Frame className="slim leaders" title="Leaders" extra={total > 0 ? <span className="cost" title="Gold in your leaders' purses">{total}g in purses</span> : undefined}>
+      <p className="small budgets-total" aria-label="Your leaders' budgets">
+        Budgets: <b>{Math.round(all.share * 100)}%</b> of income{all.gold > 0 ? ` + ${all.gold}g a turn` : ""}
+      </p>
       <ul className="leader-list" aria-label="Your leaders">
         {leaders.map((l) => {
           const key = leaderKey(l);
@@ -113,7 +142,7 @@ export function LeadersPanel({ ctx, view, queue, onShow, onCards }: { ctx: GameC
                 <LeaderPortrait view={view} l={l} size={own && l.kind === "leader" ? 44 : 36} />
                 <span className="leader-who">
                   <b>{l.name}</b> <span className="muted small">{own ? `your ${KIND_NAME[l.kind]}` : `${n.who(l.of)}'s old ${KIND_NAME[l.kind]}`}</span>
-                  <span className="block small">{doingLine(ctx, view, l, command, paused.includes(key))}</span>
+                  <span className="block small">{doingLine(ctx, view, l, command, paused.includes(key), key in instructions ? undefined : leaderNotes[key])}</span>
                   <span className="block small purse-line">
                     Purse <b>{purse}g</b>
                     {taking > 0 && <span className="muted"> ({taking}g coming home)</span>} · {budgetLabel(budget)}
@@ -151,7 +180,11 @@ export function LeadersPanel({ ctx, view, queue, onShow, onCards }: { ctx: GameC
                       <CommandMenu view={view} general={key} kind={l.kind} current={command} onDone={() => setMenu(null)} />
                     </Suspense>
                   )}
-                  {menu === "budget" && <BudgetControl ctx={ctx} budget={budget} onSet={(b) => void setBudget(key, b)} />}
+                  {menu === "budget" &&
+                    (() => {
+                      const o = othersBudgets(view, budgets, key);
+                      return <BudgetControl ctx={ctx} budget={budget} left={Math.max(0, 1 - o.share)} leftGold={Math.floor(income * Math.max(0, 1 - o.share)) - o.gold} onSet={(b) => void setBudget(key, b)} />;
+                    })()}
                 </div>
               )}
             </li>

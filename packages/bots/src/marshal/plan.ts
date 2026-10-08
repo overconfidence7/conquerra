@@ -1,5 +1,5 @@
 import type { MarshalJudgement, Personality, SpecialistType } from "@conquerra/content";
-import { fewestToTake, investCost, isRecruitSiteIn, leaderAt, passageFor, type GameContext, type Order, type PlayerId, type PlayerView, type ReplayEvent, type TerritoryId } from "@conquerra/engine";
+import { expectBattle, fewestToTake, investCost, isRecruitSiteIn, leaderAt, passageFor, type GameContext, type Order, type PlayerId, type PlayerView, type ReplayEvent, type TerritoryId } from "@conquerra/engine";
 import { BREAKTHROUGH_MARGIN, chainOn, readBoard, type Board, type CaptainOptions } from "../board";
 import { captainSpoils, missionPull, missionSpend, spoilsOrder } from "../cards";
 import { respectDeals, withoutDeals } from "../diplomacy";
@@ -70,6 +70,8 @@ export interface MarshalPlan {
   orders: Order[];
   /** Session 20: the rivals it's finishing off this turn (with the land it knows they hold), for the Leaders panel. */
   finishing: { rival: PlayerId; land: number }[];
+  /** Session 20: where it guesses a rival army will strike next and a fort would help (for the Steward). */
+  fortsWanted: TerritoryId[];
   /** Session 20: gold it keeps in its purse, and what for (a leader never keeps gold without a reason it can name). */
   saving: { gold: number; for: "barracks"; at: TerritoryId | null } | null;
   /** The memory to keep for next turn (this turn taken in). */
@@ -107,7 +109,8 @@ export function planMarshal(req: MarshalRequest): MarshalPlan {
   const steer = scope.kind === "leader" ? scope.steer : undefined;
   const finishing: MarshalPlan["finishing"] = [];
   const saving: { v: MarshalPlan["saving"] } = { v: null };
-  const moves = planMoves(ctx, view, P, judgement, insight, lastTurn, req.purse ?? view.me.gold, sources, steer, finishing, saving);
+  const fortsWanted: TerritoryId[] = [];
+  const moves = planMoves(ctx, view, P, judgement, insight, lastTurn, req.purse ?? view.me.gold, sources, steer, finishing, saving, fortsWanted);
   let kept = steer ? moves : moves.filter((o) => inScope(scope, sources.get(o.id), view, ctx));
   if (!steer && scope.kind === "realm") {
     // Its own Leader goes with the main attack out of where it stands (session 19, as your leaders' does).
@@ -118,7 +121,7 @@ export function planMarshal(req: MarshalRequest): MarshalPlan {
   // Strikes that are ready before anyone can move (finishing a rival, session 20) go first of all.
   const first = (o: Order) => { const src = sources.get(o.id); return !!src && "army" in src && !!src.first; };
   kept = [...kept.filter(first), ...kept.filter((o) => !first(o))];
-  return { orders: [...breaks, ...respectDeals(ctx, view, kept)], memory, insight, finishing, saving: saving.v };
+  return { orders: [...breaks, ...respectDeals(ctx, view, kept)], memory, insight, finishing, saving: saving.v, fortsWanted };
 }
 
 /** Troops first (the Spoils, recruits), then the armies' moves, then everything else it buys (session 19). */
@@ -179,6 +182,7 @@ function planMoves(
   steer?: Steer,
   finishing: MarshalPlan["finishing"] = [],
   saving: { v: MarshalPlan["saving"] } = { v: null },
+  fortsWanted: TerritoryId[] = [],
 ): Order[] {
   const b = marshalBoard(ctx, view, insight, lastTurn);
   if (!b) return [];
@@ -235,8 +239,38 @@ function planMoves(
       if (A.vulture && insight.fought.has(owner)) v *= 1 + A.vulture * 0.5;
       if (A.oneFront && main && owner !== main && !calm) v *= OFF_FRONT;
     }
+    if (threatens.has(t)) v *= 1 + J.counter!.strike;
     return v;
   };
+
+  // ---------- Anticipate and counter (session 20, Nate) ----------
+  // Each rival army it can see next to its land: where would it strike next? (The territory of ours it would most
+  // likely take, worth the most for the fewest troops: what a person would guess.) Only from what it sees.
+  /** Our territory -> the biggest rival army we guess will strike it next. */
+  const predicted = new Map<TerritoryId, number>();
+  /** Rival armies we guess will strike next (striking them first is worth more). */
+  const threatens = new Set<TerritoryId>();
+  if (J.counter)
+    for (const x of idx.ids) {
+      const r = rivalAt(x);
+      if (!r || atPeace(r) || troopsAt(x) < J.counter.minArmy) continue;
+      const attackers = troopsAt(x) - garrison;
+      let best: { t: TerritoryId; score: number } | null = null;
+      for (const t of idx.neighbors.get(x)!) {
+        if (!owned(t)) continue;
+        const v = seen(t)!;
+        const takes = expectBattle(rules, {
+          attackers, attackerSpecialists: seen(x)!.specialists.map((s) => s.type), attackerLeader: seen(x)!.leaders.includes(r), defenders: v.troops, defenderSpecialists: v.specialists.map((s) => s.type),
+          defenderLeader: v.leaders.includes(me.id), terrain: idx.byId.get(t)!.terrain, building: v.building, culture: v.culture, border: b.border(x, t), luck: view.settings.luck,
+        }).captureLikely;
+        if (!takes) continue;
+        const score = (b.valueOf(t) + (t === capital ? 10 : 0)) / Math.max(1, v.troops);
+        if (!best || score > best.score || (score === best.score && t < best.t)) best = { t, score };
+      }
+      if (!best) continue;
+      predicted.set(best.t, Math.max(predicted.get(best.t) ?? 0, troopsAt(x)));
+      threatens.add(x);
+    }
 
   // ---------- Whom it finishes off (session 20) ----------
   // A rival down to a handful of territories (or, cleaning up, every rival): it goes and ends them.
@@ -307,7 +341,8 @@ function planMoves(
     if (!own && !barracksBuilding && spot && gold >= rules.buildings.barracks.cost + troopCost * 4) {
       spend({ id: id(), kind: "build", territory: spot, building: "barracks" });
       gold -= rules.buildings.barracks.cost;
-    } else if (!recruitSites.length && !barracksBuilding && gold >= troopCost) saving.v = { gold, for: "barracks", at: spot ?? null };
+      if (!recruitSites.length) saving.v = { gold, for: "barracks", at: spot };
+    } else if (!recruitSites.length && gold >= troopCost) saving.v = { gold, for: "barracks", at: mine.find((t) => seen(t)!.construction?.building === "barracks") ?? spot ?? null };
   } else if (shelter && gold >= rules.buildings.barracks.cost) {
     spend({ id: id(), kind: "build", territory: shelter, building: "barracks" });
     gold -= rules.buildings.barracks.cost;
@@ -582,6 +617,15 @@ function planMoves(
     else want(t, enemyPressure(t) > 0 ? 5 + enemyPressure(t) / 20 : 1);
   }
   for (const [t, v] of staging) want(t, 40 + v);
+  // Anticipate and counter (session 20): where a rival army will likely strike next and we didn't strike it first,
+  // troops go there (and it asks for a fort).
+  if (J.counter)
+    for (const [t, army0] of predicted) {
+      const struck = idx.neighbors.get(t)!.some((x) => threatens.has(x) && targeted.has(x));
+      if (struck || holdNeed(t) <= troopsAt(t) + (recruitedAt.get(t) ?? 0)) continue;
+      want(t, J.counter.block + army0 / 10);
+      if (!building(t)) fortsWanted.push(t);
+    }
   // Reading the border (Nate): the capital and land of a province held whole draw troops when a rival army two steps
   // away could reach it next turn (it would arrive bigger than what stands there).
   if (J.anticipate?.reach)
@@ -633,12 +677,23 @@ function planMoves(
       continue;
     }
     army({ id: id(), kind: "move", from: t, to: step, troops: send }, t);
+    // Marching on (session 20): through its own land toward the goal, one order a hop, as far as `march` goes.
+    let at = step, d = best.d - 1;
+    for (let hop = 1; hop < (J.march ?? 1) && d > 0; hop++) {
+      const next = idx.neighbors.get(at)!.filter((nb) => owned(nb) && commandsHere(nb) && dg.get(nb) === d - 1).sort()[0];
+      if (!next || !commandsHere(at)) break;
+      army({ id: id(), kind: "move", from: at, to: next, troops: send }, at);
+      at = next;
+      d--;
+    }
   }
 
   // ---------- Pull back stacks that would be crushed ----------
   if (D.retreatAt > 0)
     for (const t of frontier) {
       if (t === capital || attackedFrom.has(t) || chokeHolder(t) || (steer && !steer.commands(t))) continue;
+      // Never away from a rival it's finishing off (session 20): that border is the ring.
+      if (idx.neighbors.get(t)!.some((x) => toFinish.includes(rivalAt(x) ?? ""))) continue;
       const here = troopsAt(t);
       if (here >= 6 && biggestEnemyNear(t) >= here * D.retreatAt) army({ id: id(), kind: "retreat", from: t, preset: { id: "retreatIfOutnumbered" } }, t);
     }

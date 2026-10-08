@@ -157,7 +157,9 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       return {
         text: isMe(e.player)
           ? `You have been eliminated${e.by ? ` by ${who(e.by)}` : ""}.`
-          : `${who(e.player)} has been eliminated${e.by ? ` by ${who(e.by)}` : ""}.`,
+          : isMe(e.by) && e.leader
+            ? `${leaderName(n, e.leader)}, finished ${who(e.player)}.`
+            : `${who(e.player)} has been eliminated${e.by ? ` by ${who(e.by)}` : ""}.`,
         tone: isMe(e.player) ? "bad" : isMe(e.by) ? "good" : "info",
       };
     case "generalCaptured":

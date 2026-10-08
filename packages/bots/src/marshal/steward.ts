@@ -30,7 +30,17 @@ interface Wish {
   urgent: boolean;
 }
 
-export function planSteward(b: Board, cfg: LeaderPlanning["steward"], command: StewardCommand, purse: number, newId: () => string, taken: Set<TerritoryId>, maxTurns: number): Order[] {
+export function planSteward(
+  b: Board,
+  cfg: LeaderPlanning["steward"],
+  command: StewardCommand,
+  purse: number,
+  newId: () => string,
+  taken: Set<TerritoryId>,
+  maxTurns: number,
+  /** Forts your military leaders asked for (session 20: where they guess a rival army strikes next). */
+  asked: ReadonlySet<TerritoryId> = new Set(),
+): Order[] {
   const { rules, idx, mine, seen, owned, rivalAt, troopsAt, biggestEnemyNear, holdNeed, chokeHolder, capital, capThreatened, look0, view } = b;
   const building = (t: TerritoryId) => !!seen(t)?.building || !!seen(t)?.construction || taken.has(t);
   const provinceOf = (t: TerritoryId) => idx.byId.get(t)!.province;
@@ -47,7 +57,7 @@ export function planSteward(b: Board, cfg: LeaderPlanning["steward"], command: S
     if (building(t)) return 0;
     const threat = idx.neighbors.get(t)!.reduce((m, x) => (rivalAt(x) && (!r || rivalAt(x) === r) ? Math.max(m, troopsAt(x)) : m), 0);
     if (threat < cfg.fortThreat) return 0;
-    const weight = t === capital ? 3 : chokeHolder(t) ? 2 : holdsWhole(provinceOf(t)) ? 1.5 : 1;
+    const weight = (t === capital ? 3 : chokeHolder(t) ? 2 : holdsWhole(provinceOf(t)) ? 1.5 : 1) * (asked.has(t) ? 2 : 1);
     const short = holdNeed(t) > troopsAt(t) ? 1.5 : 1;
     return threat * weight * short;
   };
@@ -56,7 +66,7 @@ export function planSteward(b: Board, cfg: LeaderPlanning["steward"], command: S
       .map((t) => ({ t, w: fortWorth(t, r) }))
       .filter((x) => x.w > 0)
       .sort((a, c) => c.w - a.w || (a.t < c.t ? -1 : 1))
-      .map(({ t }) => ({ order: { kind: "build", territory: t, building: "fort" }, territory: t, cost: fort, urgent: t === capital ? capThreatened : holdNeed(t) > troopsAt(t) }));
+      .map(({ t }) => ({ order: { kind: "build", territory: t, building: "fort" }, territory: t, cost: fort, urgent: asked.has(t) || (t === capital ? capThreatened : holdNeed(t) > troopsAt(t)) }));
   /** Culture where it means to hold (the Marshal's rule): the troops there, a few fights over, beat its price in troops. */
   const holdCulture = (t: TerritoryId) => {
     const cost = investCost(rules, seen(t)!.culture);
@@ -122,7 +132,7 @@ export function planSteward(b: Board, cfg: LeaderPlanning["steward"], command: S
       wishes = economy(mine);
       break;
     case "realm": {
-      const urgent = forts(mine).filter((w) => w.territory === capital || chokeHolder(w.territory) || w.urgent);
+      const urgent = forts(mine).filter((w) => w.territory === capital || chokeHolder(w.territory) || w.urgent || asked.has(w.territory));
       // What pays (Part 2's sims): markets before culture bought for income, which doesn't pay back yet; culture only
       // where it protects (the capital and choke points facing an army), a level a turn.
       wishes = [

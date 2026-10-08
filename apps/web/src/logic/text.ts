@@ -1,3 +1,4 @@
+import type { LeaderNote } from "@conquerra/bots";
 import type { BuildingType, SpecialistType, Terrain } from "@conquerra/content";
 import { amountLabel, findLeader, leaderAt, recruitLabel, indexMap, PRESETS, DEAL_NAME, type ArmySnapshot, type Budget, type DealNames, type GameContext, type Instruction, type LeaderRef, type Order, type PlayerId, type PlayerView } from "@conquerra/engine";
 import { SET_NAME } from "./cards";
@@ -175,6 +176,25 @@ export function instructionName(i: Instruction, n: Namer, kind: LeaderRef["kind"
       return "Grow the economy";
     case "realm":
       return "Run the realm";
+  }
+}
+
+/**
+ * A leader's reason for this turn, in a plain line (session 20): "Finishing them off: Lady Morwen (3 territories left)",
+ * "Going for Pinemark and Fernhollow; Baron Krell's main army at Galeholt (40) is too big for now", "Saving 14 gold for
+ * a barracks at Galeholt (nowhere to recruit)".
+ */
+export function leaderNoteLine(note: LeaderNote, n: Namer): string {
+  switch (note.kind) {
+    case "finishing":
+      return `Finishing them off: ${note.rivals.map((r) => `${n.who(r.rival)} (${r.land} ${r.land === 1 ? "territory" : "territories"} left)`).join(", ")}`;
+    case "pushBack": {
+      const going = note.going.length ? `Going for ${note.going.map((t) => n.place(t)).join(" and ")}` : `Looking for ${n.who(note.rival)}'s weak land`;
+      if (note.striking) return `${going}, ${n.who(note.rival)}'s main army among it`;
+      return note.avoiding ? `${going}; ${n.who(note.rival)}'s main army at ${n.place(note.avoiding.at)} (${note.avoiding.troops}) is too big for now` : going;
+    }
+    case "saving":
+      return `Saving ${note.gold} gold: nowhere to recruit until ${note.at ? `the barracks at ${n.place(note.at)}` : "a barracks"} is up`;
   }
 }
 

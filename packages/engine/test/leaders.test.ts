@@ -6,6 +6,7 @@ import {
   createGame,
   startingStewardShare,
   findLeader,
+  makeSave,
   readSave,
   replayFor,
   resolveTurn,
@@ -415,7 +416,91 @@ describe("saves from before leaders", () => {
   });
 });
 
+describe("session 20: Report to, the 100% cap, Clean up and Push back", () => {
+  /** p1: a (capital) and b, the whole West: income 14 a turn; a captured Leader and Steward of x9. */
+  const two = () => {
+    const s = lineGame(ctx);
+    board(s, { a: ["p1", 5], b: ["p1", 3], e: ["p2", 5] });
+    player(s, "p1").gold = 0;
+    capture(s, "p1", "x9", "b", 4);
+    capture(s, "p1", "x9", null, 3);
+    return s;
+  };
+
+  it("a leader that reports to another: its budget, and its purse, go into its senior's purse each turn", () => {
+    const s = two();
+    rec(s, "p1", "leader")!.command = { kind: "military" };
+    const r = resolveTurn(ctx, s, { p1: [instruct("x9", { kind: "report", to: "p1" }), budget("x9", { share: 0.5 }), budget("p1", { share: 0.2 })] });
+    expect(rec(r.state, "p1", "leader", "x9")).toMatchObject({ command: { kind: "report", to: "p1" }, purse: 0 });
+    // 14 income: your Leader's 20% (2), then x9's 50% (7) and its 4 saved go to your Leader: 13.
+    expect(rec(r.state, "p1", "leader")!.purse).toBe(13);
+    expect(r.events.find((e) => e.type === "purses")).toMatchObject({ paid: [{ kind: "leader", of: "p1", gold: 9 }] });
+    // Stewards too: a captured Steward reports to yours.
+    const r2 = resolveTurn(ctx, two(), { p1: [instruct("x9", { kind: "report", to: "p1" }, true), budget("x9", { share: 0.1 }, true)] });
+    expect([rec(r2.state, "p1", "steward", "x9")!.purse, rec(r2.state, "p1", "steward")!.purse]).toEqual([0, 3 + 1]);
+  });
+
+  it("Report to: never to itself, to a leader you don't have, or to one that reports itself; Take back ends it", () => {
+    const s = two();
+    const r = resolveTurn(ctx, s, { p1: [instruct("p1", { kind: "report", to: "p1" }), instruct("x9", { kind: "report", to: "zz" })] });
+    expect(rec(r.state, "p1", "leader")!.command).toBeNull();
+    expect(rec(r.state, "p1", "leader", "x9")!.command).toBeNull();
+    const chain = resolveTurn(ctx, two(), { p1: [instruct("x9", { kind: "report", to: "p1" }), instruct("p1", { kind: "report", to: "x9" })] });
+    expect([rec(chain.state, "p1", "leader")!.command?.kind ?? null, rec(chain.state, "p1", "leader", "x9")!.command?.kind ?? null]).not.toEqual(["report", "report"]);
+    const s2 = two();
+    rec(s2, "p1", "leader", "x9")!.command = { kind: "report", to: "p1" };
+    const back = resolveTurn(ctx, s2, { p1: [budget("x9", undefined, false, 4)] });
+    expect(rec(back.state, "p1", "leader", "x9")!.command).toBeNull();
+    expect(back.events.some((e) => e.type === "purseTaken")).toBe(true);
+  });
+
+  it("budgets add up to at most 100%: shares over it are trimmed in roster order (your Leader first)", () => {
+    const r = resolveTurn(ctx, two(), { p1: [budget("p1", { share: 0.8 }), budget("p1", { share: 0.5 }, true), budget("x9", { share: 0.3 })] });
+    const shares = player(r.state, "p1").leaders.map((l) => ("share" in l.budget ? l.budget.share : 0));
+    expect(shares.reduce((a, b) => a + b, 0)).toBeLessThanOrEqual(1 + 1e-9);
+    expect([rec(r.state, "p1", "leader")!.budget, rec(r.state, "p1", "steward")!.budget, rec(r.state, "p1", "leader", "x9")!.budget]).toEqual([{ share: 0.8 }, { share: 0.2 }, { share: 0 }]);
+  });
+
+  it("a save from before session 20 with budgets over 100% is trimmed as it loads", () => {
+    const s = two();
+    rec(s, "p1", "leader")!.budget = { share: 0.7 };
+    rec(s, "p1", "steward")!.budget = { share: 0.5 };
+    const save = makeSave({ map: ctx.map, rules: ctx.rules }, s, "p1", 0);
+    const r = readSave(JSON.parse(JSON.stringify(save)));
+    if (!r.ok) throw new Error(r.why);
+    expect([rec(r.save.state, "p1", "leader")!.budget, rec(r.save.state, "p1", "steward")!.budget]).toEqual([{ share: 0.7 }, { share: 0.3 }]);
+  });
+
+  it("Clean up any time; Push back names a rival still in that isn't a partner", () => {
+    const r = resolveTurn(ctx, two(), { p1: [instruct("p1", { kind: "cleanup" }), instruct("x9", { kind: "pushBack", player: "p2" })] });
+    expect(rec(r.state, "p1", "leader")!.command).toEqual({ kind: "cleanup" });
+    expect(rec(r.state, "p1", "leader", "x9")!.command).toEqual({ kind: "pushBack", player: "p2" });
+    const bad = resolveTurn(ctx, two(), { p1: [instruct("p1", { kind: "pushBack", player: "p1" }), instruct("x9", { kind: "pushBack", player: "nobody" })] });
+    expect([rec(bad.state, "p1", "leader")!.command, rec(bad.state, "p1", "leader", "x9")!.command]).toEqual([null, null]);
+  });
+
+  it("knocking a player out with a leader's order says which leader did it", () => {
+    const s = aboutToWin();
+    rec(s, "p1", "leader")!.command = { kind: "military" };
+    rec(s, "p1", "leader")!.purse = 2;
+    const r = resolveTurn(ctx, s, { p1: [{ ...mv("d", "e", 5), general: "p1" }] });
+    expect(find(r.events, "eliminated")).toMatchObject({ player: "p2", by: "p1", leader: { kind: "leader", of: "p1" } });
+    const yours = resolveTurn(ctx, aboutToWin(), { p1: [mv("d", "e", 5)] });
+    expect(find(yours.events, "eliminated")!.leader).toBeUndefined();
+  });
+});
+
 describe("determinism", () => {
+  it("the same game with Report to, Clean up and Push back plays out exactly the same twice", () => {
+    const play = () => {
+      const c = { map: maps.embervale!, rules: defaultRules };
+      let s = createGame(c, { gameId: "d", seed: "leaders-det-20", players: [{ id: "a", name: "A", delegate: true }, { id: "b", name: "B" }, { id: "c", name: "C" }] });
+      for (let t = 0; t < 4; t++) s = resolveTurn(c, s, { a: [instruct("a", t % 2 ? { kind: "cleanup" } : { kind: "pushBack", player: "b" }), budget("a", { share: 0.9 }), budget("a", { share: 0.5 }, true)] }).state;
+      return stateFingerprint(s);
+    };
+    expect(play()).toBe(play());
+  });
+
   it("the same game with leaders, budgets and purses plays out exactly the same twice", () => {
     const play = () => {
       const c = { map: maps.embervale!, rules: defaultRules };

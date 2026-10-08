@@ -1,3 +1,4 @@
+import type { MarshalJudgement } from "@conquerra/content";
 import { leaderKey, type Budget, type Instruction, type Order, type PlayerView } from "@conquerra/engine";
 import { makeCaptainBot } from "./captain";
 import { freshMemory, type MarshalMemory } from "./marshal/memory";
@@ -74,6 +75,8 @@ export interface DelegateOptions {
   cleanUp?: boolean;
   /** Session 20: the leaders it captures report to its own (Leaders to its Leader, Stewards to its Steward). */
   report?: boolean;
+  /** Its leaders plan with this judgement (one-change tests; the shared one by default). */
+  judgement?: MarshalJudgement;
   id?: string;
 }
 
@@ -96,7 +99,7 @@ export function makeDelegateSeat(leaderShare = 0.8, opts: DelegateOptions = {}):
         commands[leaderKey(l)] = want;
         if (JSON.stringify(l.command) !== JSON.stringify(want)) setup.push({ ...instruct(view, l.kind, want), id: `${view.me.id}-t${view.turn}-cmd-${l.kind}-${l.of}`, general: l.of });
       }
-      const plan = planLeaders({ ctx, view, memory: mem.recall(view), commands, ...(lastTurn ? { lastTurn } : {}) });
+      const plan = planLeaders({ ctx, view, memory: mem.recall(view), commands, ...(opts.judgement ? { judgement: opts.judgement } : {}), ...(lastTurn ? { lastTurn } : {}) });
       mem.keep(view, plan.memory);
       // The treasury it holds (its starting gold, and what budgets round off): troops at its capital, as a person would.
       const own: Order[] = view.me.gold >= ctx.rules.troops.cost && view.territories[view.me.capital]?.detail === "full" && (view.territories[view.me.capital] as { owner: string | null }).owner === view.me.id

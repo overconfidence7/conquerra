@@ -77,7 +77,7 @@ for (const phone of [false, true]) {
     while (q.length) { const t = q.shift(); for (const n of nb(t)) if (!d.has(n)) (d.set(n, d.get(t) + 1), q.push(n)); }
     let best = null;
     for (const [t, k] of [...d].filter(([, k]) => k >= 3 && k <= 5).sort((a, b) => a[1] - b[1])) {
-      const orders = await host.planGenerals({ [`leader:${view.me.id}`]: { kind: "expand", territory: t } });
+      const { orders } = await host.planGenerals({ [`leader:${view.me.id}`]: { kind: "expand", territory: t } });
       const n = orders.filter((o) => o.general === view.me.id && o.kind === "move").length;
       if (!best || n > best.n) best = { t, n };
       if (n >= 3) break;

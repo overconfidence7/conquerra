@@ -2,7 +2,7 @@ import type { MapDef } from "@conquerra/content";
 import type { Answer } from "@conquerra/bots";
 import { readSave, type Instruction, type Offer, type Order, type PlayerId, type SaveFile } from "@conquerra/engine";
 import { LocalGame } from "./localGame";
-import type { HostStart, HostUpdate, LobbySettings, LoadSource } from "./protocol";
+import type { HostStart, HostUpdate, LeaderOrders, LobbySettings, LoadSource } from "./protocol";
 import { saveErrorFor, type SaveStore, type SlotId, type SlotInfo } from "./saves";
 
 /** How long your queue must be still before the autosave keeps it (ms). */
@@ -129,7 +129,7 @@ export class HostCore {
   }
   suggest = (): Order[] => this.g.suggest();
   propose = (offer: Offer): Answer => this.g.propose(offer);
-  planGenerals = (instructions: Record<string, Instruction | null>, purses?: Record<string, number>): Order[] => this.g.generalOrders(instructions, purses);
+  planGenerals = (instructions: Record<string, Instruction | null>, purses?: Record<string, number>): LeaderOrders => this.g.leaderOrders(instructions, purses);
   pause = (): HostUpdate => this.g.pause();
   resume = (): HostUpdate => this.g.resume();
 

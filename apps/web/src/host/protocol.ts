@@ -1,5 +1,5 @@
 import type { MapDef, Rules } from "@conquerra/content";
-import type { Answer } from "@conquerra/bots";
+import type { LeaderNote, Answer } from "@conquerra/bots";
 import type { GameMode, Instruction, Offer, Order, PlayerId, PlayerView, ReplayEvent, SaveFile } from "@conquerra/engine";
 import type { TurnClock } from "../logic/timer";
 import type { SlotId, SlotInfo } from "./saves";
@@ -67,6 +67,8 @@ export interface HostUpdate {
   autoLocked?: boolean;
   /** Your generals' orders for the turn now being planned, from their standing instructions (shown in your queue). */
   generalOrders: Order[];
+  /** What each leader is up to this turn, in a line for the Leaders panel (session 20), by leader key. */
+  leaderNotes?: Record<string, LeaderNote>;
   /**
    * Continue: the orders you'd queued on this turn but not locked in (with your instruction changes and generals you
    * let go), and the generals whose army you'd taken back. Only on the first update after loading a save.
@@ -118,7 +120,7 @@ export interface GameHost {
    * Your leaders' orders for this turn with these commands (by leader key, "leader:you" / "steward:you"; the ones you
    * haven't changed keep theirs), and their purses as they'll be once gold you take back is home.
    */
-  planGenerals(instructions: Record<string, Instruction | null>, purses?: Record<string, number>): Promise<Order[]>;
+  planGenerals(instructions: Record<string, Instruction | null>, purses?: Record<string, number>): Promise<LeaderOrders>;
   /**
    * Offer a bot a deal (session 14). It answers at once, from its own view, with one plain reason (and maybe a
    * counteroffer). Add the `propose` order to your orders so the deal starts if it said yes.
@@ -154,11 +156,18 @@ export type HostRequest =
   | { id: number; type: "exportSave"; notes?: Record<string, string> }
   | { id: number; type: "propose"; offer: Offer };
 
+/** Your leaders' orders for the turn, and what each is up to (session 20). */
+export interface LeaderOrders {
+  orders: Order[];
+  notes: Record<string, LeaderNote>;
+}
+
 export type HostResponse =
   | { id: number; ok: true; update: HostUpdate | HostStart }
   /** Not an answer: the timer ran out and the host locked your orders in (id is 0). */
   | { id: 0; ok: true; pushed: HostUpdate }
   | { id: number; ok: true; orders: Order[] }
+  | { id: number; ok: true; plan: LeaderOrders }
   | { id: number; ok: true; save: SaveFile }
   | { id: number; ok: true; slot: SlotInfo }
   | { id: number; ok: true; answer: Answer }

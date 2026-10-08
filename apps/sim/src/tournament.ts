@@ -46,7 +46,9 @@ export interface TournamentSpec {
 function merge<T>(a: T, b: unknown): T {
   if (!b || typeof b !== "object" || Array.isArray(b) || typeof a !== "object" || a === null) return (b === undefined ? a : b) as T;
   const out: Record<string, unknown> = { ...(a as Record<string, unknown>) };
-  for (const [k, v] of Object.entries(b)) out[k] = merge(out[k], v);
+  // (A key set to undefined switches that part off.)
+  for (const [k, v] of Object.entries(b)) if (v === undefined) delete out[k];
+    else out[k] = merge(out[k], v);
   return out as T;
 }
 
@@ -58,7 +60,18 @@ function merge<T>(a: T, b: unknown): T {
  *    `armies` (troops and armies first in its queue), `style` (plays in the leaders' neutral style, keeping its
  *    personality's name for dealing).
  */
-const SEAT_JUDGEMENT: Record<string, Record<string, unknown>> = { goes: { leaderGoes: true }, armies: { queue: "armies" }, nogoes: { leaderGoes: false }, spending: { queue: "spending" } };
+const SEAT_JUDGEMENT: Record<string, Record<string, unknown>> = {
+  goes: { leaderGoes: true },
+  armies: { queue: "armies" },
+  nogoes: { leaderGoes: false },
+  spending: { queue: "spending" },
+  // Session 20: anticipate and counter; marches of several hops; and each switched off.
+  counter: { counter: { minArmy: 4, strike: 0.5, block: 35 } },
+  nocounter: { counter: undefined },
+  counter2: { counter: { minArmy: 3, strike: 1.5, block: 60 } },
+  march6: { march: 6 },
+  march1: { march: 1 },
+};
 
 export function botFor(kind: string, tweak?: TournamentSpec["tweak"]): Bot {
   const [head, ...opts] = kind.replace(/^sighted:/, "").split("+");
@@ -72,6 +85,8 @@ export function botFor(kind: string, tweak?: TournamentSpec["tweak"]): Bot {
       ...(opts.includes("stewfirst") ? { stewardFirst: true } : {}),
       ...(opts.includes("cleanup") ? { cleanUp: true } : {}),
       ...(opts.includes("report") ? { report: true } : {}),
+      // Session 20's one-change tests: its leaders plan with a judgement change (see SEAT_JUDGEMENT).
+      ...(opts.some((o) => SEAT_JUDGEMENT[o]) ? { judgement: opts.reduce((J, o) => (SEAT_JUDGEMENT[o] ? MarshalJudgement.parse(merge(J, SEAT_JUDGEMENT[o])) : J), marshalData.judgement) } : {}),
     });
   }
   if (opts.length && k.startsWith("marshal-") && PERSONALITY_IDS.includes(k.slice(8) as PersonalityId)) {

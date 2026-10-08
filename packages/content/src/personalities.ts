@@ -183,6 +183,13 @@ export const MarshalJudgement = z.object({
   finish: z.object({ margin: z.number().min(1), hops: z.number().int().min(1), sites: z.number().int().min(1) }).optional(),
   /** Session 20: reinforcements march up to this many hops through its own land in one turn (one order a hop; 1: a step a turn, as before). */
   march: z.number().int().min(1).optional(),
+  /**
+   * Session 20 (Nate): anticipate and counter. For each rival army of at least `minArmy` troops it can see next to its
+   * land, it guesses the army's next move (the territory of ours it would most likely take: worth the most for the
+   * fewest troops) and counters it: strikes the army first where it can (worth `strike` times more), else sends
+   * troops there (a reinforcement goal of `block`), and asks for a fort there.
+   */
+  counter: z.object({ minArmy: z.number().int().min(1), strike: z.number().min(0), block: z.number().min(0) }).optional(),
 });
 export type MarshalJudgement = z.infer<typeof MarshalJudgement>;
 

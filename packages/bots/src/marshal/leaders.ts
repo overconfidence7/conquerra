@@ -214,6 +214,8 @@ export function planLeaders(req: LeadersRequest): LeadersPlan {
   if (!b) return { orders: [], memory: thought.memory, written, notes };
   const claims = claimArmies(b, view, commandsOf(view, req.commands));
   const taken = new Set<TerritoryId>();
+  /** Forts the military leaders ask the Stewards for (session 20). */
+  const asked = new Set<TerritoryId>();
   const purseOf = (l: LeaderRecord) => req.purses?.[leaderKey(l)] ?? l.purse;
   const orders: Order[] = [];
   // Military leaders first (they lead the main armies), then Stewards.
@@ -230,12 +232,15 @@ export function planLeaders(req: LeadersRequest): LeadersPlan {
     // A leader that reports to another plans nothing itself: its senior directs its army and spends its budget.
     if (command!.kind === "report") mine = [];
     else if (l.kind === "steward") {
-      if (!isMilitaryCommand(command!)) mine = own(planSteward(b, marshalData.leaders.steward, command as StewardCommand, purseOf(l), () => `${prefix}x${n++}`, taken, ctx.rules.game.maxTurnsHard));
+      if (!isMilitaryCommand(command!)) mine = own(planSteward(b, marshalData.leaders.steward, command as StewardCommand, purseOf(l), () => `${prefix}x${n++}`, taken, ctx.rules.game.maxTurnsHard, asked));
     } else if (isMilitaryCommand(command!)) {
       const juniors = commandsOf(view, req.commands).filter((x) => x.l.kind === "leader" && x.command?.kind === "report" && x.command.to === l.of).map((x) => x.l);
       const planned = planMilitary(ctx, view, b, J, l, command as MilitaryCommand, purseOf(l), claims, thought, lastTurn, juniors);
       mine = own(planned.orders);
       if (planned.note) notes[key] = planned.note;
+      // Where it builds (a barracks), a Steward doesn't.
+      for (const o of mine) if (o.kind === "build") taken.add(o.territory);
+      for (const t of planned.forts) asked.add(t);
     }
     written[key] = mine.length;
     orders.push(...mine);
@@ -256,7 +261,7 @@ function planMilitary(
   thought: ReturnType<typeof think>,
   lastTurn?: readonly ReplayEvent[],
   juniors: readonly LeaderRecord[] = [],
-): { orders: Order[]; note: LeaderNote | null } {
+): { orders: Order[]; note: LeaderNote | null; forts: TerritoryId[] } {
   const key = leaderKey(l);
   const at = leaderAt(view.me, l);
   const isOwn = l.of === view.me.id;
@@ -266,7 +271,7 @@ function planMilitary(
   const reached = command.kind === "expand" && b.owned(command.territory);
   const single = command.kind === "hold" || command.kind === "defend" || command.kind === "push" || command.kind === "raid" || reached;
   if (single) {
-    if (!at || !b.owned(at)) return { orders: [], note: null };
+    if (!at || !b.owned(at)) return { orders: [], note: null, forts: [] };
     const instruction: Instruction = reached ? (at === (command as { territory: TerritoryId }).territory ? { kind: "hold" } : { kind: "push", territory: (command as { territory: TerritoryId }).territory }) : command;
     // Recruits from its purse join its army first (so they march with it), where it stands if it can recruit there.
     const troop = ctx.rules.troops.cost;
@@ -287,7 +292,7 @@ function planMilitary(
       }
     }
     const board = plannedView === view ? b : marshalBoard(ctx, plannedView, thought.insight, lastTurn);
-    return { orders: [...pre, ...planGeneral(ctx, plannedView, l.of, instruction, lastTurn, { chainMargin: margin }, board)], note: null };
+    return { orders: [...pre, ...planGeneral(ctx, plannedView, l.of, instruction, lastTurn, { chainMargin: margin }, board)], note: null, forts: [] };
   }
 
   // Expand, Command this front, Run the military: the Marshal's planner, steered.
@@ -358,7 +363,7 @@ function planMilitary(
     note = { kind: "pushBack", rival: pushing.rival, going: going.slice(0, 2), avoiding: pushing.biggest && !going.includes(pushing.biggest.at) ? pushing.biggest : null, striking: !!pushing.biggest && going.includes(pushing.biggest.at) };
   } else if (plan.finishing.length) note = { kind: "finishing", rivals: plan.finishing };
   else if (plan.saving) note = { kind: "saving", ...plan.saving };
-  return { orders, note };
+  return { orders, note, forts: plan.fortsWanted };
 }
 
 /** The view as it will be once `count` recruits stand in `t` (so the army that marches counts them). */

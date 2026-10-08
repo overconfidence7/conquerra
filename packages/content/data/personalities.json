@@ -39,7 +39,8 @@
       "turns": 3,
       "opening": 0.5
     },
-    "finish": { "margin": 1.5, "hops": 12, "sites": 6 }
+    "finish": { "margin": 1.5, "hops": 12, "sites": 6 },
+    "counter": { "minArmy": 3, "strike": 1.5, "block": 60 }
   },
   "personalities": [
     {

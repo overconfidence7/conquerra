@@ -213,7 +213,7 @@ describe("the Marshal against a runaway (Part 3)", () => {
 
 
 describe("the Marshal's queue (session 19)", () => {
-  it("queues troops first, then its armies' moves, then everything else it buys (each order takes a round, so rivals would move first)", () => {
+  it("queues troops first, then its armies' moves, then everything else it buys (each order takes a round, so rivals would move first; session 20: a strike that's ready now goes before all of it)", () => {
     const { snapshots } = play("m-queue", fourOf(["turtle", "merchant", "schemer", "conqueror"]), 14);
     let mixed = 0;
     for (const { s, last } of snapshots.slice(2)) {
@@ -221,7 +221,9 @@ describe("the Marshal's queue (session 19)", () => {
         for (const id of ["turtle", "merchant"] as const) {
           const orders = planMarshal({ ctx: ember, view: viewFor(ember, s, p.id), personality: personality(id), judgement: J, memory: freshMemory(), lastTurn: last.get(p.id) }).orders.filter((o) => o.kind !== "break");
           const rank = (o: Order) => (o.kind === "spoils" || o.kind === "recruit" ? 0 : o.kind === "move" || o.kind === "retreat" || o.kind === "advance" ? 1 : 2);
-          const ranks = orders.map(rank);
+          // (Session 20: strikes ready before anyone can move, finishing a rival off, go first of all.)
+          const lead = orders.findIndex((o) => o.kind !== "move");
+          const ranks = orders.slice(Math.max(0, lead)).map(rank);
           expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
           if (ranks.includes(1) && ranks.includes(2)) mixed++;
         }

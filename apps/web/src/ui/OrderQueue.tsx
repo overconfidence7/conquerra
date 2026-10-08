@@ -28,6 +28,9 @@ export function OrderQueue({ ctx, view, plan, queue, bare = false, onFold }: { c
               >
                 {/* Written by one of your leaders: its portrait first, so you're never surprised (its purse pays). */}
                 {o.general && <LeaderPortrait view={view} l={{ kind: "leader", of: o.general }} size={22} />}
+                {/* A leader reporting to the one that wrote it goes with its army (session 20): its portrait too. */}
+                {o.general && o.kind === "move" && o.withGeneral && o.withGeneral !== o.general && <LeaderPortrait view={view} l={{ kind: "leader", of: o.withGeneral }} size={18} />}
+                {o.general && o.general !== view.me.id && o.kind === "move" && o.withLeader && <LeaderPortrait view={view} l={{ kind: "leader", of: view.me.id }} size={18} />}
                 {o.steward && <LeaderPortrait view={view} l={{ kind: "steward", of: o.steward }} size={22} />}
                 {o.kind === "move" && before
                   ? describeOrder(o, n, isAttack(view, o, before), amountPill(plan.sent[i] ?? 0, o.troops, before.estimated.has(o.from)))

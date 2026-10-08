@@ -11,7 +11,7 @@ import { dueTurnIn, withTurnIn } from "./logic/spoils";
 import { namer } from "./logic/text";
 import { DEFAULT_TIMER, type TurnClock } from "./logic/timer";
 import { actionBarState } from "./logic/actions";
-import type { Answer } from "@conquerra/bots";
+import type { LeaderNote, Answer } from "@conquerra/bots";
 import { agreedThisTurn, attackCheck, counterFrom, dealsNow, newOffer, passageNow, type PageDeal } from "./logic/deals";
 import type { PathKind } from "./logic/paths";
 import { chronicleOf } from "./logic/chronicleKeep";
@@ -70,6 +70,8 @@ interface GameStore {
   instructions: Record<string, Instruction | null>;
   /** Budgets you changed this turn, and gold you're taking back from purses, by leader key (session 18). */
   budgets: Record<string, { budget?: Budget; takeBack?: number }>;
+  /** What each leader is up to this turn (session 20), by leader key: a line in the Leaders panel. */
+  leaderNotes: Record<string, LeaderNote>;
   /** Leaders (by key) leading one army you gave an order of your own this turn: yours to command until the turn ends. */
   paused: string[];
   /**
@@ -298,6 +300,7 @@ export const useGame = create<GameStore>((set, get) => ({
   error: null,
   instructions: {},
   budgets: {},
+  leaderNotes: {},
   paused: [],
   picking: null,
   leaderPlacement: rememberedPlacement(),
@@ -884,7 +887,7 @@ async function replanGenerals() {
   try {
     const fresh = await host.planGenerals(instructions, purses);
     if (useGame.getState().view?.turn !== view.turn) return;
-    useGame.setState({ queue: withGeneralOrders(useGame.getState().queue, fresh, useGame.getState().paused) });
+    useGame.setState({ queue: withGeneralOrders(useGame.getState().queue, fresh.orders, useGame.getState().paused), leaderNotes: fresh.notes });
   } catch {
     // The old orders stay; the engine and the generals' guards still keep the deal.
   }
@@ -950,6 +953,7 @@ function applyTurn(u: HostUpdate, auto: boolean) {
     clock: u.clock,
     // A new turn: your generals have already written their orders, and every army is theirs again.
     queue: openingQueue(useGame.getState().ctx, u),
+    leaderNotes: u.leaderNotes ?? {},
     instructions: {},
     budgets: {},
     paused: [],

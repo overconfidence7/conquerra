@@ -44,7 +44,7 @@ scope.onmessage = async (e) => {
         scope.postMessage({ id: req.id, ok: true, orders: core.suggest() });
         return;
       case "planGenerals":
-        scope.postMessage({ id: req.id, ok: true, orders: core.planGenerals(req.instructions, req.purses) });
+        scope.postMessage({ id: req.id, ok: true, plan: core.planGenerals(req.instructions, req.purses) });
         return;
       case "saveOrders":
         core.saveOrders(req.orders, req.turn, req.paused ?? [], req.now ?? false);

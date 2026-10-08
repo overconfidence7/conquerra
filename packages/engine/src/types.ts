@@ -730,7 +730,8 @@ export type GameEvent =
   | { type: "leaderKilled"; player: PlayerId; territory: TerritoryId }
   /** A fallen Leader comes back for free at the end of the turn: at the capital, or the strongest territory if the capital is lost. */
   | { type: "leaderReturned"; player: PlayerId; territory: TerritoryId }
-  | { type: "eliminated"; player: PlayerId; by: PlayerId | null }
+  /** `leader`: the military leader of `by`'s whose order took the last of their land (session 20), if a leader wrote it. */
+  | { type: "eliminated"; player: PlayerId; by: PlayerId | null; leader?: LeaderRef }
   /** The knocked-out player's Leader joins whoever knocked them out, as a captured general at `territory`. */
   | { type: "generalCaptured"; player: PlayerId; general: PlayerId; territory: TerritoryId }
   /** The knocked-out player's Steward joins whoever knocked them out (session 18). Only they hear of it. */

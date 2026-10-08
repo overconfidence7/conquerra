@@ -99,6 +99,7 @@ class Turn {
   readonly attacked = new Set<TerritoryId>();
   /** Who last captured land from each player this turn (for "eliminated by"). */
   readonly lastCapturer = new Map<PlayerId, PlayerId>();
+  readonly lastCaptureLeader = new Map<PlayerId, PlayerId | null>();
   /** Set by a move that captured its target, so `then` follow-ups know where to push from. */
   lastCapture: TerritoryId | null = null;
   /** The general that wrote the order now running (for the replay and the report). */
@@ -604,6 +605,8 @@ class Turn {
       if (plan.general) this.generalOf(p, plan.general)!.territory = o.to;
       if (defender) for (const of of standing) lost.push({ owner: defender, of, by: pid });
       if (defenderId) this.lastCapturer.set(defenderId, pid);
+      // Which of its leaders wrote the order that took it (session 20: "Your Leader, Aldric, finished House Azure").
+      if (defenderId) this.lastCaptureLeader.set(defenderId, this.author ?? null);
       this.lastCapture = o.to;
       this.tookLand.add(pid);
       this.taken.set(pid, [...(this.taken.get(pid) ?? []), o.to]);
@@ -703,7 +706,8 @@ class Turn {
     if (this.s.settings.fallen) p.influence = Math.max(p.influence, this.ctx.rules.fallen.startInfluence ?? 0);
     // Their spies are gone with them.
     this.s.spies = this.s.spies.filter((x) => x.owner !== pid);
-    this.emit({ type: "eliminated", player: pid, by: p.eliminatedBy });
+    const leader = p.eliminatedBy ? (this.lastCaptureLeader.get(pid) ?? null) : null;
+    this.emit({ type: "eliminated", player: pid, by: p.eliminatedBy, ...(leader ? { leader: { kind: "leader" as const, of: leader } } : {}) });
     // Their Leader and Steward join whoever knocked them out (the Leader at that player's capital, or, if it's lost,
     // their strongest territory, with no army until troops are there). Everything else of theirs is gone.
     const captor = p.eliminatedBy ? this.player(p.eliminatedBy) : null;

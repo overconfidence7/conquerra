@@ -1,7 +1,7 @@
 import type { Answer } from "@conquerra/bots";
 import type { Order, SaveFile } from "@conquerra/engine";
 import type { SlotInfo } from "./saves";
-import type { GameHost, HostRequest, HostResponse, HostStart, HostUpdate, LobbySettings } from "./protocol";
+import type { GameHost, HostRequest, HostResponse, HostStart, HostUpdate, LeaderOrders, LobbySettings } from "./protocol";
 
 /** A fresh secret seed for the game's dice (the engine itself never makes randomness). */
 function newSeed(): string {
@@ -32,7 +32,7 @@ export function createLocalHost(): GameHost {
     if (!p) return;
     pending.delete(res.id);
     if (!res.ok) p.reject(new Error(res.error));
-    else p.resolve("orders" in res ? res.orders : "save" in res ? res.save : "slot" in res ? res.slot : "answer" in res ? res.answer : res.update);
+    else p.resolve("orders" in res ? res.orders : "plan" in res ? res.plan : "save" in res ? res.save : "slot" in res ? res.slot : "answer" in res ? res.answer : res.update);
   };
   // If the engine's worker stops (it crashed, or the browser killed it), say so instead of waiting forever.
   const failAll = (why: string) => {
@@ -65,7 +65,7 @@ export function createLocalHost(): GameHost {
     finish: () => send({ type: "finish" }),
     suggest: () => send<Order[]>({ type: "suggest" }),
     propose: (offer) => send<Answer>({ type: "propose", offer }),
-    planGenerals: (instructions, purses) => send<Order[]>({ type: "planGenerals", instructions, ...(purses ? { purses } : {}) }),
+    planGenerals: (instructions, purses) => send<LeaderOrders>({ type: "planGenerals", instructions, ...(purses ? { purses } : {}) }),
     dispose: () => worker.terminate(),
   };
 }

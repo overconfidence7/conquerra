@@ -16,6 +16,7 @@ import {
   withAgreed,
   type Answer,
   type Bot,
+  type LeaderNote,
   type MarshalBot,
   type MarshalMemory,
 } from "@conquerra/bots";
@@ -325,6 +326,7 @@ export class LocalGame {
       fastForwarded,
       clock: this.clock,
       generalOrders: this.generalOrders(),
+      leaderNotes: this.leaderNotes,
       offers: this.talk.turn === this.state.turn ? this.talk.toHuman : [],
       ...(this.state.winner || this.showPersonalities ? { seats: this.seatInfo() } : {}),
     };
@@ -383,10 +385,20 @@ export class LocalGame {
    * here, on the page, or (M4) on the server.
    */
   generalOrders(instructions: Record<string, Instruction | null> = {}, purses?: Record<string, number>): Order[] {
-    if (this.state.winner || this.knockedOut) return [];
+    return this.leaderOrders(instructions, purses).orders;
+  }
+
+  /** What each leader said it's up to, the last time they planned (session 20). */
+  private leaderNotes: Record<string, LeaderNote> = {};
+
+  /** Your leaders' orders, and what each is up to this turn (a line for the Leaders panel). */
+  leaderOrders(instructions: Record<string, Instruction | null> = {}, purses?: Record<string, number>): { orders: Order[]; notes: Record<string, LeaderNote> } {
+    if (this.state.winner || this.knockedOut) return { orders: [], notes: {} };
     // Your leaders plan knowing the deals you've agreed this turn (they start before any move).
     const view = withAgreed(viewFor(this.ctx, this.state, HUMAN_ID), this.agreed());
-    return planLeaders({ ctx: this.ctx, view, memory: this.leaderMemory, commands: instructions, ...(purses ? { purses } : {}), ...(this.lastTurn.get(HUMAN_ID) ? { lastTurn: this.lastTurn.get(HUMAN_ID)! } : {}) }).orders;
+    const plan = planLeaders({ ctx: this.ctx, view, memory: this.leaderMemory, commands: instructions, ...(purses ? { purses } : {}), ...(this.lastTurn.get(HUMAN_ID) ? { lastTurn: this.lastTurn.get(HUMAN_ID)! } : {}) });
+    this.leaderNotes = plan.notes;
+    return { orders: plan.orders, notes: plan.notes };
   }
 
   private get knockedOut(): boolean {
