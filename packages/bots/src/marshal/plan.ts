@@ -7,6 +7,7 @@ import { captainSpies } from "../spies";
 import { marshalData } from "@conquerra/content";
 import { startingStewardShare } from "@conquerra/engine";
 import { planFinish, remnantRivals } from "./finish";
+import { planSweep, type Goes } from "./sweep";
 import { planSteward } from "./steward";
 import { think, type Insight } from "./judge";
 import type { MarshalMemory } from "./memory";
@@ -52,6 +53,8 @@ export interface Steer {
   finishes?(rival: PlayerId): boolean;
   /** Session 20: Clean up (every rival is one to finish; Run the military does it unasked from `rules.leaders.cleanUpShare`). */
   cleanUp?: boolean;
+  /** Session 20c: the Leader that goes with this command's main effort (where it stands, and what an order carrying it says). */
+  rider?: { at: TerritoryId; goes: Goes } | null;
 }
 
 export interface MarshalRequest {
@@ -77,6 +80,8 @@ export interface MarshalPlan {
   fortsWanted: TerritoryId[];
   /** Session 20: gold it keeps in its purse, and what for (a leader never keeps gold without a reason it can name). */
   saving: { gold: number; for: "barracks"; at: TerritoryId | null } | null;
+  /** Session 20c: the Leader already goes with the main effort (the finish's mass and sweep), so nobody else moves it. */
+  leaderPlaced: boolean;
   /** The memory to keep for next turn (this turn taken in). */
   memory: MarshalMemory;
   insight: Insight;
@@ -113,18 +118,19 @@ export function planMarshal(req: MarshalRequest): MarshalPlan {
   const finishing: MarshalPlan["finishing"] = [];
   const saving: { v: MarshalPlan["saving"] } = { v: null };
   const fortsWanted: TerritoryId[] = [];
-  const moves = planMoves(ctx, view, P, judgement, insight, lastTurn, req.purse ?? view.me.gold, sources, steer, finishing, saving, fortsWanted);
+  const placed = { v: false };
+  const moves = planMoves(ctx, view, P, judgement, insight, lastTurn, req.purse ?? view.me.gold, sources, steer, finishing, saving, fortsWanted, placed);
   let kept = steer ? moves : moves.filter((o) => inScope(scope, sources.get(o.id), view, ctx));
   if (!steer && scope.kind === "realm") {
     // Its own Leader goes with the main attack out of where it stands (session 19, as your leaders' does).
     const at = judgement.leaderGoes ? leaderAt(view.me, { kind: "leader", of: view.me.id }) : null;
-    if (at) kept = carryLeader(kept, at, { withLeader: true }, null);
+    if (at && !placed.v) kept = carryLeader(kept, at, { withLeader: true }, null);
     if (judgement.queue === "armies") kept = armiesFirst(kept, sources);
   }
   // Strikes that are ready before anyone can move (finishing a rival, session 20) go first of all.
   const first = (o: Order) => { const src = sources.get(o.id); return !!src && "army" in src && !!src.first; };
   kept = [...kept.filter(first), ...kept.filter((o) => !first(o))];
-  return { orders: [...breaks, ...respectDeals(ctx, view, kept)], memory, insight, finishing, saving: saving.v, fortsWanted };
+  return { orders: [...breaks, ...respectDeals(ctx, view, kept)], memory, insight, finishing, saving: saving.v, fortsWanted, leaderPlaced: placed.v };
 }
 
 /** Troops first (the Spoils, recruits), then the armies' moves, then everything else it buys (session 19). */
@@ -186,6 +192,7 @@ function planMoves(
   finishing: MarshalPlan["finishing"] = [],
   saving: { v: MarshalPlan["saving"] } = { v: null },
   fortsWanted: TerritoryId[] = [],
+  placed: { v: boolean } = { v: false },
 ): Order[] {
   const b = marshalBoard(ctx, view, insight, lastTurn);
   if (!b) return [];
@@ -475,9 +482,18 @@ function planMoves(
   // Finishing (session 20): recruits at the sites nearest their land, shared out, so they march straight in.
   // (A site their armies could take before the recruits arrive comes last.)
   const holds = (t: TerritoryId) => troopsAt(t) >= holdNeed(t);
-  const finishSites = toFinish.length && J.finish ? recruitSites.filter((t) => toRemnant.has(t) && (!steer || steer.buys.troops)).sort((a, c) => Number(holds(c)) - Number(holds(a)) || toRemnant.get(a)! - toRemnant.get(c)! || (a < c ? -1 : 1)).slice(0, J.finish.sites) : [];
+  // Cleaning up (session 20c): a site that can't be lost before its recruit runs comes first (the capital, a barracks,
+  // or a province none of whose land touches theirs: one territory taken from a province stops it recruiting).
+  const sweeping = cleanUp && !!J.sweep;
+  const robust = (t: TerritoryId) => t === me.capital || seen(t)!.building === "barracks" || (idx.provinceMembers.get(provinceOf(t)) ?? []).every((m) => !idx.neighbors.get(m)!.some((x) => toFinish.includes(b.look0(x) ?? "")));
+  let finishSites = toFinish.length && J.finish ? recruitSites.filter((t) => toRemnant.has(t) && (!steer || steer.buys.troops)).sort((a, c) => (sweeping ? Number(robust(c)) - Number(robust(a)) : 0) || Number(holds(c)) - Number(holds(a)) || toRemnant.get(a)! - toRemnant.get(c)! || (a < c ? -1 : 1)).slice(0, J.finish.sites) : [];
+  // The Leader goes with the mass (session 20c): where it stands with no army to go with, some of the troops are
+  // recruited there, so it marches to the staging territory with them.
+  const own = leaderAt(me, { kind: "leader", of: me.id });
+  const rider = steer ? (steer.rider ?? null) : own ? { at: own, goes: { withLeader: true } } : null;
+  if (sweeping && finishSites.length && rider && troopsAt(rider.at) <= garrison * 2 && recruitSites.includes(rider.at) && (!steer || steer.buys.troops)) finishSites = [rider.at, ...finishSites.filter((t) => t !== rider.at)].slice(0, J.finish!.sites);
   /** Never hoard (session 20): a recruit whose site is lost before it's paid for recruits at the safest site instead. */
-  const safest = [...recruitSites].sort((a, c) => Number(isFrontier(a)) - Number(isFrontier(c)) || enemyPressure(a) - enemyPressure(c) || troopsAt(c) - troopsAt(a) || (a < c ? -1 : 1))[0];
+  const safest = [...recruitSites].sort((a, c) => (sweeping ? Number(robust(c)) - Number(robust(a)) : 0) || Number(isFrontier(a)) - Number(isFrontier(c)) || enemyPressure(a) - enemyPressure(c) || troopsAt(c) - troopsAt(a) || (a < c ? -1 : 1))[0];
   const recruitOrder = (t: TerritoryId, count: number): Order => ({ id: id(), kind: "recruit", territory: t, count, ...(safest && safest !== t ? { fallback: { id: id(), kind: "recruit", territory: safest, count } as Order } : {}) });
   if (finishSites.length && gold >= troopCost) {
     const all = Math.floor(gold / troopCost);
@@ -539,7 +555,23 @@ function planMoves(
   // ---------- Finishing them off (session 20) ----------
   const targeted = new Set<TerritoryId>();
   let usedInitiative = false;
-  if (toFinish.length && J.finish) {
+  if (toFinish.length && J.finish && cleanUp && J.sweep) {
+    // Cleaning up (session 20c): mass and sweep, with the security blanket; a small remnant gets the ring.
+    const timing = me.leader.alive && me.cooldowns.seize === 0 && (!steer || steer.timing);
+    const f = planSweep(b, toFinish, free, targeted, id, army, {
+      margin: J.finish.margin,
+      reach: J.sweep.reach,
+      blanket: J.sweep.blanket,
+      ringUpTo: J.sweep.ringUpTo,
+      ...(steer ? { commands: (t: TerritoryId) => steer.commands(t) || recruitedAt.has(t) } : {}),
+      initiative: timing,
+      recruited: recruitedAt,
+      leader: rider && owned(rider.at) ? rider : null,
+    });
+    usedInitiative = f.usedInitiative && timing;
+    placed.v = f.leaderPlaced;
+    finishing.push(...f.targets);
+  } else if (toFinish.length && J.finish) {
     const f = planFinish(b, toFinish, free, targeted, id, army, {
       margin: J.finish.margin,
       hops: J.finish.hops,

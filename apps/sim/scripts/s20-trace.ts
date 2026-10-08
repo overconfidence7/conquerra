@@ -48,7 +48,9 @@ playTable(ctx, `${fx.name}-run`, bots, {
     const k = new Map<string, number>();
     for (const e of mine) k.set(e.type, (k.get(e.type) ?? 0) + 1);
     const rec = mine.filter((e) => e.type === "recruited").map((e) => (e as { count: number; territory: string }).count + "@" + (e as { territory: string }).territory);
-    const fz = mine.filter((e) => e.type === "fizzled").map((e) => JSON.stringify(e).slice(0, Number(process.env.FZ ?? 80)));
+    const fzr = new Map<string, number>();
+    for (const e of mine) if (e.type === "fizzled") fzr.set((e as any).reason, (fzr.get((e as any).reason) ?? 0) + 1);
+    const fz = process.env.FZ ? mine.filter((e) => e.type === "fizzled").map((e) => JSON.stringify(e).slice(0, Number(process.env.FZ))) : [...fzr].map(([r, n]) => `${r}:${n}`);
     const vs = mine.filter((e) => e.type === "battle").map((e) => `${(e as any).from}>${(e as any).to}${(e as any).captured ? "+" : "-"}(${(e as any).attackers.troops}v${(e as any).defenders.troops})`);
     console.log(`   events ${[...k].map(([a, b]) => `${a}:${b}`).join(" ")}; recruited ${rec.join(",")}; battles ${vs.join(" ")}; fizzles ${fz.join(",")}`);
   },

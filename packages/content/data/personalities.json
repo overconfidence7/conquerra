@@ -40,6 +40,7 @@
       "opening": 0.5
     },
     "finish": { "margin": 1.5, "hops": 12, "sites": 6 },
+    "sweep": { "reach": 8, "blanket": 3, "ringUpTo": 3 },
     "counter": { "minArmy": 3, "strike": 1.5, "block": 60 },
     "realm": true,
     "anticipate": { "guard": true, "reach": true, "fort": true }

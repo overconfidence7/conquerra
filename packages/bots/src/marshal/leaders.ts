@@ -25,6 +25,7 @@ import { remnantRivals } from "./finish";
 import { freshMemory, type MarshalMemory } from "./memory";
 import { carryLeader, marshalBoard, planMarshal, type Steer } from "./plan";
 import { planSteward } from "./steward";
+import type { Goes } from "./sweep";
 
 /**
  * Your leaders plan (session 18, design additions §4 "REDESIGN"). Every leader with a command writes its orders each
@@ -265,7 +266,7 @@ function planMilitary(
   const key = leaderKey(l);
   const at = leaderAt(view.me, l);
   const isOwn = l.of === view.me.id;
-  const goes: Partial<Order> = isOwn ? { withLeader: true } : { withGeneral: l.of };
+  const goes: Goes = isOwn ? { withLeader: true } : { withGeneral: l.of };
   const margin = J.attackFloor?.chainMargin ?? STYLE().attack.chainMargin;
   // At the target, Expand stops and holds there (or marches the last steps through our own land).
   const reached = command.kind === "expand" && b.owned(command.territory);
@@ -297,7 +298,7 @@ function planMilitary(
 
   // Expand, Command this front, Run the military: the Marshal's planner, steered.
   const commands = (t: TerritoryId) => claims.armies.get(t) === key;
-  const steer: Steer = { commands, buys: { troops: true, specialists: true, barracks: command.kind !== "expand" }, timing: isOwn, guardsCapital: command.kind === "military" };
+  const steer: Steer = { commands, buys: { troops: true, specialists: true, barracks: command.kind !== "expand" }, timing: isOwn, guardsCapital: command.kind === "military", rider: at && commands(at) ? { at, goes } : null };
   let pushing: { rival: PlayerId; biggest: { at: TerritoryId; troops: number } | null } | null = null;
   if (command.kind === "cleanup") {
     // Clean up (session 20): it finishes the rivals it was given (with the other leaders on Clean up), all of them.
@@ -350,7 +351,7 @@ function planMilitary(
   }
   const plan = planMarshal({ ctx, view, personality: STYLE(), judgement: J, memory: thought.memory, insight: thought, ...(lastTurn ? { lastTurn } : {}), scope: { kind: "leader", steer }, purse });
   let orders: Order[] = plan.orders.filter((o) => o.kind !== "break");
-  if (at && commands(at)) orders = carryLeader(orders, at, goes, command.kind === "expand" ? distancesFrom(b.idx, command.territory) : null);
+  if (at && commands(at) && !plan.leaderPlaced) orders = carryLeader(orders, at, goes, command.kind === "expand" ? distancesFrom(b.idx, command.territory) : null);
   // A leader that reports to this one goes with its own army's main move (its portrait shows on that order).
   for (const j of juniors) {
     const jat = leaderAt(view.me, j);

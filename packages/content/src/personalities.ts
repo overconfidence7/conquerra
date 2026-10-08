@@ -193,6 +193,14 @@ export const MarshalJudgement = z.object({
    * first, chaining on through the rest and taking the empty land they could run to.
    */
   finish: z.object({ margin: z.number().min(1), hops: z.number().int().min(1), sites: z.number().int().min(1) }).optional(),
+  /**
+   * Session 20c (Nate's second note): finishing the game once it cleans up is mass and sweep. Every spare troop marches
+   * to one staging territory next to the remnant's biggest army (with the Leader), one chain sweeps their land and the
+   * empty land their armies could reach (as far as their armies could chain, `reach` hops at most), and a security blanket of transfers brings
+   * `blanket` troops into each territory of ours they could reach, queued last, to take back anything they take. A
+   * remnant of at most `ringUpTo` territories that it can strike everywhere at once gets session 20's ring instead.
+   */
+  sweep: z.object({ reach: z.number().int().min(1), blanket: z.number().int().min(0), ringUpTo: z.number().int().min(0) }).optional(),
   /** Session 20: every Marshal builds like the Steward (each personality's `build.realm` share). Off: as before. */
   realm: z.boolean().optional(),
   /** ...on a crowded table too (at most `rules.leaders.crowdedTerritories` a player), where buildings pay back slowly. */

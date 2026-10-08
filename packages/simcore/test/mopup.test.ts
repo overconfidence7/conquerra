@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { defaultRules, type PersonalityId } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { makeDelegateSeat, makeMarshalBot, planLeaders, type Bot } from "@conquerra/bots";
-import { leaderKey, viewFor, type GameContext, type GameState, type Instruction, type PlayerId } from "@conquerra/engine";
+import { distancesFrom, indexMap, leaderKey, viewFor, type GameContext, type GameState, type Instruction, type PlayerId } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { playTable } from "../src";
 
@@ -10,7 +10,8 @@ import { playTable } from "../src";
  * Session 20 (Nate's play test): leaders that finish the job. The mop-up fixtures are 20 positions from real Marshal
  * games (Embervale 4, Wyrmland 6, Rootholm 9) at the moment one seat passed 85% of the map with two or three rivals
  * left (made by apps/sim/scripts/s20-mopup.ts). Before session 20 a Leader on Run the military took a median of 7 turns
- * to finish them (two never did in 15), a Marshal 6.
+ * to finish them (two never did in 15), a Marshal 6; session 20 made it 3; session 20c's mass and sweep (with the
+ * security blanket) makes it 2, with 9 in 10 within 3 turns and none past 5.
  */
 interface Fixture {
   name: string;
@@ -42,10 +43,23 @@ function delegating(f: Fixture): GameState {
   return s;
 }
 
-/** Turns until every rival is out (99: not within 15). */
-function finish(f: Fixture, seat: (seat: number) => Bot, start: GameState): number {
+/** Turns until every rival is out (99: not within 15). `kept`: territories a rival took from the leading seat and still held as that turn ended. */
+function finish(f: Fixture, seat: (seat: number) => Bot, start: GameState, out?: { kept: number }): number {
   const top = Number(f.top.slice(1)) - 1;
-  const r = playTable(ctxOf(f), `${f.name}-test`, f.kinds.map((k, i) => (i === top ? seat(i) : marshal(k))), { start, maxTurns: start.turn + 14 });
+  let taken: string[] = [];
+  const settle = (s: GameState) => {
+    if (out) out.kept += taken.filter((t) => s.territories[t]!.owner !== f.top).length;
+    taken = [];
+  };
+  const r = playTable(ctxOf(f), `${f.name}-test`, f.kinds.map((k, i) => (i === top ? seat(i) : marshal(k))), {
+    start,
+    maxTurns: start.turn + 14,
+    onTurn: settle,
+    onEvents: (_s, ev) => {
+      for (const e of ev) if (e.type === "battle" && e.captured && e.defender === f.top && e.player !== f.top) taken.push(e.to);
+    },
+  });
+  settle(r.final!);
   return r.final!.winner === f.top ? r.final!.turn - start.turn + 1 : 99;
 }
 const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!;
@@ -57,25 +71,28 @@ describe("finishing a rival off: the mop-up fixtures", () => {
     for (const f of fixtures) expect(f.rivals.length === 2 || f.rivals.length === 3).toBe(true);
   });
 
-  it("a Leader on Run the military finishes them: a median of 3 turns, three in four within 4, every one within 15", () => {
-    const turns = fixtures.map((f) => finish(f, () => makeDelegateSeat(0.8), delegating(f)));
-    expect(turns.every((t) => t < 99)).toBe(true);
-    expect(median(turns)).toBeLessThanOrEqual(3);
-    expect(turns.filter((t) => t <= 4).length).toBeGreaterThanOrEqual(15);
+  it("a Leader on Run the military finishes them (session 20c): a median of 2 turns, 9 in 10 within 3, none past 5", () => {
+    const kept = { kept: 0 };
+    const turns = fixtures.map((f) => finish(f, () => makeDelegateSeat(0.8), delegating(f), kept));
+    expect(median(turns)).toBeLessThanOrEqual(2);
+    expect(turns.filter((t) => t <= 3).length).toBeGreaterThanOrEqual(18);
+    expect(turns.every((t) => t <= 5)).toBe(true);
+    // The security blanket: they keep little of what they take (session 20 left them about 6 territories a position).
+    expect(kept.kept).toBeLessThanOrEqual(20);
   });
 
   it("so does a Marshal in the seat (they share the planner)", () => {
     const turns = fixtures.map((f) => finish(f, (i) => marshal(f.kinds[i]!), structuredClone(f.state)));
-    expect(turns.every((t) => t < 99)).toBe(true);
-    expect(median(turns)).toBeLessThanOrEqual(3);
-    expect(turns.filter((t) => t <= 4).length).toBeGreaterThanOrEqual(15);
+    expect(median(turns)).toBeLessThanOrEqual(2);
+    expect(turns.filter((t) => t <= 3).length).toBeGreaterThanOrEqual(17);
+    expect(turns.every((t) => t <= 5)).toBe(true);
   });
 
   it("and with every military leader on Clean up", () => {
     const turns = fixtures.map((f) => finish(f, () => makeDelegateSeat(0.8, { cleanUp: true }), delegating(f)));
-    expect(turns.every((t) => t < 99)).toBe(true);
-    expect(median(turns)).toBeLessThanOrEqual(3);
-    expect(turns.filter((t) => t <= 4).length).toBeGreaterThanOrEqual(15);
+    expect(median(turns)).toBeLessThanOrEqual(2);
+    expect(turns.filter((t) => t <= 3).length).toBeGreaterThanOrEqual(17);
+    expect(turns.every((t) => t <= 5)).toBe(true);
   });
 }, 300000);
 
@@ -134,6 +151,67 @@ describe("the leaders' plans on the mop-up fixtures", () => {
       shared++;
     }
     expect(shared).toBeGreaterThan(3);
+  });
+
+  // ---------- Session 20c: mass and sweep, with the security blanket ----------
+  it("mass and sweep: its Leader goes with the main chain, which strikes their land; its marches only attack if still stronger", () => {
+    let rides = 0;
+    for (const f of fixtures) {
+      const { view, plan: p } = plan(f, { [own(f)]: { kind: "military" } }, 60);
+      const owner = (t: string) => {
+        const v = view.territories[t]!;
+        return v.detail === "full" ? v.owner : (v.lastSeen?.owner ?? null);
+      };
+      const moves = p.orders.filter((o): o is Extract<typeof o, { kind: "move" }> => o.kind === "move");
+      expect(moves.some((o) => owner(o.to) !== f.top), f.name).toBe(true);
+      if (moves.some((o) => o.withLeader && owner(o.to) !== f.top && owner(o.to) !== null)) rides++;
+      // The marches and the blanket: transfers through our own land that take back what they took on the way, but
+      // never throw themselves at a stronger army ("only if still stronger").
+      expect(moves.filter((o) => owner(o.to) === f.top && o.preset?.id === "onlyIfStronger").length, f.name).toBeGreaterThan(3);
+    }
+    expect(rides).toBeGreaterThanOrEqual(12);
+  });
+
+  it("mass: spare troops far from the fight (more than 3 steps from any rival's land) march, nearly all of them", () => {
+    let far = 0, stayed = 0;
+    for (const f of fixtures) {
+      const { view, plan: p } = plan(f, { [own(f)]: { kind: "military" } }, 60);
+      const idx = indexMap(maps[f.map]!);
+      const theirs = idx.ids.filter((t) => {
+        const v = view.territories[t]!;
+        const o = v.detail === "full" ? v.owner : (v.lastSeen?.owner ?? null);
+        return o && o !== f.top;
+      });
+      const d = new Map<string, number>();
+      for (const t of theirs) for (const [x, k] of distancesFrom(idx, t)) d.set(x, Math.min(d.get(x) ?? 99, k));
+      const out = new Set(p.orders.flatMap((o) => (o.kind === "move" ? [o.from] : [])));
+      for (const t of idx.ids) {
+        const v = view.territories[t]!;
+        if (v.detail !== "full" || v.owner !== f.top || t === view.me.capital || (d.get(t) ?? 99) <= 3) continue;
+        far += v.troops - 1;
+        if (!out.has(t)) stayed += v.troops - 1;
+      }
+    }
+    expect(stayed).toBeLessThanOrEqual(far * 0.1);
+  });
+
+  it("no cheating: what it can't see (land in the fog, a remnant's hidden army) changes nothing it writes", () => {
+    for (const f of fixtures.slice(0, 8)) {
+      const base = plan(f, { [own(f)]: { kind: "military" } }, 60).plan.orders;
+      const s = structuredClone(f.state);
+      const view = viewFor(ctxOf(f), s, f.top);
+      const rival = f.rivals[0]!.id;
+      const hidden = Object.keys(view.territories).filter((t) => view.territories[t]!.detail !== "full");
+      for (const t of hidden.slice(0, 5)) (s.territories[t]!.troops += 50), (s.territories[t]!.owner = rival);
+      const p0 = s.players.find((x) => x.id === f.top)!;
+      p0.leaders.find((l) => l.kind === "leader" && l.of === p0.id)!.purse = 60;
+      const again = planLeaders({ ctx: ctxOf(f), view: viewFor(ctxOf(f), s, f.top), commands: { [own(f)]: { kind: "military" } } }).orders;
+      expect(again, f.name).toEqual(base);
+    }
+  });
+
+  it("deterministic: the same view gives the same orders, finishing too", () => {
+    for (const f of fixtures.slice(0, 5)) expect(plan(f, { [own(f)]: { kind: "military" } }, 60).plan.orders).toEqual(plan(f, { [own(f)]: { kind: "military" } }, 60).plan.orders);
   });
 
   it("Report to: the junior writes nothing itself; its senior moves its army, the junior's portrait on that order", () => {
