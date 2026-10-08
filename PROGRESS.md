@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–19 are done and reviewed. Nate has played. Next: **session 20** (leaders that finish the job, the Marshal plays like a person, controls) and **20b** (Walls, fair seats), then 21 (the polish pass), 22 (the language pass).**
+**Phase: M3 (depth and balance). Sessions 7–20 are done (20 awaiting review). Next: **session 20b** (Walls, fair seats), then 21 (the polish pass), 22 (the language pass).**
 
-Claude Code sessions completed: **19** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
+Claude Code sessions completed: **20** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
 ---
 
@@ -997,8 +997,51 @@ One game: **Rootholm (200 territories) with 9 Marshals, Classic, on the laptop; 
 - **Not tried this time:** the phone, the 160 maps, Embervale with 4, getting knocked out, Conquest's 20-turn default.
 - **Nate's calls (Oct 7 evening):** culture +1 stays; sound is its own session later; **session 20 = his fixes above + the Marshal builds like the Steward + Walls + fair seats, split into 20 and 20b** (two usage windows), each ending with a deploy; the polish pass is **21**, the language pass **22**.
 
-### Things to test after session 19 (Nate's next play test)
-*The orchestrator adds to this list after each session. Laptop: 6 players on Wyrmland, you in red; phone: the same checks where they apply.*
+### Oct 7: Claude Code session 20 (M3: leaders that finish the job, the Marshal plays like a person, controls)
+All four parts are done, each committed and pushed. Art batch 4 wasn't imported (session 21). Nothing slipped to 20b. Full write-up: `docs/sim-results-m3-leaders.md` (session 20).
+- **Why your Leader didn't finish the game** (from replaying real positions turn by turn):
+  - **Your capital's army was frozen.** Leaders you capture arrive at your capital with no command, and "a leader with no command keeps its army for you" meant Run the military never touched the biggest army you had. Now only your own Leader with no command keeps its army.
+  - Recruits all went to one place; if a rival took it first, the whole purse sat unspent that turn. Reinforcements crept one step a turn. The last rival's army broke out through land held by 1 troop.
+  - A small engine bug turned up too: a turn changed the game it started from (the replay's copy shared the leaders' purses). Fixed, with a test; it made the purses look fuller than they were.
+- **Leaders that finish the job (Part 1):**
+  - **Finishing:** when a rival is down to a handful of territories (6, or a tenth of yours), your leaders (and every Marshal) recruit next to them, march troops through your land to every territory touching theirs (one order a hop, the way you write them), strike their armies first, sweep the rest, and keep the ring strong enough that nothing escapes. On 20 real "85% of the map" positions: **7 turns to finish → 3** (Marshals 6 → 3), 80% within 4 turns. **Not met:** "2 turns or fewer in most" (about 40%): the slow ones are real fights where the rivals' armies match yours.
+  - **Never hoards:** recruits are shared out with a fallback site; unspent gold a turn 3.5–8.4 → 1.5–2.0. The only reason it saves is one it names ("Saving 32 gold: nowhere to recruit until the barracks at Galeholt is up").
+  - **More orders, at the fight:** a Leader on Run the military writes 7–16 orders a turn (was 6–10), dozens when finishing someone; it matches or beats a Marshal in the same seat on 9 turns in 10.
+  - **New commands:** **Clean up** (offered from 75% of the map; every leader on it shares the rivals out; Run the military does it unasked), **Push back <rival>** (that rival's weak land only, never anyone else's), **Report to <leader>** (its army and budget go to the senior; Take back ends it).
+  - **Anticipate and counter:** leaders (and Marshals) guess where a rival army they can see will strike next, and strike it first or reinforce there and ask the Steward for a fort.
+  - **Budgets cap at 100%:** the chips offer only what's left; the panel says "Budgets: 80% of income"; older saves are trimmed as they load.
+  - **The Leaders panel** says what each leader is up to ("Finishing them off: Baron Krell (2 territories left), Queen Isolde (7 territories left)"; "Reports to Aldric"), and the report says "Your Leader, Aldric, finished House Azure".
+- **The Marshal plays like a person (Part 2):**
+  - **Builds like your Steward on roomy maps** (the Turtle and Merchant more, the Blitzer least); on a crowded map (Embervale with 4) building costs it wins, so it doesn't there.
+  - **Holds what matters** on roomy maps (it guards whole provinces and builds forts there; in session 17 this cost wins, now it doesn't).
+  - **Tried and not kept:** picking the best region (no gain), lean play on crowded maps, longer marches, its Leader riding along.
+  - **A player who hands everything to leaders (80/20) is now at fair** against Marshals: Embervale 32% → 27% (fair 25%), Wyrmland 29% → 17% (fair 17%). **Still open:** all-in (100/0) on Embervale wins 35% (1.38× fair; target 1.2×). It isn't the personalities, the Leader's +20% or the talking; it shows only on the crowded 4-player map.
+  - **Bot games end now:** games at the 60-turn cap on Rootholm 8 85% → 31%, Wyrmland 8 57% → 29%, Wyrmland 6 29% → 16%. The opening isn't faster; who leads at halftime wins less or about the same.
+  - **The headline holds:** one Marshal against Captains averages 39.2% on Embervale (was 39.0%) and 31.9% on Wyrmland (was 29.6%); the sharp stand-in against Marshals 23.6% (was 22.4%, within the noise).
+- **Controls (Part 3):**
+  - **Enter confirms** an attack, move or path box exactly as shown; **Esc cancels**; arrow keys and Enter pick a command in a leader's menu. Never while you're typing. A small ↵ on the confirm button on a laptop.
+  - **The full sweep** clears a band about 3 territories wide between the two points, and finishes provinces it nearly covers. A sweep across all of Wyrmland is about 50 orders and leaves nothing unclaimed in its band. Still 4 taps for the shortest way, 5 for the sweep.
+- **Taps on a 384 px phone** (from your Leader's portrait): Clean up 3, Push back 4, Report to 4 (a Steward's 5); a basic turn is still 6.
+- **Screenshots** (desktop and 384 px phone), `docs/art/screens/s20-*.png`: `command-menu` (Clean up and Push back), `finishing`, `report-to`, `budget` (chips stop at what's left), `enter-hint` (desktop), `sweep-band` (Wyrmland). Script: `apps/web/scripts/s20-shots.mjs`; its save: `make-s20-save.ts`.
+- **Speed** (10 players): one Marshal plans in 1.3 ms a turn (worst 16.5 ms), all ten bots together 10.9 ms (worst 34 ms); limit 50 ms.
+- **Tests and deploy:** see the end of this entry.
+- **Questions for Nate:** (1) all-in delegating (100% to your Leader) still beats Marshals on Embervale at 1.38× fair: worth more work, or fine since it's a crowded small map? (2) Clean up is offered from 75% of the map: right threshold? (3) Should a finishing Leader turn down truces from a rival it's finishing (today your diplomacy is yours)?
+
+### Things to test after session 20 (Nate's next play test)
+*The orchestrator adds to this list after each session. Laptop first; the phone where it applies.*
+- **From session 20 (leaders that finish the job, the Marshal plays like a person, controls), most important first:**
+  1. **Hold 75% of a map and finish it with your leaders:** put your Leader on **Run the military** (or **Clean up**, which now appears in its command list) with most of your income. Does it end the last rivals in a turn or two? Does the Leaders panel say "Finishing them off: …", and does the report say "Your Leader, Aldric, finished …"? How many orders does it write?
+  2. **Watch your Leader's purse on Run the military:** it should be spent every turn (or say what it's saving for). Do your troops head toward the fighting, including the army at your capital?
+  3. **"Push back"** a rival that annoys you: does it take only their weak land, keep clear of their big army, and leave everyone else alone? Does the one-line reason make sense?
+  4. **"Report to":** set a captured Leader to report to yours: does "Reports to Aldric" show, does its budget go to Aldric, and do Aldric's orders move its army (its portrait on those orders)?
+  5. **Budgets:** with your Leader on 80%, open your Steward's Budget: do the chips stop at 20%? Does the top say "Budgets: 90% of income"?
+  6. **Enter to confirm** for a whole turn: attack, Enter, attack, Enter. How many fewer mouse trips? Esc to cancel. (The ↵ on the Add button.)
+  7. **A full sweep across Wyrmland:** does it leave any pocket of unclaimed land between the two points?
+  8. **A delegated game against Marshals** (Leader on Run the military with 80%, Steward on Run the realm): does delegating still beat them? (The sims say it's now about fair.)
+  9. **Do the Marshals finish their own games faster now?** (Bot games on the big maps used to run to the 60-turn cap.) Do they build more on a big map?
+- **Not tried yet (carried over):** the phone; a 160-territory map (Ashwing or The Sundered Crowns); Embervale with 4; getting knocked out once (the Fallen's first turn); Conquest's 20-turn default on a 200-territory map.
+- **Older lists (still useful):**
+
 - **From session 19 (the balance pass and bigger maps), most important first:**
   1. **Embervale against 3 Marshals:** does the game last longer (the sims say about 29 turns, was 21), and does someone run away less? Does anyone get knocked out in the first few turns (they shouldn't now)?
   2. **A 6–8 player game on a new ~160 map** (Ashwing or The Sundered Crowns): how many turns, does the size feel right for big battles, and do the neck (Ashwing) and the strait (Sundered Crowns) matter?

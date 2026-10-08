@@ -1,5 +1,5 @@
-after        embervale:4  marshal 25.0% (1.00x) | fair 25.0% | length median 24, avg 25.4, at the 60 cap 0.8% | half-map by 10 35.2%, halfway leader won 57.4% | 17s
-after        wyrmland:6   marshal 16.7% (1.00x) | fair 16.7% | length median 40, avg 41.4, at the 60 cap 15.6% | half-map by 10 1.0%, halfway leader won 52.8% | 47s
-after        wyrmland:8   marshal 12.5% (1.00x) | fair 12.5% | length median 48, avg 47.0, at the 60 cap 29.6% | half-map by 10 0.0%, halfway leader won 44.0% | 65s
-after        rootholm:8   marshal 12.5% (1.00x) | fair 12.5% | length median 48, avg 47.9, at the 60 cap 31.0% | half-map by 10 0.0%, halfway leader won 52.3% | 79s
-after        rootholm:10  marshal 10.0% (1.00x) | fair 10.0% | length median 58, avg 52.6, at the 60 cap 45.8% | half-map by 10 0.0%, halfway leader won 41.4% | 102s
+after        embervale:4  marshal 25.0% (1.00x) | fair 25.0% | length median 24, avg 25.4, at the 60 cap 0.8% | half-map by 10 35.2%, halfway leader won 57.4% | 15s
+after        wyrmland:6   marshal 16.7% (1.00x) | fair 16.7% | length median 40, avg 41.4, at the 60 cap 16.2% | half-map by 10 1.0%, halfway leader won 52.0% | 41s
+after        wyrmland:8   marshal 12.5% (1.00x) | fair 12.5% | length median 47, avg 46.9, at the 60 cap 28.6% | half-map by 10 0.0%, halfway leader won 45.8% | 68s
+after        rootholm:8   marshal 12.5% (1.00x) | fair 12.5% | length median 48, avg 47.9, at the 60 cap 31.4% | half-map by 10 0.0%, halfway leader won 52.9% | 85s
+after        rootholm:10  marshal 10.0% (1.00x) | fair 10.0% | length median 58, avg 52.6, at the 60 cap 45.0% | half-map by 10 0.0%, halfway leader won 41.6% | 102s

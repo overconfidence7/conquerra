@@ -1,0 +1,6 @@
+leader   180 runs: median 3, average 3.08, within 2 41%, within 4 85%, unfinished after 15 1, lost 0
+   turns: 1:26 2:48 3:50 4:29 5:13 6:7 8:2 9:2 10:1 13:1 15+:1
+marshal  180 runs: median 3, average 3.01, within 2 41%, within 4 84%, unfinished after 15 1, lost 0
+   turns: 1:29 2:45 3:56 4:21 5:16 6:6 7:3 9:1 10:1 11:1 15+:1
+cleanup  180 runs: median 3, average 3.68, within 2 36%, within 4 73%, unfinished after 15 0, lost 0
+   turns: 1:26 2:39 3:47 4:19 5:19 6:10 7:7 8:4 9:2 10:1 11:1 12:2 14:2 15:1

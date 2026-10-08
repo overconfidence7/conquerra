@@ -142,7 +142,7 @@ export function LeadersPanel({ ctx, view, queue, onShow, onCards }: { ctx: GameC
                 <LeaderPortrait view={view} l={l} size={own && l.kind === "leader" ? 44 : 36} />
                 <span className="leader-who">
                   <b>{l.name}</b> <span className="muted small">{own ? `your ${KIND_NAME[l.kind]}` : `${n.who(l.of)}'s old ${KIND_NAME[l.kind]}`}</span>
-                  <span className="block small">{doingLine(ctx, view, l, command, paused.includes(key), key in instructions ? undefined : leaderNotes[key])}</span>
+                  <span className="block small">{doingLine(ctx, view, l, command, paused.includes(key), leaderNotes[key])}</span>
                   <span className="block small purse-line">
                     Purse <b>{purse}g</b>
                     {taking > 0 && <span className="muted"> ({taking}g coming home)</span>} · {budgetLabel(budget)}
