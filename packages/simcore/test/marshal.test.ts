@@ -10,12 +10,14 @@ const ember: GameContext = { map: { ...maps.embervale!, capitalLayouts: maps.emb
 
 /**
  * Each personality's signature shows up in play (session 17). Four personalities at a table, rotated through the seats
- * over a few fixed games (the games are deterministic, so this can't fail by luck).
+ * over 24 fixed games (the games are deterministic, so this can't fail by luck). (Session 20c: 8 games left the
+ * Conqueror's fronts a turn at the Blitzer's edge once every Marshal pauses and marches far; over 100 games the gap
+ * is as before: 1.21 against 1.27.)
  */
 describe("the Marshal's personalities play differently", () => {
   const kinds = ["turtle", "blitzer", "merchant", "conqueror"] as const;
   const seats: Record<string, SeatStats[]> = {};
-  for (let g = 0; g < 8; g++) {
+  for (let g = 0; g < 24; g++) {
     const order = kinds.map((_, i) => kinds[(i + g) % kinds.length]!);
     const r = playTable(ember, `sig-${g}`, order.map((k) => makeMarshalBot(k)), { maxTurns: 16 });
     r.seats.forEach((s, i) => (seats[order[i]!] ??= []).push(s));

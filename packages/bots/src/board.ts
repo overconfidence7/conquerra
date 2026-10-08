@@ -381,12 +381,21 @@ export function chainOn(
     /** Hops in all, and the spare troops that add Follow through (the Marshal's personalities; else MAX_HOPS and FOLLOW_THROUGH_SPARE). */
     maxHops?: number;
     followThroughSpare?: number;
+    /**
+     * Session 20c: defensible pauses. If the chain would end where `ok` says it can't stay (with what would arrive),
+     * it ends instead at its last hop where it can (at most `back` hops back).
+     */
+    pause?: { back: number; ok: (t: TerritoryId, arriving: number) => boolean };
   } = {},
 ) {
   const { idx, garrison, owned, look, shieldsLeader, me, crossing, expectAt, specsAt } = b;
   const value = pick.value ?? b.valueOf;
   const specs = specsAt(first.from);
   let from = first.to, sent = first.troops, prevFrom = first.attackFrom ?? first.from, last = first.order;
+  /** With pauses, the hops wait here until the chain's end is known (each with where it stood before it). */
+  const held: { order: Order; from: TerritoryId; prevFrom: TerritoryId; sent: number; last: Order }[] = [];
+  const push0 = push;
+  if (pick.pause) push = (o: Order) => held.push({ order: o, from, prevFrom, sent, last });
   for (let hop = 0; hop < (pick.maxHops ?? MAX_HOPS) - 1; hop++) {
     const e = expectAt(prevFrom, from, sent, specs, pick.leader);
     if (!e.captureLikely) break;
@@ -405,12 +414,33 @@ export function chainOn(
       if (!best || v > best.value || (v === best.value && nb < best.to)) best = { to: nb, value: v };
     }
     if (!best) break;
-    last = { id: newId(), kind: "move", from, to: best.to, troops: "all", preset: { id: "onlyIfStronger" }, ...(pick.extra ?? {}) } as Order;
-    push(last);
+    const o = { id: newId(), kind: "move", from, to: best.to, troops: "all", preset: { id: "onlyIfStronger" }, ...(pick.extra ?? {}) } as Order;
+    push(o);
+    last = o;
     targeted.add(best.to);
     prevFrom = from;
     from = best.to;
     sent = avail;
+  }
+  if (pick.pause) {
+    // Where would it stop? Back to the last hop it could hold (no further than `back`); else as planned.
+    const arriving = (f: TerritoryId, t: TerritoryId, n: number) => Math.floor(n - expectAt(f, t, n, specs, pick.leader).expectedAttackerLosses);
+    let keep = held.length;
+    if (!pick.pause.ok(from, arriving(prevFrom, from, sent)))
+      for (let k = held.length - 1; k >= Math.max(0, held.length - pick.pause.back); k--) {
+        const h = held[k]!;
+        // Ending at h.from (the chain before hop k): the first attack's target, or an earlier hop's.
+        if (pick.pause.ok(h.from, arriving(h.prevFrom, h.from, h.sent))) {
+          keep = k;
+          break;
+        }
+      }
+    for (const h of held.slice(keep)) targeted.delete((h.order as { to: TerritoryId }).to);
+    for (const h of held.slice(0, keep)) push0(h.order);
+    if (keep < held.length) {
+      const h = held[keep]!;
+      (from = h.from), (prevFrom = h.prevFrom), (sent = h.sent), (last = h.last);
+    }
   }
   const end = expectAt(prevFrom, from, sent, specs, pick.leader);
   if (end.captureLikely && Math.floor(sent - end.expectedAttackerLosses) - garrison >= (pick.followThroughSpare ?? FOLLOW_THROUGH_SPARE)) {

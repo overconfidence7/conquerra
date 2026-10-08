@@ -109,6 +109,20 @@ export function expandCorridor(b: Board, from: TerritoryId, target: TerritoryId,
   return out;
 }
 
+/**
+ * Clean up works as one (session 20c, Nate: captured leaders work together): with several leaders cleaning up, or one
+ * running the military, the senior is the one running the military, else your own Leader, else the first on Clean up;
+ * the others on Clean up join its mass and sweep (their armies are its to move, their purses pay for its troops).
+ */
+export function cleanUpTeam(list: { l: LeaderRecord; command: Instruction | null }[], me: PlayerId): { senior: LeaderRecord; pooled: LeaderRecord[] } | null {
+  const military = list.filter((x) => x.l.kind === "leader");
+  const cleaners = military.filter((x) => x.command?.kind === "cleanup").map((x) => x.l);
+  const runner = military.find((x) => x.command?.kind === "military")?.l;
+  if (!cleaners.length || (!runner && cleaners.length < 2)) return null;
+  const senior = runner ?? cleaners.find((l) => l.of === me) ?? cleaners[0]!;
+  return { senior, pooled: cleaners.filter((l) => l !== senior) };
+}
+
 /** Work out which leader commands which of our armies (see the overlap rule above). */
 export function claimArmies(b: Board, view: PlayerView, list: { l: LeaderRecord; command: Instruction | null }[]): Claims {
   const armies = new Map<TerritoryId, string>();
@@ -118,6 +132,8 @@ export function claimArmies(b: Board, view: PlayerView, list: { l: LeaderRecord;
     if (b.owned(t) && !armies.has(t) && !yours.has(t)) armies.set(t, key);
   };
   const commandOf = (of: PlayerId) => military.find((x) => x.l.of === of)?.command ?? null;
+  const team = cleanUpTeam(list, view.me.id);
+  const pooled = new Set((team?.pooled ?? []).map(leaderKey));
   // 1. Each military leader's own army: its own if it has a command; your own Leader's is yours if it hasn't. (A
   // captured Leader with no command is just standing there: its army is Run the military's, session 20. They arrive
   // at your capital, and used to freeze its army.) A leader that reports to another: its senior's (session 20).
@@ -127,7 +143,8 @@ export function claimArmies(b: Board, view: PlayerView, list: { l: LeaderRecord;
     if (command?.kind === "report") {
       const senior = commandOf(command.to);
       if (senior && SENIOR.has(senior.kind)) claim(at, leaderKey({ kind: "leader", of: command.to }));
-    } else if (command) claim(at, leaderKey(l));
+    } else if (command && pooled.has(leaderKey(l))) claim(at, leaderKey(team!.senior));
+    else if (command) claim(at, leaderKey(l));
     else if (l.of === view.me.id) yours.add(at);
   }
   // 2. Fronts.
@@ -143,7 +160,8 @@ export function claimArmies(b: Board, view: PlayerView, list: { l: LeaderRecord;
     for (const t of b.mine) if (d.has(t)) claim(t, leaderKey(l));
   }
   // 2c. Clean up (session 20): the leaders on it share out the rivals left, and each takes our land nearest its own.
-  const split = cleanUpSplit(b, view, military);
+  // (Clean up as one team: only its senior takes a share, if it's on Clean up; one running the military has it all.)
+  const split = cleanUpSplit(b, view, team ? military.filter((x) => !pooled.has(leaderKey(x.l))) : military);
   for (const [t, key] of split.land) claim(t, key);
   // 3. The way an Expand leader is taking (until it's there).
   for (const { l, command } of military) {
@@ -221,6 +239,8 @@ export function planLeaders(req: LeadersRequest): LeadersPlan {
   const orders: Order[] = [];
   // Military leaders first (they lead the main armies), then Stewards.
   const ordered = [...list].sort((x, y) => Number(x.l.kind === "steward") - Number(y.l.kind === "steward"));
+  const team = cleanUpTeam(commandsOf(view, req.commands), view.me.id);
+  const pooled = new Set((team?.pooled ?? []).map(leaderKey));
   for (const { l, command } of ordered) {
     const key = leaderKey(l);
     let n = 0;
@@ -230,14 +250,19 @@ export function planLeaders(req: LeadersRequest): LeadersPlan {
     const tagged = (o: Order): Order => ({ ...o, ...tag, ...(o.fallback ? { fallback: tagged(o.fallback) } : {}), ...(o.then ? { then: tagged(o.then) } : {}) }) as Order;
     const own = (os: Order[]) => os.map((o) => ({ ...tagged(o), id: `${prefix}${n++}` }) as Order);
     let mine: Order[] = [];
-    // A leader that reports to another plans nothing itself: its senior directs its army and spends its budget.
-    if (command!.kind === "report") mine = [];
+    // A leader that reports to another plans nothing itself: its senior directs its army and spends its budget. So
+    // does one on Clean up that has joined the team (session 20c): its senior's orders spend its purse.
+    if (command!.kind === "report" || pooled.has(key)) mine = [];
     else if (l.kind === "steward") {
       if (!isMilitaryCommand(command!)) mine = own(planSteward(b, marshalData.leaders.steward, command as StewardCommand, purseOf(l), () => `${prefix}x${n++}`, taken, ctx.rules.game.maxTurnsHard, asked));
     } else if (isMilitaryCommand(command!)) {
       const juniors = commandsOf(view, req.commands).filter((x) => x.l.kind === "leader" && x.command?.kind === "report" && x.command.to === l.of).map((x) => x.l);
-      const planned = planMilitary(ctx, view, b, J, l, command as MilitaryCommand, purseOf(l), claims, thought, lastTurn, juniors);
+      const team0 = team && team.senior === l ? team.pooled : [];
+      const purse = purseOf(l) + team0.reduce((a, j) => a + purseOf(j), 0);
+      const planned = planMilitary(ctx, view, b, J, l, command as MilitaryCommand, purse, claims, thought, lastTurn, [...juniors, ...team0]);
       mine = own(planned.orders);
+      if (team0.length) mine = shareRecruits(mine, [l, ...team0].map((x) => ({ of: x.of, gold: purseOf(x) })), ctx.rules.troops.cost, () => `${prefix}${n++}`);
+      for (const j of team0) if (planned.note) notes[leaderKey(j)] = planned.note;
       if (planned.note) notes[key] = planned.note;
       // Where it builds (a barracks), a Steward doesn't.
       for (const o of mine) if (o.kind === "build") taken.add(o.territory);
@@ -247,6 +272,35 @@ export function planLeaders(req: LeadersRequest): LeadersPlan {
     orders.push(...mine);
   }
   return { orders: respectDeals(ctx, view, orders), memory: thought.memory, written, notes };
+}
+
+/**
+ * A team's troops (session 20c): the senior's recruits are paid from each purse in turn (the senior's first), an order
+ * split where a purse runs out, each part tagged with the leader whose purse pays.
+ */
+function shareRecruits(orders: Order[], purses: { of: PlayerId; gold: number }[], cost: number, newId: () => string): Order[] {
+  const left = purses.map((p) => ({ ...p }));
+  const out: Order[] = [];
+  for (const o of orders) {
+    if (o.kind !== "recruit" || typeof o.count !== "number") {
+      out.push(o);
+      continue;
+    }
+    let count = o.count;
+    let first = true;
+    for (const p of left) {
+      if (count <= 0) break;
+      const n = Math.min(count, Math.floor(p.gold / cost));
+      if (n <= 0) continue;
+      p.gold -= n * cost;
+      count -= n;
+      const fb = o.fallback && o.fallback.kind === "recruit" ? { fallback: { ...o.fallback, id: newId(), count: n, general: p.of } as Order } : {};
+      out.push({ ...o, ...(first ? {} : { id: newId() }), count: n, general: p.of, ...fb } as Order);
+      first = false;
+    }
+    if (first) out.push(o);
+  }
+  return out;
 }
 
 /** One military leader's orders. */

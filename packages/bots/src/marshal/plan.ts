@@ -8,6 +8,7 @@ import { marshalData } from "@conquerra/content";
 import { startingStewardShare } from "@conquerra/engine";
 import { planFinish, remnantRivals } from "./finish";
 import { planSweep, type Goes } from "./sweep";
+import { planHomeSweep } from "./home";
 import { planSteward } from "./steward";
 import { think, type Insight } from "./judge";
 import type { MarshalMemory } from "./memory";
@@ -123,8 +124,10 @@ export function planMarshal(req: MarshalRequest): MarshalPlan {
   let kept = steer ? moves : moves.filter((o) => inScope(scope, sources.get(o.id), view, ctx));
   if (!steer && scope.kind === "realm") {
     // Its own Leader goes with the main attack out of where it stands (session 19, as your leaders' does).
-    const at = judgement.leaderGoes ? leaderAt(view.me, { kind: "leader", of: view.me.id }) : null;
+    const at = judgement.leaderGoes && view.turn >= (judgement.leaderGoesFrom ?? 0) ? leaderAt(view.me, { kind: "leader", of: view.me.id }) : null;
     if (at && !placed.v) kept = carryLeader(kept, at, { withLeader: true }, null);
+    // The leaders it captured go with its armies too (session 20c): on the biggest move out of where each stands.
+    if (judgement.carryCaptured) for (const g of view.me.captured) kept = carryLeader(kept, g.territory, { withGeneral: g.of }, null);
     if (judgement.queue === "armies") kept = armiesFirst(kept, sources);
   }
   // Strikes that are ready before anyone can move (finishing a rival, session 20) go first of all.
@@ -586,6 +589,15 @@ function planMoves(
     finishing.push(...f.targets);
   }
 
+  // ---------- A sweep of our own land before the attack (session 20c, Nate) ----------
+  // A rival army it can see could get behind the front: a few troops step into the land it could take, from land it
+  // can't reach (not while cleaning up: the security blanket does that).
+  let homeOrders: Order[] = [];
+  if (J.homeSweep && !(cleanUp && J.sweep && toFinish.length)) {
+    homeOrders = planHomeSweep(b, free, id, { troops: J.homeSweep.troops, reach: J.sweep?.reach ?? 6, ...(steer ? { commands: (t: TerritoryId) => steer.commands(t) } : {}), atPeace }).orders;
+    if (J.homeSweep.first) for (const o of homeOrders) army(o, (o as { from: TerritoryId }).from, true);
+  }
+
   // ---------- Attacks ----------
   type Plan = { from: TerritoryId; to: TerritoryId; troops: number; score: number; vsPlayer: boolean; breakthrough: boolean; through?: TerritoryId[] };
   const candidates: Plan[] = [];
@@ -651,6 +663,20 @@ function planMoves(
     }
   }
   candidates.sort((a, c) => c.score - a.score || (a.to < c.to ? -1 : 1));
+  const riderAt0 = steer ? (steer.rider?.at ?? null) : me.leader.alive ? leaderAt(me, { kind: "leader", of: me.id }) : null;
+  /** The Leader leads the main effort (session 20c): marching to it and taking the Initiative there, after the opening. */
+  const leaderLeads = !!J.leaderGoes && view.turn >= (J.leaderGoesFrom ?? 0);
+  /** (The attacks it will make, as far as troops allow: for whether the Leader has one.) */
+  const queued0 = (() => {
+    const left0 = new Map(free);
+    const out: Plan[] = [];
+    for (const c of candidates) {
+      if (targeted.has(c.to) || (left0.get(c.from) ?? 0) < c.troops) continue;
+      left0.set(c.from, left0.get(c.from)! - c.troops);
+      out.push(c);
+    }
+    return out;
+  })();
   const attackedFrom = new Set<TerritoryId>();
   const queued: { order: Order; from: TerritoryId; to: TerritoryId; troops: number; attackFrom?: TerritoryId }[] = [];
   for (const c of candidates) {
@@ -663,7 +689,9 @@ function planMoves(
     targeted.add(c.to);
     attackedFrom.add(c.from);
     const o: Order = { id: id(), kind: "move", from: c.from, to: c.to, troops: send, preset: { id: "onlyIfStronger" }, ...(c.through ? { through: c.through } : {}) };
-    if (!usedInitiative && c.vsPlayer && me.leader.alive && me.cooldowns.seize === 0 && (!steer || steer.timing)) {
+    // The Initiative goes with the Leader (session 20c): on an attack from where it stands, if there's one on a rival.
+    const leaderFirst = leaderLeads && riderAt0 && queued0.some((x) => x.from === riderAt0 && x.vsPlayer);
+    if (!usedInitiative && c.vsPlayer && me.leader.alive && me.cooldowns.seize === 0 && (!steer || steer.timing) && (!leaderFirst || c.from === riderAt0)) {
       o.timing = "first";
       usedInitiative = true;
     }
@@ -682,8 +710,12 @@ function planMoves(
         ...(steer.careful ? { safe: (t: TerritoryId, arriving: number) => !steer.careful!(t) || !b.exposed(t, arriving) } : {}),
       }
     : {};
+  // Defensible pauses (session 20c, Nate): a chain doesn't stop where a rival army next to it would throw it out.
+  const pause = J.pause && A.pauses !== false ? { back: J.pause.back, ok: (t: TerritoryId, arriving: number) => !b.exposed(t, arriving) } : undefined;
   for (const first of queued)
-    chainOn(chainB, first, targeted, calm ? Math.max(A.chainMargin, A.calmMargin) : A.chainMargin, id, (o) => army(o, first.from), { maxHops: A.maxHops, followThroughSpare: A.followThroughSpare, ...steered });
+    chainOn(chainB, first, targeted, calm ? Math.max(A.chainMargin, A.calmMargin) : A.chainMargin, id, (o) => army(o, first.from), { maxHops: A.maxHops, followThroughSpare: A.followThroughSpare, ...steered, ...(pause ? { pause } : {}) });
+
+  if (J.homeSweep && !J.homeSweep.first) for (const o of homeOrders) army(o, (o as { from: TerritoryId }).from);
 
   // ---------- Reinforcements ----------
   const goals = new Map<TerritoryId, number>();
@@ -734,9 +766,28 @@ function planMoves(
     distFrom.set(g, d);
   }
   let reserveUsed = false;
+  // The Leader goes with the main effort (session 20c, Nate): standing where nothing attacks this turn, its spare troops
+  // march with it through our own land (as many hops as it takes) to where the biggest attack this turn sets out.
+  const riderAt = steer ? (steer.rider?.at ?? null) : J.leaderGoes && me.leader.alive ? leaderAt(me, { kind: "leader", of: me.id }) : null;
+  const riderGoes: Goes = (steer ? steer.rider?.goes : null) ?? { withLeader: true };
+  const mainFrom = queued.length ? [...queued].sort((x, y) => y.troops - x.troops || (x.from < y.from ? -1 : 1))[0]!.from : null;
   for (const t of mine) {
     const avail = free.get(t)!;
     if (avail <= 0 || attackedFrom.has(t) || t === spearhead) continue;
+    if (t === riderAt && mainFrom && mainFrom !== t && !placed.v && leaderLeads) {
+      const dm = new Map<TerritoryId, number>([[mainFrom, 0]]);
+      const q = [mainFrom];
+      for (let h = 0; h < q.length; h++) for (const nb of idx.neighbors.get(q[h]!)!) if (owned(nb) && commandsHere(nb) && !dm.has(nb)) (dm.set(nb, dm.get(q[h]!)! + 1), q.push(nb));
+      if (dm.has(t)) {
+        for (let at = t; at !== mainFrom; ) {
+          const next = idx.neighbors.get(at)!.filter((nb) => dm.get(nb) === dm.get(at)! - 1).sort()[0]!;
+          army({ id: id(), kind: "move", from: at, to: next, troops: avail, ...riderGoes }, at);
+          at = next;
+        }
+        placed.v = true;
+        continue;
+      }
+    }
     let send = avail;
     if (isFrontier(t) && !chokeHolder(t)) {
       // A front stack shifts sideways only toward a spearhead (it keeps what it needs to hold its own stretch).

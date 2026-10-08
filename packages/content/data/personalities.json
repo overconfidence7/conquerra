@@ -41,6 +41,12 @@
     },
     "finish": { "margin": 1.5, "hops": 12, "sites": 6 },
     "sweep": { "reach": 8, "blanket": 3, "ringUpTo": 3 },
+    "pause": { "back": 1 },
+    "homeSweep": { "troops": 3, "first": false },
+    "leaderGoes": true,
+    "leaderGoesFrom": 15,
+    "march": 20,
+    "carryCaptured": true,
     "counter": { "minArmy": 3, "strike": 1.5, "block": 60 },
     "realm": true,
     "anticipate": { "guard": true, "reach": true, "fort": true }
@@ -113,7 +119,7 @@
         "calmMargin": 1,
         "strikeTurn": 0,
         "oneFront": false,
-        "vulture": 0
+        "vulture": 0, "pauses": false
       },
       "defend": {
         "frontGarrison": 0,

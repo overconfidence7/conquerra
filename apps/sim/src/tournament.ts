@@ -81,6 +81,17 @@ const SEAT_JUDGEMENT: Record<string, Record<string, unknown>> = {
   noanticipate: { anticipate: undefined },
   lean: { crowdedLean: true },
   anticrowd: { anticipate: { guard: true, reach: true, fort: true, crowded: true } },
+  // Session 20c, Part 2's one-change tests.
+  pause1: { pause: { back: 1 } },
+  pause2: { pause: { back: 2 } },
+  pause9: { pause: { back: 9 } },
+  home3f: { homeSweep: { troops: 3, first: true } },
+  home3a: { homeSweep: { troops: 3, first: false } },
+  home2f: { homeSweep: { troops: 2, first: true } },
+  march20: { march: 20 },
+  carry: { carryCaptured: true },
+  lead15: { leaderGoesFrom: 15 },
+  lead1: { leaderGoesFrom: 0 },
 };
 
 export function botFor(kind: string, tweak?: TournamentSpec["tweak"]): Bot {

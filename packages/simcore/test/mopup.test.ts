@@ -135,22 +135,30 @@ describe("the leaders' plans on the mop-up fixtures", () => {
     }
   });
 
-  it("Clean up: the leaders on it share the rivals out between them", () => {
-    let shared = 0;
+  it("Clean up works as one (session 20c): a captured Leader on it joins your Leader's mass, its army moved under your Leader's orders with its portrait, its purse paying for troops", () => {
+    let joined = 0;
     for (const f of fixtures) {
       const p0 = f.state.players.find((x) => x.id === f.top)!;
-      const captured = p0.leaders.find((l) => l.kind === "leader" && l.of !== f.top && p0.captured.some((g) => g.of === l.of));
-      if (!captured) continue;
-      const { plan: p } = plan(f, { [own(f)]: { kind: "cleanup" }, [leaderKey(captured)]: { kind: "cleanup" } });
-      const a = p.notes[own(f)], b = p.notes[leaderKey(captured)];
-      if (a?.kind !== "finishing" || b?.kind !== "finishing") continue;
-      const ra = a.rivals.map((r) => r.rival), rb = b.rivals.map((r) => r.rival);
-      // Two or three rivals, two leaders: neither takes them all.
-      expect(ra.length + rb.length).toBeGreaterThanOrEqual(2);
-      expect(ra.some((r) => !rb.includes(r)) || rb.some((r) => !ra.includes(r))).toBe(true);
-      shared++;
+      const g = p0.captured.find((x) => f.state.territories[x.territory]!.owner === f.top && f.state.territories[x.territory]!.troops > 3);
+      if (!g) continue;
+      const s = structuredClone(f.state);
+      const p = s.players.find((x) => x.id === f.top)!;
+      p.leaders.find((l) => l.kind === "leader" && l.of === p.id)!.purse = 40;
+      p.leaders.find((l) => l.kind === "leader" && l.of === g.of)!.purse = 30;
+      const junior = leaderKey({ kind: "leader", of: g.of });
+      const p1 = planLeaders({ ctx: ctxOf(f), view: viewFor(ctxOf(f), s, f.top), commands: { [own(f)]: { kind: "cleanup" }, [junior]: { kind: "cleanup" } } });
+      // Nothing of its own but the troops its purse pays for (on your Leader's plan); its army moves under your Leader.
+      for (const o of p1.orders.filter((o) => o.general === g.of)) expect(o.kind, f.name).toBe("recruit");
+      expect(p1.orders.filter((o) => o.general === g.of && o.kind === "recruit").reduce((a, o) => a + (o.kind === "recruit" && typeof o.count === "number" ? o.count : 0), 0) * defaultRules.troops.cost, f.name).toBeLessThanOrEqual(30);
+      const out = p1.orders.filter((o) => o.kind === "move" && o.from === g.territory);
+      if (!out.length) continue;
+      expect(out.every((o) => o.general === f.top), f.name).toBe(true);
+      expect(out.some((o) => o.kind === "move" && o.withGeneral === g.of), f.name).toBe(true);
+      // Both say what they're doing: finishing them off.
+      expect(p1.notes[junior]?.kind, f.name).toBe("finishing");
+      joined++;
     }
-    expect(shared).toBeGreaterThan(3);
+    expect(joined).toBeGreaterThan(0);
   });
 
   // ---------- Session 20c: mass and sweep, with the security blanket ----------

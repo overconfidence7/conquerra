@@ -50,6 +50,8 @@ export const Personality = z.object({
     oneFront: z.boolean(),
     /** How much more a rival that just fought (lost troops or land last turn, as it watched) is worth hitting (0: no more). */
     vulture: z.number().min(0),
+    /** Session 20c: false, it never stops a chain short for safer ground (the shared judgement's `pause`): the Blitzer. */
+    pauses: z.boolean().optional(),
   }),
   defend: z.object({
     /** Share of what it takes to hold a frontier territory that stays there (0: the 1-troop garrison; the Captain: 0, except choke points and a threatened capital). */
@@ -154,6 +156,21 @@ export const MarshalJudgement = z.object({
   /** Ending on defensible ground (Nate): a chain prefers to stop where few open borders face it (this much more value with none, half with one). */
   endSafe: z.number().min(0).optional(),
   /**
+   * Session 20c (Nate): defensible pauses. A chain that would stop where a rival army next to it would likely throw it
+   * straight back out stops instead at its last hop that wouldn't be (at most `back` hops back), so no rival army gets
+   * behind its lines.
+   */
+  pause: z.object({ back: z.number().int().min(0) }).optional(),
+  /**
+   * Session 20c (Nate): a sweep of our own land before the attack. When a rival army it can see could reach land of
+   * ours behind the front this turn, transfers from land it can't reach bring `troops` into each such territory
+   * (attacking only if still stronger, so anything that stepped in is taken back), queued `first` (before the
+   * attacks) or after them.
+   */
+  homeSweep: z.object({ troops: z.number().int().min(1), first: z.boolean() }).optional(),
+  /** Session 20c: the leaders it has captured go with its armies (on the biggest move out of where each stands). */
+  carryCaptured: z.boolean().optional(),
+  /**
    * Reading the border (Nate): land in a province it holds whole keeps enough troops to hold against the army next to
    * it (`guard`); its capital and that land draw reinforcements when a rival army two steps away could strike next
    * turn (`reach`); and it builds a fort there when it can afford one (`fort`).
@@ -166,6 +183,12 @@ export const MarshalJudgement = z.object({
   crowdedLean: z.boolean().optional(),
   /** Session 19: its own Leader goes with the main attack out of where it stands, and on through that attack's chain (+20%), as your leaders' does. */
   leaderGoes: z.boolean().optional(),
+  /**
+   * Session 20c (Nate: the bots' Leaders are used): from this turn its Leader also marches to where its biggest attack
+   * sets out and takes the Initiative there. (From turn 1 it made the strongest opener snowball on a crowded table:
+   * half of Embervale by turn 10 in half the games of four Marshals, against a third.)
+   */
+  leaderGoesFrom: z.number().int().min(0).optional(),
   /**
    * Session 19: the order of its queue. Each player's orders run one a round, so every purchase queued before the
    * attacks lets the rivals move first. "armies" queues troops (the Spoils, recruits) first, then the armies' moves,

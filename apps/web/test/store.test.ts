@@ -8,7 +8,8 @@ import { inProcessHost } from "./inProcessHost";
 
 async function playUntilKnockedOut() {
   const g = useGame.getState();
-  g.setLobby({ mapId: "embervale", bots: 2 });
+  // (Three bots: since session 20c two Marshals finish a game so fast that knocking you out often ends it.)
+  g.setLobby({ mapId: "embervale", bots: 3 });
   await useGame.getState().start();
   for (let i = 0; i < 80; i++) {
     const v = useGame.getState().view!;
