@@ -1,6 +1,6 @@
 import { maps } from "@conquerra/content/maps";
 import { defaultRules } from "@conquerra/content";
-import { adjacency, allDistances, exposureOf, fairness, territoryIncome } from "@conquerra/mapgen";
+import { adjacency, allDistances, exposureOf, fairness, fairnessOf, fairnessTable, territoryIncome } from "@conquerra/mapgen";
 import { describe, expect, it } from "vitest";
 import { rankCorrelation, searchFairSeats } from "../src/fairSeats";
 
@@ -12,6 +12,7 @@ import { rankCorrelation, searchFairSeats } from "../src/fairSeats";
 describe("the fair-seat search (session 20b)", () => {
   const map = maps.wyrmland!;
   const dists = allDistances(map), adj = adjacency(map), income = territoryIncome(map, defaultRules);
+  const tbl = fairnessTable(dists, income);
   const players = 6;
   const start = map.capitalLayouts!.find((l) => l.players === players)!.slots;
   const wobble = (t: string) => ([...t].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) % 97) / 970;
@@ -26,7 +27,7 @@ describe("the fair-seat search (session 20b)", () => {
       start,
       slots: map.capitalSlots,
       measure,
-      paperFair: (l) => fairness(l, dists, income).fair,
+      paperFair: (l) => fairnessOf(l.map((t) => tbl.ids.indexOf(t)), tbl).fair,
       dist: (a, b) => dists.get(a)!.get(b) ?? 99,
       exposure: (l, s) => exposureOf(l, dists, adj).exposure[l.indexOf(s)]!,
       budget: 10,

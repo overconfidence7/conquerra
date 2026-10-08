@@ -8,7 +8,7 @@
  */
 import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
-import { adjacency, allDistances, exposureOf, fairness, territoryIncome } from "@conquerra/mapgen";
+import { adjacency, allDistances, exposureOf, fairnessOf, fairnessTable, territoryIncome } from "@conquerra/mapgen";
 import { rankCorrelation, searchFairSeats } from "../src/fairSeats";
 import { runTournament } from "../src/tournament";
 
@@ -20,6 +20,7 @@ const name = (t: string) => map.territories.find((x) => x.id === t)!.name;
 const dists = allDistances(map);
 const adj = adjacency(map);
 const income = territoryIncome(map, defaultRules);
+const tbl = fairnessTable(dists, income);
 
 async function rates(layout: readonly string[], games: number, seed: string): Promise<number[]> {
   const r = await runTournament({ map: id, players, seats: ["marshal"], games, seed, fog: true, diplomacy: true, layout: [...layout] });
@@ -39,7 +40,7 @@ const res = await searchFairSeats({
   start,
   slots: map.capitalSlots,
   measure: (l) => rates(l, Number(gamesArg), "s20bF"),
-  paperFair: (l) => fairness(l, dists, income).fair,
+  paperFair: (l) => fairnessOf(l.map((t) => tbl.ids.indexOf(t)), tbl).fair,
   dist: (a, b) => dists.get(a)!.get(b) ?? 99,
   exposure: (l, s) => exposureOf(l, dists, adj).exposure[l.indexOf(s)]!,
   budget: Number(budgetArg),
