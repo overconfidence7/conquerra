@@ -1024,7 +1024,8 @@ All four parts are done, each committed and pushed. Art batch 4 wasn't imported 
 - **Taps on a 384 px phone** (from your Leader's portrait): Clean up 3, Push back 4, Report to 4 (a Steward's 5); a basic turn is still 6.
 - **Screenshots** (desktop and 384 px phone), `docs/art/screens/s20-*.png`: `command-menu` (Clean up and Push back), `finishing`, `report-to`, `budget` (chips stop at what's left), `enter-hint` (desktop), `sweep-band` (Wyrmland). Script: `apps/web/scripts/s20-shots.mjs`; its save: `make-s20-save.ts`.
 - **Speed** (10 players): one Marshal plans in 1.3 ms a turn (worst 16.5 ms), all ten bots together 10.9 ms (worst 34 ms); limit 50 ms.
-- **Tests and deploy:** see the end of this entry.
+- **Start-up bundle:** 476.6 → 479.3 KB (gzip 146.0 → 146.9).
+- **Tests and deploy:** 872 automated tests pass (the full run twice, as property tests use random inputs); typecheck and the web build pass. Deployed to the private preview (version `219fc605`); the lock check passed. Nate: please check the repo's Actions page for the last commit.
 - **Questions for Nate:** (1) all-in delegating (100% to your Leader) still beats Marshals on Embervale at 1.38× fair: worth more work, or fine since it's a crowded small map? (2) Clean up is offered from 75% of the map: right threshold? (3) Should a finishing Leader turn down truces from a rival it's finishing (today your diplomacy is yours)?
 
 ### Things to test after session 20 (Nate's next play test)
