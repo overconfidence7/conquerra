@@ -102,6 +102,10 @@ export function replayFor(ctx: GameContext, before: GameState, result: TurnResul
       case "generalCaptured":
         if (mine || sees(e.territory)) out.push(e);
         break;
+      // A wall is a big visible structure (session 20b): it shows to anyone who could see any of it.
+      case "walled":
+        if (mine || e.territories.some(sees)) out.push(e);
+        break;
       // Your own general lost always shows, and so does one you took from them; others only where you could see.
       case "generalLost":
         if (mine || e.by === player || sees(e.territory)) out.push(e);
@@ -206,6 +210,8 @@ function placesSeen(e: StepEvent): TerritoryId[] {
       return [e.at, ...e.land.map((l) => l.territory)];
     case "fate":
       return [e.at, ...(e.border ?? []), ...e.land.map((l) => l.territory)];
+    case "walled":
+      return [...e.territories];
     case "missionDone":
     case "governed":
     case "dealStarted":

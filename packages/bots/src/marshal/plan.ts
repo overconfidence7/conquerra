@@ -306,7 +306,7 @@ function planMoves(
         if (!owned(t)) continue;
         const v = seen(t)!;
         const takes = expectBattle(rules, {
-          attackers, attackerSpecialists: seen(x)!.specialists.map((s) => s.type), attackerLeader: seen(x)!.leaders.includes(r), defenders: v.troops, defenderSpecialists: v.specialists.map((s) => s.type),
+          attackers, attackerSpecialists: seen(x)!.specialists.map((s) => s.type), attackerLeader: seen(x)!.leaders.includes(r), defenders: b.wallDefend(t) ?? v.troops, defenderSpecialists: v.specialists.map((s) => s.type),
           defenderLeader: v.leaders.includes(me.id), terrain: idx.byId.get(t)!.terrain, building: v.building, culture: v.culture, border: b.border(x, t), luck: view.settings.luck,
         }).captureLikely;
         if (!takes) continue;
@@ -358,7 +358,7 @@ function planMoves(
     if (region) for (const t of frontier) if (inRegion(t) && idx.neighbors.get(t)!.some((x) => !inRegion(x) && rivalAt(x))) asked.add(t);
     const taken = new Set<TerritoryId>();
     const budget = Math.floor(gold * realmShare);
-    for (const o of planSteward(b, marshalData.leaders.steward, { kind: "realm" }, budget, id, taken, rules.game.maxTurnsHard, asked)) {
+    for (const o of planSteward(b, marshalData.leaders.steward, { kind: "realm" }, budget, id, taken, rules.game.maxTurnsHard, asked, null, B.walls)) {
       spend(o);
       gold -= o.kind === "build" ? rules.buildings[o.building].cost : o.kind === "invest" ? (investCost(rules, seen(o.territory)!.culture) ?? 0) : 0;
       if (o.kind === "recruit" && typeof o.count === "number") gold -= o.count * troopCost;

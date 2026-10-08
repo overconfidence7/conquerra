@@ -197,6 +197,11 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
         .sort((a, b) => a.score - b.score || (a.t < b.t ? -1 : 1))[0]?.t ?? null)
     : null;
 
+  /**
+   * Walls (session 20b): everyone who'd defend `t` if it were attacked now (its troops plus what its wall lends), when
+   * it's part of a wall we can see; null otherwise. The engine shows a wall's shared garrison to anyone who sees part of it.
+   */
+  const wallDefend = (t: TerritoryId): number | null => view.walls?.find((w) => w.territories.includes(t))?.defend[t] ?? null;
   /** Troops needed in `t` so that no rival army we can see next to it is likely to take it (crossings, terrain, fort and Leaders count). */
   const needCache = new Map<TerritoryId, number>();
   const holdNeed = (t: TerritoryId): number => {
@@ -230,7 +235,9 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
         if (takes(mid)) lo = mid + 1;
         else hi = mid;
       }
-      need = Math.max(need, lo);
+      // Our wall's lenders stand with it (session 20b): only the rest has to be here.
+      const lent = owned(t) ? Math.max(0, (wallDefend(t) ?? 0) - v.troops) : 0;
+      need = Math.max(need, lo - lent);
     }
     needCache.set(t, need);
     return need;
@@ -264,7 +271,8 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
       attackers: troops,
       attackerSpecialists: specs,
       attackerLeader: leader,
-      defenders: g.troops + extraDefenders,
+      // A walled target: its whole shared garrison (session 20b).
+      defenders: (wallDefend(to) ?? g.troops) + extraDefenders,
       defenderSpecialists: g.specialists,
       defenderLeader: !!g.owner && g.leaders.includes(g.owner),
       terrain: idx.byId.get(to)!.terrain,
@@ -341,7 +349,7 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
     ctx, view, rules, idx, me, garrison, on, blocked,
     seen, owned, rivalAt, troopsAt, specsAt, mine, border, crossing, isFrontier, frontier, enemyPressure, biggestEnemyNear,
     alive, look0, knownLand, facing, endgame, runaway, shieldsLeader, raider, facesRival, facesRaider, wantsFront,
-    focus, toFocusCapital, spearhead, holdNeed, chokeHolder, capital, capThreatened, look, expectAt, valueOf, needFor, exposed,
+    focus, toFocusCapital, spearhead, holdNeed, chokeHolder, capital, capThreatened, look, expectAt, valueOf, needFor, exposed, wallDefend,
   };
 }
 

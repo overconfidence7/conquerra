@@ -1,7 +1,7 @@
 export * from "./types";
 export { createGame, type NewGameOptions } from "./setup";
 export { resolveTurn, type TurnObserver } from "./resolve";
-export { viewFor, trueDetail, copyDetail, seesPolitically, dealView, type PlayerView, type TerritoryView, type TerritoryDetail, type DealView, type SpyView } from "./view";
+export { viewFor, trueDetail, copyDetail, seesPolitically, dealView, wallViews, type WallView, type PlayerView, type TerritoryView, type TerritoryDetail, type DealView, type SpyView } from "./view";
 export { spreadTroops, buildingSpot, type SpreadLand } from "./spoils";
 export { emptyStats, landHeld } from "./history";
 export { spiesOn, wholeHolder, forgedDetails, spyReports, spiesEndOfTurn } from "./spies";
@@ -48,6 +48,7 @@ export { PRESETS, expandPreset, type PresetInfo } from "./presets";
 export { expectBattle, rollLosses, healerReduction, cultureDefense, terrainDefense, bannerBonus, type BattleExpectation, type BattleInput } from "./combat";
 export { SHARES, amountLabel, fewestToTake, isShare, recruitCount, recruitLabel, troopsFor, type RecruitAmount, type Share, type TroopAmount } from "./amounts";
 export { previewAttack, recruitSitesIn, isRecruitSiteIn, type AttackPlan } from "./preview";
+export { wallRules, qualifiesForWall, isWalled, wallSteps, allWalls, wallLenders, wallDefenders, shareWallLosses, updateWalls, type Lend, type WallRules } from "./walls";
 export { explainFizzle, explainHold, describeFizzledOrder, fizzleIsQuiet, type PlaceNames, type ExplainOptions } from "./explain";
 export {
   incomeFor,

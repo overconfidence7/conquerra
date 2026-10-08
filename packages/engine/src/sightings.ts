@@ -98,6 +98,8 @@ function placesOf(e: StepEvent): TerritoryId[] {
 export function applyLand(b: GameState, land: readonly LandChange[]) {
   for (const { territory, ...change } of land) {
     const t = b.territories[territory]!;
+    // Land that changes hands leaves its wall (session 20b).
+    if ("owner" in change && change.owner !== t.owner) delete t.walled;
     if (change.specialists) change.specialists = change.specialists.map((x) => ({ ...x }));
     if (change.construction) change.construction = { ...change.construction };
     Object.assign(t, change);
@@ -286,9 +288,16 @@ export class TurnVision {
         const specs = take(e.from, e.attackers.specialists);
         from.troops -= e.attackers.troops;
         const survivors = e.attackers.troops - e.result.attackerLosses;
-        to.troops -= e.result.defenderLosses;
+        // A wall's lenders lost their share (session 20b); the rest fell on the attacked land.
+        let lentLost = 0;
+        for (const l of e.wall?.lent ?? []) {
+          terr(l.territory).troops -= l.lost;
+          lentLost += l.lost;
+        }
+        to.troops -= e.result.defenderLosses - lentLost;
         if (e.captured) {
           to.owner = e.player;
+          delete to.walled;
           to.troops = survivors;
           to.culture = e.keptCulture ?? to.culture;
           to.specialists = specs;
@@ -304,6 +313,9 @@ export class TurnVision {
         }
         break;
       }
+      case "walled":
+        for (const t of e.territories) terr(t).walled = true;
+        break;
       case "leaderKilled":
         player(e.player).leader = { alive: false, territory: null };
         break;
@@ -327,6 +339,7 @@ export class TurnVision {
         if (e.flipped) {
           const t = terr(e.target);
           t.owner = null;
+          delete t.walled;
           t.troops = e.rebels!;
           t.culture = 0;
           t.specialists = [];
@@ -405,7 +418,7 @@ export class TurnVision {
 /** What a player remembers of a territory they see on the board right now. */
 export function sightingOf(board: GameState, t: TerritoryId, turn: number): LastSeen {
   const terr = board.territories[t]!;
-  return { owner: terr.owner, troops: terr.troops, building: terr.building, turn };
+  return { owner: terr.owner, troops: terr.troops, building: terr.building, turn, ...(terr.walled ? { walled: true as const } : {}) };
 }
 
 /**

@@ -1,7 +1,7 @@
 import type { Line } from "@conquerra/content";
 import { landFrame, toMap, type Camera, type Insets } from "../../map/camera";
 import { houseOf } from "../../map/houses";
-import { hitTester } from "../../map/shapes";
+import { groupOutlines, hitTester } from "../../map/shapes";
 import { territoryStatus } from "../../map/status";
 import { typicalTerritorySize } from "../../map/zoom";
 import { attachInput, CameraController } from "../controls";
@@ -99,6 +99,15 @@ class SvgMapRenderer implements MapRenderer {
     if (area.size)
       for (const t of this.opts.ctx.map.territories)
         if (area.has(t.province)) el("path", { d: path(g.territories.find((x) => x.id === t.id)!.rings), fill: "none", stroke: "#e3c77e", "stroke-width": 2 * k, "stroke-dasharray": "5 3" }, this.dynamic);
+    // Walls (session 20b): a stone ring with a band of the House colour round each wall you can see part of.
+    const walled = new Map<string, string>();
+    (view.walls ?? []).forEach((w, i) => w.territories.forEach((t) => walled.set(t, `w${i}`)));
+    if (walled.size)
+      for (const [grp, lines] of groupOutlines(g, (id) => walled.get(id) ?? null)) {
+        const owner = view.walls![Number(grp.slice(1))]!.owner;
+        el("path", { d: path(lines, false), fill: "none", stroke: "#1b1206", "stroke-width": 7 * k, "stroke-dasharray": `${6 * k} ${3 * k}` }, this.dynamic);
+        el("path", { d: path(lines, false), fill: "none", stroke: houseOf(view, owner).color, "stroke-width": 3 * k }, this.dynamic);
+      }
     if (selected) el("path", { d: path(g.territories.find((t) => t.id === selected)!.rings), fill: "none", stroke: "#e3c77e", "stroke-width": 5 * k }, this.dynamic);
     // Truce borders (session 14), where you can see them.
     for (const tr of scene.truces ?? [])

@@ -90,6 +90,42 @@ export function fairnessOf(slots: readonly number[], tbl: FairnessTable): Fairne
   };
 }
 
+/**
+ * Session 20b: how exposed each capital spot of a layout is, beyond distance and gold (the paper check). For each spot:
+ *  - `room`: the land closer to it than to any rival capital (within 4 borders): what it can take without a fight;
+ *  - `front`: the territories just outside that land (the borders it must hold);
+ *  - `rivals`: rival capitals within 4 borders;
+ *  - `exposure`: (front + 3 x rivals) per territory of room. Lower is safer.
+ * The layout passes when every spot's exposure is within `band` times the safest one's.
+ */
+export interface Exposure {
+  room: number[];
+  front: number[];
+  rivals: number[];
+  exposure: number[];
+  fair: boolean;
+}
+
+export function exposureOf(slots: readonly string[], dists: Map<string, Map<string, number>>, adj: Map<string, string[]>, band = 2): Exposure {
+  const ids = [...dists.keys()];
+  const home = slots.map(() => new Set<string>());
+  for (const t of ids) {
+    const d = slots.map((s) => dists.get(s)!.get(t) ?? 99);
+    const best = Math.min(...d);
+    if (best > 4 || d.filter((x) => x === best).length > 1) continue;
+    home[d.indexOf(best)]!.add(t);
+  }
+  const room = home.map((h) => h.size);
+  const front = home.map((h) => {
+    const out = new Set<string>();
+    for (const t of h) for (const n of adj.get(t) ?? []) if (!h.has(n)) out.add(n);
+    return out.size;
+  });
+  const rivals = slots.map((s) => slots.filter((o) => o !== s && (dists.get(s)!.get(o) ?? 99) <= 4).length);
+  const exposure = slots.map((_, i) => (front[i]! + 3 * rivals[i]!) / Math.max(1, room[i]!));
+  return { room, front, rivals, exposure, fair: Math.max(...exposure) <= band * Math.max(1e-9, Math.min(...exposure)) };
+}
+
 /** All-pairs border distances. */
 export function allDistances(map: MapDef): Map<string, Map<string, number>> {
   const adj = adjacency(map);

@@ -94,6 +94,13 @@ const SEAT_JUDGEMENT: Record<string, Record<string, unknown>> = {
   lead1: { leaderGoesFrom: 0 },
 };
 
+/** "+walls<N>": walls finished with up to N gold left; "+nowalls": never (session 20b). */
+const wallsOpt = (opts: readonly string[]): number | undefined => {
+  if (opts.includes("nowalls")) return 0;
+  const o = opts.find((x) => /^walls\d+$/.test(x));
+  return o ? Number(o.slice(5)) : undefined;
+};
+
 export function botFor(kind: string, tweak?: TournamentSpec["tweak"]): Bot {
   const [head, ...opts] = kind.replace(/^sighted:/, "").split("+");
   const k = head!;
@@ -106,6 +113,8 @@ export function botFor(kind: string, tweak?: TournamentSpec["tweak"]): Bot {
       ...(opts.includes("stewfirst") ? { stewardFirst: true } : {}),
       ...(opts.includes("cleanup") ? { cleanUp: true } : {}),
       ...(opts.includes("report") ? { report: true } : {}),
+      // Session 20b: "+walls39" (its Steward walls land worth holding with up to 39 gold left), "+nowalls" (never).
+      ...(wallsOpt(opts) !== undefined ? { walls: wallsOpt(opts) } : {}),
       // Session 20's one-change tests: its leaders plan with a judgement change (see SEAT_JUDGEMENT).
       ...(opts.some((o) => SEAT_JUDGEMENT[o]) ? { judgement: opts.reduce((J, o) => (SEAT_JUDGEMENT[o] ? MarshalJudgement.parse(merge(J, SEAT_JUDGEMENT[o])) : J), marshalData.judgement) } : {}),
     });
@@ -125,7 +134,11 @@ export function botFor(kind: string, tweak?: TournamentSpec["tweak"]): Bot {
       const [steps, reach, turns, opening, crowded = 12] = gd.slice(6).split("-").map(Number) as [number, number, number, number, number?];
       J = { ...J, capitalGuard: { steps, reach, turns, opening, crowded } };
     }
-    const P = opts.includes("style") ? { ...marshalData.leaders.style, id } : Personality.parse(merge(merge(personality(id), tweak?.personalities?.["*"]), tweak?.personalities?.[id]));
+    let P = opts.includes("style") ? { ...marshalData.leaders.style, id } : Personality.parse(merge(merge(personality(id), tweak?.personalities?.["*"]), tweak?.personalities?.[id]));
+    // Session 20b: "+walls39" / "+nowalls" (its wall building), and "+realmcrowded" (it builds like the Steward on a crowded table too).
+    const w = wallsOpt(opts);
+    if (w !== undefined) P = { ...P, build: { ...P.build, walls: w } };
+    if (opts.includes("realmcrowded")) J = { ...J, realmCrowded: true };
     return { ...makeMarshalBot(P as Personality, J), id: kind.replace(/^sighted:/, "") };
   }
   if (k === "captain") return makeCaptainBot();

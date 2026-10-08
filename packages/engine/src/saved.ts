@@ -6,7 +6,8 @@ import { resolveTurn } from "./resolve";
 import { seedRng } from "./rng";
 import { emptyStats, landHeld } from "./history";
 import { createGame, type NewGameOptions } from "./setup";
-import type { GameContext, GameState, OrdersByPlayer, PlayerId, PlayerState, TurnResult } from "./types";
+import type { GameContext, GameState, OrdersByPlayer, PlayerId, PlayerState, TerritoryState, TurnResult } from "./types";
+import { qualifiesForWall } from "./walls";
 
 /**
  * Saved games (session 13).
@@ -74,7 +75,7 @@ export interface SavedGameV1 {
 }
 
 /** The game state's current shape. Bump it (and add a migration below) whenever GameState changes. */
-export const STATE_VERSION: GameState["version"] = 11;
+export const STATE_VERSION: GameState["version"] = 12;
 
 /**
  * How to bring an older game state up to date, one version at a time: `STATE_MIGRATIONS[n]` turns a version-n
@@ -187,6 +188,16 @@ export const STATE_MIGRATIONS: Record<number, (s: Record<string, unknown>, you?:
         return out;
       }),
     })),
+  }),
+  /**
+   * 11 -> 12 (session 20b): walls. Land in an older game that already has culture 5 and a fort is walled straight
+   * away, as it would have been at the end of the turn it was finished. (Only land that's walled carries the mark.)
+   */
+  11: (s) => ({
+    ...s,
+    territories: Object.fromEntries(
+      Object.entries(s.territories as Record<string, TerritoryState>).map(([id, t]) => [id, qualifiesForWall(defaultRules, t) ? { ...t, walled: true } : t]),
+    ),
   }),
 };
 

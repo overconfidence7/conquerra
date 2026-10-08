@@ -29,7 +29,8 @@ export function previewAttack(ctx: GameContext, view: PlayerView, a: AttackPlan)
     attackers: a.troops,
     attackerSpecialists: a.specialists ?? [],
     attackerLeader: !!a.withLeader,
-    defenders: target.troops,
+    // A walled target: everyone its wall would send (the wall and its garrison are visible to anyone who sees part of it).
+    defenders: view.walls?.find((w) => w.territories.includes(a.to))?.defend[a.to] ?? target.troops,
     defenderSpecialists: target.specialists.map((s) => s.type),
     defenderLeader: target.owner !== null && target.leaders.includes(target.owner),
     terrain: def.terrain,

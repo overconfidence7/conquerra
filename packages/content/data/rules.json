@@ -128,6 +128,14 @@
     "maxProtection": 0.75,
     "defensePerLevel": 0.06
   },
+  "walls": {
+    "on": true,
+    "culture": 5,
+    "needsFort": true,
+    "reach": 3,
+    "lendAll": true,
+    "oneBattleATurn": true
+  },
   "economy": {
     "startGold": 20,
     "capitalIncome": 8,

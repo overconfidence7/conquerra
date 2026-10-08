@@ -5,6 +5,7 @@ import { FIGURE_SPRITES } from "@conquerra/art";
 import { hexNum, houseOf, NEUTRAL_HOUSE } from "../../map/houses";
 import { groupOutlines, quadPoint } from "../../map/shapes";
 import { territoryStatus, type TerritoryStatus } from "../../map/status";
+import { wallFootprints } from "../../map/walls";
 import type { DetailMix } from "../../map/zoom";
 import type { MapScene } from "../types";
 import type { TextureBank } from "./bank";
@@ -76,6 +77,12 @@ export class InfoLayer {
   readonly lines = new Graphics();
   readonly glow = new Graphics();
   readonly realmLayer = new RealmLayer();
+  /** Walls (session 20b): a ring round each wall's whole footprint in its House's colour, battlements from Mid in. */
+  readonly walls = new Graphics();
+  private wallRings: { color: number; outlines: Line[]; remembered: boolean }[] = [];
+  private wallKey = "";
+  /** Battlements show from Mid zoom in (the share of Mid/Near detail, 0 at Far). */
+  private battlements = 0;
   readonly sites = new Container();
   readonly figures = new Container();
   readonly arrows = new Graphics();
@@ -143,11 +150,49 @@ export class InfoLayer {
       this.rememberedKey = rememberedKey;
       this.realmLayer.setRemembered(remembered.map(([id, s]) => ({ house: houseOf(view, s.owner), rings: this.rings.get(id)! })));
     }
+    this.setWalls(view);
     this.realmLayer.setSelected(scene.selected ? (this.rings.get(scene.selected) ?? null) : null);
     this.realmLayer.visible = !tactical;
     this.drawFills();
     this.drawSites();
     this.drawnScale = 0; // lines and arrows redraw at the next zoom update
+  }
+
+  /**
+   * The walls you can see (view.walls: anyone who sees part of a wall sees all of it), each outlined as one ring round
+   * its footprint; walls you only remember (in the fog), greyed like a remembered building. Rebuilt only when they change.
+   */
+  private setWalls(view: MapScene["view"]) {
+    const walls = wallFootprints(view, this.map.territories.map((t) => t.id));
+    const key = walls.map((w) => `${w.key}=${houseOf(view, w.owner).color}:${w.territories.join(",")}`).join("|");
+    if (key === this.wallKey) return;
+    this.wallKey = key;
+    const groupOf = new Map(walls.flatMap((w) => w.territories.map((t) => [t, w.key] as const)));
+    const outlines = groupOf.size ? groupOutlines(this.map.geometry!, (id) => groupOf.get(id) ?? null) : new Map<string, Line[]>();
+    this.wallRings = walls.map((w) => ({ color: w.remembered ? 0x8a8a8a : hexNum(houseOf(view, w.owner).color), remembered: w.remembered, outlines: outlines.get(w.key) ?? [] }));
+  }
+
+  /** The walls, in screen pixels: dark stone under a band of the House colour, merlons along it from Mid in. */
+  private drawWalls(px: number) {
+    const W = this.walls;
+    W.clear();
+    if (this.isTactical) {
+      for (const w of this.wallRings) for (const l of w.outlines) ring(W, l, false).stroke({ width: 4 * px, color: w.remembered ? 0x6a6a6a : INK, alpha: 0.95, join: "miter", cap: "butt" });
+      return;
+    }
+    for (const w of this.wallRings) {
+      const a = w.remembered ? 0.6 : 1;
+      for (const l of w.outlines) {
+        ring(W, l, false).stroke({ width: 9 * px, color: INK, alpha: 0.75 * a, join: "miter", cap: "butt" });
+        ring(W, l, false).stroke({ width: 6 * px, color: w.remembered ? 0x9a9a9a : 0xd8cfb8, alpha: a, join: "miter", cap: "butt" });
+        ring(W, l, false).stroke({ width: 3 * px, color: w.color, alpha: a, join: "miter", cap: "butt" });
+        // Battlements (Mid and Near): square merlons of stone along the wall, outlined in ink.
+        if (this.battlements > 0.02) {
+          stitches(W, l, 6 * px, 5 * px, 10 * px, INK, 0.8 * a * this.battlements);
+          stitches(W, l, 6 * px, 5 * px, 7 * px, w.remembered ? 0x9a9a9a : 0xe6dcc2, a * this.battlements);
+        }
+      }
+    }
   }
 
   /** The flat Tactical map. (Illustrated, the House tint is painted by the world layer's shader: see onRealms.) */
@@ -272,6 +317,9 @@ export class InfoLayer {
     this.labels.places.alpha = Math.min(1, 0.4 + mix.placeNames);
     this.figures.visible = !this.isTactical && mix.nearDetail > 0.02;
     this.figures.alpha = mix.nearDetail;
+    // Walls' battlements show from Mid in (where the icons do).
+    const merlons = Math.round(mix.icons * 4) / 4;
+    if (merlons !== this.battlements) (this.battlements = merlons), (this.drawnScale = 0);
     if (this.scene && (this.drawnScale === 0 || Math.abs(Math.log(scale / this.drawnScale)) > 0.08)) {
       this.drawnScale = scale;
       this.drawLines(scale);
@@ -348,6 +396,7 @@ export class InfoLayer {
     // Realms: in Tactical, a dark line round everything each House holds. Illustrated: the House bands (realms.ts).
     if (this.isTactical) for (const outlines of this.realms.values()) for (const l of outlines) ring(G, l, false).stroke({ width: 2.6 * px, color: INK, alpha: 0.9, join: "round" });
     else this.realmLayer.draw(px);
+    this.drawWalls(px);
     // Provinces on demand (session 16): the province of the territory you tapped, lit round its whole border with a
     // bright band (a soft light halo, a dark rule, a warm white core), so it reads over every House colour, the
     // gilded province borders and the sea.

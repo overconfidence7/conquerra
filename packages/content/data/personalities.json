@@ -82,7 +82,8 @@
         "spies": 1,
         "spiesFrom": 6,
         "spyReserve": 12,
-        "realm": 1
+        "realm": 1,
+        "walls": 18
       },
       "deals": {
         "truce": 1,
@@ -138,7 +139,8 @@
         "spies": 0,
         "spiesFrom": 99,
         "spyReserve": 0,
-        "realm": 0.25
+        "realm": 0.25,
+        "walls": 0
       },
       "deals": {
         "truce": -1,
@@ -194,7 +196,8 @@
         "spies": 1,
         "spiesFrom": 5,
         "spyReserve": 10,
-        "realm": 1.5
+        "realm": 1.5,
+        "walls": 39
       },
       "deals": {
         "truce": 3,
@@ -250,7 +253,8 @@
         "spies": 3,
         "spiesFrom": 3,
         "spyReserve": 8,
-        "realm": 1
+        "realm": 1,
+        "walls": 18
       },
       "deals": {
         "truce": 2,
@@ -306,7 +310,8 @@
         "spies": 2,
         "spiesFrom": 4,
         "spyReserve": 10,
-        "realm": 0.75
+        "realm": 0.75,
+        "walls": 10
       },
       "deals": {
         "truce": 0,
@@ -362,7 +367,8 @@
         "spies": 1,
         "spiesFrom": 6,
         "spyReserve": 12,
-        "realm": 1.5
+        "realm": 1.5,
+        "walls": 24
       },
       "deals": {
         "truce": 2,
@@ -456,7 +462,8 @@
       "cultureFights": 4,
       "exposedWorth": 0.5,
       "culturePays": 0.3,
-      "styles": { "turtle": { "fortThreat": 3, "culture": 2 }, "merchant": { "culturePays": 0.3 } }
+      "walls": { "near": 18, "each": 1 },
+      "styles": { "turtle": { "fortThreat": 3, "culture": 2, "walls": 39 }, "merchant": { "culturePays": 0.3, "walls": 18 } }
     }
   }
 }

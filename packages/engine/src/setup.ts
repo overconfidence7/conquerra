@@ -119,7 +119,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   players.sort((a, b) => opts.players.findIndex((p) => p.id === a.id) - opts.players.findIndex((p) => p.id === b.id));
 
   const state: GameState = {
-    version: 11,
+    version: 12,
     gameId: opts.gameId,
     mapId: map.id,
     turn: 1,

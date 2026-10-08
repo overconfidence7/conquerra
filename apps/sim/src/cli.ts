@@ -24,7 +24,7 @@ import { runGame, type GameSummary } from "./runGame";
  *                                              turtle, schemer, opportunist, merchant), or "marshal" (dealt from the seed)
  * Options: --fallen on|off (knocked-out seats play world events; on by default), --rules a.b=1,c.d=2 (any rule number),
  *          --spoils on|off, --fate on|off (the card decks; both on by default), --diplomacy on|off (deals; on by default),
- *          --spies on|off (spies; on by default),
+ *          --spies on|off (spies; on by default), --walls on|off (walls, session 20b; on by default),
  *          --reasons N (print N of the bots' reason lines from the games),
  *          --map embervale|greatmarch (default: Embervale up to 6 players, Greatmarch above),
  *          --luck 0.3, --mode classic|conquest, --turn-limit N, --fog on|off, --seed prefix,
@@ -94,6 +94,8 @@ for (const kv of arg("rules", "").split(",").filter(Boolean)) {
   if (!(keys[keys.length - 1]! in o)) throw new Error(`No rule ${path}`);
   o[keys[keys.length - 1]!] = Number(value);
 }
+/** Walls (session 20b): --walls off to compare (on by default); --rules walls.reach=2 etc. for its limits. */
+if (rules.walls) rules.walls.on = arg("walls", "on") !== "off";
 const tuned = arg("culture-defense", "") || arg("culture-costs", "") ? `, culture +${Math.round(rules.culture.defensePerLevel * 100)}%/level costing ${rules.culture.investCost.join("/")}` : "";
 
 function ctxFor(players: number): GameContext {

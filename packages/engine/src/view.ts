@@ -3,6 +3,7 @@ import { indexMap } from "./mapIndex";
 import { coveredBorders, isParty, passageFor } from "./diplomacy";
 import type { Bond, Deal, DealKind, DealRecord, DealTerms, GameContext, GameSettings, GameState, PlayerId, PlayerState, SpyStatus, TerritoryDetail, TerritoryId, WorldEventKind } from "./types";
 import { visionFor, type VisionSource } from "./vision";
+import { allWalls, wallLenders } from "./walls";
 
 export type { TerritoryDetail };
 
@@ -68,12 +69,46 @@ export interface PlayerView {
   record: DealRecord[];
   /** Your own spies (session 15). Never anyone else's. */
   spies: SpyView[];
+  /** The walls you can see part of (session 20b), with their shared garrisons. Absent when there are none. */
+  walls?: WallView[];
   /**
    * The game's record (session 16): land each House held turn by turn, and what each did. Only once the game is over
    * (everything is revealed then); during play nobody is shown land counts.
    */
   history?: GameState["history"];
   stats?: GameState["stats"];
+}
+
+/**
+ * A wall as one player sees it (session 20b). A wall is a big visible structure: anyone who sees any part of it sees
+ * all of it and its shared garrison, so the odds preview stays honest ("guaranteed" always wins). Under full fog you
+ * see nothing of it (only what you remember).
+ */
+export interface WallView {
+  owner: PlayerId;
+  /** Every territory of the wall (in map order). */
+  territories: TerritoryId[];
+  /** For each of its territories: everyone who'd defend it if it were attacked now (its troops plus what's lent). */
+  defend: Record<TerritoryId, number>;
+  /** For each: the territories that would lend it troops now (nearest first). */
+  with: Record<TerritoryId, TerritoryId[]>;
+}
+
+/** The walls `sees` lets a player see (any part of each), with their shared garrisons. */
+export function wallViews(ctx: GameContext, state: GameState, sees: (t: TerritoryId) => boolean): WallView[] {
+  const out: WallView[] = [];
+  for (const w of allWalls(ctx, state.territories)) {
+    if (!w.territories.some(sees)) continue;
+    const defend: Record<TerritoryId, number> = {};
+    const lenders: Record<TerritoryId, TerritoryId[]> = {};
+    for (const t of w.territories) {
+      const lend = wallLenders(ctx, state.territories, t);
+      defend[t] = state.territories[t]!.troops + lend.reduce((a, l) => a + l.troops, 0);
+      lenders[t] = lend.map((l) => l.territory);
+    }
+    out.push({ owner: w.owner, territories: [...w.territories], defend, with: lenders });
+  }
+  return out;
 }
 
 /** One of your own spies, as you see it (nobody else ever does). A fooled spy looks exactly like one that got in. */
@@ -202,9 +237,13 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
     deals: (state.deals ?? []).map((d) => dealView(ctx, state, d, player, (t) => !state.settings.fog || political || vision.has(t))),
     record: (state.record ?? []).filter((r) => r.how === "broken" || isParty(r, player)).map((r) => ({ ...r })),
     spies: (state.spies ?? []).filter((x) => x.owner === player).map((x) => ({ id: x.id, at: x.at, target: x.target, recalled: x.recalled, status: x.status })),
+    // (The Fallen's political map shows no troops, so no garrisons either.)
+    ...walls(political ? [] : wallViews(ctx, state, (t) => !state.settings.fog || vision.has(t))),
     ...(state.winner ? { history: JSON.parse(JSON.stringify(state.history ?? [])) as GameState["history"], stats: JSON.parse(JSON.stringify(state.stats ?? {})) as GameState["stats"] } : {}),
   };
 }
+
+const walls = (list: WallView[]) => (list.length ? { walls: list } : {});
 
 /** A territory detail, copied (same shape and order as `trueDetail`). */
 export const copyDetail = (d: TerritoryDetail): TerritoryDetail => ({

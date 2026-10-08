@@ -54,6 +54,50 @@ describe("the odds preview keeps its promises", () => {
     );
   });
 
+  it("guaranteed always captures and impossible never does at a wall too (session 20b: the preview sees the shared garrison)", () => {
+    // c and d are p2's, both walled (culture 5 and a fort); d lends its spare troops when c is attacked.
+    const walled = (o: { attackers: number; defenders: number; lender: number; luck: number; atkSpecs: SpecialistType[]; leader: boolean; seed: string }) => {
+      ctx.map.territories.find((t) => t.id === "c")!.terrain = "plains";
+      const s = lineGame(ctx, { luck: o.luck }, o.seed);
+      board(s, {
+        a: ["p1", 1],
+        b: ["p1", o.attackers + 1, o.atkSpecs],
+        c: ["p2", o.defenders, [], { culture: 5, building: "fort" }],
+        d: ["p2", o.lender, [], { culture: 5, building: "fort" }],
+        e: ["p2", 1],
+      });
+      s.territories.c!.walled = true;
+      s.territories.d!.walled = true;
+      s.players.find((p) => p.id === "p1")!.leader.territory = o.leader ? "b" : "a";
+      const view = viewFor(ctx, s, "p1");
+      const preview = previewAttack(ctx, view, { from: "b", to: "c", troops: o.attackers, specialists: o.atkSpecs, withLeader: o.leader })!;
+      const { events } = resolveTurn(ctx, s, { p1: [mv("b", "c", o.attackers, { withLeader: o.leader })] });
+      return { preview, fight: find(events, "battle")!, view };
+    };
+    fc.assert(
+      fc.property(
+        fc.record({
+          attackers: fc.integer({ min: 1, max: 120 }),
+          defenders: fc.integer({ min: 1, max: 30 }),
+          lender: fc.integer({ min: 1, max: 30 }),
+          luck: fc.constantFrom(0, 0.1, 0.3, 0.5, 0.75, 1),
+          atkSpecs: fc.subarray(["siege", "healers"] as SpecialistType[], { maxLength: 2 }),
+          leader: fc.boolean(),
+          seed: fc.string({ minLength: 1, maxLength: 6 }),
+        }),
+        (o) => {
+          const { preview, fight, view } = walled(o);
+          // The preview counts the lender (it's in view: p1 sees c, so it sees the whole wall).
+          expect(view.walls?.[0]?.defend.c).toBe(o.defenders + o.lender - 1);
+          expect(fight.defenders.troops).toBe(o.defenders + o.lender - 1);
+          if (preview.captureGuaranteed) expect(fight.captured).toBe(true);
+          if (preview.captureImpossible) expect(fight.captured).toBe(false);
+        },
+      ),
+      { numRuns: 1000 },
+    );
+  });
+
   // Every lobby setting (None, Low, Normal, High) and more. At 100% luck a side's losses can roll all the way down
   // to 0, so the preview says "likely" there, not "guaranteed" (the property test above still covers it).
   it("35 against 1 always wins, at every luck level", () => {

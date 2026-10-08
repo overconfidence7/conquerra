@@ -2,6 +2,7 @@ import type { BuildingType } from "@conquerra/content";
 import { indexMap } from "./mapIndex";
 import type { GameContext, GameState, PlayerId, TerritoryId } from "./types";
 import { visionFor } from "./vision";
+import { isWalled } from "./walls";
 
 /**
  * "Last seen" intel (design v0.2 §8): what a player remembers about a territory they saw before but can't see now.
@@ -17,6 +18,8 @@ export interface LastSeen {
   political?: boolean;
   /** On the political map: whose capital it is (events can't touch capitals). */
   capitalOf?: PlayerId | null;
+  /** It was walled when seen (session 20b): a remembered wall, greyed like a remembered building. */
+  walled?: true;
 }
 
 /** Each player's memory, kept in the game state: player -> territory -> what they last saw there. */
@@ -29,7 +32,7 @@ export type Intel = Record<PlayerId, Record<TerritoryId, LastSeen>>;
  */
 export function recordSighting(state: GameState, player: PlayerId, territory: TerritoryId, seen: LastSeen): void {
   const mem = (state.intel[player] ??= {});
-  mem[territory] = { owner: seen.owner, troops: seen.troops, building: seen.building, turn: seen.turn };
+  mem[territory] = { owner: seen.owner, troops: seen.troops, building: seen.building, turn: seen.turn, ...(seen.walled ? { walled: true as const } : {}) };
 }
 
 /**
@@ -46,7 +49,7 @@ export function updateIntel(ctx: GameContext, state: GameState): void {
     for (const id of idx.ids) {
       if (!vision.has(id)) continue;
       const t = state.territories[id]!;
-      recordSighting(state, p.id, id, { owner: t.owner, troops: t.troops, building: t.building, turn: state.turn });
+      recordSighting(state, p.id, id, { owner: t.owner, troops: t.troops, building: t.building, turn: state.turn, ...(isWalled(ctx.rules, t) ? { walled: true as const } : {}) });
     }
   }
 }

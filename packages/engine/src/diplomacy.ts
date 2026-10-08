@@ -370,6 +370,7 @@ function handOver(h: DiplomacyHost, giver: PlayerId, receiver: PlayerId, land: r
     here.owner = receiver;
     here.troops = 1;
     here.culture = cultureKept(ctx.rules, here.culture);
+    delete here.walled;
     here.specialists = [];
     for (const x of [t, back, from]) note(x);
   }

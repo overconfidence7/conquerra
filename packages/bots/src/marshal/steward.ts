@@ -1,5 +1,5 @@
 import type { LeaderPlanning } from "@conquerra/content";
-import { investCost, isRecruitSiteIn, type LeaderStyle, type Order, type PlayerId, type StewardCommand, type TerritoryId } from "@conquerra/engine";
+import { investCost, isRecruitSiteIn, wallRules, type LeaderStyle, type Order, type PlayerId, type StewardCommand, type TerritoryId } from "@conquerra/engine";
 import type { Board } from "../board";
 
 /**
@@ -13,6 +13,9 @@ import type { Board } from "../board";
  *    recruited where the border is short and marched in.
  *  - Raise culture here: culture across one province, where it protects first, then the lowest.
  *  - Grow the economy: markets and culture, whichever pays back fastest, on land that's safe.
+ *  - Walls (session 20b): Run the realm and Build up this province finish a wall (culture to the top and a fort) where a
+ *    territory worth holding (the capital, a choke point, a province held whole, or next to a wall of ours) is nearly
+ *    there, ahead of markets (the Turtle from scratch; the Merchant after its markets).
  *  - Run the realm: urgent forts first (a threatened capital, choke points facing an army), markets where they pay, a
  *    barracks where there's nowhere to recruit, and a level of culture a turn where it protects (the capital and choke
  *    points facing an army). Culture bought only for its income doesn't pay back under today's rules (session 18's
@@ -42,6 +45,8 @@ export function planSteward(
   asked: ReadonlySet<TerritoryId> = new Set(),
   /** Its personality (session 20c): the Turtle and the Merchant run the realm their own way. */
   style: LeaderStyle | null = null,
+  /** Walls (session 20b): finish one where at most this much gold is left (the Marshal's personality; default the Steward's own). */
+  wallsNear?: number,
 ): Order[] {
   const { rules, idx, mine, seen, owned, rivalAt, troopsAt, biggestEnemyNear, holdNeed, chokeHolder, capital, capThreatened, look0, view } = b;
   const building = (t: TerritoryId) => !!seen(t)?.building || !!seen(t)?.construction || taken.has(t);
@@ -101,6 +106,43 @@ export function planSteward(
       .filter((t) => investCost(rules, seen(t)!.culture) !== null)
       .sort((a, c) => Number(holdCulture(c)) - Number(holdCulture(a)) || seen(a)!.culture - seen(c)!.culture || biggestEnemyNear(c) - biggestEnemyNear(a) || (a < c ? -1 : 1))
       .map((t) => ({ order: { kind: "invest", territory: t }, territory: t, cost: investCost(rules, seen(t)!.culture)!, urgent: false }));
+  // ---------- Walls (session 20b) ----------
+  const W = wallRules(rules);
+  const near = wallsNear ?? (turtle ? turtle.walls : merchant ? merchant.walls : cfg.walls.near);
+  const ours = (view.walls ?? []).filter((w) => w.owner === view.me.id).flatMap((w) => w.territories);
+  const walled = new Set(ours);
+  /** Gold still to pay to wall `t` (culture to the top, and a fort), or null if it can't be (another building stands there). */
+  const wallLeft = (t: TerritoryId): number | null => {
+    if (!W || walled.has(t)) return null;
+    const v = seen(t)!;
+    let gold = 0;
+    for (let c = v.culture; c < W.culture; c++) gold += investCost(rules, c) ?? Infinity;
+    if (W.needsFort && v.building !== "fort" && v.construction?.building !== "fort") {
+      if (v.building || v.construction || taken.has(t)) return null;
+      gold += fort;
+    }
+    return gold;
+  };
+  /** Land worth walling: the capital, a choke point, a province held whole, or land next to a wall of ours (it joins up). */
+  const wallWeight = (t: TerritoryId) => (t === capital ? 3 : chokeHolder(t) ? 2 : idx.neighbors.get(t)!.some((x) => walled.has(x)) ? 1.5 : holdsWhole(provinceOf(t)) ? 1 : 0);
+  /** The next piece of the walls nearest done (a fort first if it has none, else a level of culture), up to `each` places. */
+  const walls = (land: readonly TerritoryId[]): Wish[] => {
+    if (!W || near <= 0) return [];
+    return land
+      .map((t) => ({ t, left: wallLeft(t), w: wallWeight(t) }))
+      .filter((x): x is { t: TerritoryId; left: number; w: number } => x.left !== null && x.left > 0 && x.left <= near && x.w > 0)
+      .sort((a, c) => a.left - c.left || c.w - a.w || (a.t < c.t ? -1 : 1))
+      .slice(0, cfg.walls.each)
+      .map(({ t }): Wish => {
+        const v = seen(t)!;
+        const needsFort = W.needsFort && v.building !== "fort" && v.construction?.building !== "fort";
+        // The fort first (it takes a turn to build); culture rises a level a turn.
+        return needsFort
+          ? { order: { kind: "build", territory: t, building: "fort" }, territory: t, cost: fort, urgent: false }
+          : { order: { kind: "invest", territory: t }, territory: t, cost: investCost(rules, v.culture)!, urgent: false };
+      });
+  };
+
   const sites = mine.filter((t) => isRecruitSiteIn(b.ctx, view, t));
   /** A barracks where land facing rivals is more than a step from anywhere to recruit (or there's nowhere at all). */
   const barracksFor = (land: readonly TerritoryId[]): Wish[] => {
@@ -116,7 +158,7 @@ export function planSteward(
   switch (command.kind) {
     case "buildUp": {
       const land = members(command.province).filter(owned);
-      wishes = [...forts(land), ...barracksFor(land), ...economy(land).filter((w) => w.order.kind === "build"), ...culture(land).filter((w) => holdCulture(w.territory) || quiet(w.territory))];
+      wishes = [...forts(land), ...walls(land), ...barracksFor(land), ...economy(land).filter((w) => w.order.kind === "build"), ...culture(land).filter((w) => holdCulture(w.territory) || quiet(w.territory))];
       break;
     }
     case "fortify": {
@@ -143,6 +185,7 @@ export function planSteward(
         ? [
             // The Turtle (session 20c): forts wherever an army stands next door, and culture where it protects, first.
             ...forts(mine),
+            ...walls(mine),
             ...culture(mine).filter((w) => holdCulture(w.territory)).slice(0, turtle.culture),
             ...barracksFor(mine),
             ...economy(mine).filter((w) => w.order.kind === "invest" && payback(w.territory, "culture") >= cfg.culturePays),
@@ -156,11 +199,13 @@ export function planSteward(
               ...urgent.filter((w) => w.territory === capital),
               ...economy(mine).filter((w) => w.order.kind === "build"),
               ...urgent,
+              ...walls(mine),
               ...barracksFor(mine),
               ...economy(mine).filter((w) => w.order.kind === "invest" && payback(w.territory, "culture") >= merchant.culturePays),
             ]
           : [
               ...urgent,
+              ...walls(mine),
               ...economy(mine).filter((w) => w.order.kind === "build"),
               ...barracksFor(mine),
               ...culture(mine).filter((w) => (w.territory === capital || chokeHolder(w.territory)) && holdCulture(w.territory)).slice(0, 1),

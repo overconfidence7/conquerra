@@ -77,6 +77,8 @@ export interface DelegateOptions {
   report?: boolean;
   /** Its leaders plan with this judgement (one-change tests; the shared one by default). */
   judgement?: MarshalJudgement;
+  /** Session 20b: its Steward finishes walls with at most this much gold left (0: never). */
+  walls?: number;
   id?: string;
 }
 
@@ -99,7 +101,7 @@ export function makeDelegateSeat(leaderShare = 0.8, opts: DelegateOptions = {}):
         commands[leaderKey(l)] = want;
         if (JSON.stringify(l.command) !== JSON.stringify(want)) setup.push({ ...instruct(view, l.kind, want), id: `${view.me.id}-t${view.turn}-cmd-${l.kind}-${l.of}`, general: l.of });
       }
-      const plan = planLeaders({ ctx, view, memory: mem.recall(view), commands, ...(opts.judgement ? { judgement: opts.judgement } : {}), ...(lastTurn ? { lastTurn } : {}) });
+      const plan = planLeaders({ ctx, view, memory: mem.recall(view), commands, ...(opts.judgement ? { judgement: opts.judgement } : {}), ...(opts.walls !== undefined ? { walls: opts.walls } : {}), ...(lastTurn ? { lastTurn } : {}) });
       mem.keep(view, plan.memory);
       // The treasury it holds (its starting gold, and what budgets round off): troops at its capital, as a person would.
       const own: Order[] = view.me.gold >= ctx.rules.troops.cost && view.territories[view.me.capital]?.detail === "full" && (view.territories[view.me.capital] as { owner: string | null }).owner === view.me.id

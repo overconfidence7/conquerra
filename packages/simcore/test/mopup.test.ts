@@ -274,7 +274,9 @@ describe("leaders with personalities on the mop-up fixtures (session 20c)", () =
 
   it("the planner plays each personality's block: in the middle of a game each war-minded one writes orders Neutral wouldn't", () => {
     // (On the mop-up fixtures the finish is the same for all: mass and sweep. Mid-game is where styles show.)
-    const ctx: GameContext = { map: maps.wyrmland!, rules: defaultRules };
+    // (Walls off, session 20b: the Marshals' walls changed these games, and the Schemer, which plays like Neutral in
+    // most positions, no longer met one where it doesn't. Planning with walls on, on the same positions, is the same.)
+    const ctx: GameContext = { map: maps.wyrmland!, rules: { ...defaultRules, walls: { ...defaultRules.walls!, on: false } } };
     // Each position with what every seat watched last turn (the Opportunist goes for whoever just fought).
     const positions = [1, 2, 3].map((g) => {
       let watched: ReadonlyMap<string, readonly ReplayEvent[]> = new Map();

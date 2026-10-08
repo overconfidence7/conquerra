@@ -278,6 +278,24 @@ export const Rules = z.object({
      */
     keptOnCapture: z.number().min(0).max(1),
   }),
+  /**
+   * Walls (session 20b, Nate's idea; design additions §16): the reward at the end of the culture and building path.
+   * A territory with culture `culture` (and a fort, if `needsFort`) is walled from the end of the turn its last piece
+   * is finished. Walled territories of one House that touch (not across water) form one wall. When one is attacked,
+   * every other territory of its wall within `reach` steps along the wall (null: the whole wall) lends its spare troops
+   * (all but the garrison; half of them unless `lendAll`) to the defence, each to one battle a turn if
+   * `oneBattleATurn`. Defence only. Missing (an older game's rules) or `on: false`: no walls.
+   */
+  walls: z
+    .object({
+      on: z.boolean(),
+      culture: z.number().int().min(0),
+      needsFort: z.boolean(),
+      reach: z.number().int().min(1).nullable(),
+      lendAll: z.boolean(),
+      oneBattleATurn: z.boolean(),
+    })
+    .optional(),
   economy: z.object({
     startGold: z.number().int(),
     capitalIncome: z.number().int(),

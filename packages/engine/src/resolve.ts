@@ -37,6 +37,7 @@ import { visibleTerritories } from "./vision";
 import { hireSpy, spiesEndOfTurn, spyOrders, spyReports } from "./spies";
 import { authorOf, captureLeaders, commandLeaders, findLeader, loseCaptured, payBudgets, pursesPayUpkeep } from "./leaders";
 import { recordTurn } from "./history";
+import { shareWallLosses, updateWalls, wallLenders, wallRules, type Lend } from "./walls";
 
 /** Called after every event with the live board (tests use it to check the replay against the real game). */
 export type TurnObserver = (e: StepEvent, live: Readonly<GameState>) => void;
@@ -114,6 +115,8 @@ class Turn {
   readonly famine = new Map<PlayerId, number>();
   /** Pairs of players who attacked each other this turn: it voids the offers between them. */
   readonly fought = new Set<string>();
+  /** Walls (session 20b): walled territories that already lent their spare troops to a battle this turn. */
+  readonly lent = new Set<TerritoryId>();
   /** This turn's offers that didn't start a deal (they lapse as the turn ends). */
   readonly offers: { offer: Offer; declined: boolean }[] = [];
   /** Vision cache; bumped whenever something that affects vision changes. */
@@ -504,7 +507,14 @@ class Turn {
     return { ...draft, troops };
   }
 
-  expect(pid: PlayerId, toId: TerritoryId, plan: MovePlan): BattleExpectation {
+  /** What `toId`'s wall would lend if it were attacked now (nothing if it isn't walled, or walls are off). */
+  wallLend(toId: TerritoryId): Lend[] {
+    const w = wallRules(this.ctx.rules);
+    if (!w || !this.terr(toId)?.walled) return [];
+    return wallLenders(this.ctx, this.s.territories, toId, w.oneBattleATurn ? this.lent : undefined);
+  }
+
+  expect(pid: PlayerId, toId: TerritoryId, plan: MovePlan, lend = this.wallLend(toId)): BattleExpectation {
     const to = this.terr(toId)!;
     const defender = to.owner ? this.player(to.owner) : null;
     const defenderLeader = !!defender && defender.leader.alive && defender.leader.territory === toId;
@@ -512,7 +522,8 @@ class Turn {
       attackers: plan.troops,
       attackerSpecialists: plan.specialists.map((s) => s.type),
       attackerLeader: plan.leaderGoes,
-      defenders: to.troops,
+      // A wall's shared defenders stand with the attacked territory's own (its terrain, fort and culture count for all).
+      defenders: to.troops + lend.reduce((a, l) => a + l.troops, 0),
       defenderSpecialists: to.specialists.map((s) => s.type),
       defenderLeader,
       terrain: this.idx.byId.get(toId)!.terrain,
@@ -569,17 +580,28 @@ class Turn {
     const defenderId = to.owner;
     const defender = defenderId ? this.player(defenderId) : null;
     const defenderLeader = !!defender && defender.leader.alive && defender.leader.territory === o.to;
-    const exp = this.expect(pid, o.to, plan);
+    // Walls (session 20b): the rest of a walled territory's wall lends its spare troops to this battle.
+    const lend = this.wallLend(o.to);
+    const lentTroops = lend.reduce((a, l) => a + l.troops, 0);
+    const all = to.troops + lentTroops;
+    const exp = this.expect(pid, o.to, plan, lend);
     const luck = this.s.settings.luck;
     // Roll on the uncapped averages, then cap at each army: a "guaranteed" attack always captures.
-    let defLoss = rollLosses(exp.uncappedDefenderLosses, luck, to.troops, this.rng);
+    let defLoss = rollLosses(exp.uncappedDefenderLosses, luck, all, this.rng);
     const atkLoss = rollLosses(exp.uncappedAttackerLosses, luck, plan.troops, this.rng);
     // Both sides wiped out: the last defender holds. Land is never left owned with 0 troops.
-    if (to.troops > 0 && defLoss >= to.troops && atkLoss >= plan.troops) defLoss = to.troops - 1;
+    if (all > 0 && defLoss >= all && atkLoss >= plan.troops) defLoss = all - 1;
     const attackers = snapshot(plan.troops, plan.specialists);
-    const defenders = snapshot(to.troops, to.specialists);
+    const defenders = snapshot(all, to.specialists);
     const survivors = plan.troops - atkLoss;
-    to.troops -= defLoss;
+    // Losses fall on the attacked land first (down to its last troop), then on the lenders in proportion.
+    const shared = shareWallLosses(to.troops, lend, defLoss);
+    to.troops -= shared.own;
+    const wall = lend.length ? { lent: lend.map((l, i) => ({ territory: l.territory, troops: l.troops, lost: shared.lent[i]! })) } : null;
+    lend.forEach((l, i) => {
+      this.terr(l.territory)!.troops -= shared.lent[i]!;
+      if (wallRules(this.ctx.rules)?.oneBattleATurn) this.lent.add(l.territory);
+    });
     const specialistsLost: SpecialistType[] = [];
 
     const captured = to.troops === 0 && survivors > 0;
@@ -596,6 +618,8 @@ class Turn {
       specialistsLost.push(...to.specialists.map((s) => s.type));
       to.owner = pid;
       to.culture = cultureKept(this.ctx.rules, to.culture);
+      // The wall falls with the land (session 20b): the rest of it stands.
+      delete to.walled;
       to.troops = survivors;
       to.specialists = [...plan.specialists];
       // The winners can push on from here in a later order (chained attacks).
@@ -648,6 +672,7 @@ class Turn {
       ...(captured ? { keptCulture: to.culture } : {}),
       specialistsLost,
       defense: { fort: exp.fortCounted, culture: defCulture, leader: defenderLeader, ...(standing.length ? { generals: standing } : {}) },
+      ...(wall ? { wall } : {}),
     });
     for (const f of fallen) {
       f.leader = { alive: false, territory: null };
@@ -941,6 +966,8 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
     drawFate(T, seats);
     // Spies travel and every contest is run, after every army's move and the decks.
     spiesEndOfTurn(T);
+    // Walls (session 20b): land whose culture and fort are both complete is walled from now on.
+    for (const w of updateWalls(ctx, s.territories)) T.emit({ type: "walled", player: w.player, territories: w.territories });
   }
 
   s.rng = T.rng.state;

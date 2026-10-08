@@ -55,6 +55,20 @@ export interface SeatStats {
   broken: number;
   wars: number;
   truces: number;
+  /**
+   * Walls (session 20b): the turn its first territory was walled (null: never), territories walled over the game, the
+   * most it held walled at once, and walled / held at the halfway turn and at the end. Battles at its walls where the
+   * wall lent troops, and how many of those it held.
+   */
+  firstWall: number | null;
+  wallsBuilt: number;
+  walledPeak: number;
+  walledHalfway: number;
+  landHalfway: number;
+  walledEnd: number;
+  landEnd: number;
+  wallBattles: number;
+  wallHolds: number;
 }
 
 export interface TableResult {
@@ -97,6 +111,7 @@ const blank = (seat: number, player: PlayerId, bot: string): SeatStats => ({
   attacks: 0, frontsPerTurn: 0, rivalsAttacked: 0, concentration: 0, concentration10: 0, leaderAttacks: 0, leaderShare: 0,
   firstFort: null, firstMarket: null, firstCulture: null, forts10: 0, markets10: 0, culture10: 0,
   gold: { troops: 0, buildings: 0, culture: 0, specialists: 0, spies: 0 }, gold10: { troops: 0, buildings: 0, culture: 0, specialists: 0, spies: 0 }, deals: 0, broken: 0, wars: 0, truces: 0,
+  firstWall: null, wallsBuilt: 0, walledPeak: 0, walledHalfway: 0, landHalfway: 0, walledEnd: 0, landEnd: 0, wallBattles: 0, wallHolds: 0,
 });
 
 /** Play one game with one bot per seat (in seat order), and record every seat's behaviours. */
@@ -113,6 +128,8 @@ export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], 
   const resolveMs: number[] = [];
   const turnPlanMs: number[] = [];
   const leaders: (PlayerId | null)[] = [];
+  /** Each turn's land and walled land per seat (session 20b), lined up with `leaders`. */
+  const walledByTurn: { walled: Map<PlayerId, number>; land: Map<PlayerId, number> }[] = [];
   let topShareTurn10: number | null = null;
   let lastTurn = new Map<PlayerId, ReplayEvent[]>();
   const level = (b: Bot) => b.diplomat ?? (b.id === "recruit" ? ("recruit" as const) : ("captain" as const));
@@ -182,6 +199,10 @@ export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], 
             f.all.add(e.defender);
             fronts.set(e.player, f);
           }
+          if (e.wall && e.defender) {
+            const d = byId.get(e.defender);
+            if (d) (d.wallBattles++, !e.captured && d.wallHolds++);
+          }
           if (e.captured) {
             me.took++;
             if (turn <= 8) me.took8++;
@@ -228,6 +249,11 @@ export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], 
           if (x) x.broken++;
           break;
         }
+        case "walled":
+          if (!me) break;
+          me.firstWall ??= turn;
+          me.wallsBuilt += e.territories.length;
+          break;
       }
     }
     for (const [p, set] of attacked) {
@@ -243,13 +269,17 @@ export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], 
     s = r.state;
     lastTurn = new Map(s.players.filter((p) => p.eliminatedTurn === null).map((p) => [p.id, replayFor(ctx, st, r, p.id)]));
     const now = new Map<PlayerId, number>();
+    const walledNow = new Map<PlayerId, number>();
     for (const t of idx.ids) {
       const o = s.territories[t]!.owner;
       if (o) now.set(o, (now.get(o) ?? 0) + 1);
+      if (o && s.territories[t]!.walled) walledNow.set(o, (walledNow.get(o) ?? 0) + 1);
     }
+    walledByTurn.push({ walled: walledNow, land: now });
     for (const x of stats) {
       const n = now.get(x.player) ?? 0;
       x.peak = Math.max(x.peak, n);
+      x.walledPeak = Math.max(x.walledPeak, walledNow.get(x.player) ?? 0);
       if (turn === 5) x.land5 = n;
       if (turn === 8) x.land8 = n;
       if (turn === 10) x.land10 = n;
@@ -261,8 +291,14 @@ export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], 
     if (leaders.length === 9) topShareTurn10 = Math.max(0, ...now.values()) / idx.ids.length;
     leaders.push(top);
   }
+  const half = walledByTurn[Math.ceil(walledByTurn.length / 2) - 1];
+  const end = walledByTurn[walledByTurn.length - 1];
   for (const x of stats) {
     x.won = s.winner === x.player;
+    x.walledHalfway = half?.walled.get(x.player) ?? 0;
+    x.landHalfway = half?.land.get(x.player) ?? 0;
+    x.walledEnd = end?.walled.get(x.player) ?? 0;
+    x.landEnd = end?.land.get(x.player) ?? 0;
     const f = fronts.get(x.player);
     x.frontsPerTurn = f && f.turns ? f.sum / f.turns : 0;
     x.rivalsAttacked = f ? f.all.size : 0;

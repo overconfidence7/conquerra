@@ -75,6 +75,9 @@ const kindOf = (e: ReplayEvent): BeatKind | null => {
     // A governing general's purchase pops on the map (only when it bought something).
     case "governed":
       return e.land.length ? "pop" : null;
+    // A wall going up (session 20b): its own beat, so the ring appears as its toast plays.
+    case "walled":
+      return "pop";
     // Deals: a deal starting or broken gets a beat (its toast), with any land that changed hands or troops that
     // deserted popping on the map; a payment only if troops deserted for it.
     case "dealStarted":
@@ -388,10 +391,12 @@ export function replayView(before: PlayerView, events: readonly ReplayEvent[], a
             // Taking back your own capital (or a rival's you've seen) makes it a capital again.
             t.capitalOf = capitals.get(e.to) === e.player ? e.player : null;
           } else {
-            t.troops -= e.result.defenderLosses;
+            // A wall's lenders took their share of the losses (session 20b).
+            t.troops -= e.result.defenderLosses - (e.wall?.lent ?? []).reduce((a, l) => a + l.lost, 0);
             if (t.troops <= 0) t.specialists = [];
           }
         });
+        for (const l of e.wall?.lent ?? []) edit(l.territory, (t) => void (t.troops -= l.lost));
         if (e.captured && e.withLeader) moveLeader(e.player, e.from, e.to);
         if (e.captured && e.withGeneral) moveGeneral(e.withGeneral, e.from, e.to);
         break;

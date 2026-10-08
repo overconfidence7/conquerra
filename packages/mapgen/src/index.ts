@@ -17,7 +17,7 @@ import { makeTerritories } from "./territories";
 import { assignBiomes, assignTerrain, buildGrids, carveRivers, cellHeights, toBase64 } from "./terrain";
 import { clamp, dist, r1 } from "./util";
 
-export { checkMap, borderLengths, MIN_BORDER_CHECK, MIN_PASS_CHECK, chokePoints, landBridgeBorders, shapeArea, fairness, allDistances, territoryIncome } from "./checks";
+export { checkMap, borderLengths, MIN_BORDER_CHECK, MIN_PASS_CHECK, chokePoints, landBridgeBorders, shapeArea, fairness, allDistances, territoryIncome, adjacency, exposureOf, type Exposure } from "./checks";
 export { fromBase64, TERRAIN_BIOMES } from "./terrain";
 export { DECORATION_BIOMES, LABEL_CLEAR } from "./places";
 export { insideRings } from "./util";

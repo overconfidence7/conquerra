@@ -19,6 +19,8 @@ export function narrate(ctx: GameContext, e: StepEvent, name: (id: string | null
       return `${name(e.player)} ${e.doneAtEndOfTurn === null ? "builds" : "starts building"} a ${e.building} at ${place(e.territory)} (${e.cost}g)`;
     case "completed":
       return `${name(e.player)}'s ${e.building} at ${place(e.territory)} is finished`;
+    case "walled":
+      return `${name(e.player)} walls ${e.territories.map(place).join(", ")}`;
     case "invested":
       return `${name(e.player)} raises culture at ${place(e.territory)} to ${e.culture} (${e.cost}g)`;
     case "moved":

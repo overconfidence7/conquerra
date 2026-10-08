@@ -88,6 +88,12 @@ export const Personality = z.object({
      * markets and culture; the rest to its armies. 0: as before.
      */
     realm: z.number().min(0).optional(),
+    /**
+     * Session 20b: walls. When building like the Steward, it finishes a wall (culture to the top and a fort) on land worth
+     * holding where at most this much gold is left to pay (the Turtle from scratch, the Blitzer never). Missing: the
+     * Steward's own (`leaders.steward.walls.near`).
+     */
+    walls: z.number().min(0).optional(),
   }),
   deals: z.object({
     /** Added to how much it likes each kind of deal when it judges an offer (negative: it likes them less). */
@@ -284,14 +290,23 @@ export const LeaderPlanning = z.object({
      */
     culturePays: z.number().min(0).default(0.3),
     /**
+     * Session 20b: walls. "Run the realm" and "Build up this province" finish a wall where a territory worth holding (the
+     * capital, a choke point, a province held whole, or next to a wall of ours) has at most `near` gold left to pay
+     * (culture to the top and a fort), at most `each` territories a turn, ahead of markets.
+     */
+    walls: z.object({ near: z.number().min(0), each: z.number().int().min(0) }).default({ near: 18, each: 1 }),
+    /**
      * Session 20c: a Steward's personality on "Run the realm". The Turtle: a fort wherever a rival army of at least
      * `fortThreat` stands next door (not only urgent ones), and up to `culture` levels a turn where they protect, before
      * markets. The Merchant: a threatened capital's fort, then markets (where they pay), then the other urgent forts, then culture for its income. A
      * Marshal's Steward of another personality runs the realm as Neutral does.
      */
     styles: z
-      .object({ turtle: z.object({ fortThreat: z.number().int().min(1), culture: z.number().int().min(0) }), merchant: z.object({ culturePays: z.number().min(0) }) })
-      .default({ turtle: { fortThreat: 3, culture: 2 }, merchant: { culturePays: 0.3 } }),
+      .object({
+        turtle: z.object({ fortThreat: z.number().int().min(1), culture: z.number().int().min(0), /** Session 20b: walls from scratch (any land worth holding). */ walls: z.number().min(0).default(39) }),
+        merchant: z.object({ culturePays: z.number().min(0), /** Session 20b: walls, after its markets. */ walls: z.number().min(0).default(18) }),
+      })
+      .default({ turtle: { fortThreat: 3, culture: 2, walls: 39 }, merchant: { culturePays: 0.3, walls: 18 } }),
   }),
 });
 export type LeaderPlanning = z.infer<typeof LeaderPlanning>;

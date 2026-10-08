@@ -337,6 +337,11 @@ export interface TerritoryState {
   construction: { building: BuildingType; doneAtEndOfTurn: number } | null;
   /** Light culture: one number per territory, 0..rules.culture.max. Passes to whoever captures it. */
   culture: number;
+  /**
+   * Walled (session 20b): set at the end of the turn its culture and fort were both complete (`walls.ts`), dropped when
+   * the land changes hands. Absent when not walled (so a game without walls looks exactly as before).
+   */
+  walled?: boolean;
 }
 
 export type GameMode = "classic" | "conquest";
@@ -398,7 +403,7 @@ export interface HistoryPoint {
 }
 
 export interface GameState {
-  version: 11;
+  version: 12;
   gameId: string;
   mapId: string;
   turn: number;
@@ -740,7 +745,14 @@ export type GameEvent =
       specialistsLost: SpecialistType[];
       /** What helped the defenders, beyond terrain and the border (both come from the map): for "They held: hills and a fort". */
       defense: { fort: boolean; culture: number; leader: boolean; /** Captured generals standing there (no bonus; lost on a capture). */ generals?: PlayerId[] };
+      /**
+       * Walls (session 20b): the attacked territory's wall lent its spare troops. `defenders` and the defender losses
+       * count everyone; here is each lender's share and what it lost (the rest of the losses fell on the attacked land).
+       */
+      wall?: { lent: { territory: TerritoryId; troops: number; lost: number }[] };
     }
+  /** Land that became walled as the turn ended (session 20b): its culture and its fort both complete. */
+  | { type: "walled"; player: PlayerId; territories: TerritoryId[] }
   | { type: "leaderKilled"; player: PlayerId; territory: TerritoryId }
   /** A fallen Leader comes back for free at the end of the turn: at the capital, or the strongest territory if the capital is lost. */
   | { type: "leaderReturned"; player: PlayerId; territory: TerritoryId }

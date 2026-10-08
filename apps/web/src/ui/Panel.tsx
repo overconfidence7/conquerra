@@ -38,7 +38,7 @@ import { ArtIcon, buildingIcon, specialistIcon } from "./ArtIcon";
 import { useGame } from "../store";
 import { nearestRecruitSite, RECRUIT_RULE } from "../logic/actions";
 import { colorOf } from "./colors";
-import { cultureLine, cultureNext, placeFacts } from "../map/card";
+import { cultureLine, cultureNext, placeFacts, wallAt, wallHint, wallLine } from "../map/card";
 
 /** Your spies where they stand (session 15): loaded the first time there's one to show. */
 const SpyRows = lazy(() => import("./Spies").then((m) => ({ default: m.SpyRows })));
@@ -253,6 +253,8 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
   const estimate = oddsAreEstimate(plan, draft);
   const odds = attack ? oddsFor(ctx, view, plan, draft, troops) : null;
   const target = seen(view, draft.to);
+  // A walled target (session 20b): its wall's shared garrison defends it too (the odds count it).
+  const wall = attack ? wallAt(view, draft.to) : null;
   const enough = attack ? justEnough(ctx, view, plan, draft) : null;
   const lastStep = draft.through?.[draft.through.length - 1] ?? draft.via ?? draft.from;
   const crossing = indexMap(ctx.map).border(lastStep, draft.to) ?? "normal";
@@ -276,8 +278,13 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
         From {n.place(draft.from)}
         {draft.via ? ` via ${n.place(draft.via)} (cavalry)` : ""}
         {draft.through ? ` through ${draft.through.map((t) => n.place(t)).join(", ")} (right of passage: it can't stop there)` : ""}
-        {attack && target ? ` · defenders: ${target.troops}${target.owner ? ` (${n.who(target.owner)})` : " (neutral)"}` : ""}
+        {attack && target ? ` · defenders: ${wall ? wall.defend[draft.to] : target.troops}${target.owner ? ` (${n.who(target.owner)})` : " (neutral)"}` : ""}
       </p>
+      {attack && wall && (
+        <p className="muted small wall-note">
+          {wallLine(ctx, view, draft.to)}: its wall lends its spare troops to this battle, and the odds count them.
+        </p>
+      )}
       {isHop(plan, draft.from) && <p className="muted small">A chained hop: the army that should arrive in {n.place(draft.from)} pushes on, in your next slot after it gets there.</p>}
       {draft.raise && <p className="arriving">Your attack on {n.place(draft.from)} will send All instead of Just enough, so there's an army to push on with.</p>}
 
@@ -554,7 +561,10 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
             {buildOptions(ctx, plan, selected).map((b) => (
               <button key={b.building} disabled={!b.ok} onClick={() => add({ kind: "build", territory: selected, building: b.building })}>
                 <ArtIcon name={buildingIcon(b.building)} size={22} /> {BUILDING_NAME[b.building]} <span className="cost">{b.cost}g</span>
-                <span className="small muted block">{BUILDING_HELP[b.building]}</span>
+                <span className="small muted block">
+                  {BUILDING_HELP[b.building]}
+                  {b.building === "fort" && wallHint(ctx, view, selected, "fort", plan.culture) ? ` ${wallHint(ctx, view, selected, "fort", plan.culture)}.` : ""}
+                </span>
               </button>
             ))}
           </div>

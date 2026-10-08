@@ -1,4 +1,4 @@
-import { cultureProtection, investCost, type GameContext, type PlayerView, type TerritoryId } from "@conquerra/engine";
+import { cultureProtection, investCost, wallRules, type GameContext, type PlayerView, type TerritoryId, type WallView } from "@conquerra/engine";
 import { BUILDING_NAME, SPECIALIST_NAME } from "../logic/text";
 import { houseOf } from "./houses";
 
@@ -128,7 +128,47 @@ export function cultureNext(ctx: GameContext, view: PlayerView, id: TerritoryId,
     const province = unlockNext.split(" in ").slice(1).join(" in ");
     parts.push(`newly unlocks ${listed(fresh)} in ${province}`);
   }
-  return `Culture ${level + 1} for ${cost} gold: ${parts.join(", ")}`;
+  const wall = wallHint(ctx, view, id, "culture", levels);
+  return `Culture ${level + 1} for ${cost} gold: ${parts.join(", ")}${wall ? `. ${wall}` : ""}`;
+}
+
+/** The wall a territory stands in, as you see it (session 20b): anyone who sees part of a wall sees all of it. */
+export const wallAt = (view: PlayerView, id: TerritoryId): WallView | null => view.walls?.find((w) => w.territories.includes(id)) ?? null;
+
+/**
+ * The card's wall line (session 20b): "Walled: 10 defend (with Pinemark and Ashfell)": everyone who'd defend it if it
+ * were attacked now, and the land of its wall that would lend troops. A wall you only remember: "Walled when last
+ * seen". Null: no wall here that you know of.
+ */
+export function wallLine(ctx: GameContext, view: PlayerView, id: TerritoryId): string | null {
+  const w = wallAt(view, id);
+  if (!w) {
+    const v = view.territories[id];
+    return v?.detail === "fogged" && v.lastSeen?.walled ? "Walled when last seen" : null;
+  }
+  const name = (t: TerritoryId) => ctx.map.territories.find((x) => x.id === t)?.name ?? t;
+  const lenders = w.with[id] ?? [];
+  const shown = lenders.length > 3 ? [...lenders.slice(0, 3).map(name), `${lenders.length - 3} more`] : lenders.map(name);
+  return `Walled: ${w.defend[id]} defend${lenders.length ? ` (with ${listed(shown)})` : " (no spare troops nearby in its wall)"}`;
+}
+
+/**
+ * Before you buy the last piece of a wall (session 20b), the culture and build panels say so: "Completes a wall:
+ * walled at the end of this turn". `levels`: culture after the orders queued so far. Null: this doesn't complete one.
+ */
+export function wallHint(ctx: GameContext, view: PlayerView, id: TerritoryId, what: "culture" | "fort", levels?: ReadonlyMap<TerritoryId, number>): string | null {
+  const W = wallRules(ctx.rules);
+  const v = view.territories[id];
+  if (!W || v?.detail !== "full" || v.owner !== view.me.id || wallAt(view, id)) return null;
+  const level = levels?.get(id) ?? v.culture;
+  if (what === "culture") {
+    if (level + 1 < W.culture) return null;
+    if (!W.needsFort || v.building === "fort") return "Completes a wall: walled at the end of this turn";
+    if (v.construction?.building === "fort") return "Completes a wall once the fort is finished";
+    return v.building || v.construction ? null : "With a fort here too, it would complete a wall";
+  }
+  if (!W.needsFort || level < W.culture || v.building || v.construction) return null;
+  return "Completes a wall once it's finished";
 }
 
 const SPECIALISTS = ["cavalry", "scouts", "siege", "engineers", "healers", "rangers", "standardBearer"] as const;
@@ -170,6 +210,11 @@ export function provinceLine(name: string, bonus: number, held: number, of: numb
   return `${name} +${bonus}: ${held === of ? `you hold all ${of}` : held ? `you hold ${held} of ${of}` : `you hold none of ${of}`}`;
 }
 
+const wallRow = (ctx: GameContext, view: PlayerView, id: TerritoryId): CardLine[] => {
+  const w = wallLine(ctx, view, id);
+  return w ? [{ label: "Wall", icon: "icon-fort", value: w }] : [];
+};
+
 export function territoryCard(ctx: GameContext, view: PlayerView, id: TerritoryId): TerritoryCard {
   const def = ctx.map.territories.find((t) => t.id === id)!;
   const province = ctx.map.provinces.find((p) => p.id === def.province);
@@ -195,6 +240,7 @@ export function territoryCard(ctx: GameContext, view: PlayerView, id: TerritoryI
       { label: "Troops", icon: "icon-troops", value: troops(v.troops) },
       { label: "Building", value: building, ...(v.building || v.construction ? { icon: `icon-${v.building ?? v.construction!.building}` } : {}) },
       { label: "Culture", icon: "icon-culture", value: cultureLine(ctx, view, id, v.culture) },
+      ...wallRow(ctx, view, id),
       worth,
       { label: "Specialists", value: v.specialists.length ? v.specialists.map((s) => SPECIALIST_NAME[s.type]).join(", ") : "No specialists", ...(v.specialists.length ? { icon: `icon-${v.specialists[0]!.type}` } : {}) },
     ];
@@ -220,6 +266,7 @@ export function territoryCard(ctx: GameContext, view: PlayerView, id: TerritoryI
         { label: "Owner", value: `${heldBy(s.owner)}?`, color: houseOf(view, s.owner).color },
         { label: "Troops", icon: "icon-troops", value: `${troops(s.troops)}?` },
         { label: "Building", value: `${s.building ? BUILDING_NAME[s.building] : "No building"}?`, ...(s.building ? { icon: `icon-${s.building}` } : {}) },
+        ...wallRow(ctx, view, id),
         worth,
       ],
       intel: seenAgo(view.turn, s.turn),

@@ -108,6 +108,14 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       return { text: `${isMe(e.player) ? "Your" : `${who(e.player)}'s`} ${BUILDING_NAME[e.building].toLowerCase()} at ${place(e.territory)} is finished.`, tone: "quiet" };
     case "invested":
       return boughtBy(ctx, e, n) ?? { text: `${who(e.player)} raised culture at ${place(e.territory)} to ${e.culture}.`, tone: "quiet" };
+    // Walls (session 20b): "Pinemark is walled: its spare troops now help defend Ashfell and Galeholt."
+    case "walled": {
+      const list = e.territories.map(place);
+      const names = list.length === 1 ? list[0]! : `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}`;
+      return isMe(e.player)
+        ? { text: `${names} ${list.length === 1 ? "is" : "are"} walled: culture 5 and a fort. Its spare troops now help defend the rest of its wall, and the wall's help it.`, tone: "good" }
+        : { text: `${who(e.player)} walled ${names}.`, tone: "info" };
+    }
     case "moved":
       // Right of passage: "You marched 8 troops from Ashfell through Galeholt and Pinemark to Oakcrest." (Land on the
       // way that changed hands: it stopped short, and says where it meant to go.)
