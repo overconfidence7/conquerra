@@ -95,7 +95,7 @@ export function planSteward(
   const economy = (land: readonly TerritoryId[]): Wish[] => {
     const out: { w: Wish; pay: number }[] = [];
     for (const t of land) {
-      if (marketsPay && !building(t) && quiet(t)) out.push({ w: { order: { kind: "build", territory: t, building: "market" }, territory: t, cost: market, urgent: false }, pay: payback(t, "market") });
+      if (marketsPay && !building(t) && quiet(t) && !keepForFort(t)) out.push({ w: { order: { kind: "build", territory: t, building: "market" }, territory: t, cost: market, urgent: false }, pay: payback(t, "market") });
       const cost = investCost(rules, seen(t)!.culture);
       if (cost !== null) out.push({ w: { order: { kind: "invest", territory: t }, territory: t, cost, urgent: false }, pay: payback(t, "culture") });
     }
@@ -125,6 +125,8 @@ export function planSteward(
   };
   /** Land worth walling: the capital, a choke point, a province held whole, or land next to a wall of ours (it joins up). */
   const wallWeight = (t: TerritoryId) => (t === capital ? 3 : chokeHolder(t) ? 2 : idx.neighbors.get(t)!.some((x) => walled.has(x)) ? 1.5 : holdsWhole(provinceOf(t)) ? 1 : 0);
+  /** Land worth walling with its culture (nearly) at the top keeps its one building plot for the fort (session 20b). */
+  const keepForFort = (t: TerritoryId) => !!W && W.needsFort && near > 0 && wallWeight(t) > 0 && seen(t)!.culture + 1 >= W.culture;
   /** The next piece of the walls nearest done (a fort first if it has none, else a level of culture), up to `each` places. */
   const walls = (land: readonly TerritoryId[]): Wish[] => {
     if (!W || near <= 0) return [];
@@ -197,7 +199,7 @@ export function planSteward(
               // then culture for its income. (Markets before even the capital's fort made it 4-7 points stronger than
               // Neutral in the sims.)
               ...urgent.filter((w) => w.territory === capital),
-              ...economy(mine).filter((w) => w.order.kind === "build"),
+              ...economy(mine).filter((w) => w.order.kind === "build").slice(0, merchant.markets ?? Infinity),
               ...urgent,
               ...walls(mine),
               ...barracksFor(mine),
@@ -205,8 +207,8 @@ export function planSteward(
             ]
           : [
               ...urgent,
-              ...walls(mine),
               ...economy(mine).filter((w) => w.order.kind === "build"),
+              ...walls(mine),
               ...barracksFor(mine),
               ...culture(mine).filter((w) => (w.territory === capital || chokeHolder(w.territory)) && holdCulture(w.territory)).slice(0, 1),
               // Culture for its income, where it pays back as well as a market would (session 19).

@@ -1,0 +1,7 @@
+# s20b Steward personalities with walls on: a delegating seat (80/20) against Marshals (300 games a line)
+embervale:4 delegate-80 vs marshal: won 26.0% (x1.04 fair) | 24.6 turns, half-map at 10 31.7%, halfway leader won 48.7% | land10 9.5, troops 544.0g, buildings 62.8g, culture 36.1g, wars 2.5, truces 3.3 (56s)
+wyrmland:6 delegate-80 vs marshal: won 16.7% (x1.00 fair) | 37.9 turns, half-map at 10 2.0%, halfway leader won 55.3% | land10 18.5, troops 1569.6g, buildings 138.6g, culture 112.7g, wars 3.7, truces 4.9 (139s)
+embervale:4 delegate-80+stew-turtle vs marshal: won 22.3% (x0.89 fair) | 25.3 turns, half-map at 10 31.3%, halfway leader won 49.7% | land10 9.6, troops 527.7g, buildings 49.7g, culture 59.2g, wars 2.5, truces 3.5 (61s)
+wyrmland:6 delegate-80+stew-turtle vs marshal: won 17.0% (x1.02 fair) | 38.8 turns, half-map at 10 2.7%, halfway leader won 49.7% | land10 17.4, troops 1448.2g, buildings 94.6g, culture 206.3g, wars 3.6, truces 4.6 (132s)
+embervale:4 delegate-80+stew-merchant vs marshal: won 36.7% (x1.47 fair) | 23.6 turns, half-map at 10 35.0%, halfway leader won 52.0% | land10 9.7, troops 596.1g, buildings 66.3g, culture 33.7g, wars 2.3, truces 3.0 (49s)
+wyrmland:6 delegate-80+stew-merchant vs marshal: won 28.7% (x1.72 fair) | 37.3 turns, half-map at 10 2.0%, halfway leader won 49.7% | land10 18.5, troops 1936.2g, buildings 138.8g, culture 142.6g, wars 3.4, truces 4.6 (143s)

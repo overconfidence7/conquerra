@@ -449,6 +449,13 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
           {mine && plan.free.get(selected) !== undefined ? `, ${plan.free.get(selected)} can move` : ""}
         </span>
       </li>
+      {/* Walls (session 20b): who'd defend it, with the wall's garrison. */}
+      {wallAt(view, selected) && (
+        <li className="with-icon wall-row">
+          <ArtIcon name="icon-fort" size={18} />
+          {wallLine(ctx, view, selected)}
+        </li>
+      )}
       {v.specialists.length > 0 && (
         <li>
           {v.specialists.map((s, i) => (

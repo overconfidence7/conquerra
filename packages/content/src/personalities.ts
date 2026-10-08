@@ -304,7 +304,7 @@ export const LeaderPlanning = z.object({
     styles: z
       .object({
         turtle: z.object({ fortThreat: z.number().int().min(1), culture: z.number().int().min(0), /** Session 20b: walls from scratch (any land worth holding). */ walls: z.number().min(0).default(39) }),
-        merchant: z.object({ culturePays: z.number().min(0), /** Session 20b: walls, after its markets. */ walls: z.number().min(0).default(18) }),
+        merchant: z.object({ culturePays: z.number().min(0), /** Session 20b: walls, after its markets. */ walls: z.number().min(0).default(18), /** Session 20b: at most this many markets a turn (missing: as many as it can). */ markets: z.number().int().min(0).optional() }),
       })
       .default({ turtle: { fortThreat: 3, culture: 2, walls: 39 }, merchant: { culturePays: 0.3, walls: 18 } }),
   }),

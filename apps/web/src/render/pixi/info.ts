@@ -182,14 +182,16 @@ export class InfoLayer {
     }
     for (const w of this.wallRings) {
       const a = w.remembered ? 0.6 : 1;
+      const col = w.remembered ? 0x8a8a8a : w.color;
       for (const l of w.outlines) {
-        ring(W, l, false).stroke({ width: 9 * px, color: INK, alpha: 0.75 * a, join: "miter", cap: "butt" });
-        ring(W, l, false).stroke({ width: 6 * px, color: w.remembered ? 0x9a9a9a : 0xd8cfb8, alpha: a, join: "miter", cap: "butt" });
-        ring(W, l, false).stroke({ width: 3 * px, color: w.color, alpha: a, join: "miter", cap: "butt" });
-        // Battlements (Mid and Near): square merlons of stone along the wall, outlined in ink.
+        // A solid band of the House colour edged in ink (a truce's band is white and stitched: never mistaken for it).
+        ring(W, l, false).stroke({ width: 10 * px, color: INK, alpha: 0.85 * a, join: "miter", cap: "butt" });
+        ring(W, l, false).stroke({ width: 7 * px, color: col, alpha: a, join: "miter", cap: "butt" });
+        ring(W, l, false).stroke({ width: 1.6 * px, color: 0xffffff, alpha: 0.35 * a, join: "miter", cap: "butt" });
+        // Battlements (Mid and Near): square merlons standing out on both sides, in the House colour, outlined in ink.
         if (this.battlements > 0.02) {
-          stitches(W, l, 6 * px, 5 * px, 10 * px, INK, 0.8 * a * this.battlements);
-          stitches(W, l, 6 * px, 5 * px, 7 * px, w.remembered ? 0x9a9a9a : 0xe6dcc2, a * this.battlements);
+          stitches(W, l, 5 * px, 6 * px, 15 * px, INK, 0.85 * a * this.battlements);
+          stitches(W, l, 5 * px, 6 * px, 12 * px, col, a * this.battlements);
         }
       }
     }

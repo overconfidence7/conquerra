@@ -238,9 +238,10 @@ export function territoryCard(ctx: GameContext, view: PlayerView, id: TerritoryI
     const lines: CardLine[] = [
       { label: "Owner", value: heldBy(v.owner), color: houseOf(view, v.owner).color },
       { label: "Troops", icon: "icon-troops", value: troops(v.troops) },
+      // Walls (session 20b): who'd defend it, next to its own troops.
+      ...wallRow(ctx, view, id),
       { label: "Building", value: building, ...(v.building || v.construction ? { icon: `icon-${v.building ?? v.construction!.building}` } : {}) },
       { label: "Culture", icon: "icon-culture", value: cultureLine(ctx, view, id, v.culture) },
-      ...wallRow(ctx, view, id),
       worth,
       { label: "Specialists", value: v.specialists.length ? v.specialists.map((s) => SPECIALIST_NAME[s.type]).join(", ") : "No specialists", ...(v.specialists.length ? { icon: `icon-${v.specialists[0]!.type}` } : {}) },
     ];
