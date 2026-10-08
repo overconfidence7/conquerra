@@ -1,0 +1,4 @@
+embervale:4 s20P: delegate-100 won 38.6% (x1.54) | its spots: t02 100 games, won 23.0%; t20 136 games, won 54.4%; t28 155 games, won 30.3%; t37 109 games, won 45.0% | every seat by spot: t02 15.4%, t20 39.2%, t28 15.8%, t37 29.6%
+embervale:4 s19: delegate-100 won 39.2% (x1.57) | its spots: t02 122 games, won 25.4%; t20 127 games, won 50.4%; t28 118 games, won 30.5%; t37 133 games, won 48.9% | every seat by spot: t02 16.2%, t20 39.2%, t28 15.4%, t37 29.2%
+embervale:4 s20b-a: delegate-100 won 38.8% (x1.55) | its spots: t02 128 games, won 25.8%; t20 119 games, won 54.6%; t28 123 games, won 29.3%; t37 130 games, won 46.2% | every seat by spot: t02 15.2%, t20 38.8%, t28 16.0%, t37 30.0%
+embervale:4 s20b-b: delegate-100 won 37.8% (x1.51) | its spots: t02 118 games, won 27.1%; t20 142 games, won 51.4%; t28 121 games, won 25.6%; t37 119 games, won 44.5% | every seat by spot: t02 16.2%, t20 40.6%, t28 14.8%, t37 28.4%

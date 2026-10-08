@@ -72,7 +72,8 @@ describe("leaders in the report (session 18)", () => {
       n,
     ).map((l) => l.text);
     expect(lines[0]).toBe("You took 9 gold back from Odo's purse (your Steward).");
-    expect(lines[1]).toMatch(/^.+, Lady Morwen's Steward, joins you too\./);
+    // It arrives reporting to your own Steward (session 20b).
+    expect(lines[1]).toMatch(/^.+, Lady Morwen's Steward, joins you too, reporting to Odo\./);
     expect(lines[2]).toContain("Your leaders' purses paid 6 of it.");
   });
 

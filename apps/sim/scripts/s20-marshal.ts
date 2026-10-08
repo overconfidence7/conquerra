@@ -8,7 +8,12 @@
  */
 import { runTournament, type TournamentSpec } from "../src/tournament";
 
-const [games = "500", tablesArg = "embervale:4,wyrmland:6", seatsArg = "delegate-80,marshal", ...changes] = process.argv.slice(2);
+// --seed s (session 20b): with the same seed this gives exactly what s19-lines.ts gives. A 500-game line still swings
+// a few points with the seed (which capital spot each seat draws, which personalities the Marshals are dealt).
+const argv = process.argv.slice(2);
+const si = argv.indexOf("--seed");
+const seedPrefix = si >= 0 ? argv.splice(si, 2)[1]! : "s20P";
+const [games = "500", tablesArg = "embervale:4,wyrmland:6", seatsArg = "delegate-80,marshal", ...changes] = argv;
 const pct = (k: number, of: number) => `${((100 * k) / Math.max(1, of)).toFixed(1)}%`;
 for (const c of changes.length ? changes : ["today={}"]) {
   const i = c.indexOf("=");
@@ -20,7 +25,7 @@ for (const c of changes.length ? changes : ["today={}"]) {
     const head = seatsArg.split(",");
     // One of each listed seat (the last fills the table).
     const seats = [...head.slice(0, -1), ...Array(players - head.length + 1).fill(head[head.length - 1])];
-    const spec: TournamentSpec = { map, players, seats, games: Number(games), seed: "s20P", fog: true, diplomacy: true, ...(ch.judgement || ch.personalities ? { tweak: { ...(ch.judgement ? { judgement: ch.judgement } : {}), ...(ch.personalities ? { personalities: ch.personalities } : {}) } } : {}) };
+    const spec: TournamentSpec = { map, players, seats, games: Number(games), seed: seedPrefix, fog: true, diplomacy: true, ...(ch.judgement || ch.personalities ? { tweak: { ...(ch.judgement ? { judgement: ch.judgement } : {}), ...(ch.personalities ? { personalities: ch.personalities } : {}) } } : {}) };
     const t0 = Date.now();
     const r = await runTournament(spec);
     const base = (k: string) => k.replace(/^marshal-[a-z]+/, "marshal");

@@ -366,6 +366,9 @@ describe("bots' diplomacy: bots dealing with each other", () => {
     const s = structuredClone(a.s) as unknown as { version: number; players: { leaders: Record<string, unknown>[] }[] };
     s.version = 10;
     for (const p of s.players) for (const l of p.leaders) delete l.personality;
+    // (Session 20b: captured leaders arrive on "Report to" their captor's own. The game's shape again: set aside, it's the same.)
+    for (const p of s.players as unknown as { id: string; leaders: Record<string, unknown>[] }[])
+      for (const l of p.leaders) if (l.of !== p.id && (l.command as { kind?: string; to?: string } | null)?.kind === "report" && (l.command as { to: string }).to === p.id) l.command = null;
     expect(stateFingerprint(s as unknown as GameState)).toBe("c86498c32b7f525a");
   });
 

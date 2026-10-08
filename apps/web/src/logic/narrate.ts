@@ -165,10 +165,10 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       };
     case "generalCaptured":
       return isMe(e.player)
-        ? { text: `${leaderShortName(n, { kind: "leader", of: e.general })}, ${who(e.general)}'s Leader, joins you at ${place(e.territory)}. Give it a command and a budget in the Leaders panel, or move troops there for it to lead.`, tone: "good" }
+        ? { text: `${leaderShortName(n, { kind: "leader", of: e.general })}, ${who(e.general)}'s Leader, joins you at ${place(e.territory)}, reporting to ${leaderShortName(n, { kind: "leader", of: e.player })}: its army works with yours. Give it a command of its own in the Leaders panel.`, tone: "good" }
         : { text: `${who(e.general)}'s Leader now serves ${who(e.player)}.`, tone: "info" };
     case "stewardCaptured":
-      return { text: `${leaderShortName(n, { kind: "steward", of: e.steward })}, ${who(e.steward)}'s Steward, joins you too. Give it a command and a budget in the Leaders panel.`, tone: "good" };
+      return { text: `${leaderShortName(n, { kind: "steward", of: e.steward })}, ${who(e.steward)}'s Steward, joins you too, reporting to ${leaderShortName(n, { kind: "steward", of: e.player })}. Give it a command of its own in the Leaders panel.`, tone: "good" };
     case "generalLost":
       return isMe(e.player)
         ? { text: `${leaderShortName(n, { kind: "leader", of: e.general })}, your captured Leader, is gone for good: ${place(e.territory)} ${e.by ? `fell to ${who(e.by)}` : "was lost"}.${e.gold ? ` The ${e.gold} gold in its purse came home.` : ""}`, tone: "bad" }

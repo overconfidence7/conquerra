@@ -27,6 +27,8 @@ export default function KeepGenerals({ ctx, view, onDone }: { ctx: GameContext; 
       const chosen = list.filter((x) => releases.includes(keyFor(kind, x.of))).length;
       return { kind, list, chosen, over: over[kind] };
     });
+  /** Your own Leader's (or Steward's) name: the captured ones arrive reporting to it (session 20b). */
+  const mine = (kind: LeaderKind) => `${(view.me.leaders ?? []).find((l) => l.kind === kind && l.of === view.me.id)?.name ?? `your ${kind === "steward" ? "Steward" : "Leader"}`}`;
   const nameOf = (kind: LeaderKind, of: string) => (view.me.leaders ?? []).find((l) => l.kind === kind && l.of === of)?.name ?? n.who(of);
   const done = groups.every((g) => g.chosen === g.over);
   const words = (k: LeaderKind, count: number) => (k === "leader" ? (count === 1 ? "Leader" : "Leaders") : count === 1 ? "Steward" : "Stewards");
@@ -58,6 +60,9 @@ export default function KeepGenerals({ ctx, view, onDone }: { ctx: GameContext; 
             </ul>
           </section>
         ))}
+        <p className="small muted">
+          {`The ones you keep report to ${groups.map((g) => mine(g.kind)).join(" and ")} for now: they work with yours. One tap in the Leaders panel gives one a command of its own.`}
+        </p>
         <button className="primary wide" onClick={onDone} disabled={!done}>
           Keep the others
         </button>

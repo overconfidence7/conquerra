@@ -1,6 +1,6 @@
 import { DEAL_KINDS, describeTerms, indexMap, type DealKind, type DealTerms, type GameContext, type Offer, type PlayerId, type PlayerView, type TradeSide } from "@conquerra/engine";
 import { useEffect, useRef, type ReactNode } from "react";
-import { bindingPrice, breakPrice, changedTerms, newOffer, ownerFrom } from "../logic/deals";
+import { bindingPrice, breakPrice, changedTerms, finishWarning, newOffer, ownerFrom } from "../logic/deals";
 import { dealNames, namer } from "../logic/text";
 import { useGame } from "../store";
 import { Frame } from "./Frame";
@@ -84,7 +84,8 @@ function TermRows({ ctx, view, offer, changed }: { ctx: GameContext; view: Playe
 
 /** Propose: pick a card (its defaults filled in), change the terms if you like, pick the promise, Send. */
 function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; offer: Offer }) {
-  const { editDeal, sendOffer, answers, setDealPick, closeDeal, busy } = useGame();
+  const { editDeal, sendOffer, answers, setDealPick, closeDeal, busy, leaderNotes } = useGame();
+  const stops = finishWarning(view, offer, leaderNotes);
   const d = ctx.rules.diplomacy;
   const them = offer.to;
   const t = offer.terms;
@@ -253,6 +254,7 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
       <p className="deal-words">
         You offer {nameOf(view, them)} {words}.
       </p>
+      {stops && <p className="deal-warning small">{stops}.</p>}
       {answer ? (
         <div ref={said} className={`deal-answer ${answer.accept ? "yes" : "no"}`} role="status">
           <p>
@@ -274,7 +276,8 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
 
 /** An offer to you (or a counteroffer): Accept is one tap; Counter opens the same card from your side. */
 function Incoming({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; offer: Offer }) {
-  const { answerOffer, counterOffer, diplomacy, answers } = useGame();
+  const { answerOffer, counterOffer, diplomacy, answers, leaderNotes } = useGame();
+  const stops = finishWarning(view, offer, leaderNotes);
   const original = offer.counterTo ? diplomacy.find((o) => o.kind === "propose" && o.offer.id === offer.counterTo) : undefined;
   const changed = original?.kind === "propose" ? changedTerms(original.offer, offer) : undefined;
   const reason = offer.counterTo ? answers[offer.counterTo]?.reason : undefined;
@@ -289,6 +292,7 @@ function Incoming({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; of
       )}
       <p className="deal-words">{words[0]!.toUpperCase() + words.slice(1)}.</p>
       <TermRows ctx={ctx} view={view} offer={offer} changed={changed} />
+      {stops && <p className="deal-warning small">{stops}.</p>}
       {answered?.kind === "answer" ? (
         <p className="small">{answered.accept ? "You accepted: it starts as the turn plays, before any move." : "You declined."}</p>
       ) : (

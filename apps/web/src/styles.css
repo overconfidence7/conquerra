@@ -204,6 +204,7 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .deal-answer p { margin: 0 0 4px; }
 .deal-answer.yes { border-left-color: var(--good); }
 .deal-answer.no { border-left-color: var(--bad); }
+.deal-warning { border-left: 3px solid var(--bad); padding: 4px 10px; margin: 6px 0; background: rgba(170, 60, 50, 0.08); border-radius: 6px; }
 .deal-terms { margin: 0; display: grid; gap: 4px; }
 .deal-terms > div { display: grid; grid-template-columns: 7.5em 1fr; gap: 8px; }
 .deal-terms dt { color: var(--muted); font: 700 var(--fs-label) var(--font-head); text-transform: uppercase; letter-spacing: 0.04em; padding-top: 2px; }

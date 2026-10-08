@@ -1,4 +1,4 @@
-import type { Answer } from "@conquerra/bots";
+import type { Answer, LeaderNote } from "@conquerra/bots";
 import {
   bindingCost,
   coveredBorders,
@@ -9,6 +9,7 @@ import {
   defaultTerms,
   indexMap,
   isParty,
+  leaderKey,
   oathPenalty,
   otherSide,
   passageFor,
@@ -243,4 +244,24 @@ export function tradeableLand(ctx: GameContext, view: PlayerView, giver: PlayerI
     if (v?.detail !== "full" || v.owner !== giver || v.capitalOf || t === view.me.capital) return false;
     return (idx.neighbors.get(t) ?? []).some((n) => owner(n) === receiver);
   });
+}
+
+/**
+ * A deal that would stop one of your leaders finishing a rival (session 20b): a truce (or a joint war, which brings
+ * peace between you) with a rival a leader is finishing off. Your leaders never refuse a deal for you; the card says
+ * what you'd be signing instead: "A truce with Baron Krell would stop Aldric finishing them". Null: nothing to say.
+ */
+export function finishWarning(view: PlayerView, offer: Offer, notes: Readonly<Record<string, LeaderNote>>): string | null {
+  const t = offer.terms;
+  if (t.kind !== "truce" && t.kind !== "war") return null;
+  const rival = offer.from === view.me.id ? offer.to : offer.from;
+  const finishers = (view.me.leaders ?? []).filter((l) => {
+    const note = notes[leaderKey(l)];
+    return note?.kind === "finishing" && note.rivals.some((r) => r.rival === rival);
+  });
+  if (!finishers.length) return null;
+  const who = view.players.find((p) => p.id === rival)?.name ?? rival;
+  const names = finishers.map((l) => l.name);
+  const by = names.length === 1 ? names[0]! : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+  return `A ${t.kind === "truce" ? "truce" : "joint war"} with ${who} would stop ${by} finishing them`;
 }

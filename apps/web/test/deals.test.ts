@@ -2,7 +2,7 @@ import { dealSize, indexMap, oathPenalty, type Offer } from "@conquerra/engine";
 import { beforeEach, describe, expect, it } from "vitest";
 import { draftToOrder, moveTargets, planQueue, tapTerritory } from "../src/logic/orders";
 import { buildScene } from "../src/ui/MapView";
-import { agreedThisTurn, attackCheck, breakPrice, canProposeTo, changedTerms, counterFrom, dealMarks, dealsNow, markText, newOffer, passageLines, passageNow, truceLines, waitingOffers } from "../src/logic/deals";
+import { agreedThisTurn, attackCheck, breakPrice, canProposeTo, changedTerms, counterFrom, dealMarks, dealsNow, finishWarning, markText, newOffer, passageLines, passageNow, truceLines, waitingOffers } from "../src/logic/deals";
 import { setHostFactory, useGame } from "../src/store";
 import { inProcessHost } from "./inProcessHost";
 
@@ -230,5 +230,24 @@ describe("diplomacy on the page", () => {
     expect(scene.passage!.some((p) => p.territory === theirs && p.open && p.pending)).toBe(true);
     // Never into the partner's own land beyond: that would be fighting it.
     for (const t of moveTargets(ctx!, view!, from, plain, open)) if (t.through) expect((view!.territories[t.to] as { owner?: string }).owner === rival).toBe(false);
+  });
+
+  it("the card warns when a truce would stop one of your leaders finishing a rival (diplomacy stays yours)", async () => {
+    const st = await start();
+    const view = st.view!;
+    const leader = view.me.leaders.find((l) => l.kind === "leader" && l.of === view.me.id)!;
+    const rival = view.players.find((p) => p.id !== view.me.id)!;
+    const other = view.players.find((p) => p.id !== view.me.id && p.id !== rival.id)!;
+    const notes = { [`leader:${view.me.id}`]: { kind: "finishing" as const, rivals: [{ rival: rival.id, land: 2 }] } };
+    const truce = newOffer(st.ctx!, view, rival.id, "truce");
+    expect(finishWarning(view, truce, notes)).toBe(`A truce with ${rival.name} would stop ${leader.name} finishing them`);
+    // Offered to you: the same words.
+    expect(finishWarning(view, { ...truce, from: rival.id, to: view.me.id }, notes)).toBe(`A truce with ${rival.name} would stop ${leader.name} finishing them`);
+    // A joint war brings peace between you too; a trade or passage doesn't stop a finish.
+    expect(finishWarning(view, newOffer(st.ctx!, view, rival.id, "war"), notes)).toContain("A joint war with");
+    expect(finishWarning(view, newOffer(st.ctx!, view, rival.id, "trade"), notes)).toBeNull();
+    // Someone your leaders aren't finishing, or no leader finishing anyone: nothing to say.
+    expect(finishWarning(view, newOffer(st.ctx!, view, other.id, "truce"), notes)).toBeNull();
+    expect(finishWarning(view, truce, {})).toBeNull();
   });
 });

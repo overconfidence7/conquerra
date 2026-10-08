@@ -266,18 +266,27 @@ describe("budgets and purses", () => {
 });
 
 describe("captured leaders", () => {
-  it("knocking a player out gives you their Leader (at your capital) and their Steward, with no command and no budget", () => {
+  it("knocking a player out gives you their Leader (at your capital) and their Steward, reporting to yours, with no budget", () => {
     const s = aboutToWin();
     const names = [rec(s, "p2", "leader")!.name, rec(s, "p2", "steward")!.name];
     rec(s, "p2", "steward")!.purse = 12;
     const r = resolveTurn(ctx, s, { p1: [mv("d", "e", "all")] });
     expect(player(r.state, "p1").captured).toEqual([{ of: "p2", territory: "a" }]);
-    expect(rec(r.state, "p1", "leader", "p2")).toEqual({ kind: "leader", of: "p2", name: names[0], personality: null, command: null, budget: { share: 0 }, purse: 0 });
-    expect(rec(r.state, "p1", "steward", "p2")).toEqual({ kind: "steward", of: "p2", name: names[1], personality: null, command: null, budget: { share: 0 }, purse: 0 });
+    // They arrive on "Report to" your Leader and your Steward (Nate, after session 20c: they work with yours from the start).
+    expect(rec(r.state, "p1", "leader", "p2")).toEqual({ kind: "leader", of: "p2", name: names[0], personality: null, command: { kind: "report", to: "p1" }, budget: { share: 0 }, purse: 0 });
+    expect(rec(r.state, "p1", "steward", "p2")).toEqual({ kind: "steward", of: "p2", name: names[1], personality: null, command: { kind: "report", to: "p1" }, budget: { share: 0 }, purse: 0 });
     expect(find(r.events, "generalCaptured")).toMatchObject({ player: "p1", general: "p2", territory: "a" });
     expect(find(r.events, "stewardCaptured")).toMatchObject({ player: "p1", steward: "p2" });
     expect(player(r.state, "p2").leaders).toEqual([]);
     expect(viewFor(ctx, r.state, "p1").territories.a).toMatchObject({ detail: "full", generals: ["p2"] });
+  });
+
+  it("a captured leader's Report to is one order to change (or clear), like any command", () => {
+    const r = resolveTurn(ctx, aboutToWin(), { p1: [mv("d", "e", "all")] });
+    // (A two-player board: that ended the game. Carry on a turn anyway, to read the commands.)
+    const next = resolveTurn(ctx, { ...r.state, winner: null }, { p1: [instruct("p2", { kind: "hold" }), instruct("p2", null, true)] });
+    expect(rec(next.state, "p1", "leader", "p2")!.command).toEqual({ kind: "hold" });
+    expect(rec(next.state, "p1", "steward", "p2")!.command).toBeNull();
   });
 
   it("at your strongest territory if you've lost your capital", () => {

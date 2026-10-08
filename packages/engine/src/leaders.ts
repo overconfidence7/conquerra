@@ -350,8 +350,14 @@ export function payBudgets(p: PlayerState, earned: number): (LeaderRef & { gold:
 export function captureLeaders(h: LeadersHost, loser: PlayerState, captor: PlayerState, home: TerritoryId) {
   const own = (kind: LeaderKind) => findLeader(loser, { kind, of: loser.id });
   captor.leaders ??= [];
+  // It arrives on "Report to" the captor's own Leader (or Steward), so it works with them from the start (Nate, after
+  // session 20c; one tap changes it). Not if that one is itself reporting to someone (then it waits for a command).
+  const reportTo = (kind: LeaderKind): Instruction | null => {
+    const senior = findLeader(captor, { kind, of: captor.id });
+    return senior && senior.command?.kind !== "report" ? { kind: "report", to: captor.id } : null;
+  };
   // (It keeps its name and its personality: for life, session 20c.)
-  const fresh = (kind: LeaderKind, fallback: string): LeaderRecord => ({ kind, of: loser.id, name: own(kind)?.name ?? fallback, personality: own(kind)?.personality ?? null, command: null, budget: { ...NO_BUDGET }, purse: 0 });
+  const fresh = (kind: LeaderKind, fallback: string): LeaderRecord => ({ kind, of: loser.id, name: own(kind)?.name ?? fallback, personality: own(kind)?.personality ?? null, command: reportTo(kind), budget: { ...NO_BUDGET }, purse: 0 });
   captor.captured.push({ of: loser.id, territory: home });
   captor.leaders.push(fresh("leader", `${loser.name}'s Leader`));
   h.emit({ type: "generalCaptured", player: captor.id, general: loser.id, territory: home });
