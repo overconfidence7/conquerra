@@ -1138,3 +1138,7 @@ All four parts are done, each committed and pushed. Art batch 4 wasn't imported 
   - **Take back** a purse and spend it yourself the same turn
   - change or delete one of a leader's orders in the queue (it's yours to edit)
   - on the phone: open the Leaders sheet from your Leader's portrait; is everything reachable in a few taps?
+
+### Oct 8: Session 20b in progress (where it stands)
+- **Done and pushed:** Step 0 (captured leaders report to yours; the deal card's finish warning; the two harnesses agree, true number 38.6%); Part 1 (Walls in the engine, saves v12, tests); Part 2 (the wall ring, "Walled: N defend" on the card and panels, "Completes a wall", the Steward and the Marshal build walls; screenshots `docs/art/screens/s20b-*.png`); the Walls sims and write-up (`docs/sim-results-m3-walls.md`).
+- **Running:** Part 3's fair-seat search for every official map and table size (`apps/sim/scripts/s20b-fair-seats.ts`, outputs `docs/sims/s20b-fair-*.txt`). If the session stops here: run `npx tsx apps/sim/scripts/s20b-pin-seats.ts` once they're all there, then the write-up (Part 4) and the deploy.
