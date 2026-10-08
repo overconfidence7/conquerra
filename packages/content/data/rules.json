@@ -454,6 +454,9 @@
     "fooled": { "troopJitter": 0.4, "cultureChance": 0.5 },
     "bots": { "max": 1, "fromTurn": 6, "reserve": 24 }
   },
+  "path": {
+    "sweepWidth": 3
+  },
   "game": {
     "turnTimerSecondsDefault": 300,
     "turnTimerSecondsMin": 60,

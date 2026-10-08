@@ -40,7 +40,9 @@
       "opening": 0.5
     },
     "finish": { "margin": 1.5, "hops": 12, "sites": 6 },
-    "counter": { "minArmy": 3, "strike": 1.5, "block": 60 }
+    "counter": { "minArmy": 3, "strike": 1.5, "block": 60 },
+    "realm": true,
+    "anticipate": { "guard": true, "reach": true, "fort": true }
   },
   "personalities": [
     {
@@ -72,7 +74,8 @@
         "cultureEverywhere": false,
         "spies": 1,
         "spiesFrom": 6,
-        "spyReserve": 12
+        "spyReserve": 12,
+        "realm": 1
       },
       "deals": {
         "truce": 1,
@@ -126,7 +129,8 @@
         "cultureEverywhere": false,
         "spies": 0,
         "spiesFrom": 99,
-        "spyReserve": 0
+        "spyReserve": 0,
+        "realm": 0.25
       },
       "deals": {
         "truce": -1,
@@ -180,7 +184,8 @@
         "cultureEverywhere": true,
         "spies": 1,
         "spiesFrom": 5,
-        "spyReserve": 10
+        "spyReserve": 10,
+        "realm": 1.5
       },
       "deals": {
         "truce": 3,
@@ -234,7 +239,8 @@
         "cultureEverywhere": false,
         "spies": 3,
         "spiesFrom": 3,
-        "spyReserve": 8
+        "spyReserve": 8,
+        "realm": 1
       },
       "deals": {
         "truce": 2,
@@ -288,7 +294,8 @@
         "cultureEverywhere": false,
         "spies": 2,
         "spiesFrom": 4,
-        "spyReserve": 10
+        "spyReserve": 10,
+        "realm": 0.75
       },
       "deals": {
         "truce": 0,
@@ -342,7 +349,8 @@
         "cultureEverywhere": true,
         "spies": 1,
         "spiesFrom": 6,
-        "spyReserve": 12
+        "spyReserve": 12,
+        "realm": 1.5
       },
       "deals": {
         "truce": 2,

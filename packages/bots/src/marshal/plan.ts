@@ -4,7 +4,10 @@ import { BREAKTHROUGH_MARGIN, chainOn, readBoard, type Board, type CaptainOption
 import { captainSpoils, missionPull, missionSpend, spoilsOrder } from "../cards";
 import { respectDeals, withoutDeals } from "../diplomacy";
 import { captainSpies } from "../spies";
+import { marshalData } from "@conquerra/content";
+import { startingStewardShare } from "@conquerra/engine";
 import { planFinish, remnantRivals } from "./finish";
+import { planSteward } from "./steward";
 import { think, type Insight } from "./judge";
 import type { MarshalMemory } from "./memory";
 import { marshalBreaks } from "./talk";
@@ -189,6 +192,12 @@ function planMoves(
   const { rules, idx, me, garrison, seen, owned, rivalAt, troopsAt, specsAt, mine, crossing, isFrontier, frontier, enemyPressure, biggestEnemyNear } = b;
   const { endgame, raider, runaway, shieldsLeader, facesRival, facesRaider, holdNeed, chokeHolder, capital, capThreatened, needFor } = b;
   const D = { ...P.defend, frontGarrison: P.defend.frontGarrison * (J.garrisonScale ?? 1) }, B = P.build;
+  const crowdedTable = idx.ids.length / Math.max(1, view.players.length) <= (rules.leaders.crowdedTerritories ?? 12);
+  // Reading the border (hold what matters, session 20): on roomy tables, unless it says crowded ones too; and not
+  // while it cleans up (75% of the map: finishing the game comes first).
+  const cleaningUp = !!steer?.cleanUp || mine.length >= rules.leaders.cleanUpShare * idx.ids.length;
+  if (J.anticipate && ((crowdedTable && !J.anticipate.crowded) || cleaningUp)) J = { ...J, anticipate: undefined };
+  const lean = !!J.crowdedLean && crowdedTable && !steer;
   // The opening: every Marshal expands at least this hard for the first few turns (what the sims found wins).
   const o = J.opening && view.turn <= J.opening.turns ? J.opening : null;
   // And all game, every Marshal attacks at least as hard as the shared floor (what the sims found wins).
@@ -196,7 +205,7 @@ function planMoves(
     f ? { ...a, chainMargin: Math.min(a.chainMargin, f.chainMargin), sendShare: Math.max(a.sendShare, f.sendShare), maxHops: Math.max(a.maxHops, f.maxHops), followThroughSpare: Math.min(a.followThroughSpare, f.followThroughSpare) } : a;
   const A = floor(floor(P.attack, J.attackFloor), o);
   /** Building for the long run waits until the opening's over, if the shared judgement says so. */
-  const longRun = view.turn >= (J.buildFrom ?? 0);
+  const longRun = view.turn >= (J.buildFrom ?? 0) && !lean;
   const orders: Order[] = [];
   let n = 0;
   const id = () => `${me.id}-t${view.turn}-m${n++}`;
@@ -240,8 +249,35 @@ function planMoves(
       if (A.oneFront && main && owner !== main && !calm) v *= OFF_FRONT;
     }
     if (threatens.has(t)) v *= 1 + J.counter!.strike;
+    if (region?.has(provinceOf(t))) v *= J.region!.pull;
     return v;
   };
+
+  // ---------- The best region (session 20, a one-change test) ----------
+  let region: Set<string> | null = null;
+  if (J.region && !steer && mine.length >= J.region.from * idx.ids.length) {
+    const near = new Map<string, Set<string>>();
+    for (const bd of ctx.map.borders) {
+      const pa = provinceOf(bd.a), pb = provinceOf(bd.b);
+      if (pa === pb) continue;
+      (near.get(pa) ?? near.set(pa, new Set()).get(pa)!).add(pb);
+      (near.get(pb) ?? near.set(pb, new Set()).get(pb)!).add(pa);
+    }
+    let best: { set: Set<string>; score: number; id: string } | null = null;
+    for (const p of ctx.map.provinces) {
+      const members = idx.provinceMembers.get(p.id) ?? [];
+      if (!members.some(owned)) continue;
+      const set = new Set([p.id, ...(near.get(p.id) ?? [])]);
+      let score = 0;
+      for (const q of set) {
+        score += bonusOf.get(q) ?? 0;
+        for (const t of idx.provinceMembers.get(q) ?? []) score += rules.terrain[idx.byId.get(t)!.terrain].income + (owned(t) ? 0.5 : 0) - (rivalAt(t) ? troopsAt(t) * 0.1 : 0);
+      }
+      if (!best || score > best.score || (score === best.score && p.id < best.id)) best = { set, score, id: p.id };
+    }
+    region = best?.set ?? null;
+  }
+  const inRegion = (t: TerritoryId) => !region || region.has(provinceOf(t));
 
   // ---------- Anticipate and counter (session 20, Nate) ----------
   // Each rival army it can see next to its land: where would it strike next? (The territory of ours it would most
@@ -303,6 +339,22 @@ function planMoves(
     gold -= errand.cost;
   }
 
+  // Building like the Steward (session 20): a share of the treasury goes to what "Run the realm" would buy, in its own
+  // style (the Turtle and the Merchant more, the Blitzer least), in place of its own markets and culture.
+  // (Not while it cleans up: buildings would pay back after the game's over.)
+  const realmShare = !steer && J.realm && B.realm && (J.realmCrowded || !crowdedTable) && !cleaningUp ? Math.min(1, B.realm * startingStewardShare(rules, idx.ids.length, view.players.length)) : 0;
+  if (realmShare > 0) {
+    const asked = new Set([...predicted.keys()].filter((t) => holdNeed(t) > troopsAt(t)));
+    if (region) for (const t of frontier) if (inRegion(t) && idx.neighbors.get(t)!.some((x) => !inRegion(x) && rivalAt(x))) asked.add(t);
+    const taken = new Set<TerritoryId>();
+    const budget = Math.floor(gold * realmShare);
+    for (const o of planSteward(b, marshalData.leaders.steward, { kind: "realm" }, budget, id, taken, rules.game.maxTurnsHard, asked)) {
+      spend(o);
+      gold -= o.kind === "build" ? rules.buildings[o.building].cost : o.kind === "invest" ? (investCost(rules, seen(o.territory)!.culture) ?? 0) : 0;
+      if (o.kind === "recruit" && typeof o.count === "number") gold -= o.count * troopCost;
+    }
+  }
+
   // Forts: the Captain's (its threatened capital, a choke point facing a rival army), plus the personality's own on
   // fronts facing a big enough army, up to its number of forts on the frontier.
   const fortsUp = frontier.filter((t) => seen(t)!.building === "fort" || seen(t)!.construction?.building === "fort").length;
@@ -354,7 +406,7 @@ function planMoves(
   // Markets on safe land (no rival next to it as far as it knows), up to its number, keeping gold for troops.
   const quiet = (t: TerritoryId) => idx.neighbors.get(t)!.every((x) => owned(x) || b.look0(x) === null);
   const markets = mine.filter((t) => seen(t)!.building === "market" || seen(t)!.construction?.building === "market").length;
-  if (!steer && view.turn >= B.marketsFrom && longRun && markets < B.markets && !capThreatened) {
+  if (!steer && !realmShare && view.turn >= B.marketsFrom && longRun && markets < B.markets && !capThreatened) {
     const spot = mine.filter((t) => !building(t) && quiet(t)).sort((a, c) => Number(isFrontier(a)) - Number(isFrontier(c)) || (a < c ? -1 : 1))[0];
     if (spot && gold >= rules.buildings.market.cost + troopCost * B.marketReserve) {
       spend({ id: id(), kind: "build", territory: spot, building: "market" });
@@ -390,7 +442,7 @@ function planMoves(
   // Culture: where it means to hold (its capital and choke points facing a rival, with enough troops there for the
   // bonus to pay), from its turn and keeping its reserve; a culture-minded personality also raises safe land.
   // (Culture is the Steward's, not a military leader's.)
-  if (!steer && view.turn >= B.cultureFrom) {
+  if (!steer && !realmShare && !lean && view.turn >= B.cultureFrom) {
     const worth = (t: TerritoryId) => {
       const cost = investCost(rules, seen(t)!.culture);
       return cost !== null && troopsAt(t) * rules.culture.defensePerLevel * 4 >= cost / troopCost;
@@ -411,7 +463,7 @@ function planMoves(
   }
 
   // Spies: the Captain's choices of where (its main target's province, a province of ours to guard), its own number.
-  if (!steer && B.spies > 0) {
+  if (!steer && !lean && B.spies > 0) {
     const spying = captainSpies(b, id, gold, { max: B.spies, fromTurn: B.spiesFrom, reserve: troopCost * B.spyReserve });
     for (const o of spying.orders) spend(o);
     gold -= spying.spent;
@@ -530,8 +582,8 @@ function planMoves(
       if (avail <= 0) continue;
       const need = needFor(from, to, avail);
       if (need === null) continue;
-      // Careful where it's contested: only where what arrives would hold.
-      if (steer?.careful?.(to) && b.exposed(to, avail - b.expectAt(from, to, avail, specsAt(from)).expectedAttackerLosses)) continue;
+      // Careful where it's contested: only where what arrives would hold (and, with a region picked, outside it).
+      if ((steer?.careful?.(to) || !inRegion(to)) && b.exposed(to, avail - b.expectAt(from, to, avail, specsAt(from)).expectedAttackerLosses)) continue;
       // Calm play: rival land only with a big margin; neutral land only where the army that takes it would be safe.
       if (calm && rival && avail < need * A.calmMargin) continue;
       if (calm && !o && !rival && b.exposed(to, Math.max(1, avail - need))) continue;

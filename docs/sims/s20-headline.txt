@@ -1,0 +1,17 @@
+conqueror    embervale:4  marshal 44.2% (1.77x), captain 18.6% (0.74x) | fair 25.0% | length median 23, avg 24.9, at the 60 cap 1.4% | half-map by 10 56.2%, halfway leader won 77.2% | 17s
+conqueror    wyrmland:6   marshal 31.4% (1.88x), captain 13.7% (0.82x) | fair 16.7% | length median 44, avg 44.7, at the 60 cap 21.0% | half-map by 10 0.2%, halfway leader won 68.4% | 46s
+blitzer      embervale:4  marshal 43.0% (1.72x), captain 18.9% (0.76x) | fair 25.0% | length median 21, avg 23.5, at the 60 cap 1.4% | half-map by 10 60.1%, halfway leader won 77.6% | 16s
+blitzer      wyrmland:6   marshal 27.2% (1.63x), captain 14.5% (0.87x) | fair 16.7% | length median 44, avg 44.3, at the 60 cap 20.8% | half-map by 10 1.4%, halfway leader won 72.7% | 43s
+turtle       embervale:4  marshal 30.6% (1.22x), captain 23.1% (0.93x) | fair 25.0% | length median 24, avg 26.1, at the 60 cap 1.0% | half-map by 10 51.0%, halfway leader won 70.0% | 17s
+turtle       wyrmland:6   marshal 34.8% (2.09x), captain 13.0% (0.78x) | fair 16.7% | length median 44, avg 44.0, at the 60 cap 20.0% | half-map by 10 0.2%, halfway leader won 65.2% | 44s
+schemer      embervale:4  marshal 36.8% (1.47x), captain 21.1% (0.84x) | fair 25.0% | length median 22, avg 25.0, at the 60 cap 1.8% | half-map by 10 55.8%, halfway leader won 75.0% | 17s
+schemer      wyrmland:6   marshal 28.6% (1.72x), captain 14.2% (0.85x) | fair 16.7% | length median 45, avg 45.2, at the 60 cap 23.0% | half-map by 10 0.6%, halfway leader won 70.1% | 45s
+opportunist  embervale:4  marshal 42.0% (1.68x), captain 19.3% (0.77x) | fair 25.0% | length median 22, avg 24.7, at the 60 cap 1.2% | half-map by 10 55.6%, halfway leader won 75.4% | 17s
+opportunist  wyrmland:6   marshal 28.4% (1.70x), captain 14.3% (0.86x) | fair 16.7% | length median 44, avg 44.4, at the 60 cap 19.4% | half-map by 10 0.4%, halfway leader won 69.6% | 44s
+merchant     embervale:4  marshal 38.6% (1.54x), captain 20.5% (0.82x) | fair 25.0% | length median 23, avg 24.9, at the 60 cap 1.0% | half-map by 10 48.9%, halfway leader won 62.6% | 17s
+merchant     wyrmland:6   marshal 41.2% (2.47x), captain 11.7% (0.70x) | fair 16.7% | length median 41, avg 42.8, at the 60 cap 22.0% | half-map by 10 0.2%, halfway leader won 62.1% | 43s
+standin      wyrmland:6   sighted:marshal-conqueror 23.6% (1.42x), marshal 15.2% (0.91x) | fair 16.7% | length median 41, avg 42.3, at the 60 cap 21.0% | half-map by 10 1.0%, halfway leader won 56.3% | 50s
+delegate-80  embervale:4  delegate-80 27.2% (1.09x), marshal 24.3% (0.97x) | fair 25.0% | length median 25, avg 26.3, at the 60 cap 1.0% | half-map by 10 31.0%, halfway leader won 53.8% | 21s
+delegate-80  wyrmland:6   delegate-80 16.8% (1.01x), marshal 16.6% (1.00x) | fair 16.7% | length median 40, avg 40.8, at the 60 cap 15.8% | half-map by 10 1.2%, halfway leader won 64.6% | 49s
+delegate-100 embervale:4  delegate-100 34.6% (1.38x), marshal 21.8% (0.87x) | fair 25.0% | length median 24, avg 25.9, at the 60 cap 0.8% | half-map by 10 37.0%, halfway leader won 54.2% | 20s
+delegate-100 wyrmland:6   delegate-100 10.6% (0.64x), marshal 17.8% (1.07x) | fair 16.7% | length median 41, avg 42.1, at the 60 cap 16.2% | half-map by 10 1.0%, halfway leader won 59.3% | 48s

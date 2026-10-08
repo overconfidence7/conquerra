@@ -74,6 +74,13 @@ export const Personality = z.object({
     spies: z.number().int().min(0),
     spiesFrom: z.number().int().min(1),
     spyReserve: z.number().int().min(0),
+    /**
+     * Session 20: building like the Steward. This many times your Steward's default share of the treasury (20% with
+     * room, 10% on a crowded table) goes each turn to what "Run the realm" would buy (forts where an army masses,
+     * markets and culture where they pay back, a barracks where there's nowhere to recruit), in place of its own
+     * markets and culture; the rest to its armies. 0: as before.
+     */
+    realm: z.number().min(0).optional(),
   }),
   deals: z.object({
     /** Added to how much it likes each kind of deal when it judges an offer (negative: it likes them less). */
@@ -151,7 +158,12 @@ export const MarshalJudgement = z.object({
    * it (`guard`); its capital and that land draw reinforcements when a rival army two steps away could strike next
    * turn (`reach`); and it builds a fort there when it can afford one (`fort`).
    */
-  anticipate: z.object({ guard: z.boolean(), reach: z.boolean(), fort: z.boolean() }).optional(),
+  anticipate: z.object({ guard: z.boolean(), reach: z.boolean(), fort: z.boolean(), /** Session 20: on a crowded table too (else roomy tables only). */ crowded: z.boolean().optional() }).optional(),
+  /**
+   * Session 20: on a crowded table (at most `rules.leaders.crowdedTerritories` territories a player) it builds nothing
+   * for the long run (markets, culture, its own forts, spies): they don't pay back before the game's decided there.
+   */
+  crowdedLean: z.boolean().optional(),
   /** Session 19: its own Leader goes with the main attack out of where it stands, and on through that attack's chain (+20%), as your leaders' does. */
   leaderGoes: z.boolean().optional(),
   /**
@@ -181,6 +193,17 @@ export const MarshalJudgement = z.object({
    * first, chaining on through the rest and taking the empty land they could run to.
    */
   finish: z.object({ margin: z.number().min(1), hops: z.number().int().min(1), sites: z.number().int().min(1) }).optional(),
+  /** Session 20: every Marshal builds like the Steward (each personality's `build.realm` share). Off: as before. */
+  realm: z.boolean().optional(),
+  /** ...on a crowded table too (at most `rules.leaders.crowdedTerritories` a player), where buildings pay back slowly. */
+  realmCrowded: z.boolean().optional(),
+  /**
+   * Session 20 (Nate's playbook, a one-change test): once it holds `from` of the map, it picks the best region within
+   * reach (a province and the provinces around it: their bonuses and land, less the rival armies in it), drives
+   * everyone else out of it (its land worth `pull` times more), asks for forts on its border, and outside it takes only
+   * land it can hold.
+   */
+  region: z.object({ from: z.number().min(0).max(1), pull: z.number().min(1) }).optional(),
   /** Session 20: reinforcements march up to this many hops through its own land in one turn (one order a hop; 1: a step a turn, as before). */
   march: z.number().int().min(1).optional(),
   /**

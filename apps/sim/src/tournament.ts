@@ -71,6 +71,16 @@ const SEAT_JUDGEMENT: Record<string, Record<string, unknown>> = {
   counter2: { counter: { minArmy: 3, strike: 1.5, block: 60 } },
   march6: { march: 6 },
   march1: { march: 1 },
+  // Session 20, Part 2's one-change tests for the Marshal.
+  region: { region: { from: 0.33, pull: 1.5 } },
+  anticipate: { anticipate: { guard: true, reach: true, fort: true } },
+  antifort: { anticipate: { guard: false, reach: false, fort: true } },
+  norealm: { realm: undefined },
+  nofinish: { finish: undefined },
+  nocounter2: { counter: undefined },
+  noanticipate: { anticipate: undefined },
+  lean: { crowdedLean: true },
+  anticrowd: { anticipate: { guard: true, reach: true, fort: true, crowded: true } },
 };
 
 export function botFor(kind: string, tweak?: TournamentSpec["tweak"]): Bot {

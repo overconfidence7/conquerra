@@ -457,6 +457,12 @@ export const Rules = z.object({
     /** The Captain: at most this many spies, not before this turn, and only with this much gold left over for troops. */
     bots: z.object({ max: z.number().int().min(0), fromTurn: z.number().int().min(1), reserve: z.number().int().min(0) }),
   }),
+  /**
+   * Orders along a path (session 16; session 20, Nate): the full sweep clears a band about `sweepWidth` territories
+   * wide between the two points (every territory within a step or so of a shortest way there), and branches out
+   * further where that completes a province.
+   */
+  path: z.object({ sweepWidth: z.number().int().min(1) }).default({ sweepWidth: 3 }),
   game: z.object({
     /** Order-phase timer. The engine only stores it; the server runs the clock. */
     turnTimerSecondsDefault: z.number().int().min(1),
