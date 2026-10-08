@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–20 are done and reviewed. Next: **session 20b** (Walls, fair seats), then Nate's play test, 21 (the polish pass), 22 (the language pass).**
+**Phase: M3 (depth and balance). Sessions 7–20 are done and reviewed. Next: **session 20c** (mass and sweep, leader personalities), then **20b** (Walls, fair seats), Nate's play test, 21 (the polish pass), 22 (the language pass).**
 
 Claude Code sessions completed: **20** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -1040,6 +1040,14 @@ All four parts are done, each committed and pushed. Art batch 4 wasn't imported 
   - **Clean up at 75% of the map:** orchestrator default: keep 75% until Nate has played with it (on his list).
   - **Should a finishing Leader turn down truces from the rival it's finishing?** Orchestrator default: **no, diplomacy stays yours**; instead the offer card says "A truce with Baron Krell would stop Aldric finishing them" so you know what you're signing. Session 20b, Step 0 (a small screen change).
 - **Next:** session 20b (`docs/prompts/claude-code-session-20b.md`: Walls, fair seats), then Nate plays from the list below.
+
+### Oct 8: Nate's second note, after reading session 20's results
+- **The late game is about how many more troops we field each turn**, so a remnant's army should never be "as big as ours" at the point of contact; what session 20 called slipping a strike is the remnant **getting away**. Nate's finish: **mass everything in one place with a Leader, then sweep everywhere they are and everywhere they could get to**, with a **security blanket** of transfers through our own land so anything they take is taken straight back. That's a great many orders, and that's the point: late in a big game he expects **well over 50–75 orders a turn** from a leader (don't force the number; the sweeps should produce it).
+- **Defensible pauses** as they sweep, and **a sweep of our own land before attacking** when a rival could get behind the lines. The game allows unlimited transfers and attacks a turn; the bots should use that to keep troops near the action. (Session 20's "longer marches" and "Leader rides along" tests measured win rate, which isn't the point.)
+- **The bots' Leaders are to be used** with the main effort, and **captured leaders work together** toward the same goal.
+- **Leaders with personalities:** name your Leader and Steward and give each a personality (war-minded ones for the Leader, building-minded for the Steward) that changes how it plays and stays with it for life, including after capture.
+- **Planning may be slower:** fine ("it will always be faster than people putting in orders").
+- **Nate's calls:** all of this is **session 20c, run before 20b** (Walls and fair seats); personalities change play style, not just voice. Design: `docs/04-design-additions.md` §15, "Nate's second note". Prompt: `docs/prompts/claude-code-session-20c.md`.
 
 ### Things to test after session 20 (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop first; the phone where it applies.*
