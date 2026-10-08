@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–20 are done and reviewed. Next: **session 20c** (mass and sweep, leader personalities), then **20b** (Walls, fair seats), Nate's play test, 21 (the polish pass), 22 (the language pass).**
+**Phase: M3 (depth and balance). Sessions 7–20 are done and reviewed; 20c is done. Next: **20b** (Walls, fair seats), Nate's play test, 21 (the polish pass), 22 (the language pass).**
 
-Claude Code sessions completed: **20** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
+Claude Code sessions completed: **20c** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
 ---
 
@@ -1049,8 +1049,31 @@ All four parts are done, each committed and pushed. Art batch 4 wasn't imported 
 - **Planning may be slower:** fine ("it will always be faster than people putting in orders").
 - **Nate's calls:** all of this is **session 20c, run before 20b** (Walls and fair seats); personalities change play style, not just voice. Design: `docs/04-design-additions.md` §15, "Nate's second note". Prompt: `docs/prompts/claude-code-session-20c.md`.
 
-### Things to test after session 20 (Nate's next play test)
+### Oct 8: Session 20c done: mass and sweep, the security blanket, and leaders with personalities
+*All four parts done. Numbers: `docs/sim-results-m3-leaders.md` (session 20c). Commits: Part 1 `d369852`, Part 2 `f406bfd`, Part 3 `a22ab34`, Part 4 (this write-up).*
+- **Finishing is now Nate's mass and sweep.** Once you hold 75% of the map, a leader on Run the military or Clean up (and every Marshal): holds the ring around the remnant's armies before they can move, turns the whole purse into troops where they can't be lost that turn, marches every spare troop to one staging point with your Leader, sweeps one chain through everywhere the remnant is and everywhere its armies could reach, then lays the **security blanket**: transfers through your land into every territory they could reach, queued last, so anything they take is taken straight back. About 100 orders a turn while finishing on Wyrmland, up to about 300 on Rootholm.
+- **Mop-up fixtures (Leader):** median **3 → 2 turns**, within 3 turns **60% → 100%** (wide set of 180 runs: **69% → 92%**), none past 5 on the fixtures (one run at 6 on the wide set). **"Got away"** (a rival keeping land it took to the end of a turn): **65% → 25%** of positions (52% → 17% on the wide set). **That misses the 10% target**: what's left is real armies of 11–228 troops breaking out 6–7 hops through land that couldn't be held in the first rounds, and one fixture where the rivals' armies outnumber ours. Spare troops left far from the fight 22% → 14% (wide 26% → 8%).
+- **Defensible pauses** (a chain stops a hop short rather than end where an army would throw it out; not the Blitzer), **a sweep of your own land after the attacks** when a rival army could get behind your front, **marches as far as they need**: retaken within a turn up on Wyrmland (29% → 31%), troops closer to the action (2.06 → 1.87 steps), win rates unchanged.
+- **The bots' Leaders are used** from turn 15 (from turn 1 they made the strongest opener snowball on Embervale): the Marshal's Leader is on its main chain on 46% of its attacking turns after the opening on Embervale, 30% on Wyrmland (was 0%). **Captured leaders work together:** Clean up is one team under one senior; the Marshal carries its captured leaders with its armies.
+- **Leaders with personalities:** pick one in the lobby next to each name (Leader: Neutral, Conqueror, Blitzer, Opportunist, Schemer; Steward: Neutral, Turtle, Merchant), remembered on your device; it changes how the leader plays, the bots' leaders carry their Marshal's, and they keep it for life, including after capture (old saves load as Neutral). "Aldric, the Conqueror" in the Leaders panel and a line in its own voice in the report and Chronicle when it takes land.
+- **Personality effects** (delegating seat vs Marshals, 300 games, Embervale 4 / Wyrmland 6; Neutral 28.3% / 16.7%): Conqueror 26.7 / 18.0, Blitzer 27.7 / 16.7, Opportunist 27.7 / 18.3, Schemer 28.7 / 18.7, Turtle 25.0 / 15.3, **Merchant 34.3 / 20.0 (too strong on Embervale)**. The Steward personalities buy visibly differently; the Leader personalities differ less than the Marshal's (the Blitzer never pulls back).
+- **Nothing else got weaker:** headline 39.2% → 38.9% (Embervale), 31.9% → 32.6% (Wyrmland); delegating player 27.0% / 18.2% (fair 25 / 16.7); the opening the same (Embervale half-map by turn 10 35% → 37%, within noise); bot games end sooner (Rootholm 10 at the cap 45% → 30%); the Captain unchanged.
+- **Also fixed or changed:** session 17's personality-signature test now plays 24 games (8 sat at the edge); two web tests use three bots (two Marshals now often end a game the turn you're knocked out).
+- **Screenshots** (desktop and 384 px phone), `docs/art/screens/s20c-*.png`: `lobby` (the personality choice), `leaders` ("Aldric, the Conqueror", "Odo, the Turtle", 83 orders), `finishing-queue` (108 orders), `finishing-map`, `home-sweep`. Saves: `s20c-save.json`, `s20c-home.json` (from `make-s20c-save.ts`; their Steward's big purse is the save maker's doing: a stand-in played your turns). Script: `apps/web/scripts/s20c-shots.mjs`.
+- **Speed** (10 players): all ten bots plan a turn in **12.5 ms on average** (was 11.7; 95% of turns under 24 ms); the worst single turn 67 ms (over the 50 ms line once in 981 turns). Start-up bundle 479.3 → 482.5 KB (gzip 146.9 → 148.0).
+- **Tests and deploy:** 899 automated tests pass (the full run twice); typecheck and the web build pass. Deployed to the private preview (version `ae60a59b`); the lock check passed. Nate: please check the repo's Actions page for the last commit.
+- **Questions for Nate:** (1) the Merchant Steward wins about 6 points more than Neutral on Embervale because Neutral's Steward stops and saves for an urgent fort while the Merchant keeps buying markets: should Neutral's Steward buy markets before saving (that would also make delegating stronger), or should the Merchant be held back? (2) "Got away" is 17–25%: is a rival army breaking out and keeping one territory for a turn acceptable, or should the leader hold more land back as a ring (fewer troops in the mass)? (3) The Leader personalities are subtle: want them pushed further (a Blitzer Leader chaining longer, a Conqueror ignoring second fronts)?
+
+### Things to test after session 20c (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop first; the phone where it applies.*
+- **From session 20c (mass and sweep, the security blanket, leaders with personalities), most important first:**
+  1. **Hold 75% of Wyrmland and watch the finish:** your Leader on **Run the military** (or **Clean up**) with most of your income. Does it mass in one place with your Leader, sweep everywhere the rivals are and could go, and take back anything they take the same turn? How many orders did it write (the queue counts them)? How many turns to finish?
+  2. **Give your Leader the Conqueror and your Steward the Turtle** in the lobby: can you tell in play? (The Turtle should put up forts and culture first; then try the Merchant: markets first.) Does "Aldric, the Conqueror" show in the Leaders panel, and does it speak in its own voice in the report when it takes land?
+  3. **Capture a Leader that had a personality** (knock out a Marshal): does it keep it ("Wynn, the Turtle")? Put it on Clean up with your Leader: do they work as one (its army moving under your Leader's orders)?
+  4. **A rival army next to your land mid-game:** does your Leader on Run the military move a few troops into the land behind your front that army could reach (after its attacks), and does it take back what the rival grabs?
+  5. **Watch the Marshals' Leaders after turn 15:** do they march with the biggest attack and use the Initiative there?
+  6. **Your chains:** does your Leader stop a chain a step short rather than leave the army where a rival would throw it straight out?
+  7. **An older save** (from before today): does it load, with your leaders Neutral?
 - **From session 20 (leaders that finish the job, the Marshal plays like a person, controls), most important first:**
   1. **Hold 75% of a map and finish it with your leaders:** put your Leader on **Run the military** (or **Clean up**, which now appears in its command list) with most of your income. Does it end the last rivals in a turn or two? Does the Leaders panel say "Finishing them off: …", and does the report say "Your Leader, Aldric, finished …"? How many orders does it write?
   2. **Watch your Leader's purse on Run the military:** it should be spent every turn (or say what it's saving for). Do your troops head toward the fighting, including the army at your capital?

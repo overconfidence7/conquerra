@@ -169,3 +169,125 @@ The opening isn't faster (half the map by turn 10 is the same or lower everywher
 
 ## Speed (Krakenmere, 10 players, `s19-speed.ts`)
 Resolving a turn 6.5 → 7.6 ms on average (worst 25 → 29 ms); all ten bots planning a turn 7.6 → 10.9 ms (worst 33 → 34 ms); one Marshal 0.7 → 1.3 ms (worst 8 → 16.5 ms). More orders cost a little time; nothing near the 50 ms goal.
+
+
+# Session 20c: mass and sweep, the security blanket, and leaders with personalities
+
+*Nate's second note on session 20: late in a game our recruiting dwarfs theirs, so a remnant's army should never match ours where they meet, and anything they take should be taken straight back. Fog on, diplomacy on, seats rotated. "Before" is session 20's code (commit `215c15b`) run through the same scripts and seeds as "after". Raw outputs: `docs/sims/s20c-*.txt`. Scripts: `apps/sim/scripts/s20c-mopup.ts` (the mop-up fixtures with Nate's measures), `s20c-play.ts` (whole games: retakes, land lost, troops' distance from the action, the Leader on the main chain, what each seat buys and how it chains), `s20c-kept.ts` and `s20c-why.ts` (tracing what the remnants kept), `s20c-at.ts`, `s20c-rider.ts`, `s20c-sig.ts` (session 17's personality signatures over 100 games).*
+
+## What the traces showed (why the remnants got away)
+- **A remnant's army roamed through our 1-troop interior** while our strikes landed where it had been: one 60-troop army on Embervale chained through five of our territories a turn for four turns.
+- **Each order plays in its own round, and a remnant writes only a few**, so its army moves in the first rounds: whatever we queue first plays before it moves, the rest after. Session 20's ring was built from marches that played too late.
+- **A remnant recruits its whole income and chains out the same turn** from a territory showing 1 troop (its recruit site: a capital, a barracks, or a province it holds whole, sometimes with land we'd never seen).
+- **Recruits at full-province sites fizzled** when the remnant took one territory of the province earlier in the turn, so the purse went unspent.
+- Smaller causes: a staging territory next to their army fell before the mass arrived; a storm had closed the crossing a strike needed; a remnant's last land was remembered under a House already knocked out, which the sweep treated as off limits; the remnant's last territories were in land we'd never seen.
+
+## Finishing: the mop-up fixtures (before → after)
+The 20 fixtures (85–95% held, two or three rivals left) and the wide set (60 positions, 3 sets of dice each: 180 runs). The leading seat as a delegating player (Leader on Run the military 80%, Steward on Run the realm 20%), as its Marshal, or with every military leader on Clean up. 15 turns at most.
+
+| Seat | Set | Median turns | Within 2 | Within 3 | Within 5 | Past 5 |
+|---|---|---|---|---|---|---|
+| Leader | 20 fixtures | 3 → **2** | 30% → **90%** | 60% → **100%** | 85% → **100%** | 3 → **0** |
+| Marshal | 20 fixtures | 3 → **2** | 30% → **90%** | 65% → **100%** | 90% → **100%** | 2 → **0** |
+| Clean up | 20 fixtures | 3 → **2** | 50% → **90%** | — → **100%** | — → **100%** | 0 |
+| Leader | 180 runs | 3 → **2** | 41% → **77%** | 69% → **92%** | 92% → **99%** | 14 → **1** (6 turns) |
+| Marshal | 180 runs | 3 → **2** | 41% → **74%** | 72% → **92%** | 93% → **99%** | 13 → **1** (6 turns) |
+| Clean up | 180 runs | — → **2** | — → **76%** | — → **92%** | — → **99%** | **1** (6 turns) |
+
+**Targets met:** median 2 turns, 90% within 3 (92% on the wide set, 100% on the fixtures). **One run past 5** on the wide set (6 turns, `wyrmland-6-140` with one set of dice; its other two finish in 5): a rival there still held two real armies (the position is a fight, not a mop-up) and our mass reached the second only on the next turn.
+
+**Nate's measures, the Leader (20 fixtures / 180 runs), before → after:**
+
+| Measure | 20 fixtures | 180 runs |
+|---|---|---|
+| "Got away": a rival still held land it took from us when the turn ended | 65% → **25%** of positions (6.4 → **0.40** territories a position) | 52% → **17%** (3.0 → **0.62**) |
+| A rival took any territory at all (even one taken back the same turn) | 95% → 80% (14.9 → 6.2 a position) | 79% → 69% (7.6 → 4.8) |
+| Orders a turn while finishing | 55 → **134** (most 131 → 320) | 49 → **105** (most 160 → 277) |
+| Spare troops more than 3 steps from where the rivals were, as the turn ended | 22% → **14%** | 26% → **8%** |
+| The purse recruited within 2 steps of a rival's land | 87% → 71% | 78% → 63% |
+
+**The "got away" target (under 10%) isn't met: 17% on the wide set, 25% on the fixtures** (the Marshal: 18% and 30%). What they still keep, traced on the fixtures (`s20c-kept.ts`): in 8 territories over 20 positions, (1) **real armies breaking out**: an army of 11 to 81 troops chains 6 or 7 hops through land we couldn't hold in the first rounds and stops where our sweep can't safely follow that turn (half the cases); (2) **one fixture is a war, not a mop-up** (`wyrmland-6-24`: the two rivals' armies of 354 and 234 together outnumber our 537), where a 228-troop army takes a territory and keeps it; (3) a few transfers too small to retake (the blanket's 3 troops against 4–5). Everything the remnants took and *didn't* keep was taken straight back the same turn by the sweep or the blanket.
+
+**Recruiting near the fight fell** (87% → 71% within 2 steps) on purpose: a full-province site next to their land can be lost before its recruit runs, so sites that can't be lost that turn come first (the capital, a barracks, a province not touching their land), and the troops then march as many hops as it takes. The purse is still spent every turn.
+
+**Why each change is there** (the 20 fixtures with the Leader, one change at a time as the planner was built, within 2 / within 3 / kept a position): the first mass and sweep 25% / 45% (worse: recruits fizzling, no pounce); robust recruit sites and the pounce on an army that marches out 40% / 65%; holds from two steps away, reach worked out from army strength, the Initiative only on ready strikes 55% / 70% / 1.9; recruit sites as armies 55% / 70% / 3.0 (within the noise of 20 positions); the blanket drawn from land they can't reach 50% / 65% / 1.75; unseen land counted as theirs for recruit sites, 8-hop reach 60% / 80% / 1.0; staging out of their reach 65% / 85% / 1.1; one shared blanket flow (orders 1339 → 293 at most) 60% / 90% / 1.0; storms and the main mass sweeping every remnant 70% / 85% / 0.45; unseen land joining theirs swept 80% / 95%; a fallen House's land read as its conqueror's, the main remnant never ringed 95% / 95%; the Leader recruited an army where it stands 95% / 100% / 0.40.
+
+## Planning time
+Krakenmere, 10 players, 20 games, every system on (`s19-speed.ts`, run alone): **all ten bots planning a turn 11.7 → 12.5 ms on average** (95% of turns 22.7 → 24.2 ms; the worst single turn 43 → 67 ms); one Marshal 1.4 → 1.5 ms (worst 17 → 35 ms); resolving a turn 8.0 → 9.9 ms. The average is far inside the 50 ms limit; one turn in 981 went over it (a Marshal's finishing turn with a long sweep). A Leader finishing on Rootholm plans in about 30 ms (single-threaded), writing up to about 300 orders.
+
+## Part 2: defensible pauses, the sweep of our own land, troops near the action, the Leaders used
+**One change at a time** (300 games; one changed Marshal among unchanged Marshals, and a delegating seat's leaders with the change against Marshals; fair 25% / 16.7%). Single-seat lines at 300 games swing about ±4 points: "carry", which can't touch the delegating seat at all, shows it.
+
+| Change | Changed Marshal (Embervale / Wyrmland 6) | Delegating seat | Kept? |
+|---|---|---|---|
+| Defensible pauses, 1 hop back | 25.3% / 17.7% | 26.7% / 17.7% (lost a turn 2.32 → 2.20, 3.70 → 3.57) | **Yes** (not the Blitzer) |
+| Pauses, 2 hops back | 24.3% / 16.3% | 24.0% / 21.3% | No (mixed) |
+| Home sweep queued first | **20.0%** / 14.3% | 24.0% / 12.7% | No (costs wins) |
+| **Home sweep after the attacks** | 24.7% / 13.0% | 27.3% / 16.0% (retaken within a turn 28 → 33% on Wyrmland) | **Yes** |
+| Marches as far as they need (20 hops) | 23.0% / 14.0% | 26.3% / 16.7% (troops 2.00 → 1.89 steps from a rival army) | **Yes** |
+| The Leader with the main effort from turn 1 | 23.7% / 13.7% (Leader on the main chain 2.8 → 55.8%, 0.9 → 38.0%) | 27.0% / 15.0% | From turn 15 (below) |
+| Captured leaders carried | 27.0% / 13.0% | (no effect: 28.0% / 13.3%, as without) | **Yes** |
+
+**The opening:** with everything on and the Leader leading from turn 1, tables of four Marshals on Embervale reached half the map by turn 10 in **50%** of games (session 20: 35%). Switching each change off found the cause: the Leader going with the main attack (+20%) in the opening made the strongest opener snowball. From turn 15 it's back to 35.7%; the pauses and long marches alone moved it only within the noise.
+
+**With everything on (final code), before → after:**
+
+| Measure (300 games) | Embervale 4 | Wyrmland 6 |
+|---|---|---|
+| Territories of ours retaken within a turn of being lost (a table of Marshals) | 31.3% → 30.3% | 28.7% → **31.4%** |
+| … the delegating seat | 33.6% → 32.5% | 28.3% → **31.1%** |
+| Land lost a turn (Marshals) | 2.43 → 2.33 | 3.74 → 3.76 |
+| … the delegating seat | 2.36 → 2.22 | 3.71 → 3.66 |
+| Spare troops' distance from the nearest rival army, in steps (Marshals) | 1.62 → **1.54** | 2.06 → **1.87** |
+| … the delegating seat | 1.68 → 1.59 | 1.94 → 1.83 |
+| The Marshal's Leader on its main chain (share of turns it attacked) | 0% → 15% (**46% from turn 15**) | 0% → 14% (**30% from turn 15**) |
+| … the delegating seat's Leader | 33% → 39% (47% from turn 15) | 24% → 28% (31% from turn 15) |
+| Orders a turn (Marshals) | 8.3 → 10.1 | 12.5 → 20.6 |
+
+The sweep of our own land shows mainly on the big map (more retaken within a turn); land lost a turn is flat or a little lower. The point Nate made (troops at the front, nothing exposed behind) shows in the distance measure, not in win rate, as he expected.
+
+**Captured leaders work together:** with your Leader and a captured Leader both on Clean up, the captured one writes nothing of its own but the troops its purse pays for, its army moves under your Leader's orders with its portrait on them, and both say "Finishing them off" (a test, on every fixture with a captured Leader standing on troops). On the mop-up fixtures Clean up is now as fast as one Leader running the military (above); session 20's Clean up split our land between leaders and was slower in the tail.
+
+## Nothing else got weaker (500 games a line)
+**One Marshal of each personality against Captains** (session 20 → 20c):
+
+| Table (fair) | Conqueror | Blitzer | Turtle | Schemer | Opportunist | Merchant | Average |
+|---|---|---|---|---|---|---|---|
+| Embervale 4 (25%) | 44.2 → 41.8% | 43.0 → 42.6% | 30.6 → 30.0% | 36.8 → 39.8% | 42.0 → 42.0% | 38.6 → 37.2% | **39.2 → 38.9%** |
+| Wyrmland 6 (16.7%) | 31.4 → 31.0% | 27.2 → 28.0% | 34.8 → 39.0% | 28.6 → 31.0% | 28.4 → 27.8% | 41.2 → 38.6% | **31.9 → 32.6%** |
+
+Within the noise (about ±2 points a cell) on Embervale and a little stronger on Wyrmland. **The strong stand-in** against 5 Marshals on Wyrmland: 23.6% → 26.2%.
+
+**A delegating player against Marshals:** 80/20: 27.2% → **27.0%** on Embervale, 16.8% → **18.2%** on Wyrmland 6 (fair 25 / 16.7). All-in (100/0): 34.6% → **38.6%** on Embervale (1.54×, the open item Nate accepted until 20b), 10.4% → 9.6% on Wyrmland.
+
+**Tables of Marshals (the opening and the finish):**
+
+| Table | Median length | At the 60-turn cap | Half the map by turn 10 | Halfway leader won |
+|---|---|---|---|---|
+| Embervale 4 | 24 → 22 | 0.8% → 0.2% | 35.2% → 37.2% | 57.4% → **55.2%** |
+| Wyrmland 6 | 40 → **36** | 16.2% → **11.4%** | 1.0% → 1.4% | 52.0% → 52.6% |
+| Wyrmland 8 | 47 → 44 | 28.6% → **22.6%** | 0% → 0% | 45.8% → **37.7%** |
+| Rootholm 8 | 48 → 43 | 31.4% → **18.8%** | 0% → 0% | 52.9% → **46.0%** |
+| Rootholm 10 | 58 → 50 | 45.0% → **30.0%** | 0% → 0% | 41.6% → 41.0% |
+
+The opening is unchanged within the noise (Embervale's half-map 37.2% against 35.2%, about one standard error), the halfway leader wins less or the same everywhere, and bot games end sooner (fewer at the cap on every table). **The Captain is unchanged** (its fingerprint tests).
+
+## Leaders with personalities (300 games, a delegating seat against Marshals)
+The seat's Leader (on Run the military, 80%) or Steward (Run the realm, 20%) with a personality; Neutral is today's. "Spent" is gold a game.
+
+| Seat | Embervale 4 (fair 25%) | Wyrmland 6 (fair 16.7%) | How it plays differently |
+|---|---|---|---|
+| Neutral | 28.3% | 16.7% | (hops 2.43 / 3.50 a turn; retreats 0.10 / 0.21; buildings 64 / 121, culture 34 / 104) |
+| Leader: the Conqueror | 26.7% | 18.0% | more orders (11.4 / 22.1 a turn, Neutral 10.9 / 20.7), its troops massed on its main front |
+| Leader: the Blitzer | 27.7% | 16.7% | **never pulls back** (retreats 0.00 a turn) and never stops a chain short |
+| Leader: the Opportunist | 27.7% | 18.3% | goes for whoever just fought: different orders in a few positions in 10 |
+| Leader: the Schemer | 28.7% | 18.7% | a little more chaining (hops 2.49 / 3.54) |
+| Steward: the Turtle | 25.0% | 15.3% | **forts and culture first**: buildings 49 / 98, culture 53 / 164 |
+| Steward: the Merchant | **34.3%** | 20.0% | **markets first**: buildings 66 / 125, troops 600 / 1604 (Neutral 533 / 1466) |
+
+**Within 3 points of Neutral:** every Leader personality, and the Turtle (−3.3 / −1.4). **The Merchant isn't (+6.0 / +3.3).** Its first version (markets first, and culture for its income at a lower bar) was +10 / +7; with Neutral's culture bar it was +7 / +4, and fortifying a threatened capital first it's +6 / +3.3. What's left is the order itself: Neutral's Steward stops and saves up whenever it can't yet afford an urgent fort, and the Merchant keeps buying markets that pay back. That points at Neutral's saving, not the Merchant (a question for Nate).
+
+**How visible each is:** the Steward personalities are plainly different (what they buy). The Leader personalities differ less than the Marshal's do, because what made the Marshals differ is mostly what they buy and their deals, which a military leader doesn't do, and every Marshal (and leader) attacks at least as hard as the shared floor (chain margin, hops, troops sent). What's left: the Blitzer never pulls back or pauses, the Conqueror masses on one front, the Opportunist and Schemer go for whoever just fought or is weakened. On the mop-up fixtures all of them finish the same way (mass and sweep). A Neutral leader's orders are pinned unchanged (a fingerprint over the 20 fixtures, the same as after Part 2).
+
+## Personality signatures (session 17's test, now over 24 games)
+Every Marshal now pauses and marches far, which put the Conqueror's fronts a turn at the Blitzer's edge in the test's 8 fixed games. Over 100 games the signatures are as before (`s20c-sig.ts`): fronts a turn Conqueror 1.21 / Blitzer 1.27 (before 1.21 / 1.28), land taken by turn 8 Blitzer 20.8 (others 14.9–19.5), forts and culture by turn 10 Turtle 7.6 (Blitzer 1.0). The test now plays 24 games.

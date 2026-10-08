@@ -150,7 +150,10 @@ export function planSteward(
           ]
         : merchant
           ? [
-              // The Merchant (session 20c): markets first, then the urgent forts, then culture for its income.
+              // The Merchant (session 20c): a threatened capital's fort, then markets, then the other urgent forts,
+              // then culture for its income. (Markets before even the capital's fort made it 4-7 points stronger than
+              // Neutral in the sims.)
+              ...urgent.filter((w) => w.territory === capital),
               ...economy(mine).filter((w) => w.order.kind === "build"),
               ...urgent,
               ...barracksFor(mine),

@@ -1,0 +1,33 @@
+leader   20 runs: median 2, within 2 90%, within 3 100%, within 5 100%, unfinished 0, lost 0
+   got away 25% (kept 0.40 a run); took any 80% (6.20 a run); orders a turn 133.5 (most 320); recruits within 2 steps 71%; spare troops left behind 14%; plan 32.3 ms (worst 68)
+   turns: 1:8 2:10 3:2
+   slow (over 3): 
+   embervale    1 1 1 2 2 2 2
+   rootholm     1 3* 2* 2 1 2
+   wyrmland     2 1 2* 1 1 2* 3*
+marshal  20 runs: median 2, within 2 90%, within 3 100%, within 5 100%, unfinished 0, lost 0
+   got away 30% (kept 0.50 a run); took any 80% (5.75 a run); orders a turn 128.6 (most 314); recruits within 2 steps 73%; spare troops left behind 13%; plan 22.0 ms (worst 52)
+   turns: 1:8 2:10 3:2
+   slow (over 3): 
+   embervale    1 1 1 2* 2 2 2
+   rootholm     1 3* 2* 2 1 2
+   wyrmland     2 1 2* 1 1 2* 3*
+cleanup  20 runs: median 2, within 2 90%, within 3 100%, within 5 100%, unfinished 0, lost 0
+   got away 30% (kept 0.50 a run); took any 80% (6.25 a run); orders a turn 135.4 (most 324); recruits within 2 steps 71%; spare troops left behind 14%; plan 23.5 ms (worst 52)
+   turns: 1:8 2:10 3:2
+   slow (over 3): 
+   embervale    1 1 1 2* 2 2 2
+   rootholm     1 3* 2* 2 1 2
+   wyrmland     2 1 2* 1 1 2* 3*
+leader   180 runs: median 2, within 2 77%, within 3 92%, within 5 99%, unfinished 0, lost 0
+   got away 17% (kept 0.62 a run); took any 69% (4.77 a run); orders a turn 104.5 (most 277); recruits within 2 steps 63%; spare troops left behind 8%; plan 134.2 ms (worst 400)
+   turns: 1:69 2:69 3:27 4:11 5:3 6:1
+   slow (over 3): embervale-4-74=5* embervale-4-76=4* embervale-4-76#1=4* embervale-4-76#2=4* embervale-4-78#1=5* rootholm-9-38=4 rootholm-9-38#1=4 rootholm-9-38#2=4 rootholm-9-76=4* rootholm-9-109#1=4* wyrmland-6-79=4 wyrmland-6-79#1=4 wyrmland-6-79#2=4 wyrmland-6-140=5 wyrmland-6-140#1=6
+marshal  180 runs: median 2, within 2 74%, within 3 92%, within 5 99%, unfinished 0, lost 0
+   got away 18% (kept 0.34 a run); took any 69% (4.54 a run); orders a turn 100.6 (most 270); recruits within 2 steps 64%; spare troops left behind 13%; plan 158.7 ms (worst 451)
+   turns: 1:68 2:65 3:33 4:13 6:1
+   slow (over 3): embervale-4-52=4* rootholm-9-38=4 rootholm-9-38#1=4 rootholm-9-38#2=4 rootholm-9-76=4* rootholm-9-76#1=4* rootholm-9-76#2=4* rootholm-9-96#2=4* rootholm-9-109=4* rootholm-9-109#2=4* wyrmland-6-79=4 wyrmland-6-79#1=4 wyrmland-6-79#2=4 wyrmland-6-140#1=6
+cleanup  180 runs: median 2, within 2 76%, within 3 92%, within 5 99%, unfinished 0, lost 0
+   got away 17% (kept 0.61 a run); took any 69% (4.69 a run); orders a turn 105.8 (most 278); recruits within 2 steps 63%; spare troops left behind 8%; plan 168.6 ms (worst 642)
+   turns: 1:71 2:66 3:28 4:10 5:4 6:1
+   slow (over 3): embervale-4-74=5* embervale-4-76=5* embervale-4-76#1=4* embervale-4-76#2=4* embervale-4-78#1=5* rootholm-9-38=4 rootholm-9-38#1=4 rootholm-9-38#2=4 rootholm-9-76=4* rootholm-9-109#1=4* wyrmland-6-79=4 wyrmland-6-79#1=4 wyrmland-6-79#2=4 wyrmland-6-140=5 wyrmland-6-140#1=6

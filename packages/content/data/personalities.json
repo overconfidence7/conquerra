@@ -456,7 +456,7 @@
       "cultureFights": 4,
       "exposedWorth": 0.5,
       "culturePays": 0.3,
-      "styles": { "turtle": { "fortThreat": 3, "culture": 3 }, "merchant": { "culturePays": 0.2 } }
+      "styles": { "turtle": { "fortThreat": 3, "culture": 2 }, "merchant": { "culturePays": 0.3 } }
     }
   }
 }

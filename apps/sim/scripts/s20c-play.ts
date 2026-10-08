@@ -17,7 +17,7 @@ import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { playTable } from "@conquerra/simcore";
 import { indexMap, type GameContext, type GameState, type Order, type PlayerId, type TerritoryId } from "@conquerra/engine";
-import { botFor, seatsFor, type TournamentSpec } from "../src/tournament";
+import { botFor, seatsFor, stylesOf, type TournamentSpec } from "../src/tournament";
 
 const args = process.argv.slice(2);
 const self = fileURLToPath(import.meta.url);
@@ -69,6 +69,8 @@ function work(job: Job): Row[] {
   const lostAt = new Map<PlayerId, { t: TerritoryId; turn: number }[]>();
   const r = playTable(ctx, seed, bots, {
     settings: { fog: true, diplomacy: true },
+    // (Each seat's leaders' personalities: a Marshal's carry its own; "+lead-conqueror" on a delegating seat.)
+    styles: kinds.map(stylesOf),
     onTurn: (s) => {
       state = s;
       // Retaken by the end of the next turn.

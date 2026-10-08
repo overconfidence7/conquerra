@@ -286,12 +286,12 @@ export const LeaderPlanning = z.object({
     /**
      * Session 20c: a Steward's personality on "Run the realm". The Turtle: a fort wherever a rival army of at least
      * `fortThreat` stands next door (not only urgent ones), and up to `culture` levels a turn where they protect, before
-     * markets. The Merchant: markets first (where they pay), then the urgent forts, then culture for its income. A
+     * markets. The Merchant: a threatened capital's fort, then markets (where they pay), then the other urgent forts, then culture for its income. A
      * Marshal's Steward of another personality runs the realm as Neutral does.
      */
     styles: z
       .object({ turtle: z.object({ fortThreat: z.number().int().min(1), culture: z.number().int().min(0) }), merchant: z.object({ culturePays: z.number().min(0) }) })
-      .default({ turtle: { fortThreat: 3, culture: 3 }, merchant: { culturePays: 0.2 } }),
+      .default({ turtle: { fortThreat: 3, culture: 2 }, merchant: { culturePays: 0.3 } }),
   }),
 });
 export type LeaderPlanning = z.infer<typeof LeaderPlanning>;
