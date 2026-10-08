@@ -260,6 +260,7 @@ export function frameAt(tl: Timeline, t: number): ReplayFrame {
       else if (e.type === "built" || e.type === "completed") frame.pops.push({ at: e.territory, player: e.player, label: e.building, progress: q });
       else if (e.type === "invested") frame.pops.push({ at: e.territory, player: e.player, label: "culture", progress: q });
       else if (e.type === "governed" && e.land[0]) frame.pops.push({ at: e.land[0].territory, player: e.player, label: e.spent[0]?.what === "fort" ? "fort" : e.spent[0]?.what === "culture" ? "culture" : "troops", progress: q });
+      else if (e.type === "walled" && e.territories[0]) frame.pops.push({ at: e.territories[0], player: e.player, label: "Walled", progress: q });
       else if (e.type === "leaderReturned") frame.pops.push({ at: e.territory, player: e.player, label: "Leader", progress: q });
       else if (e.type === "generalCaptured") frame.pops.push({ at: e.territory, player: e.player, label: "Captured general", progress: q });
       else if (e.type === "generalLost") frame.pops.push({ at: e.territory, player: e.player, label: "General lost", progress: q });

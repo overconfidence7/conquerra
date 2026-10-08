@@ -1,4 +1,4 @@
-# Conquerra Rules Reference (Milestone 3, session 19)
+# Conquerra Rules Reference (Milestone 3, session 20b)
 
 *A 10-minute read. This is how the engine actually plays today. Numbers are the current balance settings from `packages/content/data/rules.json`; they will change as we tune.*
 
@@ -132,6 +132,7 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
   - **Holding bonus:** **+1 gold per turn per level** on that territory (session 19, was +½; pending Nate's pick of the three levers tested), and a full province's bonus grows by 0.5 per level of its average culture.
   - **Protection:** each level blocks 15% of bad effects there (up to 75%): **unrest** (§8), the Fallen's world events (§16) and bad **Fate events** (§19). An all-or-nothing event (a fire, a flooded ford) is shrugged off with that chance.
   - **Unlocks** the fancier specialists in that province (§6): **the culture ladder** below.
+  - **Walls** (session 20b): culture 5 and a fort make a territory walled, and touching walled territories share their spare defenders (§24).
 - **Culture is lost when land changes hands** (session 16, Nate): a captured territory drops to **culture 0** for its new owner; so does land traded in a deal, or taken by rebels. **Buildings stay** (a fort keeps standing for the new owner). Culture is an investment in land you mean to keep. The territory card says so on someone else's land ("Lost if you take it"), and the report says when a capture wiped some out. (The share kept is `rules.culture.keptOnCapture`, 0.)
 
 **The culture ladder (session 15).** Culture still unlocks only specialists (no tree, no new resource). Each step uses the total culture you hold in the province:
@@ -187,6 +188,8 @@ Custom conditions stay available behind an "Advanced" toggle. **Conditions can't
 | **Watchtower** | 4 | Ready at the end of this turn | See 1 territory further |
 
 Engineers make any of these ready immediately. A building under construction gives nothing yet; if the territory is captured, the conqueror inherits it.
+
+**A fort on culture-5 land makes a wall** (session 20b, §24): walled territories that touch share their spare defenders. A territory holds one building, so the fort is the building there.
 
 **On the map** (session 9): buildings stand next to the army marker, about the size of a capital's castle, on a soft ground shadow, and never under the marker. One being built shows behind a wooden scaffold, and the marker's building icon carries a small hourglass ("ready next turn"). Buildings you only remember (in the fog) are greyed.
 
@@ -567,5 +570,18 @@ Spies see deep behind the lines. They never fight and never change a battle: the
 - **The awards**, each with the winner's portrait: **Best Military** (most battles won: land taken plus attacks held off), **Best Culture** (most culture raised), **Master Builder** (most buildings finished), **Spymaster** (most spies into a rival's province), **Diplomat** (most deals kept to the end), **Survivor** (of everyone but the winner, who held out longest), and **Iron Wall** (most attacks held off), **Kingslayer** (most rival Leaders felled), **Fortune's Favourite** (most good Fate on their land), **Quartermaster** (most troops recruited) and **Oathbreaker** (most handshake deals broken). Ties are shared; an award nobody earned isn't given.
 - Both come from the game's own record, kept every turn (and in saved games). **Nobody sees it until the game is over**, when everything is revealed: during play, land counts stay hidden.
 
+## 24. Walls (session 20b, Nate's idea)
+The reward at the end of the culture and building path: defence only, no gold, no new resource or building.
+- **Walled:** a territory with **culture 5 and a fort** is walled from the end of the turn its last piece is finished (`rules.walls.culture`, `needsFort`). It stays walled while it keeps both and its owner. Culture is lost when land changes hands (§7), so **a captured, traded or rebelled territory leaves its wall at once**; the rest of the wall stands.
+- **One wall:** walled territories of one House that touch (over land, not a sea lane) form **one wall**.
+- **Shared defenders:** when a walled territory is attacked, every other territory of its wall **within 3 steps along the wall** (`reach`) lends its **spare troops** (all but the 1 that holds its land; `lendAll`) to the defence. Nate's example: three walled territories with 4 troops each, one attacked: **the attacker faces 10**. The attacked territory's terrain, fort, culture and Leader count for all of them.
+  - **One battle a turn:** a territory lends to the first battle at its wall in the turn's order, not to later ones (`oneBattleATurn`).
+  - **Losses:** they fall on the attacked territory first (down to its last troop), then on the lenders in proportion to what they lent. The attacked territory's last troop goes only when everyone else is gone (that's the capture), so a wall can be worn down.
+  - **Siege engines** cut the fort's bonus as ever; they don't cut the shared defenders. **Walls never attack:** a walled army attacks with its own troops.
+- **Fair and readable:** a wall is a big visible structure, so **anyone who can see any part of a wall sees all of it and its shared garrison**. The card says "Walled: 10 defend (with Pinemark and Ashfell)", the attack panel counts them ("defenders: 10"), and the odds preview uses the same number, so **"guaranteed" still always wins**. If you see no part of a wall, you see nothing of it (only what you remember).
+- **On screen:** a solid band of the House colour edged in ink round the outside of each wall's whole footprint, with battlements from Mid zoom in; a wall you only remember is greyed like a remembered building. Before you buy the last piece, the culture and build panels say "Completes a wall". The report says when land becomes walled.
+- **The bots:** your Steward on Run the realm (and Build up this province) finishes a wall where a territory worth holding (your capital, a choke point, a province you hold whole, or land next to one of your walls) needs at most 18 gold more, after the markets that pay; it keeps the building plot free for the fort there. The Marshal builds walls in its own style (the Turtle from scratch, the Blitzer never; only on roomy tables, where it builds like the Steward). The Captain and the Recruit don't. Every bot counts a wall's garrison when it attacks, and its own walls' lenders when it guards.
+- **How it plays (the sims, `docs/sim-results-m3-walls.md`):** see the write-up for who builds them, how often they're attacked, and the limits pending Nate's pick.
+
 ## Not in yet (later milestones)
-Steward portraits (a later art batch; until then the House shield with a quill), the leaders' full voices (session 22's language pass: today one line when they take land), Walls and fair capital spots on every map (session 20b), the polish pass with replay effects and art batch 4 (session 21), the language pass (session 22), sound (its own session after). Catch-up rules for a runaway (options listed in `docs/sim-results-m3-balance.md`, not built). Factions, pause by vote, deals between people and colours chosen by each player in online games (M4), tutorials and scenarios (M5). Not planned: shared vision between partners, and spies that sabotage or affect combat.
+Steward portraits (a later art batch; until then the House shield with a quill), the leaders' full voices (session 22's language pass: today one line when they take land), a painted wall piece (the wall is drawn in code until an art batch), a start bonus for weaker capital spots (listed, not built: `docs/sim-results-m3-balance.md`), the polish pass with replay effects and art batch 4 (session 21), the language pass (session 22), sound (its own session after). Catch-up rules for a runaway (options listed in `docs/sim-results-m3-balance.md`, not built). Factions, pause by vote, deals between people and colours chosen by each player in online games (M4), tutorials and scenarios (M5). Not planned: shared vision between partners, and spies that sabotage or affect combat.
