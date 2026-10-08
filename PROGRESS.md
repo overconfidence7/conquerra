@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–20 are done and reviewed; 20c is done. Next: **20b** (Walls, fair seats), Nate's play test, 21 (the polish pass), 22 (the language pass).**
+**Phase: M3 (depth and balance). Sessions 7–20 and 20c are done and reviewed. Next: **20b** (Walls, fair seats), Nate's play test, 21 (the polish pass), 22 (the language pass).**
 
 Claude Code sessions completed: **20c** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -1063,6 +1063,19 @@ All four parts are done, each committed and pushed. Art batch 4 wasn't imported 
 - **Speed** (10 players): all ten bots plan a turn in **12.5 ms on average** (was 11.7; 95% of turns under 24 ms); the worst single turn 67 ms (over the 50 ms line once in 981 turns). Start-up bundle 479.3 → 482.5 KB (gzip 146.9 → 148.0).
 - **Tests and deploy:** 899 automated tests pass (the full run twice); typecheck and the web build pass. Deployed to the private preview (version `ae60a59b`); the lock check passed. Nate: please check the repo's Actions page for the last commit.
 - **Questions for Nate:** (1) the Merchant Steward wins about 6 points more than Neutral on Embervale because Neutral's Steward stops and saves for an urgent fort while the Merchant keeps buying markets: should Neutral's Steward buy markets before saving (that would also make delegating stronger), or should the Merchant be held back? (2) "Got away" is 17–25%: is a rival army breaking out and keeping one territory for a turn acceptable, or should the leader hold more land back as a ring (fewer troops in the mass)? (3) The Leader personalities are subtle: want them pushed further (a Blitzer Leader chaining longer, a Conqueror ignoring second fronts)?
+
+### Oct 8: Orchestrator review of session 20c
+- **Checked the work:**
+  - GitHub's checks pass on all four session 20c commits, so `main` is green.
+  - The screenshots look right: the lobby's personality chips (Neutral / Conqueror / Blitzer / Opportunist / Schemer; Neutral / Turtle / Merchant), "Aldric, the Conqueror … 83 orders this turn", captured leaders keeping their personalities ("Gerrit, the Merchant, Queen Isolde's old Leader"), and a 108-order finishing turn with the marches converging on the map.
+  - **Re-run and confirmed exactly:** the 20 mop-up positions with a Leader on Run the military: median 2 turns, 90% within 2, all within 3, "got away" 25%, about 134 orders a turn while finishing. This is what Nate asked for: mass, sweep, blanket.
+  - **One thing the summary understates:** a finishing turn's planning takes about 290 ms on the orchestrator's machine (worst 600 ms) because of the hundreds of orders. Fine in single player (the limit that matters is the 50 ms for all bots together in ordinary turns, which holds at 12.5 ms average); worth watching in M4 when the server plans the bots.
+- **Nate's calls on session 20c's questions (Oct 8):**
+  - **"Got away" at 17–25%** (a real army breaks out and keeps a territory for one turn before the blanket retakes it): **acceptable**; no bigger ring.
+  - **Leader personalities are subtle: leave them**; the language pass (22) gives them their voice.
+  - **The Merchant Steward 6 points over Neutral on Embervale: leave both, re-measure after Walls (20b)**, which changes what a Steward's gold is worth.
+  - **Captured leaders arrive on "Report to" your Leader / Steward by default** (one tap to change), instead of idle with no command. Session 20b, Step 0.
+- **Next:** session 20b (Walls, fair seats), then Nate's play test from the list below.
 
 ### Things to test after session 20c (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop first; the phone where it applies.*

@@ -26,7 +26,7 @@ The parts are in priority order. **Part 4 ends with the deploy, so the session i
 ## Step 0: sync, and session 20's leftovers
 1. Run `git --no-optional-locks status`, then `git pull` and `pnpm install`. Work on `main` and push to `main`.
 2. **Don't import art batch 4** (session 21 does).
-3. If session 20c left leader personalities' play style for this session (its summary says), do it first, with its tests. Then two small things from session 20's review:
+3. Session 20c left nothing behind. From its review (Nate, Oct 8): **captured leaders arrive on "Report to"** your Leader (a captured Leader) or your Steward (a captured Steward) by default, instead of with no command; one tap changes it; the keep-or-let-go dialog says so. A test. Then two small things from session 20's review:
    - **The offer card warns when a deal would stop a finish:** when a rival your leader is finishing offers a truce (or you propose one), the card says "A truce with Baron Krell would stop Aldric finishing them". Diplomacy stays yours; the leader never refuses for you. A test.
    - **Two harnesses, two numbers:** `s20-marshal.ts` gives all-in delegating (`delegate-100`) 34.6% against Marshals on Embervale 4 and `s19-lines.ts` gives 42.6% (500 games each). Find what differs in how the two set the seat up (the Steward's share on a crowded table? the seed rotation?), make them agree, and note the true number in the write-up. Don't chase the number itself: Nate has decided what to do about it (see `PROGRESS.md`, the review of session 20).
 4. **Commit and push.**
@@ -57,7 +57,7 @@ Design: `04-design-additions.md` §16. Build it as written, with every number in
 1. **On the map:** the wall drawn around the outside of the whole walled footprint, in the House's colour, with battlements at Mid and Near (drawn in code for now; an art piece can replace it in a later batch). It reads at every zoom and never hides the troop pill. A remembered wall in the fog is greyed like a remembered building.
 2. **The card and the panel:** "Walled: 10 defend (with Pinemark and Ashfell)" on the territory card; before you buy the last piece, the culture and build panels say "Completes a wall". The odds preview shows the shared garrison.
 3. **The Steward** (Run the realm, Build up this province) finishes a wall where a territory is nearly there and the land is worth holding (the capital, a choke point, the core of a province it holds); the **Marshal** builds walls in its own style (the Turtle most, the Blitzer least); the Captain doesn't.
-4. **Final sim numbers** for Part 1's table, with the bots building.
+4. **Final sim numbers** for Part 1's table, with the bots building. Also **re-measure the Steward personalities with walls on** (Neutral, the Turtle, the Merchant: a delegating seat against Marshals, 300 games, Embervale 4 and Wyrmland 6): session 20c found the Merchant 6 points over Neutral on Embervale and Nate chose to decide after Walls. Report the three lines; if the Merchant is still over by more than 3 points, say what would bring it level without losing "markets first".
 5. **Tests:** the wall ring follows captures; the card's numbers match the engine; the Steward's wall-finishing fires only where it should.
 - **Commit and push.**
 
