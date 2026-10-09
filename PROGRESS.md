@@ -1089,7 +1089,7 @@ All four parts are done, each committed and pushed. Art batch 4 wasn't imported 
 - **Nate's notes during the session:** keep the wall's qualification as built (culture 5 and a fort, appears on its own); unlimited reach and every attack; the walls should look like his picture (done); **make the buildings more 3D so they pop like the wall** (for the polish pass, 21, and art batch 5).
 - **Screenshots** (desktop and 384 px phone), `docs/art/screens/s20b-*.png`: `wall-single`, `wall-joined` (round five), `wall-card` ("Walled: 11 defend"), `wall-odds` (the attack panel counting the garrison), `wall-remembered` (greyed in the fog). Save: `s20b-save.json` from `make-s20b-save.ts` (a real Wyrmland game with walls added by hand); script `s20b-shots.mjs`.
 - **Start-up bundle:** 482.5 → 485.9 KB (gzip 148.0 → 149.2).
-- **Tests and deploy:** DEPLOY_LINE
+- **Tests and deploy:** 943 automated tests pass (the full run twice); typecheck and the web build pass. Deployed to the private preview (version `995e5162`); the lock check passed. Nate: please check the repo's Actions page for the last commit.
 - **Questions for Nate:** (1) a **start bonus** for the weaker capital spots (most maps have one under half of fair among equal bots; e.g. +4 troops or +10 gold, set per map and table size)? (2) **The Merchant Steward** is 7–10 points over Neutral: cap its markets, change Neutral's fort-saving, or leave it? (3) Should the map maker **require** the exposure check (it would reject some layouts the sims call fair)?
 
 ### Things to test after session 20b (Nate's next play test)
