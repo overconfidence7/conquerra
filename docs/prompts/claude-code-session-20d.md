@@ -34,7 +34,7 @@ The parts are in priority order. **Part 4 ends with the deploy, so the session i
 - **Keep the Captain unchanged** and **the Recruit easy.**
 - **The opening and middle game don't change:** the half-map-by-turn-10 and halfway-leader measures stay where they are; the headline (one Marshal against Captains) doesn't drop.
 - **Planning time:** the 50 ms limit for all bots together at 10 players stands; report finishing turns separately (they ran about 290 ms in 20c; a finishing turn is rare, but say what it is now).
-- **Every claim gets numbers:** 300 games a line at least; the mop-up fixtures (20 and the wide set) and Nate's positions before and after.
+- **Every claim gets numbers:** 300 games a line at least; the mop-up fixtures (20 and the wide set) before and after.
 
 ## Part 1: no hoarding, measured the way Nate plays
 Nate's picture: on Run the military with a real budget (he gives 50–80% of his income on a big map), the purse should be **empty or nearly empty at the end of every turn's orders**, with the gold turned into troops wherever recruiting is possible, and the troops marching to the fight. In 20b's build his Leader kept gold turn over turn.
