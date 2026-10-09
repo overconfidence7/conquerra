@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–20 and 20c are done and reviewed. Next: **20b** (Walls, fair seats), Nate's play test, 21 (the polish pass), 22 (the language pass).**
+**Phase: M3 (depth and balance). Sessions 7–20, 20c and 20b are done. Next: the orchestrator's review of 20b, Nate's play test, 21 (the polish pass), 22 (the language pass).**
 
-Claude Code sessions completed: **20c** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
+Claude Code sessions completed: **20b** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
 ---
 
@@ -1077,9 +1077,33 @@ All four parts are done, each committed and pushed. Art batch 4 wasn't imported 
   - **Captured leaders arrive on "Report to" your Leader / Steward by default** (one tap to change), instead of idle with no command. Session 20b, Step 0.
 - **Next:** session 20b (Walls, fair seats), then Nate's play test from the list below.
 
-### Things to test after session 20c (Nate's next play test)
+### Oct 8–9: Claude Code session 20b (M3: Walls, and fair seats on every map)
+*All four parts done. Write-ups: `docs/sim-results-m3-walls.md`, `docs/sim-results-m3-balance.md` ("Fair seats (session 20b)").*
+- **Step 0:** captured leaders arrive on **"Report to" your Leader / Steward** (one tap changes it; the keep-or-let-go dialog and the report say so). The deal card warns **"A truce with Baron Krell would stop Aldric finishing them"** (a joint war too); diplomacy stays yours. **The two harnesses agree:** given the same seed, `s20-marshal.ts` and `s19-lines.ts` give the same number; 34.6% vs 42.6% was the seed alone (which capital spot the seat drew, which personalities were dealt). True number for all-in delegating on Embervale 4: **38.6% (1.54x fair) over 2,000 games**.
+- **Walls (Parts 1–2):** culture 5 and a fort make a territory walled at the end of the turn its last piece finishes; touching walls join; every other territory of the wall lends its spare troops to every attack on it, at any distance (**Nate's calls during the session**: unlimited reach; lend to every attack, because one battle a turn let a 1-troop decoy use up the wall's help); losses on the attacked land first, then the lenders, carried over within the turn; Siege cuts only the fort's bonus; the wall falls with the land. Anyone who sees part of a wall sees its garrison, the odds preview counts it, and "guaranteed" still always wins (property-tested). Saves: state version 12.
+  - **On screen:** a grey stone wall with battlements, towers and pennants in the House colour and the House's glow (Nate's picture), greyed when remembered; "Walled: 11 defend (with Yewstead and Wildstead)" on the card and the attack panel; "Completes a wall" before the last piece.
+  - **The bots:** the Steward (Run the realm, Build up) finishes walls on land worth holding, after its markets, and keeps the fort's plot free (a market on the capital used to block its wall for good); the Marshal by personality (the Turtle from scratch, the Blitzer never); every bot counts a wall's garrison.
+  - **The sims:** walls go up in 69% of 6-player Wyrmland games and 88% of Rootholm (from about turn 17), mostly the Turtle's and your Steward's; they're rarely attacked (bots count the garrison first). **A seat that walls its core wins more where there's room** (delegating seat on Embervale 29.6% vs 26.0%, Wyrmland 19.0% vs 15.4%; a Marshal on Rootholm 16.2% vs 9.2%), about even elsewhere. **Length and runaways are the same with walls on and off**, and no runaway hides behind walls (the halfway leader has under 1% of its land walled). **None of the limits changes anything measurable** in bot play (bot walls are small and hold 1 troop).
+  - **Steward personalities with walls on** (delegating seat vs Marshals, 300 games, Embervale 4 / Wyrmland 6): Neutral 26.3 / 19.0, Turtle 22.3 / 18.0, **Merchant 36.7 / 26.0** (still over by 10 / 7 points). One market a turn levels Wyrmland, not Embervale; Neutral not saving up for forts levels Embervale but makes delegating 1.39x fair. Nate's call.
+- **Fair seats (Part 3):** a search for every official map at its suggested table sizes (300 games a layout; about 13 hours of simulation overnight). **13 layouts pinned** where at least 5 points fairer on fresh games, e.g. The Moon Coast 4 from 1–82% to 1–50% a spot, The Sundered Crowns 6 2–72% → 0–32%, Wyrmland 6 1–50% → 3–29%, Greatmarch 10 2–31% → 5–17%, The Twin Realms 4 11–40% → 20–36%. The other 11 kept. **Most maps still have a spot under half its fair share** among equal bots (only The Twin Realms 4 and Greatmarch 10 are clear): the start bonus is listed with numbers, not built. **The exposure check** (in the map maker) agrees with the sims moderately: rank correlation 0.53, the weakest spot among the more exposed half in 84% of layouts; a tool, not yet a requirement.
+- **Nate's notes during the session:** keep the wall's qualification as built (culture 5 and a fort, appears on its own); unlimited reach and every attack; the walls should look like his picture (done); **make the buildings more 3D so they pop like the wall** (for the polish pass, 21, and art batch 5).
+- **Screenshots** (desktop and 384 px phone), `docs/art/screens/s20b-*.png`: `wall-single`, `wall-joined` (round five), `wall-card` ("Walled: 11 defend"), `wall-odds` (the attack panel counting the garrison), `wall-remembered` (greyed in the fog). Save: `s20b-save.json` from `make-s20b-save.ts` (a real Wyrmland game with walls added by hand); script `s20b-shots.mjs`.
+- **Start-up bundle:** 482.5 → 485.9 KB (gzip 148.0 → 149.2).
+- **Tests and deploy:** DEPLOY_LINE
+- **Questions for Nate:** (1) a **start bonus** for the weaker capital spots (most maps have one under half of fair among equal bots; e.g. +4 troops or +10 gold, set per map and table size)? (2) **The Merchant Steward** is 7–10 points over Neutral: cap its markets, change Neutral's fort-saving, or leave it? (3) Should the map maker **require** the exposure check (it would reject some layouts the sims call fair)?
+
+### Things to test after session 20b (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop first; the phone where it applies.*
-- **From session 20c (mass and sweep, the security blanket, leaders with personalities), most important first:**
+- **From session 20b (Walls, fair seats), most important first:**
+  1. **Wall your capital's province on Wyrmland and let a Marshal hit it.** Raise culture to 5 and put a fort on your capital and two or three neighbours (or leave it to your Steward on Run the realm). Does the red crenellated ring go round the whole group? When a Marshal attacks one of them, does the card's "Walled: N defend" match what happened in the battle (the report counts everyone who defended, and your other walled land loses its share)?
+  2. **Does a wall feel worth 39 gold a territory?** Keep a real army inside it (the sims' bots keep 1 troop in walled land, so their walls lend nothing): does it make that land safe enough to send everything else to the front?
+  3. **Can you still break a walled runaway?** Let a Marshal wall up (the Turtle walls most) and attack it: is the odds preview honest (it counts the garrison), and does "guaranteed" always win?
+  4. **Your starting spot on a 160 map** (Ashwing or The Sundered Crowns): did it feel fair? Several maps' capital spots were re-chosen by the simulator (see the table in `docs/sim-results-m3-balance.md`).
+  5. **Capture a Leader** (knock a Marshal out): does it arrive "Reports to Aldric" (and its Steward to Odo), and does one tap give it another command?
+  6. **Offer a truce to a rival your Leader is finishing off:** does the card warn "A truce with … would stop Aldric finishing them"?
+  7. **A wall you saw and can't see now:** is it greyed on the map ("Walled when last seen" on the card)?
+  8. **On the phone:** do the wall ring and its battlements read at every zoom, and never hide the troop pill?
+- **From session 20c (mass and sweep, the security blanket, leaders with personalities; not tried yet), most important first:**
   1. **Hold 75% of Wyrmland and watch the finish:** your Leader on **Run the military** (or **Clean up**) with most of your income. Does it mass in one place with your Leader, sweep everywhere the rivals are and could go, and take back anything they take the same turn? How many orders did it write (the queue counts them)? How many turns to finish?
   2. **Give your Leader the Conqueror and your Steward the Turtle** in the lobby: can you tell in play? (The Turtle should put up forts and culture first; then try the Merchant: markets first.) Does "Aldric, the Conqueror" show in the Leaders panel, and does it speak in its own voice in the report when it takes land?
   3. **Capture a Leader that had a personality** (knock out a Marshal): does it keep it ("Wynn, the Turtle")? Put it on Clean up with your Leader: do they work as one (its army moving under your Leader's orders)?
@@ -1138,7 +1162,3 @@ All four parts are done, each committed and pushed. Art batch 4 wasn't imported 
   - **Take back** a purse and spend it yourself the same turn
   - change or delete one of a leader's orders in the queue (it's yours to edit)
   - on the phone: open the Leaders sheet from your Leader's portrait; is everything reachable in a few taps?
-
-### Oct 8: Session 20b in progress (where it stands)
-- **Done and pushed:** Step 0 (captured leaders report to yours; the deal card's finish warning; the two harnesses agree, true number 38.6%); Part 1 (Walls in the engine, saves v12, tests); Part 2 (the wall ring, "Walled: N defend" on the card and panels, "Completes a wall", the Steward and the Marshal build walls; screenshots `docs/art/screens/s20b-*.png`); the Walls sims and write-up (`docs/sim-results-m3-walls.md`).
-- **Running:** Part 3's fair-seat search for every official map and table size (`apps/sim/scripts/s20b-fair-seats.ts`, outputs `docs/sims/s20b-fair-*.txt`). If the session stops here: run `npx tsx apps/sim/scripts/s20b-pin-seats.ts` once they're all there, then the write-up (Part 4) and the deploy.

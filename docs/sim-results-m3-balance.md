@@ -296,3 +296,52 @@ Each M3 item in `docs/03-build-plan.md`, as of the end of session 19:
 | The language pass | **Not started: session 21** | Nate's own voice, a tone per bot personality. |
 | Speed check before M4 | **Done** | 10 players on a 200 map: resolving 6.5 ms average (worst 25 ms), all bots planning 7.6 ms (worst 33 ms) on Nate's PC. Over Cloudflare's free 10 ms per request at the worst turns, so the plan's "Workers Paid at the start of M4" stands. |
 | Phone memory on the biggest maps | **Watch** | 225–263 MB of JavaScript memory on a phone (Wyrmland 133); a packed-array fix is suggested, not built. |
+
+## Fair seats (session 20b)
+Session 19 found that among equal bots the capital spot swings win rates from 0% to 76% on every map, and fixed Embervale at 4 players by trying every layout. The big maps have tens of thousands of layouts, so session 20b searched instead (`apps/sim/scripts/s20b-fair-seats.ts`, `docs/07-map-tooling.md`): from each map's own layout at each suggested table size, measure every spot's win rate (tables of Marshals, 300 games a layout, the same games for every layout), move the most uneven spots (one at a time, then two at once) to other capital spots of the map that pass the paper check, keep a move when the gap between the best and the worst spot shrinks, within a budget of 6 to 14 layouts (about 15–55 minutes a map and size). Then the map's own layout and the best one were played again on **fresh games (300 each)**, and a layout was pinned only where it came out **at least 5 points fairer** there (smaller gains are within the noise). Raw: `docs/sims/s20b-fair-*.txt`.
+
+### The spread before and after (fresh games, 300 a line)
+| Map, players | Before: best / worst (spread) | After | Pinned | Spots under half of fair after |
+|---|---|---|---|---|
+| Embervale 4 (fair 25%) | 43% / 10% (33) | 43% / 10% (33) | no (kept) | Eldermere 10% |
+| Embervale 6 (fair 16.7%) | 34% / 2% (32) | 34% / 2% (32) | no (kept) | Yewmarch 2%, Brightdale 4%, Sunshire 6% |
+| The Shattered Isles 4 (fair 25%) | 57% / 2% (55) | 47% / 3% (44) | yes | Thornmere 3%, Fairthorpe 7% |
+| The Shattered Isles 6 (fair 16.7%) | 44% / 1% (43) | 44% / 1% (43) | no (kept) | Thornmere 1%, Pinehold 8%, Rosemarch 1%, Hawkby 6% |
+| The Twin Realms 4 (fair 25%) | 40% / 11% (29) | 36% / 20% (17) | yes | none |
+| The Twin Realms 8 (fair 12.5%) | 32% / 1% (31) | 22% / 3% (19) | yes | Westerfall 3%, Longwell 4% |
+| The Moon Coast 4 (fair 25%) | 82% / 1% (81) | 50% / 1% (49) | yes | Hallowstead 1%, Ironbury 4% |
+| The Moon Coast 8 (fair 12.5%) | 36% / 3% (33) | 36% / 3% (33) | no (kept) | Ironbury 5%, Stonemark 4%, Kingsthorpe 3%, Greygate 6%, Ironden 5% |
+| Greatmarch 8 (fair 12.5%) | 20% / 3% (17) | 20% / 3% (17) | no (kept) | Saltshire 3%, Fenstead 5% |
+| Greatmarch 10 (fair 10%) | 31% / 2% (29) | 17% / 5% (12) | yes | none |
+| The Ringsea 6 (fair 16.7%) | 31% / 8% (23) | 31% / 8% (23) | no (kept) | Deephaven 8% |
+| The Ringsea 10 (fair 10%) | 34% / 2% (32) | 21% / 2% (19) | yes | Rushrest 4%, Mistwick 2% |
+| The Crownlands 6 (fair 16.7%) | 37% / 0% (37) | 37% / 0% (37) | no (kept) | Kingshaven 0%, Northwatch 5%, Hawkcrest 6% |
+| The Crownlands 10 (fair 10%) | 40% / 1% (39) | 23% / 0% (23) | yes | Wolfstone 4%, Elderstead 4%, Willowden 4%, Heaththorpe 0%, Ashton 3% |
+| Wyrmland 6 (fair 16.7%) | 50% / 1% (49) | 29% / 3% (27) | yes | Wildfield 5%, Whitemarch 3% |
+| Wyrmland 8 (fair 12.5%) | 31% / 1% (30) | 26% / 3% (23) | yes | Willowshire 4%, Elderton 6%, Coldton 3% |
+| Ashwing 6 (fair 16.7%) | 25% / 3% (22) | 25% / 3% (22) | no (kept) | Ambergate 5%, Rushkeep 3% |
+| Ashwing 8 (fair 12.5%) | 41% / 1% (41) | 26% / 1% (25) | yes | Saltbury 4%, Coldcrest 2%, Sorrowrest 2%, Harrowkeep 1% |
+| The Sundered Crowns 6 (fair 16.7%) | 72% / 2% (71) | 32% / 0% (32) | yes | Stagrest 0%, Oldwood 7% |
+| The Sundered Crowns 8 (fair 12.5%) | 44% / 0% (44) | 44% / 0% (44) | no (kept) | Moonden 2%, Redstone 0%, Wolfholt 4% |
+| Krakenmere 8 (fair 12.5%) | 58% / 0% (58) | 47% / 0% (47) | yes | Moonford 1%, Rookstone 0% |
+| Krakenmere 10 (fair 10%) | 50% / 0% (50) | 50% / 0% (50) | no (kept) | Dundale 3%, Moonford 0%, Rookstone 0%, Stagwood 1% |
+| Rootholm 8 (fair 12.5%) | 27% / 0% (26) | 27% / 0% (26) | no (kept) | Glenleigh 2%, Larkfield 1%, Fairfall 0% |
+| Rootholm 10 (fair 10%) | 27% / 0% (27) | 27% / 0% (27) | no (kept) | Emberwick 3%, Hallowmarch 1%, Nettlehold 2%, Silverfield 0%, Fenbury 4% |
+
+**Pinned (13 layouts):** The Shattered Isles 4, The Twin Realms 4 and 8, The Moon Coast 4, Greatmarch 10, The Ringsea 10, The Crownlands 10, Wyrmland 6 and 8, Ashwing 8, The Sundered Crowns 6, Krakenmere 8 (plus Embervale 4 from session 19). The biggest gains: The Moon Coast 4 (81 → 49 points), The Sundered Crowns 6 (71 → 32), Wyrmland 6 (49 → 27), Greatmarch 10 (29 → 12), The Twin Realms 4 (29 → 17, now every spot 20–36%). **Kept (11):** no move the paper check allows did better; on a full table (Embervale 6, The Shattered Isles 6) the check allows only one or two moves at all.
+
+### Maps that would still need a start bonus
+Even after the search, **most maps still have a spot that wins under half its fair share** among equal bots (the last column above). Only **The Twin Realms 4** and **Greatmarch 10** are clear of it. The worst: Embervale 6 (three spots at 2–6%, fair 17%), The Shattered Isles 6 (two at 1%), The Crownlands 6 and 10 (a spot at 0%), The Sundered Crowns 6 and 8 (0%), Krakenmere 8 and 10 (0%), Rootholm 8 and 10 (0%).
+
+Two cautions before building anything:
+- **Equal bots exaggerate it.** Whoever gets a small early edge snowballs, and every bot reacts the same way, so a 2% spot isn't 2% for a person (session 19's check: the same spots come out weak for every bot level, but the size of the gap is the bots').
+- **The capital spots themselves limit what a layout can do:** the map maker chose 14–32 spots per map, and the paper check (distance to the nearest rival within one border, gold within 2 steps within 30%) leaves few layouts on full tables.
+
+**The rule option (not built, Nate's call):** a start bonus for the weaker spots, set in the recipe per table size: for example **+4 troops or +10 gold** at a spot under half of fair (about a fifth of a capital's 12 starting troops). It would be measured the same way (each spot's win rate with and without), map by map. A second option is the map maker's own: more capital spots on the land the weak spots lack, which means rebuilding those maps.
+
+### The exposure check (map maker): does it agree with the sims?
+`exposureOf` (`packages/mapgen/src/checks.ts`) scores each capital spot by its **room** (land closer to it than to any rival, within 4 steps), its **front** (the borders that land must hold) and **rival capitals within 4 steps**: `exposure = (front + 3 × rivals) / room`, lower is safer. Against every layout the search measured (228 layouts, 24 map and table sizes):
+- **Rank correlation with the spots' win rates: 0.53 on average** (the safer the spot, the more it wins), from 0.13 (The Crownlands 6) to 0.86 (Krakenmere 10).
+- **The weakest spot was among the more exposed half in 192 of 228 layouts (84%).** It agrees best on Krakenmere, Rootholm, The Shattered Isles and The Twin Realms; least on The Crownlands, Wyrmland and Greatmarch 10.
+
+So it ranks the weak spots low most of the time, but not reliably enough to replace the sims: it's in the map maker (and the search uses it to order its tries), and **not yet a requirement** a map must pass. On Wyrmland and The Sundered Crowns 6 it always puts the weakest spot among the more exposed half but orders the rest poorly (correlation 0.19–0.25): what separates the middle spots there lies further out than 4 steps.

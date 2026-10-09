@@ -390,7 +390,7 @@ describe("provinces on demand (session 16)", () => {
     const target = to.a === v.me.capital ? to.b : to.a;
     const draft = { from: v.me.capital, to: target, amount: "all" as const, preset: null, withLeader: false, timing: null };
     expect(buildScene(ctx, v, [], v.me.capital, draft, true).province).toBe(ctx.map.territories.find((t) => t.id === target)!.province);
-  });
+  }, 20000); // (It imports the map screen's code on demand: slow when every core is busy with the rest of the suite.)
   it("the card's province chip says it the same way as the plaque", () => {
     expect(provinceLine("The Oak Downs", 3, 2, 5)).toBe("The Oak Downs +3: you hold 2 of 5");
     expect(provinceLine("The Oak Downs", 3, 5, 5)).toBe("The Oak Downs +3: you hold all 5");

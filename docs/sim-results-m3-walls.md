@@ -64,14 +64,14 @@ One change at a time, on the table where walls pay (Wyrmland 6: a walling delega
 
 | Limit | Walling seat | Non-walling seat | Stress table: halfway leader won (Wyrmland / Rootholm) | Battles a wall held |
 |---|---|---|---|---|
-| **Reach 3, lend all, one battle a turn (today; my pick)** | **19.0%** | 15.4% | 47.1% / 42.8% | 4% / 2% |
+| Reach 3, lend all, one battle a turn (the design's defaults) | **19.0%** | 15.4% | 47.1% / 42.8% | 4% / 2% |
 | Reach 2 | 19.4% | 15.4% | 47.1% / 43.2% | 4% / 2% |
 | Reach unlimited | 19.0% | 15.4% | 47.1% / 43.0% | 4% / 2% |
 | Lend half the spare troops | 20.0% | 16.0% | 47.4% / 42.7% | 3% / 2% |
-| Any number of battles a turn | 19.0% | 15.4% | 47.1% / 42.8% | 4% / 2% |
+| **Any number of battles a turn (with unlimited reach: Nate's pick, the rule now)** | 19.0% | 15.4% | 47.1% / 42.8% | 4% / 2% |
 | Walls off | — | — | 53.7% / 46.8% | — |
 
-**None of the limits changes anything measurable**, because bot walls are 1–3 territories and the lenders hold 1 troop: the reach never binds, and there's rarely a second battle at the same wall in a turn. **My pick, pending Nate's: keep today's defaults** (reach 3, all spare troops, one battle a turn): they're what the design says, the easiest to explain, and nothing in the sims says a runaway hides behind them. Where they'll matter is a person holding a big reserve inside a big wall; Nate's play test is the real check ("wall your capital's province on Wyrmland and let a Marshal hit it").
+**None of the limits changes anything measurable**, because bot walls are 1–3 territories and the lenders hold 1 troop: the reach never binds, and there's rarely a second battle at the same wall in a turn. My pick was the design's defaults; **Nate picked unlimited reach and lending to every attack**, and that's the rule now: with one battle a turn, a 1-troop decoy would use up the wall's help before the main attack. A wall's losses carry over within the turn, so several real attacks in one turn are how to break it. Where it will matter is a person holding a big reserve inside a big wall; Nate's play test is the real check.
 
 **Two cheaper walls, for comparison** (`s20b-walls-cheaper.txt`, Wyrmland 6, before the fort-plot fix): culture 3 and a fort: walls in every game from turn 6, the walling Marshal 18.2% against 18.4%; culture 5 and no fort: the walling Marshal 13.8% against 17.6% (it walled cheap land that wasn't worth it). Neither is better than the design.
 

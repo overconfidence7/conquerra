@@ -186,3 +186,23 @@ All four pass every check (connected, even territory sizes, provinces in one pie
 {"id":"rootholm","name":"Rootholm","seed":"mask-200-3#2","shape":"mask","territories":200,"provinces":44,"players":{"min":2,"max":10,"recommended":{"min":8,"max":10}},"seas":0,"lakes":5,"islandChains":1,"mountainRanges":7,"seaLanes":8,"minSeaLanes":2,"rivers":10,"minChokePoints":17,"roughness":0.38,"mask":"worldtree"}
 ```
 </details>
+
+# Session 20b: fair capital layouts
+Every official map's capital layout at its suggested table sizes was checked by simulation (tables of Marshals, 300 games a layout) and searched for a fairer one among the map's own capital spots (`apps/sim/scripts/s20b-fair-seats.ts`). Pinned in the recipes where a layout was at least 5 points fairer on fresh games (the gap between the best and worst spot, fair share in brackets):
+
+| Map, players | Before | After |
+|---|---|---|
+| The Shattered Isles 4 (25%) | 2–57% | 3–47% |
+| The Twin Realms 4 (25%) | 11–40% | 20–36% |
+| The Twin Realms 8 (12.5%) | 1–32% | 3–22% |
+| The Moon Coast 4 (25%) | 1–82% | 1–50% |
+| Greatmarch 10 (10%) | 2–31% | 5–17% |
+| The Ringsea 10 (10%) | 2–34% | 2–21% |
+| The Crownlands 10 (10%) | 1–40% | 0–23% |
+| Wyrmland 6 (16.7%) | 1–50% | 3–29% |
+| Wyrmland 8 (12.5%) | 1–31% | 3–26% |
+| Ashwing 8 (12.5%) | 1–41% | 1–26% |
+| The Sundered Crowns 6 (16.7%) | 2–72% | 0–32% |
+| Krakenmere 8 (12.5%) | 0–58% | 0–47% |
+
+Kept as they were (no fairer layout found): Embervale 4 (session 19's pick) and 6, The Shattered Isles 6, The Moon Coast 8, Greatmarch 8, The Ringsea 6, The Crownlands 6, Ashwing 6, The Sundered Crowns 8, Krakenmere 10, Rootholm 8 and 10. Most maps still have a spot under half its fair share among equal bots; the start-bonus option is in `docs/sim-results-m3-balance.md` ("Fair seats (session 20b)").
