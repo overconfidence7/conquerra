@@ -1,0 +1,20 @@
+start spread 55.7
+  strong t16 -> t00: spread 60.3
+  strong t16 -> t43: spread 68.3
+  strong t16 -> t37: spread 66.0
+  strong t16 -> t56: spread 68.7
+  weak t01 -> t03: spread 52.0 (better)
+  strong t16 -> t37: spread 57.3
+  strong t16 -> t56: spread 70.0
+  weak t51 -> t44: spread 55.0
+  weak t51 -> t24: spread 66.3
+  strong t46 -> t54: spread 46.0 (better)
+  strong t54 -> t43: spread 69.0
+  strong t54 -> t37: spread 71.3
+  strong t54 -> t56: spread 69.3
+start shattered-isles:4: Ironvale 2%, Brightfall 58%, Hawkby 34%, Fairthorpe 6% | best 58%, worst 2%, spread 56 pts, fair 25.0%
+best shattered-isles:4: Thornmere 3%, Brightfall 43%, Wyrmhurst 49%, Fairthorpe 5% | best 49%, worst 3%, spread 46 pts, fair 25.0% (14 layouts measured, 17.8 min)
+check shattered-isles:4 before: Ironvale 2%, Brightfall 57%, Hawkby 36%, Fairthorpe 5% | best 57%, worst 2%, spread 55 pts, fair 25.0%
+check shattered-isles:4 after: Thornmere 3%, Brightfall 43%, Wyrmhurst 47%, Fairthorpe 7% | best 47%, worst 3%, spread 44 pts, fair 25.0%
+recipe shattered-isles:4: capitals: {4: ["t03","t16","t54","t51"]}
+exposure shattered-isles:4: rank correlation with spot win rates 0.81 (avg over 14 layouts), weakest spot among the more exposed half in 14 of 14; best layout exposure 0.88/0.57/0.77/0.92 (within the band)

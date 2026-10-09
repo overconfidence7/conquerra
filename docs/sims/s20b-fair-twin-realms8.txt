@@ -1,0 +1,18 @@
+start spread 33.0
+  strong t44 -> t35: spread 26.3 (better)
+  strong t35 -> t46: spread 26.3
+  strong t35 -> t24: spread 27.0
+  strong t39 -> t25: spread 25.7 (better)
+  strong t35 -> t46: spread 32.0
+  strong t35 -> t24: spread 28.7
+  strong t35 -> t44: spread 31.3
+  weak t56 -> t62: spread 23.7 (better)
+  strong t35 -> t24: spread 28.3
+  strong t35 -> t44: spread 22.7 (better)
+  strong t64 -> t66: spread 17.3 (better)
+start twin-realms:8: Elderby 11%, Hallowstone 11%, Westerfall 2%, Fairhurst 17%, Fairfield 34%, Kingswatch 1%, Harrowdale 13%, Embervale 10% | best 34%, worst 1%, spread 33 pts, fair 12.5%
+best twin-realms:8: Elderby 8%, Hallowstone 21%, Westerfall 3%, Rosecrest 11%, Fairfield 19%, Longwell 4%, Harrowdale 15%, Silverhurst 19% | best 21%, worst 3%, spread 17 pts, fair 12.5% (12 layouts measured, 28.1 min)
+check twin-realms:8 before: Elderby 14%, Hallowstone 8%, Westerfall 2%, Fairhurst 15%, Fairfield 32%, Kingswatch 1%, Harrowdale 14%, Embervale 13% | best 32%, worst 1%, spread 31 pts, fair 12.5%
+check twin-realms:8 after: Elderby 10%, Hallowstone 15%, Westerfall 3%, Rosecrest 10%, Fairfield 22%, Longwell 4%, Harrowdale 15%, Silverhurst 20% | best 22%, worst 3%, spread 19 pts, fair 12.5%
+recipe twin-realms:8: capitals: {8: ["t04","t16","t31","t25","t44","t62","t63","t66"]}
+exposure twin-realms:8: rank correlation with spot win rates 0.75 (avg over 12 layouts), weakest spot among the more exposed half in 12 of 12; best layout exposure 1.83/1.09/3.29/2.67/1.00/2.71/1.60/1.50 (outside the band)

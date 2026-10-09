@@ -1,0 +1,11 @@
+start spread 29.0
+  strong t05 -> t16: spread 37.0
+  t05 -> t16 and t03 -> t02: spread 30.3
+  t05 -> t19 and t03 -> t02: spread 36.3
+  t05 -> t19 and t03 -> t14: spread 30.0
+start embervale:6: Yewmarch 4%, Galeholt 30%, Brightdale 4%, Wildford 33%, Sunshire 4%, Deephollow 23% | best 33%, worst 4%, spread 29 pts, fair 16.7%
+best embervale:6: Yewmarch 4%, Galeholt 30%, Brightdale 4%, Wildford 33%, Sunshire 4%, Deephollow 23% | best 33%, worst 4%, spread 29 pts, fair 16.7% (5 layouts measured, 7.5 min)
+check embervale:6 before: Yewmarch 2%, Galeholt 34%, Brightdale 4%, Wildford 28%, Sunshire 6%, Deephollow 26% | best 34%, worst 2%, spread 32 pts, fair 16.7%
+check embervale:6 after: Yewmarch 2%, Galeholt 34%, Brightdale 4%, Wildford 28%, Sunshire 6%, Deephollow 26% | best 34%, worst 2%, spread 32 pts, fair 16.7%
+recipe embervale:6: capitals: {6: ["t03","t05","t18","t20","t28","t34"]}
+exposure embervale:6: rank correlation with spot win rates 0.75 (avg over 5 layouts), weakest spot among the more exposed half in 4 of 5; best layout exposure 5.67/2.43/6.33/1.14/3.80/2.25 (outside the band)

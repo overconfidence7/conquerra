@@ -1,0 +1,13 @@
+start spread 44.3
+  strong t16 -> t00: spread 41.3 (better)
+  strong t37 -> t43: spread 40.3 (better)
+  strong t00 -> t16: spread 41.3
+  strong t43 -> t56: spread 45.0
+  weak t46 -> t54: spread 43.3
+  t00 -> t16 and t43 -> t56: spread 48.0
+start shattered-isles:6: Thornmere 0%, Brightfall 45%, Pinehold 6%, Hollyrest 39%, Rosemarch 1%, Hawkby 9% | best 45%, worst 0%, spread 44 pts, fair 16.7%
+best shattered-isles:6: Thornmere 1%, Ambervale 41%, Pinehold 7%, Ashfield 39%, Rosemarch 0%, Hawkby 12% | best 41%, worst 0%, spread 40 pts, fair 16.7% (7 layouts measured, 11.6 min)
+check shattered-isles:6 before: Thornmere 1%, Brightfall 44%, Pinehold 8%, Hollyrest 41%, Rosemarch 1%, Hawkby 6% | best 44%, worst 1%, spread 43 pts, fair 16.7%
+check shattered-isles:6 after: Thornmere 1%, Ambervale 41%, Pinehold 8%, Ashfield 38%, Rosemarch 1%, Hawkby 10% | best 41%, worst 1%, spread 41 pts, fair 16.7%
+recipe shattered-isles:6: capitals: {6: ["t03","t00","t24","t43","t44","t46"]}
+exposure shattered-isles:6: rank correlation with spot win rates 0.60 (avg over 7 layouts), weakest spot among the more exposed half in 7 of 7; best layout exposure 1.00/0.50/0.90/0.29/0.90/1.33 (outside the band)

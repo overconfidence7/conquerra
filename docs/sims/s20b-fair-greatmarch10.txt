@@ -1,0 +1,18 @@
+start spread 28.0
+  strong t28 -> t15: spread 33.3
+  weak t49 -> t70: spread 28.7
+  weak t64 -> t76: spread 26.3 (better)
+  strong t56 -> t48: spread 32.3
+  strong t63 -> t59: spread 31.3
+  t28 -> t15 and t49 -> t35: spread 8.7 (better)
+  weak t76 -> t77: spread 11.0
+  strong t56 -> t48: spread 9.0
+  strong t00 -> t49: spread 10.3
+  strong t63 -> t71: spread 11.7
+  strong t19 -> t52: spread 22.7
+start greatmarch:10: Northmark 7%, Rookthorpe 6%, Oakshire 6%, Northcrest 9%, Dawnhollow 29%, Galeford 1%, Kingswick 12%, Goldcrest 10%, Brightby 14%, Mistmore 5% | best 29%, worst 1%, spread 28 pts, fair 10.0%
+best greatmarch:10: Northmark 13%, Rookthorpe 6%, Oakshire 10%, Northcrest 13%, Stoneden 14%, Brightden 8%, Kingswick 13%, Goldcrest 7%, Brightby 11%, Silvercrest 5% | best 14%, worst 5%, spread 9 pts, fair 10.0% (12 layouts measured, 33.7 min)
+check greatmarch:10 before: Northmark 12%, Rookthorpe 5%, Oakshire 7%, Northcrest 9%, Dawnhollow 31%, Galeford 2%, Kingswick 10%, Goldcrest 6%, Brightby 12%, Mistmore 6% | best 31%, worst 2%, spread 29 pts, fair 10.0%
+check greatmarch:10 after: Northmark 17%, Rookthorpe 5%, Oakshire 8%, Northcrest 9%, Stoneden 10%, Brightden 9%, Kingswick 13%, Goldcrest 5%, Brightby 17%, Silvercrest 7% | best 17%, worst 5%, spread 12 pts, fair 10.0%
+recipe greatmarch:10: capitals: {10: ["t00","t17","t19","t25","t15","t35","t56","t60","t63","t76"]}
+exposure greatmarch:10: rank correlation with spot win rates 0.26 (avg over 12 layouts), weakest spot among the more exposed half in 9 of 12; best layout exposure 1.00/2.00/2.00/2.00/3.00/4.50/3.17/3.75/1.56/1.75 (outside the band)

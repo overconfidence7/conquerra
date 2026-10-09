@@ -1,0 +1,14 @@
+start spread 30.3
+  weak t02 -> t03: spread 34.3
+  strong t20 -> t05: spread 48.7
+  weak t28 -> t19: spread 43.7
+  t02 -> t03 and t20 -> t14: spread 30.3
+  t02 -> t03 and t20 -> t18: spread 46.3
+  t02 -> t18 and t20 -> t14: spread 38.3
+  t02 -> t16 and t20 -> t36: spread 39.0
+start embervale:4: Eldermere 9%, Wildford 39%, Sunshire 15%, Wolfcrest 37% | best 39%, worst 9%, spread 30 pts, fair 25.0%
+best embervale:4: Eldermere 9%, Wildford 39%, Sunshire 15%, Wolfcrest 37% | best 39%, worst 9%, spread 30 pts, fair 25.0% (8 layouts measured, 7.3 min)
+check embervale:4 before: Eldermere 10%, Wildford 43%, Sunshire 16%, Wolfcrest 30% | best 43%, worst 10%, spread 33 pts, fair 25.0%
+check embervale:4 after: Eldermere 10%, Wildford 43%, Sunshire 16%, Wolfcrest 30% | best 43%, worst 10%, spread 33 pts, fair 25.0%
+recipe embervale:4: capitals: {4: ["t02","t20","t28","t37"]}
+exposure embervale:4: rank correlation with spot win rates 0.67 (avg over 8 layouts), weakest spot among the more exposed half in 7 of 8; best layout exposure 1.29/0.88/1.50/1.40 (within the band)

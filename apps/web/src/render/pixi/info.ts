@@ -19,6 +19,43 @@ import { RealmLayer } from "./realms";
  */
 
 const GOLD = 0xc9a45c, GOLD_HI = 0xe3c77e, ATTACK = 0xc2553f, MOVE = 0x3a72c4, INK = 0x1b1206;
+/** The walls' stone (session 20b). */
+const STONE = 0x8d877c, STONE_LIGHT = 0xc4bdae;
+
+/**
+ * Where a wall's towers stand along one of its lines (map units): at its corners (a turn of 40 degrees or more), at
+ * least 44 screen pixels apart, and along any straight stretch longer than 140 pixels.
+ */
+export function towerSpots(l: Line, px: number): { x: number; y: number }[] {
+  const p = l as number[];
+  const n = p.length / 2;
+  const out: { x: number; y: number }[] = [];
+  const minGap = 44 * px, maxGap = 140 * px;
+  const closed = n > 2 && Math.hypot(p[0]! - p[2 * n - 2]!, p[1]! - p[2 * n - 1]!) < 1e-6;
+  let since = closed ? maxGap / 2 : minGap;
+  for (let i = 1; i < n; i++) {
+    const x0 = p[2 * i - 2]!, y0 = p[2 * i - 1]!, x1 = p[2 * i]!, y1 = p[2 * i + 1]!;
+    const seg = Math.hypot(x1 - x0, y1 - y0);
+    // Along a long stretch: a tower every `maxGap`.
+    let at = 0;
+    while (seg > 0 && since + (seg - at) >= maxGap) {
+      at += maxGap - since;
+      out.push({ x: x0 + ((x1 - x0) * at) / seg, y: y0 + ((y1 - y0) * at) / seg });
+      since = 0;
+    }
+    since += seg - at;
+    // At a corner (the next segment turns 40 degrees or more).
+    const j = i + 1 < n ? i + 1 : closed ? 1 : -1;
+    if (j < 0) continue;
+    const ax = x1 - x0, ay = y1 - y0, bx = p[2 * j]! - x1, by = p[2 * j + 1]! - y1;
+    const turn = Math.abs(Math.atan2(ax * by - ay * bx, ax * bx + ay * by));
+    if (turn >= (40 * Math.PI) / 180 && since >= minGap) {
+      out.push({ x: x1, y: y1 });
+      since = 0;
+    }
+  }
+  return out;
+}
 /** A building sprite's width (about twice session 8's 26, a touch bigger than a capital's castle), and a figure's, in map units. */
 const BUILDING_SIZE = 48, FIGURE_SIZE = 20;
 /** Roughly how far an army marker reaches from its territory's label point, in screen px (pill, banner, icons). */
@@ -172,7 +209,12 @@ export class InfoLayer {
     this.wallRings = walls.map((w) => ({ color: w.remembered ? 0x8a8a8a : hexNum(houseOf(view, w.owner).color), remembered: w.remembered, outlines: outlines.get(w.key) ?? [] }));
   }
 
-  /** The walls, in screen pixels: dark stone under a band of the House colour, merlons along it from Mid in. */
+  /**
+   * The walls, in screen pixels (Nate's picture, session 20b): a glow of the House colour, a grey stone wall standing up
+   * off the land (its shadow, its face, a lit top), and from Mid in its battlements, square towers at the corners and
+   * along long stretches, each flying a pennant in the House colour. A wall you only remember is grey all through.
+   * Drawn in code until a painted wall piece and tower come in an art batch.
+   */
   private drawWalls(px: number) {
     const W = this.walls;
     W.clear();
@@ -180,20 +222,39 @@ export class InfoLayer {
       for (const w of this.wallRings) for (const l of w.outlines) ring(W, l, false).stroke({ width: 4 * px, color: w.remembered ? 0x6a6a6a : INK, alpha: 0.95, join: "miter", cap: "butt" });
       return;
     }
+    const up = (l: Line, dy: number): Line => (l as number[]).map((v, i) => (i % 2 ? v - dy : v));
+    const towers: { x: number; y: number; col: number; a: number }[] = [];
     for (const w of this.wallRings) {
       const a = w.remembered ? 0.6 : 1;
-      const col = w.remembered ? 0x8a8a8a : w.color;
+      const stone = w.remembered ? 0x9a9a9a : STONE, top = w.remembered ? 0xb8b8b8 : STONE_LIGHT;
       for (const l of w.outlines) {
-        // A solid band of the House colour edged in ink (a truce's band is white and stitched: never mistaken for it).
-        ring(W, l, false).stroke({ width: 10 * px, color: INK, alpha: 0.85 * a, join: "miter", cap: "butt" });
-        ring(W, l, false).stroke({ width: 7 * px, color: col, alpha: a, join: "miter", cap: "butt" });
-        ring(W, l, false).stroke({ width: 1.6 * px, color: 0xffffff, alpha: 0.35 * a, join: "miter", cap: "butt" });
-        // Battlements (Mid and Near): square merlons standing out on both sides, in the House colour, outlined in ink.
+        // The House's glow round it, then the wall: a shadow on the land, its face, and the lit top a little higher.
+        ring(W, l, false).stroke({ width: 22 * px, color: w.color, alpha: 0.32 * a, join: "round", cap: "round" });
+        ring(W, up(l, -2.5 * px), false).stroke({ width: 13 * px, color: INK, alpha: 0.55 * a, join: "round", cap: "round" });
+        ring(W, l, false).stroke({ width: 12 * px, color: INK, alpha: 0.9 * a, join: "round", cap: "round" });
+        ring(W, l, false).stroke({ width: 9.5 * px, color: stone, alpha: a, join: "round", cap: "round" });
+        ring(W, up(l, 2.5 * px), false).stroke({ width: 4 * px, color: top, alpha: a, join: "round", cap: "round" });
         if (this.battlements > 0.02) {
-          stitches(W, l, 5 * px, 6 * px, 15 * px, INK, 0.85 * a * this.battlements);
-          stitches(W, l, 5 * px, 6 * px, 12 * px, col, a * this.battlements);
+          // Battlements: stone merlons along the top, each edged in ink.
+          const m = up(l, 4.5 * px);
+          stitches(W, m, 4 * px, 4 * px, 5.5 * px, INK, 0.9 * a * this.battlements);
+          stitches(W, m, 4 * px, 4 * px, 3.5 * px, top, a * this.battlements);
+          for (const t of towerSpots(l, px)) towers.push({ ...t, col: w.remembered ? 0x8a8a8a : w.color, a });
         }
       }
+    }
+    // Towers over the wall (drawn last so the wall never runs across one).
+    const T = 8 * px;
+    for (const t of towers) {
+      const k = t.a * this.battlements;
+      W.rect(t.x - T + 1.5 * px, t.y - T + 2 * px, 2 * T, 2 * T).fill({ color: INK, alpha: 0.5 * k });
+      W.rect(t.x - T, t.y - T - 4 * px, 2 * T, 2 * T + 4 * px).fill({ color: STONE, alpha: k }).stroke({ width: 1.4 * px, color: INK, alpha: 0.9 * k });
+      W.rect(t.x - T, t.y - T - 4 * px, 2 * T, 3 * px).fill({ color: STONE_LIGHT, alpha: k });
+      for (const dx of [-T + 1.5 * px, -1.5 * px, T - 4.5 * px]) W.rect(t.x + dx, t.y - T - 7 * px, 3 * px, 3 * px).fill({ color: STONE_LIGHT, alpha: k }).stroke({ width: 1 * px, color: INK, alpha: 0.85 * k });
+      // The pennant: a pole and a small flag in the House colour.
+      const px0 = t.x + 1 * px, py0 = t.y - T - 7 * px;
+      W.moveTo(px0, py0).lineTo(px0, py0 - 10 * px).stroke({ width: 1.3 * px, color: INK, alpha: k });
+      W.poly([px0, py0 - 10 * px, px0 + 8 * px, py0 - 8 * px, px0, py0 - 6 * px]).fill({ color: t.col, alpha: k }).stroke({ width: 0.8 * px, color: INK, alpha: 0.8 * k });
     }
   }
 

@@ -1,0 +1,18 @@
+start spread 34.7
+  strong t66 -> t64: spread 33.3 (better)
+  strong t64 -> t72: spread 27.3 (better)
+  strong t72 -> t44: spread 30.0
+  strong t72 -> t46: spread 46.3
+  strong t72 -> t35: spread 35.0
+  strong t72 -> t24: spread 37.0
+  weak t00 -> t04: spread 32.3
+  weak t00 -> t02: spread 23.3 (better)
+  strong t72 -> t64: spread 19.0 (better)
+  strong t64 -> t66: spread 19.7
+  strong t64 -> t44: spread 29.7
+start twin-realms:4: Stormreach 10%, Dawnreach 18%, Greyleigh 27%, Silverhurst 45% | best 45%, worst 10%, spread 35 pts, fair 25.0%
+best twin-realms:4: Northmark 21%, Dawnreach 16%, Greyleigh 28%, Embervale 35% | best 35%, worst 16%, spread 19 pts, fair 25.0% (12 layouts measured, 15.6 min)
+check twin-realms:4 before: Stormreach 11%, Dawnreach 19%, Greyleigh 30%, Silverhurst 40% | best 40%, worst 11%, spread 29 pts, fair 25.0%
+check twin-realms:4 after: Northmark 22%, Dawnreach 20%, Greyleigh 22%, Embervale 36% | best 36%, worst 20%, spread 17 pts, fair 25.0%
+recipe twin-realms:4: capitals: {4: ["t02","t36","t60","t64"]}
+exposure twin-realms:4: rank correlation with spot win rates 0.82 (avg over 12 layouts), weakest spot among the more exposed half in 11 of 12; best layout exposure 0.58/0.86/0.64/0.33 (outside the band)

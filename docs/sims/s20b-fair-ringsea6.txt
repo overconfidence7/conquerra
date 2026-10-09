@@ -1,0 +1,7 @@
+start spread 27.0
+  strong t92 -> t95: spread 27.3
+  strong t92 -> t99: spread 29.7
+  strong t92 -> t98: spread 24.7 (better)
+  strong t42 -> t37: spread 36.0
+  weak t35 -> t01: spread 22.0 (better)
+  strong t42 -> t37: spread 41.0

@@ -1,0 +1,18 @@
+start spread 17.0
+  weak t52 -> t38: spread 22.0
+  weak t52 -> t06: spread 20.0
+  weak t52 -> t01: spread 16.3 (better)
+  strong t25 -> t19: spread 23.3
+  strong t25 -> t38: spread 47.0
+  strong t25 -> t52: spread 27.3
+  strong t15 -> t28: spread 20.0
+  strong t15 -> t08: spread 19.7
+  strong t15 -> t38: spread 40.0
+  weak t60 -> t77: spread 26.0
+  weak t60 -> t52: spread 23.7
+start greatmarch:8: Stoneden 16%, Rookthorpe 16%, Northcrest 20%, Saltshire 3%, Kingswick 12%, Goldcrest 11%, Fenstead 4%, Moonrest 19% | best 20%, worst 3%, spread 17 pts, fair 12.5%
+best greatmarch:8: Stoneden 17%, Rookthorpe 6%, Northcrest 22%, Ravenmouth 11%, Kingswick 14%, Goldcrest 11%, Fenstead 6%, Moonrest 13% | best 22%, worst 6%, spread 16 pts, fair 12.5% (12 layouts measured, 28.4 min)
+check greatmarch:8 before: Stoneden 18%, Rookthorpe 14%, Northcrest 20%, Saltshire 3%, Kingswick 11%, Goldcrest 14%, Fenstead 5%, Moonrest 16% | best 20%, worst 3%, spread 17 pts, fair 12.5%
+check greatmarch:8 after: Stoneden 18%, Rookthorpe 7%, Northcrest 23%, Ravenmouth 9%, Kingswick 12%, Goldcrest 12%, Fenstead 3%, Moonrest 16% | best 23%, worst 3%, spread 20 pts, fair 12.5%
+recipe greatmarch:8: capitals: {8: ["t15","t17","t25","t01","t56","t60","t70","t71"]}
+exposure greatmarch:8: rank correlation with spot win rates 0.49 (avg over 12 layouts), weakest spot among the more exposed half in 11 of 12; best layout exposure 0.80/1.75/0.78/0.89/2.17/1.44/1.20/1.00 (outside the band)

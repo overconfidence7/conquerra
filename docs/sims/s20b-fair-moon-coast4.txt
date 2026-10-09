@@ -1,0 +1,18 @@
+start spread 70.3
+  weak t43 -> t12: spread 43.7 (better)
+  weak t13 -> t39: spread 57.3
+  weak t13 -> t36: spread 52.0
+  strong t66 -> t34: spread 76.7
+  strong t64 -> t36: spread 52.7
+  strong t64 -> t34: spread 54.7
+  t13 -> t09 and t66 -> t63: spread 57.0
+  t13 -> t09 and t66 -> t59: spread 57.0
+  t13 -> t15 and t66 -> t63: spread 48.3
+  t13 -> t15 and t66 -> t59: spread 49.0
+  t13 -> t36 and t66 -> t63: spread 54.7
+start moon-coast:4: Hallowstead 2%, Saltmarch 2%, Thorncrest 24%, Briarby 72% | best 72%, worst 2%, spread 70 pts, fair 25.0%
+best moon-coast:4: Hallowstead 3%, Ironbury 5%, Thorncrest 46%, Briarby 47% | best 47%, worst 3%, spread 44 pts, fair 25.0% (12 layouts measured, 16.4 min)
+check moon-coast:4 before: Hallowstead 1%, Saltmarch 1%, Thorncrest 16%, Briarby 82% | best 82%, worst 1%, spread 81 pts, fair 25.0%
+check moon-coast:4 after: Hallowstead 1%, Ironbury 4%, Thorncrest 50%, Briarby 45% | best 50%, worst 1%, spread 49 pts, fair 25.0%
+recipe moon-coast:4: capitals: {4: ["t13","t12","t64","t66"]}
+exposure moon-coast:4: rank correlation with spot win rates 0.53 (avg over 12 layouts), weakest spot among the more exposed half in 8 of 12; best layout exposure 0.60/0.63/0.55/0.50 (within the band)

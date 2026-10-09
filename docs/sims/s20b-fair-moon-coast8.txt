@@ -1,0 +1,18 @@
+start spread 34.7
+  strong t63 -> t66: spread 28.7 (better)
+  strong t66 -> t59: spread 36.0
+  weak t15 -> t09: spread 32.0
+  weak t15 -> t23: spread 27.0 (better)
+  strong t66 -> t63: spread 35.0
+  strong t66 -> t59: spread 35.0
+  strong t44 -> t09: spread 66.0
+  strong t44 -> t13: spread 68.7
+  t64 -> t13 and t66 -> t63: spread 37.3
+  t64 -> t13 and t66 -> t59: spread 40.0
+  t66 -> t63 and t23 -> t09: spread 38.0
+start moon-coast:8: Ironbury 3%, Stonemark 3%, Kingsthorpe 9%, Greygate 2%, Sorrowmouth 8%, Ironden 4%, Greygarth 37%, Thorncrest 35% | best 37%, worst 2%, spread 35 pts, fair 12.5%
+best moon-coast:8: Ironbury 7%, Frostmark 1%, Kingsthorpe 2%, Greygate 4%, Sorrowmouth 19%, Ironden 13%, Briarby 25%, Thorncrest 28% | best 28%, worst 1%, spread 27 pts, fair 12.5% (12 layouts measured, 26.0 min)
+check moon-coast:8 before: Ironbury 5%, Stonemark 4%, Kingsthorpe 3%, Greygate 6%, Sorrowmouth 7%, Ironden 5%, Greygarth 36%, Thorncrest 35% | best 36%, worst 3%, spread 33 pts, fair 12.5%
+check moon-coast:8 after: Ironbury 3%, Frostmark 1%, Kingsthorpe 1%, Greygate 2%, Sorrowmouth 19%, Ironden 14%, Briarby 24%, Thorncrest 35% | best 35%, worst 1%, spread 34 pts, fair 12.5%
+recipe moon-coast:8: capitals: {8: ["t12","t23","t36","t42","t44","t47","t66","t64"]}
+exposure moon-coast:8: rank correlation with spot win rates 0.15 (avg over 12 layouts), weakest spot among the more exposed half in 7 of 12; best layout exposure 2.20/1.45/0.68/2.57/1.50/0.90/2.00/0.75 (outside the band)
