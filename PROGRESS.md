@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–20, 20c and 20b are done. Next: the orchestrator's review of 20b, Nate's play test, 21 (the polish pass), 22 (the language pass).**
+**Phase: M3 (depth and balance). Sessions 7–20, 20c and 20b are done and reviewed. Next: Nate's play test (the list under "Things to test after session 20b"), 21 (the polish pass), 22 (the language pass, the start bonus, the Marshal adopts the Merchant's lesson).**
 
 Claude Code sessions completed: **20b** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -1091,6 +1091,18 @@ All four parts are done, each committed and pushed. Art batch 4 wasn't imported 
 - **Start-up bundle:** 482.5 → 485.9 KB (gzip 148.0 → 149.2).
 - **Tests and deploy:** 943 automated tests pass (the full run twice); typecheck and the web build pass. Deployed to the private preview (version `995e5162`); the lock check passed. Nate: please check the repo's Actions page for the last commit.
 - **Questions for Nate:** (1) a **start bonus** for the weaker capital spots (most maps have one under half of fair among equal bots; e.g. +4 troops or +10 gold, set per map and table size)? (2) **The Merchant Steward** is 7–10 points over Neutral: cap its markets, change Neutral's fort-saving, or leave it? (3) Should the map maker **require** the exposure check (it would reject some layouts the sims call fair)?
+
+### Oct 9: Orchestrator review of session 20b
+- **Checked the work:**
+  - GitHub's checks pass on all eleven session 20b commits, so `main` is green.
+  - The screenshots look right: grey stone walls with towers and pennants in the House colour, one territory and a joined ring of five; "Walled: 11 defend (with Yewstead and Wildstead)" on the card; the attack box counting the garrison in its odds; a remembered wall greyed in the fog.
+  - **Re-run and confirmed:** Wyrmland at 6 players, win rate by capital spot (300 games): Longrest 27% down to Whitemarch 1.7%, a 26-point spread (the write-up: 49 → 27). Two spots (Whitemarch 1.7%, Wildfield 6.7%) are still under half of fair (8.3%): the start-bonus case.
+  - The two harnesses now agree; all-in delegating on Embervale 4 is **38.6% (1.54× fair)** over 2,000 games (Nate: accepted until looked at again).
+- **Nate's calls on session 20b's questions (Oct 9):**
+  - **A start bonus for the weak capital spots: yes, as a part of session 22** (the sims size each bonus per map and table size and re-check the spread). Before friends play online.
+  - **The Merchant Steward (7–10 points over Neutral on both maps): leave it.** Nate: personalities are meant to play differently, and that naturally gives different benefits in different scenarios (map size, player count, who you're up against). **But a leader that beats the Marshals consistently across map types shows a behaviour the Marshals should adopt.** The Merchant's edge shows on both Embervale and Wyrmland, so: **the Marshal (and the Neutral Steward) adopt it** (markets that pay back come before saving up for a fort that isn't urgent; save only for the capital's fort), and the delegating player is re-checked at fair. **Session 22.**
+  - **The exposure check stays a map-builder feature**, for players building their own maps and, later, randomly generated maps: both will produce some games that aren't perfectly balanced, and that's accepted. **Player-made maps live in a community section, apart from the official, thoroughly tested maps.** (Design note for the map builder, after M4.)
+- **Next:** Nate's play test from the list below (walls, the finish, personalities, captured leaders, a 160 map); then session 21 (the polish pass, with his fixes and the 3D buildings), 22 (the language pass, the start bonus, the Marshal adopts the Merchant's lesson).
 
 ### Things to test after session 20b (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop first; the phone where it applies.*
