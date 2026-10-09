@@ -181,10 +181,10 @@ describe("walls: shared defenders", () => {
     expect(shareWallLosses(1, [{ territory: "b", troops: 5 }], 5)).toEqual({ own: 0, lent: [5] });
   });
 
-  it("each territory lends to one battle a turn (the first attacked); with the limit off, to every battle", () => {
+  it("with one battle a turn, each territory lends only to the first; by default (Nate), to every battle, its losses carried over", () => {
     const s = nate();
     const orders = { p2: [mv("d", "c", 8), mv("d", "c", 3)] };
-    const r = resolveTurn(ctx, s, orders);
+    const r = resolveTurn(ctxOf({ oneBattleATurn: true }), s, orders);
     const [first, second] = battles(r.events);
     expect(first!.defenders.troops).toBe(10);
     // b and a already lent this turn: c (down to 1) stands alone.
@@ -195,6 +195,10 @@ describe("walls: shared defenders", () => {
     const r2 = resolveTurn(any, nate(), orders);
     // a still has 1 spare after the first battle (b has none): it lends again.
     expect(battles(r2.events)[1]!.defenders.troops).toBe(2);
+    // Nate's decoy: a 1-troop attack first no longer uses up the wall's help; the main army faces the whole garrison,
+    // less the one defender the decoy killed (the losses are real and carry over).
+    const decoy = resolveTurn(any, nate(), { p2: [mv("d", "c", 1), mv("d", "c", 20)] });
+    expect(battles(decoy.events).map((b) => b.defenders.troops)).toEqual([10, 9]);
   });
 
   it("only within reach steps along the wall; half the spare troops when the wall doesn't lend all", () => {
