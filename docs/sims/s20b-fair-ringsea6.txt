@@ -5,3 +5,12 @@ start spread 27.0
   strong t42 -> t37: spread 36.0
   weak t35 -> t01: spread 22.0 (better)
   strong t42 -> t37: spread 41.0
+  strong t42 -> t21: spread 34.0
+  strong t42 -> t20: spread 45.7
+  strong t47 -> t43: spread 23.3
+start ringsea:6: Dawnmouth 15%, Rushfall 5%, Dunleigh 30%, Deephaven 5%, Heathmouth 32%, Longmere 13% | best 32%, worst 5%, spread 27 pts, fair 16.7%
+best ringsea:6: Dawnmouth 12%, Willowmere 13%, Dunleigh 30%, Deephaven 22%, Fairfield 16%, Longmere 8% | best 30%, worst 8%, spread 22 pts, fair 16.7% (10 layouts measured, 26.4 min)
+check ringsea:6 before: Dawnmouth 15%, Rushfall 10%, Dunleigh 24%, Deephaven 8%, Heathmouth 31%, Longmere 13% | best 31%, worst 8%, spread 23 pts, fair 16.7%
+check ringsea:6 after: Dawnmouth 13%, Willowmere 16%, Dunleigh 33%, Deephaven 18%, Fairfield 13%, Longmere 8% | best 33%, worst 8%, spread 25 pts, fair 16.7%
+recipe ringsea:6: capitals: {6: ["t13","t01","t42","t47","t98","t93"]}
+exposure ringsea:6: rank correlation with spot win rates 0.62 (avg over 10 layouts), weakest spot among the more exposed half in 9 of 10; best layout exposure 0.31/0.53/0.40/0.31/0.47/0.64 (outside the band)

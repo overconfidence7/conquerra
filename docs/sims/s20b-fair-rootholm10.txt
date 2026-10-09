@@ -1,0 +1,13 @@
+start spread 25.7
+  strong t150 -> t164: spread 20.0 (better)
+  weak t138 -> t133: spread 24.0
+  weak t138 -> t132: spread 21.3
+  strong t114 -> t082: spread 21.7
+  strong t191 -> t194: spread 24.0
+  weak t010 -> t016: spread 22.0
+start rootholm:10: Wolfhold 22%, Emberwick 4%, Hallowmarch 3%, Mistmark 10%, Nettlehold 2%, Kingshelm 18%, Silverfield 1%, Deepton 26%, Kingsmarch 10%, Fenbury 5% | best 26%, worst 1%, spread 26 pts, fair 10.0%
+best rootholm:10: Wolfhold 20%, Emberwick 6%, Hallowmarch 3%, Mistmark 12%, Nettlehold 4%, Kingshelm 16%, Silverfield 0%, Marshfell 15%, Kingsmarch 14%, Fenbury 8% | best 20%, worst 0%, spread 20 pts, fair 10.0% (7 layouts measured, 15.4 min)
+check rootholm:10 before: Wolfhold 25%, Emberwick 3%, Hallowmarch 1%, Mistmark 7%, Nettlehold 2%, Kingshelm 18%, Silverfield 0%, Deepton 27%, Kingsmarch 11%, Fenbury 4% | best 27%, worst 0%, spread 27 pts, fair 10.0%
+check rootholm:10 after: Wolfhold 25%, Emberwick 5%, Hallowmarch 3%, Mistmark 10%, Nettlehold 2%, Kingshelm 16%, Silverfield 0%, Marshfell 18%, Kingsmarch 14%, Fenbury 8% | best 25%, worst 0%, spread 25 pts, fair 10.0%
+recipe rootholm:10: capitals: {10: ["t005","t010","t044","t071","t097","t114","t138","t164","t191","t197"]}
+exposure rootholm:10: rank correlation with spot win rates 0.82 (avg over 7 layouts), weakest spot among the more exposed half in 7 of 7; best layout exposure 0.22/0.58/0.55/0.29/0.81/0.38/0.59/0.13/0.38/0.75 (outside the band)

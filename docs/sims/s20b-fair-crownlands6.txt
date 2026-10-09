@@ -1,0 +1,16 @@
+start spread 35.7
+  weak t03 -> t02: spread 40.0
+  strong t81 -> t95: spread 38.3
+  strong t81 -> t82: spread 35.3 (better)
+  strong t82 -> t89: spread 44.0
+  strong t08 -> t16: spread 29.3 (better)
+  weak t03 -> t11: spread 41.3
+  weak t03 -> t51: spread 34.3
+  weak t03 -> t46: spread 42.3
+  strong t82 -> t95: spread 38.7
+start crownlands:6: Kingshaven 2%, Ironmarch 19%, Northwatch 8%, Hollyden 26%, Embermouth 37%, Hawkcrest 7% | best 37%, worst 2%, spread 36 pts, fair 16.7%
+best crownlands:6: Kingshaven 1%, Yewhelm 23%, Northwatch 11%, Kestrelhome 30%, Embermouth 30%, Hawkcrest 6% | best 30%, worst 1%, spread 29 pts, fair 16.7% (10 layouts measured, 24.6 min)
+check crownlands:6 before: Kingshaven 0%, Ironmarch 16%, Northwatch 5%, Hollyden 35%, Embermouth 37%, Hawkcrest 6% | best 37%, worst 0%, spread 37 pts, fair 16.7%
+check crownlands:6 after: Kingshaven 1%, Yewhelm 19%, Northwatch 5%, Kestrelhome 41%, Embermouth 26%, Hawkcrest 7% | best 41%, worst 1%, spread 39 pts, fair 16.7%
+recipe crownlands:6: capitals: {6: ["t03","t16","t19","t82","t97","t98"]}
+exposure crownlands:6: rank correlation with spot win rates 0.13 (avg over 10 layouts), weakest spot among the more exposed half in 2 of 10; best layout exposure 0.50/0.75/0.70/0.42/0.67/0.74 (within the band)

@@ -1,0 +1,16 @@
+start spread 36.7
+  strong t82 -> t89: spread 24.7 (better)
+  strong t89 -> t95: spread 37.0
+  strong t89 -> t81: spread 33.0
+  strong t89 -> t23: spread 36.3
+  strong t89 -> t19: spread 20.3 (better)
+  weak t85 -> t98: spread 24.0
+  weak t85 -> t84: spread 24.0
+  weak t85 -> t13: spread 19.3 (better)
+  strong t19 -> t23: spread 43.0
+start crownlands:10: Yewhelm 14%, Wolfstone 2%, Elderstead 1%, Willowden 1%, Norththorpe 14%, Heaththorpe 3%, Salthollow 10%, Kestrelhome 38%, Fenridge 5%, Pinefell 12% | best 38%, worst 1%, spread 37 pts, fair 10.0%
+best crownlands:10: Yewhelm 16%, Wolfstone 3%, Elderstead 4%, Willowden 4%, Norththorpe 20%, Heaththorpe 1%, Salthollow 12%, Northwatch 20%, Ashton 4%, Pinefell 15% | best 20%, worst 1%, spread 19 pts, fair 10.0% (10 layouts measured, 31.7 min)
+check crownlands:10 before: Yewhelm 12%, Wolfstone 3%, Elderstead 3%, Willowden 1%, Norththorpe 18%, Heaththorpe 2%, Salthollow 10%, Kestrelhome 40%, Fenridge 3%, Pinefell 8% | best 40%, worst 1%, spread 39 pts, fair 10.0%
+check crownlands:10 after: Yewhelm 19%, Wolfstone 4%, Elderstead 4%, Willowden 4%, Norththorpe 19%, Heaththorpe 0%, Salthollow 13%, Northwatch 23%, Ashton 3%, Pinefell 10% | best 23%, worst 0%, spread 23 pts, fair 10.0%
+recipe crownlands:10: capitals: {10: ["t16","t45","t46","t49","t50","t51","t66","t19","t13","t87"]}
+exposure crownlands:10: rank correlation with spot win rates 0.24 (avg over 10 layouts), weakest spot among the more exposed half in 5 of 10; best layout exposure 2.50/3.83/3.33/1.20/0.73/3.17/3.20/1.50/1.07/3.00 (outside the band)

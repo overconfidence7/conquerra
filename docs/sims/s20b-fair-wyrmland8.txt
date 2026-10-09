@@ -1,0 +1,16 @@
+start spread 31.0
+  strong t010 -> t003: spread 36.3
+  strong t010 -> t000: spread 31.7
+  strong t010 -> t012: spread 21.3 (better)
+  weak t058 -> t000: spread 23.0
+  weak t058 -> t003: spread 18.0 (better)
+  strong t112 -> t058: spread 34.3
+  weak t012 -> t005: spread 22.7
+  weak t012 -> t011: spread 21.3
+  weak t056 -> t077: spread 18.0
+start wyrmland:8: Hallowhaven 31%, Rookhome 14%, Elderton 7%, Coldton 3%, Glenmark 0%, Brightmarch 9%, Larkstead 19%, Kingsholt 17% | best 31%, worst 0%, spread 31 pts, fair 12.5%
+best wyrmland:8: Willowshire 4%, Rookhome 14%, Elderton 6%, Coldton 5%, Harrowmarch 19%, Brightmarch 12%, Larkstead 19%, Kingsholt 22% | best 22%, worst 4%, spread 18 pts, fair 12.5% (10 layouts measured, 36.8 min)
+check wyrmland:8 before: Hallowhaven 31%, Rookhome 14%, Elderton 6%, Coldton 3%, Glenmark 1%, Brightmarch 8%, Larkstead 15%, Kingsholt 23% | best 31%, worst 1%, spread 30 pts, fair 12.5%
+check wyrmland:8 after: Willowshire 4%, Rookhome 11%, Elderton 6%, Coldton 3%, Harrowmarch 22%, Brightmarch 10%, Larkstead 19%, Kingsholt 26% | best 26%, worst 3%, spread 23 pts, fair 12.5%
+recipe wyrmland:8: capitals: {8: ["t012","t014","t046","t056","t003","t072","t110","t112"]}
+exposure wyrmland:8: rank correlation with spot win rates 0.19 (avg over 10 layouts), weakest spot among the more exposed half in 7 of 10; best layout exposure 0.64/0.67/1.10/0.92/0.89/1.06/0.69/1.30 (outside the band)

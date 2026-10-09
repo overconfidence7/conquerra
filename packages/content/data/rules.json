@@ -132,9 +132,9 @@
     "on": true,
     "culture": 5,
     "needsFort": true,
-    "reach": 3,
+    "reach": null,
     "lendAll": true,
-    "oneBattleATurn": true
+    "oneBattleATurn": false
   },
   "economy": {
     "startGold": 20,

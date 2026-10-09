@@ -1,0 +1,14 @@
+start spread 69.0
+  strong t139 -> t133: spread 68.3 (better)
+  strong t133 -> t110: spread 72.0
+  strong t133 -> t146: spread 31.3 (better)
+  weak t009 -> t017: spread 29.7 (better)
+  strong t016 -> t018: spread 30.7
+  strong t016 -> t005: spread 29.7
+  strong t016 -> t025: spread 32.3
+start sundered-crowns:6: Sorrowgarth 6%, Moonden 1%, Northrest 2%, Stonemere 18%, Oldwood 4%, Nettlehurst 70% | best 70%, worst 1%, spread 69 pts, fair 16.7%
+best sundered-crowns:6: Sorrowgarth 11%, Stagrest 0%, Northrest 30%, Stonemere 26%, Oldwood 5%, Redhome 26% | best 30%, worst 0%, spread 30 pts, fair 16.7% (8 layouts measured, 24.1 min)
+check sundered-crowns:6 before: Sorrowgarth 6%, Moonden 2%, Northrest 3%, Stonemere 15%, Oldwood 2%, Nettlehurst 72% | best 72%, worst 2%, spread 71 pts, fair 16.7%
+check sundered-crowns:6 after: Sorrowgarth 12%, Stagrest 0%, Northrest 25%, Stonemere 32%, Oldwood 7%, Redhome 23% | best 32%, worst 0%, spread 32 pts, fair 16.7%
+recipe sundered-crowns:6: capitals: {6: ["t006","t017","t016","t065","t120","t146"]}
+exposure sundered-crowns:6: rank correlation with spot win rates 0.19 (avg over 8 layouts), weakest spot among the more exposed half in 8 of 8; best layout exposure 0.24/0.50/0.79/0.22/0.36/0.41 (outside the band)

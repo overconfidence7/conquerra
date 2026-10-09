@@ -1,0 +1,14 @@
+start spread 40.0
+  strong t034 -> t053: spread 25.0 (better)
+  weak t115 -> t109: spread 24.3 (better)
+  strong t053 -> t034: spread 40.0
+  weak t091 -> t094: spread 32.0
+  weak t091 -> t018: spread 33.0
+  strong t019 -> t025: spread 26.3
+  t109 -> t104 and t091 -> t094: spread 28.0
+start ashwing:8: Glenthorpe 21%, Thornmere 41%, Saltbury 2%, Coldcrest 1%, Sorrowrest 2%, Amberfield 2%, Greyden 18%, Galewell 13% | best 41%, worst 1%, spread 40 pts, fair 12.5%
+best ashwing:8: Glenthorpe 21%, Stagfield 23%, Saltbury 3%, Coldcrest 4%, Sorrowrest 2%, Harrowkeep 0%, Greyden 25%, Galewell 22% | best 25%, worst 0%, spread 24 pts, fair 12.5% (8 layouts measured, 33.5 min)
+check ashwing:8 before: Glenthorpe 19%, Thornmere 41%, Saltbury 2%, Coldcrest 1%, Sorrowrest 2%, Amberfield 1%, Greyden 16%, Galewell 17% | best 41%, worst 1%, spread 41 pts, fair 12.5%
+check ashwing:8 after: Glenthorpe 26%, Stagfield 24%, Saltbury 4%, Coldcrest 2%, Sorrowrest 2%, Harrowkeep 1%, Greyden 22%, Galewell 20% | best 26%, worst 1%, spread 25 pts, fair 12.5%
+recipe ashwing:8: capitals: {8: ["t019","t053","t065","t074","t091","t109","t121","t123"]}
+exposure ashwing:8: rank correlation with spot win rates 0.73 (avg over 8 layouts), weakest spot among the more exposed half in 6 of 8; best layout exposure 0.59/0.59/0.87/0.67/1.00/1.53/0.50/0.69 (outside the band)

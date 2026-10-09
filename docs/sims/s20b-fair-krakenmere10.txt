@@ -1,0 +1,14 @@
+start spread 49.3
+  strong t194 -> t188: spread 48.0 (better)
+  strong t188 -> t190: spread 46.3 (better)
+  strong t196 -> t185: spread 53.0
+  weak t104 -> t113: spread 52.3
+  weak t004 -> t009: spread 50.3
+  weak t195 -> t183: spread 45.3 (better)
+  strong t190 -> t194: spread 52.7
+start krakenmere:10: Dundale 1%, Moonford 0%, Willowfall 10%, Rookstone 0%, Oldfell 4%, Stagwood 0%, Glenby 8%, Rookton 49%, Coldwick 6%, Emberfall 22% | best 49%, worst 0%, spread 49 pts, fair 10.0%
+best krakenmere:10: Dundale 2%, Moonford 0%, Willowfall 8%, Rookstone 0%, Oldfell 5%, Stagwood 1%, Glenby 8%, Hallowmark 45%, Rushdale 7%, Emberfall 24% | best 45%, worst 0%, spread 45 pts, fair 10.0% (8 layouts measured, 44.2 min)
+check krakenmere:10 before: Dundale 3%, Moonford 0%, Willowfall 6%, Rookstone 0%, Oldfell 5%, Stagwood 1%, Glenby 5%, Rookton 50%, Coldwick 7%, Emberfall 23% | best 50%, worst 0%, spread 50 pts, fair 10.0%
+check krakenmere:10 after: Dundale 1%, Moonford 0%, Willowfall 6%, Rookstone 0%, Oldfell 5%, Stagwood 0%, Glenby 9%, Hallowmark 51%, Rushdale 5%, Emberfall 23% | best 51%, worst 0%, spread 51 pts, fair 10.0%
+recipe krakenmere:10: capitals: {10: ["t004","t013","t018","t104","t120","t133","t173","t190","t183","t196"]}
+exposure krakenmere:10: rank correlation with spot win rates 0.86 (avg over 8 layouts), weakest spot among the more exposed half in 8 of 8; best layout exposure 0.41/0.50/0.20/0.60/0.41/0.55/0.29/0.15/0.20/0.33 (outside the band)

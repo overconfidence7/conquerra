@@ -1,0 +1,14 @@
+start spread 48.3
+  weak t009 -> t017: spread 42.7 (better)
+  strong t065 -> t024: spread 43.3
+  weak t155 -> t154: spread 41.7 (better)
+  weak t017 -> t009: spread 44.7
+  weak t084 -> t120: spread 45.0
+  strong t065 -> t024: spread 42.3
+  weak t018 -> t016: spread 52.0
+start sundered-crowns:8: Moonden 1%, Rookreach 12%, Thornhurst 6%, Stonemere 23%, Redstone 0%, Ravenkeep 48%, Wolfholt 4%, Coldreach 6% | best 48%, worst 0%, spread 48 pts, fair 12.5%
+best sundered-crowns:8: Stagrest 1%, Rookreach 12%, Thornhurst 7%, Stonemere 22%, Redstone 1%, Ravenkeep 42%, Wolfholt 5%, Wolfshire 9% | best 42%, worst 1%, spread 42 pts, fair 12.5% (8 layouts measured, 30.2 min)
+check sundered-crowns:8 before: Moonden 2%, Rookreach 17%, Thornhurst 7%, Stonemere 17%, Redstone 0%, Ravenkeep 44%, Wolfholt 4%, Coldreach 9% | best 44%, worst 0%, spread 44 pts, fair 12.5%
+check sundered-crowns:8 after: Stagrest 0%, Rookreach 12%, Thornhurst 8%, Stonemere 18%, Redstone 0%, Ravenkeep 45%, Wolfholt 7%, Wolfshire 9% | best 45%, worst 0%, spread 45 pts, fair 12.5%
+recipe sundered-crowns:8: capitals: {8: ["t017","t012","t018","t065","t084","t110","t122","t154"]}
+exposure sundered-crowns:8: rank correlation with spot win rates 0.41 (avg over 8 layouts), weakest spot among the more exposed half in 8 of 8; best layout exposure 0.44/0.38/0.36/0.29/0.60/0.50/0.52/0.42 (outside the band)

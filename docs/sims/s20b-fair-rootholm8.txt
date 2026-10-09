@@ -1,0 +1,13 @@
+start spread 27.7
+  weak t106 -> t118: spread 29.0
+  weak t106 -> t133: spread 35.3
+  weak t016 -> t010: spread 32.3
+  weak t016 -> t027: spread 32.0
+  strong t196 -> t191: spread 30.0
+  strong t196 -> t153: spread 28.7
+start rootholm:8: Wolfhold 10%, Glenleigh 3%, Westerford 28%, Coldreach 23%, Larkfield 0%, Brightfield 16%, Fairfall 1%, Nettlehelm 20% | best 28%, worst 0%, spread 28 pts, fair 12.5%
+best rootholm:8: Wolfhold 10%, Glenleigh 3%, Westerford 28%, Coldreach 23%, Larkfield 0%, Brightfield 16%, Fairfall 1%, Nettlehelm 20% | best 28%, worst 0%, spread 28 pts, fair 12.5% (7 layouts measured, 32.7 min)
+check rootholm:8 before: Wolfhold 11%, Glenleigh 2%, Westerford 27%, Coldreach 23%, Larkfield 1%, Brightfield 15%, Fairfall 0%, Nettlehelm 22% | best 27%, worst 0%, spread 26 pts, fair 12.5%
+check rootholm:8 after: Wolfhold 11%, Glenleigh 2%, Westerford 27%, Coldreach 23%, Larkfield 1%, Brightfield 15%, Fairfall 0%, Nettlehelm 22% | best 27%, worst 0%, spread 26 pts, fair 12.5%
+recipe rootholm:8: capitals: {8: ["t005","t016","t067","t099","t106","t190","t195","t196"]}
+exposure rootholm:8: rank correlation with spot win rates 0.55 (avg over 7 layouts), weakest spot among the more exposed half in 7 of 7; best layout exposure 0.21/0.44/0.35/0.44/0.48/0.25/0.46/0.43 (outside the band)

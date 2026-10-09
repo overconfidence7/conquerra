@@ -1,0 +1,16 @@
+start spread 36.3
+  strong t53 -> t42: spread 33.7 (better)
+  weak t35 -> t20: spread 16.3 (better)
+  strong t20 -> t21: spread 17.3
+  weak t93 -> t94: spread 20.7
+  weak t93 -> t35: spread 19.3
+  strong t92 -> t35: spread 28.3
+  weak t02 -> t01: spread 18.0
+  weak t02 -> t35: spread 16.3
+  strong t43 -> t35: spread 29.3
+start ringsea:10: Rushrest 2%, Elderhome 12%, Mistwick 2%, Rushfall 2%, Galestead 12%, Willowhollow 6%, Ravenkeep 38%, Heathmouth 14%, Longmere 4%, Wolfton 7% | best 38%, worst 2%, spread 36 pts, fair 10.0%
+best ringsea:10: Rushrest 4%, Elderhome 12%, Mistwick 2%, Northridge 18%, Galestead 13%, Willowhollow 8%, Dunleigh 14%, Heathmouth 18%, Longmere 2%, Wolfton 9% | best 18%, worst 2%, spread 16 pts, fair 10.0% (10 layouts measured, 32.3 min)
+check ringsea:10 before: Rushrest 2%, Elderhome 10%, Mistwick 2%, Rushfall 3%, Galestead 11%, Willowhollow 6%, Ravenkeep 34%, Heathmouth 19%, Longmere 5%, Wolfton 8% | best 34%, worst 2%, spread 32 pts, fair 10.0%
+check ringsea:10 after: Rushrest 4%, Elderhome 14%, Mistwick 2%, Northridge 21%, Galestead 10%, Willowhollow 8%, Dunleigh 10%, Heathmouth 19%, Longmere 5%, Wolfton 8% | best 21%, worst 2%, spread 19 pts, fair 10.0%
+recipe ringsea:10: capitals: {10: ["t02","t18","t24","t20","t43","t49","t42","t92","t93","t97"]}
+exposure ringsea:10: rank correlation with spot win rates 0.70 (avg over 10 layouts), weakest spot among the more exposed half in 9 of 10; best layout exposure 1.43/1.67/2.38/0.90/0.92/2.40/1.83/1.38/1.86/1.86 (outside the band)

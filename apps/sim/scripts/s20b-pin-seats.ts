@@ -1,6 +1,6 @@
 /**
  * Session 20b: pin the fair-seat search's layouts. Reads the "recipe" lines of docs/sims/s20b-fair-<map><n>.txt and,
- * where the check on fresh games says the new layout is fairer than the map's own (a smaller spread), writes it into
+ * where the check on fresh games says the new layout is at least 5 points fairer than the map's own, writes it into
  * the map's recipe (`capitals` in packages/mapgen/src/configs.ts) and changes only that table size's entry in the
  * map file's `capitalLayouts`. Prints what it pinned and what it kept.
  *   npx tsx apps/sim/scripts/s20b-pin-seats.ts [--dry]
@@ -24,7 +24,8 @@ for (const f of readdirSync(sims).filter((x) => /^s20b-fair-.*\.txt$/.test(x)).s
   }
   const [, map, n, slots] = recipe;
   const b = spread(before), a = spread(after);
-  if (!(a < b)) {
+  // At least 5 points fairer on fresh games (smaller gains are within the noise of 300 games).
+  if (!(a <= b - 5)) {
     console.log(`${map}:${n}: kept the map's own layout (fresh games: ${b} -> ${a} pts)`);
     continue;
   }
