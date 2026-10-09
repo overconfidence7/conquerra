@@ -23,11 +23,10 @@ The parts are in priority order. **Part 4 ends with the deploy, so the session i
 6. `docs/rules-reference.md` §7 (culture: several levels a turn are allowed), §10, §14, §24 (walls)
 7. The code: `packages/bots/src/marshal/` (`sweep.ts`, `plan.ts`, `leaders.ts`, `steward.ts`, `home.ts`), `packages/bots/src/generals.ts`, `apps/sim/scripts/s20c-mopup.ts`, `s20-leaders.ts`
 
-## Step 0: sync, and Nate's games
+## Step 0: sync
 1. Run `git --no-optional-locks status`, then `git pull` and `pnpm install`. Work on `main` and push to `main`.
 2. **Don't import art batch 4** (session 21 does).
-3. **Nate's saved games:** if `docs/sims/nate-games/` has any `.json` files (Settings → Save game → Save to a file; each holds every turn's orders), replay each with `pnpm sim --replay <file>` and keep the positions at the turns where his Leader was on Run the military or Clean up: those are this session's test cases, alongside the mop-up fixtures. If the folder is empty, say so and use the fixtures; make the folder with a short `README.md` saying what goes there.
-4. **Commit and push.**
+3. **Commit and push** anything Step 0 changed.
 
 ## Guardrails (all parts)
 - **The hard rules in `CLAUDE.md`:** the engine stays pure and deterministic; every engine change has tests and the determinism test passes; balance values live in `packages/content`; clients only get `viewFor`.
@@ -39,9 +38,9 @@ The parts are in priority order. **Part 4 ends with the deploy, so the session i
 
 ## Part 1: no hoarding, measured the way Nate plays
 Nate's picture: on Run the military with a real budget (he gives 50–80% of his income on a big map), the purse should be **empty or nearly empty at the end of every turn's orders**, with the gold turned into troops wherever recruiting is possible, and the troops marching to the fight. In 20b's build his Leader kept gold turn over turn.
-1. **Find out why**, by tracing a Run the military leader through 10 turns of a delegating game on Wyrmland 6 and Rootholm 9 (and Nate's positions if there are any), turn by turn: what the purse held at the start, what it spent, what it kept, and the reason the planner had (no recruit site? the finish's "sites that can't be lost this turn" rule? saving for something? an order cap? the order of the queue?). Write the trace up in plain language in the summary.
+1. **Find out why**, by tracing a Run the military leader through 10 turns of a delegating game on Wyrmland 6 and Rootholm 9, turn by turn: what the purse held at the start, what it spent, what it kept, and the reason the planner had (no recruit site? the finish's "sites that can't be lost this turn" rule? saving for something? an order cap? the order of the queue?). Write the trace up in plain language in the summary.
 2. **Fix each cause.** Rules that stand: the purse is spent on troops **every turn it can recruit anywhere** (the capital, barracks, full provinces: all of them, not only the "safe" ones; a site that might fall still gets its recruits if there's nowhere safer); a "saving for" reason is rare, named, and shown in the panel ("Saving 14 gold for the fort at Galeholt"); recruits march toward the fight the same turn where the rules allow.
-3. **Measure:** unspent gold at the end of each turn's orders as a **share of the purse** (not just gold), by turn, on Wyrmland 6 and Rootholm 9 at budgets of 20%, 50% and 80% (300 games each), before and after. Target: **under 10% of the purse unspent on 9 turns in 10**, and never more than one troop's cost unspent when a recruit site exists. Also the mop-up fixtures' turns to finish (they should not get slower).
+3. **Measure:** unspent gold at the end of each turn's orders as a **share of the purse** (not just gold), by turn, on Wyrmland 6 and Rootholm 9 at budgets of 20%, 50% and 80% (300 games each), before and after. Also play 10 turns of a Wyrmland 6 delegating game in the browser (Leader on Run the military at 50%) and check the panel's purse by eye each turn, since the sims said this was fixed once already. Target: **under 10% of the purse unspent on 9 turns in 10**, and never more than one troop's cost unspent when a recruit site exists. Also the mop-up fixtures' turns to finish (they should not get slower).
 4. **Tests:** a property test over random positions: a military leader with gold and any recruit site ends the plan with less than one troop's cost unspent unless a named reason is set.
 - **Commit and push.**
 
@@ -63,7 +62,7 @@ Nate: "mostly doing well", but with a plan: **markets and other buildings in the
 - **Commit and push.**
 
 ## Part 4: write-up, screenshots, deploy
-- **`docs/sim-results-m3-leaders.md`:** a session 20d section: the hoarding trace in plain language (what was keeping gold and why), the unspent-share table before and after, the fog sweep's numbers (turns, got away, never-ordered territories, fog on against off), the Steward's wall numbers, Nate's positions if any (and what they showed).
+- **`docs/sim-results-m3-leaders.md`:** a session 20d section: the hoarding trace in plain language (what was keeping gold and why), the unspent-share table before and after, the fog sweep's numbers (turns, got away, never-ordered territories, fog on against off), the Steward's wall numbers.
 - **Rules reference:** §14 (no hoarding, the sweep under fog, the Steward's plan), §7 if the culture rule changed, §24.
 - **Design additions §15:** a BUILT block under "Nate's third note".
 - **Screenshots** (desktop and a 384 px phone), `docs/art/screens/s20d-*.png`: the Leaders panel with an empty purse after orders ("Purse 0g · 50% of income · 41 orders this turn"); a finishing turn's queue reaching into fogged land; a Steward walling a province in one turn (the queue's culture and fort orders); a wall with a garrison inside it.
@@ -72,7 +71,7 @@ Nate: "mostly doing well", but with a plan: **markets and other buildings in the
 - **Commit and push.**
 
 ## Out of scope
-- **Session 21:** the polish pass (plus Step 0's service-worker fix and the three nits from the orchestrator's checks). **Session 22:** the language pass, the start bonus, the Marshal adopting the Merchant's lesson. **Later:** a top-tier bot above the Marshal, built from Nate's saved games.
+- **Session 21:** the polish pass (plus Step 0's service-worker fix and the three nits from the orchestrator's checks). **Session 22:** the language pass, the start bonus, the Marshal adopting the Merchant's lesson. **Later:** a top-tier bot above the Marshal, and the review of Nate's saved games that feeds it (not this session).
 - Not in this session: new commands, new rules beyond the culture-levels-a-turn check, art, sound.
 
 ## Exit criteria
@@ -89,5 +88,4 @@ Nate: "mostly doing well", but with a plan: **markets and other buildings in the
 - the Steward: turn of the first wall, walls a game, garrisoned walls, attacks on walls, the delegating seat's win rate
 - whether the culture rule (levels a turn) had to change
 - planning time (ordinary turns and finishing turns)
-- Nate's positions, if any, and what they showed
 - the screenshot paths, and anything that slipped
