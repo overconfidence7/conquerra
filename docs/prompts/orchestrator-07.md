@@ -61,7 +61,8 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first, simul
 **What happens next, in order (updated Oct 7 evening, after Nate's play test):**
 1. **Session 20** (`docs/prompts/claude-code-session-20.md`, written): leaders that finish the job (never hoard, spend the budget, many orders, finish rivals; "Clean up", "Push back <player>", "Report to <leader>"; budgets cap at 100%), the Marshal plays like a person (Nate's playbook, builds culture like the Steward so a delegating player is back at fair, finishes games), Enter confirms, the full sweep reworked.
 2. **Session 20c** (`docs/prompts/claude-code-session-20c.md`, written, Nate's Oct 8 note): finishing as mass-and-sweep with a security blanket, defensible pauses, a sweep of our own land before attacking, the bots' Leaders used, captured leaders working together, leader personalities for life. Runs before 20b.
-3. **Session 20b** (`docs/prompts/claude-code-session-20b.md`, written): **Walls** (`04-design-additions.md` §16; the sims pick the limits, pending Nate) and **fair seats** on every map (a smarter search, an exposure-aware check, a start bonus listed as the fallback). Nate plays after 20b.
+3. **Session 20b** (done Oct 9): Walls and fair seats.
+3b. **Session 20d** (`docs/prompts/claude-code-session-20d.md`, written, from Nate's play of 20b's build): no hoarding for real (traced in his kind of game), the sweep covers the fog, the Steward builds with a plan and walls up fast, the two leaders together on walls, Nate's saved games replayed. **Runs before 21.** **Walls** (`04-design-additions.md` §16; the sims pick the limits, pending Nate) and **fair seats** on every map (a smarter search, an exposure-aware check, a start bonus listed as the fallback). Nate plays after 20b.
 4. **Session 21: the polish pass** (`docs/09-polish-and-effects-plan.md`) with art batch 4's import; Fate and the Fallen made visible (Nate: the events are fine). One session, parts in priority order.
 5. **Session 22: the language pass** (`04-design-additions.md` §13). Then **sound as its own session** (Nate, Oct 7).
 6. **After M3: decided after Nate plays** (then **M4**: online with friends, $5/month Workers Paid, multiplayer pause by vote, deals between people, chat, each player picks a colour, bot takeover for quitters).
@@ -120,7 +121,7 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first, simul
    - Tests; **"run the full `pnpm test` twice before your last push"** (property tests use random inputs).
    - Exit criteria: screenshots for visual work, `pnpm deploy:preview`, and either a play test for Nate or additions to the "Things to test" list.
    - The end-of-session summary format.
-6. **Every 3 Claude Code sessions** (the next one is due after session 21; 20, 20c and 20b count as one), write a fresh `docs/prompts/orchestrator-NN.md` and give Nate both prompts together.
+6. **Every 3 Claude Code sessions** (the next one is due after session 21; 20, 20c, 20b and 20d count as one), write a fresh `docs/prompts/orchestrator-NN.md` and give Nate both prompts together.
 
 ## Design guardrails (from Nate)
 - **Simple to play, deep to master.** A basic turn takes about 60 seconds (6 taps today), and a deep turn fits the 5-minute default. Watch the tap count. Today: proposing a truce 4 taps, accepting an offer 1, hiring or sending a spy 3, a path order 4–5, a leader's command 3–5, turning in Spoils 2, the Fate draw 0.
@@ -163,4 +164,4 @@ You are the **orchestrator** for **Conquerra**, a fantasy, military-first, simul
 Nate is a business leader, not a full-time developer. Use plain language and short answers, recommend a choice, and keep him moving. Keep `PROGRESS.md` simple.
 
 ## Right now
-Session 19 is done and reviewed, and Nate has played (notes in `PROGRESS.md`). Session 20 is done and reviewed. He has the prompts for **session 20c** (first) and **20b**. When each summary comes in, run the loop. **The orchestrator-08 prompt is due after session 21.**
+Session 19 is done and reviewed, and Nate has played (notes in `PROGRESS.md`). Sessions 20, 20c and 20b are done and reviewed; Nate has played 20b's build (notes in `PROGRESS.md`). He has the prompt for **session 20d**. When its summary comes in, run the loop; then write **session 21** (the polish pass: `09-polish-and-effects-plan.md` plus Step 0's service-worker fix and the orchestrator's three nits, and Nate's 3D buildings) and the **orchestrator-08** prompt together. **The orchestrator-08 prompt is due after session 21.**

@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–20, 20c and 20b are done and reviewed. Next: Nate's play test (the list under "Things to test after session 20b"), 21 (the polish pass), 22 (the language pass, the start bonus, the Marshal adopts the Merchant's lesson).**
+**Phase: M3 (depth and balance). Sessions 7–20, 20c and 20b are done and reviewed. Nate has played 20b's build. Next: **session 20d** (no hoarding for real, the sweep covers the fog, the Steward's walls, the two leaders together), then 21 (the polish pass), 22 (the language pass, the start bonus, the Marshal adopts the Merchant's lesson).**
 
 Claude Code sessions completed: **20b** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -1117,6 +1117,14 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
   - **Embervale, 4 players, 14 turns.** The orchestrator played badly on purpose for the budget test (a 5-gold Leader, 40 gold unspent) and was knocked out on turn 6 by Queen Isolde (a Marshal, the Merchant), who then held 25% by turn 6, half the map by turn 9 and 98% at 14, winning Best Military, Best Culture, Master Builder and Kingslayer (6 Leaders felled). The other two Marshals never stopped her; on turn 5 Morwen and Isolde had signed a joint war against Krell, the wrong target. One game, but it's the shape the sims call "half the map by turn 10" (a third of Embervale games): once a seat collapses, the map is small enough that nobody can catch the one who ate it.
   - **The walls weren't attacked:** over four turns of the 20b position the Marshals took every unwalled 1-troop territory around the walled core and left the wall alone (they count the garrison first).
 - **Strategies that beat the Marshal:** none found at the knob level. One changed Marshal against a table of standard ones on Embervale (300 games): Leader with the main effort from turn 1 24.7%, a sweep of its own land first 20.7%, more pre-emptive strikes 23.7%, no opening capital guard 25.3% (fair 25%). The only known edge stays the one already logged: pure military with the leaders' planning path wins 1.5× fair on Embervale (and loses on Wyrmland), which session 20 couldn't trace to a cause. A strategy that needs new behaviour (not a knob) would need code, so it's a job for a session, not the orchestrator.
+
+### Oct 9: Nate's play test of session 20b's build (first notes)
+- **The Leader still hoards** on Run the military (gold kept turn over turn, fewer recruits than it could afford); the clean-up dragged, and once the remnant was coming back before he stepped in. Session 20's "never hoard" didn't hold in play.
+- **The sweep isn't complete:** territories in the fog weren't touched. The sweep should hit every territory the remnant is in, might be in, or could move to.
+- **Captured leaders report to his by default:** yes.
+- **The Steward was mostly good,** but should put markets and buildings in the centre, forts wherever a wall may be wanted (now or later) and at choke points, push to wall up fast when its purse allows (several culture levels in one territory in one turn, so a wall can go up in a turn from 0), and when defences are the best thing to do, put everything into them. Run the realm and Run the military should work together on walls and the armies on them.
+- He walled areas himself, too late to see them attacked. **The Marshals feel harder** but can still be improved, or a better bot built above them.
+- **Nate's calls (Oct 9):** a short **session 20d** for these, before the polish pass (21 and 22 shift by one); **a top-tier bot above the Marshal later**, built from how he wins; he can share his games as save files (Settings → Save game → Save to a file), which the simulator replays. Design: `docs/04-design-additions.md` §15, "Nate's third note". Prompt: `docs/prompts/claude-code-session-20d.md`.
 
 ### Things to test after session 20b (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop first; the phone where it applies.*
