@@ -79,6 +79,10 @@ export interface DelegateOptions {
   judgement?: MarshalJudgement;
   /** Session 20b: its Steward finishes walls with at most this much gold left (0: never). */
   walls?: number;
+  /** Session 20d: the Steward's share (default: the rest of the income after the Leader's). */
+  stewardShare?: number;
+  /** Session 20d's purse trace: each turn's view and its leaders' plan. */
+  trace?: (view: PlayerView, plan: ReturnType<typeof planLeaders>) => void;
   id?: string;
 }
 
@@ -92,7 +96,7 @@ export function makeDelegateSeat(leaderShare = 0.8, opts: DelegateOptions = {}):
     plan(ctx, view, lastTurn) {
       const held = Object.values(view.territories).filter((t) => t.detail === "full" && t.owner === view.me.id).length;
       const cleaning = !!opts.cleanUp && held >= ctx.rules.leaders.cleanUpShare * ctx.map.territories.length;
-      const { orders: setup, commands } = setUp(view, { leader: { command: cleaning ? { kind: "cleanup" } : { kind: "military" }, budget: { share: leaderShare } }, steward: { command: { kind: "realm" }, budget: { share: Math.round((1 - leaderShare) * 100) / 100 } } });
+      const { orders: setup, commands } = setUp(view, { leader: { command: cleaning ? { kind: "cleanup" } : { kind: "military" }, budget: { share: leaderShare } }, steward: { command: { kind: "realm" }, budget: { share: opts.stewardShare ?? Math.round((1 - leaderShare) * 100) / 100 } } });
       // Its captured leaders: on Clean up too, or reporting to its own.
       for (const l of view.me.leaders) {
         if (l.of === view.me.id) continue;
@@ -103,6 +107,7 @@ export function makeDelegateSeat(leaderShare = 0.8, opts: DelegateOptions = {}):
       }
       const plan = planLeaders({ ctx, view, memory: mem.recall(view), commands, ...(opts.judgement ? { judgement: opts.judgement } : {}), ...(opts.walls !== undefined ? { walls: opts.walls } : {}), ...(lastTurn ? { lastTurn } : {}) });
       mem.keep(view, plan.memory);
+      opts.trace?.(view, plan);
       // The treasury it holds (its starting gold, and what budgets round off): troops at its capital, as a person would.
       const own: Order[] = view.me.gold >= ctx.rules.troops.cost && view.territories[view.me.capital]?.detail === "full" && (view.territories[view.me.capital] as { owner: string | null }).owner === view.me.id
         ? [{ id: `${view.me.id}-t${view.turn}-treasury`, kind: "recruit", territory: view.me.capital, count: "all" }]

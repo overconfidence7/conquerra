@@ -33,7 +33,7 @@ interface Props {
   view: PlayerView;
   gold: number;
   goldAfter: number;
-  /** Gold in your leaders' purses (session 18): shown smaller, next to your treasury. */
+  /** Gold in your leaders' purses (session 18): shown smaller, next to your treasury; once their orders this turn are paid for (session 20d). */
   purses?: number;
   income: number;
   clock: TurnClock | null;
@@ -69,7 +69,7 @@ export function TopBar({ view, gold, goldAfter, purses = 0, income, clock, repla
           {goldAfter !== gold && <span className="after">→{goldAfter}</span>}
           <span className="plus">+{income}</span>
           {purses > 0 && (
-            <span className="purses" title="Gold in your leaders' purses (yours: take it back any time)">
+            <span className="purses" title="Gold left in your leaders' purses once their orders this turn are paid for (yours: take it back any time)">
               {purses} in purses
             </span>
           )}

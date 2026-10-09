@@ -46,6 +46,12 @@ export interface Run {
   behind: number;
   spare: number;
   ms: number[];
+  /** Session 20d: territories the rivals held as each turn was planned (the true board), and those no order of ours went for that turn. */
+  held?: number;
+  missed?: number;
+  /** ... of those, the ones the leading seat couldn't see as it planned. */
+  heldFog?: number;
+  missedFog?: number;
 }
 
 const pool = <T>(jobs: unknown[], workers = 19): Promise<T[]> => {
@@ -79,6 +85,8 @@ export function runFixture(fx: MopupFixture, how: string, rep: number): Run {
   const c: GameContext = { map: maps[fx.map]!, rules: { ...defaultRules, game: { ...defaultRules.game, maxTurnsHard: 500 } } };
   const seat = Number(fx.top.slice(1)) - 1;
   const start = structuredClone(fx.state);
+  // Session 20d: FOG=off plays the same positions with the fog lifted.
+  if (process.env.FOG === "off") start.settings = { ...start.settings, fog: false };
   if (rep > 0) start.rng = seedRng(`${fx.name}-rep${rep}`);
   const kinds = [...fx.kinds];
   if (how !== "marshal") {
@@ -96,9 +104,17 @@ export function runFixture(fx: MopupFixture, how: string, rep: number): Run {
   const orders: number[] = [];
   const ms: number[] = [];
   const inner = bots[seat]!;
-  bots[seat] = { ...inner, plan: (cc, v, l) => { const t0 = performance.now(); const o = inner.plan(cc, v, l); ms.push(performance.now() - t0); if (process.env.SLOWPLAN && ms[ms.length - 1]! > Number(process.env.SLOWPLAN)) process.stderr.write(`slow plan ${fx.name} T${v.turn}: ${ms[ms.length - 1]!.toFixed(0)} ms, ${o.length} orders
+  // Session 20d: where our orders went each turn (every move's target, chained ones included), and what we could see.
+  const aimed = new Map<number, Set<TerritoryId>>();
+  const visible = new Map<number, Set<TerritoryId>>();
+  const targetsOf = (o: { kind: string; to?: TerritoryId; then?: unknown; fallback?: unknown }, into: Set<TerritoryId>) => {
+    if (o.kind === "move" && o.to) into.add(o.to);
+    if (o.then) targetsOf(o.then as never, into);
+    if (o.fallback) targetsOf(o.fallback as never, into);
+  };
+  bots[seat] = { ...inner, plan: (cc, v, l) => { const t0 = performance.now(); const o = inner.plan(cc, v, l); const into = new Set<TerritoryId>(); for (const x of o) targetsOf(x as never, into); aimed.set(v.turn, into); visible.set(v.turn, new Set(Object.entries(v.territories).filter(([, x]) => x.detail === "full").map(([t]) => t))); ms.push(performance.now() - t0); if (process.env.SLOWPLAN && ms[ms.length - 1]! > Number(process.env.SLOWPLAN)) process.stderr.write(`slow plan ${fx.name} T${v.turn}: ${ms[ms.length - 1]!.toFixed(0)} ms, ${o.length} orders
 `); orders.push(o.length); return o; } };
-  let retaken = 0, kept = 0, recruitNear = 0, recruitAll = 0, behind = 0, spare = 0;
+  let retaken = 0, kept = 0, recruitNear = 0, recruitAll = 0, behind = 0, spare = 0, held = 0, missed = 0, heldFog = 0, missedFog = 0;
   let planned: GameState | null = null;
   let taken = new Set<TerritoryId>();
   const settle = (s: GameState) => {
@@ -111,6 +127,16 @@ export function runFixture(fx: MopupFixture, how: string, rep: number): Run {
     maxTurns: from + 14,
     onEvents: (before, events) => {
       planned = before;
+      const went = aimed.get(before.turn);
+      const saw = visible.get(before.turn);
+      if (went && saw)
+        for (const t of Object.keys(before.territories)) {
+          const o = before.territories[t]!.owner;
+          if (!o || o === top) continue;
+          held++;
+          if (!went.has(t)) missed++;
+          if (!saw.has(t)) (heldFog++, !went.has(t) && missedFog++);
+        }
       const d = fromRivals(c, before, top);
       for (const e of events) {
         if (e.type === "battle" && e.captured && e.defender === top && e.player !== top) (retaken++, taken.add(e.to));
@@ -136,7 +162,7 @@ export function runFixture(fx: MopupFixture, how: string, rep: number): Run {
   });
   const end = r.final!;
   settle(end);
-  return { name: `${fx.name}${rep ? `#${rep}` : ""}`, map: fx.map, how, turns: end.winner ? end.turn - from + 1 : 99, won: end.winner === top, gotAway: kept > 0, tookAny: retaken > 0, retaken, kept, orders, recruitNear, recruitAll, behind, spare, ms };
+  return { name: `${fx.name}${rep ? `#${rep}` : ""}`, map: fx.map, how, turns: end.winner ? end.turn - from + 1 : 99, won: end.winner === top, gotAway: kept > 0, tookAny: retaken > 0, retaken, kept, orders, recruitNear, recruitAll, behind, spare, ms, held, missed, heldFog, missedFog };
 }
 
 export function summarize(how: string, rs: Run[], detail = true): string[] {
@@ -152,6 +178,8 @@ export function summarize(how: string, rs: Run[], detail = true): string[] {
   out.push(
     `   got away ${pc(rs.filter((r) => r.gotAway).length)} (kept ${avg(rs.map((r) => r.kept)).toFixed(2)} a run); took any ${pc(rs.filter((r) => r.tookAny).length)} (${avg(rs.map((r) => r.retaken)).toFixed(2)} a run); orders a turn ${avg(all).toFixed(1)} (most ${Math.max(0, ...all)}); recruits within 2 steps ${(100 * rs.reduce((a, r) => a + r.recruitNear, 0) / Math.max(1, rs.reduce((a, r) => a + r.recruitAll, 0))).toFixed(0)}%; spare troops left behind ${(100 * rs.reduce((a, r) => a + r.behind, 0) / Math.max(1, rs.reduce((a, r) => a + r.spare, 0))).toFixed(0)}%; plan ${avg(rs.flatMap((r) => r.ms)).toFixed(1)} ms (worst ${Math.max(0, ...rs.flatMap((r) => r.ms)).toFixed(0)})`,
   );
+  const sum = (f: (r: Run) => number | undefined) => rs.reduce((a, r) => a + (f(r) ?? 0), 0);
+  out.push(`   never ordered (session 20d): ${sum((r) => r.missed)} of ${sum((r) => r.held)} rival territory-turns (${((100 * sum((r) => r.missed)) / Math.max(1, sum((r) => r.held))).toFixed(1)}%); in the fog ${sum((r) => r.missedFog)} of ${sum((r) => r.heldFog)} (${((100 * sum((r) => r.missedFog)) / Math.max(1, sum((r) => r.heldFog))).toFixed(1)}%)`);
   const hist = new Map<number, number>();
   for (const x of t) hist.set(x, (hist.get(x) ?? 0) + 1);
   out.push(`   turns: ${[...hist].sort((a, b) => a[0] - b[0]).map(([k, v]) => `${k === 99 ? "15+" : k}:${v}`).join(" ")}`);

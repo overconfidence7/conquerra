@@ -69,6 +69,9 @@ export interface SeatStats {
   landEnd: number;
   wallBattles: number;
   wallHolds: number;
+  /** Session 20d: walled territory-turns (each turn's walled land, summed), and those holding more than 1 troop (a garrison the wall can lend). */
+  walledTurns?: number;
+  walledGarrisoned?: number;
 }
 
 export interface TableResult {
@@ -111,7 +114,7 @@ const blank = (seat: number, player: PlayerId, bot: string): SeatStats => ({
   attacks: 0, frontsPerTurn: 0, rivalsAttacked: 0, concentration: 0, concentration10: 0, leaderAttacks: 0, leaderShare: 0,
   firstFort: null, firstMarket: null, firstCulture: null, forts10: 0, markets10: 0, culture10: 0,
   gold: { troops: 0, buildings: 0, culture: 0, specialists: 0, spies: 0 }, gold10: { troops: 0, buildings: 0, culture: 0, specialists: 0, spies: 0 }, deals: 0, broken: 0, wars: 0, truces: 0,
-  firstWall: null, wallsBuilt: 0, walledPeak: 0, walledHalfway: 0, landHalfway: 0, walledEnd: 0, landEnd: 0, wallBattles: 0, wallHolds: 0,
+  firstWall: null, wallsBuilt: 0, walledPeak: 0, walledHalfway: 0, landHalfway: 0, walledEnd: 0, landEnd: 0, wallBattles: 0, wallHolds: 0, walledTurns: 0, walledGarrisoned: 0,
 });
 
 /** Play one game with one bot per seat (in seat order), and record every seat's behaviours. */
@@ -273,7 +276,11 @@ export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], 
     for (const t of idx.ids) {
       const o = s.territories[t]!.owner;
       if (o) now.set(o, (now.get(o) ?? 0) + 1);
-      if (o && s.territories[t]!.walled) walledNow.set(o, (walledNow.get(o) ?? 0) + 1);
+      if (o && s.territories[t]!.walled) {
+        walledNow.set(o, (walledNow.get(o) ?? 0) + 1);
+        const x = stats.find((y) => y.player === o);
+        if (x) (x.walledTurns = (x.walledTurns ?? 0) + 1), s.territories[t]!.troops > 1 && (x.walledGarrisoned = (x.walledGarrisoned ?? 0) + 1);
+      }
     }
     walledByTurn.push({ walled: walledNow, land: now });
     for (const x of stats) {

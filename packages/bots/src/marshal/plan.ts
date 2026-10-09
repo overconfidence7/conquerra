@@ -98,6 +98,8 @@ const BASE: CaptainOptions = { chainMargin: 1.25 };
 const WAR_PULL = 1.6;
 /** The runaway leader's land is worth this much more to every Marshal (on top of the Captain's priority 8). */
 const LEADER_PULL = 1.4;
+/** A leader's recruit whose site is lost tries this many other sites (the engine follows up to 5 fallbacks; the Marshal one, as before). */
+const RECRUIT_FALLBACKS = 4;
 /** One-front play: a rival that isn't the main target is worth this much (it still takes cheap land). */
 const OFF_FRONT = 0.45;
 
@@ -495,9 +497,23 @@ function planMoves(
   const own = leaderAt(me, { kind: "leader", of: me.id });
   const rider = steer ? (steer.rider ?? null) : own ? { at: own, goes: { withLeader: true } } : null;
   if (sweeping && finishSites.length && rider && troopsAt(rider.at) <= garrison * 2 && recruitSites.includes(rider.at) && (!steer || steer.buys.troops)) finishSites = [rider.at, ...finishSites.filter((t) => t !== rider.at)].slice(0, J.finish!.sites);
-  /** Never hoard (session 20): a recruit whose site is lost before it's paid for recruits at the safest site instead. */
-  const safest = [...recruitSites].sort((a, c) => (sweeping ? Number(robust(c)) - Number(robust(a)) : 0) || Number(isFrontier(a)) - Number(isFrontier(c)) || enemyPressure(a) - enemyPressure(c) || troopsAt(c) - troopsAt(a) || (a < c ? -1 : 1))[0];
-  const recruitOrder = (t: TerritoryId, count: number): Order => ({ id: id(), kind: "recruit", territory: t, count, ...(safest && safest !== t ? { fallback: { id: id(), kind: "recruit", territory: safest, count } as Order } : {}) });
+  /**
+   * Never hoard (session 20; session 20d, Nate: recruit wherever it can, not only where it's safe): a recruit whose site
+   * is lost before it's paid for recruits at the next site instead, the safest first, through every site we have (a
+   * leader's purse may recruit at any of ours: the troops are its own to march), up to the engine's fallbacks.
+   */
+  const bySafety = [...new Set([...recruitSites, ...(steer && steer.buys.troops ? anySite : [])])].sort(
+    (a, c) => (sweeping ? Number(robust(c)) - Number(robust(a)) : 0) || Number(isFrontier(a)) - Number(isFrontier(c)) || enemyPressure(a) - enemyPressure(c) || troopsAt(c) - troopsAt(a) || (a < c ? -1 : 1),
+  );
+  const recruitOrder = (t: TerritoryId, count: number): Order => {
+    let fb: Order | undefined;
+    // (The Marshal keeps its one fallback, to the safest site, as before.)
+    const alts = steer ? bySafety.filter((x) => x !== t).slice(0, RECRUIT_FALLBACKS) : bySafety[0] && bySafety[0] !== t ? [bySafety[0]] : [];
+    for (const alt of [...alts].reverse()) fb = { id: "", kind: "recruit", territory: alt, count, ...(fb ? { fallback: fb } : {}) } as Order;
+    const withIds = (o: Order | undefined): Order | undefined => (o ? ({ ...o, id: id(), ...(o.fallback ? { fallback: withIds(o.fallback) } : {}) } as Order) : undefined);
+    const first = { id: id(), kind: "recruit", territory: t, count } as Order;
+    return fb ? ({ ...first, fallback: withIds(fb) } as Order) : first;
+  };
   if (finishSites.length && gold >= troopCost) {
     const all = Math.floor(gold / troopCost);
     finishSites.forEach((t, i) => {

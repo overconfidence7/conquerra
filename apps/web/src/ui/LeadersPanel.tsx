@@ -106,12 +106,29 @@ function BudgetControl({ ctx, budget, left, leftGold, onSet }: { ctx: GameContex
  * name, kind, what it's doing, its purse and budget. Tap one for Command, Budget and Take back. Desktop: the right
  * column; phone: the Leaders sheet, opened from your Leader's portrait.
  */
-export function LeadersPanel({ ctx, view, queue, onShow, onCards }: { ctx: GameContext; view: PlayerView; queue: readonly Order[]; onShow(t: TerritoryId): void; /** Open your cards (Spoils and missions). */ onCards(): void }) {
+export function LeadersPanel({
+  ctx,
+  view,
+  queue,
+  pursesLeft,
+  onShow,
+  onCards,
+}: {
+  ctx: GameContext;
+  view: PlayerView;
+  queue: readonly Order[];
+  /** Gold left in each purse once this turn's queued orders are paid for (session 20d: the purse a leader really keeps). */
+  pursesLeft?: ReadonlyMap<string, number>;
+  onShow(t: TerritoryId): void;
+  /** Open your cards (Spoils and missions). */
+  onCards(): void;
+}) {
   const { instructions, budgets, paused, leaderOpen, openLeader, setBudget, takeBack, showMission, mission, leaderNotes } = useGame();
   const [menu, setMenu] = useState<"command" | "budget" | null>(null);
   const n = namer(ctx, view);
   const leaders = view.me.leaders ?? [];
-  const total = pursesTotal(view.me);
+  // (What's left in the purses once this turn's orders are paid for, session 20d.)
+  const total = pursesLeft ? leaders.reduce((a, l) => a + Math.max(0, Math.min(l.purse, pursesLeft.get(leaderKey(l)) ?? l.purse)), 0) : pursesTotal(view.me);
   const counts = new Map<string, number>();
   for (const o of queue) {
     const k = authorKey(o);
@@ -121,7 +138,7 @@ export function LeadersPanel({ ctx, view, queue, onShow, onCards }: { ctx: GameC
   const all = othersBudgets(view, budgets, "");
   const income = Math.max(0, incomeEstimate(ctx, view));
   return (
-    <Frame className="slim leaders" title="Leaders" extra={total > 0 ? <span className="cost" title="Gold in your leaders' purses">{total}g in purses</span> : undefined}>
+    <Frame className="slim leaders" title="Leaders" extra={total > 0 ? <span className="cost" title="Gold left in your leaders' purses once their orders this turn are paid for">{total}g in purses</span> : undefined}>
       <p className="small budgets-total" aria-label="Your leaders' budgets">
         Budgets: <b>{Math.round(all.share * 100)}%</b> of income{all.gold > 0 ? ` + ${all.gold}g a turn` : ""}
       </p>
@@ -133,6 +150,10 @@ export function LeadersPanel({ ctx, view, queue, onShow, onCards }: { ctx: GameC
           const budget = budgets[key]?.budget ?? l.budget;
           const taking = budgets[key]?.takeBack ?? 0;
           const purse = Math.max(0, l.purse - taking);
+          // What it keeps once this turn's orders are paid for (session 20d, Nate: the purse as the turn started always
+          // looked full, though its orders spend it), and what they spend.
+          const left = Math.max(0, Math.min(purse, pursesLeft?.get(key) ?? purse));
+          const spends = Math.max(0, l.purse - (pursesLeft?.get(key) ?? l.purse));
           const own = l.of === view.me.id;
           const at = leaderAt(view.me, l);
           const written = counts.get(key) ?? 0;
@@ -143,10 +164,15 @@ export function LeadersPanel({ ctx, view, queue, onShow, onCards }: { ctx: GameC
                 <span className="leader-who">
                   <b>{styledName(l.name, l.personality)}</b> <span className="muted small">{own ? `your ${KIND_NAME[l.kind]}` : `${n.who(l.of)}'s old ${KIND_NAME[l.kind]}`}</span>
                   <span className="block small">{doingLine(ctx, view, l, command, paused.includes(key), leaderNotes[key])}</span>
-                  <span className="block small purse-line">
-                    Purse <b>{purse}g</b>
+                  <span className="block small purse-line" title={`${purse}g in its purse as the turn starts${spends > 0 ? `; its orders this turn spend ${spends}g` : ""}`}>
+                    Purse <b>{left}g</b>
                     {taking > 0 && <span className="muted"> ({taking}g coming home)</span>} · {budgetLabel(budget)}
-                    {written > 0 && <span className="muted"> · {written} order{written === 1 ? "" : "s"} this turn</span>}
+                    {written > 0 && (
+                      <span className="muted">
+                        {" "}
+                        · {written} order{written === 1 ? "" : "s"} this turn{spends > 0 ? ` (${spends}g)` : ""}
+                      </span>
+                    )}
                   </span>
                 </span>
               </button>

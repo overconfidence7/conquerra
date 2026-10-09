@@ -404,7 +404,7 @@ export function GameScreen() {
     <TopBar
       view={view}
       gold={view.me.gold}
-      purses={pursesTotal(view.me)}
+      purses={plan ? [...plan.pursesLeft.values()].reduce((a, x) => a + Math.max(0, x), 0) : pursesTotal(view.me)}
       goldAfter={plan.goldLeft}
       income={income}
       clock={out ? null : clock}
@@ -555,7 +555,7 @@ export function GameScreen() {
           <BottomSheet size={replaying ? "closed" : sheet} onSize={setSheet} bottom={76} tabs={tabs} tab={tab} onTab={setTab}>
             {tab === "army" && army}
             {tab === "orders" && <OrderQueue ctx={ctx} view={view} plan={plan} queue={shownQueue} bare />}
-            {tab === "leaders" && <LeadersPanel ctx={ctx} view={view} queue={queue} onShow={(t) => g.select(t)} onCards={() => setCardsOpen(true)} />}
+            {tab === "leaders" && <LeadersPanel ctx={ctx} view={view} queue={queue} pursesLeft={plan?.pursesLeft} onShow={(t) => g.select(t)} onCards={() => setCardsOpen(true)} />}
             {tab === "card" && (selected ? <TerritoryCard ctx={ctx} view={view} id={selected} /> : <p className="muted">Tap a territory to see its card. Tap and hold anywhere for a quick look.</p>)}
             {tab === "report" && report && (
               <Suspense fallback={null}>
@@ -598,7 +598,7 @@ export function GameScreen() {
       </div>
       <aside className="rightcol" ref={moreCue}>
         <PlayersPanel view={view} />
-        {!out && <LeadersPanel ctx={ctx} view={view} queue={queue} onShow={(t) => g.select(t)} onCards={() => setCardsOpen(true)} />}
+        {!out && <LeadersPanel ctx={ctx} view={view} queue={queue} pursesLeft={plan?.pursesLeft} onShow={(t) => g.select(t)} onCards={() => setCardsOpen(true)} />}
       </aside>
       {settingsMenu}
       <Toasts toasts={toasts} />
