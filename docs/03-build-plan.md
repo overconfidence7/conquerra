@@ -140,7 +140,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
 
 ### M6: Native apps + later
 - iOS and Android apps, cosmetics.
-- **Map builder** on the same staged map maker (`docs/07-map-tooling.md`): **a player feature from the start** (decided Oct 4). Players save, share and play each other's maps, so it needs M4's online storage, automatic quality and fairness checks, undo and light moderation. It can come sooner than M6 once M4 is done.
+- **Map builder** on the same staged map maker (`docs/07-map-tooling.md`): **a player feature from the start** (decided Oct 4). Players save, share and play each other's maps, so it needs M4's online storage, automatic quality and fairness checks, undo and light moderation. It can come sooner than M6 once M4 is done. **Community maps (Nate, Oct 9):** player-made maps live in a community section apart from the official, thoroughly tested maps; the exposure check (session 20b) is the builder's fairness warning, not a gate.
 
 ## Working conventions for Claude Code
 - Start each session by reading `CLAUDE.md`, `docs/02-game-design-outline.md` and the current milestone in this file.
