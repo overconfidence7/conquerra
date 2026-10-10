@@ -42,7 +42,7 @@ Warm, direct and organized without being stiff. Plain-spoken: specifics over pol
 - **Deadpan verdicts.** A flat assessment is the punchline. "Moonwood's wall is up. Anyone who wants Rookhome now has to go through all of it."
 - **Self-inclusion.** A leader is in the mess, never above it. "Purse is empty. I'll be holding the line with strong opinions."
 - **Running gags with receipts.** A leader who lost a fort to a rival remembers it and brings it up again later, and the line changes as the story does (the grudge, the revenge, the grudging respect).
-- **Affection, not cruelty.** Sarcasm aims at the situation, the speaker, or a rival's choices. A rival can needle the player's move, never the player. Nothing crude, nothing childish or nasty, no real people or firms.
+- **Affection, not cruelty.** Sarcasm aims at the situation, the speaker, or someone's choices. A rival can needle the player's move. **Your own Leader can tease your bad moves** (below). Nobody mocks the player's worth. Nothing crude, nothing childish or nasty, no real people or firms.
 - **One beat per line, and not every line.** Leaders speak when something happened that calls for it, with a limit per leader per turn. A turn's report with a joke in every line is too much: about one in three lines carries a beat.
 - **Fair:** a line never reveals anything the player couldn't know. No bragging about land in their fog, no hint at a hidden personality beyond how it plays.
 
@@ -57,6 +57,22 @@ Warm, direct and organized without being stiff. Plain-spoken: specifics over pol
 | **Merchant** | Nate at a negotiation: credits the offer, shows the math, "walk me through it." | "The numbers don't work for me. Walk me through how you got there." |
 
 Your own **Leader and Steward** speak in their personality's voice (the same six, with the Steward's Turtle and Merchant). **A Neutral leader is dry and brief:** mostly facts, with the occasional flat verdict ("Took Ashfell and Pinemark. Nobody was home.").
+
+## Three running bits (Nate, Oct 10)
+**1. Captured leaders and their "unyielding loyalty."** A leader you captured used to serve a rival, and now serves you with total, suspicious devotion. Two modes, mixed:
+- **Loyalty sarcasm:** "My loyalty to House Azure lasted right up until House Azure stopped existing. I'm all yours now." / "I've always admired House Gules. Since turn 31."
+- **Over-the-top brownnosing:** "Took Fairmoor, my liege. Your wisdom guided my every step. Mostly the steps toward Fairmoor." / "Another brilliant order, Your Grace. History will be kind to you. I'll make sure of it."
+It never undercuts the facts (what it took, what it lost), and it can needle its old House by name ("Lady Morwen never once said thank you. You haven't either, but I can tell you're thinking it.").
+
+**2. The Steward's handout.** When your Steward hands back gold it couldn't spend (session 23's rule), it does so like a rich person giving to the poor, even though the gold was yours all along: "Sent 40 gold back. Wanted the peasants to have something." The amount and the plain reason are always in the line.
+
+**3. Your Leader judges your moves.** When one of **your own orders** goes badly, and your Leader would have done it differently, it says so, with the real numbers: "You sent 6 against Highmere's 14. Bold. I'd have waited a turn and brought the 12 from Ashfell." Rules for this bit:
+- **Only your orders,** never the Leader's own (a leader that roasts you for its own mistake is a different joke, and not this one).
+- **Only when it's true, from what you could see:** the odds the preview showed, the troops that really were nearby, the rival army that really was next door. The "I'd have" part names something the Leader really could have done.
+- **Triggers** (each with the real numbers): an attack you ordered at poor odds that failed; your land left thin next to a rival army that took it; a deal you broke that brought a joint war down on you; gold left unspent at the end of a turn while your land was taken; your capital left with fewer troops than the rival army next door.
+- **Not every time:** at most once every few turns, and never twice for the same kind of mistake in a row. **It eases off when you're down to your last few territories** (orchestrator default): a Leader who roasts you while you're losing badly stops being funny. A good move can earn a grudging compliment now and then ("That worked. I'd have done it the same way, just sooner.").
+- **Each personality judges in its own way:** the Conqueror wanted one front, the Blitzer wanted it faster, the Turtle wanted a wall first, the Opportunist wanted a weaker target, the Schemer wanted a deal first, the Neutral just states the math.
+
 
 ## Sample rewrites (Nate: strike or change anything that doesn't sound like you)
 | Where | Today | In the voice |
@@ -83,8 +99,16 @@ Your own **Leader and Steward** speak in their personality's voice (the same six
 | Your Leader, finished a rival | (new) | {rival} is done. We checked the fog twice. |
 | Your Leader, a grudge (receipts) | (new) | {rival} burned our fort at {place} on turn {turn}. I haven't forgotten, in case you were wondering. |
 | A captured leader, first report | (new) | {name} here. Formerly of House {old house}, which as you know is no longer a thing. Reporting to {your leader}. |
+| A captured leader, took land | (new) | Took {places}, my liege. Your wisdom guided my every step. Mostly the steps toward {place}. |
+| A captured leader, loyalty | (new) | My loyalty to House {old house} lasted right up until House {old house} stopped existing. I'm all yours now. |
+| Your Leader, your failed attack | (new) | You sent {n} against {place}'s {m}. Bold. I'd have waited a turn and brought the {k} from {other place}. |
+| Your Leader, your thin border | (new) | You left {place} with {n} troop next to {rival}'s {m}. {rival} noticed. |
+| Your Leader, a broken truce backfired | (new) | You broke the truce with {rival}. {rival} and {n} of their friends would like a word. |
+| Your Steward (Turtle), a good move of yours | (new) | That worked. I'd have built a wall first, but it worked. |
 | Your Steward, wall built | (new) | {place}'s wall is up. Anyone who wants {capital} now has to go through all of it. |
-| Your Steward, gold handed back (session 23) | (new) | Sent {n} gold back. I looked everywhere for something worth building. Twice. |
+| Your Steward, gold handed back (session 23) | (new) | Sent {n} gold back. Wanted the peasants to have something. |
+| Your Steward, gold handed back (another version) | (new) | Returning {n} gold. Don't spend it all in one place. Or do, it's only {n}. |
+| Your Steward, gold handed back (another version) | (new) | Here's {n} gold. Nothing out here worth building, and I know things have been tight at the palace. |
 | Title card subline, a House knocked out | House Azure is no more | House Azure is no more. Subline: "They had a good run. Mostly the running." |
 | Empty order queue | (new) | No orders yet. The army is enjoying its day off. |
 | Waiting for the bots | The bots are finishing the game… | The bots are thinking. Some harder than others. |
