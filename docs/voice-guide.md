@@ -122,3 +122,13 @@ It never undercuts the facts (what it took, what it lost), and it can needle its
 ## How the lines are stored
 - Bot and leader lines live in `packages/content` as data (JSON with a Zod schema), **several versions per situation** so a long game doesn't repeat itself. Which version is picked is seeded from the game's public id, the turn and the speaker (never the dice seed), so a replay or a reload says the same thing.
 - A test reads every player-facing line (the content JSON and the web app's text modules) and fails on the hard rules: dashes, semicolons, arrows in prose, the banned words, and a question mark in a bot's or leader's line (they ask no real questions until M4's chat, so any question there is a rhetorical one).
+
+## What session 22 learned (the language pass, as built)
+- **Where the lines live:** `packages/content/data/lines.json` (schema and picker in `src/lines.ts`, imported as `@conquerra/content/lines` so it never loads with the lobby). Groups: `bots` (each personality's own lines), `reasons` (the shared reasons: `plain`, and a personality's own versions in `voiced`), `leaders` (the six personalities and `neutral`), `captured`, `screens` (title-card sublines, game over, the awards' remarks, waiting text) and `limits` (how much leaders say).
+- **Placeholders are declared per situation** and the schema rejects any other. Two that were missing from the guide's samples: the captured leader's first report has no `{turn}` (so "Since turn 31" became "Since this turn"), and the old House is `{house}` with "House" in it ("House Azure").
+- **A shared reason keeps its exact words** and a personality either has its own version (same facts) or adds a short turn of phrase after it half the time (`yesTail` / `noTail`). Offers, counteroffers and broken-deal lines never get a tail.
+- **Lists of places:** a leader names at most three ("Took Ashfell, Pinemark and 4 more"); the report's own line lists them all. Twelve names didn't fit at 384 px.
+- **The judge names a nearby army only if bringing it would have made the fight fair** (your troops plus theirs at least the defenders). Otherwise it says it would have waited.
+- **Ranges** read "4 to 6", never "4–6", everywhere a player reads them, the rules reference included.
+- **The voice test** (`packages/content/test/voice.test.ts`) reads about 6,200 strings with the TypeScript parser and fails on the hard rules; `ALLOWED` in `voiceScan.ts` names the few non-prose exceptions (the gold counter's arrow). `npx tsx packages/content/test/voice-report.ts` lists failures by file.
+- **Comma splices** crept in when semicolons were turned into commas inside parentheses: Nate's style fixes them, so use "and" or a full stop.

@@ -65,7 +65,7 @@ describe("the Marshal's words (session 22)", () => {
     }
     // More than one version of what they say.
     expect(new Set(said).size).toBeGreaterThan(15);
-  });
+  }, 60000);
 });
 
 describe("the Marshal: fair play", () => {

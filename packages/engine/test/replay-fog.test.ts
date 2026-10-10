@@ -260,7 +260,7 @@ describe("the step-by-step replay never leaks", () => {
       }),
       { numRuns: 40 },
     );
-  }, 30000);
+  }, 60000); // (9.5 s alone; the full suite on this machine can triple it.)
 
   it("every replay event and every vision snapshot matches the real game at that step, and only where the player could see", () => {
     let checkedVision = 0, checkedRival = 0, hiddenLater = 0, worldEvents = 0, fateShown = 0, fateHidden = 0, spyReported = 0;

@@ -373,6 +373,14 @@ Nate's notes: his test game on Wyrmland against 5 Captains lasted only 12 turns,
 - **When:** session 22, after the polish pass (21) and before M4 (the chat below reuses these voices). Nate can move it.
 - **The guide (Oct 10):** `docs/voice-guide.md`, built from Nate's writing-style skill: the hard rules (no dashes, semicolons, arrows in prose, AI filler or rhetorical questions), where humor is allowed (Nate: sarcastic humor and other humor wherever the game can take it; none where words do exact work, like rules, tooltips, odds and errors; always about what really happened, never at the player), a voice for each personality, and sample rewrites for Nate to mark up.
 
+### BUILT (session 22, Oct 10): the language pass
+- **The line library** (`packages/content/data/lines.json`): every bot's deal answers, offers and broken-deal lines in its personality's voice (3 to 5 versions each), the shared reasons (plain for the Captain and the Recruit, a personality's own versions of the common ones), the leaders' lines (six personalities and a dry Neutral), captured leaders, title-card sublines, game over, the awards' remarks and the waiting text. About 1,000 lines. The version said is picked from the game's public id, the turn and the speaker.
+- **Your leaders speak** after each turn (the report's "Your leaders", the Chronicle, the Leaders panel): land taken, driven back, capitals taken and lost, a rival finished, a rival army near your capital, an empty purse, a wall, a first word; Nate's three running bits (captured leaders' loyalty, your Leader judging your own moves with the real numbers, the Steward's handout written for session 23); grudges with receipts. At most one line per leader a turn and three a report; worked out from your own view only.
+- **Every other word** checked against the guide; the rules reference rewritten without dashes, semicolons or arrows.
+- **The voice test** enforces the hard rules on every string it can reach; strict (no expected failures).
+- **Words only:** the same seeded sims before and after give the same winners, turns and deal counts.
+- **Reused by the chat later (M4):** one situation, several versions, the speaker's voice. Not built: the chat, multiple-choice replies, leaders asking questions, temperaments.
+
 ### Chat (with M4, the multiplayer milestone; it works in single player too)
 - **People with people:** a normal chat. One-to-one chats, and group chats with the players you pick.
 - **The look:** like any chat app. Open the chat and a **left sidebar lists your chats** (bold when unread), the **selected chat fills the main area**, and **a small pop-up notification** shows when a message comes in. Easy to bring up and to dismiss. On a phone, the list and the chat are two screens.

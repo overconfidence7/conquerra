@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–21 (with 20b, 20c, 20d) are done and reviewed. Next: Nate's play test from "Things to test after session 21" (it can run alongside the next session), **session 22** (the language pass: the prompt is written, built on Nate's voice skill as `docs/voice-guide.md`), 23 (bots and balance: the start bonus, the Marshal adopts the Merchant's lesson and the Steward's plan, idle Steward gold handed back, a remnant judged honestly under fog), then sound.**
+**Phase: M3 (depth and balance). Sessions 7–22 (with 20b, 20c, 20d) are done; 22 waits for review. Next: Nate reads `docs/voice/lines-for-nate.md` and marks it up (the next session applies his marks), his play test from "Things to test after session 22", then session 23 (bots and balance: the start bonus, the Marshal adopts the Merchant's lesson and the Steward's plan, idle Steward gold handed back with the lines already written, a remnant judged honestly under fog), then sound.**
 
-Claude Code sessions completed: **21** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
+Claude Code sessions completed: **22** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
 ---
 
@@ -1302,3 +1302,28 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
   5. Where does your Steward build now (markets inside, forts on passes and necks, walls on the capital's province first)?
   6. Does a delegating game feel too easy on Embervale?
 - **Not tried yet (carried over):** the phone; a 160-territory map (Ashwing or The Sundered Crowns); Embervale with 4; getting knocked out once (is the Fallen loud enough?); Conquest's 20-turn default on a 200-territory map; capturing a Leader ("Reports to Aldric"); a remembered wall greyed in the fog.
+
+### Oct 10: Claude Code session 22 (M3: the language pass, every word in Nate's voice)
+*All four parts and Step 0 done, nothing slipped (no 22b). Built on `docs/voice-guide.md` and Nate's "nate-voice" skill. Nate's sheet: `docs/voice/lines-for-nate.md`. Screenshots `docs/art/screens/s22-*.png`.*
+- **Step 0, the replay fixes:** on the desktop the territory panel and the order dock slide out of the way while the replay plays (0.3 s, none with Reduce motion) and come back as they were, so the letterbox and vignette show full width (`s22-plan-1440.png` before, `s22-replay-1440.png` and `s22-replay-1024.png` during). One headline per event: a title card's event no longer gets a banner too (`s22-title.png`). The floating words are in the display font on an ink plate with the House's colour (`s22-pop-1440.png`). Baseline sims recorded.
+- **Part 1, the voice in code:** the voice test reads about 6,200 player-facing strings with the TypeScript parser (the web app, the bots, the engine's text, the line library, the rules reference) and fails on the guide's hard rules; 192 failures at the start, **none at the end** (the expected-failures list is empty). It can't reach names built from map data, the browser's own formats or Workbox's text. The line library (`packages/content/data/lines.json`, its schema checks every placeholder) holds what the bots and leaders say, 3 to 5 versions each, picked by the game's public id, the turn and the speaker.
+- **Part 2, the six personalities:** each answers, offers and breaks deals in its own voice, and has its own versions of the reasons it gives most; the Captain and the Recruit stay plain (`s22-deal-<personality>-truce/passage.png`, `s22-deal-offer.png`). **Not captured:** a bot's broken-deal line in the report (bots break deals with a line only when a capital or the win is certain; none did in 20 headless games or 54 played turns).
+- **Part 3, the leaders' voices:** your Leader, your Steward and captured leaders speak about each turn in the report ("Your leaders"), the Chronicle and the Leaders panel, worked out by the host from your own view only. Nate's running bits: captured leaders' suspicious loyalty, your Leader judging your own bad moves with the turn's real numbers (`s22-leader-judge.png`: "You hit Moonwood's 41 with 1. I admire the confidence. I'd have brought more."), the Steward's handout written for session 23; grudges with receipts. At most one line per leader a turn and three a report (`s22-report-voices.png`, `s22-leaders-panel.png`, `s22-chronicle.png`, `s22-captured-first.png`).
+- **Part 4, every other word:** title cards (plain for your own loss, a sarcastic subline on a rival's misfortune or a broken deal), game over and the awards as a royal audit (`s22-victory-awards.png`), notices, empty states, waiting text, Spoils flavour lines, the map and personality blurbs, the rules reference (no dashes, semicolons or arrows, and a section on what leaders say).
+- **Lines written:** about 1,000: 241 personality deal lines, 147 personality reasons, 83 plain reasons, 445 leader lines (six personalities and Neutral), 27 captured-leader lines, 59 screen lines.
+- **Words only:** the same seeded sims before and after every part match exactly (6 Marshals on Wyrmland with diplomacy: same win rates by seat and personality, games avg 43.5 turns, 40.7 deals and 5.10 broken a game; a Blitzer and three Captains on Embervale: avg 26.8 turns, 9.8 deals, 0.90 broken). The determinism test passes; tests that pinned old wording now pin the new.
+- **Start-up bundle** 491.2 → 487.8 KB (the old voice block left the lobby's bundle; the line library loads with the game screen and the bots' worker). **Deployed** four times: `16fc915d` (Part 2), `5178dde7` (Part 3), `aff89578` (Part 4) and the final build after the docs; the lock check passed each time. 999 tests pass. Nate: please check the repo's Actions page for the last commit.
+
+### Things to test after session 22 (Nate's next play test)
+*Laptop first; the phone where it applies.*
+- **From session 22, most important first:**
+  1. **Read a whole turn's report.** Does it sound like you? Is anything a joke where it should be plain?
+  2. **Do the six personalities sound different** in their deal answers? Offer a truce and a right of passage to each bot (Show personalities in the lobby helps).
+  3. **Your leaders:** did one ever say too much, or something that didn't happen? Did your Leader judge a bad move of yours fairly, with the right numbers? Too often, or not often enough?
+  4. **Capture a leader** (knock a House out): does its first report and its loyalty make you laugh, or wince?
+  5. **Any line you'd never say?** Mark it in `docs/voice/lines-for-nate.md`.
+  6. **The replay on the laptop:** the territory panel and the order dock slide away and come back; the whole map is clear while it plays.
+  7. **Title cards:** a rival's capital falling or a House knocked out has a dry line under it; your own loss is plain. One headline per event (no banner under the card).
+  8. **Game over:** the line under the result, and the awards' remarks.
+- **Still open from session 21 (not tried yet):** the update notice on your phone; a whole replay on the phone on Full; is the replay as readable as before (and with Effects Off); "Watch again" looks the same; do the buildings pop; the title screen and game over art; a capital falling (too much, or right); the living map while you plan; the menus' seal, ember and turn sweep.
+- **Still open from 20d and before:** Run the military at 50 to 80% for ten turns; the sweep into the fog; the Steward's walls when a Marshal masses; a 160-territory map; Embervale with 4; getting knocked out once; Conquest's 20 turns on a 200-territory map; a remembered wall in the fog.
