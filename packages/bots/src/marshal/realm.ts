@@ -13,7 +13,8 @@ import type { Board } from "../board";
  *  - **Wall candidates:** the capital's province, and every province we hold whole that borders a rival. Forts go there
  *    too (a fort is half a wall), and a threatened Steward walls them first.
  *  - **Threatened:** a rival army (at least `army` troops) within 2 steps of the capital's province, or a runaway on
- *    the map. Then a Steward puts everything into the wall until it stands.
+ *    the map (`runawayToo`: anywhere, only one whose land touches ours, or never). Then a Steward puts everything into
+ *    the wall until it stands.
  *
  * Everything here is worked out from the map and the owner's own view (the board): nothing hidden.
  */
@@ -116,7 +117,7 @@ export function cutPoints(b: Board): Set<TerritoryId> {
   return out;
 }
 
-export function realmShape(b: Board, army = 4, runawayToo = true): RealmShape {
+export function realmShape(b: Board, army = 4, runawayToo: boolean | "near" = true): RealmShape {
   const { idx, owned, mine, rivalAt, troopsAt, capital, runaway } = b;
   // Interior-ness: steps from the nearest land of ours touching land that isn't ours.
   const interior = new Map<TerritoryId, number>();
@@ -152,5 +153,5 @@ export function realmShape(b: Board, army = 4, runawayToo = true): RealmShape {
       for (const nb of idx.neighbors.get(cur)!) if (!d.has(nb)) (d.set(nb, d.get(cur)! + 1), qq.push(nb));
     }
   }
-  return { interior, choke, wallCandidates, threatened: !!threat || (runawayToo && !!runaway && runaway !== b.me.id), threat };
+  return { interior, choke, wallCandidates, threatened: !!threat || (!!runawayToo && !!runaway && runaway !== b.me.id && (runawayToo !== "near" || b.facing.has(runaway))), threat };
 }

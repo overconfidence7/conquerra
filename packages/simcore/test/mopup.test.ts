@@ -307,5 +307,9 @@ describe("leaders with personalities on the mop-up fixtures (session 20c)", () =
   });
 }, 300000);
 
-/** Pinned in session 20c (Part 3) from the code as it stood after Part 2: personalities must leave Neutral alone. */
-const NEUTRAL_FINGERPRINT = "12cce2d3";
+/**
+ * Pinned in session 20c (Part 3) from the code as it stood after Part 2: personalities must leave Neutral alone.
+ * Session 20d re-pinned it on purpose (was "12cce2d3"): the sweep now covers the fog and land never seen, with more
+ * chains for what the first don't reach, and a leader with nowhere to recruit builds its barracks sooner.
+ */
+const NEUTRAL_FINGERPRINT = "8b2dee96";

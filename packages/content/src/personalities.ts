@@ -341,8 +341,8 @@ export const LeaderPlanning = z.object({
         threat: z.number().int().min(1),
         /** Forts on choke points facing a rival, after markets (not urgent ones). */
         chokeForts: z.boolean(),
-        /** A runaway anywhere on the map counts as a threat too (else only an army near the capital's province). */
-        runaway: z.boolean().default(true),
+        /** A runaway counts as a threat too: anywhere on the map (true), only one whose land touches ours ("near"), or never (false). */
+        runaway: z.union([z.boolean(), z.literal("near")]).default(true),
         /** Not threatened, what's left after markets walls: the capital's province (and your Leader's) only, or every candidate. */
         steady: z.enum(["capital", "all"]).default("all"),
         /** Threatened, everything into the wall: of the capital's province (and your Leader's) only, or every candidate. */
