@@ -6,6 +6,7 @@ import { personaLine, portraitOf } from "./PlayersPanel";
 import { useGame } from "../store";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
+import "./over.css";
 import { MapView, readTactical } from "./MapView";
 import { PlayersPanel } from "./PlayersPanel";
 import { ReportBody } from "./TurnReport";
@@ -59,7 +60,13 @@ export function GameOver() {
   const youWon = winner === view.me.id;
   const outBy = me.eliminatedBy ? view.players.find((p) => p.id === me.eliminatedBy)?.name : null;
   return (
-    <div className={`over ${keyArt ? "with-art" : ""}`} style={keyArt ? ({ "--key-art": `url("${keyArt}")` } as React.CSSProperties) : undefined}>
+    <div className={`over ${keyArt ? "with-art" : ""} ${view.winner === view.me.id ? "won" : "lost"}`} style={keyArt ? ({ "--key-art": `url("${keyArt}")` } as React.CSSProperties) : undefined}>
+      {/* Embers drift up over a defeat, petals fall over a victory (session 21). */}
+      <div className="over-motes" aria-hidden>
+        {Array.from({ length: 18 }, (_, i) => (
+          <i key={i} style={{ left: `${(i * 37) % 100}%`, animationDelay: `${-((i * 1.7) % 9)}s`, animationDuration: `${7 + (i % 5)}s` }} />
+        ))}
+      </div>
       <Frame>
         <div className="logo">
           {emblem && <img src={emblem} alt="" />}

@@ -51,8 +51,16 @@ export function ActionBar({ ctx, view, plan, spendOpen, onSpend, onMove, disable
 export function LockSeal({ count, busy, disabled, onLock }: { count: number; busy: boolean; disabled?: boolean; onLock(): void }) {
   const seal = useArtUrl("seal");
   return (
-    <button className="seal" onClick={onLock} disabled={busy || disabled} aria-label={`Lock in ${count} order${count === 1 ? "" : "s"}`}>
+    <button className={`seal ${busy ? "sealing" : ""}`} onClick={onLock} disabled={busy || disabled} aria-label={`Lock in ${count} order${count === 1 ? "" : "s"}`}>
       {seal && <img src={seal} alt="" />}
+      {/* Gold flecks as the wax seal stamps down (session 21). */}
+      {busy && (
+        <span className="flecks" aria-hidden>
+          {Array.from({ length: 10 }, (_, i) => (
+            <i key={i} style={{ "--a": `${i * 36 + (i % 2) * 14}deg` } as React.CSSProperties} />
+          ))}
+        </span>
+      )}
       <span className="label">{busy ? "Sealing…" : "Lock in"}</span>
       {count > 0 && <span className="badge">{count}</span>}
     </button>

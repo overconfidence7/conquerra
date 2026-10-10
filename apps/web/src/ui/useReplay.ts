@@ -1,7 +1,7 @@
 import type { GameContext, PlayerView } from "@conquerra/engine";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { TurnReport } from "../host/protocol";
-import { CAMERA_EASE_MS, capitalFalls, planReplayCamera, replaySpots, type CameraMove } from "../replay/camera";
+import { bigMoment, CAMERA_EASE_MS, planReplayCamera, replaySpots, type CameraMove } from "../replay/camera";
 import { buildTimeline, frameAt, replayView, type Beat, type ReplayFrame } from "../replay/timeline";
 import type { MapRenderer } from "../render/types";
 import { cardAt, titleCards, type TitleCard } from "../replay/titles";
@@ -48,7 +48,7 @@ export function useReplay(
     const start = renderer.current?.viewState();
     // Capitals this view knows of: the camera pushes in when one falls.
     const capitals = new Set([replay.before.me.capital, ...Object.entries(replay.before.territories).flatMap(([id, t]) => (t.detail === "full" && t.capitalOf ? [id] : []))]);
-    const moves: CameraMove[] = start && spots ? planReplayCamera(timeline, spots, start.cam, start.vp, replay.before.me.id, { pushIn: (b) => capitalFalls(b, capitals) }) : [];
+    const moves: CameraMove[] = start && spots ? planReplayCamera(timeline, spots, start.cam, start.vp, replay.before.me.id, { pushIn: (b) => bigMoment(b, capitals) }) : [];
     // The effects need to know about the replay (and the map can be rebuilt as it starts: tell whichever is current).
     let toldRenderer: MapRenderer | null = null;
     let nextMove = 0;

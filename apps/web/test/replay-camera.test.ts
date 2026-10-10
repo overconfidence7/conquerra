@@ -4,10 +4,13 @@ import { createGame, replayFor, resolveTurn, viewFor, type GameContext, type Rep
 import { recruitBot } from "@conquerra/bots";
 import { describe, expect, it } from "vitest";
 import { fitCamera, landFrame, type Camera, type Viewport } from "../src/map/camera";
-import { CAMERA_HOLD_MS, centredOn, focusOf, inView, planReplayCamera, replaySpots } from "../src/replay/camera";
+import { CAMERA_EASE_MS, CAMERA_HOLD_MS, centredOn, END_PULL_MS, focusOf, inView, planReplayCamera, replaySpots } from "../src/replay/camera";
+import type { Timeline } from "../src/replay/timeline";
 import { buildTimeline } from "../src/replay/timeline";
 
 const ctx: GameContext = { map: maps.embervale!, rules: defaultRules };
+/** When the camera starts home (session 21: a slow pull-out just before the end), after a glide at `prev`. */
+const homeAt = (tl: Timeline, prev: number) => Math.max(prev + CAMERA_EASE_MS, tl.total - END_PULL_MS);
 const spots = replaySpots(ctx.map);
 // A laptop screen with the menus over the map (top bar, right column, bottom dock).
 const vp: Viewport = { width: 1440, height: 900, insets: { top: 72, right: 340, bottom: 232, left: 8 } };
@@ -59,7 +62,7 @@ describe("replay camera", () => {
     expect(moves[0]!.cam).toEqual(centredOn(zoomedIn, vp, at(far)));
     expect(moves[0]!.cam.scale).toBe(zoomedIn.scale);
     expect(inView(moves[0]!.cam, vp, at(far))).toBe(true);
-    expect(moves[1]).toMatchObject({ at: tl.total, cam: zoomedIn });
+    expect(moves[1]).toMatchObject({ at: homeAt(tl, b.start), cam: zoomedIn });
   });
 
   it("goes straight home for a spot that home can see, and doesn't move for one already in view", () => {
@@ -77,7 +80,7 @@ describe("replay camera", () => {
     const tl = buildTimeline([intro, { type: "surface", step: 1, what: "battle", province: farProvince }, battle(2, here)]);
     const moves = planReplayCamera(tl, spots, zoomedIn, vp);
     expect(tl.beats[2]!.start - tl.beats[1]!.start).toBeLessThan(CAMERA_HOLD_MS);
-    expect(moves.map((m) => m.at)).toEqual([tl.beats[1]!.start, tl.total]);
+    expect(moves.map((m) => m.at)).toEqual([tl.beats[1]!.start, homeAt(tl, tl.beats[1]!.start)]);
   });
 
   it("your own battles come first: one cuts short the hold after a fogged pulse", () => {
@@ -88,7 +91,7 @@ describe("replay camera", () => {
     expect(moves.map((m) => m.at)).toEqual([tl.beats[1]!.start, tl.beats[2]!.start]);
     expect(moves[1]!.cam).toEqual(zoomedIn);
     // Someone else's battle doesn't cut a hold short.
-    expect(planReplayCamera(tl, spots, zoomedIn, vp, "p3").map((m) => m.at)).toEqual([tl.beats[1]!.start, tl.total]);
+    expect(planReplayCamera(tl, spots, zoomedIn, vp, "p3").map((m) => m.at)).toEqual([tl.beats[1]!.start, homeAt(tl, tl.beats[1]!.start)]);
   });
 
   it("a fogged battle is aimed at its pulse (the province centre), never closer than you were", () => {

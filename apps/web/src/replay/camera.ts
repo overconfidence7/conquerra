@@ -94,6 +94,16 @@ export function capitalFalls(beat: Beat, capitals: ReadonlySet<string>): boolean
   return beat.kind === "battle" && beat.events.some((e) => e.type === "battle" && e.captured && capitals.has(e.to));
 }
 
+/** A battle this big (troops on both sides) gets the push-in too. */
+export const BIG_PUSH_TROOPS = 30;
+/** The pull-out home at the end of the turn (ms). */
+export const END_PULL_MS = 1100;
+
+/** The big moments the camera pushes in on: a capital falling, or a very big battle. */
+export function bigMoment(beat: Beat, capitals: ReadonlySet<string>): boolean {
+  return capitalFalls(beat, capitals) || (beat.kind === "battle" && beat.events.some((e) => e.type === "battle" && e.attackers.troops + e.defenders.troops >= BIG_PUSH_TROOPS));
+}
+
 /** The beats worth moving the camera for. */
 const FOLLOWED: ReadonlySet<Beat["kind"]> = new Set(["battle", "pulse", "leaderFell"]);
 /** A spot this close (px) to the edge of the free screen counts as off screen. */
@@ -171,6 +181,7 @@ export function planReplayCamera(timeline: Timeline, spots: ReplaySpots, home: C
     cur = inView(home, vp, s) ? home : centredOn(cur, vp, s);
     moves.push({ at: beat.start, cam: cur, ms: CAMERA_EASE_MS });
   }
-  if (cur !== home) moves.push({ at: timeline.total, cam: home, ms: CAMERA_EASE_MS });
+  // A slow pull-out home as the turn ends (session 21), unless something is still being followed then.
+  if (cur !== home) moves.push({ at: Math.max(lastAt + CAMERA_EASE_MS, busyUntil, timeline.total - END_PULL_MS), cam: home, ms: END_PULL_MS });
   return moves;
 }

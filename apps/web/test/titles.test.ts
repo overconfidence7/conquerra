@@ -68,3 +68,36 @@ describe("the camera on a capital falling", () => {
     expect(moves.at(-1)!.cam.scale).toBeCloseTo(1);
   });
 });
+
+describe("the camera stays on what you can see", () => {
+  it("in real fogged games, with the push-ins, every move goes to a beat's own spot or back home", async () => {
+    const { recruitBot } = await import("@conquerra/bots");
+    const { replayFor, resolveTurn } = await import("@conquerra/engine");
+    const { bigMoment, focusOf } = await import("../src/replay/camera");
+    const spots = replaySpots(ctx.map);
+    const home = { x: 0, y: 0, scale: 1 };
+    const vp = { width: 1440, height: 900 };
+    let state = createGame(ctx, { gameId: "cam2", seed: "cam-push", players: [1, 2, 3, 4].map((i) => ({ id: `p${i}`, name: `P${i}` })) });
+    let moves = 0;
+    for (let turn = 0; turn < 10 && state.winner === null; turn++) {
+      const s = state;
+      const orders = Object.fromEntries(s.players.filter((p) => p.eliminatedTurn === null).map((p) => [p.id, recruitBot.plan(ctx, viewFor(ctx, s, p.id))]));
+      const result = resolveTurn(ctx, state, orders);
+      const tl = buildTimeline(replayFor(ctx, state, result, "p1"));
+      const before = viewFor(ctx, state, "p1");
+      const capitals = new Set([before.me.capital, ...Object.entries(before.territories).flatMap(([id, t]) => (t.detail === "full" && t.capitalOf ? [id] : []))]);
+      for (const m of planReplayCamera(tl, spots, home, vp, "p1", { pushIn: (b) => bigMoment(b, capitals) })) {
+        moves++;
+        const centre = { x: (vp.width / 2 - m.cam.x) / m.cam.scale, y: (vp.height / 2 - m.cam.y) / m.cam.scale };
+        // Centred where home is, or exactly on a beat's own spot (a battle, a pulse's province): nowhere else.
+        const homeCentre = { x: (vp.width / 2 - home.x) / home.scale, y: (vp.height / 2 - home.y) / home.scale };
+        const near = (p: { x: number; y: number }) => Math.hypot(p.x - centre.x, p.y - centre.y) < 1e-6;
+        const ok = near(homeCentre) || tl.beats.some((b) => !!focusOf(b, spots) && near(focusOf(b, spots)!));
+        expect(ok).toBe(true);
+        expect(m.cam.scale).toBeGreaterThanOrEqual(home.scale);
+      }
+      state = result.state;
+    }
+    expect(moves).toBeGreaterThan(0);
+  });
+});

@@ -5,7 +5,8 @@ import { RESULT_AT, type Beat, type Timeline } from "./timeline";
 
 /**
  * Title cards (session 21, docs/09 §1): a short banner across the top for the moments that matter, at most two a
- * turn: a capital falling ("Galeholt falls to House Gules"), a House knocked out ("House Vert is no more"). Only for
+ * turn: a capital falling ("Galeholt falls to House Gules"), a House knocked out ("House Vert is no more"), a deal
+ * broken ("Lady Morwen breaks the truce"). Only for
  * what you saw: they're built from your replay's events, and a fogged event (a "surface" pulse) never gets one.
  * Plain words for now; the language pass (session 22) gives them their final voice.
  */
@@ -40,6 +41,12 @@ export function titleCards(tl: Timeline, before: PlayerView, map: MapDef): Title
         const yours = capitals.get(e.to) === me;
         const text = yours ? `Your capital, ${name.get(e.to)}, falls to House ${house(e.player)}` : e.player === me ? `${name.get(e.to)} falls to you` : `${name.get(e.to)} falls to House ${house(e.player)}`;
         cards.push({ at: at(b, RESULT_AT), ms: CARD_MS, text, house: e.player, weight: yours || e.player === me ? 3 : 2 });
+      } else if (e.type === "dealBroken") {
+        const who = (p: string) => before.players.find((x) => x.id === p)?.name ?? "A House";
+        const what = e.kind === "war" ? "joint war" : e.kind === "passage" ? "right of passage" : e.kind;
+        const other = e.by === e.a ? e.b : e.a;
+        const text = e.by === me ? `You break the ${what} with ${who(other)}` : `${who(e.by)} breaks the ${what}`;
+        cards.push({ at: at(b, 0.2), ms: CARD_MS, text, house: e.by, weight: e.by === me || other === me ? 3 : 1 });
       } else if (e.type === "eliminated") {
         const text = e.player === me ? "Your House is no more" : `House ${house(e.player)} is no more`;
         cards.push({ at: b.start, ms: CARD_MS, text, house: e.player, weight: e.player === me || e.by === me ? 4 : 1 });

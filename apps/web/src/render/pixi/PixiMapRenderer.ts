@@ -10,9 +10,10 @@ import { InfoLayer } from "./info";
 import { MarkerLayer } from "./markers";
 import { ReplayLayer } from "./replayLayer";
 import { FxLayer } from "./fxLayer";
+import { LivingLayer } from "./living";
 import type { ReplayFrame, Timeline } from "../../replay/timeline";
 import type { PlayerView, ReplayEvent } from "@conquerra/engine";
-import { useFx } from "../../replay/fx/settings";
+import { reducedMotion, useFx } from "../../replay/fx/settings";
 import { sceneryFor } from "./scenery";
 import { WorldLayer } from "./world";
 
@@ -73,6 +74,8 @@ class PixiMapRenderer implements MapRenderer {
   private info!: InfoLayer;
   private markers!: MarkerLayer;
   private replay!: ReplayLayer;
+  private living!: LivingLayer;
+  private livingOn = !new URLSearchParams(location.search).has("noliving");
   private replayFrame: ReplayFrame | null = null;
   private bank!: TextureBank;
   private art!: ArtBook;
@@ -151,16 +154,25 @@ class PixiMapRenderer implements MapRenderer {
     // painted only where you look; a small cache (each tile about 1 MB), smaller on phones.
     const deepest = scaleForPx(NEAR_FROM_PX * 2.4, this.territorySize) * this.app.renderer.resolution;
     const nearPpu = Math.min(ppu * 3, deepest, 6);
-    this.world = new WorldLayer(this.app.renderer, ctx.map, this.art, { ppu, nearPpu: nearPpu > ppu * 1.3 ? nearPpu : 0, nearCap: phone ? 20 : 32 }, scenery);
+    this.world = new WorldLayer(this.app.renderer, ctx.map, this.art, { ppu, nearPpu: nearPpu > ppu * 1.3 ? nearPpu : 0, nearCap: phone ? 20 : 32, living: true }, scenery);
     mark("world");
     this.info = new InfoLayer(ctx.map, this.bank);
     this.info.onRealms = (realms) => this.world.setOwners(realms);
     mark("labels");
     this.markers = new MarkerLayer(ctx.map, this.bank, this.app.renderer.resolution);
-    this.mapLayer.addChild(this.world.view, this.info.tactical, this.info.lines, this.info.realmLayer.root, this.info.walls, this.info.gates, this.info.glow, this.info.sites, this.info.figures, this.info.names, this.info.links, this.info.arrows);
+    // The living map (session 21): sails, boats, flags, smoke and clouds over the painting, under every border and pill.
+    this.living = new LivingLayer(ctx.map, this.bank, scenery);
+    // Reduce motion: the water and the mist move more slowly.
+    if (reducedMotion()) this.world.display.uniforms.uMotion = 0.35;
+    if (!this.livingOn) this.living.root.visible = this.living.cloudsTop.visible = false;
+    this.living.setLevel(useFx.getState().level);
+    this.mapLayer.addChild(this.world.view, this.living.root, this.living.cloudsTop, this.info.tactical, this.info.lines, this.info.realmLayer.root, this.info.walls, this.info.gates, this.info.glow, this.info.sites, this.info.figures, this.info.names, this.info.links, this.info.arrows);
     this.replay = new ReplayLayer(ctx.map, this.bank, phone);
     this.replay.setLevel(useFx.getState().level);
-    this.unsubFx = useFx.subscribe((st) => this.replay.setLevel(st.level));
+    this.unsubFx = useFx.subscribe((st) => {
+      this.replay.setLevel(st.level);
+      this.living.setLevel(st.level);
+    });
     // Separate render groups (session 21): what changes every replay frame (the replay, the markers' numbers) no longer
     // makes Pixi rebuild the whole painted map's draw list each frame.
     this.mapLayer.enableRenderGroup();
@@ -193,9 +205,12 @@ class PixiMapRenderer implements MapRenderer {
     if (this.scene) this.setScene(this.scene);
     this.app.ticker.add(() => this.frame());
     // The replay's effects (session 21) load once the map is on screen, like the Near art: never with the lobby.
-    void FxLayer.create(this.art).then((fx) => {
+    void FxLayer.create(this.art).then(async (fx) => {
       if (this.destroyed) return fx.destroy();
       this.replay.fx = fx;
+      const smoke = await FxLayer.create(this.art);
+      if (this.destroyed) return smoke.destroy();
+      this.living.setSmoke(smoke);
     });
     // The bigger art for the Near zoom (session 16) comes once the map is on screen, so it never slows the first paint.
     if (this.world.opts.nearPpu)
@@ -242,6 +257,8 @@ class PixiMapRenderer implements MapRenderer {
     this.world.display.uniforms.uTime = (now - this.t0) / 1000;
     this.world.tickFog(now);
     this.info.realmLayer.tick((now - this.t0) / 1000);
+    // ("?noliving": the frame-rate script measures the map without it.)
+    if (this.livingOn) this.living.tick((now - this.t0) / 1000, this.cam.cam, this.cam.vp, this.detail.far, this.detail.near, this.tactical);
     // Paint remaining tiles a couple per frame, nearest the screen first.
     if (this.world.pendingTiles) {
       this.world.bakeTiles(this.cam.animating ? 1 : 2, this.cam.cam, this.cam.vp);
@@ -321,6 +338,7 @@ class PixiMapRenderer implements MapRenderer {
       this.fogKey = fogKey;
     }
     this.info.setScene(scene, this.tactical);
+    this.living.setView(scene.view);
     this.laidOutScale = 0;
     this.dirtyCam = true;
   }
@@ -456,6 +474,7 @@ class PixiMapRenderer implements MapRenderer {
       this.info?.destroy();
       this.markers?.destroy();
       this.replay?.destroy();
+      this.living?.destroy();
       this.bank?.destroy();
       this.app.destroy({ removeView: true }, { children: true });
     } catch {

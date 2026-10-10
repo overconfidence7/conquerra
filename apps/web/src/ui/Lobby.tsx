@@ -48,10 +48,18 @@ export function Lobby() {
   const emblem = useArtUrl("emblem");
   // The title screen's key art behind the lobby (batch 4, session 21); its left third is dark and calm for the menu.
   const keyArt = useArtUrl("art-title");
+  const cloud1 = useArtUrl(keyArt ? "cloud-1" : null), cloud2 = useArtUrl(keyArt ? "cloud-2" : null), cloud3 = useArtUrl(keyArt ? "cloud-3" : null);
   // Left blank, your Steward gets a name from the game's seed; this is the kind of name it'll be.
   const [stewardSuggestion] = useState(() => suggestLeaderName("steward", String(Date.now())));
   return (
     <div className={`lobby ${keyArt ? "with-art" : ""}`} style={keyArt ? ({ "--key-art": `url("${keyArt}")` } as React.CSSProperties) : undefined}>
+      {cloud1 && cloud2 && cloud3 && (
+        <div className="lobby-clouds" aria-hidden>
+          <img src={cloud1} alt="" />
+          <img src={cloud2} alt="" />
+          <img src={cloud3} alt="" />
+        </div>
+      )}
       <Frame>
       <div className="logo">
         {emblem && <img src={emblem} alt="" />}

@@ -58,6 +58,10 @@ button {
   touch-action: manipulation;
 }
 button:hover:not(:disabled) { border-color: var(--gold-hi); }
+/* Menus with weight (session 21): buttons press down (the gold glint on hover is in ui/replay.css, with the game). */
+button { transition: transform 0.08s ease-out, border-color 0.15s; }
+button:active:not(:disabled) { transform: translateY(1px) scale(0.985); }
+
 button:disabled { opacity: 0.4; cursor: default; }
 button.primary { background: linear-gradient(#e3c77e, #c9a45c); color: var(--navy); border-color: #f1dca2; font-weight: 700; }
 /* Enter confirms (session 20): a small hint on the confirm button, only where there's a mouse and a keyboard. */
@@ -128,6 +132,15 @@ p.good { color: var(--good); margin: 0; }
 .lobby.with-art, .over.with-art { background: linear-gradient(90deg, rgba(10, 14, 22, 0.88), rgba(10, 14, 22, 0.55) 45%, rgba(10, 14, 22, 0.2)), var(--key-art) center / cover no-repeat fixed, var(--navy); }
 .over.with-art { background: linear-gradient(rgba(10, 14, 22, 0.35), rgba(10, 14, 22, 0.85) 60%), var(--key-art) center top / cover no-repeat fixed, var(--navy); }
 @media (min-width: 1000px) { .lobby.with-art { justify-content: flex-start; padding-left: max(32px, 6vw); } }
+/* The title screen: slow clouds drifting over the key art, at two depths (session 21). */
+.lobby-clouds { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.lobby-clouds img { position: absolute; opacity: 0.16; filter: blur(1px); animation: drift linear infinite; }
+.lobby-clouds img:nth-child(1) { width: 46vw; top: 6%; animation-duration: 140s; }
+.lobby-clouds img:nth-child(2) { width: 30vw; top: 38%; animation-duration: 95s; animation-delay: -40s; opacity: 0.12; }
+.lobby-clouds img:nth-child(3) { width: 60vw; top: 62%; animation-duration: 190s; animation-delay: -120s; opacity: 0.1; }
+@keyframes drift { 0% { transform: translateX(-70vw); } 100% { transform: translateX(110vw); } }
+@media (prefers-reduced-motion: reduce) { .lobby-clouds { display: none; } }
+.lobby.with-art > .frame { position: relative; z-index: 1; }
 @media (max-width: 700px) { .lobby.with-art { background: linear-gradient(rgba(10, 14, 22, 0.6), rgba(10, 14, 22, 0.92) 40%), var(--key-art) 30% top / auto 46vh no-repeat, var(--navy); } }
 .lobby .frame, .over > .frame { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 16px; padding: 22px; }
 .over > .frame { max-width: 960px; }

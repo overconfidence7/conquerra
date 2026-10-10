@@ -212,4 +212,104 @@ if (want("fx")) {
   }
 }
 
+// ---------- Part 4: the cinematic replay; building, culture, Fate, deals and spies ----------
+if (want("cine")) {
+  for (const phone of [false, true]) {
+    const sfx = phone ? "-phone" : "";
+    const p = await page(phone);
+    await p.evaluateOnNewDocument(() => { localStorage.setItem("conquerra.effects", "full"); localStorage.setItem("conquerra.effects.noAuto", "1"); });
+    await p.goto(URL, { waitUntil: "networkidle0" });
+    const px = phone ? 120 : 170;
+    // The Wyrmland game (20d), played on: accept Baron Krell's offer, hire a spy and send it, the Steward raises
+    // culture; keep playing until each moment has been seen once.
+    await load(p, file("s20d-purse.json"));
+    await p.evaluate(async () => {
+      const s = window.__conquerraStore.getState();
+      for (const o of s.offers ?? []) s.answerOffer(o, true);
+      await s.setInstruction(`leader:${s.view.me.id}`, { kind: "military" });
+      await s.setBudget(`leader:${s.view.me.id}`, { share: 0.6 });
+    });
+    const want4 = new Set(["deal", "laurels", "fate", "spy", "title"]);
+    for (let turn = 0; turn < 16 && want4.size; turn++) {
+      // A spy: hire one at the capital, then send it to a rival's province.
+      await p.evaluate(() => {
+        const st = window.__conquerraStore.getState();
+        const v = st.view;
+        const spy = v.spies.find((x) => x.status === "defend" || x.at === v.me.capital);
+        if (spy) {
+          const rival = Object.entries(v.territories).find(([, t]) => t.detail === "full" && t.owner && t.owner !== v.me.id);
+          const prov = rival && st.ctx.map.territories.find((t) => t.id === rival[0]).province;
+          if (prov) window.__conquerraStore.setState({ queue: [...st.queue, { id: `spy-${Date.now()}`, kind: "spy", spy: spy.id, to: prov }] });
+        } else if (!v.spies.length) window.__conquerraStore.setState({ queue: [...st.queue, { id: `hire-${Date.now()}`, kind: "hireSpy", territory: v.me.capital }] });
+      });
+      const beats = await replayTurn(p);
+      const found = await p.evaluate((SPY_MS) => {
+        const tl = window.__conquerraTimeline;
+        const pick = (pred) => { for (const b of tl.beats) for (const e of b.events) if (pred(e)) return { at: b.start + b.duration * 0.5, e }; return null; };
+        const deal = pick((e) => e.type === "dealStarted");
+        const laurels = pick((e) => e.type === "invested");
+        const fate = pick((e) => e.type === "fate" || e.type === "worldEvent");
+        const st = window.__conquerraStore.getState();
+        const spyEv = st.replay.report.events.find((e) => e.type === "spy");
+        const spot = (e) => e?.territory ?? e?.at ?? e?.target ?? null;
+        const owner = (id) => st.replay.before.territories[id]?.owner;
+        const dealAt = deal && Object.keys(st.replay.before.territories).find((id) => owner(id) === deal.e.deal.a);
+        return {
+          deal: deal && { at: deal.at, to: dealAt },
+          laurels: laurels && { at: laurels.at, to: spot(laurels.e) },
+          fate: fate && { at: fate.at, to: spot(fate.e) },
+          spy: spyEv && { at: tl.total - SPY_MS * 0.45, to: spyEv.territory },
+        };
+      }, 1400);
+      for (const k of ["deal", "laurels", "fate", "spy"]) {
+        if (!want4.has(k) || !found[k]) continue;
+        await holdAt(p, found[k].at, found[k].to, px);
+        await shot(p, `s21-cine-${k}`, sfx);
+        want4.delete(k);
+      }
+      // A title card on the letterboxed replay: hold at a capital falling or a knock-out, where the card is.
+      if (want4.has("title")) {
+        const b = beats.find((x) => x.capital) ?? beats.find((x) => x.out);
+        if (b) {
+          await holdAt(p, b.start + b.duration * (b.capital ? 0.8 : 0.3), null, px);
+          await p.waitForSelector(".title-card", { timeout: 3000 }).catch(() => {});
+          await shot(p, "s21-cine-title", sfx, { wait: 300 });
+          want4.delete("title");
+        }
+      }
+      await endReplay(p);
+      if (await p.evaluate(() => !!window.__conquerraStore.getState().view.winner)) break;
+    }
+    if (want4.size) console.log(`  (not seen${sfx}: ${[...want4].join(", ")})`);
+    await p.close();
+  }
+}
+
+// ---------- Part 3: buildings that stand up like the walls ----------
+if (want("build")) {
+  for (const phone of [false, true]) {
+    const sfx = phone ? "-phone" : "";
+    const p = await page(phone);
+    await p.goto(URL, { waitUntil: "networkidle0" });
+    // Session 20d's walled Wyrmland game: the wall with the most buildings in and around it.
+    await load(p, file("s20d-wall-garrison.json"));
+    const ids = await p.evaluate(() => {
+      const st = window.__conquerraStore.getState();
+      const v = st.view;
+      const built = (id) => { const t = v.territories[id]; return t?.detail === "full" && (t.building || t.construction) ? 1 : 0; };
+      const near = (id) => st.ctx.map.borders.flatMap((b) => (b.a === id ? [b.b] : b.b === id ? [b.a] : []));
+      const walls = (v.walls ?? []).map((w) => w.territories);
+      const score = (ts) => ts.reduce((n, id) => n + built(id) + near(id).reduce((m, x) => m + built(x), 0) * 0.3, 0);
+      const best = walls.sort((a, b) => score(b) - score(a))[0] ?? [v.me.capital];
+      return best;
+    });
+    for (const [level, px] of phone ? [["mid", 130]] : [["near", 300], ["mid", 150], ["far", 60]]) {
+      await look(p, ids, px);
+      await settle(p);
+      await shot(p, `s21-build-${level}`, sfx, { wait: 2500 });
+    }
+    await p.close();
+  }
+}
+
 await browser.close();

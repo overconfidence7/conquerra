@@ -211,6 +211,9 @@ void main() {
     float s = vnoise(vPos * 0.08 + vec2(t * 0.30, t * 0.17)) * vnoise(vPos * 0.045 - vec2(t * 0.12, -t * 0.21));
     c += water * (s - 0.22) * 0.09;
   }
+  // Foam along the coasts breathes in and out (session 21: the living map).
+  float coast = smoothstep(0.3, 0.45, land) * (1.0 - smoothstep(0.45, 0.58, land));
+  if (coast > 0.01) c += coast * (0.5 + 0.5 * sin(t * 1.1 + vnoise(vPos * 0.05) * 6.28)) * 0.06;
   // Fog: R = standard fog. G is kept free for blackout fog (thick clouds hiding the land), not built yet.
   // A soft, pale haze: the painted land shows faintly through it (mostly grey, only lightly darkened), with
   // drifting mist on top. Pale against the bright, coloured land you can see, so it's obvious at a glance.

@@ -95,6 +95,127 @@ export const RECIPES = {
       { textures: ["fx-smoke-2"], blend: "normal", count: 2, max: 2, at: [0.3, 0.6], life: [900, 1200], spread: 6, speed: [12, 18], angle: [-95, -85], size: [20, 26], grow: 1.5, alpha: 0.5, fadeIn: 0.2, fadeOut: 0.6, tint: "#6f6a62" },
     ],
   },
+
+  // ---------- Building, recruiting, gold, Spoils (§4) ----------
+  recruitPuff: {
+    note: "Recruits march out of the gate in a puff of dust.",
+    emitters: [{ textures: ["fx-dust-2", "fx-dust-1"], blend: "normal", count: 4, max: 5, at: [0, 0.25], life: [500, 800], spread: 6, spreadY: 3, speed: [10, 22], angle: [-180, 0], drag: 1.2, size: [16, 26], grow: 1.8, alpha: 0.55, fadeIn: 0.1, fadeOut: 0.6, tint: "ground" }],
+  },
+  scaffoldDust: {
+    note: "Building starts: a little dust as the scaffold goes up.",
+    emitters: [{ textures: ["fx-dust-1"], blend: "normal", count: 3, max: 3, at: [0, 0.3], life: [500, 800], spread: 10, spreadY: 3, speed: [6, 14], angle: [-170, -10], drag: 1, size: [16, 24], grow: 1.6, alpha: 0.5, fadeIn: 0.1, fadeOut: 0.6, tint: "ground" }],
+  },
+  sawdust: {
+    note: "Building done (or Master masons): the scaffold drops away in sawdust, with a glint.",
+    emitters: [
+      { textures: ["fx-dust-1", "fx-dust-2"], blend: "normal", count: 4, max: 5, at: [0.1, 0.35], life: [500, 900], spread: 12, spreadY: 4, speed: [8, 20], angle: [-170, -10], drag: 1, size: [18, 28], grow: 1.6, alpha: 0.55, fadeIn: 0.1, fadeOut: 0.6, tint: "#d9c497" },
+      { textures: ["dot"], blend: "normal", count: 10, max: 12, at: [0.1, 0.35], life: [350, 600], spread: 10, speed: [30, 60], angle: [-160, -20], gravity: 180, size: [2, 3], alpha: 0.9, fadeIn: 0, fadeOut: 0.3, tint: "#e0c58e" },
+      { textures: ["glint"], blend: "add", count: 1, max: 1, at: [0.45, 0.5], life: [380, 420], spread: 6, speed: [0, 0], angle: [0, 0], size: [16, 18], grow: 0.3, spin: [60, 90], alpha: 1, fadeIn: 0.2, fadeOut: 0.6, tint: "#fff6d6", flash: true },
+    ],
+  },
+  laurels: {
+    note: "Culture raised: golden laurel leaves drift up from the land, with a soft glow ring.",
+    emitters: [
+      { textures: ["fx-leaf"], blend: "normal", count: 8, max: 9, at: [0, 0.5], life: [800, 1200], spread: 22, spreadY: 8, speed: [40, 62], angle: [-115, -65], drag: 0.7, size: [12, 16], spin: [-140, 140], alpha: 1, fadeIn: 0.1, fadeOut: 0.45 },
+      { textures: ["ring"], blend: "add", count: 1, max: 1, at: [0, 0.05], life: [700, 750], spread: 0, speed: [0, 0], angle: [0, 0], size: [20, 20], grow: 2.6, alpha: 0.75, fadeIn: 0.05, fadeOut: 0.8, tint: "#ffe39a" },
+    ],
+  },
+  spoilsBurst: {
+    note: "Spoils turned in: the three cards burst into the windfall in gold.",
+    emitters: [
+      { textures: ["glint", "dot"], blend: "add", count: 14, max: 16, at: [0.25, 0.4], life: [450, 750], spread: 6, speed: [40, 90], angle: [0, 360], drag: 1.6, size: [5, 10], grow: 0.5, spin: [-90, 90], alpha: 1, fadeIn: 0.05, fadeOut: 0.6, tint: "#ffe39a" },
+    ],
+  },
+
+  // ---------- Fate and the Fallen (§5): one short signature each ----------
+  harvest: {
+    note: "A bountiful harvest: golden wheat drifts up, in a warm glow.",
+    emitters: [
+      { textures: ["fx-wheat"], blend: "normal", count: 7, max: 8, at: [0, 0.5], life: [800, 1200], spread: 16, spreadY: 7, speed: [12, 24], angle: [-110, -70], drag: 0.5, size: [12, 16], spin: [-80, 80], alpha: 1, fadeIn: 0.15, fadeOut: 0.5 },
+      { textures: ["dot"], blend: "add", count: 1, max: 1, at: [0, 0.05], life: [900, 1000], spread: 0, speed: [0, 0], angle: [0, 0], size: [60, 60], grow: 1.3, alpha: 0.35, fadeIn: 0.3, fadeOut: 0.6, tint: "#ffcf6a" },
+    ],
+  },
+  hoard: {
+    note: "A hidden hoard: a burst of coins and glints.",
+    emitters: [
+      { textures: ["fx-coin"], blend: "normal", count: 8, max: 10, at: [0, 0.2], life: [600, 900], spread: 4, speed: [50, 95], angle: [-150, -30], gravity: 200, size: [8, 11], spin: [-300, 300], alpha: 1, fadeIn: 0, fadeOut: 0.3 },
+      { textures: ["glint"], blend: "add", count: 6, max: 6, at: [0.05, 0.5], life: [250, 400], spread: 14, speed: [0, 0], angle: [0, 0], size: [8, 12], grow: 0.4, spin: [-90, 90], alpha: 1, fadeIn: 0.2, fadeOut: 0.6, tint: "#fff1b0" },
+    ],
+  },
+  arrival: {
+    note: "A band arrives (wanderers, veterans, mercenaries) in a puff of dust.",
+    emitters: [{ textures: ["fx-dust-2", "fx-dust-1"], blend: "normal", count: 5, max: 6, at: [0, 0.4], life: [600, 900], spread: 12, spreadY: 4, speed: [8, 18], angle: [-170, -10], drag: 1, size: [18, 28], grow: 1.7, alpha: 0.55, fadeIn: 0.15, fadeOut: 0.6, tint: "ground" }],
+  },
+  pilgrims: {
+    note: "Pilgrims: soft lantern lights move in, and laurel leaves.",
+    emitters: [
+      { textures: ["ember"], blend: "add", count: 8, max: 9, at: [0, 0.4], life: [900, 1200], spread: 26, spreadY: 12, speed: [10, 18], angle: [0, 0], aim: "toward", drag: 0.4, size: [6, 9], alpha: 0.9, fadeIn: 0.3, fadeOut: 0.5, tint: "#ffd890" },
+      { textures: ["fx-leaf"], blend: "normal", count: 3, max: 3, at: [0.3, 0.6], life: [700, 1000], spread: 10, speed: [14, 24], angle: [-110, -70], size: [8, 11], spin: [-120, 120], alpha: 1, fadeIn: 0.15, fadeOut: 0.5 },
+    ],
+  },
+  flood: {
+    note: "A flooded ford: water spreads along the crossing, ripples and spray.",
+    emitters: [
+      { textures: ["fx-splash"], blend: "screen", count: 3, max: 3, at: [0, 0.4], life: [500, 800], spread: 10, spreadY: 4, speed: [0, 6], angle: [-120, -60], size: [20, 28], grow: 1.3, alpha: 0.85, fadeIn: 0.1, fadeOut: 0.6 },
+      { textures: ["ring"], blend: "screen", count: 4, max: 4, at: [0, 0.6], life: [700, 900], spread: 12, spreadY: 5, speed: [0, 0], angle: [0, 0], size: [10, 14], grow: 3, alpha: 0.7, fadeIn: 0.05, fadeOut: 0.8, tint: "#bfe8f5" },
+    ],
+  },
+  rockslide: {
+    note: "A rockslide: rocks tumble into the pass with dust.",
+    emitters: [
+      { textures: ["fx-rock-1", "fx-rock-2"], blend: "normal", count: 6, max: 7, at: [0, 0.4], life: [450, 650], spread: 12, speed: [20, 40], angle: [60, 120], gravity: 260, size: [7, 11], spin: [-240, 240], alpha: 1, fadeIn: 0, fadeOut: 0.2 },
+      { textures: ["fx-dust-1", "fx-dust-2"], blend: "normal", count: 4, max: 4, at: [0.3, 0.7], life: [600, 900], spread: 12, spreadY: 4, speed: [6, 14], angle: [-170, -10], size: [22, 32], grow: 1.6, alpha: 0.55, fadeIn: 0.1, fadeOut: 0.6, tint: "#b8ad98" },
+    ],
+  },
+  storm: {
+    note: "Squalls, or the Fallen's storm: a dark cloud over the lane, rain streaks and a lightning flash.",
+    emitters: [
+      { textures: ["fx-storm-cloud"], blend: "normal", count: 1, max: 1, at: [0, 0], life: [1500, 1500], spread: 0, speed: [8, 8], angle: [0, 0], size: [70, 70], grow: 1.1, alpha: 0.9, fadeIn: 0.15, fadeOut: 0.25 },
+      { textures: ["streak"], blend: "screen", count: 22, max: 24, at: [0.05, 0.8], life: [260, 380], spread: 26, spreadY: 4, speed: [150, 190], angle: [100, 105], size: [10, 14], faceTravel: true, alpha: 0.7, fadeIn: 0.1, fadeOut: 0.3, tint: "#cfe2f3" },
+      { textures: ["fx-lightning-1", "fx-lightning-2"], blend: "add", count: 1, max: 1, at: [0.3, 0.35], life: [180, 220], spread: 6, speed: [0, 0], angle: [0, 0], size: [40, 46], alpha: 1, fadeIn: 0, fadeOut: 0.6, flash: true },
+    ],
+  },
+  fire: {
+    note: "Fire in the works: flames and smoke on the scaffold.",
+    emitters: [
+      { textures: ["fx-flame-1", "fx-flame-2", "fx-flame-3"], blend: "add", count: 4, max: 5, at: [0, 0.5], life: [600, 900], spread: 8, spreadY: 3, speed: [4, 10], angle: [-100, -80], size: [16, 22], grow: 1.1, alpha: 0.95, fadeIn: 0.15, fadeOut: 0.5 },
+      { textures: ["fx-smoke-2"], blend: "normal", count: 2, max: 2, at: [0.2, 0.5], life: [900, 1200], spread: 6, speed: [12, 18], angle: [-95, -85], size: [24, 30], grow: 1.5, alpha: 0.55, fadeIn: 0.2, fadeOut: 0.6, tint: "#7a746a" },
+    ],
+  },
+  sickness: {
+    note: "Camp fever or plague: a sickly green-grey mist creeps over the land.",
+    emitters: [{ textures: ["fx-wisp-1", "fx-wisp-2"], blend: "normal", count: 5, max: 6, at: [0, 0.5], life: [1000, 1400], spread: 22, spreadY: 10, speed: [6, 12], angle: [-30, 30], drag: 0.3, size: [36, 52], grow: 1.3, spin: [-10, 10], alpha: 0.55, fadeIn: 0.3, fadeOut: 0.5, tint: "#a6b38a" }],
+  },
+  blight: {
+    note: "Blight or famine: the ground's colour drains to brown for a moment, and dead leaves drift down.",
+    emitters: [
+      { textures: ["dot"], blend: "normal", count: 1, max: 1, at: [0, 0], life: [1200, 1300], spread: 0, speed: [0, 0], angle: [0, 0], size: [90, 90], grow: 1.1, alpha: 0.4, fadeIn: 0.3, fadeOut: 0.5, tint: "#6b5232" },
+      { textures: ["fx-leaf"], blend: "normal", count: 6, max: 7, at: [0, 0.6], life: [800, 1100], spread: 20, spreadY: 8, speed: [8, 16], angle: [70, 110], drag: 0.3, size: [8, 11], spin: [-160, 160], alpha: 0.95, fadeIn: 0.15, fadeOut: 0.5, tint: "#8a6a3a" },
+    ],
+  },
+  uprising: {
+    note: "An uprising: torch flames and a red flicker.",
+    emitters: [
+      { textures: ["fx-flame-1"], blend: "add", count: 5, max: 6, at: [0, 0.6], life: [400, 700], spread: 16, spreadY: 7, speed: [4, 8], angle: [-100, -80], size: [9, 13], alpha: 0.95, fadeIn: 0.1, fadeOut: 0.5 },
+      { textures: ["dot"], blend: "add", count: 3, max: 3, at: [0, 0.6], life: [300, 500], spread: 10, speed: [0, 0], angle: [0, 0], size: [40, 56], alpha: 0.35, fadeIn: 0.2, fadeOut: 0.6, tint: "#d2452f", flash: true },
+    ],
+  },
+
+  // ---------- Diplomacy and spies (§6) ----------
+  dealSealed: {
+    note: "A deal is sealed: gold flecks as the wax seal stamps down.",
+    emitters: [{ textures: ["glint", "dot"], blend: "add", count: 10, max: 12, at: [0.45, 0.5], life: [350, 600], spread: 4, speed: [40, 80], angle: [0, 360], drag: 1.5, size: [4, 8], grow: 0.5, alpha: 1, fadeIn: 0, fadeOut: 0.6, tint: "#ffe39a" }],
+  },
+  dealBroken: {
+    note: "A deal is broken: a puff of torn parchment (the red crack along the border is drawn by the replay layer).",
+    emitters: [
+      { textures: ["flake"], blend: "normal", count: 8, max: 9, at: [0.2, 0.3], life: [500, 800], spread: 8, speed: [30, 60], angle: [0, 360], gravity: 70, drag: 1, size: [4, 7], spin: [-200, 200], alpha: 0.95, fadeIn: 0, fadeOut: 0.4, tint: "#efe2c2" },
+    ],
+  },
+  spyWisp: {
+    note: "A spy fades in and out in a wisp of smoke.",
+    emitters: [{ textures: ["fx-wisp-1", "fx-smoke-3"], blend: "normal", count: 3, max: 3, at: [0, 0.3], life: [700, 1000], spread: 6, speed: [4, 10], angle: [-120, -60], size: [18, 26], grow: 1.5, alpha: 0.5, fadeIn: 0.2, fadeOut: 0.6, tint: "#9aa0a8" }],
+  },
 } satisfies Record<string, RecipeInput>;
 
 export type RecipeName = keyof typeof RECIPES;

@@ -10,7 +10,7 @@ function Lines({ lines }: { lines: LogLine[] }) {
   return (
     <ul className="log">
       {lines.map((l, i) => (
-        <li key={i} className={`tone-${l.tone}`}>
+        <li key={i} className={`tone-${l.tone}`} style={{ "--i": Math.min(i, 12) } as React.CSSProperties}>
           {l.text}
         </li>
       ))}

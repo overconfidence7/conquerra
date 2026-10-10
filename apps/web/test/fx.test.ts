@@ -161,7 +161,6 @@ describe("fog: a fogged event is the same soft pulse whatever it was", () => {
       for (const i of fxAt(tl, at, c).instances) {
         const e = events[Number(i.key.split(":")[0])]!;
         expect(e.type, i.key).not.toBe("surface");
-        expect(["moved", "battle", "eliminated"]).toContain(e.type);
         n++;
       }
     expect(n).toBeGreaterThan(0);

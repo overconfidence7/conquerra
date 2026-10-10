@@ -5,7 +5,7 @@ import { toScreen, type Camera } from "../../map/camera";
 import { hexNum, houseOf } from "../../map/houses";
 import { dashes } from "../../map/shapes";
 import { replaySpots } from "../../replay/camera";
-import { fxAt, fxContext, lastLandOf, type FxContext } from "../../replay/fx/plan";
+import { fxAt, fxContext, lastLandOf, meetingOf, SPY_MS, type FxContext } from "../../replay/fx/plan";
 import { BUDGET, particlesAt, type FxLevel } from "../../replay/fx/particles";
 import { replayInfo, type ReplayInfo } from "../../replay/info";
 import { routePoint, type Pt } from "../../replay/route";
@@ -51,6 +51,7 @@ export class ReplayLayer {
   private puppets: Puppet[] = [];
   private provinceAt: ReadonlyMap<string, { x: number; y: number }>;
   private rings: Map<string, readonly (readonly number[])[]>;
+  private siteOf: Map<string, Pt>;
   private ctx: FxContext | null = null;
   private tl: Timeline | null = null;
   private level: FxLevel = "full";
@@ -66,6 +67,7 @@ export class ReplayLayer {
   ) {
     this.provinceAt = replaySpots(map).province;
     this.rings = new Map(map.geometry!.territories.map((t) => [t.id, t.rings]));
+    this.siteOf = new Map(map.geometry!.territories.map((t) => [t.id, t.site]));
     this.budget = phone ? BUDGET.phone : BUDGET.desktop;
     this.show.addChild(this.showG);
     this.root.addChild(this.g);
@@ -82,7 +84,10 @@ export class ReplayLayer {
       if (t.building === "fort") forts.add(id);
     }
     for (const w of before.walls ?? []) for (const id of w.territories) forts.add(id);
-    this.ctx = fxContext(this.map, before.gameId, before.turn, events, (p) => hexNum(houseOf(before, p).color), (id) => capitals.has(id), (id) => forts.has(id));
+    this.ctx = fxContext(this.map, before.gameId, before.turn, events, (p) => hexNum(houseOf(before, p).color), (id) => capitals.has(id), (id) => forts.has(id), (id) => {
+      const t = before.territories[id];
+      return t?.detail === "full" ? t.owner : null;
+    });
   }
 
   /** The particles, once their art has loaded: between the campaign lines and the figures. */
@@ -129,6 +134,7 @@ export class ReplayLayer {
       p = this.puppets[i] = { root, base: b, mask: m };
     }
     p.base.texture = base;
+    p.base.anchor.set(0.5, 0.9);
     p.mask.visible = !!mask;
     if (mask) {
       p.mask.texture = mask;
@@ -331,6 +337,8 @@ export class ReplayLayer {
       }
     }
 
+    if (show) [pi, ti] = this.drawPops(frame, cam, view, zk, pi, ti);
+
     // A House knocked out: its last banner burns away (when you saw its last land fall).
     if (show && frame.beat?.kind === "eliminated") {
       const u = clamp01((frame.t - frame.beat.start) / frame.beat.duration);
@@ -347,6 +355,204 @@ export class ReplayLayer {
         flag.root.scale.set(k, k * (1 - 0.35 * clamp01((u - 0.3) / 0.7)));
         flag.base.tint = blend(0xffffff, 0x2a1a10, clamp01(u / 0.7));
         flag.root.alpha = 1 - clamp01((u - 0.45) / 0.5);
+      }
+    }
+  }
+
+  /**
+   * The show for what pops up (docs/09 §4-§6): recruits marching out of the gate, the scaffold rising as building
+   * starts and dropping away when it's done, the Spoils cards fanning out, a band arriving, rebels rising, a deal's
+   * scroll and seal (and the truce border stitching itself in white), a broken deal's red crack, and your spies.
+   */
+  private drawPops(frame: ReplayFrame, cam: Camera, view: PlayerView, zk: number, pi: number, ti: number): [number, number] {
+    const s = this.showG, ctx = this.ctx!;
+    const scr = (p: Pt) => toScreen(cam, p.x, p.y);
+    const colour = (player: string | null) => hexNum(houseOf(view, player).color);
+    const fxReady = !!this.fxLayer;
+    /** A few small House figures walking from one spot to another (map units), fading in and out. */
+    const walkers = (from: [number, number], to: [number, number], q: number, player: string | null, n = 3) => {
+      const tex = this.bank.get("figure-army");
+      if (!tex) return;
+      for (let k = 0; k < n; k++) {
+        const u = clamp01((q - k * 0.08) / 0.7);
+        if (u <= 0) continue;
+        const p = this.puppet(pi++, tex, this.bank.mask("figure-army"), player ? colour(player) : 0xbdb6a6);
+        if (!p) return;
+        const x = from[0] + (to[0] - from[0]) * easeOut(u) + (k - 1) * 6 * zk, y = from[1] + (to[1] - from[1]) * easeOut(u) + (k % 2) * 3 * zk;
+        const bob = -Math.abs(Math.sin(u * Math.PI * 4)) * 1.8 * zk;
+        p.root.position.set(x, y + bob);
+        const sc = (FIGURE_PX * 0.55 * zk) / tex.height;
+        p.root.scale.set(to[0] < from[0] ? -sc : sc, sc);
+        p.root.alpha = Math.min(1, u * 4) * (1 - clamp01((q - 0.82) / 0.18));
+      }
+    };
+    const beat = frame.beat;
+    if (beat?.kind === "pop") {
+      const n = beat.events.length, lagMax = n > 1 ? 0.35 : 0;
+      const p0 = clamp01((frame.t - beat.start) / beat.duration);
+      beat.events.forEach((e, k) => {
+        const q = clamp01((p0 - (n > 1 ? (k / n) * 0.35 : 0)) / (1 - lagMax));
+        const spotOf = (id: string) => ctx.spot(id);
+        if (e.type === "recruited" || e.type === "hired") {
+          const at = spotOf(e.territory);
+          if (!at) return;
+          const [x, y] = scr(at);
+          walkers([x - 4 * zk, y + 2 * zk], [x + 16 * zk, y + 12 * zk], q, e.player);
+        } else if ((e.type === "built" && e.doneAtEndOfTurn !== null) || e.type === "completed") {
+          // The scaffold rises as building starts; when it's done, it drops away.
+          const site = this.siteOf.get(e.territory);
+          const tex = this.bank.get("scaffold");
+          if (!site || !tex) return;
+          const [x, y] = scr(site);
+          const p = this.puppet(pi++, tex, null, 0xffffff);
+          if (!p) return;
+          const k0 = (48 * 0.9 * cam.scale) / tex.width;
+          p.base.anchor.set(0.5, 0.9);
+          if (e.type === "built") {
+            const up = easeOut(clamp01(q / 0.5));
+            p.root.position.set(x, y);
+            p.root.scale.set(k0, k0 * up);
+            p.root.alpha = 1 - clamp01((q - 0.85) / 0.15);
+          } else {
+            const down = clamp01((q - 0.1) / 0.45);
+            p.root.position.set(x + down * 4 * zk, y + down * down * 14 * zk);
+            p.root.scale.set(k0);
+            p.root.rotation = down * 0.25;
+            p.root.alpha = 1 - down;
+          }
+        } else if (e.type === "spoilsTurnedIn") {
+          // The three cards fan out, then burst into the windfall.
+          const at = spotOf(e.at);
+          if (!at) return;
+          const [x, y] = scr(at);
+          const fan = easeOut(clamp01(q / 0.3)), burst = clamp01((q - 0.3) / 0.25);
+          const w = 13 * zk * (1 + burst * 0.4), h = 18 * zk * (1 + burst * 0.4);
+          for (let c = -1; c <= 1; c++) {
+            const a = c * 0.38 * fan;
+            const cx = x + Math.sin(a) * 14 * zk, cy = y - 26 * zk - Math.cos(a) * 6 * zk;
+            const corners = [[-w / 2, -h], [w / 2, -h], [w / 2, 0], [-w / 2, 0]].map(([dx, dy]) => [cx + dx! * Math.cos(a) - dy! * Math.sin(a), cy + dx! * Math.sin(a) + dy! * Math.cos(a)]).flat();
+            s.poly(corners).fill({ color: 0xede0bf, alpha: 1 - burst }).stroke({ width: 1.4 * zk, color: GOLD, alpha: 1 - burst });
+          }
+        } else if ((e.type === "fate" && (e.card === "wanderers" || e.card === "veterans")) || (e.type === "worldEvent" && e.event === "mercenaries")) {
+          // A band arrives in a puff of dust.
+          const id = e.type === "fate" ? e.at : (e.at ?? e.target);
+          const at = spotOf(id);
+          if (!at) return;
+          const [x, y] = scr(at);
+          walkers([x - 34 * zk, y + 16 * zk], [x - 4 * zk, y + 6 * zk], q, e.type === "fate" ? e.holder : e.against);
+        } else if ((e.type === "fate" && e.card === "uprising") || (e.type === "worldEvent" && e.event === "uprising")) {
+          // Rebels rise.
+          const at = spotOf(e.type === "fate" ? e.at : e.target);
+          if (!at) return;
+          const [x, y] = scr(at);
+          walkers([x + 2 * zk, y + 14 * zk], [x + 4 * zk, y + 8 * zk], q, null);
+        } else if (e.type === "dealStarted" && fxReady) {
+          // The scroll unrolls between the two banners and the wax seal stamps down; a truce border stitches itself.
+          const at = meetingOf(ctx, e.deal.a, e.deal.b);
+          if (!at) return;
+          const [x, y] = scr(at);
+          const scroll = this.bank.get("fx-scroll");
+          const p = scroll && this.puppet(pi++, scroll, null, 0xffffff);
+          if (p) {
+            const k0 = (54 * zk) / scroll!.width;
+            p.base.anchor.set(0.5, 0.5);
+            p.root.position.set(x, y - 30 * zk);
+            p.root.scale.set(k0, k0 * easeOut(clamp01(q / 0.35)));
+            p.root.alpha = 1 - clamp01((q - 0.8) / 0.2);
+          }
+          const seal = this.bank.get("seal");
+          const st = clamp01((q - 0.4) / 0.12);
+          const sp = seal && st > 0 ? this.puppet(pi++, seal, null, 0xffffff) : null;
+          if (sp) {
+            sp.base.anchor.set(0.5, 0.5);
+            sp.root.position.set(x + 12 * zk, y - 22 * zk);
+            sp.root.scale.set(((22 * zk) / seal!.width) * (1.8 - 0.8 * easeOut(st)));
+            sp.root.alpha = st * (1 - clamp01((q - 0.85) / 0.15));
+          }
+          for (const pl of [e.deal.a, e.deal.b]) {
+            const f = this.puppet(pi++, this.bank.house("banner-flag", houseOf(view, pl)), null, 0xffffff);
+            if (!f) continue;
+            const side = pl === e.deal.a ? -1 : 1;
+            const war = e.deal.terms.kind === "war";
+            f.root.position.set(x + side * (war ? 6 : 34) * zk, y - 20 * zk);
+            f.root.scale.set((20 * zk) / f.base.texture.height);
+            f.root.rotation = war ? side * -0.5 * easeOut(clamp01(q / 0.4)) : 0;
+            f.root.alpha = 1 - clamp01((q - 0.85) / 0.15);
+          }
+          if (e.deal.terms.kind === "truce" || e.deal.terms.kind === "passage") this.stitchBorders(e.deal.a, e.deal.b, clamp01((q - 0.3) / 0.6), cam, zk, view);
+        } else if (e.type === "dealBroken" && fxReady) {
+          // The red crack runs along the border they shared.
+          const at = (e.at ? ctx.spot(e.at) : null) ?? meetingOf(ctx, e.a, e.b);
+          const crack = this.bank.get("fx-crack");
+          if (!at || !crack) return;
+          const [x, y] = scr(at);
+          const p = this.puppet(pi++, crack, null, 0xff4a3a);
+          if (!p) return;
+          p.base.tint = 0xff4a3a;
+          p.base.anchor.set(0.5, 0.5);
+          p.root.position.set(x, y);
+          const run = easeOut(clamp01((q - 0.15) / 0.3));
+          p.root.scale.set(((70 * zk) / crack.width) * run, (70 * zk) / crack.width);
+          // (The art runs lower-left to upper-right at about 35 degrees: turned to lie flat.)
+          p.root.rotation = (35 * Math.PI) / 180;
+          p.root.alpha = 1 - clamp01((q - 0.75) / 0.25);
+        }
+      });
+    }
+    // Your spies' news, as the turn ends: the hooded figure fades in and out; an eye opens over a province it got into;
+    // a caught spy shows a red stamp.
+    const since = frame.t - (this.tl!.total - SPY_MS);
+    if (since >= 0 && fxReady) {
+      const q = clamp01(since / SPY_MS);
+      for (const [e] of ctx.indexOf) {
+        if (e.type !== "spy") continue;
+        const at = ctx.spot(e.territory);
+        if (!at) continue;
+        const [x, y] = scr(at);
+        const tex = this.bank.get("figure-spy");
+        const p = tex && this.puppet(pi++, tex, null, 0xffffff);
+        if (p) {
+          p.root.position.set(x - 12 * zk, y + 4 * zk);
+          p.root.scale.set((FIGURE_PX * 0.8 * zk) / tex!.height);
+          p.root.alpha = Math.min(1, q * 4) * (1 - clamp01((q - 0.7) / 0.3));
+        }
+        if (e.outcome === "in") {
+          const open = easeOut(clamp01((q - 0.2) / 0.3)), a = 1 - clamp01((q - 0.75) / 0.25);
+          const ex = x, ey = y - 38 * zk, w = 14 * zk, h = 7 * zk * open;
+          s.moveTo(ex - w, ey).quadraticCurveTo(ex, ey - h * 2, ex + w, ey).quadraticCurveTo(ex, ey + h * 2, ex - w, ey).fill({ color: 0xfff1c1, alpha: 0.9 * a }).stroke({ width: 2 * zk, color: INK, alpha: a });
+          s.circle(ex, ey, 4 * zk * open).fill({ color: INK, alpha: a });
+        } else if (e.outcome === "killed" || e.outcome === "blocked") {
+          const stamp = clamp01((q - 0.3) / 0.15);
+          const t = this.text(ti++, "Caught", 13 * zk * (1.6 - 0.6 * easeOut(stamp)), 0xff5a46);
+          t.position.set(x, y - 34 * zk);
+          t.rotation = -0.18;
+          t.alpha = stamp * (1 - clamp01((q - 0.8) / 0.2));
+        }
+      }
+    }
+    return [pi, ti];
+  }
+
+  /** A truce border drawing itself in white stitches (share `u` of each shared border drawn). */
+  private stitchBorders(a: string, b: string, u: number, cam: Camera, zk: number, view: PlayerView) {
+    if (u <= 0) return;
+    const owner = (id: string) => {
+      const t = view.territories[id];
+      return t?.detail === "full" ? t.owner : null;
+    };
+    for (const bl of this.map.geometry!.borderLines) {
+      const oa = owner(bl.a), ob = owner(bl.b);
+      if (!((oa === a && ob === b) || (oa === b && ob === a))) continue;
+      for (const line of bl.lines) {
+        const pts: number[] = [];
+        const n = Math.max(2, Math.ceil((line.length / 2) * u));
+        for (let k = 0; k < n && k * 2 < line.length; k++) {
+          const [sx, sy] = toScreen(cam, line[k * 2]!, line[k * 2 + 1]!);
+          pts.push(sx, sy);
+        }
+        if (pts.length < 4) continue;
+        this.showG.poly(pts, false).stroke({ width: 6 * zk, color: INK, alpha: 0.4, cap: "round", join: "round" });
+        for (const d of dashes(pts, 6 * zk, 5 * zk)) this.showG.poly(d, false).stroke({ width: 3 * zk, color: 0xffffff, alpha: 0.95, cap: "round" });
       }
     }
   }

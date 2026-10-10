@@ -44,10 +44,23 @@ export interface FxContext {
   bendCap: number;
   /** Each event's place in the turn's events (its seed). */
   indexOf: ReadonlyMap<ReplayEvent, number>;
+  /** Who held each territory as the turn began, as far as this view knew (for where a deal is sealed). */
+  ownerOf: (id: string) => string | null;
+  /** Each territory's neighbours. */
+  neighbours: (id: string) => readonly string[];
+  territories: readonly string[];
+  /** Where each territory's building stands (map units). */
+  site: (id: string) => Pt | undefined;
 }
 
-export function fxContext(map: MapDef, gameId: string, turn: number, events: readonly ReplayEvent[], colour: FxContext["colour"], isCapital: FxContext["isCapital"], fortified: FxContext["fortified"]): FxContext {
+export function fxContext(map: MapDef, gameId: string, turn: number, events: readonly ReplayEvent[], colour: FxContext["colour"], isCapital: FxContext["isCapital"], fortified: FxContext["fortified"], ownerOf: FxContext["ownerOf"] = () => null): FxContext {
+  const near = new Map<string, string[]>();
+  for (const b of map.borders) {
+    (near.get(b.a) ?? near.set(b.a, []).get(b.a)!).push(b.b);
+    (near.get(b.b) ?? near.set(b.b, []).get(b.b)!).push(b.a);
+  }
   const spots = new Map(map.geometry!.territories.map((t) => [t.id, { x: t.label.x, y: t.label.y }]));
+  const sites = new Map(map.geometry!.territories.map((t) => [t.id, { x: t.site.x, y: t.site.y }]));
   const terrain = new Map(map.territories.map((t) => [t.id, t.terrain]));
   const key = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
   const borders = new Map(map.borders.map((b) => [key(b.a, b.b), b.type]));
@@ -64,6 +77,10 @@ export function fxContext(map: MapDef, gameId: string, turn: number, events: rea
     fortified,
     bendCap: span * 0.35,
     indexOf: new Map(events.map((e, i) => [e, i])),
+    ownerOf,
+    neighbours: (id) => near.get(id) ?? [],
+    territories: map.territories.map((t) => t.id),
+    site: (id) => sites.get(id),
   };
 }
 
@@ -115,9 +132,109 @@ export function fxAt(tl: Timeline, t: number, ctx: FxContext): FxPlan {
       if (e.type === "moved") marchFx(ctx, add, idx, "march", e.from, e.to, e.through, e.player, e.army.troops, e.army.specialists, local, b.duration * (1 - lagMax), 1, true);
       else if (e.type === "battle") shake = Math.max(shake, battleFx(ctx, add, idx, e, t - b.start, b));
       else if (e.type === "eliminated") eliminatedFx(ctx, add, idx, e, tl, b, t - b.start);
+      else popFx(ctx, add, idx, e, local, b.duration * (1 - lagMax));
     });
   }
+  // Your spies' news comes as the turn ends (it isn't a beat of its own): it plays over the last moments.
+  const spyFrom = tl.total - SPY_MS;
+  if (t >= spyFrom && t <= tl.total + LINGER_MS)
+    for (const [e, idx] of ctx.indexOf) {
+      if (e.type !== "spy") continue;
+      const at = ctx.spot(e.territory);
+      if (at) add(idx, "spy", "spyWisp", { x: at.x, y: at.y - 8 }, t - spyFrom, SPY_MS);
+    }
   return { instances, shake };
+}
+
+/** Your spies' news plays over this much of the end of the replay (ms). */
+export const SPY_MS = 1400;
+
+/** Where two players' land meets, as far as this view knew (null: nowhere it could see). */
+export function meetingOf(ctx: FxContext, a: string, b: string): Pt | null {
+  for (const id of ctx.territories) {
+    if (ctx.ownerOf(id) !== a) continue;
+    for (const n of ctx.neighbours(id)) if (ctx.ownerOf(n) === b) return ctx.borderPoint(id, n);
+  }
+  return null;
+}
+
+/** The Fate cards' and the Fallen's signatures (docs/09 §5). */
+const FATE_FX: Record<string, RecipeName> = {
+  harvest: "harvest",
+  hoard: "hoard",
+  wanderers: "arrival",
+  veterans: "arrival",
+  pilgrims: "pilgrims",
+  masons: "sawdust",
+  ford: "flood",
+  rockslide: "rockslide",
+  squall: "storm",
+  fire: "fire",
+  fever: "sickness",
+  plague: "sickness",
+  blight: "blight",
+  uprising: "uprising",
+};
+const WORLD_FX: Record<string, RecipeName> = { plague: "sickness", storm: "storm", uprising: "uprising", mercenaries: "arrival", famine: "blight" };
+
+/** What pops up as the turn plays: recruits, building, culture, Spoils, Fate, the Fallen, deals. */
+function popFx(ctx: FxContext, add: Add, idx: number, e: ReplayEvent, age: number, span: number) {
+  const at = (id: string | undefined) => (id ? ctx.spot(id) : undefined);
+  const ground = (id: string) => ({ ground: GROUND[ctx.terrain(id)] ?? GROUND.plains! });
+  const crossing = (border: readonly [string, string] | undefined, fallback: string) => (border ? (ctx.borderPoint(border[0], border[1]) ?? at(fallback)) : at(fallback));
+  switch (e.type) {
+    case "recruited":
+    case "hired": {
+      const p = at(e.territory);
+      if (p) add(idx, "recruit", "recruitPuff", p, age, span, { tints: ground(e.territory) });
+      return;
+    }
+    case "built": {
+      const p = ctx.site(e.territory) ?? at(e.territory);
+      if (p) add(idx, "build", e.doneAtEndOfTurn === null ? "sawdust" : "scaffoldDust", p, age, span, { tints: ground(e.territory) });
+      return;
+    }
+    case "completed": {
+      const p = ctx.site(e.territory) ?? at(e.territory);
+      if (p) add(idx, "done", "sawdust", p, age, span);
+      return;
+    }
+    case "invested": {
+      const p = at(e.territory);
+      // (From just above the troop pill, so the leaves aren't hidden under it.)
+      if (p) add(idx, "culture", "laurels", { x: p.x, y: p.y - 10 }, age, span);
+      return;
+    }
+    case "spoilsTurnedIn": {
+      const p = at(e.at);
+      if (p) add(idx, "spoils", "spoilsBurst", p, age, span);
+      return;
+    }
+    case "fate": {
+      const r = FATE_FX[e.card];
+      const p = e.card === "ford" || e.card === "rockslide" || e.card === "squall" ? crossing(e.border, e.at) : e.card === "fire" || e.card === "masons" ? (ctx.site(e.at) ?? at(e.at)) : at(e.at);
+      if (r && p) add(idx, `fate:${e.card}`, r, p, age, Math.max(span, 900), { tints: ground(e.at) });
+      return;
+    }
+    case "worldEvent": {
+      const r = WORLD_FX[e.event];
+      const p = e.event === "storm" ? crossing(e.border, e.target) : e.event === "mercenaries" ? at(e.at ?? e.target) : at(e.target);
+      if (r && p) add(idx, `world:${e.event}`, r, p, age, Math.max(span, 900), { tints: ground(e.target) });
+      return;
+    }
+    case "dealStarted": {
+      const p = meetingOf(ctx, e.deal.a, e.deal.b);
+      if (p) add(idx, "deal", "dealSealed", p, age, span);
+      return;
+    }
+    case "dealBroken": {
+      const p = (e.at ? at(e.at) : null) ?? meetingOf(ctx, e.a, e.b);
+      if (p) add(idx, "broken", "dealBroken", p, age, span);
+      return;
+    }
+    default:
+      return;
+  }
 }
 
 type Add = (index: number, part: string, recipe: RecipeName, at: Pt, age: number, span: number, extra?: Partial<FxInstance>) => void;

@@ -10,3 +10,62 @@
 @media (prefers-reduced-motion: reduce) { .title-card { animation-name: title-card-still; } }
 @keyframes title-card-still { 0% { opacity: 0; } 8% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
 
+
+/* ---------- Gold coming in (session 21): coins fly from the map to the counter ---------- */
+.coins-in img { position: fixed; z-index: 70; width: 22px; height: 22px; left: 0; top: 0; pointer-events: none; animation: coin-in 0.9s cubic-bezier(0.5, 0, 0.75, 0.4) both; }
+@keyframes coin-in {
+  0% { transform: translate(var(--sx), var(--sy)) scale(0.6); opacity: 0; }
+  15% { opacity: 1; transform: translate(var(--sx), calc(var(--sy) - 30px)) scale(1); }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0.7); opacity: 0.9; }
+}
+/* The Oathbreaker mark stamps onto the breaker's name (session 21, docs/09 §6). */
+.player .oath { animation: oath-stamp 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+@keyframes oath-stamp { 0% { transform: scale(2.2) rotate(-12deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .player .oath { animation: none; } }
+
+/* ---------- Menus with weight (session 21, docs/09 §8): short, never in the way ---------- */
+/* Lock in: the seal presses down, and gold flecks scatter as it stamps. */
+.seal img { transition: transform 0.12s ease-out; }
+.seal:active:not(:disabled) img, .seal.sealing img { transform: scale(0.9) translateY(2px); }
+.seal.sealing img { animation: seal-stamp 0.42s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+@keyframes seal-stamp { 0% { transform: scale(1.12) translateY(-6px); } 55% { transform: scale(0.88) translateY(2px); } 100% { transform: scale(0.94) translateY(1px); } }
+.seal .flecks { position: absolute; inset: 50% auto auto 50%; pointer-events: none; }
+.seal .flecks i { position: absolute; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: radial-gradient(#fff6d6, #e3c77e 60%, rgba(227, 199, 126, 0)); animation: fleck 0.6s ease-out both; }
+@keyframes fleck { 0% { transform: rotate(var(--a)) translateX(10px) scale(1); opacity: 1; } 100% { transform: rotate(var(--a)) translateX(58px) scale(0.3); opacity: 0; } }
+/* The timer's last ten seconds: it glows like an ember. */
+.timer.ember { animation: ember 1s ease-in-out infinite; }
+@keyframes ember { 0%, 100% { box-shadow: 0 0 6px 1px rgba(255, 120, 40, 0.55), inset 0 0 6px rgba(255, 200, 120, 0.4); } 50% { box-shadow: 0 0 16px 5px rgba(255, 110, 30, 0.85), inset 0 0 10px rgba(255, 220, 150, 0.6); } }
+/* "Turn 8" sweeps across with the compass emblem. */
+.turn-sweep { position: absolute; z-index: 36; left: 0; right: 0; top: 40%; display: flex; justify-content: center; align-items: center; gap: 14px; pointer-events: none; animation: sweep 1.4s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  background: linear-gradient(90deg, transparent, rgba(10, 14, 22, 0.75) 25%, rgba(10, 14, 22, 0.75) 75%, transparent); padding: 10px 0; border-top: 1px solid rgba(201, 164, 92, 0.6); border-bottom: 1px solid rgba(201, 164, 92, 0.6); }
+.turn-sweep img { width: 46px; height: 46px; animation: sweep-spin 1.4s ease-out both; }
+.turn-sweep span { font: 700 1.8rem var(--font-head); letter-spacing: 0.12em; color: var(--gold-hi); text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7); }
+@keyframes sweep { 0% { transform: translateX(-30%); opacity: 0; } 22% { transform: translateX(0); opacity: 1; } 75% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(30%); opacity: 0; } }
+@keyframes sweep-spin { 0% { transform: rotate(-120deg); } 40% { transform: rotate(0); } 100% { transform: rotate(10deg); } }
+@media (max-width: 700px) { .turn-sweep span { font-size: 1.35rem; } .turn-sweep img { width: 34px; height: 34px; } }
+/* The gold trim catches a slow glint of light on hover (desktop). */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  button.primary, .menu-item { background-image: linear-gradient(105deg, transparent 40%, rgba(255, 250, 230, 0.35) 50%, transparent 60%), var(--glint-base, linear-gradient(#e3c77e, #c9a45c)); background-size: 250% 100%, 100% 100%; background-position: 120% 0, 0 0; }
+  .menu-item { --glint-base: linear-gradient(transparent, transparent); }
+  button.primary:hover:not(:disabled), .menu-item:hover { animation: glint 1.6s ease-in-out; }
+}
+@keyframes glint { 0% { background-position: 120% 0, 0 0; } 100% { background-position: -40% 0, 0 0; } }
+/* Panels ease in. */
+.popover, .bottom-sheet, .dialog { animation: panel-in 0.18s ease-out both; }
+@keyframes panel-in { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: none; } }
+/* The turn report's lines come in one by one. */
+.log li { animation: line-in 0.28s ease-out both; animation-delay: calc(var(--i, 0) * 55ms); }
+@keyframes line-in { 0% { opacity: 0; transform: translateX(-6px); } 100% { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .seal.sealing img, .seal .flecks i, .turn-sweep, .turn-sweep img, .popover, .bottom-sheet, .dialog, .log li, .timer.ember { animation: none; }
+}
+
+/* ---------- The cinematic replay (session 21, docs/09 §1) ---------- */
+.cine { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity 0.5s ease;
+  background: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(4, 7, 12, 0.5) 100%), rgba(255, 168, 84, 0.07); }
+.cine.on { opacity: 1; }
+.cine-bar { position: absolute; left: 0; right: 0; height: 5vh; background: #05070b; transform: scaleY(0); transition: transform 0.5s ease; }
+.cine-bar.top { top: 0; transform-origin: top; }
+.cine-bar.bottom { bottom: 0; transform-origin: bottom; }
+.cine.on .cine-bar { transform: scaleY(1); }
+@media (max-width: 700px) { .cine-bar { height: 3.2vh; } }

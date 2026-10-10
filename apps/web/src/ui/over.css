@@ -1,0 +1,9 @@
+/* The game-over screen's motes (session 21, docs/09 §8): loaded with the game-over screen only. */
+.over-motes { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.over > .frame { position: relative; z-index: 1; }
+.over-motes i { position: absolute; top: 105%; width: 5px; height: 5px; border-radius: 50%; animation: mote-up linear infinite; }
+.over.lost .over-motes i { background: radial-gradient(#fff2c8, #ff9a3c 45%, rgba(255, 120, 40, 0)); box-shadow: 0 0 6px rgba(255, 140, 50, 0.8); }
+.over.won .over-motes i { top: -5%; width: 9px; height: 6px; border-radius: 60% 0 60% 0; background: linear-gradient(135deg, #fff5f7, #f2b8c6); opacity: 0.85; animation-name: mote-down; }
+@keyframes mote-up { 0% { transform: translate(0, 0); opacity: 0; } 10% { opacity: 1; } 100% { transform: translate(6vw, -115vh); opacity: 0; } }
+@keyframes mote-down { 0% { transform: translate(0, 0) rotate(0); opacity: 0; } 10% { opacity: 0.9; } 100% { transform: translate(-8vw, 115vh) rotate(540deg); opacity: 0.2; } }
+@media (prefers-reduced-motion: reduce) { .over-motes { display: none; } }

@@ -2,6 +2,7 @@ import type { Line, MapDef } from "@conquerra/content";
 import { ColorMatrixFilter, Container, Graphics, Sprite, Texture } from "pixi.js";
 import { canvas } from "../../art/paint";
 import { FIGURE_SPRITES } from "@conquerra/art";
+import { solid } from "./solid";
 import { hexNum, houseOf, NEUTRAL_HOUSE } from "../../map/houses";
 import { groupOutlines, quadPoint } from "../../map/shapes";
 import { territoryStatus, type TerritoryStatus } from "../../map/status";
@@ -375,18 +376,8 @@ export class InfoLayer {
       if (b && !this.isTactical) {
         const tex = this.bank.get(`building-${b}`);
         if (tex) {
-          const root = new Container();
-          // Standing on the ground like the capital's castle: a soft shadow down and to the right.
-          const sh = new Sprite(this.groundShadow());
-          sh.anchor.set(0.5);
-          sh.width = BUILDING_SIZE * 0.95;
-          sh.height = BUILDING_SIZE * 0.34;
-          sh.alpha = 0.55;
-          sh.position.set(BUILDING_SIZE * 0.14, BUILDING_SIZE * 0.04);
-          const sp = new Sprite(tex);
-          sp.anchor.set(0.5, 0.88);
-          sp.scale.set(BUILDING_SIZE / tex.width);
-          root.addChild(sh, sp);
+          // Standing up off the land like the walls (session 21): its shadow, a stone plinth, lit and shaded rims.
+          const { root, sprite: sp } = solid(tex, { width: BUILDING_SIZE, plinth: true, remembered: s.kind === "remembered" });
           if (s.kind === "remembered") {
             // Remembered (in the fog): greyed.
             sp.tint = 0x8a8a8a;
@@ -398,11 +389,10 @@ export class InfoLayer {
             sp.filters = [wash];
             const art = this.bank.get("scaffold");
             if (art) {
-              const sc = new Sprite(art);
-              sc.anchor.set(0.5, 0.9);
-              // Sized by height to just over the building's (the art is a tall tower; by width it stood over a capital).
-              sc.scale.set((sp.height * 1.05) / art.height);
-              root.addChild(sc);
+              // Sized by height to just over the building's (the art is a tall tower; by width it stood over a capital),
+              // standing on the land too (its own shadow and rims).
+              const w = ((sp.height * 1.05) / art.height) * art.width;
+              root.addChild(solid(art, { width: w, anchorY: 0.9 }).root);
             } else root.addChild(scaffold(BUILDING_SIZE));
           }
           this.sites.addChild(root);

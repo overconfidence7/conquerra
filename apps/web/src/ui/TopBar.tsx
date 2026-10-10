@@ -1,5 +1,7 @@
 import type { PlayerView } from "@conquerra/engine";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { reducedMotion, useFx } from "../replay/fx/settings";
+import { Rolling } from "./Rolling";
 import { formatClock, remainingMs, timerTone, type TurnClock } from "../logic/timer";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
@@ -23,7 +25,7 @@ export function TimerPill({ clock, paused }: { clock: TurnClock | null; paused: 
     );
   const tone = paused ? "calm" : timerTone(left);
   return (
-    <span className={`timer ${tone}`} role="timer" aria-label={`${formatClock(left)} left to give orders`} data-tone={tone}>
+    <span className={`timer ${tone}${!paused && left < 10_000 ? " ember" : ""}`} role="timer" aria-label={`${formatClock(left)} left to give orders`} data-tone={tone}>
       {formatClock(left)}
     </span>
   );
@@ -49,9 +51,40 @@ interface Props {
 }
 
 /** Logo · gold (+N per turn), or Influence for the Fallen · Turn N, the timer and Pause · settings. */
+/**
+ * The turn's gold coming in (session 21, docs/09 §4): as the replay ends and the new turn's gold is in, a few coins fly
+ * from the map to the counter, which rolls up to the new total. Not with Effects off.
+ */
+function CoinsIn({ gold, replaying, target }: { gold: number; replaying: boolean; target: React.RefObject<HTMLElement | null> }) {
+  const level = useFx((s) => s.level);
+  const coinArt = useArtUrl("fx-coin");
+  const planning = useRef(gold);
+  const [flight, setFlight] = useState<{ key: number; x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (replaying) return;
+    if (gold > planning.current && level !== "off" && !reducedMotion() && target.current) {
+      const r = target.current.getBoundingClientRect();
+      setFlight({ key: Date.now(), x: r.left + 12, y: r.top + r.height / 2 });
+      const t = setTimeout(() => setFlight(null), 1600);
+      planning.current = gold;
+      return () => clearTimeout(t);
+    }
+    planning.current = gold;
+  }, [gold, replaying, level, target]);
+  if (!flight || !coinArt) return null;
+  return (
+    <span className="coins-in" key={flight.key} aria-hidden>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <img key={i} src={coinArt} alt="" style={{ "--tx": `${flight.x}px`, "--ty": `${flight.y}px`, "--sx": `${44 + i * 3}vw`, "--sy": `${52 + ((i * 7) % 9)}vh`, animationDelay: `${i * 90}ms` } as React.CSSProperties} />
+      ))}
+    </span>
+  );
+}
+
 export function TopBar({ view, gold, goldAfter, purses = 0, income, clock, replaying, phone, fallen, onPause, onChronicle, onSettings }: Props) {
   const emblem = useArtUrl("emblem");
   const coin = useArtUrl("icon-gold");
+  const goldRef = useRef<HTMLSpanElement | null>(null);
   const isPaused = clock?.pausedLeft !== undefined;
   return (
     <Frame className="topbar">
@@ -63,9 +96,10 @@ export function TopBar({ view, gold, goldAfter, purses = 0, income, clock, repla
           <span className="plus">+{fallen.perTurn}</span>
         </span>
       ) : (
-        <span className="stat" title="Gold now, after your queued orders, and what you'll earn this turn">
+        <span className="stat" ref={goldRef} title="Gold now, after your queued orders, and what you'll earn this turn">
           {coin && <img src={coin} alt="Gold" />}
-          {gold}
+          <Rolling value={gold} />
+          <CoinsIn gold={gold} replaying={!!replaying} target={goldRef} />
           {goldAfter !== gold && <span className="after">→{goldAfter}</span>}
           <span className="plus">+{income}</span>
           {purses > 0 && (

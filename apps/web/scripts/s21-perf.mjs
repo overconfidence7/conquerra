@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 import puppeteer from "puppeteer-core";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
-const URL = process.env.MAP_URL ?? "http://localhost:4173/";
+const URL = (process.env.MAP_URL ?? "http://localhost:4173/") + (process.env.NOLIVING ? "?noliving" : "");
 const [mapsArg = "wyrmland:5,krakenmere:9", levelsArg = "full,light,off"] = process.argv.slice(2);
 const DEVICES = (process.env.DEVICES ?? "phone,desktop").split(",");
 const TURNS = Number(process.env.TURNS ?? 3);

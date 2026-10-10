@@ -6,6 +6,7 @@ import { canvas } from "../../art/paint";
 import type { Camera, Viewport } from "../../map/camera";
 import { quadPoint } from "../../map/shapes";
 import { auxCanvases, biomeCanvases, type AuxData } from "./bakeData";
+import { solid } from "./solid";
 import { sceneryFor, type Piece, type Scenery } from "./scenery";
 import { DISPLAY_FRAGMENT, GROUND_FRAGMENT, VERTEX } from "./shaders";
 
@@ -54,6 +55,8 @@ export interface WorldOptions {
   nearPpu?: number;
   /** At most this many Near tiles are kept (each about 1 MB of texture memory). */
   nearCap?: number;
+  /** The living map draws the windmills' sails and the ships on sea lanes, so they move (session 21). */
+  living?: boolean;
 }
 
 interface NearTile {
@@ -87,8 +90,6 @@ const quad = (x: number, y: number, w: number, h: number) =>
   });
 
 export class WorldLayer {
-  /** Paint the windmills' sails into the map (false when the living map turns them, session 21). */
-  bakeSails = true;
   /** What's on screen: the Far image or the tiles. */
   readonly view = new Container();
   readonly display: UniformGroup<{
@@ -327,7 +328,7 @@ export class WorldLayer {
         lanes.circle(x, y, 1.6).fill({ color: 0xf6f1e4, alpha: 0.95 });
         lanes.circle(x, y, 2.4).stroke({ width: 0.6, color: 0x3b2a1a, alpha: 0.4 });
       }
-      if (ship && len > 40) {
+      if (ship && len > 40 && !this.opts.living) {
         const [x, y, ang] = quadPoint(x0, y0, cx, cy, x1, y1, 0.5);
         const s = new Sprite(mipmapped(ship.image));
         s.label = "ship";
@@ -341,7 +342,7 @@ export class WorldLayer {
     this.bakeScene.addChildAt(lanes, this.bakeScene.children.indexOf(passes) + 1);
 
     // ---- Decorations (already sorted top to bottom) and castles at every capital site ----
-    const items: { y: number; make: () => Sprite }[] = [];
+    const items: { y: number; make: () => Sprite | Container }[] = [];
     const texCache = new Map<string, Texture>();
     const tex = (name: string) => {
       let t = texCache.get(name);
@@ -428,7 +429,7 @@ export class WorldLayer {
       if (l.kind === "windmill" && hasArt("landmark-windmill-body") && hasArt("landmark-windmill-sails")) {
         const w = windmillParts(l);
         piece("landmark-windmill-body", { ...l, w: w.bodyW });
-        if (this.bakeSails)
+        if (!this.opts.living)
           items.push({
             y: l.y + 0.001,
             make: () => {
@@ -445,18 +446,29 @@ export class WorldLayer {
     for (const b of sc.bridges) piece(b.kind === "wood" && hasArt("bridge-wood") ? "bridge-wood" : "bridge", b, 0.55, false);
     g.territories.forEach((t, i) => {
       if (t.castle) {
-        items.push({ y: t.castle.y - 0.001, make: () => shadow(t.castle!.x, t.castle!.y, CASTLE_SIZE) });
-        items.push({ y: t.castle.y, make: () => place(`capital-${(i % 2) + 1}`, t.castle!.x, t.castle!.y, CASTLE_SIZE, false) });
+        // The capital stands up off the land like the walls and the buildings (session 21): painted into the map.
+        items.push({
+          y: t.castle.y,
+          make: () => {
+            const name = `capital-${(i % 2) + 1}`;
+            const c = solid(tex(name), { width: CASTLE_SIZE, plinth: true, label: name }).root;
+            c.position.set(t.castle!.x, t.castle!.y);
+            return c;
+          },
+        });
       }
     });
     items.sort((a, b) => a.y - b.y);
     for (const it of items) this.bakeScene.addChild(it.make());
     // Every sprite's extent (the scene isn't moved or scaled), so painting a tile skips the ones it doesn't touch.
-    for (const c of this.bakeScene.children)
+    // (A capital is a group: its shadow, plinth and rims, session 21. Each of its sprites is culled and sharpened alike.)
+    const cull = (c: Container) => {
       if (c instanceof Sprite) {
         const b = c.getBounds();
         this.cullables.push({ obj: c, x0: b.minX, y0: b.minY, x1: b.maxX, y1: b.maxY });
-      }
+      } else if (!(c instanceof Graphics) && c !== this.groundMid) for (const k of c.children) cull(k);
+    };
+    for (const c of this.bakeScene.children) cull(c);
   }
 
   /**

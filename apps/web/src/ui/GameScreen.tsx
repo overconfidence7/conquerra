@@ -207,6 +207,20 @@ export function GameScreen() {
   const [settings, setSettings] = useState(false);
   // The replay moved itself to Light (it was running slowly): say so, once.
   const movedToLight = useFx((s) => s.movedToLight);
+  const fxLevel = useFx((s) => s.level);
+  const sweepEmblem = useArtUrl("emblem");
+  const [sweepTurn, setSweepTurn] = useState<number | null>(null);
+  const sweptTurn = useRef<number | null>(null);
+  useEffect(() => {
+    // Once per new turn, after its replay (not on the game's first turn or a loaded game's).
+    if (!view || replay || sweptTurn.current === view.turn) return;
+    const first = sweptTurn.current === null;
+    sweptTurn.current = view.turn;
+    if (first) return;
+    setSweepTurn(view.turn);
+    const t = setTimeout(() => setSweepTurn(null), 1500);
+    return () => clearTimeout(t);
+  }, [view, replay]);
   useEffect(() => {
     if (movedToLight) useGame.setState({ notice: "The replay was running slowly on this device, so Effects are on Light now (Settings, Effects, to change it)." });
   }, [movedToLight]);
@@ -381,6 +395,11 @@ export function GameScreen() {
         rendererRef={renderer}
         onViewMoved={setRect}
       />
+      {/* The replay is the story (session 21): letterbox, a soft vignette and a warmer grade ease in and out. */}
+      <div className={`cine ${replaying && fxLevel !== "off" ? "on" : ""}`} aria-hidden>
+        <i className="cine-bar top" />
+        <i className="cine-bar bottom" />
+      </div>
     </div>
   );
 
@@ -408,6 +427,13 @@ export function GameScreen() {
         }
       }}
     />
+  );
+  // "Turn 8" sweeps across with the compass emblem as a new turn's planning starts (session 21), briefly.
+  const turnSweep = !replaying && sweepTurn === view.turn && (
+    <div className="turn-sweep" key={`sweep-${view.turn}`} aria-hidden>
+      {sweepEmblem && <img src={sweepEmblem} alt="" />}
+      <span>Turn {view.turn}</span>
+    </div>
   );
   // A title card for the moment that matters (session 21), across the top of the map.
   const titleCard = replaying && rp.card && (
@@ -582,6 +608,7 @@ export function GameScreen() {
         <Toasts toasts={toasts} />
         {replayBar}
         {titleCard}
+        {turnSweep}
         {out && watching && (
           <Suspense fallback={null}>
             <OutPanel ctx={ctx} view={view} replaying={replaying} />
@@ -640,6 +667,7 @@ export function GameScreen() {
       <Toasts toasts={toasts} />
       {replayBar}
       {titleCard}
+      {turnSweep}
       {out ? (
         watching && (
           <Suspense fallback={null}>
