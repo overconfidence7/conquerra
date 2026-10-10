@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–20, 20c and 20b are done and reviewed; session 20d is done (awaiting review). Next: Nate's play test from "Things to test after session 20d", then 21 (the polish pass), 22 (the language pass, the start bonus, the Marshal adopts the Merchant's lesson and maybe the Steward's plan).**
+**Phase: M3 (depth and balance). Sessions 7–20, 20c, 20b and 20d are done and reviewed. Next: Nate's play test from "Things to test after session 20d" (it can run alongside the next session), **session 21** (the polish pass with art batch 4, plus Step 0's fixes), 22 (the language pass), 23 (bots and balance: the start bonus, the Marshal adopts the Merchant's lesson and the Steward's plan, idle Steward gold handed back, a remnant judged honestly under fog), then sound.**
 
 Claude Code sessions completed: **20d** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -1141,6 +1141,20 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
 - **Start-up bundle:** 485.9 → 486.3 KB (gzip 149.2 → 149.3).
 - **Tests and deploy:** 952 automated tests pass (the full run twice); typecheck and the web build pass. Deployed to the private preview (version `dc0791c1`); the lock check passed. Nate: please check the repo's Actions page for the last commit.
 - **Questions for Nate:** (1) your Steward's walls cost the delegating seat about 2–3 points on Rootholm 8 (10–12% against 13–14%, fair 12.5) and gain it 5–7 on Embervale 4: keep the plan everywhere, or wall less on the big 8-player tables? (2) Should the Marshal build with the same plan (session 22, with the Merchant's lesson)? (3) "Never ordered" isn't near zero (5% of rival land on the fixtures, 9% on the wide set): it's the first finishing turn on big maps and armies too big to strike. Acceptable, or push harder (fewer troops in the security blanket)?
+
+### Oct 10: Orchestrator review of session 20d
+- **Checked the work:**
+  - GitHub's checks pass on the last three commits (Part 3, Part 4, PROGRESS), so `main` is green. **Parts 1 and 2 were pushed red:** session 20c's pinned "finishing fingerprint" test changed as soon as the sweep covered the fog, and the pin was only updated in Part 3. Not a real bug, but the full suite should run before every push, not only the package's tests (session 21's prompt says so).
+  - The screenshots look right: "Purse 0g · 50% of income · 11 orders this turn (26g)"; a finishing turn's arrows going into greyed fog ("Attack Kestrelhurst … Hop 11"); Moonwood's culture raised three levels in one turn with its fort "ready next turn"; "Walled: 8 defend (with Moonwood)" with 5 and 4 troops inside. The phone sheets match.
+  - **Re-run with the orchestrator's own seeds (300 games each):** the delegating seat with the planned Steward wins **29.0% on Embervale 4** (the session: 31–33%; fair 25) and **10.0% on Rootholm 8** (the session: 10–12%; fair 12.5). So the "stronger on small maps, weaker on Rootholm" picture holds.
+  - **The headline finding:** the Leader wasn't hoarding; **the Leaders panel showed the purse before the Leader's own orders spent it**, and the purse refills every turn, so it always looked full. Now it shows what's left after this turn's orders. Three small leaks were real and are fixed.
+- **Seen in the screenshots, for later:** the Steward sitting on **998 gold at turn 54** of a won game with nothing worth buying (Nate's call below); "Finishing them off: … Duke Varric (17 territories left)" on turn 6 of a fogged game (the session flagged it: the rule judges remnants on the land it can see); the Spoils card's text overlapping "1 mission" (session 21).
+- **Nate's calls (Oct 10):**
+  - **The Steward's wall plan stays everywhere**, and **the Marshal adopts it** in the bots-and-balance session (it beats the Marshals on two map types: his rule), with the delegating seat re-checked at fair on every table.
+  - **The sweep's remaining misses (5–9%) are acceptable;** he plays and tells.
+  - **A Steward with nothing worth building hands gold back:** whatever its purse holds over two turns of its budget, with a reason ("Odo returned 40 gold: nothing worth building").
+  - **Session order: 21 the polish pass, 22 the language pass, 23 bots and balance** (the start bonus, the Merchant's lesson, the Steward's plan for the Marshal, idle gold handed back, a remnant judged honestly under fog), **then sound.**
+- **Next:** session 21 (`docs/prompts/claude-code-session-21.md`) and the orchestrator-08 prompt. Nate's play test (below) can run alongside it.
 
 ### Things to test after session 20d (Nate's next play test)
 *Laptop first; the phone where it applies.*
