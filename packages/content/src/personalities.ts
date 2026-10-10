@@ -336,7 +336,19 @@ export const LeaderPlanning = z.object({
      * runaway on the map) everything goes into the wall until it stands; otherwise what's left after markets does, a
      * few turns at a time. Missing: as session 20b.
      */
-    plan: z.object({ threat: z.number().int().min(1), /** Forts on choke points facing a rival, after markets (not urgent ones). */ chokeForts: z.boolean() }).optional(),
+    plan: z
+      .object({
+        threat: z.number().int().min(1),
+        /** Forts on choke points facing a rival, after markets (not urgent ones). */
+        chokeForts: z.boolean(),
+        /** A runaway anywhere on the map counts as a threat too (else only an army near the capital's province). */
+        runaway: z.boolean().default(true),
+        /** Not threatened, what's left after markets walls: the capital's province (and your Leader's) only, or every candidate. */
+        steady: z.enum(["capital", "all"]).default("all"),
+        /** Threatened, everything into the wall: of the capital's province (and your Leader's) only, or every candidate. */
+        rush: z.enum(["capital", "all"]).default("all"),
+      })
+      .optional(),
   }),
 });
 export type LeaderPlanning = z.infer<typeof LeaderPlanning>;

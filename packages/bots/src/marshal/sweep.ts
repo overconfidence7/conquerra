@@ -124,8 +124,9 @@ export function planSweep(b: Board, rivals: readonly PlayerId[], free: Map<Terri
   const isArmy = (x: TerritoryId) => isTarget.has(look0(x) ?? "") && !owned(x) && (look(x).troops > garrison || site(x));
   const recruitedAt = (t: TerritoryId) => opt.recruited?.get(t) ?? 0;
   /**
-   * Where they might be (session 20d): land we can't see now, within `fog` steps of theirs through land that, when we
-   * last saw it, was empty, theirs, ours, or that we've never seen. (Land a third House held stays theirs as far as we know.)
+   * Where they might be (session 20d): land we've never seen, and land we can't see now within `fog` steps of theirs (or
+   * of land never seen) through land that, when we last saw it, was empty, theirs or ours. (Land a third House held
+   * stays theirs as far as we know.)
    */
   const theirSet = new Set(theirs);
   const might = new Set<TerritoryId>();
@@ -136,8 +137,12 @@ export function planSweep(b: Board, rivals: readonly PlayerId[], free: Map<Terri
       const o = look0(t);
       return o === null || o === b.me.id || isTarget.has(o);
     };
-    const d = new Map<TerritoryId, number>(theirs.map((t) => [t, 0]));
-    const q = [...theirs];
+    // Land we've never seen could be anyone's, theirs too: all of it (it's where the rest of them may be), and the fog
+    // within `fog` steps of it or of what we know is theirs.
+    const never = idx.ids.filter((t) => !owned(t) && unknown(t));
+    for (const t of never) might.add(t);
+    const d = new Map<TerritoryId, number>([...theirs, ...never].map((t) => [t, 0]));
+    const q = [...theirs, ...never];
     for (let h = 0; h < q.length; h++) {
       const cur = q[h]!;
       if (d.get(cur)! >= opt.fog) continue;

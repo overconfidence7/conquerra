@@ -116,7 +116,7 @@ export function cutPoints(b: Board): Set<TerritoryId> {
   return out;
 }
 
-export function realmShape(b: Board, army = 4): RealmShape {
+export function realmShape(b: Board, army = 4, runawayToo = true): RealmShape {
   const { idx, owned, mine, rivalAt, troopsAt, capital, runaway } = b;
   // Interior-ness: steps from the nearest land of ours touching land that isn't ours.
   const interior = new Map<TerritoryId, number>();
@@ -152,5 +152,5 @@ export function realmShape(b: Board, army = 4): RealmShape {
       for (const nb of idx.neighbors.get(cur)!) if (!d.has(nb)) (d.set(nb, d.get(cur)! + 1), qq.push(nb));
     }
   }
-  return { interior, choke, wallCandidates, threatened: !!threat || (!!runaway && runaway !== b.me.id), threat };
+  return { interior, choke, wallCandidates, threatened: !!threat || (runawayToo && !!runaway && runaway !== b.me.id), threat };
 }

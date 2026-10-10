@@ -211,6 +211,14 @@ export function runTournament(spec: TournamentSpec, workers = Math.max(1, cpus()
 /** Run as a program (not imported by another script, such as s17-runaway.ts with its own workers). */
 const isMain = !!process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 if (isMain && args.includes("--worker")) {
+  // Session 20d's one-change tests: MARSHAL_PATCH='{"leaders":{"steward":{"plan":{...}}}}' is merged into the shared
+  // settings for every seat (the workers inherit it).
+  if (process.env.MARSHAL_PATCH) {
+    const deep = (to: Record<string, unknown>, from: Record<string, unknown>) => {
+      for (const [k, v] of Object.entries(from)) v && typeof v === "object" && !Array.isArray(v) && to[k] && typeof to[k] === "object" ? deep(to[k] as Record<string, unknown>, v as Record<string, unknown>) : (to[k] = v);
+    };
+    deep(marshalData as unknown as Record<string, unknown>, JSON.parse(process.env.MARSHAL_PATCH) as Record<string, unknown>);
+  }
   const { spec, w, n } = JSON.parse(arg("worker", "{}")) as { spec: TournamentSpec; w: number; n: number };
   for (let i = w; i < spec.games; i += n) process.stdout.write(`${JSON.stringify(playOne(spec, i))}\n`);
 } else if (isMain) {

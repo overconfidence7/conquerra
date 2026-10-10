@@ -72,14 +72,17 @@ export function planSteward(
   const fort = rules.buildings.fort.cost, market = rules.buildings.market.cost, barracks = rules.buildings.barracks.cost, troop = rules.troops.cost;
   /** Session 20d: the realm's shape, when it builds with a plan (Run the realm, your Steward). */
   const plan = extra.planned && command.kind === "realm" && cfg.plan ? cfg.plan : null;
-  const shape: RealmShape | null = plan ? realmShape(b, plan.threat) : null;
+  const shape: RealmShape | null = plan ? realmShape(b, plan.threat, plan.runaway) : null;
   /** Wall candidates, best first: the capital and its province, the province your Leader stands in (held whole), the rest. */
   const candidates: TerritoryId[] = [];
+  /** The core: the capital's province and your Leader's (when its plan walls only those). */
+  const core: TerritoryId[] = [];
   if (shape) {
     const lp = extra.leaderAt && owned(extra.leaderAt) ? provinceOf(extra.leaderAt) : null;
     const withLeader = lp && holdsWhole(lp) ? members(lp) : [];
     const capProv = capital ? provinceOf(capital) : null;
     for (const t of [...shape.wallCandidates.filter((t) => capProv && provinceOf(t) === capProv), ...withLeader, ...shape.wallCandidates]) if (owned(t) && !candidates.includes(t)) candidates.push(t);
+    core.push(...candidates.filter((t) => (capProv && provinceOf(t) === capProv) || withLeader.includes(t)));
   }
   const candidateSet = new Set(candidates);
   /** Plots kept for a fort (session 20d): wall candidates and choke points. */
@@ -245,8 +248,8 @@ export function planSteward(
       // where it protects (the capital and choke points facing an army), a level a turn.
       // With a plan (session 20d): threatened, everything into the wall (after a threatened capital's fort); otherwise
       // markets (deep inside), then the wall with what's left, then forts at choke points, then the rest.
-      const rush = shape?.threatened ? wallPieces(candidates) : [];
-      const steady = shape && !shape.threatened ? wallPieces(candidates) : [];
+      const rush = shape?.threatened ? wallPieces(plan!.rush === "capital" ? core : candidates) : [];
+      const steady = shape && !shape.threatened ? wallPieces(plan!.steady === "capital" ? core : candidates) : [];
       wishes = shape
         ? [
             ...urgent.filter((w) => w.territory === capital && !candidateSet.has(capital)),

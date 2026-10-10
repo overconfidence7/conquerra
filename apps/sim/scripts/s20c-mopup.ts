@@ -134,8 +134,9 @@ export function runFixture(fx: MopupFixture, how: string, rep: number): Run {
       if (went && saw)
         for (const t of Object.keys(before.territories)) {
           const o = before.territories[t]!.owner;
-          // (A rival we have a deal with, a truce or a joint war, isn't one our leaders may attack.)
+          // (A rival we have a deal with, a truce or a joint war, isn't one our leaders may attack: one in force, or agreed this turn.)
           if (!o || o === top || (before.deals ?? []).some((x) => (x.a === top && x.b === o) || (x.b === top && x.a === o))) continue;
+          if (events.some((e) => e.type === "dealStarted" && ((e.deal.a === top && e.deal.b === o) || (e.deal.b === top && e.deal.a === o)))) continue;
           held++;
           if (!went.has(t)) missed++;
           if (!saw.has(t)) (heldFog++, !went.has(t) && missedFog++);
