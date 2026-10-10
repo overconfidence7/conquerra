@@ -1,0 +1,2 @@
+delegate-80  embervale:4  delegate-80 26.0% (1.04x), marshal 24.7% (0.99x) | fair 25.0% | length median 23, avg 24.4, at the 60 cap 0.7% | half-map by 10 28.4%, halfway leader won 47.0% | 92s
+delegate-80  wyrmland:6   delegate-80 21.0% (1.26x), marshal 15.8% (0.95x) | fair 16.7% | length median 38, avg 40.3, at the 60 cap 13.0% | half-map by 10 0.7%, halfway leader won 44.3% | 157s

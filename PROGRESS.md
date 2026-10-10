@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–20, 20c and 20b are done and reviewed. Nate has played 20b's build. Next: **session 20d** (no hoarding for real, the sweep covers the fog, the Steward's walls, the two leaders together), then 21 (the polish pass), 22 (the language pass, the start bonus, the Marshal adopts the Merchant's lesson).**
+**Phase: M3 (depth and balance). Sessions 7–20, 20c and 20b are done and reviewed; session 20d is done (awaiting review). Next: Nate's play test from "Things to test after session 20d", then 21 (the polish pass), 22 (the language pass, the start bonus, the Marshal adopts the Merchant's lesson and maybe the Steward's plan).**
 
-Claude Code sessions completed: **20b** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
+Claude Code sessions completed: **20d** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
 ---
 
@@ -1125,6 +1125,38 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
 - **The Steward was mostly good,** but should put markets and buildings in the centre, forts wherever a wall may be wanted (now or later) and at choke points, push to wall up fast when its purse allows (several culture levels in one territory in one turn, so a wall can go up in a turn from 0), and when defences are the best thing to do, put everything into them. Run the realm and Run the military should work together on walls and the armies on them.
 - He walled areas himself, too late to see them attacked. **The Marshals feel harder** but can still be improved, or a better bot built above them.
 - **Nate's calls (Oct 9):** a short **session 20d** for these, before the polish pass (21 and 22 shift by one); **a top-tier bot above the Marshal later**, built from how he wins; he can share his games as save files (Settings → Save game → Save to a file), which the simulator replays. Design: `docs/04-design-additions.md` §15, "Nate's third note". Prompt: `docs/prompts/claude-code-session-20d.md`.
+
+### Oct 9: Claude Code session 20d (M3: no hoarding for real, a sweep that covers the fog, the Steward's walls)
+*All four parts done. Write-up: `docs/sim-results-m3-leaders.md` ("Session 20d"). Raw outputs: `docs/sims/s20d-*.txt`.*
+- **Why the Leader looked like it hoarded:** its plan was already spending the purse (on 94–97% of turns in the sims, traced turn by turn the way Nate plays). **The Leaders panel showed the purse as the turn started**, before the Leader's own orders spent it, and the purse is refilled every turn, so it always looked full. **Now the panel, its header and the top bar show what's left once this turn's orders are paid for:** "Purse 0g · 50% of income · 9 orders this turn (18g)". Three smaller leaks fixed: a recruit whose site is lost now tries up to four other sites; with nowhere at all to recruit, it builds a barracks as soon as it can pay (it used to wait for 14 gold); a "saving" reason only when it really keeps gold.
+  - **The numbers:** the purse ends a turn with less than a troop's cost (0 or 1 gold) on **95–98% of turns** (Wyrmland 6 and Rootholm 9, budgets 20/50/80%; was 93–96%). "Under 10% unspent" is 94–95% at 80%, 88–92% at 50%, 70–73% at 20%, where the 1 gold it can't spend (a troop costs 2) is more than 10% of a small purse.
+  - **In the browser:** 12 turns of Wyrmland 6 against Marshals, Aldric on Run the military at 50%: "Purse 0g" or "Purse 1g" after its orders every turn.
+- **The sweep covers the fog:** it goes everywhere the remnant is, **might be** (land never seen, and fog within 2 steps of theirs that was empty when last seen) and could move to; fogged land is no longer visited last; **more chains** sweep whatever the first ones didn't reach; the blanket covers your land next to the fog. Fixed on the way: while cleaning up, a rival next to whoever the planner read as running away was being skipped. **Rival land no order went for:** 20 fixtures 10.3% → **5.1%** (in the fog 22% → **13%**); the wide set 12.4% → **8.7%** (fog 23.5% → **12.5%**), now about the same as with the fog lifted. Not near zero: on the first finishing turn of a big map the troops can't reach everything yet, and armies too big to strike wait. **Finishing is no slower** (median 2 turns, all fixtures within 3).
+- **The Steward builds with a plan:** markets and barracks deep inside your realm; forts on choke points and where walls will go (your capital's province, provinces you hold whole facing a rival, the province your Leader stands in); **several culture levels in one turn** (the culture rule didn't need changing: it was always allowed), so 40 gold walls your capital in one turn's orders; when you're threatened (a rival army near your capital's province, or a runaway whose land touches yours) **everything goes into the wall**. Your Leader keeps **4 troops in walled land facing a rival**. Walls now go up in about three games in four, from about turn 13 (was one in five, from turn 24–27), several territories a game.
+  - **What the sims say:** those walls are attacked about once a game on the big maps and nearly always fall to that attack (a Marshal only attacks a wall it's sure of). The delegating seat (Leader 80%, Steward 20%) against Marshals: Embervale 26.0% → **31–33%** (fair 25), Wyrmland ~21% → **19–22%** (fair 16.7), Rootholm 8 13–14% → **10–12%** (fair 12.5). A question for Nate below.
+- **Nothing else changed:** the Marshal plays exactly as before until it cleans up: one Marshal against Captains wins exactly as before (38.4% on Embervale 4, 36.8% on Wyrmland 6, the same games), the opening is the same (half the map by turn 10), and a few big games end a turn sooner. The Captain and the Recruit are unchanged (their tests).
+- **Planning time:** this machine was about 2.3 times slower today than in session 20c (20c's own code planned in 29 ms today against the 12.5 ms it measured then). Side by side today, all ten bots at 10 players: 30.3 ms at the session start, **31.5 ms** now (about 13 ms on 20c's yardstick: under the 50 ms limit). Finishing turns: about 25–35 ms on average (worst about 70 ms), no slower than before.
+- **Screenshots** (desktop and 384 px phone), `docs/art/screens/s20d-*.png`: `leaders` ("Purse 0g · 50% of income · 11 orders this turn (26g)"), `finishing-fog` and `finishing-fog-queue` (a finishing turn going into the fog: "Attack Kestrelhurst … Hop 11"), `wall-rush` (the Steward raising Moonwood's culture three levels in one turn, its fort building), `wall-garrison` ("Walled: 8 defend (with Moonwood)", Rookhome 5 troops, Moonwood 4). Saves from `make-s20d-save.ts` (a real delegating Wyrmland game); script `s20d-shots.mjs`.
+- **Questions for Nate:** see the session summary (the walls on the big table, and whether the Marshal should build the same way).
+
+### Things to test after session 20d (Nate's next play test)
+*Laptop first; the phone where it applies.*
+- **From session 20d, most important first:**
+  1. **Run the military with 50–80% for ten turns** (Wyrmland or Rootholm): look at your Leader's line in the Leaders panel each turn. Does it say "Purse 0g" (or 1g) with its orders' cost beside the count ("9 orders this turn (18g)")? Do the troops it recruits march toward the fighting the same turn? If it ever keeps gold, does it say why ("Saving 4 gold: nowhere to recruit until the barracks at … is up")?
+  2. **Clean up against a rival with land in the fog** (hold 75% of a big map, Leader on Run the military): does the sweep go into the fog after them (its orders reach territories you can't see, each "only if still stronger")? Do they still get away, or come back?
+  3. **Give your Steward 50% when a Marshal masses near your capital:** does a wall go up in a turn or two (the queue shows several "Raise culture" orders on one territory and a fort)? Does your Leader keep troops inside it (4 or more in walled land facing the rival)?
+  4. **Did anyone ever attack your wall?** And did it hold? (In the sims walls get attacked about once a game on the big maps and usually fall when they do; the question is whether they put attacks off.)
+  5. **Where does your Steward build now?** Markets deep inside your land, forts on passes, fords and the narrow necks, and walls on your capital's province first.
+  6. **Does a delegating game feel too easy on Embervale now?** (The sims say a delegating seat wins about 31–33% there against Marshals, fair 25.)
+- **Still open from session 20b (not tried yet), most important first:**
+  1. Wall your capital's province on Wyrmland and let a Marshal hit it: does "Walled: N defend" match what happened in the battle?
+  2. Can you still break a walled runaway (the Turtle walls most)? Is the odds preview honest, and does "guaranteed" always win?
+  3. Your starting spot on a 160 map (Ashwing or The Sundered Crowns): did it feel fair?
+  4. Capture a Leader: does it arrive "Reports to Aldric", and does one tap give it another command?
+  5. Offer a truce to a rival your Leader is finishing off: does the card warn you?
+  6. A wall you saw and can't see now: is it greyed on the map?
+  7. On the phone: do the wall ring and its battlements read at every zoom, and never hide the troop pill?
+- **Not tried yet (carried over):** the phone; a 160-territory map (Ashwing or The Sundered Crowns); Embervale with 4; getting knocked out once (is the Fallen loud enough?); Conquest's 20-turn default on a 200-territory map.
 
 ### Things to test after session 20b (Nate's next play test)
 *The orchestrator adds to this list after each session. Laptop first; the phone where it applies.*

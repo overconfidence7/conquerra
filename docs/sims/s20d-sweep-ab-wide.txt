@@ -1,0 +1,15 @@
+== {"massCap":1.5}
+leader   60 runs: median 2, within 2 78%, within 3 95%, within 5 100%, unfinished 0, lost 0
+   got away 13% (kept 0.47 a run); took any 68% (4.75 a run); orders a turn 123.7 (most 506); recruits within 2 steps 68%; spare troops left behind 13%; plan 459.0 ms (worst 1136)
+   never ordered (session 20d): 74 of 836 rival territory-turns (8.9%); in the fog 40 of 302 (13.2%)
+   turns: 1:29 2:18 3:10 4:2 5:1
+== {"massCap":2}
+leader   60 runs: median 2, within 2 78%, within 3 95%, within 5 100%, unfinished 0, lost 0
+   got away 13% (kept 0.47 a run); took any 68% (4.80 a run); orders a turn 122.3 (most 506); recruits within 2 steps 67%; spare troops left behind 12%; plan 454.8 ms (worst 1273)
+   never ordered (session 20d): 74 of 836 rival territory-turns (8.9%); in the fog 40 of 302 (13.2%)
+   turns: 1:29 2:18 3:10 4:2 5:1
+== {"blanket":2}
+leader   60 runs: median 2, within 2 77%, within 3 93%, within 5 100%, unfinished 0, lost 0
+   got away 13% (kept 0.60 a run); took any 68% (5.00 a run); orders a turn 113.4 (most 356); recruits within 2 steps 69%; spare troops left behind 19%; plan 235.8 ms (worst 775)
+   never ordered (session 20d): 69 of 844 rival territory-turns (8.2%); in the fog 36 of 302 (11.9%)
+   turns: 1:29 2:17 3:10 4:2 5:2

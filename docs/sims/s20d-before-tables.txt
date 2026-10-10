@@ -1,0 +1,3 @@
+tables       embervale:4  marshal 25.0% (1.00x) | fair 25.0% | length median 22, avg 23.3, at the 60 cap 0.3% | half-map by 10 35.3%, halfway leader won 55.3% | 50s
+tables       wyrmland:6   marshal 16.7% (1.00x) | fair 16.7% | length median 36, avg 39.2, at the 60 cap 10.3% | half-map by 10 0.0%, halfway leader won 41.0% | 157s
+tables       rootholm:8   marshal 12.5% (1.00x) | fair 12.5% | length median 44, avg 45.2, at the 60 cap 21.0% | half-map by 10 0.0%, halfway leader won 47.3% | 340s

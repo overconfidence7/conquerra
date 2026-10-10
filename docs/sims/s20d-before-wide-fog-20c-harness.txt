@@ -1,0 +1,5 @@
+leader   180 runs: median 2, within 2 77%, within 3 91%, within 5 99%, unfinished 0, lost 0
+   got away 18% (kept 0.61 a run); took any 69% (4.75 a run); orders a turn 103.9 (most 277); recruits within 2 steps 63%; spare troops left behind 8%; plan 142.5 ms (worst 596)
+   never ordered (session 20d): 336 of 2708 rival territory-turns (12.4%); in the fog 221 of 939 (23.5%)
+   turns: 1:69 2:69 3:26 4:12 5:2 6:1 8:1
+   slow (over 3): embervale-4-74=5* embervale-4-76=4* embervale-4-76#1=8* embervale-4-78=4* embervale-4-78#1=4* embervale-4-78#2=4* rootholm-9-38=4 rootholm-9-38#1=4 rootholm-9-38#2=4 rootholm-9-76=4* rootholm-9-109#1=4* wyrmland-6-79=4 wyrmland-6-79#1=4 wyrmland-6-79#2=4 wyrmland-6-140=5 wyrmland-6-140#1=6

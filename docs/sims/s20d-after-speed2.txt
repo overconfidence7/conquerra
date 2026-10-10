@@ -1,0 +1,4 @@
+krakenmere, 10 players, 20 games, 945 turns, every system on:
+  resolving a turn: avg 28.5 ms, 95% 52.1 ms, worst 92.4 ms
+  all bots planning a turn (talks, orders, the Fallen): avg 31.5 ms, 95% 55.2 ms, worst 109.6 ms
+  one Marshal planning: avg 3.6 ms, 95% 9.9 ms, worst 96.3 ms

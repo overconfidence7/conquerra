@@ -408,7 +408,7 @@ function planMoves(
     if (!own && !barracksBuilding && spot && gold >= rules.buildings.barracks.cost + (recruitSites.length ? troopCost * 4 : 0)) {
       spend({ id: id(), kind: "build", territory: spot, building: "barracks" });
       gold -= rules.buildings.barracks.cost;
-      if (!recruitSites.length) saving.v = { gold, for: "barracks", at: spot };
+      if (!recruitSites.length && gold >= troopCost) saving.v = { gold, for: "barracks", at: spot };
     } else if (!recruitSites.length && gold >= troopCost) saving.v = { gold, for: "barracks", at: mine.find((t) => seen(t)!.construction?.building === "barracks") ?? spot ?? null };
   } else if (shelter && gold >= rules.buildings.barracks.cost) {
     spend({ id: id(), kind: "build", territory: shelter, building: "barracks" });

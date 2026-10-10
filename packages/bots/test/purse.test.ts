@@ -70,6 +70,8 @@ describe("never hoard (session 20d)", () => {
           const spent = mine.reduce((a, o) => a + cost(ctx, o), 0);
           const note = plan.notes[leaderKey(l)];
           expect(spent).toBeLessThanOrEqual(purse);
+          // A named reason is for gold it really keeps (never "Saving 0 gold").
+          if (note?.kind === "saving") expect(note.gold).toBeGreaterThanOrEqual(ctx.rules.troops.cost);
           if (note?.kind !== "saving") expect(purse - spent).toBeLessThan(ctx.rules.troops.cost);
           // And once the turn has played (the rival sitting still), what's left in the purse is under a troop's cost.
           const after = resolveTurn(ctx, s, { p1: plan.orders, p2: [] }).state;

@@ -45,6 +45,14 @@ const centre = (p, ids, zoom = 0.8) =>
     r.camera.centreOn(x, y, r.camera.cam.scale * zoom);
   }, ids, zoom);
 const openLeaders = (p, phone) => (phone ? p.evaluate(() => { if (!document.querySelector(".leader-list")?.offsetParent) document.querySelector('button[aria-label="Leaders"]')?.click(); }) : null);
+/** Scroll the queue so the first order line whose text matches `re` is at the top. */
+const scrollQueueTo = (p, re) =>
+  p.evaluate((src) => {
+    const re = new RegExp(src);
+    const line = [...document.querySelectorAll(".order-line")].find((x) => re.test(x.textContent ?? ""));
+    line?.scrollIntoView({ block: "start" });
+    return !!line;
+  }, re);
 const openQueue = (p, phone) => (phone ? p.evaluate(() => document.querySelector('button[aria-label="Orders"]')?.click()) : p.evaluate(() => document.querySelector(".order-queue, .queue")?.scrollIntoView({ block: "start" })));
 
 for (const phone of [false, true]) {
@@ -74,10 +82,12 @@ for (const phone of [false, true]) {
   await sleep(1500);
   const fogged = await store(p, (s) => [...new Set((s.queue ?? []).filter((o) => o.kind === "move" && o.general && s.view.territories[o.to]?.detail !== "full").map((o) => o.to))]);
   console.log(`  finishing: ${fogged.length} territories in the fog in the queue`);
-  await centre(p, fogged.length ? fogged : [], 1);
+  await centre(p, fogged.slice(0, 1), 0.6);
   await sleep(1200);
   await shot(p, "s20d-finishing-fog", sfx);
   await openQueue(p, phone);
+  const name = await store(p, (s, t) => s.ctx.map.territories.find((x) => x.id === t)?.name ?? "", fogged[0]);
+  if (name) await scrollQueueTo(p, `${name}`);
   await sleep(800);
   await shot(p, "s20d-finishing-fog-queue", sfx);
   if (phone) await openQueue(p, phone);
@@ -92,6 +102,8 @@ for (const phone of [false, true]) {
   });
   if (rush) (await centre(p, [rush], 1.2), await store(p, (s, t) => s.select?.(t), rush));
   await openQueue(p, phone);
+  const rushName = rush ? await store(p, (s, t) => s.ctx.map.territories.find((x) => x.id === t)?.name ?? "", rush) : "";
+  if (rushName) await scrollQueueTo(p, `(fort|[Cc]ulture).*${rushName}`);
   await sleep(1200);
   await shot(p, "s20d-wall-rush", sfx);
   if (phone) await openQueue(p, phone);

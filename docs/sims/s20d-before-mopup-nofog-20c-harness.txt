@@ -1,0 +1,16 @@
+leader   20 runs: median 2, within 2 85%, within 3 90%, within 5 100%, unfinished 0, lost 0
+   got away 30% (kept 1.05 a run); took any 80% (7.70 a run); orders a turn 127.0 (most 290); recruits within 2 steps 72%; spare troops left behind 7%; plan 32.8 ms (worst 67)
+   never ordered (session 20d): 30 of 305 rival territory-turns (9.8%); in the fog 0 of 0 (0.0%)
+   turns: 1:6 2:11 3:1 4:2
+   slow (over 3): rootholm-9-15=4* wyrmland-6-24=4*
+   embervale    1 1 1 2 2 3* 2
+   rootholm     2 4* 2* 2 1 1
+   wyrmland     2 2 2* 2 1 2* 4*
+marshal  20 runs: median 2, within 2 90%, within 3 90%, within 5 100%, unfinished 0, lost 0
+   got away 40% (kept 1.25 a run); took any 80% (7.40 a run); orders a turn 121.5 (most 282); recruits within 2 steps 73%; spare troops left behind 5%; plan 19.0 ms (worst 89)
+   never ordered (session 20d): 32 of 302 rival territory-turns (10.6%); in the fog 0 of 0 (0.0%)
+   turns: 1:7 2:11 4:2
+   slow (over 3): embervale-4-10=4* rootholm-9-15=4*
+   embervale    1 1 1 2* 2 4* 2
+   rootholm     2* 4* 2* 2 1 1
+   wyrmland     2 2 2* 1 1 2* 2*

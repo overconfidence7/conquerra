@@ -1,0 +1,23 @@
+== V0 {"leaders":{"steward":{"plan":null}},"judgement":{"wallGarrison":1}}
+rootholm:8 delegate-80: won 14.0% (1.12x fair) | walled in 18.7% of games, first wall turn 28 (median), 0.2 walled territories a game | garrisoned (more than 1 troop) 50.4% of walled territory-turns | attacks on its walls 0.00 a game (held 0.0%); on anyone's walls 0.14 a game | 300 games, 432 s
+== V1 {"leaders":{"steward":{"plan":{"runaway":false}}}}
+rootholm:8 delegate-80: won 12.0% (0.96x fair) | walled in 68.7% of games, first wall turn 15 (median), 7.6 walled territories a game | garrisoned (more than 1 troop) 36.4% of walled territory-turns | attacks on its walls 0.86 a game (held 2.3%); on anyone's walls 0.97 a game | 300 games, 454 s
+== V2 {"leaders":{"steward":{"plan":{"runaway":false,"steady":"capital"}}}}
+rootholm:8 delegate-80: won 10.7% (0.85x fair) | walled in 68.7% of games, first wall turn 15 (median), 4.8 walled territories a game | garrisoned (more than 1 troop) 36.0% of walled territory-turns | attacks on its walls 0.66 a game (held 1.5%); on anyone's walls 0.78 a game | 300 games, 410 s
+== V3 {"leaders":{"steward":{"plan":{"runaway":false,"steady":"capital","rush":"capital"}}}}
+rootholm:8 delegate-80: won 10.3% (0.83x fair) | walled in 69.3% of games, first wall turn 15 (median), 4.0 walled territories a game | garrisoned (more than 1 troop) 31.6% of walled territory-turns | attacks on its walls 0.59 a game (held 1.7%); on anyone's walls 0.71 a game | 300 games, 459 s
+== V4 {"leaders":{"steward":{"plan":{"runaway":false,"steady":"capital"}}},"judgement":{"wallGarrison":6}}
+rootholm:8 delegate-80: won 11.3% (0.91x fair) | walled in 68.7% of games, first wall turn 15 (median), 4.6 walled territories a game | garrisoned (more than 1 troop) 34.7% of walled territory-turns | attacks on its walls 0.60 a game (held 3.4%); on anyone's walls 0.71 a game | 300 games, 435 s
+== V1 runaway false
+embervale:4 delegate-80: won 32.7% (1.31x fair) | walled in 65.3% of games, first wall turn 13 (median), 1.4 walled territories a game | garrisoned (more than 1 troop) 76.2% of walled territory-turns | attacks on its walls 0.07 a game (held 0.0%); on anyone's walls 0.07 a game | 300 games, 106 s
+wyrmland:6 delegate-80: won 24.7% (1.48x fair) | walled in 75.7% of games, first wall turn 15 (median), 7.4 walled territories a game | garrisoned (more than 1 troop) 52.4% of walled territory-turns | attacks on its walls 0.79 a game (held 2.1%); on anyone's walls 0.86 a game | 300 games, 280 s
+== V5 runaway near
+embervale:4 delegate-80: won 33.3% (1.33x fair) | walled in 66.0% of games, first wall turn 13 (median), 1.4 walled territories a game | garrisoned (more than 1 troop) 76.9% of walled territory-turns | attacks on its walls 0.06 a game (held 0.0%); on anyone's walls 0.06 a game | 300 games, 78 s
+wyrmland:6 delegate-80: won 19.0% (1.14x fair) | walled in 76.7% of games, first wall turn 13 (median), 6.7 walled territories a game | garrisoned (more than 1 troop) 53.8% of walled territory-turns | attacks on its walls 0.86 a game (held 2.3%); on anyone's walls 0.96 a game | 300 games, 154 s
+rootholm:8 delegate-80: won 10.3% (0.83x fair) | walled in 72.3% of games, first wall turn 12 (median), 8.4 walled territories a game | garrisoned (more than 1 troop) 40.2% of walled territory-turns | attacks on its walls 1.08 a game (held 1.5%); on anyone's walls 1.22 a game | 300 games, 231 s
+== near, garrison 1
+rootholm:8 delegate-80: won 9.3% (0.75x fair) | walled in 72.3% of games, first wall turn 12 (median), 7.8 walled territories a game | garrisoned (more than 1 troop) 31.1% of walled territory-turns | attacks on its walls 0.91 a game (held 1.8%); on anyone's walls 1.04 a game | 300 games, 236 s
+== near, garrison 4, seed 2
+rootholm:8 delegate-80: won 11.7% (0.93x fair) | walled in 74.3% of games, first wall turn 13 (median), 8.6 walled territories a game | garrisoned (more than 1 troop) 41.4% of walled territory-turns | attacks on its walls 1.02 a game (held 0.7%); on anyone's walls 1.11 a game | 300 games, 230 s
+== off, seed 2
+rootholm:8 delegate-80: won 13.0% (1.04x fair) | walled in 17.0% of games, first wall turn 30 (median), 0.2 walled territories a game | garrisoned (more than 1 troop) 52.3% of walled territory-turns | attacks on its walls 0.00 a game (held 0.0%); on anyone's walls 0.10 a game | 300 games, 232 s

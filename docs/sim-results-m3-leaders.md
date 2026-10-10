@@ -291,3 +291,132 @@ The seat's Leader (on Run the military, 80%) or Steward (Run the realm, 20%) wit
 
 ## Personality signatures (session 17's test, now over 24 games)
 Every Marshal now pauses and marches far, which put the Conqueror's fronts a turn at the Blitzer's edge in the test's 8 fixed games. Over 100 games the signatures are as before (`s20c-sig.ts`): fronts a turn Conqueror 1.21 / Blitzer 1.27 (before 1.21 / 1.28), land taken by turn 8 Blitzer 20.8 (others 14.9–19.5), forts and culture by turn 10 Turtle 7.6 (Blitzer 1.0). The test now plays 24 games.
+
+
+# Session 20d: no hoarding for real, a sweep that covers the fog, and the Steward's walls
+
+*Nate's play test of session 20b's build: his Leader on Run the military kept gold turn over turn, the finish's sweep skipped land in the fog, and his Steward should build with a plan and wall up fast. Fog on, diplomacy on, 300 games a line, seats rotated. "Before" is the code as the session started (commit `7642cda`), run through the same scripts and seeds as "after" (`546d74c` and its two small follow-ups). Raw outputs: `docs/sims/s20d-*.txt`. Scripts: `apps/sim/scripts/s20d-purse.ts` (the purse turn by turn, and the unspent share), `s20c-mopup.ts` (now with the "never ordered" count and `FOG=off`), `s20d-walls.ts` (the Steward's walls), `s20-marshal.ts` (fairness, the tables, the headline).*
+
+## Part 1: what was keeping the gold (the trace)
+A delegating seat played the way Nate plays (Leader on Run the military with 20%, 50% or 80% of the income, Steward on Run the realm, the treasury spent on troops at the capital) against 5 Marshals on Wyrmland and 8 on Rootholm, traced turn by turn for 10 turns (`s20d-purse.ts trace`). A typical Wyrmland game at 50%:
+
+| Turn | Purse as the turn starts | Its orders spent | Kept | Why |
+|---|---|---|---|---|
+| 2 | 7 | 6 (3 troops) | 1 | an odd gold coin (a troop costs 2) |
+| 3–4 | 10 | 10 | 0 | |
+| 5 | 17 | 16 | 1 | odd coin |
+| 6–9 | 22–34 | all | 0 | |
+| 10–13 | 28–45 | all but 1 | 0–1 | odd coin |
+
+**What we found, in plain words:**
+1. **The planner was already spending the purse** (on 94–97% of turns in the sims). **What Nate saw was the panel:** it showed the purse *as the turn started*, before the Leader's own orders spent it. The purse is refilled with its budget at the end of every turn, so during planning it always looked full ("Purse 46g"), turn after turn, and so did the top bar ("46 in purses"). **Fixed:** the panel, its header and the top bar now show what's left once this turn's orders are paid for: "Purse 0g · 50% of income · 9 orders this turn (18g)".
+2. **A recruit whose site was lost before it ran** (a rival took the territory earlier in the turn) fell back to one other site; if that was lost too, the gold stayed. **Fixed:** a leader's recruit now tries up to four other sites of yours, safest first.
+3. **Saving for a barracks** with nowhere at all to recruit (the capital lost, no barracks, no province held whole): it waited until it had 14 gold before building one. **Fixed:** with nowhere at all to recruit it builds the barracks as soon as it can pay for it (6 gold), and it names a reason only when it really keeps gold (it said "Saving 0 gold" once in the browser check).
+4. **An odd gold coin** can't buy anything (a troop costs 2) and waits for next turn. That's most of the "kept" turns at a 20% budget, where purses are small.
+
+**The unspent share at the end of each turn's orders, before → after** (300 games, every turn the Leader had a purse):
+
+| Table | Budget | Under a troop's cost unspent (0–1 gold) | Under 10% of the purse unspent | Average unspent share |
+|---|---|---|---|---|
+| Wyrmland 6 | 20% | 96.5% → **97.5%** | 71.1% → 70.4% | 9.9% → 9.4% |
+| Wyrmland 6 | 50% | 95.4% → **96.8%** | 87.2% → 87.7% | 7.0% → 5.8% |
+| Wyrmland 6 | 80% | 93.8% → **96.2%** | 92.8% → **95.3%** | 7.2% → 4.9% |
+| Rootholm 9 | 20% | 95.3% → **96.7%** | 72.4% → 73.0% | 10.3% → 9.1% |
+| Rootholm 9 | 50% | 93.5% → **96.2%** | 89.8% → **92.0%** | 8.0% → 5.6% |
+| Rootholm 9 | 80% | 93.2% → **95.4%** | 92.4% → **94.4%** | 7.2% → 5.2% |
+
+**Against the target:** "never more than one troop's cost unspent when a recruit site exists" holds on every turn but the few where every site it tried was lost before its recruit ran (about 1 turn in 500) or it truly had nowhere to recruit (named in the panel). "Under 10% of the purse on 9 turns in 10" is met at 80% (94–95%) and on Rootholm at 50% (92%), nearly on Wyrmland at 50% (88%); at 20% it's 70–73%, all of it the odd coin: with a purse under 10 gold, the 1 gold it can't spend is more than 10%. Counting that coin as spent, every budget is at 96–98%.
+
+**In the browser** (the built game, a Wyrmland 6 game against Marshals, Aldric on Run the military with 50%, turns 1–12, read off the Leaders panel each turn): "Purse 0g" or "Purse 1g" after its orders on every turn, its orders spending 6–26 gold a turn (purses of 9–21 gold as each turn started).
+
+**The mop-up fixtures don't finish slower:** the 20 fixtures median 2 turns, 90% within 2, all within 3, before and after (below).
+
+## Part 2: the sweep covers the fog
+**The new count, "never ordered":** of every territory a rival held as each finishing turn was planned (the true board; rivals under a truce or joint war with the leading seat left out), the share no order of ours went for that turn, and the same for those in the leading seat's fog.
+
+**What the traces showed was left out** (the 20 fixtures and the wide set, fog on): (1) land in the fog the chain visited last and never reached once its troops ran out; (2) **land we'd never seen at all** that didn't touch anything we knew was theirs (whole pockets of the remnant: most of the misses on the wide set); (3) on the first finishing turn, smaller groups' masses that found no spare troops left; (4) armies far too big to strike (234 and 354 troops in `wyrmland-6-24`, a war rather than a mop-up); (5) one bug: while cleaning up, a rival bordering whoever the planner read as running away was skipped as a "shield".
+
+**What changed:** the sweep's set is everywhere the remnant **is**, **might be** (all land never seen, and fog within 2 steps of theirs or of never-seen land that was empty, theirs or ours when last seen) and **could move to**; the fogged parts take their turn by distance; **more chains** sweep what the first ones didn't reach, from the spare troops left, strongest first; the blanket covers our land next to the fog; while cleaning up every rival is one to finish (deals still hold).
+
+**Before → after, the Leader on Run the military** (20 fixtures; 60 wide positions × 3 sets of dice = 180 runs):
+
+| Measure | 20 fixtures, fog on | 20 fixtures, fog off | 180 runs, fog on | 180 runs, fog off |
+|---|---|---|---|---|
+| Rival land never ordered (all of it) | 10.3% → **5.1%** | 9.8% → 6.8% | 12.4% → **8.7%** | 10.5% → 10.6% |
+| … of it in the fog | 22.0% → **13.0%** | — | 23.5% → **12.5%** | — |
+| Median turns to finish | 2 → 2 | 2 → 2 | 2 → 2 | 2 → 2 |
+| Within 3 turns | 100% → 100% | 90% → 90% | 91% → 94% | 94% → 94% |
+| "Got away" (kept land it took) | 20% → 20% | 30% → 30% | 18% → 18% | 23% → 23% |
+| Orders a turn while finishing (most) | 133 (320) → 133 (320) | 127 (290) → 124 (290) | 104 (277) → 107 (277) | 104 (303) → 104 (303) |
+
+(The "before" column is the session-start sweep played through this session's harness, so both sides count the same way; the Marshal's own finish gets the same sweep and its numbers are in `docs/sims/s20d-mopup-*.txt`.)
+
+**Against the target:** the sweep under fog now misses about as much as it does with the fog lifted (**5.1%** against 6.8% on the fixtures, **8.7%** against 10.6% on the wide set), which was the point: fogged land is no longer left out. **It isn't near zero:** what's left is (1) the first finishing turn on the big maps, when the spare troops can't reach everything yet (the next turn sweeps the rest), and (2) armies too big to strike yet (struck once they march out). Two levers tried and dropped: capping the main mass so more troops are left for the other chains (no fewer misses, more orders), and a 2-troop blanket (a little fewer misses, more troops left behind and more land kept by the remnant).
+
+## Part 3: the Steward's walls
+**The plan, as built:** see the rules reference §14 ("Run the realm with a plan"): markets and barracks deep inside; forts on choke points facing a rival and on wall candidates; several culture levels in a turn; threatened (a rival army of 4+ within 2 steps of the capital's province, or a runaway whose land touches ours), everything into the wall; the Leader keeps 4 troops in walled land facing a rival. **The culture rule didn't change:** the engine and the queue always allowed several levels in one territory in one turn (one order a level).
+
+**A delegating seat (Leader 80%, Steward 20%) against Marshals, 300 games, before → after:**
+
+| Table (fair) | Win rate | Walled in | First wall (median turn) | Walled territories a game | Walled land holding more than 1 troop | Attacks on its walls a game (held) |
+|---|---|---|---|---|---|---|
+| Embervale 4 (25%) | 26.0% → **31.0–33.3%** | — → 66% of games | — → 13 | — → 1.4 | — → 77% | — → 0.06 (none held) |
+| Wyrmland 6 (16.7%) | 20.7% → 19.0% (21.0% → 22.3% on the fairness seeds) | 20% → **77%** | 24 → **13** | 0.2 → **6.7** | 80% → 54% | 0.02 → 0.86 (2%) |
+| Rootholm 8 (12.5%) | 13.0–14.0% → **10.3–11.7%** | 18% → **72%** | 27 → **12** | 0.2 → **8.4** | 50% → 40% | 0.00 → 1.08 (1.5%) |
+
+**What it means:**
+- **Walls go up early and often now** (from turn 12–13 in three games in four), and the capital's province is walled first.
+- **They get attacked** on the big maps (about once a game) and **nearly always fall to that attack**: a Marshal attacks a wall only when it's sure, counting the garrison. What a wall buys is the attacks it puts off, which the sims can't count directly.
+- **Fairness moved by map:** stronger on the smaller tables (Embervale +5 to +7 points, 1.24–1.33× fair), about the same or a little stronger on Wyrmland, and **weaker on Rootholm 8** (two seeds: 10.3% and 11.7%, against 14.0% and 13.0% with the plan off; 0.88× fair on average). On the big 8-player table the gold that goes into walls that then fall is gold not spent on markets.
+
+**One change at a time on Rootholm 8 (300 games each, the delegating seat):**
+
+| Change | Win rate | Walled territories a game |
+|---|---|---|
+| Plan off (session 20b's Steward) | 14.0% / 13.0% (two seeds) | 0.2 |
+| Plan as first built (a runaway anywhere counts as a threat) | 10.3% | 8.5 |
+| No runaway trigger at all | 12.0% | 7.6 |
+| ... and steady walls only on the capital's province | 10.7% | 4.8 |
+| ... and the rush only on the capital's province | 10.3% | 4.0 |
+| ... steady on the capital's province, a 6-troop garrison | 11.3% | 4.6 |
+| **A runaway counts only if its land touches ours (kept)** | **10.3% / 11.7%** (two seeds) | 8.4 / 8.6 |
+| ... with no garrison (1 troop) | 9.3% | 7.8 |
+
+The 4-troop garrison helps (9.3% without it). With no runaway trigger the seat was 32.7% / 24.7% / 12.0% on the three tables (more lopsided on Wyrmland); "a runaway that touches us" was kept because it matches Nate's rule while ignoring a runaway on the far side of the map. **A question for Nate below.**
+
+**The two leaders together:** the Steward walls the province your Leader stands in (after the capital's), and the Leader keeps its garrison inside the wall. **The Marshal doesn't build this way yet** (its own realm share keeps session 20b's way): a Steward that makes delegating beat the Marshals on the smaller tables is, by Nate's rule, a behaviour the Marshal should adopt; that fits session 22's "the Marshal adopts the Merchant's lesson".
+
+## Nothing else got weaker
+**One Marshal of each personality against Captains** (300 games, before → after):
+
+| Table (fair) | Conqueror | Blitzer | Turtle | Schemer | Opportunist | Merchant | Average |
+|---|---|---|---|---|---|---|---|
+| Embervale 4 (25%) | 41.3 → 41.3% | 44.7 → 44.7% | 27.3 → 27.3% | 38.0 → 38.0% | 44.0 → 44.0% | 35.3 → 35.3% | **38.4 → 38.4%** |
+| Wyrmland 6 (16.7%) | 39.0 → 39.0% | 22.0 → 22.0% | 47.7 → 47.7% | 33.7 → 33.7% | 30.7 → 30.7% | 47.7 → 47.7% | **36.8 → 36.8%** |
+
+Exactly the same games: the Marshal plays as before until it cleans up (its sweep changed with your leaders'), and by then those games are decided.
+
+**Tables of Marshals:**
+
+| Table | Median length | At the 60-turn cap | Half the map by turn 10 | Halfway leader won |
+|---|---|---|---|---|
+| Embervale 4 | 22 → 22 | 0.3% → 0.3% | 35.3% → 35.3% | 55.3% → 55.3% |
+| Wyrmland 6 | 36 → 36 | 10.3% → 10.3% | 0% → 0% | 41.0% → 40.3% |
+| Rootholm 8 | 44 → 44 | 21.0% → 20.3% | 0% → 0% | 47.3% → 47.0% |
+
+The opening and the middle game are untouched (half the map by turn 10 the same everywhere); the finish's new sweep ends a few big games a turn or two sooner.
+
+**The Captain is unchanged** (its fingerprint tests), and so is the Recruit.
+
+## Planning time
+Krakenmere, 10 players, 20 games, every system on (`s19-speed.ts`, run alone). **This machine was about 2.3 times slower today than in session 20c's measurement**: session 20c's own code (`776427d`), run today, plans in 29.1 ms where it measured 12.5 ms then (resolving a turn 24.0 ms against 9.9). Side by side today:
+
+| Code | All ten bots planning a turn (average / 95% / worst) | Resolving a turn (average) |
+|---|---|---|
+| Session 20c (`776427d`) | 29.1 / 54.8 / 105.6 ms | 24.0 ms |
+| Session start (`7642cda`) | 30.3 / 52.3 / 105.9 ms | 28.1 ms |
+| **Session 20d** | **31.5 / 55.2 / 109.6 ms** | 28.5 ms |
+
+So 20d plans about 4% slower than the session start (the Marshal is unchanged until it cleans up; the rest is noise and the finish's wider sweep), about 13 ms on session 20c's yardstick: the 50 ms average limit holds. (The Leaders and Stewards aren't in this measure: a seat of yours plans them once a turn.)
+
+**Finishing turns** (the leading seat's whole plan, the Leader on Run the military, today's machine): the 20 fixtures 36.6 → **34.9 ms** on average (worst 85 → 69 ms); the 60 wide positions 68.5 → **25.4 ms** (worst 257 → 72 ms; the two runs are noisy, but not slower), with about 106–108 orders a turn (most 277). The orchestrator measured about 290 ms for a finishing turn on its own machine in session 20c.
