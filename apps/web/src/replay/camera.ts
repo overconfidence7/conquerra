@@ -84,6 +84,16 @@ export interface CameraMove {
 export const CAMERA_EASE_MS = 450;
 /** After a glide the camera holds at least this long (ms), so it never ping-pongs between beats. */
 export const CAMERA_HOLD_MS = 2200;
+/** A capital falling: how far the camera pushes in, how long the push and the pull-out take (ms). */
+export const PUSH_IN = 1.3;
+export const PUSH_MS = 650;
+export const PULL_MS = 900;
+
+/** Does this beat show a capital you know of falling? (Your own, or one you've seen.) */
+export function capitalFalls(beat: Beat, capitals: ReadonlySet<string>): boolean {
+  return beat.kind === "battle" && beat.events.some((e) => e.type === "battle" && e.captured && capitals.has(e.to));
+}
+
 /** The beats worth moving the camera for. */
 const FOLLOWED: ReadonlySet<Beat["kind"]> = new Set(["battle", "pulse", "leaderFell"]);
 /** A spot this close (px) to the edge of the free screen counts as off screen. */
@@ -115,15 +125,34 @@ export function centredOn(cam: Camera, vp: Viewport, s: Spot): Camera {
  * important (a fogged pulse, or someone else's battle), so the camera is never off watching the fog while your army
  * takes land. Give `me` to turn this on.
  */
-export function planReplayCamera(timeline: Timeline, spots: ReplaySpots, home: Camera, vp: Viewport, me: string | null = null): CameraMove[] {
+export function planReplayCamera(timeline: Timeline, spots: ReplaySpots, home: Camera, vp: Viewport, me: string | null = null, opts: { pushIn?: (beat: Beat) => boolean } = {}): CameraMove[] {
   const moves: CameraMove[] = [];
   let cur = home;
   let lastAt = -Infinity;
+  /** A push-in's pull-out still to come (ms), so nothing else moves the camera before it. */
+  let busyUntil = -Infinity;
   /** Where the last followed battle was fought, and by whom (to recognise the next hop of a chain). */
   let lastTaken: { player: string; at: string } | null = null;
   /** Was the last glide for one of your own battles? */
   let lastMine = false;
   for (const beat of timeline.beats) {
+    if (beat.start < busyUntil) continue;
+    // A capital falling (session 21): a gentle push-in on it, then a slow pull-out as its beat ends.
+    if (opts.pushIn?.(beat)) {
+      const s = focusOf(beat, spots);
+      if (s) {
+        const before = inView(cur, vp, s) ? cur : centredOn(cur, vp, s);
+        const close = centredOn({ ...before, scale: before.scale * PUSH_IN }, vp, s);
+        moves.push({ at: beat.start, cam: close, ms: PUSH_MS });
+        const back = beat.start + beat.duration;
+        moves.push({ at: back, cam: before, ms: PULL_MS });
+        cur = before;
+        lastAt = back;
+        busyUntil = back + PULL_MS;
+        lastTaken = null;
+        continue;
+      }
+    }
     // Fate or the Fallen on your own land (session 16): always worth the camera, as much as your own battles.
     const loud = !!me && beat.events.some((x) => (x.type === "fate" && x.holder === me) || (x.type === "worldEvent" && x.against === me));
     if (!FOLLOWED.has(beat.kind) && !loud) continue;

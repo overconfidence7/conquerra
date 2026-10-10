@@ -105,4 +105,111 @@ if (want("art")) {
   await p.close();
 }
 
+// ---------- Part 2: the effects (held at exact moments of real replays) ----------
+/** Lock in and wait for the replay, held at its start. Returns the timeline's beats with what each is about. */
+async function replayTurn(p) {
+  await p.evaluate(() => (window.__conquerraReplayAt = 0));
+  await p.evaluate(() => void window.__conquerraStore.getState().lockIn());
+  await p.waitForFunction(() => window.__conquerraTimeline && window.__conquerraStore.getState().replay, { timeout: 90000 });
+  return p.evaluate(() => {
+    const st = window.__conquerraStore.getState();
+    const before = st.replay.before;
+    const capitals = new Set([before.me.capital, ...Object.entries(before.territories).filter(([, t]) => t.detail === "full" && t.capitalOf).map(([id]) => id)]);
+    return window.__conquerraTimeline.beats.map((b, i) => {
+      const e = b.events[0];
+      const battles = b.events.filter((x) => x.type === "battle");
+      return {
+        i, kind: b.kind, start: b.start, duration: b.duration,
+        to: e?.to ?? e?.territory ?? null,
+        troops: battles.reduce((n, x) => n + x.attackers.troops + x.defenders.troops, 0),
+        captured: battles.some((x) => x.captured),
+        capital: battles.some((x) => x.captured && capitals.has(x.to)),
+        out: b.events.find((x) => x.type === "eliminated")?.player ?? null,
+        mine: b.events.some((x) => x.player === before.me.id || x.defender === before.me.id),
+      };
+    });
+  });
+}
+/** Hold the replay at a moment, the camera at Mid on a territory (the replay's own camera stops: you "moved" it). */
+async function holdAt(p, at, focus, px) {
+  await p.evaluate((at) => (window.__conquerraReplayAt = at), at);
+  if (focus) await look(p, [focus], px);
+  await p.evaluate(() => (window.__conquerraMap.camera.userMoves = (window.__conquerraMap.camera.userMoves ?? 0) + 1));
+  await sleep(1200);
+}
+const endReplay = (p) => p.evaluate(() => { delete window.__conquerraReplayAt; const g = window.__conquerraStore.getState(); g.endReplay?.(); g.setShowReport?.(false); });
+
+if (want("fx")) {
+  for (const phone of [false, true]) {
+    const sfx = phone ? "-phone" : "";
+    const p = await page(phone);
+    await p.evaluateOnNewDocument(() => { localStorage.setItem("conquerra.effects", "full"); localStorage.setItem("conquerra.effects.noAuto", "1"); });
+    await p.goto(URL, { waitUntil: "networkidle0" });
+    const px = phone ? 120 : 170;
+    // A busy Wyrmland turn (the 20d game): an army marching, the biggest battle mid-clash, a capture.
+    await load(p, file("s20d-purse.json"));
+    let beats = await replayTurn(p);
+    const march = beats.find((b) => b.kind === "march" && b.mine) ?? beats.find((b) => b.kind === "march") ?? beats.find((b) => b.kind === "battle");
+    const big = [...beats].filter((b) => b.kind === "battle").sort((a, b) => b.troops - a.troops)[0];
+    const cap = beats.find((b) => b.kind === "battle" && b.captured && b.mine) ?? beats.find((b) => b.kind === "battle" && b.captured);
+    if (march) (await holdAt(p, march.start + march.duration * (march.kind === "battle" ? 0.22 : 0.5), march.to, px), await shot(p, "s21-fx-march", sfx));
+    if (big) (await holdAt(p, big.start + big.duration * 0.56, big.to, px), await shot(p, "s21-fx-battle", sfx));
+    if (cap) (await holdAt(p, cap.start + cap.duration * 0.84, cap.to, px), await shot(p, "s21-fx-capture", sfx));
+    await endReplay(p);
+    // The finish (session 20c's save: you hold 80%): play turns until a capital falls and a House is knocked out.
+    await load(p, file("s20c-save.json"));
+    await p.evaluate(async () => {
+      const s = window.__conquerraStore.getState();
+      await s.setInstruction(`leader:${s.view.me.id}`, { kind: "military" });
+      await s.setBudget(`leader:${s.view.me.id}`, { share: 0.8 });
+    });
+    let gotCapital = false, gotOut = false;
+    for (let turn = 0; turn < 6 && !(gotCapital && gotOut); turn++) {
+      beats = await replayTurn(p);
+      const fall = beats.find((b) => b.capital);
+      const out = beats.find((b) => b.out);
+      if (fall && !gotCapital) {
+        await holdAt(p, fall.start + fall.duration * 0.86, fall.to, px);
+        await shot(p, "s21-fx-capital", sfx);
+        gotCapital = true;
+      }
+      if (out && !gotOut) {
+        const where = await p.evaluate((player, i) => {
+          const tl = window.__conquerraTimeline;
+          let at = null;
+          for (const b of tl.beats.slice(0, i)) for (const e of b.events) if (e.type === "battle" && e.captured && e.defender === player) at = e.to;
+          return at;
+        }, out.out, out.i);
+        await holdAt(p, out.start + out.duration * 0.4, where, px);
+        await shot(p, "s21-fx-knockout", sfx);
+        gotOut = true;
+      }
+      await endReplay(p);
+      if (await p.evaluate(() => !!window.__conquerraStore.getState().view.winner)) break;
+    }
+    // No capital fell in the finish: play the Wyrmland game on (your Leader running the military) until one does.
+    if (!gotCapital) {
+      await load(p, file("s20d-purse.json"));
+      await p.evaluate(async () => {
+        const s = window.__conquerraStore.getState();
+        await s.setInstruction(`leader:${s.view.me.id}`, { kind: "military" });
+        await s.setBudget(`leader:${s.view.me.id}`, { share: 0.8 });
+      });
+      for (let turn = 0; turn < 16 && !gotCapital; turn++) {
+        beats = await replayTurn(p);
+        const fall = beats.find((b) => b.capital);
+        if (fall) {
+          await holdAt(p, fall.start + fall.duration * 0.86, fall.to, px);
+          await shot(p, "s21-fx-capital", sfx);
+          gotCapital = true;
+        }
+        await endReplay(p);
+        if (await p.evaluate(() => !!window.__conquerraStore.getState().view.winner)) break;
+      }
+    }
+    if (!gotCapital || !gotOut) console.log(`  (no ${gotCapital ? "" : "capital falling "}${gotOut ? "" : "knock-out"} found${sfx})`);
+    await p.close();
+  }
+}
+
 await browser.close();

@@ -174,6 +174,9 @@ export interface MarchAnim {
   /** 0..1 along the way. */
   progress: number;
   retreat: boolean;
+  /** Marching to a battle: it goes as far as the border, where the armies meet (session 21). */
+  meet?: boolean;
+  specialists?: SpecialistType[];
 }
 
 export interface ClashAnim {
@@ -187,6 +190,10 @@ export interface ClashAnim {
   captured: boolean;
   attackerLosses: number;
   defenderLosses: number;
+  /** Right of passage: it attacked from the last of these. */
+  through?: TerritoryId[];
+  /** Troops on both sides (the size of the fight). */
+  troops?: number;
 }
 
 export interface PopAnim {
@@ -238,13 +245,16 @@ export function frameAt(tl: Timeline, t: number): ReplayFrame {
       // Grouped items start a little after each other and share the beat.
       const lag = n > 1 ? (k / n) * 0.35 : 0;
       const q = clamp01((p - lag) / (1 - (n > 1 ? 0.35 : 0)));
-      if (e.type === "moved") frame.marches.push({ from: e.from, to: e.to, ...(e.through ? { through: e.through } : {}), player: e.player, troops: e.army.troops, progress: ease(q), retreat: e.retreat });
+      if (e.type === "moved") frame.marches.push({ from: e.from, to: e.to, ...(e.through ? { through: e.through } : {}), player: e.player, troops: e.army.troops, progress: ease(q), retreat: e.retreat, specialists: e.army.specialists });
       else if (e.type === "battle") {
-        if (p < MARCH_SHARE) frame.marches.push({ from: e.from, to: e.to, ...(e.through ? { through: e.through } : {}), player: e.player, troops: e.attackers.troops, progress: ease(p / MARCH_SHARE) * (e.through ? 1 - 0.18 / (e.through.length + 1) : 0.82), retreat: false });
+        // The army marches as far as the border (session 21: armies meet at the border, not the territory's middle).
+        if (p < MARCH_SHARE) frame.marches.push({ from: e.from, to: e.to, ...(e.through ? { through: e.through } : {}), player: e.player, troops: e.attackers.troops, progress: ease(p / MARCH_SHARE), retreat: false, meet: true, specialists: e.attackers.specialists });
         else
           frame.clashes.push({
             at: e.to,
             from: e.from,
+            ...(e.through ? { through: e.through } : {}),
+            troops: e.attackers.troops + e.defenders.troops,
             attacker: e.player,
             defender: e.defender,
             progress: (p - MARCH_SHARE) / (1 - MARCH_SHARE),

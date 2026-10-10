@@ -1,7 +1,7 @@
-import type { GameContext, PlayerView, TerritoryId } from "@conquerra/engine";
+import type { GameContext, PlayerView, ReplayEvent, TerritoryId } from "@conquerra/engine";
 import type { Odds } from "../logic/orders";
 import type { Camera, Insets, Viewport } from "../map/camera";
-import type { ReplayFrame } from "../replay/timeline";
+import type { ReplayFrame, Timeline } from "../replay/timeline";
 import type { ZoomLevel } from "../map/zoom";
 
 /** A queued (or being-drafted) move or attack, drawn as an arrow. */
@@ -93,6 +93,8 @@ export interface MapRenderer {
   glideTo(cam: Camera, ms: number): void;
   /** One moment of the animated replay to draw over the map, or null when there's no replay. */
   setReplay(frame: ReplayFrame | null): void;
+  /** A replay is starting (session 21): what its effects need (the timeline, the events, the view before the turn). */
+  startReplay?(timeline: Timeline, events: readonly ReplayEvent[], before: PlayerView): void;
   resize(): void;
   destroy(): void;
 }

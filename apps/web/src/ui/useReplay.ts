@@ -1,9 +1,10 @@
 import type { GameContext, PlayerView } from "@conquerra/engine";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { TurnReport } from "../host/protocol";
-import { CAMERA_EASE_MS, planReplayCamera, replaySpots, type CameraMove } from "../replay/camera";
+import { CAMERA_EASE_MS, capitalFalls, planReplayCamera, replaySpots, type CameraMove } from "../replay/camera";
 import { buildTimeline, frameAt, replayView, type Beat, type ReplayFrame } from "../replay/timeline";
 import type { MapRenderer } from "../render/types";
+import { cardAt, titleCards, type TitleCard } from "../replay/titles";
 
 /**
  * Drives the animated replay: a clock from the timeline (replay/timeline.ts), each frame handed to the renderer
@@ -24,6 +25,9 @@ export function useReplay(
   const spots = useMemo(() => (ctx ? replaySpots(ctx.map) : null), [ctx]);
   const [applied, setApplied] = useState(0);
   const [progress, setProgress] = useState(0);
+  // Title cards for the moments that matter (session 21): a capital falling, a House knocked out.
+  const cards = useMemo(() => (replay && timeline && ctx ? titleCards(timeline, replay.before, ctx.map) : []), [replay, timeline, ctx]);
+  const [card, setCard] = useState<TitleCard | null>(null);
   const skipRef = useRef(false);
   const cb = useRef({ onBeat, onEnd });
   cb.current = { onBeat, onEnd };
@@ -38,9 +42,15 @@ export function useReplay(
     let lastApplyAt = -Infinity;
     let raf = 0;
     let lastProgress = 0;
+    let lastCard: TitleCard | null = null;
+    setCard(null);
     // The camera plan, from where you're looking now. It stops for good if you pan or zoom during the replay.
     const start = renderer.current?.viewState();
-    const moves: CameraMove[] = start && spots ? planReplayCamera(timeline, spots, start.cam, start.vp, replay.before.me.id) : [];
+    // Capitals this view knows of: the camera pushes in when one falls.
+    const capitals = new Set([replay.before.me.capital, ...Object.entries(replay.before.territories).flatMap(([id, t]) => (t.detail === "full" && t.capitalOf ? [id] : []))]);
+    const moves: CameraMove[] = start && spots ? planReplayCamera(timeline, spots, start.cam, start.vp, replay.before.me.id, { pushIn: (b) => capitalFalls(b, capitals) }) : [];
+    // The effects need to know about the replay (and the map can be rebuilt as it starts: tell whichever is current).
+    let toldRenderer: MapRenderer | null = null;
     let nextMove = 0;
     let moved = false;
     const yours = () => !start || renderer.current?.viewState().userMoves !== start.userMoves;
@@ -49,7 +59,10 @@ export function useReplay(
       moved = false;
     };
     const step = (now: number) => {
-      const t = skipRef.current ? timeline.total : now - t0;
+      // (Screenshot scripts can hold the replay at a moment: window.__conquerraReplayAt = ms.)
+      const held = (window as unknown as { __conquerraReplayAt?: number }).__conquerraReplayAt;
+      const t = skipRef.current ? timeline.total : typeof held === "number" ? held : now - t0;
+      (window as unknown as { __conquerraTimeline?: typeof timeline }).__conquerraTimeline = timeline;
       while (!skipRef.current && nextMove < moves.length && moves[nextMove]!.at <= t) {
         const m = moves[nextMove++]!;
         if (yours()) nextMove = moves.length;
@@ -57,6 +70,10 @@ export function useReplay(
           renderer.current?.glideTo(m.cam, m.ms);
           moved = true;
         }
+      }
+      if (renderer.current && renderer.current !== toldRenderer) {
+        toldRenderer = renderer.current;
+        toldRenderer.startReplay?.(timeline, replay.report.events, replay.before);
       }
       const f: ReplayFrame = frameAt(timeline, t);
       renderer.current?.setReplay(f.done ? null : f);
@@ -69,6 +86,8 @@ export function useReplay(
         setApplied((lastApplied = f.applied));
       }
       if (f.beat && f.beat !== lastBeat) cb.current.onBeat((lastBeat = f.beat));
+      const c = f.done ? null : cardAt(cards, t);
+      if (c !== lastCard) setCard((lastCard = c));
       const p = timeline.total ? Math.min(1, t / timeline.total) : 1;
       if (p - lastProgress > 0.02 || p === 1) setProgress((lastProgress = p));
       if (f.done) {
@@ -85,8 +104,8 @@ export function useReplay(
       comeBack();
       renderer.current?.setReplay(null);
     };
-  }, [replay, timeline, spots, renderer]);
+  }, [replay, timeline, spots, renderer, cards]);
 
   const shown: PlayerView | null = useMemo(() => (replay ? replayView(replay.before, replay.report.events, applied) : null), [replay, applied]);
-  return { view: shown, progress, skip: () => (skipRef.current = true), total: timeline?.total ?? 0, ctx };
+  return { view: shown, progress, card, skip: () => (skipRef.current = true), total: timeline?.total ?? 0, ctx };
 }

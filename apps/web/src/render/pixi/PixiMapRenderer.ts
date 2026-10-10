@@ -9,7 +9,10 @@ import { TextureBank } from "./bank";
 import { InfoLayer } from "./info";
 import { MarkerLayer } from "./markers";
 import { ReplayLayer } from "./replayLayer";
-import type { ReplayFrame } from "../../replay/timeline";
+import { FxLayer } from "./fxLayer";
+import type { ReplayFrame, Timeline } from "../../replay/timeline";
+import type { PlayerView, ReplayEvent } from "@conquerra/engine";
+import { useFx } from "../../replay/fx/settings";
 import { sceneryFor } from "./scenery";
 import { WorldLayer } from "./world";
 
@@ -91,6 +94,8 @@ class PixiMapRenderer implements MapRenderer {
   private destroyed = false;
   private hovering: string | null = null;
   private steps: Record<string, number> = {};
+  private unsubFx: (() => void) | null = null;
+  private replayFrames: number[] = [];
 
   constructor(
     private opts: RendererOptions,
@@ -153,13 +158,17 @@ class PixiMapRenderer implements MapRenderer {
     mark("labels");
     this.markers = new MarkerLayer(ctx.map, this.bank, this.app.renderer.resolution);
     this.mapLayer.addChild(this.world.view, this.info.tactical, this.info.lines, this.info.realmLayer.root, this.info.walls, this.info.gates, this.info.glow, this.info.sites, this.info.figures, this.info.names, this.info.links, this.info.arrows);
-    this.replay = new ReplayLayer(ctx.map);
+    this.replay = new ReplayLayer(ctx.map, this.bank, phone);
+    this.replay.setLevel(useFx.getState().level);
+    this.unsubFx = useFx.subscribe((st) => this.replay.setLevel(st.level));
     // Separate render groups (session 21): what changes every replay frame (the replay, the markers' numbers) no longer
     // makes Pixi rebuild the whole painted map's draw list each frame.
     this.mapLayer.enableRenderGroup();
     this.markers.root.enableRenderGroup();
     this.replay.root.enableRenderGroup();
-    this.app.stage.addChild(this.mapLayer, this.markers.root, this.replay.root);
+    this.replay.show.enableRenderGroup();
+    // The show (figures, banners, dust and smoke) under the troop pills; the replay's numbers and plaques over them.
+    this.app.stage.addChild(this.mapLayer, this.replay.show, this.markers.root, this.replay.root);
     this.world.bakeFar();
     mark("far");
 
@@ -183,6 +192,11 @@ class PixiMapRenderer implements MapRenderer {
     this.applyMode();
     if (this.scene) this.setScene(this.scene);
     this.app.ticker.add(() => this.frame());
+    // The replay's effects (session 21) load once the map is on screen, like the Near art: never with the lobby.
+    void FxLayer.create(this.art).then((fx) => {
+      if (this.destroyed) return fx.destroy();
+      this.replay.fx = fx;
+    });
     // The bigger art for the Near zoom (session 16) comes once the map is on screen, so it never slows the first paint.
     if (this.world.opts.nearPpu)
       void this.art.loadHd().then((n) => {
@@ -239,7 +253,11 @@ class PixiMapRenderer implements MapRenderer {
       this.dirtyCam = true;
     }
     if (this.dirtyCam) this.applyCamera();
-    if (this.replayFrame && this.scene) this.replay.draw(this.replayFrame, this.cam.cam, this.scene.view);
+    if (this.replayFrame && this.scene) {
+      this.replay.draw(this.replayFrame, this.cam.cam, this.scene.view, this.cam.cam.scale * this.territorySize);
+      this.app.stage.position.set(this.replay.shake[0], this.replay.shake[1]);
+      this.watchReplaySpeed(now);
+    }
     if (!this.firstMapMs) this.firstMapMs = now - this.t0;
   }
 
@@ -335,7 +353,32 @@ class PixiMapRenderer implements MapRenderer {
 
   setReplay(frame: ReplayFrame | null) {
     this.replayFrame = frame;
-    if (!frame && this.replay && this.scene) this.replay.draw(null, this.cam.cam, this.scene.view);
+    if (!frame && this.replay && this.scene) {
+      this.replay.draw(null, this.cam.cam, this.scene.view, 0);
+      this.app.stage.position.set(0, 0);
+    }
+  }
+
+  startReplay(tl: Timeline, events: readonly ReplayEvent[], before: PlayerView) {
+    this.replay?.start(tl, events, before);
+    this.replayFrames = [];
+  }
+
+  /**
+   * A phone that can't keep the replay smooth on Full (under about 50 frames a second for two seconds) moves to Light
+   * by itself, and the game says so once (session 21).
+   */
+  private watchReplaySpeed(now: number) {
+    const f = this.replayFrames;
+    f.push(now);
+    while (f.length && f[0]! < now - 2000) f.shift();
+    if (f.length < 10 || now - f[0]! < 1900) return;
+    const fps = ((f.length - 1) / (now - f[0]!)) * 1000;
+    const w = window as unknown as { __conquerraFx?: { autoLight: boolean; peak: number; slowest: number } };
+    w.__conquerraFx = { autoLight: w.__conquerraFx?.autoLight ?? false, peak: this.replay.fx?.peak ?? 0, slowest: Math.min(w.__conquerraFx?.slowest ?? Infinity, Math.round(fps)) };
+    if (fps >= 48 || useFx.getState().level !== "full") return;
+    if (useFx.getState().tooSlow()) w.__conquerraFx.autoLight = true;
+    this.replayFrames = [];
   }
 
   setInsets(insets: Insets) {
@@ -405,6 +448,7 @@ class PixiMapRenderer implements MapRenderer {
 
   destroy() {
     this.destroyed = true;
+    this.unsubFx?.();
     this.detachInput?.();
     this.resizeObs?.disconnect();
     try {

@@ -1,0 +1,12 @@
+/* The replay's own styles (session 21): loaded with the game screen, not the lobby. */
+/* ---------- Title cards (session 21): the moments that matter, across the top of the replay ---------- */
+.title-card { position: absolute; z-index: 41; left: 50%; top: 132px; transform: translateX(-50%); pointer-events: none; padding: 10px 28px; min-width: min(80vw, 420px); max-width: 92vw; text-align: center;
+  background: linear-gradient(90deg, transparent, rgba(10, 14, 22, 0.92) 12%, rgba(10, 14, 22, 0.92) 88%, transparent);
+  border-top: 1px solid var(--gold); border-bottom: 1px solid var(--gold); box-shadow: 0 1px 0 var(--house), 0 -1px 0 var(--house);
+  animation: title-card var(--card-ms, 2200ms) ease-out both; }
+.title-card-text { font: 700 1.25rem var(--font-head); letter-spacing: 0.06em; color: var(--gold-hi); text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7); }
+@keyframes title-card { 0% { opacity: 0; transform: translate(-50%, -8px) scaleX(0.92); } 12% { opacity: 1; transform: translate(-50%, 0) scaleX(1); } 82% { opacity: 1; } 100% { opacity: 0; } }
+@media (max-width: 700px) { .title-card { top: 128px; padding: 8px 16px; } .title-card-text { font-size: 1rem; } }
+@media (prefers-reduced-motion: reduce) { .title-card { animation-name: title-card-still; } }
+@keyframes title-card-still { 0% { opacity: 0; } 8% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+

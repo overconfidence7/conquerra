@@ -34,6 +34,9 @@ import { moreCue } from "./moreCue";
 import { useLayout, useLayoutChoice } from "./useLayout";
 import { VersionLine } from "./Diagnostics";
 import type { LayoutChoice } from "../logic/layout";
+import { FX_LEVELS, useFx } from "../replay/fx/settings";
+import { houseOf } from "../map/houses";
+import "./replay.css";
 
 /** Save game / Load game: loaded the first time it's opened (it isn't needed to play a turn). */
 const SavesDialog = lazy(() => import("./Saves"));
@@ -130,6 +133,7 @@ function Settings({ tactical, onTactical, onFit, onReport, onSaves, onLeave, onC
         Load game
       </button>
       <LayoutSetting />
+      <EffectsSetting />
       <hr className="rule" />
       <button className="menu-item" onClick={onLeave}>
         Leave this game <span className="muted">Continue picks it up</span>
@@ -161,6 +165,26 @@ function LayoutSetting() {
   );
 }
 
+/**
+ * Settings → Effects (session 21): Full, Light (half the particles, no camera shake or flashes) or Off (the replay's
+ * information only: who moved, who fought, who holds what). Remembered on this device.
+ */
+function EffectsSetting() {
+  const { level, setLevel } = useFx();
+  return (
+    <div className="menu-item" role="radiogroup" aria-label="Effects">
+      <span>Effects</span>
+      <span className="seg">
+        {FX_LEVELS.map(([c, label]) => (
+          <button key={c} role="radio" aria-checked={level === c} className={level === c ? "on" : ""} onClick={() => setLevel(c)}>
+            {label}
+          </button>
+        ))}
+      </span>
+    </div>
+  );
+}
+
 let toastId = 0;
 
 const NO_AREA: readonly string[] = [];
@@ -181,6 +205,11 @@ export function GameScreen() {
   const renderer = useRef<MapRenderer | null>(null);
   const [tactical, setTactical] = useState(readTactical);
   const [settings, setSettings] = useState(false);
+  // The replay moved itself to Light (it was running slowly): say so, once.
+  const movedToLight = useFx((s) => s.movedToLight);
+  useEffect(() => {
+    if (movedToLight) useGame.setState({ notice: "The replay was running slowly on this device, so Effects are on Light now (Settings, Effects, to change it)." });
+  }, [movedToLight]);
   const [saves, setSaves] = useState<"save" | "load" | null>(null);
   const [cardsOpen, setCardsOpen] = useState(false);
   const [chronicleOpen, setChronicleOpen] = useState(false);
@@ -380,6 +409,12 @@ export function GameScreen() {
       }}
     />
   );
+  // A title card for the moment that matters (session 21), across the top of the map.
+  const titleCard = replaying && rp.card && (
+    <div className="title-card" key={rp.card.at} role="status" style={{ "--card-ms": `${rp.card.ms}ms`, "--house": rp.card.house ? houseOf(view, rp.card.house).color : "#c9a45c" } as React.CSSProperties}>
+      <span className="title-card-text">{rp.card.text}</span>
+    </div>
+  );
   const replayBar = replaying && (
     <Frame className="replay-bar slim">
       <span className="what">Turn {replay!.report.turn}</span>
@@ -546,6 +581,7 @@ export function GameScreen() {
         {settingsMenu}
         <Toasts toasts={toasts} />
         {replayBar}
+        {titleCard}
         {out && watching && (
           <Suspense fallback={null}>
             <OutPanel ctx={ctx} view={view} replaying={replaying} />
@@ -603,6 +639,7 @@ export function GameScreen() {
       {settingsMenu}
       <Toasts toasts={toasts} />
       {replayBar}
+      {titleCard}
       {out ? (
         watching && (
           <Suspense fallback={null}>
