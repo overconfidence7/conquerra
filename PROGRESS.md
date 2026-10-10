@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–21 (with 20b, 20c, 20d) are done; 21 (the polish pass) awaits review. Next: Nate's play test from "Things to test after session 21" (it can run alongside the next session), **session 22** (the language pass), 23 (bots and balance: the start bonus, the Marshal adopts the Merchant's lesson and the Steward's plan, idle Steward gold handed back, a remnant judged honestly under fog), then sound.**
+**Phase: M3 (depth and balance). Sessions 7–21 (with 20b, 20c, 20d) are done and reviewed. Next: Nate's play test from "Things to test after session 21" (it can run alongside the next session), **session 22** (the language pass: the prompt is written, built on Nate's voice skill as `docs/voice-guide.md`), 23 (bots and balance: the start bonus, the Marshal adopts the Merchant's lesson and the Steward's plan, idle Steward gold handed back, a remnant judged honestly under fog), then sound.**
 
 Claude Code sessions completed: **21** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -1266,6 +1266,21 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
   (Frames a second through the replay, uncapped. Session 19's 39–43 fps was a different measure: one turn, one attack. Krakenmere's busiest turn sits just under 50 even with Effects Off, so it's the 10-player map's own work, not the effects; on a real phone that turn would move itself to Light, which doesn't help much there. Runs vary by ±15% on this machine.)
 - **Particle budget** 600 phone / 2,000 laptop; busy moments use 60–90 (Full), 35–40 (Light). **The living map** costs about 0.4–1 ms a frame on the throttled phone at Mid. **The replay's length** is unchanged (timeline untouched; the 10–20 s median test passes). **Start-up bundle** 486.3 → 491.2 KB (gzip 149.3 → 150.8), inside the 5 KB allowance: batch 4's names, Step 0's notices, the title art's styles (the effects and their art load with the game screen).
 - **Tests and deploy:** typecheck and the web build pass; 978 tests pass (the full run twice before the last push). Deployed to the private preview twice (`07750885` after Part 6, **`5c6d1602`** final); the lock check passed both times. Nate: please check the repo's Actions page for the last commit.
+
+### Oct 10: Orchestrator review of session 21
+*A new orchestrator (session 8) took over from here.*
+- **The code:** all seven commits green on GitHub (the last, `87febf7`, included). Nothing slipped, so there is no 21b.
+- **The stale-build fix, checked on the real preview from the browser pane:** the pane was on an old build (no version in the lobby, a new service worker waiting). With a valid sign-in it showed "Update ready"; "Update now" brought up today's build (`c033ff7` in the lobby). The lock held: every path fetched without the sign-in cookie (bypassing the offline copy) was sent to Cloudflare's sign-in, and the identity was Nate's.
+- **The phone screenshots read well:** the replay has the whole screen, title cards and banners sit clear of the map, buildings stand up.
+- **Found in the screenshots, not the session's subject (session 22's Step 0):**
+  1. **On the laptop the replay is half hidden:** the territory panel and the order dock stay open over the map while it plays (about 40% covered), and the letterbox sits under them. The phone closes its sheet. Nate: fix it at the start of 22.
+  2. **The same news twice:** a capture with a title card shows the banner ("You capture Whitemarch") and the card ("Whitemarch falls to you") together.
+  3. **Floating words** ("Fire", "culture") are plain white system text.
+  4. **Gold piling up:** 811 gold in purses at turn 54 in the knock-out shot, the Steward with nothing to buy. Session 23's hand-back rule covers it.
+- **Frame rate:** the numbers are from a phone profile on the laptop (CPU 4×), not a real phone. Nate's Android is the real check (test list item 2).
+- **The session's three questions** (the amount of effects, whether the buildings pop, the 12 scenery pieces waiting) are play-test items; the scenery pieces wait for art batch 5 (orchestrator default).
+- **Nate's voice:** his writing-style skill ("nate-voice") is the source for the language pass. The orchestrator turned it into `docs/voice-guide.md` (the hard rules, where humor is allowed, a voice for each bot personality, sample rewrites for Nate to strike or change). The session writes `docs/voice/lines-for-nate.md` at the end for Nate to mark up.
+- **Session 22's prompt is written** (`docs/prompts/claude-code-session-22.md`).
 
 ### Things to test after session 21 (Nate's next play test)
 *Laptop first; the phone where it applies.*
