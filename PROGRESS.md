@@ -1265,7 +1265,7 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
 
   (Frames a second through the replay, uncapped. Session 19's 39–43 fps was a different measure: one turn, one attack. Krakenmere's busiest turn sits just under 50 even with Effects Off, so it's the 10-player map's own work, not the effects; on a real phone that turn would move itself to Light, which doesn't help much there. Runs vary by ±15% on this machine.)
 - **Particle budget** 600 phone / 2,000 laptop; busy moments use 60–90 (Full), 35–40 (Light). **The living map** costs about 0.4–1 ms a frame on the throttled phone at Mid. **The replay's length** is unchanged (timeline untouched; the 10–20 s median test passes). **Start-up bundle** 486.3 → 491.2 KB (gzip 149.3 → 150.8), inside the 5 KB allowance: batch 4's names, Step 0's notices, the title art's styles (the effects and their art load with the game screen).
-- **Tests and deploy:** 978 automated tests pass; typecheck and the web build pass. Deployed to the private preview (version `07750885` after Part 6; the final deploy below); the lock check passed. Nate: please check the repo's Actions page for the last commit.
+- **Tests and deploy:** typecheck and the web build pass; 978 tests pass (the full run twice before the last push). Deployed to the private preview twice (`07750885` after Part 6, **`5c6d1602`** final); the lock check passed both times. Nate: please check the repo's Actions page for the last commit.
 
 ### Things to test after session 21 (Nate's next play test)
 *Laptop first; the phone where it applies.*
