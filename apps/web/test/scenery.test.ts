@@ -46,7 +46,7 @@ describe("painted scenery (ranges, cliffs, bridges, gates, landmarks, forests)",
     });
     // One gate on every pass road.
     expect(s.gates.map((x) => [x.x, x.y])).toEqual(g.passes.map((p) => [p.x, p.y]));
-  });
+  }, 30000); // (The 200-territory maps take a few seconds when the whole suite runs at once.)
 
   it.each(all.map((m) => [m.id, m] as const))("%s: landmarks are few, on suitable ground, and clear of capitals, sites, passes, banners and plaques", (_, map) => {
     const g = map.geometry!;
