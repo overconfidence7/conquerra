@@ -56,6 +56,7 @@ export function Lobby() {
         <h1>Conquerra</h1>
       </div>
       <p className="muted">Set your orders, lock in, and watch every plan play out at once.</p>
+      <VersionLine />
       {auto && (
         <button className="primary wide big continue" onClick={() => void load({ slot: "auto" })} disabled={busy}>
           Continue
@@ -285,7 +286,6 @@ export function Lobby() {
           <SavesDialog mode="load" inGame={false} onClose={() => setLoading(false)} />
         </Suspense>
       )}
-      <VersionLine />
       </Frame>
     </div>
   );

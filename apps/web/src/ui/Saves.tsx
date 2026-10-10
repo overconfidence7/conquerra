@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { SLOTS, type SlotId } from "../host/saves";
-import { savedWhen, slotLine } from "./saveText";
+import { emptyAutosaveLine, lastFinished, savedWhen, slotLine } from "./saveText";
 import { useGame } from "../store";
 import { BUILD } from "./Diagnostics";
 import { Frame } from "./Frame";
@@ -49,7 +49,7 @@ export default function SavesDialog({ mode, inGame, onClose }: { mode: "save" | 
               <li key={slot} className={`slot ${info ? "" : "empty"}`}>
                 <div className="slot-text">
                   <b>{slotName(slot)}</b>
-                  <span className="small">{info ? slotLine(info) : slot === "auto" ? "Nothing yet: the game saves itself every turn." : "Empty"}</span>
+                  <span className="small">{info ? slotLine(info) : slot === "auto" ? emptyAutosaveLine(lastFinished()) : "Empty"}</span>
                   {info && <span className="small muted">{savedWhen(info.savedAt)}</span>}
                 </div>
                 {mode === "save" ? (

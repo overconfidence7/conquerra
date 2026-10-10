@@ -203,7 +203,7 @@ function PathPanel({ ctx, view, queue, path }: Props & { path: { from: Territory
       <p className="muted">From {n.place(path.from)}</p>
       <div className="chips" role="radiogroup" aria-label="Which way">
         {(["shortest", "sweep"] as const).map((k) => (
-          <button key={k} role="radio" aria-checked={path.kind === k} className={`chip ${path.kind === k ? "on" : ""}`} onClick={() => setPathKind(k)} title={PATH_HELP[k]}>
+          <button key={k} role="radio" aria-checked={path.kind === k} className={`chip ${path.kind === k ? "on" : ""}`} onClick={() => setPathKind(k)} title={PATH_HELP[k]} aria-label={`${k === "shortest" ? "Shortest way" : "Full sweep"}: ${plans[k].orders.length} order${plans[k].orders.length === 1 ? "" : "s"}`}>
             {k === "shortest" ? "Shortest way" : "Full sweep"} · {plans[k].orders.length}
           </button>
         ))}

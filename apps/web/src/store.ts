@@ -1,3 +1,4 @@
+import { forgetFinished, rememberFinished } from "./ui/saveText";
 import { keyIntent, type KeyLike } from "./logic/keys";
 import { defaultRules, mapCatalog, suggestedMode, type BuildingType } from "@conquerra/content";
 import { BOT_NAMES } from "./host/names";
@@ -429,6 +430,8 @@ export const useGame = create<GameStore>((set, get) => ({
 
   async start() {
     const { lobby } = get();
+    // A new game: the lobby stops saying the last one finished.
+    forgetFinished();
     await enterGame((host) => host.start(lobby));
   },
 
@@ -795,6 +798,7 @@ export const useGame = create<GameStore>((set, get) => ({
     set({ busy: true, error: null });
     try {
       const u = await host.finish();
+      rememberFinished({ mapName: get().ctx?.map.name ?? "Your game", turn: u.view.turn, at: Date.now() });
       set({ view: u.view, seats: u.seats ?? null, report: u.report ?? get().report, fastForwarded: u.fastForwarded, screen: "over", watching: false });
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
@@ -985,6 +989,8 @@ function applyTurn(u: HostUpdate, auto: boolean) {
   const over = u.view.winner !== null;
   const out = knockedOut(u.view);
   const chronicle = useGame.getState().chronicle;
+  // The game's autosave goes when it ends: the lobby says it finished instead of "Nothing yet".
+  if (over) rememberFinished({ mapName: useGame.getState().ctx?.map.name ?? "Your game", turn: u.view.turn, at: Date.now() });
   useGame.setState({
     view: u.view,
     seats: u.seats ?? null,

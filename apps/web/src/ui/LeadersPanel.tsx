@@ -90,9 +90,12 @@ function BudgetControl({ ctx, budget, left, leftGold, onSet }: { ctx: GameContex
           placeholder="8"
           aria-label="An exact amount of gold each turn"
           onChange={(e) => {
-            setExact(e.target.value);
             const v = Math.floor(Number(e.target.value));
-            if (e.target.value !== "" && Number.isFinite(v)) onSet({ gold: Math.max(0, Math.min(max, v)) });
+            if (e.target.value === "" || !Number.isFinite(v)) return setExact(e.target.value);
+            // Capped at the income that's left: the box shows the amount it really is (typing 99 shows 5).
+            const gold = Math.max(0, Math.min(max, v));
+            setExact(gold === v ? e.target.value : String(gold));
+            onSet({ gold });
           }}
         />
         gold a turn

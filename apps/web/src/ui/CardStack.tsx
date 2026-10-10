@@ -31,7 +31,7 @@ export function CardStack({ ctx, view, onOpen, compact = false }: { ctx: GameCon
       {!compact && (
         <span className="stack-text">
           {hand.length > 0 && <b>{full ? "Hand full" : `Spoils ${hand.length}`}</b>}
-          {hand.length > 0 && <span className="small rule">{SPOILS_RULE}</span>}
+          {hand.length > 0 && <span className="small stack-rule">{SPOILS_RULE}</span>}
           {missions > 0 && <span className="small">{missions === 1 ? "1 mission" : `${missions} missions`}</span>}
         </span>
       )}

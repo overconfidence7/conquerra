@@ -389,7 +389,7 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .spoils-table tr.lit th, .spoils-table tr.lit td { opacity: 1; color: var(--gold-hi); background: rgba(227, 199, 126, 0.1); }
 .spoils-table .best { font-size: 0.8em; padding: 0 5px; border-radius: 6px; background: var(--gold); color: var(--navy); margin-left: 4px; }
 .card-stack .stack-text { flex: 1; min-width: 0; }
-.card-stack .rule { display: block; font: 500 var(--fs-label) var(--font-body); line-height: 1.25; white-space: normal; opacity: 0.85; }
+.card-stack .stack-rule { display: block; font: 500 var(--fs-label) var(--font-body); line-height: 1.25; white-space: normal; opacity: 0.85; }
 /* Orders along a path (session 16). */
 .path-summary { font-weight: 700; color: var(--gold-hi); margin: 6px 0; }
 .row > .grow { flex: 1; margin: 0; }
@@ -515,8 +515,12 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .diag dt { color: var(--muted); }
 .diag dd { margin: 0; font-family: var(--font-num); word-break: break-word; }
 .version-line { align-self: center; opacity: 0.7; }
+/* The lobby shows the version up top (session 21), so an old build is plain to see without opening anything. */
+.lobby .version-line { margin: -4px 0 4px; }
 
 /* "Update ready" */
+/* "Sign in again" (session 21): a link that looks like the primary button. */
+.update-prompt a.button { display: inline-flex; align-items: center; min-height: 40px; padding: 7px 12px; border-radius: 8px; font: 700 0.95rem var(--font-body); background: linear-gradient(#e3c77e, #c9a45c); color: var(--navy); border: 1px solid #f1dca2; text-decoration: none; }
 .update-prompt { position: fixed; z-index: 60; left: 50%; bottom: 96px; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; }
 
 /* The Desktop site tip: one line across the top, over everything. Its size is set from how shrunk the page is. */
