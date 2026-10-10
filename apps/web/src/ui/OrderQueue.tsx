@@ -13,7 +13,7 @@ export function OrderQueue({ ctx, view, plan, queue, bare = false, onFold }: { c
   const body = (
     <>
       {queue.some((o) => o.general || o.steward) && <PlacementSwitch compact />}
-      {queue.length === 0 && <p className="muted small">No orders yet. Tap your land, then a neighbour to attack; or use the round buttons.</p>}
+      {queue.length === 0 && <p className="muted small">No orders yet. The army is enjoying its day off. Tap your land, then a neighbour to attack, or use the round buttons.</p>}
       <ol ref={moreCue}>
         {queue.map((o, i) => {
           const before = o.kind === "move" ? planQueue(ctx, view, queue.slice(0, i)) : null;

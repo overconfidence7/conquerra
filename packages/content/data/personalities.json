@@ -99,7 +99,7 @@
     {
       "id": "blitzer",
       "title": "the Blitzer",
-      "summary": "Expands as fast as it can every turn and chains everything it can; it defends little.",
+      "summary": "Expands as fast as it can every turn and chains everything it can. It defends little.",
       "attack": {
         "chainMargin": 1,
         "maxHops": 6,

@@ -1,4 +1,5 @@
 import type { MapDef, Rules } from "@conquerra/content";
+import type { VoiceLine } from "../logic/voices";
 import type { LeaderNote, Answer } from "@conquerra/bots";
 import type { GameMode, Instruction, LeaderStyle, Offer, Order, PlayerId, PlayerView, ReplayEvent, SaveFile } from "@conquerra/engine";
 import type { TurnClock } from "../logic/timer";
@@ -54,6 +55,8 @@ export interface TurnReport {
   /** The turn these events happened on. */
   turn: number;
   events: ReplayEvent[];
+  /** What your leaders said about it (session 22), in their own voices. */
+  voices?: VoiceLine[];
 }
 
 export interface HostUpdate {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOT_SITUATIONS, fill, LEADER_SITUATIONS, LEADER_VOICES, leaderLine, lines, pickVersion, placeholders, REASONS, reasonLine, VOICES, type Speaker } from "../src/lines";
+import { BOT_SITUATIONS, CAPTURED_SITUATIONS, fill, LEADER_SITUATIONS, LEADER_VOICES, leaderLine, lines, pickVersion, placeholders, REASONS, reasonLine, VOICES, type Speaker } from "../src/lines";
 
 /** The line library (session 22): enough versions, every placeholder known and filled, and a deterministic pick. */
 const sample = (keys: readonly string[]) => Object.fromEntries(keys.map((k) => [k, `<${k}>`]));
@@ -45,6 +45,14 @@ describe("the line library", () => {
       for (const v of VOICES) check(allowed, lines.reasons.voiced[v][k as keyof typeof REASONS], `${v}.${k}`);
     }
     for (const v of LEADER_VOICES) for (const [k, allowed] of Object.entries(LEADER_SITUATIONS)) check(allowed, lines.leaders[v]?.[k as keyof typeof LEADER_SITUATIONS], `leader ${v}.${k}`);
+    for (const [k, allowed] of Object.entries(CAPTURED_SITUATIONS)) check(allowed, lines.captured[k as keyof typeof CAPTURED_SITUATIONS], `captured.${k}`);
+  });
+
+  it("a captured leader has three to five versions of each line", () => {
+    for (const k of Object.keys(CAPTURED_SITUATIONS) as (keyof typeof CAPTURED_SITUATIONS)[]) {
+      expect(lines.captured[k].length, k).toBeGreaterThanOrEqual(3);
+      expect(lines.captured[k].length, k).toBeLessThanOrEqual(5);
+    }
   });
 
   it("the pick is deterministic (the game, the turn, the speaker), and a long game hears more than one version", () => {

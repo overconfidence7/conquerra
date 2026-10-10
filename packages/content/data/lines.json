@@ -1,4 +1,19 @@
 {
+  "limits": {
+    "perLeaderPerTurn": 1,
+    "perReport": 3,
+    "judgeEvery": 4,
+    "judgeQuietAt": 4,
+    "complimentEvery": 6,
+    "purseEvery": 5,
+    "threatEvery": 3,
+    "threatSteps": 2,
+    "threatMin": 4,
+    "goldIdle": 20,
+    "grudgeAfter": 3,
+    "grudgeEvery": 6,
+    "needleEvery": 6
+  },
   "bots": {
     "conqueror": {
       "truceYes": [
@@ -924,48 +939,830 @@
   },
   "leaders": {
     "conqueror": {
+      "opening": [
+        "{leader} here. {capital} is ours, and I have plans for the rest of the map.",
+        "{leader} reporting. One plan, one front. I'll tell you which one when I've picked it.",
+        "{leader} here. Point me at someone and I'll handle the rest."
+      ],
       "took": [
         "Took {places}. {rival} ran before we got there.",
         "Took {places} from {rival}. One plan, working as planned.",
         "Took {places}. {rival} didn't hold the line for long.",
         "Took {places}. Next."
+      ],
+      "pushedBack": [
+        "Pushed at {place} and got pushed back. Lost {n}. We go again.",
+        "{place} held. Lost {n}. It won't next time.",
+        "Driven back at {place}, {n} lost. Noted, and not for long."
+      ],
+      "capitalTaken": [
+        "{capital} is ours. {rival} will want it back. They won't get it.",
+        "Took {capital}. That was {rival}'s capital, for the record.",
+        "{capital} has a new owner. One plan, working as planned."
+      ],
+      "capitalLost": [
+        "{capital} is gone. {rival} brought {n} troops. I'll want them back.",
+        "For the record, it took {rival} {n} troops to take {capital}. We'll remember the number.",
+        "{capital} fell to {rival}. I have a plan for that too."
+      ],
+      "finished": [
+        "{rival} is done. We checked the fog twice.",
+        "{rival} is out. Next.",
+        "That's the end of {rival}. One front closed."
+      ],
+      "threatened": [
+        "Heads up, {rival} has {n} troops two steps from {capital}. I'm moving what I can inside the wall.",
+        "{rival} has {n} troops two steps from {capital}. I'm pulling the army home to meet them.",
+        "Heads up, {n} of {rival}'s troops are two steps from {capital}. I'm on it."
+      ],
+      "threatenedYours": [
+        "Heads up, {rival} has {n} troops two steps from {capital}. Your army, your call, but I'd bring some home.",
+        "{rival} has {n} troops two steps from {capital}. I'd move troops in before they do.",
+        "Heads up, {n} of {rival}'s troops are two steps from {capital}. Just saying."
+      ],
+      "purseEmpty": [
+        "Purse is empty. I'll be holding the line with strong opinions.",
+        "Out of gold. The war continues on credit.",
+        "My purse is empty. The plan is not."
+      ],
+      "wallBuilt": [
+        "{place}'s wall is up. Now we can stop worrying about {capital} and go win something.",
+        "{place} is walled. Good. One less thing to defend.",
+        "Wall's up at {place}. Back to the war."
+      ],
+      "judgeAttack": [
+        "You sent {n} against {place}'s {m}. Bold. I'd have waited a turn and brought the {k} from {other}.",
+        "{n} against {m} at {place}. I'd have brought the {k} from {other} and done it once.",
+        "You hit {place}'s {m} with {n}. The {k} at {other} were right there. One front, all of it, next time."
+      ],
+      "judgeAttackAlone": [
+        "You sent {n} against {place}'s {m}. Bold. I'd have waited a turn for more.",
+        "{n} against {m} at {place}. I'd have waited until the numbers were ours.",
+        "You hit {place}'s {m} with {n}. I admire the confidence. I'd have brought more."
+      ],
+      "judgeThin": [
+        "You left {place} with {n} next to {rival}'s {m}. {rival} noticed.",
+        "{place} had {n} troops and {rival} had {m} next door. That math was never going to work.",
+        "{n} at {place}, {m} of {rival}'s next to it. I'd have held one border properly."
+      ],
+      "judgeTruce": [
+        "You broke the truce with {rival}. {rival} and {n} of their friends would like a word.",
+        "We broke our word to {rival}, and now {n} more Houses are coming with them. I'd have kept it until the war was ready.",
+        "Breaking the truce with {rival} brought {n} of their friends in. I'd have picked one enemy."
+      ],
+      "judgeGold": [
+        "You had {n} gold in the treasury and {place} fell. I'd have turned the gold into troops.",
+        "{place} fell with {n} gold sitting in the treasury. Gold doesn't hold walls.",
+        "{n} gold unspent, and {place} is gone. I'd have bought an army with it."
+      ],
+      "judgeCapital": [
+        "You left {capital} with {n} troops next to {rival}'s {m}. I'd have brought the army home first.",
+        "{capital} had {n}, {rival} had {m} next door. I'd have fixed that before anything else.",
+        "{n} at {capital} against {rival}'s {m}. I'd have guarded the capital, then gone conquering."
+      ],
+      "compliment": [
+        "That worked at {place}. I'd have done it the same way, just sooner.",
+        "Good call at {place}. I'll take some of the credit anyway.",
+        "{place} was a good hit. I'd have done the same."
+      ],
+      "grudgeFort": [
+        "{rival} burned our fort at {place} on turn {turn}. I haven't forgotten, in case you were wondering.",
+        "Still thinking about our fort at {place}. {rival}, turn {turn}.",
+        "{rival} owes us a fort. {place}, turn {turn}."
+      ],
+      "grudgeHome": [
+        "{rival} took {place} from our home province on turn {turn}. I haven't forgotten.",
+        "{place} was ours until {rival} came through on turn {turn}. I'd like it back.",
+        "{rival}, {place}, turn {turn}. I keep a list. It's a short list."
+      ],
+      "grudgeArmy": [
+        "{rival} wiped out our army at {place} on turn {turn}. I haven't forgotten.",
+        "Turn {turn}, {place}, {rival}. Our army never came home. I'd like a rematch.",
+        "{rival} broke our army at {place} on turn {turn}. That's on the list."
+      ],
+      "grudgeRevenge": [
+        "Took {place} back from {rival}. Turn {turn} feels like a long time ago now.",
+        "{place} is ours again. {rival} can keep the memory of turn {turn}.",
+        "Paid {rival} back for {place}. We're even. For now."
+      ],
+      "grudgeRespect": [
+        "{rival} took {place} too. I'm starting to respect them. A little.",
+        "{rival} again, at {place}. Fine. They're good. I'll still beat them.",
+        "{place} as well. {rival} has earned a grudging nod from me. Grudging."
+      ],
+      "handout": [
+        "Sent {n} gold back. My war chest has standards.",
+        "Returning {n} gold. Spend it on something with a sword.",
+        "Here's {n} gold back. Nothing worth conquering with it this turn."
       ]
     },
     "blitzer": {
+      "opening": [
+        "{leader} here. Already moving.",
+        "{leader}. Ready. Point the way.",
+        "{leader} reporting. {capital} is fine. The rest of the map is the plan."
+      ],
       "took": [
         "Took {places}. Already moving.",
         "Took {places}. Didn't stop to look around.",
         "Took {places}. {rival} were slow.",
         "{places}. Done. Next."
+      ],
+      "pushedBack": [
+        "Bounced off {place}. Lost {n}. Going around.",
+        "{place} held. {n} gone. Next.",
+        "Lost {n} at {place}. Already moving."
+      ],
+      "capitalTaken": [
+        "Took {capital}. That was {rival}'s capital. Moving on.",
+        "{capital}, done. {rival} was slow.",
+        "{rival}'s capital, {capital}, is ours. Next."
+      ],
+      "capitalLost": [
+        "{capital} is gone. {rival} brought {n}. We were somewhere else.",
+        "{rival} took {capital} with {n}. I was busy. Sorry.",
+        "Lost {capital} to {rival}'s {n}. We'll be faster."
+      ],
+      "finished": [
+        "{rival} is done. Next.",
+        "{rival}, out. Faster than I thought.",
+        "Finished {rival}. Who's next."
+      ],
+      "threatened": [
+        "Heads up, {rival}, {n} troops, two steps from {capital}. Turning around.",
+        "{n} of {rival}'s, two steps from {capital}. Heading home. Quickly.",
+        "{rival} has {n} near {capital}. On my way."
+      ],
+      "threatenedYours": [
+        "Heads up, {rival}, {n} troops, two steps from {capital}. Your move.",
+        "{n} of {rival}'s troops two steps from {capital}. I'd hurry.",
+        "{rival} has {n} near {capital}. Faster would be good."
+      ],
+      "purseEmpty": [
+        "Purse empty. Running on fumes.",
+        "Out of gold. Still moving.",
+        "No gold. Marching anyway."
+      ],
+      "wallBuilt": [
+        "Wall up at {place}. Great. Can we go now.",
+        "{place} has a wall. {capital} is safe. Moving on.",
+        "Walled {place}. Took forever. Done."
+      ],
+      "judgeAttack": [
+        "{n} against {m} at {place}. I'd have brought the {k} from {other} and gone faster.",
+        "You sent {n} at {place}'s {m}. The {k} at {other} were right there. Bring them next time.",
+        "{place}: {n} against {m}. I'd have thrown the {k} from {other} in too."
+      ],
+      "judgeAttackAlone": [
+        "{n} against {m} at {place}. Brave. Slow to recover, though.",
+        "You sent {n} at {place}'s {m}. I'd have hit somewhere softer and kept moving.",
+        "{place} had {m}. You sent {n}. I'd have gone around."
+      ],
+      "judgeThin": [
+        "{place} had {n}. {rival} had {m} next door. They noticed before I did.",
+        "You left {n} at {place} next to {rival}'s {m}. Gone.",
+        "{n} at {place}, {m} of {rival}'s next to it. Should've moved first."
+      ],
+      "judgeTruce": [
+        "Broke the truce with {rival}. Now {n} more of them are coming. Fun.",
+        "{rival} plus {n} friends, because of the truce. I'd have run past them.",
+        "We broke the truce. {rival} brought {n} friends. Busy turn."
+      ],
+      "judgeGold": [
+        "{n} gold sitting there and {place} fell. Spend it. Faster.",
+        "{place} gone, {n} gold unspent. Troops are quicker than gold.",
+        "You kept {n} gold and lost {place}. I'd have spent it on the road."
+      ],
+      "judgeCapital": [
+        "{capital} had {n}, {rival} had {m} next door. I'd have doubled back.",
+        "You left {n} at {capital} by {rival}'s {m}. Quick fix next time.",
+        "{n} at {capital}, {m} of {rival}'s next door. Even I'd have guarded that."
+      ],
+      "compliment": [
+        "{place}. Nice. Fast.",
+        "Good hit at {place}. I'd have done it a turn earlier.",
+        "That worked at {place}. Keep going."
+      ],
+      "grudgeFort": [
+        "{rival} burned our fort at {place}. Turn {turn}. Still annoyed.",
+        "Turn {turn}, our fort at {place}, {rival}. Haven't forgotten. Moving fast doesn't mean forgetting.",
+        "{rival} owes us for {place}. Turn {turn}."
+      ],
+      "grudgeHome": [
+        "{rival} took {place} on turn {turn}. Home province. Rude.",
+        "{place}, turn {turn}, {rival}. I want it back. Quickly.",
+        "Still thinking about {place}. {rival}, turn {turn}."
+      ],
+      "grudgeArmy": [
+        "{rival} wiped out our army at {place}, turn {turn}. Not forgotten.",
+        "Turn {turn}. {place}. {rival}. That one stung.",
+        "{rival} caught our army at {place} on turn {turn}. Payback soon."
+      ],
+      "grudgeRevenge": [
+        "Took {place} back from {rival}. Turn {turn}, settled.",
+        "{place} is ours again. {rival}, we're even.",
+        "Paid back {rival} for {place}. Next."
+      ],
+      "grudgeRespect": [
+        "{rival} took {place} too. Fine. They're quick.",
+        "{rival} again at {place}. Faster than I'd like. Respect.",
+        "{place} as well. {rival} is good. Annoyingly."
+      ],
+      "handout": [
+        "Sent {n} gold back. No time to spend it.",
+        "Returning {n} gold. Too busy marching.",
+        "{n} gold, back to you. Spend it fast."
       ]
     },
     "turtle": {
+      "opening": [
+        "{leader} here. I'd like to start with {capital}'s walls, if that's all right.",
+        "{leader} reporting. First the walls, then everything else.",
+        "{leader} here. {capital} looks a bit exposed. I can fix that."
+      ],
       "took": [
         "Took {places}, and the walls are going up behind us.",
         "Took {places}. Carefully. Now we hold it.",
         "Took {places} from {rival}. I'd like a wall there next."
+      ],
+      "pushedBack": [
+        "Tried {place}. They held. Lost {n}. We should have built first.",
+        "{place} held, and we lost {n}. Back behind the walls.",
+        "Pushed back at {place}, {n} lost. This is why I like walls."
+      ],
+      "capitalTaken": [
+        "Took {capital} from {rival}. I'd like to wall it, if you don't mind.",
+        "{capital} is ours. {rival}'s walls were thinner than mine.",
+        "{rival}'s capital, {capital}, has new owners. The masons are excited."
+      ],
+      "capitalLost": [
+        "{capital} is gone. {rival} brought {n}. For the record, I asked for a bigger wall.",
+        "{rival} took {capital} with {n} troops. I'll be drawing up plans for a bigger wall.",
+        "{capital} fell to {rival}'s {n}. The wall did its best."
+      ],
+      "finished": [
+        "{rival} is done. We checked the fog twice. Then once more.",
+        "{rival} is out. Carefully done.",
+        "That's {rival} finished. Slow and sure."
+      ],
+      "threatened": [
+        "Heads up, {rival} has {n} troops two steps from {capital}. I'm moving what I can inside the wall.",
+        "{n} of {rival}'s troops, two steps from {capital}. Everyone inside.",
+        "Heads up, {rival}, {n} troops, near {capital}. Bolting the gates."
+      ],
+      "threatenedYours": [
+        "Heads up, {rival} has {n} troops two steps from {capital}. I'd get some troops inside the wall.",
+        "{n} of {rival}'s troops are two steps from {capital}. This is what walls are for, if we had more of them.",
+        "Heads up, {rival} is two steps from {capital} with {n}. I'd hold, not attack."
+      ],
+      "purseEmpty": [
+        "Purse is empty. The masons are working for exposure.",
+        "Out of gold. The walls will have to finish themselves.",
+        "My purse is empty. I'm told stone doesn't grow on trees."
+      ],
+      "wallBuilt": [
+        "{place}'s wall is up. Anyone who wants {capital} now has to go through all of it.",
+        "{place} is walled. I'll sleep better.",
+        "The wall at {place} is finished. It's beautiful. {capital} thanks you."
+      ],
+      "judgeAttack": [
+        "You sent {n} against {place}'s {m}. I'd have built a wall first, then brought the {k} from {other}.",
+        "{n} against {m} at {place}. The {k} at {other} were sitting right there. Patience pays.",
+        "{place} had {m}. You sent {n}. I'd have waited for the {k} from {other}. And a wall."
+      ],
+      "judgeAttackAlone": [
+        "You sent {n} against {place}'s {m}. I'd have waited behind the walls.",
+        "{n} against {m} at {place}. I'd have stayed home and built something.",
+        "{place} had {m}, you sent {n}. Slow and sure would have been sure."
+      ],
+      "judgeThin": [
+        "You left {place} with {n} next to {rival}'s {m}. That's what walls are for.",
+        "{place} had {n}, {rival} had {m} next door. A wall would have helped.",
+        "{n} at {place}, {m} of {rival}'s across the border. I did mention walls."
+      ],
+      "judgeTruce": [
+        "You broke the truce with {rival}. {rival} and {n} of their friends would like a word, and my walls aren't ready.",
+        "We broke our truce with {rival}. Now {n} more Houses are at the gates.",
+        "Breaking the truce with {rival} brought {n} friends. I liked the truce."
+      ],
+      "judgeGold": [
+        "You had {n} gold and {place} fell. That was a wall's worth of gold.",
+        "{place} fell with {n} gold in the treasury. I could have built something.",
+        "{n} gold sitting there while {place} fell. Stone is cheaper than regret."
+      ],
+      "judgeCapital": [
+        "You left {capital} with {n} troops next to {rival}'s {m}. I'd have walled it first.",
+        "{capital} had {n}, {rival} had {m}. I'd have fixed that before anything else.",
+        "{n} at {capital} and {m} of {rival}'s next door. My walls and I were nervous."
+      ],
+      "compliment": [
+        "That worked at {place}. I'd have built a wall first, but it worked.",
+        "Good move at {place}. Careful, even.",
+        "{place} went well. I approve. Cautiously."
+      ],
+      "grudgeFort": [
+        "{rival} burned our fort at {place} on turn {turn}. I built that fort.",
+        "Still thinking about our fort at {place}. {rival}, turn {turn}. It had a lovely gate.",
+        "{rival} owes us a fort at {place}. Turn {turn}. I kept the plans."
+      ],
+      "grudgeHome": [
+        "{rival} took {place} from our home province on turn {turn}. Behind our walls, almost.",
+        "{place}, turn {turn}, {rival}. I'd like it back, and walled.",
+        "{rival} took {place} on turn {turn}. I haven't forgotten. I have a wall-shaped plan."
+      ],
+      "grudgeArmy": [
+        "{rival} wiped out our army at {place} on turn {turn}. It should have stayed behind the walls.",
+        "Turn {turn}, {place}, {rival}. I said it was too far from the walls.",
+        "{rival} broke our army at {place} on turn {turn}. Not forgotten."
+      ],
+      "grudgeRevenge": [
+        "{place} is ours again. {rival} can have turn {turn}. We'll have the wall.",
+        "Took {place} back from {rival}. Building a wall there tomorrow.",
+        "Paid {rival} back for {place}. Carefully."
+      ],
+      "grudgeRespect": [
+        "{rival} took {place} as well. I'm starting to respect them. A little.",
+        "{rival} again at {place}. Fine. They're good at this.",
+        "{place} too. {rival} has my respect. Not my land."
+      ],
+      "handout": [
+        "Sent {n} gold back. Wanted the peasants to have something.",
+        "Returning {n} gold. Every wall I wanted is built.",
+        "Here's {n} gold. Nothing out here worth building, and I know things have been tight at the palace."
       ]
     },
     "schemer": {
+      "opening": [
+        "{leader} here, at your service. Truly.",
+        "{leader} reporting. I already have three plans. You'll like at least one.",
+        "{leader} here. Lovely capital, {capital}. Be a shame if anything happened to anyone else's."
+      ],
       "took": [
         "Took {places}, as planned. {rival} never saw it coming.",
         "Took {places}. {rival} trusted the wrong neighbour.",
         "Took {places}. Exactly as I said it would go. Well, as I thought it would."
+      ],
+      "pushedBack": [
+        "{place} held. Lost {n}. Part of the plan. A different plan.",
+        "Pushed back at {place}, {n} lost. Nobody saw that coming. Including me.",
+        "Lost {n} at {place}. I'll find another way in."
+      ],
+      "capitalTaken": [
+        "Took {capital}. {rival} never saw it coming.",
+        "{capital} is ours. {rival} trusted the wrong neighbour.",
+        "{rival}'s capital, {capital}. Exactly as I planned. Roughly."
+      ],
+      "capitalLost": [
+        "{capital} is gone. {rival} brought {n}. I'll remember that.",
+        "{rival} took {capital} with {n} troops. I'm already making plans.",
+        "{capital} fell to {rival}. They'll regret it. I'll see to it."
+      ],
+      "finished": [
+        "{rival} is done. We checked the fog twice.",
+        "That's {rival} gone. Lovely.",
+        "{rival} is out. I never liked them. I said I did, but I didn't."
+      ],
+      "threatened": [
+        "Heads up, {rival} has {n} troops two steps from {capital}. I'm moving what I can inside the wall, quietly.",
+        "{n} of {rival}'s troops are two steps from {capital}. I'm taking care of it.",
+        "Heads up, friend. {rival}, {n} troops, near {capital}. Handled."
+      ],
+      "threatenedYours": [
+        "Heads up, {rival} has {n} troops two steps from {capital}. You might want a word with them. Or an army.",
+        "{rival}, {n} troops, two steps from {capital}. I'd suggest a truce. With your fingers crossed.",
+        "Heads up, {n} of {rival}'s troops near {capital}. Something should be done. By you."
+      ],
+      "purseEmpty": [
+        "Purse is empty. Plans are free, at least.",
+        "Out of gold. I'll have to scheme on credit.",
+        "My purse is empty. I know where to find more. Not yet."
+      ],
+      "wallBuilt": [
+        "{place}'s wall is up. Nobody gets into {capital} now without an invitation.",
+        "Walled {place}. Good walls make good neighbours nervous.",
+        "{place} is walled. {capital} is cosier already."
+      ],
+      "judgeAttack": [
+        "You sent {n} against {place}'s {m}. I'd have made a deal first, then brought the {k} from {other}.",
+        "{n} against {m} at {place}. A truce somewhere else and the {k} from {other} would have done it.",
+        "You hit {place}'s {m} with {n}. I'd have had a friend do it."
+      ],
+      "judgeAttackAlone": [
+        "You sent {n} against {place}'s {m}. I'd have found a friend to go first.",
+        "{n} against {m} at {place}. Honest. Too honest.",
+        "{place} had {m}. You sent {n}. I'd have asked someone else to try."
+      ],
+      "judgeThin": [
+        "You left {place} with {n} next to {rival}'s {m}. A truce would have cost nothing.",
+        "{place} had {n} and {rival} had {m} next door. I'd have signed something.",
+        "{n} at {place}, {m} of {rival}'s next to it. A deal would have bought us a turn."
+      ],
+      "judgeTruce": [
+        "You broke the truce with {rival}. {rival} and {n} of their friends would like a word. Amateur.",
+        "Breaking the truce with {rival} brought {n} more Houses. You have to wait for the right moment.",
+        "We broke our truce with {rival}, and {n} friends came with them. Timing is everything."
+      ],
+      "judgeGold": [
+        "You had {n} gold and {place} fell. A bribe would have been cheaper.",
+        "{place} fell with {n} gold in the treasury. Gold is for buying friends.",
+        "{n} gold unspent and {place} gone. I'd have bought someone."
+      ],
+      "judgeCapital": [
+        "You left {capital} with {n} troops next to {rival}'s {m}. I'd have signed a truce and smiled.",
+        "{capital} had {n}, {rival} had {m}. A truce would have bought time.",
+        "{n} at {capital} beside {rival}'s {m}. I'd have made friends quickly."
+      ],
+      "compliment": [
+        "{place} went well. I'll pretend it was my idea.",
+        "Good work at {place}. Sneaky. I approve.",
+        "That worked at {place}. I'd have done it with a deal first, but it worked."
+      ],
+      "grudgeFort": [
+        "{rival} burned our fort at {place} on turn {turn}. I've been very friendly to them since. On purpose.",
+        "Still smiling at {rival}. Still remembering our fort at {place}, turn {turn}.",
+        "{rival} owes us a fort. {place}, turn {turn}. They'll pay. Friend."
+      ],
+      "grudgeHome": [
+        "{rival} took {place} on turn {turn}. Our home province. I smiled. I remembered.",
+        "{place}, turn {turn}, {rival}. I'm waiting for the right moment.",
+        "{rival} has {place}. Since turn {turn}. Not for long."
+      ],
+      "grudgeArmy": [
+        "{rival} wiped out our army at {place} on turn {turn}. I've sent them a lovely letter.",
+        "Turn {turn}, {place}, {rival}. I never forget a kindness, or the other thing.",
+        "{rival} broke our army at {place} on turn {turn}. Patience."
+      ],
+      "grudgeRevenge": [
+        "Took {place} back from {rival}. They never saw it coming. Since turn {turn}, actually.",
+        "{place} is ours again. I told {rival} we were friends. We weren't.",
+        "Paid {rival} back for {place}. With interest, friend."
+      ],
+      "grudgeRespect": [
+        "{rival} took {place} too. I'm starting to respect them. Which is worse for them.",
+        "{rival} again at {place}. Fine. Worthy opponents get the best plans.",
+        "{place} as well. {rival} is cleverer than I thought. I'll adjust."
+      ],
+      "handout": [
+        "Sent {n} gold back. Don't tell anyone where it came from.",
+        "Returning {n} gold. Consider it a favour. I'll remember it.",
+        "Here's {n} gold. Spend it on friends."
       ]
     },
     "opportunist": {
+      "opening": [
+        "{leader} here. I'll be watching for someone to have a bad turn.",
+        "{leader} reporting. Let the others fight. We'll be nearby.",
+        "{leader} here. {capital} is fine. Everyone else looks tired already."
+      ],
       "took": [
         "{rival} left {places} wide open. I'd have been a fool not to.",
         "Took {places}. It came cheap.",
         "Took {places}. {rival} weren't looking."
+      ],
+      "pushedBack": [
+        "{place} held. Lost {n}. Wrong target. I'll find a softer one.",
+        "Pushed back at {place}, {n} lost. They looked weaker from here.",
+        "Lost {n} at {place}. My mistake. They were healthier than they looked."
+      ],
+      "capitalTaken": [
+        "Took {capital}. {rival} left it wide open. I'd have been a fool not to.",
+        "{capital} came cheap. {rival} was busy elsewhere.",
+        "{rival}'s capital, {capital}. Somebody had to."
+      ],
+      "capitalLost": [
+        "{capital} is gone. {rival} brought {n}. Fair, honestly. I'd have done the same.",
+        "{rival} took {capital} with {n}. Somebody was going to.",
+        "{capital} fell to {rival}'s {n}. We looked like the easy target. We were."
+      ],
+      "finished": [
+        "{rival} is done. We checked the fog twice.",
+        "{rival} is out. They were bleeding anyway.",
+        "Finished {rival}. They made it easy."
+      ],
+      "threatened": [
+        "Heads up, {rival} has {n} troops two steps from {capital}. I'm moving what I can inside the wall.",
+        "{n} of {rival}'s troops two steps from {capital}. Moving home before they notice we're weak.",
+        "Heads up, {rival}, {n} troops, near {capital}. On it."
+      ],
+      "threatenedYours": [
+        "Heads up, {rival} has {n} troops two steps from {capital}. They've noticed we look easy.",
+        "{rival}, {n} troops, two steps from {capital}. I'd fix that before they do.",
+        "Heads up, {n} of {rival}'s near {capital}. That's how I'd start too."
+      ],
+      "purseEmpty": [
+        "Purse is empty. Opportunities are piling up unpaid.",
+        "Out of gold. And there's a perfectly good weak spot right there.",
+        "My purse is empty. Somebody's bad luck will have to wait."
+      ],
+      "wallBuilt": [
+        "{place}'s wall is up. Let someone else be the easy target.",
+        "Walled {place}. {capital} doesn't look easy anymore.",
+        "Wall at {place}. Now we're nobody's opportunity."
+      ],
+      "judgeAttack": [
+        "You sent {n} against {place}'s {m}. I'd have found a weaker target and brought the {k} from {other}.",
+        "{n} against {m} at {place}. Plenty of softer land around. The {k} at {other} agree.",
+        "You hit {place}'s {m} with {n}. I'd have waited for them to fight someone else first."
+      ],
+      "judgeAttackAlone": [
+        "You sent {n} against {place}'s {m}. I'd have picked someone weaker.",
+        "{n} against {m} at {place}. There was easier land, I promise.",
+        "{place} had {m}. You sent {n}. I'd have waited for them to bleed a bit."
+      ],
+      "judgeThin": [
+        "You left {place} with {n} next to {rival}'s {m}. {rival} noticed. I would have.",
+        "{place} had {n} and {rival} had {m}. That's an invitation.",
+        "{n} at {place}, {m} of {rival}'s next door. I'd have taken it too, honestly."
+      ],
+      "judgeTruce": [
+        "You broke the truce with {rival}. {rival} and {n} of their friends would like a word.",
+        "Breaking the truce with {rival} brought {n} more Houses. Bad timing. Theirs was good.",
+        "We broke the truce, and {rival} found {n} friends. We're the weak one now."
+      ],
+      "judgeGold": [
+        "You had {n} gold and {place} fell. That gold could have been troops.",
+        "{place} fell with {n} gold sitting there. We looked rich and weak. The worst combination.",
+        "{n} gold unspent and {place} gone. I'd have spent it."
+      ],
+      "judgeCapital": [
+        "You left {capital} with {n} troops next to {rival}'s {m}. I'd have taken it too, if I were them.",
+        "{capital} had {n}, {rival} had {m}. We looked like an opportunity.",
+        "{n} at {capital} beside {rival}'s {m}. That's the easy target, and it was us."
+      ],
+      "compliment": [
+        "{place} was a good pick. Weak, and right there.",
+        "That worked at {place}. Good eye.",
+        "Good hit at {place}. I'd have done the same, honestly."
+      ],
+      "grudgeFort": [
+        "{rival} burned our fort at {place} on turn {turn}. I'm waiting for their bad turn.",
+        "Still thinking about our fort at {place}. {rival}, turn {turn}. They'll slip.",
+        "{rival}, {place}, turn {turn}. Everyone has a bad turn eventually."
+      ],
+      "grudgeHome": [
+        "{rival} took {place} on turn {turn}. I'm watching for the moment they're stretched thin.",
+        "{place}, turn {turn}, {rival}. Waiting.",
+        "{rival} has had {place} since turn {turn}. They won't always be strong."
+      ],
+      "grudgeArmy": [
+        "{rival} wiped out our army at {place} on turn {turn}. I'll wait until they're bleeding.",
+        "Turn {turn}, {place}, {rival}. Patience.",
+        "{rival} broke our army at {place} on turn {turn}. Their turn will come."
+      ],
+      "grudgeRevenge": [
+        "Took {place} back from {rival} while they were busy. Turn {turn}, settled.",
+        "{place} is ours again. {rival} had a bad turn. Shame.",
+        "Paid {rival} back for {place}. Timing is everything."
+      ],
+      "grudgeRespect": [
+        "{rival} took {place} too. Fine. They're good at spotting a weak spot.",
+        "{rival} again at {place}. They think like me. I hate it.",
+        "{place} as well. {rival} has earned some respect. Grudging."
+      ],
+      "handout": [
+        "Sent {n} gold back. Nothing worth buying out here.",
+        "Returning {n} gold. No bargains this turn.",
+        "Here's {n} gold. I'll find you something cheap later."
       ]
     },
     "merchant": {
+      "opening": [
+        "{leader} here. I've looked over the books for {capital}. We can do better.",
+        "{leader} reporting. Markets first, and the rest pays for itself.",
+        "{leader} here. Thanks for having me. Let's make some money."
+      ],
       "took": [
         "Took {places}. Good land, and it will pay.",
         "Took {places}. That's income every turn from here on.",
         "Took {places}. The ledger looks better already."
+      ],
+      "pushedBack": [
+        "{place} held. Lost {n}. That was an expensive afternoon.",
+        "Pushed back at {place}, {n} lost. Bad investment.",
+        "Lost {n} at {place}. I'll write it off."
+      ],
+      "capitalTaken": [
+        "Took {capital} from {rival}. Good markets, and they're ours now.",
+        "{capital} is ours. {rival}'s treasury is under new management.",
+        "{rival}'s capital, {capital}. The ledger looks very good this turn."
+      ],
+      "capitalLost": [
+        "{capital} is gone. {rival} brought {n}. I'll be updating the books.",
+        "{rival} took {capital} with {n} troops. That's a big line in the losses column.",
+        "{capital} fell to {rival}'s {n}. Expensive."
+      ],
+      "finished": [
+        "{rival} is done. We checked the fog twice.",
+        "{rival} is out. One less competitor.",
+        "Finished {rival}. Their markets are ours now."
+      ],
+      "threatened": [
+        "Heads up, {rival} has {n} troops two steps from {capital}. I'm moving what I can inside the wall.",
+        "{n} of {rival}'s troops two steps from {capital}. Protecting the investment.",
+        "Heads up, {rival}, {n} troops, near {capital}. Handling it."
+      ],
+      "threatenedYours": [
+        "Heads up, {rival} has {n} troops two steps from {capital}. I'd protect the investment.",
+        "{rival}, {n} troops, two steps from {capital}. That's our biggest asset.",
+        "Heads up, {n} of {rival}'s near {capital}. Worth defending, for what that's worth."
+      ],
+      "purseEmpty": [
+        "Purse is empty. Walk me through how I'm supposed to build markets with that.",
+        "Out of gold. I've checked twice.",
+        "My purse is empty. The books balance at zero, which is technically balanced."
+      ],
+      "wallBuilt": [
+        "{place}'s wall is up. Safe markets are good markets. {capital} thanks you.",
+        "Walled {place}. The traders feel better already.",
+        "Wall at {place}, done. Money well spent."
+      ],
+      "judgeAttack": [
+        "You sent {n} against {place}'s {m}. I'd have waited a turn and brought the {k} from {other}. Walk me through the plan.",
+        "{n} against {m} at {place}. The {k} at {other} were free. The math was right there.",
+        "You hit {place}'s {m} with {n}. With the {k} from {other}, the numbers work."
+      ],
+      "judgeAttackAlone": [
+        "You sent {n} against {place}'s {m}. Walk me through how that was supposed to work.",
+        "{n} against {m} at {place}. The numbers never added up.",
+        "{place} had {m}. You sent {n}. I'd have waited for better numbers."
+      ],
+      "judgeThin": [
+        "You left {place} with {n} next to {rival}'s {m}. That's a bad ratio.",
+        "{place} had {n}, {rival} had {m} next door. I'd have priced that risk.",
+        "{n} at {place} and {m} of {rival}'s next to it. Walk me through it."
+      ],
+      "judgeTruce": [
+        "You broke the truce with {rival}. {rival} and {n} of their friends would like a word. That's a bad deal.",
+        "Breaking the truce with {rival} brought {n} more Houses. Expensive.",
+        "We broke our truce with {rival}, and {n} friends came. Peace was cheaper."
+      ],
+      "judgeGold": [
+        "You had {n} gold and {place} fell. Gold in the treasury earns nothing.",
+        "{place} fell with {n} gold sitting there. That's a bad use of capital.",
+        "{n} gold unspent and {place} gone. Walk me through that."
+      ],
+      "judgeCapital": [
+        "You left {capital} with {n} troops next to {rival}'s {m}. That's our biggest asset.",
+        "{capital} had {n}, {rival} had {m}. I'd have insured it.",
+        "{n} at {capital} against {rival}'s {m}. The numbers made me nervous."
+      ],
+      "compliment": [
+        "{place} was a good investment.",
+        "That worked at {place}. The numbers agree with you.",
+        "Good move at {place}. Thanks for that."
+      ],
+      "grudgeFort": [
+        "{rival} burned our fort at {place} on turn {turn}. I have the receipt.",
+        "Still carrying our fort at {place} on the books. {rival}, turn {turn}.",
+        "{rival} owes us a fort. {place}, turn {turn}. I keep records."
+      ],
+      "grudgeHome": [
+        "{rival} took {place} on turn {turn}. That's on the books.",
+        "{place}, turn {turn}, {rival}. Outstanding debt.",
+        "{rival} has had {place} since turn {turn}. I'd like it back, with interest."
+      ],
+      "grudgeArmy": [
+        "{rival} wiped out our army at {place} on turn {turn}. Very expensive.",
+        "Turn {turn}, {place}, {rival}. Still in the losses column.",
+        "{rival} broke our army at {place} on turn {turn}. I keep records."
+      ],
+      "grudgeRevenge": [
+        "Took {place} back from {rival}. Debt from turn {turn}, paid.",
+        "{place} is ours again. The books from turn {turn} balance.",
+        "Paid {rival} back for {place}. With interest."
+      ],
+      "grudgeRespect": [
+        "{rival} took {place} too. Annoyingly good business.",
+        "{rival} again at {place}. I respect a good operator.",
+        "{place} as well. {rival} knows what they're doing. I'll adjust the forecast."
+      ],
+      "handout": [
+        "Sent {n} gold back. Wanted the peasants to have something.",
+        "Returning {n} gold. Don't spend it all in one place. Or do, it's only {n}.",
+        "Here's {n} gold. Nothing out here worth building, and I know things have been tight at the palace."
+      ]
+    },
+    "neutral": {
+      "opening": [
+        "{leader} here. Ready when you are."
+      ],
+      "took": [
+        "Took {places}.",
+        "Took {places}. Nobody was home.",
+        "Took {places} from {rival}."
+      ],
+      "pushedBack": [
+        "Driven back at {place}. Lost {n}.",
+        "{place} held. Lost {n}."
+      ],
+      "capitalTaken": [
+        "Took {capital}, {rival}'s capital."
+      ],
+      "capitalLost": [
+        "{capital} is gone. {rival} brought {n}."
+      ],
+      "finished": [
+        "{rival} is out.",
+        "{rival} is done. We checked the fog twice."
+      ],
+      "threatened": [
+        "Heads up, {rival} has {n} troops two steps from {capital}. Moving troops home."
+      ],
+      "threatenedYours": [
+        "Heads up, {rival} has {n} troops two steps from {capital}."
+      ],
+      "purseEmpty": [
+        "Purse is empty."
+      ],
+      "wallBuilt": [
+        "{place} is walled."
+      ],
+      "judgeAttack": [
+        "{n} against {m} at {place}. The {k} at {other} were next to it.",
+        "You sent {n} against {place}'s {m}. The {k} from {other} would have made it {k} more."
+      ],
+      "judgeAttackAlone": [
+        "{n} against {m} at {place}. The numbers were against it."
+      ],
+      "judgeThin": [
+        "{place} had {n}. {rival} had {m} next to it."
+      ],
+      "judgeTruce": [
+        "The truce with {rival} is broken, and {n} more Houses joined them."
+      ],
+      "judgeGold": [
+        "{n} gold unspent. {place} fell."
+      ],
+      "judgeCapital": [
+        "{capital} had {n}. {rival} had {m} next to it."
+      ],
+      "compliment": [
+        "{place} went well.",
+        "That worked at {place}."
+      ],
+      "grudgeFort": [
+        "{rival} burned our fort at {place} on turn {turn}."
+      ],
+      "grudgeHome": [
+        "{rival} took {place} on turn {turn}."
+      ],
+      "grudgeArmy": [
+        "{rival} wiped out our army at {place} on turn {turn}."
+      ],
+      "grudgeRevenge": [
+        "Took {place} back from {rival}."
+      ],
+      "grudgeRespect": [
+        "{rival} took {place} as well. They're good."
+      ],
+      "handout": [
+        "Sent {n} gold back. Nothing to spend it on."
       ]
     }
+  },
+  "captured": {
+    "firstReport": [
+      "{name} here. Formerly of {house}, which as you know is no longer a thing. Reporting to {leader}.",
+      "{name}, reporting to {leader}. I've always admired your House. Since this turn.",
+      "{name} here. My loyalty to {house} lasted right up until {house} stopped existing. I'm all yours now.",
+      "{name}, at your service. {house} never appreciated me. You will, I can tell. Reporting to {leader}."
+    ],
+    "took": [
+      "Took {places}, my liege. Your wisdom guided my every step. Mostly the steps toward {place}.",
+      "Took {places}. I'd say I did it for {house}, but I've never heard of them.",
+      "Took {places}, Your Grace. History will be kind to you. I'll make sure of it.",
+      "Took {places}. Another brilliant order. I'm only the hands."
+    ],
+    "pushedBack": [
+      "{place} held, my liege. Lost {n}. My fault entirely. Your plan was flawless.",
+      "Driven back at {place}, {n} lost. Your orders were perfect. The enemy didn't read them.",
+      "Lost {n} at {place}. I let you down. I'll be loyal twice as hard."
+    ],
+    "capitalTaken": [
+      "Took {capital}, {rival}'s capital. All your idea, Your Grace. I just carried it.",
+      "{capital} is yours, my liege. Unlike {house}, you know how to win.",
+      "Took {capital}. I've never been prouder to serve. Any House. This House."
+    ],
+    "finished": [
+      "{rival} is done, my liege. Your strategy, my sword. Mostly your strategy.",
+      "{rival} is out. I was with you from the start. Well, from turn {turn}.",
+      "Finished {rival}. {house} could never have done this. I'd know."
+    ],
+    "needle": [
+      "{ruler} never once said thank you. You haven't either, but I can tell you're thinking it.",
+      "We're fighting {house}. I know all their tricks. I taught {ruler} most of them.",
+      "{ruler} would hate this. That's half the fun, my liege.",
+      "Facing {house} again. My old colleagues. They were never as good as you, Your Grace."
+    ],
+    "purseEmpty": [
+      "Purse is empty, my liege. I'd serve you for free. I'm doing it now, actually.",
+      "Out of gold. {house} never paid me either, but they were less charming about it.",
+      "My purse is empty. My loyalty is full. Overflowing, really."
+    ],
+    "wallBuilt": [
+      "{place}'s wall is up, my liege. {house} never let me build anything this nice.",
+      "Walled {place}. A wall worthy of Your Grace.",
+      "{place} is walled. I've never been so loyal to a wall."
+    ]
   }
 }

@@ -149,7 +149,7 @@ export function problems(f: Found): string[] {
 /** Every failure as "file | text | rule", for the expected-failures list. */
 export function failures(found = collect()): string[] {
   const out = new Set<string>();
-  for (const f of found) for (const p of problems(f)) out.add(`${f.file} | ${f.text} | ${p}`);
+  for (const f of found) if (!(`${f.file} | ${f.text}` in ALLOWED)) for (const p of problems(f)) out.add(`${f.file} | ${f.text} | ${p}`);
   return [...out].sort();
 }
 
@@ -157,4 +157,6 @@ export function failures(found = collect()): string[] {
  * Arrows and dashes that aren't prose: icons on buttons and the like ("Skip ▸▸" uses triangles, not arrows, so it
  * needs no entry). Each says why.
  */
-export const ALLOWED: Record<string, string> = {};
+export const ALLOWED: Record<string, string> = {
+  "apps/web/src/ui/TopBar.tsx | →": "the gold counter: gold now, then after this turn's orders (\"245→226\"), a number display, not prose",
+};

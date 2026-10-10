@@ -126,7 +126,7 @@ export function LeadersPanel({
   /** Open your cards (Spoils and missions). */
   onCards(): void;
 }) {
-  const { instructions, budgets, paused, leaderOpen, openLeader, setBudget, takeBack, showMission, mission, leaderNotes } = useGame();
+  const { instructions, budgets, paused, leaderOpen, openLeader, setBudget, takeBack, showMission, mission, leaderNotes, report } = useGame();
   const [menu, setMenu] = useState<"command" | "budget" | null>(null);
   const n = namer(ctx, view);
   const leaders = view.me.leaders ?? [];
@@ -167,6 +167,12 @@ export function LeadersPanel({
                 <span className="leader-who">
                   <b>{styledName(l.name, l.personality)}</b> <span className="muted small">{own ? `your ${KIND_NAME[l.kind]}` : `${n.who(l.of)}'s old ${KIND_NAME[l.kind]}`}</span>
                   <span className="block small">{doingLine(ctx, view, l, command, paused.includes(key), leaderNotes[key])}</span>
+                  {/* What it said about last turn (session 22), in its own voice. */}
+                  {report?.voices?.filter((v) => v.leader === key).map((v) => (
+                    <span key="said" className="block small leader-said">
+                      “{v.text}”
+                    </span>
+                  ))}
                   <span className="block small purse-line" title={`${purse}g in its purse as the turn starts${spends > 0 ? `; its orders this turn spend ${spends}g` : ""}`}>
                     Purse <b>{left}g</b>
                     {taking > 0 && <span className="muted"> ({taking}g coming home)</span>} · {budgetLabel(budget)}

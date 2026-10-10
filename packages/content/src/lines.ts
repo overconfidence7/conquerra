@@ -135,13 +135,73 @@ export const LEADER_VOICES = [...VOICES, "neutral"] as const;
 export type LeaderVoice = (typeof LEADER_VOICES)[number];
 
 /**
- * What your leaders say in the turn report and the Chronicle, in their personality's voice. `{places}`: the land it
- * took; `{rival}`: whose it was ("Morwen's lot", or "the locals" for empty land).
+ * What your leaders say in the turn report, the Chronicle and the Leaders panel (session 22), in their personality's
+ * voice. `{places}`: land it took; `{rival}` in "took": whose it was ("Morwen's lot", or "the locals" for empty land),
+ * elsewhere a rival's name. Every number is the turn's own.
  */
 export const LEADER_SITUATIONS = {
+  /** Your Leader's first word of a game (`{leader}`: its name). */
+  opening: ["leader", "capital"],
   took: ["places", "rival"],
+  /** Its own attack driven back: `{n}` lost. */
+  pushedBack: ["place", "n"],
+  /** It took a rival's capital. */
+  capitalTaken: ["capital", "rival"],
+  /** Your capital fell (the dry comment the title card doesn't make): `{n}` troops came for it. */
+  capitalLost: ["capital", "rival", "n"],
+  /** It finished a rival off. */
+  finished: ["rival"],
+  /** A rival army of `{n}` within two steps of your capital's province: what it's doing about it (it runs your army). */
+  threatened: ["rival", "n", "capital"],
+  /** The same, when you run the army yourself. */
+  threatenedYours: ["rival", "n", "capital"],
+  purseEmpty: [],
+  /** The Steward finished a wall. */
+  wallBuilt: ["place", "capital"],
+  /**
+   * Your Leader judges one of your own orders that went badly (Nate's running bit): your `{n}` against `{place}`'s
+   * `{m}`, and the `{k}` at `{other}` that really were next to it.
+   */
+  judgeAttack: ["n", "place", "m", "k", "other"],
+  /** The same with no army of yours next to it. */
+  judgeAttackAlone: ["n", "place", "m"],
+  /** `{place}` left with `{n}` next to `{rival}`'s `{m}`, and it fell. */
+  judgeThin: ["place", "n", "rival", "m"],
+  /** You broke a truce with `{rival}`, and `{n}` more Houses joined a war on you. */
+  judgeTruce: ["rival", "n"],
+  /** `{n}` gold left unspent while `{place}` fell. */
+  judgeGold: ["n", "place"],
+  /** Your capital left with `{n}` next to `{rival}`'s `{m}`, and it was attacked. */
+  judgeCapital: ["capital", "n", "rival", "m"],
+  /** A grudging compliment for a good move of yours. */
+  compliment: ["place"],
+  /** A grudge (a running gag with receipts): the rival, the place and the turn it happened. */
+  grudgeFort: ["rival", "place", "turn"],
+  grudgeHome: ["rival", "place", "turn"],
+  grudgeArmy: ["rival", "place", "turn"],
+  grudgeRevenge: ["rival", "place", "turn"],
+  grudgeRespect: ["rival", "place"],
+  /** The Steward hands back gold it couldn't spend (session 23 calls it): `{n}` gold. */
+  handout: ["n"],
 } as const satisfies Record<string, readonly string[]>;
 export type LeaderSituation = keyof typeof LEADER_SITUATIONS;
+
+/**
+ * A leader you captured (Nate's running bit): unyielding, suspicious loyalty, or outrageous flattery, in every line,
+ * with the facts. `{house}`: its old House ("House Azure"); `{ruler}`: its old ruler; `{leader}`: who it reports to.
+ */
+export const CAPTURED_SITUATIONS = {
+  firstReport: ["name", "house", "leader"],
+  took: ["places", "place", "house"],
+  pushedBack: ["place", "n"],
+  capitalTaken: ["capital", "rival", "house"],
+  finished: ["rival", "turn", "house"],
+  /** Now and then, when you fight its old House. */
+  needle: ["ruler", "house"],
+  purseEmpty: ["house"],
+  wallBuilt: ["place", "house"],
+} as const satisfies Record<string, readonly string[]>;
+export type CapturedSituation = keyof typeof CAPTURED_SITUATIONS;
 
 export type Vars = Record<string, string | number>;
 
@@ -160,7 +220,34 @@ function checked<K extends string>(allowed: Record<K, readonly string[]>, requir
   });
 }
 
+const Count = z.number().int().min(0);
 export const Lines = z.object({
+  /** How much your leaders say (session 22): not every turn, and the big moments first. */
+  limits: z
+    .object({
+      /** At most this many lines from one leader in a turn, and from all your leaders in one report. */
+      perLeaderPerTurn: Count,
+      perReport: Count,
+      /** Your Leader judges one of your moves at most once in this many turns, and not while you hold this few territories or fewer. */
+      judgeEvery: Count,
+      judgeQuietAt: Count,
+      /** A grudging compliment at most once in this many turns. */
+      complimentEvery: Count,
+      /** A leader grumbles about its empty purse at most once in this many turns. */
+      purseEvery: Count,
+      /** A warning about your capital at most once in this many turns, for a rival army of at least `threatMin` within `threatSteps` of its province. */
+      threatEvery: Count,
+      threatSteps: Count,
+      threatMin: Count,
+      /** Gold left unspent (at least this much) while your land was taken: your Leader says so. */
+      goldIdle: Count,
+      /** A grudge comes up at least this many turns after it started, and again at most once in `grudgeEvery`. */
+      grudgeAfter: Count,
+      grudgeEvery: Count,
+      /** A captured leader needles its old House at most once in this many turns. */
+      needleEvery: Count,
+    })
+    .strict(),
   /** Each personality's own lines. */
   bots: z.object(Object.fromEntries(VOICES.map((v) => [v, checked(BOT_SITUATIONS, true)])) as Record<VoiceId, ReturnType<typeof checked<BotSituation>>>).strict(),
   /** The shared reasons: `plain` for everyone, and a personality's own versions of some of them. */
@@ -172,6 +259,8 @@ export const Lines = z.object({
     .strict(),
   /** Your leaders' lines, by voice (a voice can leave a situation out: that leader says nothing then). */
   leaders: z.object(Object.fromEntries(LEADER_VOICES.map((v) => [v, checked(LEADER_SITUATIONS, false).optional()])) as unknown as Record<LeaderVoice, z.ZodOptional<ReturnType<typeof checked<LeaderSituation>>>>).strict(),
+  /** A captured leader's lines (whatever its personality: the loyalty is the voice). */
+  captured: checked(CAPTURED_SITUATIONS, true),
 });
 export type Lines = z.infer<typeof Lines>;
 
@@ -240,6 +329,11 @@ export function reasonLine(s: Speaker, key: ReasonKey, vars: Vars = {}, extra = 
 export function leaderLine(s: { game: string; turn: number; who: string; voice: LeaderVoice }, situation: LeaderSituation, vars: Vars = {}, extra = ""): string | null {
   const versions = lines.leaders[s.voice]?.[situation];
   return versions ? fill(pickVersion(versions, seedOf(s, situation, extra)), vars) : null;
+}
+
+/** A captured leader's line. */
+export function capturedLine(s: { game: string; turn: number; who: string }, situation: CapturedSituation, vars: Vars = {}, extra = ""): string {
+  return fill(pickVersion(lines.captured[situation], seedOf(s, situation, extra)), vars);
 }
 
 /**

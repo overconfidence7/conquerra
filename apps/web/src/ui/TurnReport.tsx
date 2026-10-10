@@ -2,7 +2,7 @@ import type { GameContext, PlayerView } from "@conquerra/engine";
 import type { TurnReport as Report } from "../host/protocol";
 import { groupReport } from "../logic/report";
 import type { LogLine } from "../logic/text";
-import { namer } from "../logic/text";
+import { namer, voiceText } from "../logic/text";
 import { useGame } from "../store";
 import { Frame } from "./Frame";
 
@@ -29,6 +29,12 @@ export function ReportBody({ ctx, view, report }: { ctx: GameContext; view: Play
         <h3>Your gains and losses</h3>
         {g.yours.length ? <Lines lines={g.yours} /> : <p className="muted small">Nothing happened to you this turn.</p>}
       </section>
+      {!!report.voices?.length && (
+        <section className="report-group voices">
+          <h3>Your leaders</h3>
+          <Lines lines={report.voices.map((v) => ({ text: voiceText(v), tone: "info" }))} />
+        </section>
+      )}
       {g.seen.length > 0 && (
         <section className="report-group">
           <h3>What you saw</h3>

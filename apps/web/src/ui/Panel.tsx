@@ -229,7 +229,7 @@ function PathPanel({ ctx, view, queue, path }: Props & { path: { from: Territory
 /** "↵" on a confirm button: Enter does it (on a laptop; hidden on a phone, where there's no keyboard). */
 function EnterHint() {
   return (
-    <kbd className="enter-hint" title="Enter confirms; Esc cancels">
+    <kbd className="enter-hint" title="Enter confirms, Esc cancels">
       ↵
     </kbd>
   );

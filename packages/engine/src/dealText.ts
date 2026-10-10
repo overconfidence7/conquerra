@@ -33,7 +33,7 @@ function sideWords(s: Extract<DealTerms, { kind: "trade" }>["give"], turns: numb
 
 /**
  * A deal card in one line, between `a` (who proposed) and `b`: "a truce everywhere for 3 turns", "a joint war on Baron
- * Krell for 4 turns", "a trade: Lady Morwen gives 10 gold; you give Ashfell".
+ * Krell for 4 turns", "a trade: Lady Morwen gives 10 gold, and you give Ashfell".
  */
 export function describeTerms(t: DealTerms, a: PlayerId, b: PlayerId, n: DealNames): string {
   switch (t.kind) {
@@ -48,7 +48,7 @@ export function describeTerms(t: DealTerms, a: PlayerId, b: PlayerId, n: DealNam
     case "trade": {
       const turns = tradeTotals(t).turns;
       const giveA = sideWords(t.give, turns, n), giveB = sideWords(t.get, turns, n);
-      return `a trade: ${who(n, a)} ${a === n.you ? "give" : "gives"} ${giveA}; ${who(n, b)} ${b === n.you ? "give" : "gives"} ${giveB}`;
+      return `a trade: ${who(n, a)} ${a === n.you ? "give" : "gives"} ${giveA}, and ${who(n, b)} ${b === n.you ? "give" : "gives"} ${giveB}`;
     }
   }
 }

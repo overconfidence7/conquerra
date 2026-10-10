@@ -646,3 +646,7 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .leaders .grid-buttons button .block { margin-top: 1px; line-height: 1.25; }
 .placement .seg { flex-wrap: nowrap; gap: 4px; }
 .placement .seg button { white-space: nowrap; }
+
+/* Your leaders' voices (session 22): what each said about last turn, under its status; the report's own group. */
+.leader-said { font-style: italic; color: #cdbf9f; margin-top: 2px; }
+.report-group.voices li { font-style: italic; }

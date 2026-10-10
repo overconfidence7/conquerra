@@ -104,7 +104,7 @@ export function Lobby() {
           ))}
         </span>
         <span className="muted small">
-          {players} players{players >= rec.min && players <= rec.max ? " · a good fit for this map" : ` · this map suits ${rec.min}–${rec.max}`}
+          {players} players{players >= rec.min && players <= rec.max ? " · a good fit for this map" : ` · this map suits ${rec.min} to ${rec.max}`}
         </span>
       </div>
 

@@ -141,17 +141,22 @@ export function styleNote(p: LeaderStyle | null, kind: LeaderRef["kind"]): strin
   return STYLE_NOTE[p];
 }
 const STYLE_NOTE: Record<LeaderStyle, string> = {
-  conqueror: "The Conqueror: picks one front and masses there, holding the others with just enough.",
-  blitzer: "The Blitzer: never stops and never pulls back.",
+  conqueror: "The Conqueror: picks one front and masses there, holding the others with just enough. Subtle it is not.",
+  blitzer: "The Blitzer: never stops and never pulls back. Brakes not included.",
   opportunist: "The Opportunist: goes for whoever just fought and is bleeding.",
-  schemer: "The Schemer: picks off the weakened, and keeps a little back on each front.",
-  turtle: "The Turtle: forts and culture first, then markets.",
-  merchant: "The Merchant: markets first, then forts and culture.",
+  schemer: "The Schemer: picks off the weakened, and keeps a little back on each front. Calls everyone friend.",
+  turtle: "The Turtle: forts and culture first, then markets. Very proud of its walls.",
+  merchant: "The Merchant: markets first, then forts and culture. Happy to walk you through the math.",
 };
 
 /** A leader's name with its personality, as the Leaders panel shows it: "Aldric, the Conqueror" (just "Aldric" if Neutral). */
 export function styledName(name: string, p: LeaderStyle | null | undefined): string {
   return p ? `${name}, the ${styleLabel(p)}` : name;
+}
+
+/** A leader's line as the report and the Chronicle show it (session 22): "Aldric, the Conqueror: “Took Ashfell.”" */
+export function voiceText(v: { name: string; style: LeaderStyle | null; text: string }): string {
+  return `${styledName(v.name, v.style)}: “${v.text}”`;
 }
 
 /** A leader's name alone ("Aldric"), else what it is ("Your Leader"). */
@@ -205,7 +210,7 @@ export function instructionName(i: Instruction, n: Namer, kind: LeaderRef["kind"
 
 /**
  * A leader's reason for this turn, in a plain line (session 20): "Finishing them off: Lady Morwen (3 territories left)",
- * "Going for Pinemark and Fernhollow; Baron Krell's main army at Galeholt (40) is too big for now", "Saving 14 gold for
+ * "Going for Pinemark and Fernhollow. Baron Krell's main army at Galeholt (40) is too big for now", "Saving 14 gold for
  * a barracks at Galeholt (nowhere to recruit)".
  */
 export function leaderNoteLine(note: LeaderNote, n: Namer): string {
@@ -215,7 +220,7 @@ export function leaderNoteLine(note: LeaderNote, n: Namer): string {
     case "pushBack": {
       const going = note.going.length ? `Going for ${note.going.map((t) => n.place(t)).join(" and ")}` : `Looking for ${n.who(note.rival)}'s weak land`;
       if (note.striking) return `${going}, ${n.who(note.rival)}'s main army among it`;
-      return note.avoiding ? `${going}; ${n.who(note.rival)}'s main army at ${n.place(note.avoiding.at)} (${note.avoiding.troops}) is too big for now` : going;
+      return note.avoiding ? `${going}. ${n.who(note.rival)}'s main army at ${n.place(note.avoiding.at)} (${note.avoiding.troops}) is too big for now` : going;
     }
     case "saving":
       return `Saving ${note.gold} gold: nowhere to recruit until ${note.at ? `the barracks at ${n.place(note.at)}` : "a barracks"} is up`;
@@ -291,23 +296,23 @@ export interface LogLine {
   tone: Tone;
 }
 
-/** One line per map in the lobby's map list: "The Ringsea · 100 territories · suits 6–10 players". */
+/** One line per map in the lobby's map list: "The Ringsea · 100 territories · suits 6 to 10 players". */
 /** One line per map in the lobby: who it suits and what it plays like (session 19). */
 export const MAP_SUITS: Record<string, string> = {
-  embervale: "The quick map, for 4–6: close quarters, so hold your capital early.",
-  greatmarch: "A crowded continent for 8–10: many neighbours, long wars.",
-  "shattered-isles": "Islands for 4–6: every crossing is by sea, so choke points decide the game.",
-  "twin-realms": "Two continents for 4–8, joined by one land bridge: a natural front line.",
-  "moon-coast": "A crescent for 4–8: short fronts, long marches, lots of comebacks.",
-  ringsea: "A ring of land round an inland sea, for 6–10; the island in the middle reaches every shore.",
-  crownlands: "A crown for 6–10: five peninsula points, each a natural stronghold.",
-  wyrmland: "The dragon, for 6–8: a long neck and tail mean long marches.",
-  ashwing: "A phoenix for 6–8: wide wings to grow in, and a narrow neck worth holding.",
-  "sundered-crowns": "Two great continents for 6–8, joined only by islets and sea lanes: big battles at the crossing.",
-  krakenmere: "One of the two biggest maps, for 8–10: a kraken's six arms, each a long peninsula with a choke where it joins.",
-  rootholm: "One of the two biggest maps, for 8–10: a tree of life with a broad crown, one trunk to fight over, and roots far below.",
+  embervale: "The quick map, for 4 to 6: close quarters, so hold your capital early. Your neighbours are very close.",
+  greatmarch: "A crowded continent for 8 to 10: many neighbours, long wars, and always someone at your border.",
+  "shattered-isles": "Islands for 4 to 6: every crossing is by sea, so whoever holds the crossings holds the game.",
+  "twin-realms": "Two continents for 4 to 8, joined by one land bridge. Everyone will want the bridge.",
+  "moon-coast": "A crescent for 4 to 8: short fronts, long marches, lots of comebacks. Nobody's lead is safe here.",
+  ringsea: "A ring of land round an inland sea, for 6 to 10. The island in the middle reaches every shore, which everyone notices quickly.",
+  crownlands: "A crown for 6 to 10: five peninsula points, each a natural stronghold.",
+  wyrmland: "The dragon, for 6 to 8: a long neck and tail mean long marches. Pack accordingly.",
+  ashwing: "A phoenix for 6 to 8: wide wings to grow in, and a narrow neck worth holding.",
+  "sundered-crowns": "Two great continents for 6 to 8, joined only by islets and sea lanes: big battles at the crossing.",
+  krakenmere: "One of the two biggest maps, for 8 to 10: a kraken's six arms, each a long peninsula with a choke where it joins.",
+  rootholm: "One of the two biggest maps, for 8 to 10: a tree of life with a broad crown, one trunk to fight over, and roots far below.",
 };
 
 export function mapChoiceLabel(m: { name: string; territories: number; recommendedPlayers: { min: number; max: number } }): string {
-  return `${m.name} · ${m.territories} territories · suits ${m.recommendedPlayers.min}–${m.recommendedPlayers.max} players`;
+  return `${m.name} · ${m.territories} territories · suits ${m.recommendedPlayers.min} to ${m.recommendedPlayers.max} players`;
 }

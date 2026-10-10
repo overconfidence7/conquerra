@@ -11,11 +11,11 @@ export function eventHelp(ctx: GameContext, k: WorldEventKind): string {
   const pct = (x: number) => `${Math.round(x * 100)}%`;
   switch (k) {
     case "plague":
-      return `${pct(e.plague.share)} of a player's troops in one province die (never the last one; capitals are spared).`;
+      return `${pct(e.plague.share)} of a player's troops in one province die (never the last one, and capitals are spared).`;
     case "storm":
       return "Closes one border for a turn: nobody moves or attacks across it.";
     case "uprising":
-      return `${e.uprising.rebels} rebels rise in land held by ${e.uprising.maxTroops} troops or fewer; if they're more, it turns neutral.`;
+      return `${e.uprising.rebels} rebels rise in land held by ${e.uprising.maxTroops} troops or fewer. If they outnumber the troops there, it turns neutral.`;
     case "mercenaries":
       return `${e.mercenaries.troops} neutral troops appear next to a player's land, blocking its way.`;
     case "famine":
@@ -101,7 +101,7 @@ export function FallenPanel({ ctx, view, replaying }: { ctx: GameContext; view: 
           )}
         </ol>
       )}
-      <p className="muted small">One event a turn can land on each player; none touches a capital or knocks anyone out. Other Fallen aiming at the same thing add their Influence to yours.</p>
+      <p className="muted small">One event a turn can land on each player, and none touches a capital or knocks anyone out. Other Fallen aiming at the same thing add their Influence to yours.</p>
       <button className="primary wide" onClick={() => void watchNext()} disabled={busy || replaying}>
         {busy ? "Playing…" : "Next turn ▶"}
       </button>

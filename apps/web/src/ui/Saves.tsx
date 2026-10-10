@@ -97,7 +97,7 @@ export default function SavesDialog({ mode, inGame, onClose }: { mode: "save" | 
             {inGame && <p className="muted small">Loading leaves this game. Save it to a slot first if you want to come back to it.</p>}
           </>
         )}
-        <p className="muted small">Saved games stay on this device; they're never sent anywhere.</p>
+        <p className="muted small">Saved games stay on this device. They're never sent anywhere.</p>
       </Frame>
     </div>
   );

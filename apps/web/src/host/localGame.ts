@@ -45,6 +45,7 @@ import {
 } from "@conquerra/engine";
 import { buildTimeline } from "../replay/timeline";
 import { chronicleOf } from "../logic/chronicleKeep";
+import { leaderVoices, type VoiceMemory } from "../logic/voices";
 import { BOT_NAMES } from "./names";
 import { DEFAULT_HOUSE } from "../map/houses";
 import type { BotChoice, BotLevel, HostStart, HostUpdate, LobbySettings, SeatInfo, TurnReport } from "./protocol";
@@ -130,6 +131,8 @@ export interface LocalHostData {
   chronicle?: TurnReport[];
   /** What your leaders remember (session 18: the Marshal's memory, for reading a runaway), as this turn's planning began. */
   leaderMemory?: MarshalMemory;
+  /** What your leaders remember for what they say (session 22: grudges, when your Leader last judged a move of yours). */
+  voiceMemory?: VoiceMemory;
 }
 
 /** The bots' diplomacy for one turn: their propose/answer orders, and the offers they made you. */
@@ -175,6 +178,8 @@ export class LocalGame {
   private talk: Talk = { turn: 0, orders: {}, toHuman: [] };
   /** What your leaders remember (session 18), as this turn's planning began. */
   private leaderMemory: MarshalMemory = freshMemory();
+  /** What your leaders remember for what they say (session 22). */
+  private voiceMemory: VoiceMemory = {};
 
   constructor(
     /** The map to play on (the worker loads it with `loadMap`; tests pass it straight from `maps`). */
@@ -212,6 +217,7 @@ export class LocalGame {
       this.lastTurn = new Map(Object.entries(host.lastTurn ?? {}));
       this.chronicle = Array.isArray(host.chronicle) ? host.chronicle : [];
       if (host.leaderMemory) this.leaderMemory = host.leaderMemory;
+      if (host.voiceMemory) this.voiceMemory = host.voiceMemory;
       if (host.talk && host.talk.turn === restore.state.turn) this.talk = host.talk;
       // The history only replays exactly under the rules it was played with; a game carried on under new ones drops it.
       const h = restore.history;
@@ -450,7 +456,11 @@ export class LocalGame {
     this.state = result.state;
     // What each bot watched in this turn's replay (only its own view), for its next plan.
     this.lastTurn = new Map(this.state.players.filter((p) => p.eliminatedTurn === null).map((p) => [p.id, replayFor(this.ctx, before, result, p.id)]));
-    const report = { turn: before.turn, events: this.lastTurn.get(HUMAN_ID) ?? replayFor(this.ctx, before, result, HUMAN_ID) };
+    const events = this.lastTurn.get(HUMAN_ID) ?? replayFor(this.ctx, before, result, HUMAN_ID);
+    // What your leaders say about the turn, from your own view and replay only (session 22).
+    const said = this.knockedOut ? null : leaderVoices(this.ctx, viewFor(this.ctx, before, HUMAN_ID), viewFor(this.ctx, this.state, HUMAN_ID), events, this.voiceMemory);
+    if (said) this.voiceMemory = said.memory;
+    const report: TurnReport = { turn: before.turn, events, ...(said?.lines.length ? { voices: said.lines } : {}) };
     this.chronicle.push(chronicleOf(report));
     this.startClock(buildTimeline(report.events).total);
     return report;
@@ -521,6 +531,7 @@ export class LocalGame {
       talk: this.talk,
       chronicle: this.chronicle,
       leaderMemory: this.leaderMemory,
+      voiceMemory: this.voiceMemory,
     };
     return makeSave(this.ctx, this.state, HUMAN_ID, this.now(), {
       host: host as unknown as Record<string, unknown>,

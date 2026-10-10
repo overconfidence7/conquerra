@@ -141,10 +141,17 @@ if (want("replay")) {
 // ---------- Part 2: the six personalities on the deal card, a bot's offer, a broken deal in the report ----------
 /** Play a turn to its end (the replay skipped), the report closed. */
 async function playTurn(p) {
+  const turn = await p.evaluate(() => window.__conquerraStore.getState().view.turn);
   await p.evaluate(() => void window.__conquerraStore.getState().lockIn());
-  await p.waitForFunction(() => window.__conquerraStore.getState().replay, { timeout: 90000 });
+  const ok = await p
+    .waitForFunction((turn) => { const s = window.__conquerraStore.getState(); return s.replay || s.view.turn !== turn || s.error; }, { timeout: 90000 }, turn)
+    .then(() => true, () => false);
+  const err = await p.evaluate(() => window.__conquerraStore.getState().error);
+  if (!ok || err) console.log("  (lock in:", err ?? "nothing happened", ")");
   await endReplay(p);
   await p.waitForFunction(() => !window.__conquerraStore.getState().replay && !window.__conquerraStore.getState().busy, { timeout: 90000 });
+  // Close the "keep two captured leaders" choice if it came up (keep the first ones).
+  await p.evaluate(() => { const b = [...document.querySelectorAll(".dialog button")].find((x) => /Keep|Done/.test(x.textContent)); b?.click(); });
 }
 if (want("deals")) {
   const said = [];
@@ -216,6 +223,103 @@ if (want("deals")) {
     if (await p.evaluate(() => !!window.__conquerraStore.getState().view.winner)) break;
   }
   if (!broke) console.log("  (no broken deal seen in 30 turns)");
+  await p.close();
+  console.log(said.join("\n"));
+}
+
+// ---------- Part 3: the leaders' voices ----------
+const voicesOf = (p) => p.evaluate(() => (window.__conquerraStore.getState().report?.voices ?? []).map((v) => `${v.name} [${v.situation}]: ${v.text}`));
+if (want("leaders")) {
+  const said = [];
+  for (const phone of [false, true]) {
+    const sfx = phone ? "-phone" : "";
+    const p = await page(phone);
+    await p.goto(URL, { waitUntil: "networkidle0" });
+    // Session 20c's game at turn 16: your Leader, Aldric, the Conqueror. Set up a bad attack of your own first:
+    // a small army against a much bigger one, with more of your troops right next to the target.
+    await load(p, file("s20c-home.json"));
+    await p.evaluate(async () => {
+      const s = window.__conquerraStore.getState();
+      await s.setInstruction(`leader:${s.view.me.id}`, { kind: "military" });
+      await s.setBudget(`leader:${s.view.me.id}`, { share: 0.6 });
+    });
+    let judged = false, two = false, panel = false;
+    for (let turn = 0; turn < 10 && !(judged && two); turn++) {
+      // A bad attack of your own each turn until your Leader has a moment to judge it (bigger news comes first).
+      if (!judged) {
+    const setUp = await p.evaluate(() => {
+          const st = window.__conquerraStore.getState();
+          const v = st.view, me = v.me.id, map = st.ctx.map;
+          const nb = (t) => map.borders.filter((b) => b.a === t || b.b === t).map((b) => (b.a === t ? b.b : b.a));
+          const full = (t) => (v.territories[t]?.detail === "full" ? v.territories[t] : null);
+          for (const t of map.territories) {
+            const x = full(t.id);
+            if (!x || !x.owner || x.owner === me || x.troops < 5) continue;
+            const mine = nb(t.id).filter((f) => full(f)?.owner === me && full(f).troops >= 2);
+            if (mine.length >= 1) {
+              mine.sort((a, b) => full(a).troops - full(b).troops);
+              window.__conquerraStore.setState({ queue: [...st.queue, { id: "bad-1", kind: "move", from: mine[0], to: t.id, troops: 1 }] });
+              return `${map.territories.find((y) => y.id === mine[0]).name} (1) against ${t.name} (${x.troops})`;
+            }
+          }
+          return null;
+        });
+        console.log("  bad attack:", setUp);
+      }
+      await playTurn(p);
+      const v = await voicesOf(p);
+      said.push(...v);
+      if (!judged && v.some((x) => /\[judge/.test(x))) {
+        await p.evaluate(() => window.__conquerraStore.getState().setShowReport(true));
+        await sleep(800);
+        await p.evaluate(() => document.querySelector(".report-group.voices")?.scrollIntoView({ block: "center" }));
+        await shot(p, "s22-leader-judge", sfx, { wait: 1500 });
+        await p.evaluate(() => window.__conquerraStore.getState().setShowReport(false));
+        judged = true;
+      }
+      if (!two && v.length >= 2) {
+        await p.evaluate(() => window.__conquerraStore.getState().setShowReport(true));
+        await sleep(800);
+        await p.evaluate(() => document.querySelector(".report-group.voices")?.scrollIntoView({ block: "center" }));
+        await shot(p, "s22-report-voices", sfx, { wait: 1500 });
+        await p.evaluate(() => window.__conquerraStore.getState().setShowReport(false));
+        two = true;
+      }
+      if (!panel && v.length) {
+        if (phone) await p.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => x.getAttribute("aria-label") === "Leaders"); b?.click(); });
+        await shot(p, "s22-leaders-panel", sfx, { wait: 1500 });
+        panel = true;
+      }
+    }
+    // The Chronicle, with the leaders' lines in it.
+    await p.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Chronicle/i.test(x.getAttribute("aria-label") ?? x.textContent ?? "")); b?.click(); });
+    await shot(p, "s22-chronicle", sfx, { wait: 1500 });
+    await p.close();
+  }
+  // A captured leader's first report (session 20c's finishing save: you hold 80%, the last Houses fall).
+  const p = await page(false);
+  await p.goto(URL, { waitUntil: "networkidle0" });
+  await load(p, file("s20c-save.json"));
+  await p.evaluate(async () => {
+    const s = window.__conquerraStore.getState();
+    await s.setInstruction(`leader:${s.view.me.id}`, { kind: "military" });
+    await s.setBudget(`leader:${s.view.me.id}`, { share: 0.8 });
+  });
+  let first = false;
+  for (let turn = 0; turn < 8 && !first; turn++) {
+    await playTurn(p);
+    const v = await voicesOf(p);
+    said.push(...v);
+    if (v.some((x) => /\[firstReport\]/.test(x))) {
+      await p.evaluate(() => window.__conquerraStore.getState().setShowReport(true));
+      await sleep(800);
+      await p.evaluate(() => document.querySelector(".report-group.voices")?.scrollIntoView({ block: "center" }));
+      await shot(p, "s22-captured-first", "", { wait: 1500 });
+      first = true;
+    }
+    if (await p.evaluate(() => !!window.__conquerraStore.getState().view.winner)) break;
+  }
+  if (!first) console.log("  (no captured leader's first report seen)");
   await p.close();
   console.log(said.join("\n"));
 }

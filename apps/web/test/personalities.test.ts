@@ -1,10 +1,9 @@
 import { maps } from "@conquerra/content/maps";
-import type { GameState, PlayerView } from "@conquerra/engine";
+import type { GameState } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { LocalGame } from "../src/host/localGame";
 import type { LobbySettings } from "../src/host/protocol";
-import { leaderSays } from "../src/logic/narrate";
-import { namer, styledName, styleLabel, styleNote } from "../src/logic/text";
+import { styledName, styleLabel, styleNote } from "../src/logic/text";
 
 /** Session 20c (Nate): leaders with personalities, from the lobby to the report. */
 const settings: LobbySettings = { mapId: "embervale", bots: 3, botLevel: "marshal", luck: 0.3, fog: true, mode: "classic", turnSeconds: null, leaderName: "Aldric", leaderPersonality: "conqueror", stewardPersonality: "turtle" };
@@ -42,20 +41,5 @@ describe("leaders with personalities (session 20c)", () => {
     expect(styledName("Aldric", null)).toBe("Aldric");
     expect(styleLabel(null)).toBe("Neutral");
     expect(styleNote("turtle", "steward")).toMatch(/forts and culture first/);
-  });
-
-  it("a leader with a personality speaks in its own voice in the report; a Neutral one says nothing", () => {
-    const g = new LocalGame(maps.embervale!, settings, "styles");
-    const view: PlayerView = g.update().view;
-    const n = namer(g.ctx, view);
-    const rival = view.players.find((p) => p.id !== view.me.id)!.id;
-    // (Which version it says depends on the turn: every one names the land.)
-    for (let turn = 1; turn <= 12; turn++) {
-      const said = leaderSays(n, view.me.id, ["Ashfell", "Pinemark"], rival, turn);
-      expect(said).toMatch(/^Aldric, the Conqueror: “.*Ashfell and Pinemark.*”$/);
-      expect(said).toBe(leaderSays(n, view.me.id, ["Ashfell", "Pinemark"], rival, turn));
-    }
-    const neutral = { ...view, me: { ...view.me, leaders: view.me.leaders.map((l) => ({ ...l, personality: null })) } };
-    expect(leaderSays(namer(g.ctx, neutral), view.me.id, ["Ashfell"], rival, 3)).toBeNull();
   });
 });
