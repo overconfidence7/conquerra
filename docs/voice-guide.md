@@ -24,21 +24,26 @@ Warm, direct and organized without being stiff. Plain-spoken: specifics over pol
 - **Apologize once, with a reason, then move on** (an error message, a failed save).
 
 ## Humor density (where jokes are allowed)
+**Nate (Oct 10): "I love the idea of sarcastic humor (and other humor) being written into the game where you can."** So humor is the default wherever words aren't doing exact work. The one hard line: **a joke never replaces information.** The number, the odds, the rule and the reason are always there and always exact. The joke sits beside them.
+
 | Where | Humor | Shape |
 |---|---|---|
-| Rules reference, tooltips, odds, buttons, settings, errors, the lobby's choices | **None** | Plain and exact. A tooltip is one sentence. |
-| The turn report and the Chronicle's facts | **None** in the fact itself | "You attacked Ashfell with 10 troops and took it: you lost 3, they lost 8." |
-| Title cards and banners | **None when the player loses something big** (their capital, a Leader, the game). A dry beat is allowed on a rival's misfortune or a broken deal. | Short: "Rookhome falls to House Purpure." |
-| Bots' deal answers, offers and broken-deal lines | **One dry beat**, in the personality's voice | One or two short sentences, the reason always in it. |
-| Leaders' lines in the report, the Chronicle and the Leaders panel | **It breathes**, like a trusted colleague's catch-up | A straight report with the leader inside it, anchored to what really happened. |
-| Game over, awards | **One dry beat** at most, from the game's real numbers | "Most territories taken: Aldric, 41. Nobody else was close." |
+| Rules reference, tooltips, odds, buttons, settings, errors, the deal terms | **None** | Plain and exact. A tooltip is one sentence. |
+| The turn report and the Chronicle | **The fact stays plain, and a dry line can follow it** (a leader's comment, a sarcastic aside on a rival's bad turn) | "You attacked Ashfell with 10 troops and took it: you lost 3, they lost 8." Then, from your Leader: "They had a fort. Had." |
+| Title cards and banners | **A sarcastic subline on a rival's misfortune, a broken deal, a comeback.** The player's own big loss gets a plain title, and the dry comment comes from their Leader in the report instead. | "House Azure is no more." Subline: "They had a good run. Mostly the running." |
+| Bots' deal answers, offers and broken-deal lines | **Sarcasm welcome**, in the personality's voice, the reason always in it | "You want to march through my land with that army. Bold. No." |
+| Leaders' lines | **It breathes:** sarcastic, self-deprecating, a running grudge | A straight report with the leader inside it, anchored to what really happened. |
+| Empty states, waiting, loading, the autosave line, the lobby's map and personality blurbs, Fate and Spoils flavour text | **Yes**, one dry beat | "No orders yet. The army is enjoying its day off." / "The bots are thinking. Some harder than others." |
+| Game over and the awards | **Full mode:** the awards read like an official royal audit (a frame too serious for the stakes) | "Most territories lost: Duke Varric, 23. A record, in its own way." |
 
 **The rules of the joke:**
-- **Receipts.** A joke points at something that really happened in this game, by name: the place, the rival, the turn. If the line still works with the names swapped out, it isn't the voice. ("Took Ashfell and Yewmarch. Morwen's lot ran before we got there." is Nate's own example.)
+- **Receipts.** A joke points at something that really happened in this game, by name: the place, the rival, the turn. If the line still works with the names swapped out, it isn't the voice. ("Took Ashfell and Yewmarch. Morwen's lot ran before we got there." is Nate's own example.) Generic quips are allowed only where there's nothing to point at (empty states, loading).
+- **Sarcasm by understatement and overcommitment.** Say the obvious thing flatly ("They had a fort. Had."), or commit to the wrong frame so hard it's obviously a joke (a bot thanking you warmly for the territory it just took).
 - **Deadpan verdicts.** A flat assessment is the punchline. "Moonwood's wall is up. Anyone who wants Rookhome now has to go through all of it."
-- **Self-inclusion.** A leader is in the mess, never above it. "Purse is empty. I can hold the line, but don't ask me to take anything."
-- **Affection, not cruelty.** Bots and leaders tease events and choices, never the player's worth. Nothing crude, nothing childish or nasty, no real people or firms.
-- **Never more than one beat per line,** and not every turn: a leader speaks when something happened that calls for it (a big capture, a broken truce, a comeback, a threat), with a limit per leader per turn.
+- **Self-inclusion.** A leader is in the mess, never above it. "Purse is empty. I'll be holding the line with strong opinions."
+- **Running gags with receipts.** A leader who lost a fort to a rival remembers it and brings it up again later, and the line changes as the story does (the grudge, the revenge, the grudging respect).
+- **Affection, not cruelty.** Sarcasm aims at the situation, the speaker, or a rival's choices. A rival can needle the player's move, never the player. Nothing crude, nothing childish or nasty, no real people or firms.
+- **One beat per line, and not every line.** Leaders speak when something happened that calls for it, with a limit per leader per turn. A turn's report with a joke in every line is too much: about one in three lines carries a beat.
 - **Fair:** a line never reveals anything the player couldn't know. No bragging about land in their fog, no hint at a hidden personality beyond how it plays.
 
 ## The six bot personalities (each sounds like itself)
@@ -51,7 +56,7 @@ Warm, direct and organized without being stiff. Plain-spoken: specifics over pol
 | **Opportunist** | Practical about other people's bad luck. | "Not while someone's bleeding. I keep my hands free." |
 | **Merchant** | Nate at a negotiation: credits the offer, shows the math, "walk me through it." | "The numbers don't work for me. Walk me through how you got there." |
 
-Your own **Leader and Steward** speak in their personality's voice (the same six, with the Steward's Turtle and Merchant). **A Neutral leader keeps a plain, brief voice:** it reports facts with no flavour ("Took Ashfell and Pinemark.").
+Your own **Leader and Steward** speak in their personality's voice (the same six, with the Steward's Turtle and Merchant). **A Neutral leader is dry and brief:** mostly facts, with the occasional flat verdict ("Took Ashfell and Pinemark. Nobody was home.").
 
 ## Sample rewrites (Nate: strike or change anything that doesn't sound like you)
 | Where | Today | In the voice |
@@ -66,15 +71,28 @@ Your own **Leader and Steward** speak in their personality's voice (the same six
 | Opportunist, took land | {rival} was bleeding; {places} came cheap. | {rival} left {places} wide open. I'd have been a fool not to. |
 | Merchant, trade no | The numbers don't add up for me. | The numbers don't work for me. Walk me through how you got there. |
 | Merchant, breaks a deal | {place} is worth more than our deal; business is business. | {place} is worth more than our deal. Nothing personal, it's just the math. |
+| Conqueror, passage no (you're massed on its border) | (new) | You want to march through my land with that army. Bold. No. |
+| Blitzer, took a fort | (new) | Took {place}. They had a fort. Had. |
+| Turtle, truce no (you broke one before) | (new) | We had a truce once. I still have the dent in my wall from it. |
+| Schemer, breaks a truce | (new) | Our truce was lovely while it lasted. It lasted until {place} looked unguarded. |
+| Opportunist, joint war on the runaway | Gladly: {target} is running away with the map. | Gladly. {target} has been very comfortable lately. |
+| Merchant, counter-offer | (new) | Generous of you to value my gold that highly. Walk me through the rest of the math. |
 | Your Leader, capital threatened | (new) | Heads up, {rival} has {n} troops two steps from {capital}. I'm moving what I can inside the wall. |
-| Your Leader, purse empty | (new) | Purse is empty. I can hold the line, but don't ask me to take anything. |
+| Your Leader, purse empty | (new) | Purse is empty. I'll be holding the line with strong opinions. |
+| Your Leader, after your capital fell | (new) | {capital} is gone. For the record, the wall held for {n} turns. |
 | Your Leader, finished a rival | (new) | {rival} is done. We checked the fog twice. |
-| A captured leader, first report | (new) | {name} here. I used to work for {old house}. Reporting to {your leader} now, apparently. |
+| Your Leader, a grudge (receipts) | (new) | {rival} burned our fort at {place} on turn {turn}. I haven't forgotten, in case you were wondering. |
+| A captured leader, first report | (new) | {name} here. Formerly of House {old house}, which as you know is no longer a thing. Reporting to {your leader}. |
 | Your Steward, wall built | (new) | {place}'s wall is up. Anyone who wants {capital} now has to go through all of it. |
-| Your Steward, gold handed back (session 23) | (new) | Sent {n} gold back. Nothing out here worth building right now. |
+| Your Steward, gold handed back (session 23) | (new) | Sent {n} gold back. I looked everywhere for something worth building. Twice. |
+| Title card subline, a House knocked out | House Azure is no more | House Azure is no more. Subline: "They had a good run. Mostly the running." |
+| Empty order queue | (new) | No orders yet. The army is enjoying its day off. |
+| Waiting for the bots | The bots are finishing the game… | The bots are thinking. Some harder than others. |
+| Award | (new) | Most territories lost: {name}, {n}. A record, in its own way. |
+| Defeat screen | Lady Morwen wins. 9 turns played. | Lady Morwen wins. 9 turns played, which is 9 more than nothing. |
 | Notice, Effects moved to Light | The replay was running slowly on this device, so Effects are on Light now (Settings, Effects, to change it). | Heads up, the replay was running slowly, so Effects are on Light now. You can change it in Settings. |
 | The report, turn order | Turn order: Gules → Azure → Or | Turn order: Gules, then Azure, then Or. |
-| Title card, your capital | Your capital, Rookhome, falls to House Purpure | Rookhome falls to House Purpure. |
+| Title card, your capital | Your capital, Rookhome, falls to House Purpure | Rookhome falls to House Purpure. (Your Leader comments in the report.) |
 | Title card, a capture you made | You capture Whitemarch (banner) + Whitemarch falls to you (card) | One line only: Whitemarch is yours. |
 
 ## How the lines are stored

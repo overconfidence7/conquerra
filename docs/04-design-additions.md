@@ -371,7 +371,7 @@ Nate's notes: his test game on Wyrmland against 5 Captains lasted only 12 turns,
 - **Make every piece of writing in the game feel less like AI wrote it:** menus, tooltips, reports, the Chronicle, deal reasons, bot offers, the rules reference.
 - **Written in Nate's own voice** (his writing-style skill, "nate-voice"), with **a different tone for each bot personality** (the Conqueror, Blitzer, Turtle, Schemer, Opportunist and Merchant each sound like themselves) and, later, for leaders' temperaments.
 - **When:** session 22, after the polish pass (21) and before M4 (the chat below reuses these voices). Nate can move it.
-- **The guide (Oct 10):** `docs/voice-guide.md`, built from Nate's writing-style skill: the hard rules (no dashes, semicolons, arrows in prose, AI filler or rhetorical questions), where humor is allowed (none in rules, menus and facts; one dry beat for bots; leaders can breathe; always about what really happened), a voice for each personality, and sample rewrites for Nate to mark up.
+- **The guide (Oct 10):** `docs/voice-guide.md`, built from Nate's writing-style skill: the hard rules (no dashes, semicolons, arrows in prose, AI filler or rhetorical questions), where humor is allowed (Nate: sarcastic humor and other humor wherever the game can take it; none where words do exact work, like rules, tooltips, odds and errors; always about what really happened, never at the player), a voice for each personality, and sample rewrites for Nate to mark up.
 
 ### Chat (with M4, the multiplayer milestone; it works in single player too)
 - **People with people:** a normal chat. One-to-one chats, and group chats with the players you pick.

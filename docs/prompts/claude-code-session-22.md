@@ -39,7 +39,7 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 - **The hard rules in `CLAUDE.md`.** The engine doesn't change. The bots' **decisions** don't change: only the text they attach.
 - **The voice guide's hard rules apply to every line a player can read:** no dashes in prose, no semicolons, no arrows in prose, none of the banned words, no rhetorical questions, one exclamation point at most and only on a pleasantry or a win, never "champs."
 - **Keep the specifics.** Every line keeps its names, places, numbers and its one plain reason (a deal answer always says why). Making a line shorter by dropping a real detail is a failure.
-- **Humor follows the density table:** none in rules, menus, tooltips, odds, errors and the facts of the report; none on a title card when the player loses something big; one dry beat in a bot's line; leaders can breathe. **Receipts:** a joke names the real place, rival or turn. Never cruel, nothing crude, never every turn.
+- **Humor, sarcasm included, wherever words aren't doing exact work** (Nate, Oct 10: "I love the idea of sarcastic humor (and other humor) being written into the game where you can"). Follow the guide's density table: none in the rules, tooltips, odds, buttons, settings, errors and deal terms; the report's facts stay plain with a dry line beside them; sarcasm welcome from bots and leaders; a sarcastic subline on a rival's misfortune; empty states, waiting text, flavour text and the awards get a beat. **A joke never replaces information. Receipts:** a joke names the real place, rival or turn. Aim at the situation, the speaker or a rival's choices, never the player. Nothing crude, and about one line in three carries a beat, not every line.
 - **Fog respected:** no line reveals anything the reader couldn't know (no bragging about land in their fog, no hint at a hidden personality beyond how it plays). Leaders speak only from their owner's view. Keep the fogged-replay tests passing and add one for the new lines.
 - **Deterministic and seeded:** which version of a line is picked comes from the game's public id, the turn and the speaker (never the dice seed, never `Math.random()`), so "Watch again" and a reload say the same thing.
 - **Same length on screen:** a line must fit where it shows today at 384 px (the report, the Chronicle, the Leaders panel, the deal card, a title card). Check the longest version of each.
@@ -61,8 +61,9 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 
 ## Part 3: the leaders' voices
 Today a leader with a personality says one line when it takes land; a Neutral leader says nothing. **Give your Leader, your Steward and captured leaders a full set**, in their personality's voice (the guide's samples), shown in the turn report, the Chronicle and, for the latest one, the Leaders panel:
-- **took land** (the line today, now with versions), **lost land**, **a capture of a capital** (theirs or one they took), **finished a rival** ("We checked the fog twice."), **your capital threatened** (a rival army within 2 steps of the capital's province: "Heads up," what it saw, what it's doing about it), **purse empty** (a grumble, at most once every few turns), **a wall built** (the Steward), **a captured leader's first report** to its new master, **a former rival needled** by a captured leader (rarely)
-- **a Neutral leader** gets a plain, brief voice for the same situations, facts only ("Took Ashfell and Pinemark.")
+- **took land** (the line today, now with versions), **lost land**, **a capture of a capital** (theirs or one they took), **finished a rival** ("We checked the fog twice."), **your capital threatened** (a rival army within 2 steps of the capital's province: "Heads up," what it saw, what it's doing about it), **your capital lost** (the dry comment the title card doesn't make: "For the record, the wall held for 4 turns."), **purse empty** (a grumble, at most once every few turns), **a wall built** (the Steward), **a captured leader's first report** to its new master, **a former rival needled** by a captured leader (rarely)
+- **a Neutral leader** is dry and brief for the same situations: mostly facts, the occasional flat verdict ("Took Ashfell and Pinemark. Nobody was home.")
+- **a grudge, as a running gag with receipts:** a leader remembers who burned its fort, took its home province or wiped out its army (the place and the turn), brings it up later, and the line changes as the story does (revenge taken, grudging respect)
 - **not too much:** at most one line per leader per turn, at most three leader lines in a turn's report, and the less important ones (purse empty, needling) give way to the big ones (a capital, a threat, a rival finished). Settings in `packages/content` with the lines.
 - **The Steward's "gold handed back" line** is session 23's (that's when the rule arrives): write its versions now in the library so 23 only has to call it.
 - Screenshots: a report with two leaders speaking, the Chronicle, the Leaders panel with a line, a captured leader's first report.
@@ -71,9 +72,11 @@ Today a leader with a personality says one line when it takes land; a Neutral le
 ## Part 4: every other word in the game
 Go through every remaining string against the guide, surface by surface, and keep a note of anything you weren't sure about for Nate's sheet (Last):
 - **The turn report and the Chronicle:** facts plain and exact (no humor in the fact itself), the turn order without arrows, the Fallen's events, Fate and Spoils, spies, deals
-- **Title cards and banners** (session 21 wrote them plain): their final words. No humor on the player's own big losses; one dry beat at most on a rival's misfortune or a broken deal. Step 0's floating words get their final wording.
+- **Title cards and banners** (session 21 wrote them plain): their final words, with a **sarcastic subline** on a rival's misfortune, a broken deal or a comeback. The player's own big loss gets a plain title (their Leader comments in the report instead). Step 0's floating words get their final wording.
 - **Notices and toasts** (the update notices, "Effects are on Light now", the autosave lines, errors): the point first, then what the player can do
-- **The lobby, Settings, the Houses and Leaders panels, the leaders' commands, the deal cards, the path box, the Spoils and Fate cards, game over and the awards:** plain, short, specific. Awards may carry one dry beat from the game's real numbers.
+- **The lobby, Settings, the Houses and Leaders panels, the leaders' commands, the deal cards, the path box:** plain, short, specific where they explain a choice; the map and personality blurbs can carry a dry beat.
+- **Empty states, waiting and loading text, the autosave line, Fate and Spoils flavour text:** a dry beat each ("No orders yet. The army is enjoying its day off."). Where a card needs flavour text it doesn't have, add one line under its rule text, never instead of it.
+- **Game over and the awards: full mode.** The awards read like an official royal audit, built from the game's real numbers ("Most territories lost: Duke Varric, 23. A record, in its own way.").
 - **Tooltips:** one sentence each
 - **`docs/rules-reference.md`:** in the same voice, plain and exact (it's the rules: no humor)
 - The map lab and the art bench (`?lab=`) are developer tools: leave them.
@@ -110,5 +113,5 @@ Go through every remaining string against the guide, surface by surface, and kee
 - the voice test: how many strings it checks, what it can't reach, how many failures there were at the start
 - the sims before and after (they must match)
 - the number of lines written, by personality and situation
-- five lines you're proudest of and five you're least sure of (Nate will read these first)
+- five lines you're proudest of (the funniest first) and five you're least sure of (Nate will read these first)
 - the bundle size and the deployed version
