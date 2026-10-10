@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOT_SITUATIONS, CAPTURED_SITUATIONS, fill, LEADER_SITUATIONS, LEADER_VOICES, leaderLine, lines, pickVersion, placeholders, REASONS, reasonLine, VOICES, type Speaker } from "../src/lines";
+import { BOT_SITUATIONS, CAPTURED_SITUATIONS, fill, SCREEN_SITUATIONS, LEADER_SITUATIONS, LEADER_VOICES, leaderLine, lines, pickVersion, placeholders, REASONS, reasonLine, VOICES, type Speaker } from "../src/lines";
 
 /** The line library (session 22): enough versions, every placeholder known and filled, and a deterministic pick. */
 const sample = (keys: readonly string[]) => Object.fromEntries(keys.map((k) => [k, `<${k}>`]));
@@ -46,6 +46,7 @@ describe("the line library", () => {
     }
     for (const v of LEADER_VOICES) for (const [k, allowed] of Object.entries(LEADER_SITUATIONS)) check(allowed, lines.leaders[v]?.[k as keyof typeof LEADER_SITUATIONS], `leader ${v}.${k}`);
     for (const [k, allowed] of Object.entries(CAPTURED_SITUATIONS)) check(allowed, lines.captured[k as keyof typeof CAPTURED_SITUATIONS], `captured.${k}`);
+    for (const [k, allowed] of Object.entries(SCREEN_SITUATIONS)) check(allowed, lines.screens[k as keyof typeof SCREEN_SITUATIONS], `screens.${k}`);
   });
 
   it("a captured leader has three to five versions of each line", () => {

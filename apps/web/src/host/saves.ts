@@ -35,7 +35,7 @@ export const SAVE_ERRORS = {
   unavailable: "Saving isn't available here (a private window, or storage is switched off). Use Save to a file instead.",
   full: "There's no room left on this device to save the game. Free some space, or use Save to a file.",
   failed: "The game couldn't be saved on this device. Use Save to a file instead.",
-  readFailed: "Saved games couldn't be read on this device.",
+  readFailed: "Saved games couldn't be read on this device. If you saved one to a file, Load a file still works.",
 } as const;
 
 const infoOf = (slot: SlotId, save: SaveFile): SlotInfo => ({ slot, savedAt: save.savedAt, summary: save.summary });

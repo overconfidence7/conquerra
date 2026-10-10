@@ -1,4 +1,5 @@
 import type { MapDef } from "@conquerra/content";
+import { screenLine } from "@conquerra/content/lines";
 import type { PlayerView, ReplayEvent } from "@conquerra/engine";
 import { houseOf } from "../map/houses";
 import { RESULT_AT, type Beat, type Timeline } from "./timeline";
@@ -8,7 +9,8 @@ import { RESULT_AT, type Beat, type Timeline } from "./timeline";
  * turn: a capital falling ("Galeholt falls to House Gules"), a House knocked out ("House Vert is no more"), a deal
  * broken ("Lady Morwen breaks the truce"). Only for
  * what you saw: they're built from your replay's events, and a fogged event (a "surface" pulse) never gets one.
- * Plain words for now; the language pass (session 22) gives them their final voice.
+ * The language pass (session 22): your own big loss gets a plain title (your Leader comments in the report); a
+ * rival's misfortune and a broken deal get a sarcastic subline under it (the line library's screens).
  */
 
 export interface TitleCard {
@@ -16,6 +18,8 @@ export interface TitleCard {
   at: number;
   ms: number;
   text: string;
+  /** A dry line under it (a rival's misfortune, a broken deal), or none. */
+  sub?: string;
   /** The House it's about (its colour on the card), or null. */
   house: string | null;
   /** Higher first when there are too many. */
@@ -37,21 +41,28 @@ export function titleCards(tl: Timeline, before: PlayerView, map: MapDef): Title
   const house = (p: string | null) => houseOf(before, p).name;
   const cards: TitleCard[] = [];
   const at = (b: Beat, share: number) => b.start + b.duration * share;
+  // Which subline: the game's public id, the turn and the event (a replay or a reload says the same).
+  let k = 0;
+  const seed = () => `${before.gameId}|${before.turn}|title${k++}`;
   for (const b of tl.beats) {
     for (const e of b.events) {
       if (e.type === "battle" && e.captured && capitals.has(e.to)) {
-        const yours = capitals.get(e.to) === me;
-        const text = yours ? `Your capital, ${name.get(e.to)}, falls to House ${house(e.player)}` : e.player === me ? `${name.get(e.to)} falls to you` : `${name.get(e.to)} falls to House ${house(e.player)}`;
-        cards.push({ at: at(b, RESULT_AT), ms: CARD_MS, text, house: e.player, weight: yours || e.player === me ? 3 : 2, event: e });
+        const owner = capitals.get(e.to)!;
+        const yours = owner === me;
+        const text = yours ? `${name.get(e.to)} falls to House ${house(e.player)}` : e.player === me ? `${name.get(e.to)} is yours` : `${name.get(e.to)} falls to House ${house(e.player)}`;
+        const sub = !yours ? screenLine("titleCapitalFalls", seed(), { house: `House ${house(owner)}` }) : undefined;
+        cards.push({ at: at(b, RESULT_AT), ms: CARD_MS, text, ...(sub ? { sub } : {}), house: e.player, weight: yours || e.player === me ? 3 : 2, event: e });
       } else if (e.type === "dealBroken") {
         const who = (p: string) => before.players.find((x) => x.id === p)?.name ?? "A House";
         const what = e.kind === "war" ? "joint war" : e.kind === "passage" ? "right of passage" : e.kind;
         const other = e.by === e.a ? e.b : e.a;
         const text = e.by === me ? `You break the ${what} with ${who(other)}` : `${who(e.by)} breaks the ${what}`;
-        cards.push({ at: at(b, 0.2), ms: CARD_MS, text, house: e.by, weight: e.by === me || other === me ? 3 : 1, event: e });
+        const sub = e.by !== me ? screenLine("titleDealBroken", seed()) : undefined;
+        cards.push({ at: at(b, 0.2), ms: CARD_MS, text, ...(sub ? { sub } : {}), house: e.by, weight: e.by === me || other === me ? 3 : 1, event: e });
       } else if (e.type === "eliminated") {
         const text = e.player === me ? "Your House is no more" : `House ${house(e.player)} is no more`;
-        cards.push({ at: b.start, ms: CARD_MS, text, house: e.player, weight: e.player === me || e.by === me ? 4 : 1, event: e });
+        const sub = e.player !== me ? screenLine("titleHouseOut", seed(), { house: `House ${house(e.player)}` }) : undefined;
+        cards.push({ at: b.start, ms: CARD_MS, text, ...(sub ? { sub } : {}), house: e.player, weight: e.player === me || e.by === me ? 4 : 1, event: e });
       }
     }
   }

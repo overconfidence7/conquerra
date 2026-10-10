@@ -222,7 +222,7 @@ export function GameScreen() {
     return () => clearTimeout(t);
   }, [view, replay]);
   useEffect(() => {
-    if (movedToLight) useGame.setState({ notice: "The replay was running slowly on this device, so Effects are on Light now (Settings, Effects, to change it)." });
+    if (movedToLight) useGame.setState({ notice: "Heads up, the replay was running slowly, so Effects are on Light now. You can change it in Settings." });
   }, [movedToLight]);
   const [saves, setSaves] = useState<"save" | "load" | null>(null);
   const [cardsOpen, setCardsOpen] = useState(false);
@@ -440,6 +440,7 @@ export function GameScreen() {
   const titleCard = replaying && rp.card && (
     <div className="title-card" key={rp.card.at} role="status" style={{ "--card-ms": `${rp.card.ms}ms`, "--house": rp.card.house ? houseOf(view, rp.card.house).color : "#c9a45c" } as React.CSSProperties}>
       <span className="title-card-text">{rp.card.text}</span>
+      {rp.card.sub && <span className="title-card-sub">{rp.card.sub}</span>}
     </div>
   );
   const replayBar = replaying && (

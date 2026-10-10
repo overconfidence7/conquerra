@@ -1,3 +1,4 @@
+import { screenLine } from "@conquerra/content/lines";
 import type { GameContext, PlayerView } from "@conquerra/engine";
 import { landLeader, readyEvents } from "../logic/fallen";
 import { WORLD_EVENT_NAME } from "../logic/text";
@@ -41,7 +42,7 @@ export function KnockedOutChoice({ ctx, view }: { ctx: GameContext; view: Player
               Strike as one of the Fallen
             </button>
             <button className="wide" onClick={seeResult} disabled={busy}>
-              {busy ? "The others are finishing the game…" : "Leave the game"}
+              {busy ? screenLine("waitingOthers", `${view.gameId}|${view.turn}`) : "Leave the game"}
             </button>
             <p className="muted small">Leaving: the others play on, and you see who won.</p>
           </div>
@@ -61,7 +62,7 @@ export function KnockedOutChoice({ ctx, view }: { ctx: GameContext; view: Player
           </button>
           <p className="muted small">See the whole map and each turn's replay. You can skip ahead any time.</p>
           <button className="wide" onClick={seeResult} disabled={busy}>
-            {busy ? "The bots are finishing the game…" : "See the result"}
+            {busy ? screenLine("waitingBots", `${view.gameId}|${view.turn}`) : "See the result"}
           </button>
         </div>
       </Frame>

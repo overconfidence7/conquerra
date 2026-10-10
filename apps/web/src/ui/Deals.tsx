@@ -244,7 +244,7 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
       )}
 
       <div className="chips bond" role="radiogroup" aria-label="Promise">
-        <button role="radio" aria-checked={offer.bond === "handshake"} className={`chip ${offer.bond === "handshake" ? "on" : ""}`} onClick={() => editDeal({ ...offer, bond: "handshake" })} title={`Free. You can break it, but breaking it brings the Oathbreaker mark, ${breakPrice(ctx, view, offer)}.`}>
+        <button role="radio" aria-checked={offer.bond === "handshake"} className={`chip ${offer.bond === "handshake" ? "on" : ""}`} onClick={() => editDeal({ ...offer, bond: "handshake" })} title={`Free, and you can break it, but breaking it brings the Oathbreaker mark, ${breakPrice(ctx, view, offer)}.`}>
           🤝 Handshake (free)
         </button>
         <button role="radio" aria-checked={offer.bond === "binding"} className={`chip ${offer.bond === "binding" ? "on" : ""}`} onClick={() => editDeal({ ...offer, bond: "binding" })} title="Each side pays up front, and the game holds you both to it: no attacks across it.">

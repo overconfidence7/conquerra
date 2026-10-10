@@ -41,9 +41,9 @@ export function createLocalHost(): GameHost {
   };
   worker.onerror = (e) => {
     console.error("Game host stopped:", e.message);
-    failAll("The game engine stopped unexpectedly. Reload the page to start again.");
+    failAll("Sorry, the game engine stopped. Reload the page to start again (your last turn was saved).");
   };
-  worker.onmessageerror = () => failAll("The game engine sent a message the page couldn't read.");
+  worker.onmessageerror = () => failAll("Sorry, the game engine sent a message the page couldn't read. Reload the page to carry on.");
   const send = <T = HostUpdate>(body: Body) =>
     new Promise<T>((resolve, reject) => {
       const id = nextId++;

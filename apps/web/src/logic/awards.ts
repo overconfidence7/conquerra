@@ -1,3 +1,4 @@
+import { screenLine, type ScreenSituation } from "@conquerra/content/lines";
 import type { PlayerId, PlayerStats, PlayerView } from "@conquerra/engine";
 
 /**
@@ -13,9 +14,24 @@ export interface Award {
   winners: PlayerId[];
   /** "12 battles won". */
   value: string;
+  /** The royal audit's remark (session 22): "The auditors counted twice." */
+  remark: string;
 }
 
 type Stat = keyof PlayerStats;
+const REMARK: Record<string, ScreenSituation> = {
+  military: "awardMilitary",
+  culture: "awardCulture",
+  builder: "awardBuilder",
+  spymaster: "awardSpymaster",
+  diplomat: "awardDiplomat",
+  wall: "awardWall",
+  kingslayer: "awardKingslayer",
+  fortune: "awardFortune",
+  quartermaster: "awardQuartermaster",
+  oathbreaker: "awardOathbreaker",
+  survivor: "awardSurvivor",
+};
 const DEFS: { id: string; title: string; for: string; stat: Stat; unit: (n: number) => string }[] = [
   { id: "military", title: "Best Military", for: "The most battles won", stat: "battlesWon", unit: (n) => `${n} battle${n === 1 ? "" : "s"} won` },
   { id: "culture", title: "Best Culture", for: "The most culture raised", stat: "culture", unit: (n) => `${n} level${n === 1 ? "" : "s"} of culture` },
@@ -26,10 +42,11 @@ const DEFS: { id: string; title: string; for: string; stat: Stat; unit: (n: numb
   { id: "kingslayer", title: "Kingslayer", for: "The most rival Leaders felled", stat: "leadersKilled", unit: (n) => `${n} Leader${n === 1 ? "" : "s"} felled` },
   { id: "fortune", title: "Fortune's Favourite", for: "The most good Fate on their land", stat: "fateGood", unit: (n) => `${n} good turn${n === 1 ? "" : "s"} of Fate` },
   { id: "quartermaster", title: "Quartermaster", for: "The most troops raised", stat: "recruited", unit: (n) => `${n} troops recruited` },
-  { id: "oathbreaker", title: "Oathbreaker", for: "The most handshake deals broken (an honour of sorts)", stat: "dealsBroken", unit: (n) => `${n} deal${n === 1 ? "" : "s"} broken` },
+  { id: "oathbreaker", title: "Oathbreaker", for: "The most handshake deals broken", stat: "dealsBroken", unit: (n) => `${n} deal${n === 1 ? "" : "s"} broken` },
 ];
 
-export function awardsFor(view: Pick<PlayerView, "players" | "winner" | "turn" | "stats">): Award[] {
+export function awardsFor(view: Pick<PlayerView, "players" | "winner" | "turn" | "stats"> & { gameId?: string }): Award[] {
+  const remark = (id: string) => screenLine(REMARK[id]!, `${view.gameId ?? ""}|${id}`);
   const stats = view.stats;
   if (!stats) return [];
   const ids = view.players.map((p) => p.id);
@@ -37,7 +54,7 @@ export function awardsFor(view: Pick<PlayerView, "players" | "winner" | "turn" |
   for (const d of DEFS) {
     const best = Math.max(0, ...ids.map((p) => stats[p]?.[d.stat] ?? 0));
     if (best <= 0) continue;
-    out.push({ id: d.id, title: d.title, for: d.for, winners: ids.filter((p) => (stats[p]?.[d.stat] ?? 0) === best), value: d.unit(best) });
+    out.push({ id: d.id, title: d.title, for: d.for, winners: ids.filter((p) => (stats[p]?.[d.stat] ?? 0) === best), value: d.unit(best), remark: remark(d.id) });
   }
   // Survivor: of everyone but the winner, who held out longest (still standing at the end beats any knock-out).
   const others = view.players.filter((p) => p.id !== view.winner);
@@ -45,7 +62,7 @@ export function awardsFor(view: Pick<PlayerView, "players" | "winner" | "turn" |
     const lasted = (p: (typeof others)[number]) => p.eliminatedTurn ?? view.turn + 1;
     const longest = Math.max(...others.map(lasted));
     const who = others.filter((p) => lasted(p) === longest);
-    out.push({ id: "survivor", title: "Survivor", for: "Held out longest against the winner", winners: who.map((p) => p.id), value: longest > view.turn ? "still standing at the end" : `lasted until turn ${longest}` });
+    out.push({ id: "survivor", title: "Survivor", for: "Held out longest against the winner", winners: who.map((p) => p.id), value: longest > view.turn ? "still standing at the end" : `lasted until turn ${longest}`, remark: remark("survivor") });
   }
   return out;
 }

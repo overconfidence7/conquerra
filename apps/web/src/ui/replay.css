@@ -5,8 +5,10 @@
   border-top: 1px solid var(--gold); border-bottom: 1px solid var(--gold); box-shadow: 0 1px 0 var(--house), 0 -1px 0 var(--house);
   animation: title-card var(--card-ms, 2200ms) ease-out both; }
 .title-card-text { font: 700 1.25rem var(--font-head); letter-spacing: 0.06em; color: var(--gold-hi); text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7); }
+/* The dry line under it (session 22). */
+.title-card-sub { display: block; margin-top: 3px; font: italic 400 0.92rem var(--font-body, Georgia, serif); color: #e9dfc6; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8); }
 @keyframes title-card { 0% { opacity: 0; transform: translate(-50%, -8px) scaleX(0.92); } 12% { opacity: 1; transform: translate(-50%, 0) scaleX(1); } 82% { opacity: 1; } 100% { opacity: 0; } }
-@media (max-width: 700px) { .title-card { top: 128px; padding: 8px 16px; } .title-card-text { font-size: 1rem; } }
+@media (max-width: 700px) { .title-card { top: 128px; padding: 8px 16px; } .title-card-text { font-size: 1rem; } .title-card-sub { font-size: 0.82rem; } }
 @media (prefers-reduced-motion: reduce) { .title-card { animation-name: title-card-still; } }
 @keyframes title-card-still { 0% { opacity: 0; } 8% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
 

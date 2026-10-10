@@ -1,7 +1,7 @@
 import type { BuildingType } from "@conquerra/content";
 import { setsIn, type GameContext, type PlayerView } from "@conquerra/engine";
 import { useState } from "react";
-import { MARK_ICON, MARK_NAME, missionGoal, rewardText, SET_NAME, SPOILS_RULE, turnsLeft, windfallText } from "../logic/cards";
+import { MARK_ICON, MARK_NAME, missionGoal, rewardText, SET_FLAVOUR, SET_NAME, SPOILS_RULE, turnsLeft, windfallText } from "../logic/cards";
 import { BUILDING_NAME } from "../logic/text";
 import { handFull, setChoices } from "../logic/spoils";
 import { namer } from "../logic/text";
@@ -95,7 +95,10 @@ export default function CardsSheet({ ctx, view, onClose, onShowMission }: { ctx:
                         {s === "mixed" ? `${MARK_ICON.sword}${MARK_ICON.tower}${MARK_ICON.laurel}` : MARK_ICON[s].repeat(3)} {SET_NAME[s]}
                         {s === "mixed" && <span className="best"> best</span>}
                       </th>
-                      <td>{windfallText(ctx, s)}</td>
+                      <td>
+                        {windfallText(ctx, s)}
+                        <span className="block small muted flavour">{SET_FLAVOUR[s]}</span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

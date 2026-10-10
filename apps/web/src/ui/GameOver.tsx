@@ -1,3 +1,4 @@
+import { screenLine } from "@conquerra/content/lines";
 import type { PlayerView } from "@conquerra/engine";
 import { awardsFor, type Award } from "../logic/awards";
 import { houseOf } from "../map/houses";
@@ -39,8 +40,9 @@ function AwardCard({ view, award }: { view: PlayerView; award: Award }) {
         <b>{award.title}</b>
         <span className="who">{names.join(" and ")}{award.winners.length > 1 ? " (shared)" : ""}</span>
         <span className="small muted">
-          {award.for}: {award.value}
+          {award.for}: {award.value}.
         </span>
+        <span className="small award-remark">{award.remark}</span>
       </span>
     </li>
   );
@@ -76,7 +78,7 @@ export function GameOver() {
         </div>
         {winnerSeat && <p className="persona-line">{personaLine(winnerSeat)}</p>}
         <p>
-          {view.turn} turns played.
+          {screenLine(youWon ? "overWon" : winner === "draw" ? "overDraw" : "overLost", `${view.gameId}|over`, { n: view.turn, winner: winnerName ?? "" })}
           {me.eliminatedTurn !== null && ` You were knocked out on turn ${me.eliminatedTurn}${outBy ? ` by ${outBy}` : ""}.`}
           {fastForwarded > 0 && ` The bots fought on for ${fastForwarded} more turn${fastForwarded === 1 ? "" : "s"}.`}
         </p>

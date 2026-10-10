@@ -13,6 +13,13 @@ export const troopWord = (n: number) => `${n} troop${n === 1 ? "" : "s"}`;
 export const MARK_NAME: Record<SpoilsMark, string> = { sword: "Sword", tower: "Tower", laurel: "Laurel" };
 export const MARK_ICON: Record<SpoilsMark, string> = { sword: "⚔", tower: "♜", laurel: "❦" };
 export const SET_NAME: Record<SpoilsSet, string> = { sword: "Three Swords", tower: "Three Towers", laurel: "Three Laurels", mixed: "One of each" };
+/** A line of flavour under each set's rule (session 22), never instead of it. */
+export const SET_FLAVOUR: Record<SpoilsSet, string> = {
+  sword: "Troops and gold, and nobody asks where they came from.",
+  tower: "A fort, finished and delivered. The masons have already left.",
+  laurel: "Culture by royal decree. The poets are paid in compliments.",
+  mixed: "A little of everything, which is why it pays best.",
+};
 
 /** What a set gives, with this game's numbers ("8 troops at your capital"). */
 export function windfallText(ctx: GameContext, set: SpoilsSet): string {
@@ -109,7 +116,7 @@ export function fateLine(ctx: GameContext, e: FateEv, n: Namer): string {
     case "uprising":
       return e.flipped
         ? `${drew}${name} in ${where}: ${e.rebels} rebels threw ${holder === "you" ? "you" : holder} out and hold it now.`
-        : `${drew}${name} in ${where}, but its ${e.rebels} rebels couldn't take it.`;
+        : `${drew}${name} in ${where}, but its ${e.rebels} rebel${e.rebels === 1 ? "" : "s"} couldn't take it.`;
     default:
       return `${drew}${name} in ${where}.`;
   }

@@ -63,7 +63,7 @@ export function toastFor(ctx: GameContext, view: Pick<PlayerView, "players" | "m
       return { text: `${what} from the Fallen strikes ${name(e.against)} at ${place(e.target)}`, tone: "info", house: house(e.against)?.color ?? null };
     }
     case "generalCaptured":
-      return me(e.player) ? { text: `${view.players.find((p) => p.id === e.general)?.name ?? "A Leader"} joins you as a captured general`, tone: "good", house: house(e.general)?.color ?? null } : null;
+      return me(e.player) ? { text: `${view.players.find((p) => p.id === e.general)?.name ?? "A rival"}'s Leader joins you`, tone: "good", house: house(e.general)?.color ?? null } : null;
     case "gameOver":
       return { text: e.winner === "draw" ? "The game ends in a draw" : me(e.winner) ? "You win!" : `${name(e.winner)} wins the game`, tone: me(e.winner) ? "good" : "info", house: e.winner === "draw" ? null : (house(e.winner)?.color ?? null) };
     // Diplomacy (session 14): your own deals, a joint war aimed at you (you're told who's coming), and Oathbreakers.

@@ -203,6 +203,33 @@ export const CAPTURED_SITUATIONS = {
 } as const satisfies Record<string, readonly string[]>;
 export type CapturedSituation = keyof typeof CAPTURED_SITUATIONS;
 
+/**
+ * The screens' lines (session 22): a title card's sarcastic subline on a rival's misfortune (`{house}`: "House
+ * Azure"), the game over line (`{n}` turns, `{winner}`), each award's royal audit remark, and the waiting text.
+ */
+export const SCREEN_SITUATIONS = {
+  titleHouseOut: ["house"],
+  titleCapitalFalls: ["house"],
+  titleDealBroken: [],
+  overWon: ["n"],
+  overLost: ["n", "winner"],
+  overDraw: ["n"],
+  awardMilitary: [],
+  awardCulture: [],
+  awardBuilder: [],
+  awardSpymaster: [],
+  awardDiplomat: [],
+  awardWall: [],
+  awardKingslayer: [],
+  awardFortune: [],
+  awardQuartermaster: [],
+  awardOathbreaker: [],
+  awardSurvivor: [],
+  waitingBots: [],
+  waitingOthers: [],
+} as const satisfies Record<string, readonly string[]>;
+export type ScreenSituation = keyof typeof SCREEN_SITUATIONS;
+
 export type Vars = Record<string, string | number>;
 
 const Versions = z.array(z.string().min(2)).min(1);
@@ -261,6 +288,7 @@ export const Lines = z.object({
   leaders: z.object(Object.fromEntries(LEADER_VOICES.map((v) => [v, checked(LEADER_SITUATIONS, false).optional()])) as unknown as Record<LeaderVoice, z.ZodOptional<ReturnType<typeof checked<LeaderSituation>>>>).strict(),
   /** A captured leader's lines (whatever its personality: the loyalty is the voice). */
   captured: checked(CAPTURED_SITUATIONS, true),
+  screens: checked(SCREEN_SITUATIONS, true),
 });
 export type Lines = z.infer<typeof Lines>;
 
@@ -329,6 +357,11 @@ export function reasonLine(s: Speaker, key: ReasonKey, vars: Vars = {}, extra = 
 export function leaderLine(s: { game: string; turn: number; who: string; voice: LeaderVoice }, situation: LeaderSituation, vars: Vars = {}, extra = ""): string | null {
   const versions = lines.leaders[s.voice]?.[situation];
   return versions ? fill(pickVersion(versions, seedOf(s, situation, extra)), vars) : null;
+}
+
+/** A screen's line (a title card's subline, game over, an award's remark), picked by `seed` (the game's public id and what it's about). */
+export function screenLine(situation: ScreenSituation, seed: string, vars: Vars = {}): string {
+  return fill(pickVersion(lines.screens[situation], `${seed}|${situation}`), vars);
 }
 
 /** A captured leader's line. */

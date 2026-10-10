@@ -1764,5 +1764,104 @@
       "Walled {place}. A wall worthy of Your Grace.",
       "{place} is walled. I've never been so loyal to a wall."
     ]
+  },
+  "screens": {
+    "titleHouseOut": [
+      "They had a good run. Mostly the running.",
+      "{house}'s banners are now available, slightly used.",
+      "{house} will be remembered. Briefly.",
+      "It was a good House. For a while."
+    ],
+    "titleCapitalFalls": [
+      "{house} would like that back.",
+      "That was {house}'s capital. Was.",
+      "{house} has had better turns.",
+      "{house} is reviewing its wall budget."
+    ],
+    "titleDealBroken": [
+      "The ink was barely dry.",
+      "It was a lovely deal while it lasted.",
+      "Oathbreaker, officially.",
+      "Nobody is surprised. Well, almost nobody."
+    ],
+    "overWon": [
+      "{n} turns played. The bards are already arguing about the details.",
+      "{n} turns played, and the map is yours.",
+      "{n} turns played. Someone should tell the other Houses. They know."
+    ],
+    "overLost": [
+      "{n} turns played, which is {n} more than nothing.",
+      "{n} turns played. {winner} sends their regards. Probably.",
+      "{n} turns played. There's always the next game."
+    ],
+    "overDraw": [
+      "{n} turns played, and nobody won. Everyone is equally annoyed.",
+      "{n} turns played. A draw, which is a polite word for it.",
+      "{n} turns played, and the map is still arguing."
+    ],
+    "awardMilitary": [
+      "The auditors counted twice.",
+      "A figure the royal auditors confirmed, then checked again.",
+      "Noted in the royal record, in large letters."
+    ],
+    "awardCulture": [
+      "The arts thrive. Mostly in one place.",
+      "Certified cultured by the royal office.",
+      "The poets are already writing about it. Slowly."
+    ],
+    "awardBuilder": [
+      "Every one inspected and found standing.",
+      "The masons' guild sends its thanks, and its invoice.",
+      "Most of them still have roofs."
+    ],
+    "awardSpymaster": [
+      "The details of this award are classified.",
+      "Nobody saw them do it, which is the point.",
+      "The royal office would like to know how they know so much."
+    ],
+    "awardDiplomat": [
+      "Every one honoured to the last turn. Rare, these days.",
+      "A documented case of keeping one's word.",
+      "The royal office notes this with some surprise."
+    ],
+    "awardWall": [
+      "The walls have asked for a raise.",
+      "Attackers left disappointed. Repeatedly.",
+      "Recorded as unmoved, in every sense."
+    ],
+    "awardKingslayer": [
+      "The royal office would rather not discuss it.",
+      "A record nobody else wanted to hold.",
+      "Certified dangerous to stand near."
+    ],
+    "awardFortune": [
+      "The auditors found no evidence of cheating. They looked.",
+      "Lucky, according to the official record.",
+      "Fate had a favourite, and the records show it."
+    ],
+    "awardQuartermaster": [
+      "Every one of them fed, mostly.",
+      "The royal granaries have filed a complaint.",
+      "A lot of troops. A lot of soup."
+    ],
+    "awardOathbreaker": [
+      "An honour of sorts.",
+      "A record, in its own way.",
+      "The royal office has stopped accepting their signature."
+    ],
+    "awardSurvivor": [
+      "Last to leave the party.",
+      "Stubborn, in the best way.",
+      "Hard to get rid of, officially."
+    ],
+    "waitingBots": [
+      "The bots are thinking. Some harder than others.",
+      "The bots are finishing the game. Some of them are taking it personally.",
+      "The bots are playing on. It won't be long."
+    ],
+    "waitingOthers": [
+      "The others are finishing the game. Some faster than others.",
+      "The others are playing on. It won't be long."
+    ]
   }
 }

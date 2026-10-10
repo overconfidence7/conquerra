@@ -36,7 +36,9 @@ describe("title cards", () => {
     const tl = buildTimeline([battle(1, from, true, "p3"), battle(2, cap, true)]);
     const cards = titleCards(tl, view, ctx.map);
     expect(cards).toHaveLength(1);
-    expect(cards[0]!.text).toMatch(new RegExp(`^Your capital, ${ctx.map.territories.find((t) => t.id === cap)!.name}, falls to House .+$`));
+    // Your own big loss: a plain title, no subline (your Leader comments in the report).
+    expect(cards[0]!.text).toMatch(new RegExp(`^${ctx.map.territories.find((t) => t.id === cap)!.name} falls to House .+$`));
+    expect(cards[0]!.sub).toBeUndefined();
     expect(cardAt(cards, cards[0]!.at + 10)).toBe(cards[0]);
     expect(cardAt(cards, cards[0]!.at - 10)).toBeNull();
   });

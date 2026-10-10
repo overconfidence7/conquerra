@@ -53,6 +53,9 @@ export const TARGET_MAX_MS = 20000;
 const MIN_SHARE = 0.35;
 
 /** The word over the land a world event hit, in the replay. */
+/** What pops up over the map (session 22: names, with a capital letter). */
+const SPECIALIST_LABEL: Record<string, string> = { cavalry: "Cavalry", siege: "Siege", scouts: "Scouts", engineers: "Engineers", healers: "Healers", rangers: "Rangers", standardBearer: "Standard-bearer" };
+const BUILDING_LABEL: Record<string, string> = { fort: "Fort", market: "Market", barracks: "Barracks", watchtower: "Watchtower" };
 const WORLD_EVENT_LABEL = { plague: "Plague", storm: "Storm", uprising: "Uprising", mercenaries: "Mercenaries", famine: "Famine" } as const;
 
 const kindOf = (e: ReplayEvent): BeatKind | null => {
@@ -266,14 +269,14 @@ export function frameAt(tl: Timeline, t: number): ReplayFrame {
         if (p >= RESULT_AT) frame.applied = Math.max(frame.applied, b.ends[k]!);
       } else if (e.type === "surface") frame.pulses.push({ province: e.province, what: e.what, progress: q });
       else if (e.type === "recruited") frame.pops.push({ at: e.territory, player: e.player, label: `+${e.count}`, progress: q });
-      else if (e.type === "hired") frame.pops.push({ at: e.territory, player: e.player, label: "+1 specialist", progress: q });
-      else if (e.type === "built" || e.type === "completed") frame.pops.push({ at: e.territory, player: e.player, label: e.building, progress: q });
-      else if (e.type === "invested") frame.pops.push({ at: e.territory, player: e.player, label: "culture", progress: q });
+      else if (e.type === "hired") frame.pops.push({ at: e.territory, player: e.player, label: `+${SPECIALIST_LABEL[e.specialist] ?? "Specialist"}`, progress: q });
+      else if (e.type === "built" || e.type === "completed") frame.pops.push({ at: e.territory, player: e.player, label: BUILDING_LABEL[e.building] ?? e.building, progress: q });
+      else if (e.type === "invested") frame.pops.push({ at: e.territory, player: e.player, label: "Culture", progress: q });
       else if (e.type === "governed" && e.land[0]) frame.pops.push({ at: e.land[0].territory, player: e.player, label: e.spent[0]?.what === "fort" ? "fort" : e.spent[0]?.what === "culture" ? "culture" : "troops", progress: q });
       else if (e.type === "walled" && e.territories[0]) frame.pops.push({ at: e.territories[0], player: e.player, label: "Walled", progress: q });
       else if (e.type === "leaderReturned") frame.pops.push({ at: e.territory, player: e.player, label: "Leader", progress: q });
-      else if (e.type === "generalCaptured") frame.pops.push({ at: e.territory, player: e.player, label: "Captured general", progress: q });
-      else if (e.type === "generalLost") frame.pops.push({ at: e.territory, player: e.player, label: "General lost", progress: q });
+      else if (e.type === "generalCaptured") frame.pops.push({ at: e.territory, player: e.player, label: "Captured leader", progress: q });
+      else if (e.type === "generalLost") frame.pops.push({ at: e.territory, player: e.player, label: "Leader lost", progress: q });
       else if (e.type === "worldEvent") frame.pops.push({ at: e.target, player: e.against, label: WORLD_EVENT_LABEL[e.event], progress: q });
       else if (e.type === "spoilsTurnedIn") frame.pops.push({ at: e.at, player: e.player, label: "Spoils", progress: q });
       else if (e.type === "fate") frame.pops.push({ at: e.at, player: e.holder ?? "", label: FATE_LABEL[e.card] ?? "Fate", progress: q });

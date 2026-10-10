@@ -324,4 +324,42 @@ if (want("leaders")) {
   console.log(said.join("\n"));
 }
 
+// ---------- Part 4: every other word: the lobby, Settings, the Spoils sheet, game over and the awards ----------
+if (want("words")) {
+  for (const phone of [false, true]) {
+    const sfx = phone ? "-phone" : "";
+    const p = await page(phone);
+    await p.goto(URL, { waitUntil: "networkidle0" });
+    await shot(p, "s22-lobby", sfx, { wait: 2500 });
+    await load(p, file("s20d-purse.json"));
+    await p.evaluate(() => document.querySelector('button[aria-label="Settings"]')?.click());
+    await shot(p, "s22-settings", sfx, { wait: 1200 });
+    await p.evaluate(() => document.querySelector('button[aria-label="Settings"]')?.click());
+    // The cards: the Spoils sets with a line of flavour under each.
+    await p.evaluate(() => { const b = document.querySelector(".card-stack, button[aria-label*='cards' i], button[title*='Spoils' i]"); b?.click(); });
+    await shot(p, "s22-cards", sfx, { wait: 1200 });
+    // Game over, lost (its headline and line), then won for real, with the awards (session 20c's finishing save,
+    // played to the end: the awards need the game's record, which only a finished game has).
+    await load(p, file("s20c-save.json"));
+    await p.evaluate(() => {
+      const st = window.__conquerraStore.getState();
+      const other = st.view.players.find((x) => x.id !== st.view.me.id && x.eliminatedTurn === null)?.id;
+      window.__conquerraStore.setState({ screen: "over", view: { ...st.view, winner: other } });
+    });
+    await shot(p, "s22-defeat", sfx, { wait: 2500 });
+    await load(p, file("s20c-save.json"));
+    await p.evaluate(async () => {
+      const s = window.__conquerraStore.getState();
+      await s.setInstruction(`leader:${s.view.me.id}`, { kind: "military" });
+      await s.setBudget(`leader:${s.view.me.id}`, { share: 0.8 });
+    });
+    for (let turn = 0; turn < 20 && !(await p.evaluate(() => !!window.__conquerraStore.getState().view.winner)); turn++) await playTurn(p);
+    await p.waitForFunction(() => window.__conquerraStore.getState().screen === "over", { timeout: 30000 }).catch(() => {});
+    await shot(p, "s22-victory", sfx, { wait: 2500 });
+    await p.evaluate(() => document.querySelector(".awards")?.scrollIntoView({ block: "start" }));
+    await shot(p, "s22-victory-awards", sfx, { wait: 1200 });
+    await p.close();
+  }
+}
+
 await browser.close();

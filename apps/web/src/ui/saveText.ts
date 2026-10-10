@@ -52,5 +52,5 @@ export function lastFinished(): FinishedGame | null {
 
 /** What the empty Autosave line says: "Last game finished (Embervale, turn 14)" right after a game ends. */
 export function emptyAutosaveLine(finished: FinishedGame | null): string {
-  return finished ? `Last game finished (${finished.mapName}, turn ${finished.turn}). A new game saves itself every turn.` : "Nothing yet: the game saves itself every turn.";
+  return finished ? `Last game finished (${finished.mapName}, turn ${finished.turn}). A new game saves itself every turn.` : "Nothing saved yet. The game saves itself every turn, so you don't have to.";
 }
