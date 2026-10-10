@@ -24,11 +24,15 @@ Big-studio strategy games feel polished for a handful of reasons, and most are a
 - **The camera moves like a camera:** smooth eased pans, a gentle push-in on big moments (a capital, a knock-out, a battle with many troops), and a slow pull-out at the end of the turn.
 - **Big-moment title cards:** a short banner across the top for the moments that matter: "Galeholt falls to House Gules", "House Vert is no more", "Lady Morwen breaks the truce". At most one or two a turn.
 
+**BUILT (session 21):** letterbox, vignette and a warm grade ease in and out over half a second (not on Effects Off); the camera pushes in on a capital falling and on very big battles (30+ troops) and pulls out slowly as the turn ends; title cards for a capital falling, a House knocked out and a deal broken (at most two a turn, never two at once, never for anything fogged). `replay/titles.ts`, `replay/camera.ts`, `ui/replay.css`.
+
 ## 2. Armies on the move
 - **A marching army is an army,** not a disc: the House-tinted soldier figure (`figure-army`) with its banner, bobbing as it walks, the troop number on a small pill beside it. Cavalry trots faster with more dust. Ships cross sea lanes on the `ship` sprite, bobbing, with a small wake.
 - **The order arrow unrolls ahead of the army** like an inked campaign line, gold-trimmed, and fades behind it.
 - **Feet raise dust** on land (`fx-dust`), with terrain flavour: snow powder in the mountains, mud flecks in swamp, a splash at a river ford (`fx-splash`).
 - **Right of passage:** the path through a partner's land is drawn in white stitches, matching the map.
+
+**BUILT (session 21):** House-tinted soldiers (cavalry when the army has cavalry) with their banner, bobbing; ships with a wake on sea lanes; the inked, gold-trimmed campaign line unrolling ahead and fading behind; dust in the ground's colour (snow powder, mud flecks), a splash at fords; passage in white stitches. The troop number rides beside them (and is all there is on Effects Off).
 
 ## 3. Battles
 - **Armies meet at the border, not at the territory's middle.** The clash plays out where they meet.
@@ -41,12 +45,16 @@ Big-studio strategy games feel polished for a handful of reasons, and most are a
 - **A capital falls:** the big one. A push-in, smoke columns and embers over the castle (`fx-smoke`, `fx-flame`, code embers), the banner change, the title card, and a slow pull-out.
 - **A House is knocked out:** its banner burns away (`fx-flame` over the banner), its last land washes to the conqueror's colour, and the title card "House Vert is no more".
 
+**BUILT (session 21):** armies meet at the border (the middle of the longest stretch they share); smoke, dust, sparks and steel glints, the defenders' arrows (from the walls behind a fort or a wall), a Siege stone landing in debris with a shockwave ring; more troops, more smoke; a light shake on big battles (Full only). Captured: the old banner topples, the new one rises, a ripple of the new colour round the land, a gold shimmer. Held: the shield flashes, the attackers fall back in smoke. Losses float up from each side. A capital: smoke columns, flames and embers, the push-in, the title card. A knock-out: its last banner burns away, "House Azure is no more". *Not yet:* the shockwave as a real distortion filter (pixi-filters was allowed; a ring does the job without the cost).
+
 ## 4. Building, recruiting, gold
 - **Recruits** march out of the castle gate as a few small figures with a puff of dust, and their number pops.
 - **Buildings:** the scaffold rises as building starts. When it's finished, the scaffold drops away in a puff of sawdust (`fx-dust`) and a glint.
 - **Culture raised:** golden laurel leaves (`fx-leaf`) drift up from the territory with a soft glow ring.
 - **Gold at the start of the turn:** a few coins (`fx-coin`) fly from your land to the gold counter, which rolls up to the new total.
 - **Turning in Spoils:** the three cards fan out and burst into the windfall (troops march out, a fort's scaffold drops, laurels rise).
+
+**BUILT (session 21):** recruits march out in a puff of dust; the scaffold rises as building starts and drops away in sawdust with a glint; laurels and a glow ring for culture; coins fly to the gold counter as the replay ends and it rolls up; the Spoils cards fan out and burst in gold.
 
 ## 5. Fate and the Fallen
 Each event gets its own short signature, readable at a glance:
@@ -68,10 +76,14 @@ Each event gets its own short signature, readable at a glance:
 
 Under fog, all of these are the same soft "something stirs" pulse.
 
+**BUILT (session 21):** every row of the table, as written (`replay/fx/recipes.ts`); the fogged ones stay the same soft pulse (now without the coloured dot that hinted at a battle).
+
 ## 6. Diplomacy and spies
 - **A deal is sealed:** a parchment scroll (`fx-scroll`) unrolls between the two banners and the wax seal (`seal`) stamps down. A truce border draws itself in white stitches; a joint war shows two banners crossing over the target.
 - **A deal is broken:** the scroll tears, a red crack (`fx-crack`) runs along the truce border, and an Oathbreaker brand stamps onto the breaker's portrait in the Players panel.
 - **Spies:** a hooded figure (`figure-spy`) fades in and out in a wisp of smoke. An infiltration opens an eye over the province. A caught spy shows a red stamp ("caught").
+
+**BUILT (session 21):** the scroll unrolls between the two banners and the seal stamps down in gold flecks; a truce or passage border stitches itself in white; a joint war's banners cross; a broken deal: a red crack and torn parchment, and the Oathbreaker mark stamps onto the name in the Players panel; your spies: the hooded figure in a wisp, the eye over a province it got into, a red "Caught". (Spies report as the turn ends, so they play over its last moments: no new time.)
 
 ## 7. A living map (always on, quiet)
 - **Water:** a gentle moving shimmer on the sea and lakes, foam along the coasts that breathes in and out, and boats bobbing on sea lanes.
@@ -82,6 +94,8 @@ Under fog, all of these are the same soft "something stirs" pulse.
 - **Fog mist drifts.**
 - All of this pauses when the tab is hidden, and goes to Light when the device asks for less motion.
 
+**BUILT (session 21):** clouds drifting at Far and Mid with shadows, chimney smoke (at most 20 chimneys on screen, 10 on Light), windmills turning, flags on the capitals in the owner's colour, the lighthouse beam at Mid, boats bobbing, birds every 40 s (not on Light), breathing coastal foam (the water's shimmer and the fog's mist were already in the shader). Under every border and pill. It costs about 0.4–1 ms a frame on the throttled phone at Mid (a frame or two a second at 60). `render/pixi/living.ts`.
+
 ## 8. Menus with weight
 - **Lock in:** the wax seal stamps down with a small press and a scatter of gold flecks. The turn timer glows like an ember in its last 10 seconds.
 - **Turn change:** "Turn 8" sweeps across with the compass emblem, briefly.
@@ -90,6 +104,8 @@ Under fog, all of these are the same soft "something stirs" pulse.
 - **The turn report's lines** come in one by one.
 - **Title screen:** the new key art (`art-title`) with slow drifting clouds over it (parallax). The lobby sits over it.
 - **Game over:** full illustrations for victory (`art-victory`) and defeat (`art-defeat`), with drifting embers or petals.
+
+**BUILT (session 21):** the seal presses with gold flecks; the timer glows like an ember in its last 10 seconds; "Turn N" sweeps across with the compass emblem; panels ease in; buttons press; a slow gold glint on hover (desktop, in the game); gold rolls up; the report's lines come in one by one; clouds drift over the title art (two depths); embers over a defeat, petals over a victory. All short, none blocks a tap; Reduce motion turns them off.
 
 ## 9. Sound (Nate, Oct 7: its own session, after the language pass; not part of the polish pass)
 Sound is the other half of feeling expensive: a march drum, the clash of steel, a fanfare on a capture, the thud of the wax seal, coins, and quiet music under planning. It needs a source (a licensed sound pack, or an AI audio tool whose terms allow commercial use) and a volume setting.
@@ -102,6 +118,12 @@ Sound is the other half of feeling expensive: a march drum, the clash of steel, 
 - **Already in by then:** the end-of-game power graph and awards and the Chronicle (session 16); the polish pass gives them their finish.
 - **Filters, only where they're worth their cost:** a shockwave ripple for siege impacts and a capital falling; a soft glow on gold; a displacement shimmer on water. Check the frame rate on a phone after each one.
 - **Checks:** frame rate in the replay on a 384 px phone profile (aim for at least 50 fps on Full); the replay's length unchanged; the bundle at start-up unchanged; screenshots and a short screen recording (GIF) of a turn's replay for Nate.
+
+## What session 21 built, in numbers
+- **The replay got faster before it got prettier.** On the 384 px phone profile (CPU slowed 4×, three turns with the fog lifted, `s21-perf.mjs`) the replay ran at **4.9 fps on Wyrmland 6 and 1.3 on Krakenmere 10** at the session's start: every event redrew every border, rebuilt all 200 markers and every realm. With all the effects on, at the end: **Wyrmland 6: 93 fps on Full, 108 on Light; Krakenmere 10: 79 on Full (its busiest turn 48), 81 on Light** (the laptop: 200–300). Full table in PROGRESS.md, session 21.
+- **Particle budget:** 600 on a phone, 2,000 on a laptop; a busy moment uses 60–90 on Full, 35–40 on Light.
+- **The replay's length is unchanged** (the timeline wasn't touched; the 10–20 s median test passes): effects play inside each beat, and what a result leaves behind drifts on for at most 1.6 s over the next beat.
+- **Start-up bundle:** 486.3 → 491.2 KB (gzip 149.3 → 150.8): batch 4's names in the art list, Step 0's notices, the title art's styles. The effects, their recipes, the fx art and the living map load with the game screen.
 
 ## Order of work in session 21 (most visible first; one session, stop cleanly at a part boundary if it runs low)
 1. The importer's `fx-` rule, the effects layer and the Effects setting.

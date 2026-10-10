@@ -5,349 +5,244 @@
     "device": "phone",
     "level": "full",
     "idleMid": {
-      "fps": 129.5,
-      "p95ms": 17.3
-    },
-    "replays": [
-      {
-        "fps": 122.9,
-        "p95ms": 19.2,
-        "seconds": 19.3,
-        "autoLight": false,
-        "peakParticles": 59
-      },
-      {
-        "fps": 110.2,
-        "p95ms": 26.1,
-        "seconds": 21,
-        "autoLight": false,
-        "peakParticles": 64
-      },
-      {
-        "fps": 88.8,
-        "p95ms": 27.4,
-        "seconds": 19.7,
-        "autoLight": false,
-        "peakParticles": 88
-      }
-    ],
-    "replayFps": 107.3,
-    "worstFps": 88.8
-  },
-  {
-    "map": "wyrmland",
-    "players": 6,
-    "device": "phone",
-    "level": "light",
-    "idleMid": {
-      "fps": 110.5,
-      "p95ms": 25.6
-    },
-    "replays": [
-      {
-        "fps": 71.2,
-        "p95ms": 36.9,
-        "seconds": 19.9,
-        "autoLight": false,
-        "peakParticles": 33
-      },
-      {
-        "fps": 88.2,
-        "p95ms": 31.3,
-        "seconds": 19.7,
-        "autoLight": false,
-        "peakParticles": 33
-      },
-      {
-        "fps": 64.9,
-        "p95ms": 38.6,
-        "seconds": 19.9,
-        "autoLight": false,
-        "peakParticles": 35
-      }
-    ],
-    "replayFps": 74.8,
-    "worstFps": 64.9
-  },
-  {
-    "map": "wyrmland",
-    "players": 6,
-    "device": "phone",
-    "level": "off",
-    "idleMid": {
-      "fps": 217.5,
+      "fps": 182.9,
       "p95ms": 12.3
     },
     "replays": [
       {
-        "fps": 127.1,
-        "p95ms": 22.6,
+        "fps": 101,
+        "p95ms": 29.2,
         "seconds": 19.9,
         "autoLight": false,
-        "peakParticles": 0
+        "peakParticles": 56
       },
       {
-        "fps": 119.8,
-        "p95ms": 23.9,
-        "seconds": 22.6,
-        "autoLight": false,
-        "peakParticles": 0
-      },
-      {
-        "fps": 95.3,
-        "p95ms": 28.3,
-        "seconds": 25.2,
-        "autoLight": false,
-        "peakParticles": 0
-      }
-    ],
-    "replayFps": 114.1,
-    "worstFps": 95.3
-  },
-  {
-    "map": "wyrmland",
-    "players": 6,
-    "device": "desktop",
-    "level": "full",
-    "idleMid": {
-      "fps": 381.4,
-      "p95ms": 5.9
-    },
-    "replays": [
-      {
-        "fps": 294.5,
-        "p95ms": 6,
-        "seconds": 19.9,
-        "autoLight": false,
-        "peakParticles": 59
-      },
-      {
-        "fps": 299.2,
-        "p95ms": 4.7,
-        "seconds": 23.2,
-        "autoLight": false,
-        "peakParticles": 59
-      },
-      {
-        "fps": 244.1,
-        "p95ms": 5.3,
-        "seconds": 25,
-        "autoLight": false,
-        "peakParticles": 79
-      }
-    ],
-    "replayFps": 279.3,
-    "worstFps": 244.1
-  },
-  {
-    "map": "wyrmland",
-    "players": 6,
-    "device": "desktop",
-    "level": "light",
-    "idleMid": {
-      "fps": 360.3,
-      "p95ms": 5.5
-    },
-    "replays": [
-      {
-        "fps": 272.9,
-        "p95ms": 6.6,
-        "seconds": 20,
-        "autoLight": false,
-        "peakParticles": 33
-      },
-      {
-        "fps": 307.4,
-        "p95ms": 4.9,
-        "seconds": 20.3,
-        "autoLight": false,
-        "peakParticles": 33
-      },
-      {
-        "fps": 295.9,
-        "p95ms": 4.9,
-        "seconds": 25.2,
-        "autoLight": false,
-        "peakParticles": 38
-      }
-    ],
-    "replayFps": 292.1,
-    "worstFps": 272.9
-  },
-  {
-    "map": "wyrmland",
-    "players": 6,
-    "device": "desktop",
-    "level": "off",
-    "idleMid": {
-      "fps": 376.9,
-      "p95ms": 5.9
-    },
-    "replays": [
-      {
-        "fps": 231.6,
-        "p95ms": 6.9,
-        "seconds": 20,
-        "autoLight": false,
-        "peakParticles": 0
-      },
-      {
-        "fps": 277.2,
-        "p95ms": 5.5,
-        "seconds": 23.1,
-        "autoLight": false,
-        "peakParticles": 0
-      },
-      {
-        "fps": 230.2,
-        "p95ms": 5.6,
-        "seconds": 25.3,
-        "autoLight": false,
-        "peakParticles": 0
-      }
-    ],
-    "replayFps": 246.3,
-    "worstFps": 230.2
-  },
-  {
-    "map": "krakenmere",
-    "players": 10,
-    "device": "phone",
-    "level": "full",
-    "idleMid": {
-      "fps": 167.7,
-      "p95ms": 15.2
-    },
-    "replays": [
-      {
-        "fps": 81.4,
-        "p95ms": 32.7,
-        "seconds": 25,
-        "autoLight": false,
-        "peakParticles": 61
-      },
-      {
-        "fps": 77.1,
-        "p95ms": 37.3,
-        "seconds": 25.1,
-        "autoLight": false,
-        "peakParticles": 61
-      },
-      {
-        "fps": 32.2,
-        "p95ms": 65.2,
-        "seconds": 25,
-        "autoLight": false,
-        "peakParticles": 69
-      }
-    ],
-    "replayFps": 63.6,
-    "worstFps": 32.2
-  },
-  {
-    "map": "krakenmere",
-    "players": 10,
-    "device": "phone",
-    "level": "light",
-    "idleMid": {
-      "fps": 75.3,
-      "p95ms": 30.6
-    },
-    "replays": [
-      {
-        "fps": 60.7,
-        "p95ms": 45.4,
-        "seconds": 25,
-        "autoLight": false,
-        "peakParticles": 37
-      },
-      {
-        "fps": 81.8,
-        "p95ms": 35.1,
-        "seconds": 25,
-        "autoLight": false,
-        "peakParticles": 37
-      },
-      {
-        "fps": 21.1,
-        "p95ms": 167,
-        "seconds": 25.1,
-        "autoLight": false,
-        "peakParticles": 38
-      }
-    ],
-    "replayFps": 54.5,
-    "worstFps": 21.1
-  },
-  {
-    "map": "krakenmere",
-    "players": 10,
-    "device": "phone",
-    "level": "off",
-    "idleMid": {
-      "fps": 143.4,
-      "p95ms": 16.1
-    },
-    "replays": [
-      {
-        "fps": 87.9,
-        "p95ms": 32.5,
-        "seconds": 25,
-        "autoLight": false,
-        "peakParticles": 0
-      },
-      {
-        "fps": 92,
-        "p95ms": 31.5,
-        "seconds": 25,
-        "autoLight": false,
-        "peakParticles": 0
-      },
-      {
-        "fps": 51.7,
-        "p95ms": 58.9,
-        "seconds": 25,
-        "autoLight": false,
-        "peakParticles": 0
-      }
-    ],
-    "replayFps": 77.2,
-    "worstFps": 51.7
-  },
-  {
-    "map": "krakenmere",
-    "players": 10,
-    "device": "desktop",
-    "level": "full",
-    "idleMid": {
-      "fps": 324.8,
-      "p95ms": 4.7
-    },
-    "replays": [
-      {
-        "fps": 223.2,
-        "p95ms": 8.5,
-        "seconds": 25,
-        "autoLight": false,
-        "peakParticles": 60
-      },
-      {
-        "fps": 225.1,
-        "p95ms": 9,
-        "seconds": 25.3,
+        "fps": 87.2,
+        "p95ms": 29.6,
+        "seconds": 19.2,
         "autoLight": false,
         "peakParticles": 62
       },
       {
-        "fps": 194.1,
-        "p95ms": 9.5,
+        "fps": 91.7,
+        "p95ms": 30,
         "seconds": 25,
         "autoLight": false,
-        "peakParticles": 72
+        "peakParticles": 67
       }
     ],
-    "replayFps": 214.1,
-    "worstFps": 194.1
+    "replayFps": 93.3,
+    "worstFps": 87.2
+  },
+  {
+    "map": "wyrmland",
+    "players": 6,
+    "device": "phone",
+    "level": "light",
+    "idleMid": {
+      "fps": 211.9,
+      "p95ms": 11.7
+    },
+    "replays": [
+      {
+        "fps": 126.2,
+        "p95ms": 20.1,
+        "seconds": 19.9,
+        "autoLight": false,
+        "peakParticles": 35
+      },
+      {
+        "fps": 114.6,
+        "p95ms": 20.7,
+        "seconds": 19.7,
+        "autoLight": false,
+        "peakParticles": 35
+      },
+      {
+        "fps": 83.5,
+        "p95ms": 33.1,
+        "seconds": 24.2,
+        "autoLight": false,
+        "peakParticles": 37
+      }
+    ],
+    "replayFps": 108.1,
+    "worstFps": 83.5
+  },
+  {
+    "map": "wyrmland",
+    "players": 6,
+    "device": "desktop",
+    "level": "full",
+    "idleMid": {
+      "fps": 423.8,
+      "p95ms": 4.1
+    },
+    "replays": [
+      {
+        "fps": 283.4,
+        "p95ms": 6.8,
+        "seconds": 20.8,
+        "autoLight": false,
+        "peakParticles": 59
+      },
+      {
+        "fps": 324.1,
+        "p95ms": 4.6,
+        "seconds": 21.5,
+        "autoLight": false,
+        "peakParticles": 59
+      },
+      {
+        "fps": 299.5,
+        "p95ms": 4.8,
+        "seconds": 25,
+        "autoLight": false,
+        "peakParticles": 62
+      }
+    ],
+    "replayFps": 302.3,
+    "worstFps": 283.4
+  },
+  {
+    "map": "wyrmland",
+    "players": 6,
+    "device": "desktop",
+    "level": "light",
+    "idleMid": {
+      "fps": 335.2,
+      "p95ms": 4
+    },
+    "replays": [
+      {
+        "fps": 296,
+        "p95ms": 6.4,
+        "seconds": 19.9,
+        "autoLight": false,
+        "peakParticles": 32
+      },
+      {
+        "fps": 303.8,
+        "p95ms": 4.9,
+        "seconds": 23.3,
+        "autoLight": false,
+        "peakParticles": 35
+      },
+      {
+        "fps": 266.9,
+        "p95ms": 6.4,
+        "seconds": 25,
+        "autoLight": false,
+        "peakParticles": 42
+      }
+    ],
+    "replayFps": 288.9,
+    "worstFps": 266.9
+  },
+  {
+    "map": "krakenmere",
+    "players": 10,
+    "device": "phone",
+    "level": "full",
+    "idleMid": {
+      "fps": 179.4,
+      "p95ms": 14
+    },
+    "replays": [
+      {
+        "fps": 104.8,
+        "p95ms": 27.8,
+        "seconds": 25.1,
+        "autoLight": false,
+        "peakParticles": 63
+      },
+      {
+        "fps": 84.4,
+        "p95ms": 31.2,
+        "seconds": 25.3,
+        "autoLight": false,
+        "peakParticles": 63
+      },
+      {
+        "fps": 48.2,
+        "p95ms": 53.6,
+        "seconds": 25,
+        "autoLight": false,
+        "peakParticles": 67
+      }
+    ],
+    "replayFps": 79.1,
+    "worstFps": 48.2
+  },
+  {
+    "map": "krakenmere",
+    "players": 10,
+    "device": "phone",
+    "level": "light",
+    "idleMid": {
+      "fps": 175.6,
+      "p95ms": 16.1
+    },
+    "replays": [
+      {
+        "fps": 99,
+        "p95ms": 27.7,
+        "seconds": 25,
+        "autoLight": false,
+        "peakParticles": 35
+      },
+      {
+        "fps": 85,
+        "p95ms": 31.1,
+        "seconds": 25,
+        "autoLight": false,
+        "peakParticles": 35
+      },
+      {
+        "fps": 57.9,
+        "p95ms": 43.8,
+        "seconds": 25,
+        "autoLight": false,
+        "peakParticles": 41
+      }
+    ],
+    "replayFps": 80.6,
+    "worstFps": 57.9
+  },
+  {
+    "map": "krakenmere",
+    "players": 10,
+    "device": "desktop",
+    "level": "full",
+    "idleMid": {
+      "fps": 305.8,
+      "p95ms": 5.4
+    },
+    "replays": [
+      {
+        "fps": 194,
+        "p95ms": 10.8,
+        "seconds": 25,
+        "autoLight": false,
+        "peakParticles": 62
+      },
+      {
+        "fps": 217.4,
+        "p95ms": 7.6,
+        "seconds": 25.2,
+        "autoLight": false,
+        "peakParticles": 65
+      },
+      {
+        "fps": 198.3,
+        "p95ms": 8.5,
+        "seconds": 25,
+        "autoLight": false,
+        "peakParticles": 66
+      }
+    ],
+    "replayFps": 203.2,
+    "worstFps": 194
   },
   {
     "map": "krakenmere",
@@ -355,68 +250,33 @@
     "device": "desktop",
     "level": "light",
     "idleMid": {
-      "fps": 325.1,
-      "p95ms": 4.7
+      "fps": 321.8,
+      "p95ms": 5.4
     },
     "replays": [
       {
-        "fps": 200.1,
-        "p95ms": 11.2,
+        "fps": 180.9,
+        "p95ms": 14.2,
         "seconds": 25,
         "autoLight": false,
-        "peakParticles": 34
+        "peakParticles": 36
       },
       {
-        "fps": 236.6,
-        "p95ms": 7.2,
+        "fps": 226.9,
+        "p95ms": 7.8,
         "seconds": 25,
         "autoLight": false,
-        "peakParticles": 34
+        "peakParticles": 36
       },
       {
-        "fps": 198.3,
-        "p95ms": 8.7,
+        "fps": 175.3,
+        "p95ms": 10.9,
         "seconds": 25,
         "autoLight": false,
-        "peakParticles": 40
+        "peakParticles": 36
       }
     ],
-    "replayFps": 211.7,
-    "worstFps": 198.3
-  },
-  {
-    "map": "krakenmere",
-    "players": 10,
-    "device": "desktop",
-    "level": "off",
-    "idleMid": {
-      "fps": 321.1,
-      "p95ms": 4.9
-    },
-    "replays": [
-      {
-        "fps": 220.5,
-        "p95ms": 8.6,
-        "seconds": 25.1,
-        "autoLight": false,
-        "peakParticles": 0
-      },
-      {
-        "fps": 221.1,
-        "p95ms": 8.8,
-        "seconds": 25.2,
-        "autoLight": false,
-        "peakParticles": 0
-      },
-      {
-        "fps": 139.4,
-        "p95ms": 14.8,
-        "seconds": 25.1,
-        "autoLight": false,
-        "peakParticles": 0
-      }
-    ],
-    "replayFps": 193.7,
-    "worstFps": 139.4
+    "replayFps": 194.4,
+    "worstFps": 175.3
   }
 ]

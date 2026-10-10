@@ -285,6 +285,44 @@ if (want("cine")) {
   }
 }
 
+// ---------- Parts 5 and 6: the living map, menus with weight ----------
+if (want("living")) {
+  for (const phone of [false, true]) {
+    const sfx = phone ? "-phone" : "";
+    const p = await page(phone);
+    await p.goto(URL, { waitUntil: "networkidle0" });
+    await shot(p, "s21-lobby", sfx, { wait: 2500 });
+    await load(p, file("s20d-purse.json"));
+    const cap = await p.evaluate(() => window.__conquerraStore.getState().view.me.capital);
+    for (const [name, px] of phone ? [["mid", 120]] : [["mid", 150], ["far", 55]]) {
+      await look(p, [cap], px);
+      await settle(p);
+      await shot(p, `s21-living-${name}`, sfx, { wait: 3000 });
+    }
+    // Lock in: the seal stamps (held "sealing"), then the replay ends and "Turn 9" sweeps across.
+    await p.evaluate(() => window.__conquerraStore.setState({ busy: true }));
+    await sleep(150);
+    await shot(p, "s21-menu-seal", sfx, { wait: 120 });
+    await p.evaluate(() => window.__conquerraStore.setState({ busy: false }));
+    await p.evaluate(() => void window.__conquerraStore.getState().lockIn());
+    await p.waitForFunction(() => window.__conquerraTimeline && window.__conquerraStore.getState().replay, { timeout: 90000 });
+    await p.evaluate(() => (window.__conquerraReplayAt = 1e9));
+    await p.waitForFunction(() => !window.__conquerraStore.getState().replay, { timeout: 30000 });
+    await p.evaluate(() => { delete window.__conquerraReplayAt; window.__conquerraStore.getState().setShowReport?.(false); });
+    await shot(p, "s21-menu-turn", sfx, { wait: 380 });
+    // Game over, won and lost: petals and embers over the art.
+    for (const [name, mine] of [["s21-victory", true], ["s21-defeat", false]]) {
+      await p.evaluate((mine) => {
+        const st = window.__conquerraStore.getState();
+        const other = st.view.players.find((x) => x.id !== st.view.me.id).id;
+        window.__conquerraStore.setState({ screen: "over", view: { ...st.view, winner: mine ? st.view.me.id : other } });
+      }, mine);
+      await shot(p, name, sfx, { wait: 3500 });
+    }
+    await p.close();
+  }
+}
+
 // ---------- Part 3: buildings that stand up like the walls ----------
 if (want("build")) {
   for (const phone of [false, true]) {

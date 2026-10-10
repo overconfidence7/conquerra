@@ -8,7 +8,9 @@
 
 **Batch 3 (made Oct 6):** all 20 pieces are in `art/incoming/` (old versions of the redone files in `_old/`, contact sheet `_review/batch-3.png`, a paler chalk cliff in `_review/_alt/cliff-3-chalk.png`). Session 12 imports them. The pines came out as steep-angle fir clusters rather than straight overhead (Gemini wouldn't do overhead pines without making thistle-like stars); they read as pines at game size.
 
-**Batch 4 (Oct 6–7):** 42 of about 50 pieces made (groups 1–5 complete; of group 6 only `peak-narrow-1`, when Gemini's daily limit ran out). In `art/incoming/`, not yet imported; contact sheets in `art/incoming/_review/batch-4-*.png`; report in `docs/art/batch-4-report.md`. Still to make: `peak-narrow-2`, `-3`, `ridge-diag-1`, `-2`, `cliff-side-1`, `-2`, `fringe-bush-1` … `-3`, `glade-1`, `-2`, `paper-grain`.
+**Batch 4 (Oct 6–7): imported in session 21** (groups 1–5, 41 pieces: the effects, key art, specialists and spies, the redo pieces; contact sheets of the imported effects in `docs/art/screens/import-fx.png` and `import-batch4.png`). The pines: batch 3's firs were kept (they read as pines at game size; batch 4's redo read as round clumps), warmed by a "pines" colour family in `palette.ts`; batch 4's are in `art/incoming/_old/*-batch4.png`. **Group 6 (scenery) was finished on Oct 7** (all 12 pieces are in `art/incoming/`) but isn't drawn by the game yet, so it isn't registered (it stays under Tier 3).
+
+**For batch 5 (later):** buildings painted in 3D (fort, market, barracks, watchtower, scaffold) to match the walls, a painted wall segment and tower; Steward portraits; a plainer round dust puff (`fx-dust-2` came out as a vortex); a horizontal crack (`fx-crack` runs diagonally and is turned in code); effects at 2048 px if the browser allows (batch 4's came out at 1024). And a session to draw group 6 (narrow peaks for ranges running up and down, diagonal ridges, side-on cliffs, forest-edge bushes, glades, the paper grain).
 
 **Before you start:** confirm your image tool's terms allow commercial use of the images, since the game will be sold.
 

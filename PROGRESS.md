@@ -16,9 +16,9 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–20, 20c, 20b and 20d are done and reviewed. Next: Nate's play test from "Things to test after session 20d" (it can run alongside the next session), **session 21** (the polish pass with art batch 4, plus Step 0's fixes), 22 (the language pass), 23 (bots and balance: the start bonus, the Marshal adopts the Merchant's lesson and the Steward's plan, idle Steward gold handed back, a remnant judged honestly under fog), then sound.**
+**Phase: M3 (depth and balance). Sessions 7–21 (with 20b, 20c, 20d) are done; 21 (the polish pass) awaits review. Next: Nate's play test from "Things to test after session 21" (it can run alongside the next session), **session 22** (the language pass), 23 (bots and balance: the start bonus, the Marshal adopts the Merchant's lesson and the Steward's plan, idle Steward gold handed back, a remnant judged honestly under fog), then sound.**
 
-Claude Code sessions completed: **20d** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
+Claude Code sessions completed: **21** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
 ---
 
@@ -1245,3 +1245,45 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
   - **Take back** a purse and spend it yourself the same turn
   - change or delete one of a leader's orders in the queue (it's yours to edit)
   - on the phone: open the Leaders sheet from your Leader's portrait; is everything reachable in a few taps?
+
+### Oct 10: Claude Code session 21 (M3: the polish pass: art batch 4, effects, a cinematic replay, a living map, menus with weight)
+*All six parts done, plus Step 0. Plan and BUILT lines: `docs/09-polish-and-effects-plan.md`. Screenshots `docs/art/screens/s21-*.png`, the GIF `s21-replay.gif`.*
+- **Step 0, the stale build:** behind Cloudflare Access, once the login expires every request gets the sign-in redirect, the service worker's update check included, so it failed without a word and the offline copy kept serving whatever it had (the orchestrator's pane: a pre-session-15 build). Worse, the offline copy answered every page load itself, so the sign-in could never get through. Now the game checks `version.json` (never cached) on every load: **"Sign in again to get the latest version"** when the login has expired (its link reaches the sign-in, past the offline copy), **"A new version is ready: reload"** when a newer build is live and no update is on its way, and the usual "Update ready" otherwise. The version shows at the top of the lobby. Tested against two real builds in three cases (`s21-stale-build.mjs`: login fine, login expired, update never arriving): all three end on the new build. **Not tested on the real preview** (the browser pane I have went straight to Access's sign-in, which is Nate's to do; it had no old offline copy). **A browser stuck on a build from before today** can't be rescued by new code: signing in normally lets its own update through; if it's still stuck, clear the site's data once.
+- **Step 0's nits:** the budget box shows the capped amount (99 → 5); Autosave says "Last game finished (Wyrmland, turn 14)"; the path buttons have names; **the Spoils card overlap** was a class clash (its rule text was squashed to 1 px by the gold divider's style).
+- **Art batch 4 (Part 1):** all 42 pieces were there (and the scenery group's other 12 were finished on Oct 7; not drawn yet, so not registered). The importer turns black backgrounds into soft transparency with the colour kept (tested), cuts magenta as before, flags each effect normal / add / screen, and writes contact sheets (`import-fx.png`, `import-batch4.png`): nothing came out wrong; as the report said, `fx-crack` is diagonal (turned in code) and `fx-dust-2` is a spiral. **The pines:** batch 3's firs kept (they read as pines at game size; batch 4's look like round oak clumps), warmed to the oaks' green by a colour rule. New hills, scaffold, wooden bridge; rangers' and standard-bearer's figures by the army; the spy icon in the menus; the windmill with turning sails; the title art behind the lobby (69 KB), victory and defeat behind the results.
+- **The replay got faster before it got prettier (Part 2a):** measured with three turns and the fog lifted, the replay ran at **4.9 fps on Wyrmland 6 and 1.3 on Krakenmere 10** on the phone profile at the start: every event redrew every border on the map, rebuilt all 200 markers and every House's band, and re-traced every realm. Now only what changed is redrawn; separate render groups; the map catches up at most 5 times a second.
+- **Effects (Part 2):** a particle system built in house on PixiJS's ParticleContainer, every particle a formula of the replay's clock and a seed (the game's public id, the turn and the event), so "Watch again", Skip and pause look the same; recipes as data with a schema. Armies march as soldiers with their banner behind an inked campaign line, meet at the border, fight in dust and smoke with sparks and arrow volleys (from the walls behind a fort), a Siege stone lands in debris; captures topple the old banner and raise the new; a capital falls in smoke and flame with a push-in and a title card; a knocked-out House's banner burns away. **Settings → Effects: Full / Light / Off**; a slow replay moves itself to Light and says so once; Reduce motion starts on Light. The info (troop numbers, results, losses, pops, the fog's pulse) is its own code and identical on every setting (tested), and fogged events are the same pale pulse whatever they were (tested; the old coloured dot that hinted at a battle is gone).
+- **Buildings stand up like the walls (Part 3):** a cast shadow from the building's own outline, a stone plinth, lit and shaded rims, on forts, markets, barracks, watchtowers, scaffolds and the capitals.
+- **The cinematic replay and the rest (Parts 4–6):** letterbox, vignette and a warm grade; title cards (capital falls, House knocked out, deal broken; at most two a turn); recruits marching out, scaffolds rising and dropping away, laurels, Spoils cards bursting, coins to the gold counter as it rolls; a signature for every Fate card and Fallen event; deals sealed (scroll, seal, the truce border stitching itself) and broken (a red crack, the Oathbreaker stamp); spies (the hooded figure, the eye, "Caught"); the living map (clouds and their shadows, chimney smoke, sails, flags, the lighthouse beam, boats, birds, coastal foam); the seal's press and gold flecks, the timer's ember, "Turn N" sweeping across, panels easing in, the report's lines one by one, clouds over the title art, embers or petals on game over.
+- **Frame rate** (phone profile: 384 px, CPU 4×; fog lifted, three turns each; `perf-s21.json`):
+  | | Start of session | Full | Light | Off (Part 2 build) |
+  |---|---|---|---|---|
+  | Wyrmland 6, phone | 4.9 (worst 3) | **93** (worst turn 87) | 108 (84) | 114 |
+  | Krakenmere 10, phone | 1.3 (worst 1) | **79** (worst turn 48) | 81 (58) | 77 (52) |
+  | Wyrmland 6, laptop | | 302 | 289 | 246 |
+  | Krakenmere 10, laptop | | 203 | 194 | 194 |
+
+  (Frames a second through the replay, uncapped. Session 19's 39–43 fps was a different measure: one turn, one attack. Krakenmere's busiest turn sits just under 50 even with Effects Off, so it's the 10-player map's own work, not the effects; on a real phone that turn would move itself to Light, which doesn't help much there. Runs vary by ±15% on this machine.)
+- **Particle budget** 600 phone / 2,000 laptop; busy moments use 60–90 (Full), 35–40 (Light). **The living map** costs about 0.4–1 ms a frame on the throttled phone at Mid. **The replay's length** is unchanged (timeline untouched; the 10–20 s median test passes). **Start-up bundle** 486.3 → 491.2 KB (gzip 149.3 → 150.8), inside the 5 KB allowance: batch 4's names, Step 0's notices, the title art's styles (the effects and their art load with the game screen).
+- **Tests and deploy:** 978 automated tests pass; typecheck and the web build pass. Deployed to the private preview (version `07750885` after Part 6; the final deploy below); the lock check passed. Nate: please check the repo's Actions page for the last commit.
+
+### Things to test after session 21 (Nate's next play test)
+*Laptop first; the phone where it applies.*
+- **From session 21, most important first:**
+  1. **The update notice:** open the preview on your phone (the one that may be on an old version). Does the lobby show today's version at the top? If not, does it say "A new version is ready" or "Sign in again"? (If it's stuck on an old version with no notice at all, clear the site's data once: Chrome, the lock icon, Site settings, Clear.)
+  2. **Watch a whole replay on the phone on Full:** smooth? Did it ever move to Light by itself and say so? (Krakenmere and Rootholm at 8–10 players are the hardest.)
+  3. **Is the replay as readable as before?** Can you still tell who attacked whom, who won, and the losses, without reading the report? Then **Settings → Effects → Off**: is anything missing that you needed?
+  4. **"Watch again":** does it look exactly the same?
+  5. **Do the buildings pop like the walls?** (Forts, markets, the capitals, at Near, Mid and Far.)
+  6. **The title screen and game over:** is the key art right behind the lobby on the laptop and the phone? Victory and defeat?
+  7. **A capital falling** (yours or a rival's): the push-in, the smoke and flames, the title card. Too much, or right?
+  8. **The living map while you plan:** clouds, smoke, sails, boats, birds. Quiet enough? Ever distracting?
+  9. **The menus:** the seal's stamp, the timer's ember in its last 10 seconds, "Turn 9" sweeping across. Does anything slow a basic turn?
+- **Still open from session 20d (not tried yet), most important first:**
+  1. Run the military with 50–80% for ten turns: "Purse 0g" with its orders' cost beside the count?
+  2. Clean up against a rival with land in the fog: does the sweep go into the fog after them?
+  3. Your Steward at 50% when a Marshal masses near your capital: does a wall go up in a turn or two, with your Leader keeping troops inside?
+  4. Did anyone attack your wall, and did it hold?
+  5. Where does your Steward build now (markets inside, forts on passes and necks, walls on the capital's province first)?
+  6. Does a delegating game feel too easy on Embervale?
+- **Not tried yet (carried over):** the phone; a 160-territory map (Ashwing or The Sundered Crowns); Embervale with 4; getting knocked out once (is the Fallen loud enough?); Conquest's 20-turn default on a 200-territory map; capturing a Leader ("Reports to Aldric"); a remembered wall greyed in the fog.

@@ -38,6 +38,9 @@
 - A short pop-up names the big moments ("Gules captures Oakcrest"). Something in the fog shows only as a soft pulse on its province and "A battle in Northreach", with no names and no numbers.
 - **The fog lifts as you go:** when your army takes a territory, the fog fades off the land around it right then, so you can watch a chain push into land you couldn't see. Land you lose fogs over from that moment (see §11).
 - A typical turn takes about 10–20 seconds; very busy turns are sped up. **Skip** jumps to the end. There's no pause, play or speed control (decided).
+- **How it looks** (session 21, the polish pass): the replay is letterboxed with a soft vignette and a warmer light; armies march as the House's soldiers with their banner (ships on sea lanes) behind an inked campaign line, and meet **at the border**, where the fight is (dust, smoke, sparks, the defenders' arrows, a Siege stone); a capture topples the old banner and raises the new one; a capital falling gets smoke, flames and a gentle push-in of the camera. Building, culture, Spoils, Fate, the Fallen, deals and your spies each have a short signature. None of it changes what happened: the numbers, results and pop-ups say the same as before, and the fog still shows only the soft pulse.
+- **Title cards** for the moments that matter, at most two a turn, only for what you saw: a capital falling ("Whitemarch falls to you", "Your capital, Rookhome, falls to House Purpure"), a House knocked out ("House Azure is no more"), a deal broken ("Lady Morwen breaks the truce").
+- **Settings → Effects: Full / Light / Off** (remembered on the device). Light halves the particles and drops the camera shake and flashes; Off keeps only the information (armies' numbers, battles, results, pop-ups). A phone that can't keep the replay smooth on Full moves to Light by itself and says so once; "Reduce motion" on the device starts on Light. The replay's length doesn't depend on the setting.
 - Then the **turn report** lists it all in words: your gains and losses first, then what you saw, then **what came out of the fog** (rival armies, capitals and Leaders you spotted during the turn, and fighting you couldn't see). **Watch again** replays the turn from the fog you started with.
 
 **Leader timing tricks** (only while your Leader is alive):
@@ -192,7 +195,7 @@ Engineers make any of these ready immediately. A building under construction giv
 
 **A fort on culture-5 land makes a wall** (session 20b, §24): walled territories that touch share their spare defenders. A territory holds one building, so the fort is the building there.
 
-**On the map** (session 9): buildings stand next to the army marker, about the size of a capital's castle, on a soft ground shadow, and never under the marker. One being built shows behind a wooden scaffold, and the marker's building icon carries a small hourglass ("ready next turn"). Buildings you only remember (in the fog) are greyed.
+**On the map** (session 9): buildings stand next to the army marker, about the size of a capital's castle, and never under the marker. Since session 21 they stand up off the land like the walls: a cast shadow down and to the right, a low stone plinth, lit and shaded edges (the capitals' castles too). One being built shows behind a wooden scaffold, and the marker's building icon carries a small hourglass ("ready next turn"). Buildings you only remember (in the fog) are greyed.
 
 ## 11. Fog of war
 - With fog on, you see **full detail** (owner, troops, specialists, buildings, culture, Leaders) on **your own territories and the ones bordering them**. Watchtowers and scouts see 1 territory further.
