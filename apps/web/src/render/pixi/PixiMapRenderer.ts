@@ -154,6 +154,11 @@ class PixiMapRenderer implements MapRenderer {
     this.markers = new MarkerLayer(ctx.map, this.bank, this.app.renderer.resolution);
     this.mapLayer.addChild(this.world.view, this.info.tactical, this.info.lines, this.info.realmLayer.root, this.info.walls, this.info.gates, this.info.glow, this.info.sites, this.info.figures, this.info.names, this.info.links, this.info.arrows);
     this.replay = new ReplayLayer(ctx.map);
+    // Separate render groups (session 21): what changes every replay frame (the replay, the markers' numbers) no longer
+    // makes Pixi rebuild the whole painted map's draw list each frame.
+    this.mapLayer.enableRenderGroup();
+    this.markers.root.enableRenderGroup();
+    this.replay.root.enableRenderGroup();
     this.app.stage.addChild(this.mapLayer, this.markers.root, this.replay.root);
     this.world.bakeFar();
     mark("far");

@@ -1,0 +1,72 @@
+[
+  {
+    "map": "wyrmland",
+    "players": 6,
+    "device": "phone",
+    "level": "full",
+    "idleMid": {
+      "fps": 242.7,
+      "p95ms": 10.9
+    },
+    "replays": [
+      {
+        "fps": 7.9,
+        "p95ms": 950.7,
+        "seconds": 19.7,
+        "autoLight": false,
+        "peakParticles": null
+      },
+      {
+        "fps": 3.8,
+        "p95ms": 1583.7,
+        "seconds": 20.8,
+        "autoLight": false,
+        "peakParticles": null
+      },
+      {
+        "fps": 3,
+        "p95ms": 1516.8,
+        "seconds": 19.5,
+        "autoLight": false,
+        "peakParticles": null
+      }
+    ],
+    "replayFps": 4.9,
+    "worstFps": 3
+  },
+  {
+    "map": "krakenmere",
+    "players": 10,
+    "device": "phone",
+    "level": "full",
+    "idleMid": {
+      "fps": 135.9,
+      "p95ms": 18.8
+    },
+    "replays": [
+      {
+        "fps": 1.5,
+        "p95ms": 3141.9,
+        "seconds": 26,
+        "autoLight": false,
+        "peakParticles": null
+      },
+      {
+        "fps": 1.4,
+        "p95ms": 2226.1,
+        "seconds": 25.7,
+        "autoLight": false,
+        "peakParticles": null
+      },
+      {
+        "fps": 1,
+        "p95ms": 3584.4,
+        "seconds": 25.1,
+        "autoLight": false,
+        "peakParticles": null
+      }
+    ],
+    "replayFps": 1.3,
+    "worstFps": 1
+  }
+]

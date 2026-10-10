@@ -50,23 +50,41 @@ const pk = (x: number, y: number) => `${x},${y}`;
  * Borders between two territories of the same group are left out, so the glow runs round the realm, not every
  * territory. Works because neighbouring outlines share exactly the same points (docs/map-data.md).
  */
+type Edge = { key: string; a: [number, number]; b: [number, number] };
+/** Each territory's outline edges, worked out once per map (they never change): groupOutlines runs on every capture. */
+const edgeCache = new WeakMap<object, Map<string, Edge[]>>();
+function edgesOf(g: Pick<MapGeometry, "territories">): Map<string, Edge[]> {
+  let m = edgeCache.get(g.territories);
+  if (m) return m;
+  m = new Map();
+  for (const t of g.territories) {
+    const list: Edge[] = [];
+    for (const r of t.rings)
+      for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+        const a: [number, number] = [r[j]!, r[j + 1]!], b: [number, number] = [r[i]!, r[i + 1]!];
+        const ka = pk(a[0], a[1]), kb = pk(b[0], b[1]);
+        if (ka === kb) continue;
+        list.push({ key: ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`, a, b });
+      }
+    m.set(t.id, list);
+  }
+  edgeCache.set(g.territories, m);
+  return m;
+}
+
 export function groupOutlines(g: Pick<MapGeometry, "territories">, groupOf: (territory: string) => string | null): Map<string, Line[]> {
+  const edges = edgesOf(g);
   const segs = new Map<string, Map<string, { a: [number, number]; b: [number, number]; n: number }>>();
   for (const t of g.territories) {
     const grp = groupOf(t.id);
     if (grp === null) continue;
     let m = segs.get(grp);
     if (!m) segs.set(grp, (m = new Map()));
-    for (const r of t.rings)
-      for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
-        const a: [number, number] = [r[j]!, r[j + 1]!], b: [number, number] = [r[i]!, r[i + 1]!];
-        const ka = pk(a[0], a[1]), kb = pk(b[0], b[1]);
-        if (ka === kb) continue;
-        const key = ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
-        const s = m.get(key);
-        if (s) s.n++;
-        else m.set(key, { a, b, n: 1 });
-      }
+    for (const e of edges.get(t.id)!) {
+      const s = m.get(e.key);
+      if (s) s.n++;
+      else m.set(e.key, { a: e.a, b: e.b, n: 1 });
+    }
   }
   const out = new Map<string, Line[]>();
   for (const [grp, m] of segs) {
@@ -84,20 +102,21 @@ export function groupOutlines(g: Pick<MapGeometry, "territories">, groupOf: (ter
     for (const [key, s] of m) {
       if (s.n !== 1 || used.has(key)) continue;
       used.add(key);
-      const pts = [s.a[0], s.a[1], s.b[0], s.b[1]];
-      // Walk forward from b, then backward from a.
+      const fwd = [s.a[0], s.a[1], s.b[0], s.b[1]];
+      // Walk forward from b, then backward from a (collected separately: unshifting made long realms slow).
+      const back: number[] = [];
       for (const dir of [1, -1]) {
         let cur = dir === 1 ? s.b : s.a;
         for (;;) {
           const next = (adj.get(pk(cur[0], cur[1])) ?? []).find((e) => !used.has(e.key));
           if (!next) break;
           used.add(next.key);
-          if (dir === 1) pts.push(next.to[0], next.to[1]);
-          else pts.unshift(next.to[0], next.to[1]);
+          if (dir === 1) fwd.push(next.to[0], next.to[1]);
+          else back.push(next.to[1], next.to[0]);
           cur = next.to;
         }
       }
-      lines.push(pts);
+      lines.push(back.length ? [...back.reverse(), ...fwd] : fwd);
     }
     out.set(grp, lines);
   }

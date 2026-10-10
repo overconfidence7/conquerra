@@ -103,6 +103,12 @@ export class MarkerLayer {
   private nameLayer = new Container();
   private scene: MapScene | null = null;
   private key = "";
+  /**
+   * What each marker was built from (session 21): the replay changes the scene with every event, and rebuilding all
+   * 200 markers (each with its own text textures) each time stalled it; now only markers whose content changed are.
+   */
+  private built = new Map<string, string>();
+  private plaqueKey: string | null = null;
   private resolution: number;
   private labelOf: Map<string, { x: number; y: number }>;
 
@@ -120,15 +126,32 @@ export class MarkerLayer {
   update(scene: MapScene, mix: DetailMix, tactical: boolean, force = false) {
     const key = `${mix.icons > 0.5}|${mix.nearDetail > 0.5}|${mix.names > 0.5}|${tactical}`;
     if (!force && scene === this.scene && key === this.key) return false;
+    const all = force || key !== this.key;
     this.scene = scene;
     this.key = key;
-    for (const m of this.markers.values()) m.root.destroy({ children: true });
-    this.markers.clear();
+    if (all) {
+      for (const m of this.markers.values()) m.root.destroy({ children: true });
+      this.markers.clear();
+      this.built.clear();
+      this.plaqueKey = null;
+    }
     const refZoom = { territoryPx: (REF - 15) / 0.05 };
     for (const t of this.map.territories) {
       const s = territoryStatus(scene.view, t.id);
       const content = markerContent(this.map, scene.view, s);
+      const was = this.markers.get(t.id);
+      const builtFrom = content ? JSON.stringify([content, s, houseOf(scene.view, s.owner).name]) : "";
+      if (was && this.built.get(t.id) === builtFrom) {
+        was.priority = markerPriority(scene.view, s);
+        continue;
+      }
+      if (was) {
+        was.root.destroy({ children: true });
+        this.markers.delete(t.id);
+        this.built.delete(t.id);
+      }
       if (!content) continue;
+      this.built.set(t.id, builtFrom);
       const metrics = markerMetrics(content, refZoom, mix);
       const m = this.build(scene.view, s, content, metrics, mix);
       const lbl = this.labelOf.get(t.id)!;
@@ -143,6 +166,11 @@ export class MarkerLayer {
 
   /** One plaque per province, under its painted name: "Pinemark +3 · you hold 3 of 5", or "Pinemark +3" if you hold none of it. */
   private buildPlaques(scene: MapScene) {
+    // Only when how much of a province you hold changes.
+    const view0 = scene.view;
+    const plaqueKey = this.map.territories.map((t) => (view0.territories[t.id]?.detail === "full" && (view0.territories[t.id] as { owner?: string | null }).owner === view0.me.id ? 1 : 0)).join("");
+    if (plaqueKey === this.plaqueKey) return;
+    this.plaqueKey = plaqueKey;
     for (const pl of this.plaques.values()) (pl.root.destroy({ children: true }), pl.name.root.destroy({ children: true }));
     this.plaques.clear();
     const view = scene.view;

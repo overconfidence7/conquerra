@@ -10,6 +10,9 @@ import type { MapRenderer } from "../render/types";
  * to draw, and React only told when the map view or the beat on screen changes. Ends on its own, or on Skip.
  * The camera follows off-screen events and comes back (replay/camera.ts), unless you pan or zoom yourself.
  */
+/** The replay's map catches up with the events at most this often (ms). */
+export const APPLY_EVERY_MS = 200;
+
 export function useReplay(
   ctx: GameContext | null,
   replay: { before: PlayerView; report: TurnReport; key: number } | null,
@@ -32,6 +35,7 @@ export function useReplay(
     const t0 = performance.now();
     let lastBeat: Beat | null = null;
     let lastApplied = 0;
+    let lastApplyAt = -Infinity;
     let raf = 0;
     let lastProgress = 0;
     // The camera plan, from where you're looking now. It stops for good if you pan or zoom during the replay.
@@ -58,7 +62,12 @@ export function useReplay(
       renderer.current?.setReplay(f.done ? null : f);
       // For the screenshot script: what's on screen now.
       (window as unknown as { __conquerraReplay?: ReplayFrame }).__conquerraReplay = f;
-      if (f.applied !== lastApplied) setApplied((lastApplied = f.applied));
+      // The map catches up at most every APPLY_EVERY_MS (session 21): each catch-up redraws the map and the panels, and
+      // on a big table one per event (90 a turn) made the replay stutter on phones.
+      if (f.applied !== lastApplied && (now - lastApplyAt >= APPLY_EVERY_MS || f.done)) {
+        lastApplyAt = now;
+        setApplied((lastApplied = f.applied));
+      }
       if (f.beat && f.beat !== lastBeat) cb.current.onBeat((lastBeat = f.beat));
       const p = timeline.total ? Math.min(1, t / timeline.total) : 1;
       if (p - lastProgress > 0.02 || p === 1) setProgress((lastProgress = p));

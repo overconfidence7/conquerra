@@ -135,9 +135,20 @@ export class InfoLayer {
   private realms = new Map<string, Line[]>();
   /** Who holds what, as last drawn: House borders are only rebuilt when this changes (not every replay frame). */
   private realmKey = "";
+  /** Each House's land as last traced (its territory ids), so a capture re-traces only the two Houses it changed. */
+  private realmIds = new Map<string, string>();
   private rememberedKey: string | null = null;
   private drawnScale = 0;
   private isTactical = false;
+  private isTacticalDrawn: boolean | null = null;
+  /**
+   * What a scene change needs redrawn at the next zoom update (session 21). The replay changes the scene with every
+   * event; redrawing every border on the map each time (and Pixi re-tessellating it all) stalled the replay for about
+   * 200 ms an event on a laptop. Borders and gates only change with the zoom; the rest only when what it shows changes.
+   */
+  private dirty = { realms: true, walls: true, glow: true, arrows: true };
+  private glowKey: string | null = null;
+  private siteKey: string | null = null;
   private rings: Map<string, readonly Line[]>;
   /** Building sprites with where they'd like to stand, so each zoom can step them clear of the army marker. */
   private siteViews: { root: Container; site: { x: number; y: number }; label: { x: number; y: number } }[] = [];
@@ -168,16 +179,35 @@ export class InfoLayer {
     };
     // The replay updates the scene many times a second; rebuilding every border (with its wash) each time froze the
     // page once realms grew. Rebuild only when ownership changes.
+    if (tactical !== this.isTacticalDrawn) (this.isTacticalDrawn = tactical), (this.drawnScale = 0);
     const realmKey = this.map.territories.map((t) => `${ownerOf(t.id) ?? ""}:${houseOf(view, ownerOf(t.id)).name}`).join("|");
     if (realmKey !== this.realmKey) {
       this.realmKey = realmKey;
-      this.realms = groupOutlines(this.map.geometry!, ownerOf);
+      this.dirty.realms = true;
+      // Only the Houses whose land changed are traced again (a capture changes two).
+      const idsOf = new Map<string, string>();
+      for (const t of this.map.territories) {
+        const o = ownerOf(t.id);
+        if (o) idsOf.set(o, `${idsOf.get(o) ?? ""}${t.id},`);
+      }
+      const changed = (o: string) => this.realmIds.get(o) !== idsOf.get(o) || !this.realms.has(o);
+      const fresh = groupOutlines(this.map.geometry!, (id) => {
+        const o = ownerOf(id);
+        return o && changed(o) ? o : null;
+      });
+      this.realms = new Map([...idsOf.keys()].map((o) => [o, fresh.get(o) ?? this.realms.get(o) ?? []]));
+      this.realmIds = idsOf;
       const held = new Map<string, (readonly Line[])[]>();
       for (const [id] of this.status) {
         const o = ownerOf(id);
         if (o) (held.get(o) ?? held.set(o, []).get(o)!).push(this.rings.get(id)!);
       }
-      this.realmLayer.setRealms([...this.realms].map(([owner, outlines]) => ({ house: houseOf(view, owner), outlines, territories: held.get(owner) ?? [] })));
+      const heldIds = new Map<string, string[]>();
+      for (const [id] of this.status) {
+        const o = ownerOf(id);
+        if (o) (heldIds.get(o) ?? heldIds.set(o, []).get(o)!).push(id);
+      }
+      this.realmLayer.setRealms([...this.realms].map(([owner, outlines]) => ({ key: `${owner}:${houseOf(view, owner).name}:${(heldIds.get(owner) ?? []).join(",")}`, house: houseOf(view, owner), outlines, territories: held.get(owner) ?? [] })));
       this.onRealms?.([...held].map(([owner, territories]) => ({ color: houseOf(view, owner).land, territories })));
     }
     // Remembered land (the dashed "last seen" outline) only changes when vision does.
@@ -185,28 +215,49 @@ export class InfoLayer {
     const rememberedKey = remembered.map(([id, s]) => `${id}:${houseOf(view, s.owner).name}`).join("|");
     if (rememberedKey !== this.rememberedKey) {
       this.rememberedKey = rememberedKey;
+      this.dirty.realms = true;
       this.realmLayer.setRemembered(remembered.map(([id, s]) => ({ house: houseOf(view, s.owner), rings: this.rings.get(id)! })));
     }
-    this.setWalls(view);
+    if (this.setWalls(view)) this.dirty.walls = true;
+    // The selection, glows, truces, passage land, spies and the tapped province (all drawn in screen pixels).
+    const glowKey = [
+      scene.selected ?? "",
+      scene.targets.join(","),
+      scene.glow.join(","),
+      scene.province ?? "",
+      (scene.area ?? []).join(","),
+      (scene.truces ?? []).map((t) => `${t.a}-${t.b}-${t.bond}-${t.pending}`).join(","),
+      (scene.passage ?? []).map((t) => `${t.territory}-${t.open}-${t.pending}`).join(","),
+      (scene.spies ?? []).map((t) => `${t.territory}-${t.status}-${t.count}`).join(","),
+    ].join("|");
+    if (glowKey !== this.glowKey) {
+      // (The selection's gold rule is drawn by the realm layer.)
+      if (this.glowKey === null || (scene.selected ?? "") !== this.glowKey.split("|")[0]) this.dirty.realms = true;
+      this.glowKey = glowKey;
+      this.dirty.glow = true;
+    }
+    // In Tactical the realms' dark outline is drawn with the glows.
+    if (this.dirty.realms && tactical) this.dirty.glow = true;
+    this.dirty.arrows = true;
     this.realmLayer.setSelected(scene.selected ? (this.rings.get(scene.selected) ?? null) : null);
     this.realmLayer.visible = !tactical;
     this.drawFills();
     this.drawSites();
-    this.drawnScale = 0; // lines and arrows redraw at the next zoom update
   }
 
   /**
    * The walls you can see (view.walls: anyone who sees part of a wall sees all of it), each outlined as one ring round
    * its footprint; walls you only remember (in the fog), greyed like a remembered building. Rebuilt only when they change.
    */
-  private setWalls(view: MapScene["view"]) {
+  private setWalls(view: MapScene["view"]): boolean {
     const walls = wallFootprints(view, this.map.territories.map((t) => t.id));
     const key = walls.map((w) => `${w.key}=${houseOf(view, w.owner).color}:${w.territories.join(",")}`).join("|");
-    if (key === this.wallKey) return;
+    if (key === this.wallKey) return false;
     this.wallKey = key;
     const groupOf = new Map(walls.flatMap((w) => w.territories.map((t) => [t, w.key] as const)));
     const outlines = groupOf.size ? groupOutlines(this.map.geometry!, (id) => groupOf.get(id) ?? null) : new Map<string, Line[]>();
     this.wallRings = walls.map((w) => ({ color: w.remembered ? 0x8a8a8a : hexNum(houseOf(view, w.owner).color), remembered: w.remembered, outlines: outlines.get(w.key) ?? [] }));
+    return true;
   }
 
   /**
@@ -302,6 +353,18 @@ export class InfoLayer {
 
   /** Building sprites at each site, and the figures shown at Near zoom. */
   private drawSites() {
+    // Only when a building, a scaffold or a figure changes (not with every troop count in the replay).
+    const key =
+      String(this.isTactical) +
+      this.map.territories
+        .map((t) => {
+          const s = this.status.get(t.id)!;
+          const army = s.kind === "seen" && s.owner && s.troops > 0 ? `${houseOf(this.scene!.view, s.owner).color}${s.specialists.join("")}` : "";
+          return `${s.kind}${s.building ?? ""}${s.construction ?? ""}${army}`;
+        })
+        .join("|");
+    if (key === this.siteKey) return;
+    this.siteKey = key;
     for (const c of [...this.sites.removeChildren(), ...this.figures.removeChildren()]) c.destroy({ children: true });
     this.siteViews = [];
     const g = this.map.geometry!;
@@ -389,6 +452,16 @@ export class InfoLayer {
       this.drawLines(scale);
       this.drawArrows(scale);
       this.placeSites(scale);
+      this.dirty = { realms: false, walls: false, glow: false, arrows: false };
+    } else if (this.scene && (this.dirty.realms || this.dirty.walls || this.dirty.glow || this.dirty.arrows)) {
+      // A scene change at the same zoom: only what changed, at the zoom the rest was drawn for.
+      const px = 1 / this.drawnScale;
+      if (this.dirty.realms && !this.isTactical) this.realmLayer.draw(px);
+      if (this.dirty.walls) this.drawWalls(px);
+      if (this.dirty.glow) this.drawGlow(px);
+      if (this.dirty.arrows) this.drawArrows(this.drawnScale);
+      this.placeSites(this.drawnScale);
+      this.dirty = { realms: false, walls: false, glow: false, arrows: false };
     }
   }
 
@@ -415,9 +488,8 @@ export class InfoLayer {
     const { view, selected, targets, glow } = this.scene!;
     const px = 1 / scale;
     const province = new Map(this.map.territories.map((t) => [t.id, t.province]));
-    const L = this.lines, G = this.glow;
+    const L = this.lines;
     L.clear();
-    G.clear();
     // Every territory edge, at every zoom: a crisp ink line with a light halo, so it reads inside one House's land
     // and between neutral lands too (Tactical: a plain dark line). Province borders: a gilded double line (gold,
     // a dark rule, gold), distinct from both territory edges and the House bands.
@@ -436,6 +508,23 @@ export class InfoLayer {
         }
       }
     }
+    // Passes: a small stone gate across the road, sized to read at Mid zoom.
+    this.gates.clear();
+    for (const p of g.passes) {
+      const a = this.labelOf.get(p.a)!, b = this.labelOf.get(p.b)!;
+      drawGate(this.gates, p.x, p.y, Math.atan2(b.y - a.y, b.x - a.x), Math.min(Math.max(16, 24 * px), 32 * px), px);
+    }
+    if (!this.isTactical) this.realmLayer.draw(px);
+    this.drawWalls(px);
+    this.drawGlow(px);
+  }
+
+  /** Everything over the borders that changes with the scene: truces, the selection's glows, the lit province, spies. */
+  private drawGlow(px: number) {
+    const g = this.map.geometry!;
+    const { selected, targets, glow } = this.scene!;
+    const G = this.glow;
+    G.clear();
     // Truces (session 14): every border a truce covers, where you can see it: a white band stitched with dark dashes
     // (a binding pact adds gold studs). Widths in screen pixels, so it reads at every zoom. Agreed this turn: fainter.
     const truces = this.scene!.truces ?? [];
@@ -451,16 +540,8 @@ export class InfoLayer {
           if (t.bond === "binding") studs(G, l, 28 * px, 3.4 * px, GOLD_HI);
         }
     }
-    // Passes: a small stone gate across the road, sized to read at Mid zoom.
-    this.gates.clear();
-    for (const p of g.passes) {
-      const a = this.labelOf.get(p.a)!, b = this.labelOf.get(p.b)!;
-      drawGate(this.gates, p.x, p.y, Math.atan2(b.y - a.y, b.x - a.x), Math.min(Math.max(16, 24 * px), 32 * px), px);
-    }
     // Realms: in Tactical, a dark line round everything each House holds. Illustrated: the House bands (realms.ts).
     if (this.isTactical) for (const outlines of this.realms.values()) for (const l of outlines) ring(G, l, false).stroke({ width: 2.6 * px, color: INK, alpha: 0.9, join: "round" });
-    else this.realmLayer.draw(px);
-    this.drawWalls(px);
     // Provinces on demand (session 16): the province of the territory you tapped, lit round its whole border with a
     // bright band (a soft light halo, a dark rule, a warm white core), so it reads over every House colour, the
     // gilded province borders and the sea.

@@ -20,6 +20,8 @@ type Rings = readonly Line[];
 const ring = (g: Graphics, r: Line, close = true) => g.poly(r as number[], close);
 
 export interface RealmInput {
+  /** What the realm is (its owner and land): a realm whose key hasn't changed keeps its band and mask (session 21). */
+  key: string;
   house: House;
   /** The realm's outline (borders with land of other owners, water, mountains). */
   outlines: Line[];
@@ -31,6 +33,8 @@ interface Realm extends RealmInput {
   root: Container;
   band: Graphics;
   mask: Graphics;
+  /** The zoom its band was last drawn for (0: not yet). */
+  drawnPx: number;
 }
 
 export class RealmLayer {
@@ -47,12 +51,20 @@ export class RealmLayer {
   constructor() {
     this.selection.addChild(this.selRule, this.selMask);
     this.selection.setMask({ mask: this.selMask, inverse: true });
+    // Its own render group (session 21): the pulse changes its alpha every frame, which would otherwise make Pixi
+    // re-upload every sprite of the painted map's layer each frame.
+    this.selection.enableRenderGroup();
     this.root.addChild(this.ink, this.remembered, this.selection);
   }
 
   setRealms(input: RealmInput[]) {
-    for (const r of this.realms) r.root.destroy({ children: true });
+    // A capture changes two realms; the others keep their masks (every territory's outline, slow to rebuild) and bands.
+    const keep = new Map(this.realms.map((r) => [r.key, r]));
+    const wanted = new Set(input.map((r) => r.key));
+    for (const r of this.realms) if (!wanted.has(r.key)) r.root.destroy({ children: true });
     this.realms = input.map((r) => {
+      const old = keep.get(r.key);
+      if (old) return { ...old, house: r.house, outlines: r.outlines };
       const root = new Container();
       const band = new Graphics(), mask = new Graphics();
       for (const t of r.territories) {
@@ -61,7 +73,7 @@ export class RealmLayer {
       }
       root.addChild(band, mask);
       root.mask = mask;
-      return { ...r, root, band, mask };
+      return { ...r, root, band, mask, drawnPx: 0 };
     });
     this.realms.forEach((r, i) => this.root.addChildAt(r.root, i));
   }
@@ -77,6 +89,8 @@ export class RealmLayer {
   /** Redraw the parts measured in screen pixels. `px` = one screen pixel in map units. */
   draw(px: number) {
     for (const r of this.realms) {
+      if (r.drawnPx === px) continue;
+      r.drawnPx = px;
       const col = hexNum(r.house.color), glow = hexNum(r.house.glow);
       const b = r.band;
       b.clear();
