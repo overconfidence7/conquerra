@@ -519,7 +519,7 @@ describe("diplomacy: report lines in plain words", () => {
     expect(dealLine(lapsed, names("p1"))).toBe("Your offer of a joint war to Baron Krell lapsed: nobody accepted it this turn.");
     expect(dealLine(lapsed, names("p3"))).toBe("You-know-who's offer of a joint war lapsed: nobody accepted it this turn.");
     const trade = of(resolveTurn(ctx, s, agreed(offer("p1", "p2", { kind: "trade", give: { gold: 10 }, get: { land: ["a3"] } }))).events, "dealStarted")[0]!;
-    expect(dealLine(trade, names("p1"))).toBe("You and Lady Morwen agreed a trade: you give 10 gold; Lady Morwen gives A3 (a handshake deal).");
+    expect(dealLine(trade, names("p1"))).toBe("You and Lady Morwen agreed a trade: you give 10 gold, and Lady Morwen gives A3 (a handshake deal).");
     expect(dealLine(trade, names("p3"))).toBe("You-know-who and Lady Morwen made a trade.");
   });
 });

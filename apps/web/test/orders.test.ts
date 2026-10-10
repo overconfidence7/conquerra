@@ -271,7 +271,7 @@ describe("turn log", () => {
     ];
     const lines = narrateTurn(ctx, events, namer(ctx, view)).map((l) => l.text);
     expect(lines).toEqual([
-      "Turn order: You → Bot",
+      "Turn order: You, then Bot.",
       "Fighting in the fog: East ×2. A Leader fell out of sight.",
       "Income +10, upkeep −0: you now have 30 gold.",
     ]);

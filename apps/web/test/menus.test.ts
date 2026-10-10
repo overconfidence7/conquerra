@@ -186,18 +186,18 @@ describe("the lobby's map list", () => {
     const { mapCatalog } = await import("@conquerra/content");
     const { loadMap, loadableMaps } = await import("@conquerra/content/loadMap");
     expect(mapCatalog.map(mapChoiceLabel)).toEqual([
-      "Embervale · 40 territories · suits 4–6 players",
-      "Greatmarch · 80 territories · suits 8–10 players",
-      "The Shattered Isles · 60 territories · suits 4–6 players",
-      "The Twin Realms · 80 territories · suits 4–8 players",
-      "The Moon Coast · 80 territories · suits 4–8 players",
-      "The Ringsea · 100 territories · suits 6–10 players",
-      "The Crownlands · 100 territories · suits 6–10 players",
-      "Wyrmland · 120 territories · suits 6–8 players",
-      "Ashwing · 160 territories · suits 6–8 players",
-      "The Sundered Crowns · 160 territories · suits 6–8 players",
-      "Krakenmere · 200 territories · suits 8–10 players",
-      "Rootholm · 200 territories · suits 8–10 players",
+      "Embervale · 40 territories · suits 4 to 6 players",
+      "Greatmarch · 80 territories · suits 8 to 10 players",
+      "The Shattered Isles · 60 territories · suits 4 to 6 players",
+      "The Twin Realms · 80 territories · suits 4 to 8 players",
+      "The Moon Coast · 80 territories · suits 4 to 8 players",
+      "The Ringsea · 100 territories · suits 6 to 10 players",
+      "The Crownlands · 100 territories · suits 6 to 10 players",
+      "Wyrmland · 120 territories · suits 6 to 8 players",
+      "Ashwing · 160 territories · suits 6 to 8 players",
+      "The Sundered Crowns · 160 territories · suits 6 to 8 players",
+      "Krakenmere · 200 territories · suits 8 to 10 players",
+      "Rootholm · 200 territories · suits 8 to 10 players",
     ]);
     expect(loadableMaps.sort()).toEqual(mapCatalog.map((m) => m.id).sort());
     expect((await loadMap("wyrmland")).territories.length).toBe(120);

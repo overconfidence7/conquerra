@@ -8,7 +8,7 @@ describe("the lobby's maps (session 19)", () => {
     for (const m of mapCatalog) {
       expect(MAP_SUITS[m.id], m.id).toBeTruthy();
       // The line names the map's suggested table sizes.
-      expect(MAP_SUITS[m.id]).toContain(`${m.recommendedPlayers.min}–${m.recommendedPlayers.max}`);
+      expect(MAP_SUITS[m.id]).toContain(`${m.recommendedPlayers.min} to ${m.recommendedPlayers.max}`);
     }
   });
 });

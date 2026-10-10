@@ -234,7 +234,7 @@ describe("session 20: Clean up, Push back, Report to, finishing, the 100% cap", 
     expect(instructionName({ kind: "report", to: "you" }, n)).toBe("Report to Aldric");
     expect(instructionName({ kind: "report", to: "you" }, n, "steward")).toBe("Report to Odo");
     expect(leaderNoteLine({ kind: "finishing", rivals: [{ rival: "b1", land: 3 }] }, n)).toBe("Finishing them off: Lady Morwen (3 territories left)");
-    expect(leaderNoteLine({ kind: "pushBack", rival: "b2", going: [t(4)], avoiding: { at: t(7), troops: 40 }, striking: false }, n)).toBe(`Going for ${name(4)}; Baron Krell's main army at ${name(7)} (40) is too big for now`);
+    expect(leaderNoteLine({ kind: "pushBack", rival: "b2", going: [t(4)], avoiding: { at: t(7), troops: 40 }, striking: false }, n)).toBe(`Going for ${name(4)}. Baron Krell's main army at ${name(7)} (40) is too big for now`);
     expect(leaderNoteLine({ kind: "saving", gold: 14, for: "barracks", at: t(2) }, n)).toBe(`Saving 14 gold: nowhere to recruit until the barracks at ${name(2)} is up`);
   });
 
