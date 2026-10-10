@@ -17,13 +17,15 @@
 import { spawn } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { defaultRules } from "@conquerra/content";
+import { defaultRules, marshalData } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { playTable } from "@conquerra/simcore";
 import { indexMap, seedRng, type GameContext, type GameState, type PlayerId, type TerritoryId } from "@conquerra/engine";
 import { botFor } from "../src/tournament";
 import type { MopupFixture } from "./s20-mopup";
 
+// Session 20d: SWEEP='{"fog":2,"more":true}' plays with those finish settings (merged into the shared judgement's).
+if (process.env.SWEEP) Object.assign(marshalData.judgement.sweep!, JSON.parse(process.env.SWEEP));
 const DIR = process.env.MOPUP_DIR ? `${process.env.MOPUP_DIR.replace(/\/?$/, "/")}` : fileURLToPath(new URL("../../../packages/bots/test/fixtures/mopup/", import.meta.url));
 const args = process.argv.slice(2);
 const self = fileURLToPath(import.meta.url);
@@ -132,7 +134,8 @@ export function runFixture(fx: MopupFixture, how: string, rep: number): Run {
       if (went && saw)
         for (const t of Object.keys(before.territories)) {
           const o = before.territories[t]!.owner;
-          if (!o || o === top) continue;
+          // (A rival we have a deal with, a truce or a joint war, isn't one our leaders may attack.)
+          if (!o || o === top || (before.deals ?? []).some((x) => (x.a === top && x.b === o) || (x.b === top && x.a === o))) continue;
           held++;
           if (!went.has(t)) missed++;
           if (!saw.has(t)) (heldFog++, !went.has(t) && missedFog++);

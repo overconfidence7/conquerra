@@ -25,8 +25,15 @@ import { BREAKTHROUGH_MARGIN, type Board } from "../board";
  * 20's way: troops to a territory next to each of theirs and a strike from every side), since that ends it sooner.
  * Several remnants far apart get a mass each, sized to what each needs; the biggest army gets the Leader and the rest.
  *
+ * Session 20d (Nate's third note): the sweep's set is everywhere the remnant **is** (what we see and remember of theirs),
+ * **might be** (fogged land near theirs they could have taken since we last looked: `fog` steps through fog that was
+ * empty, theirs or never seen), and **could move to** (their armies' reach). The fogged parts are swept like the rest,
+ * not last. What the first chains don't reach gets more chains from the spare troops left, strongest first (`more`),
+ * and the blanket covers our land next to any of it.
+ *
  * It only ever reads its own view (what it sees and remembers): where their armies could go is worked out from the map,
- * what it sees of them and our own troops, never from hidden positions. Land of theirs it has never seen isn't a target.
+ * what it sees of them and our own troops, never from hidden positions. Land in the fog is a target only where the map
+ * and what we remember say they could be; every hop attacks only if still stronger, so the engine checks the real odds.
  */
 
 export interface SweepOptions {
@@ -38,6 +45,15 @@ export interface SweepOptions {
   blanket: number;
   /** A remnant of at most this many territories can be ringed (when every territory of theirs can be struck at once). */
   ringUpTo: number;
+  /**
+   * Session 20d (Nate: the sweep covers the fog): fogged land within this many steps of theirs (through fog that was
+   * empty, theirs, ours or never seen when last looked at) might be theirs now, and is swept with the rest (0: none).
+   */
+  fog?: number;
+  /** Session 20d: what the first chains didn't reach is swept by more chains, from the spare troops left. */
+  more?: boolean;
+  /** Session 20d: the main mass gathers at most this many times what its chain should need (absent: every spare troop). */
+  massCap?: number;
   /** Our territories whose armies it may move (a leader's command; the Marshal: all). */
   commands?(t: TerritoryId): boolean;
   /** Its armies may use the Initiative (once). */
@@ -107,6 +123,27 @@ export function planSweep(b: Board, rivals: readonly PlayerId[], free: Map<Terri
   };
   const isArmy = (x: TerritoryId) => isTarget.has(look0(x) ?? "") && !owned(x) && (look(x).troops > garrison || site(x));
   const recruitedAt = (t: TerritoryId) => opt.recruited?.get(t) ?? 0;
+  /**
+   * Where they might be (session 20d): land we can't see now, within `fog` steps of theirs through land that, when we
+   * last saw it, was empty, theirs, ours, or that we've never seen. (Land a third House held stays theirs as far as we know.)
+   */
+  const theirSet = new Set(theirs);
+  const might = new Set<TerritoryId>();
+  if (opt.fog) {
+    const fogged = (t: TerritoryId) => b.view.territories[t]?.detail !== "full";
+    const open = (t: TerritoryId) => {
+      if (!fogged(t) || theirSet.has(t)) return false;
+      const o = look0(t);
+      return o === null || o === b.me.id || isTarget.has(o);
+    };
+    const d = new Map<TerritoryId, number>(theirs.map((t) => [t, 0]));
+    const q = [...theirs];
+    for (let h = 0; h < q.length; h++) {
+      const cur = q[h]!;
+      if (d.get(cur)! >= opt.fog) continue;
+      for (const nb of idx.neighbors.get(cur)!) if (!d.has(nb) && open(nb) && !closed(cur, nb)) (d.set(nb, d.get(cur)! + 1), q.push(nb), might.add(nb));
+    }
+  }
   const extraAt = (to: TerritoryId) => (isArmy(to) ? (recruits.get(look0(to)!) ?? 0) : 0);
   const sure = (from: TerritoryId, to: TerritoryId, leader = false) => {
     const need = fewestToTake((n) => b.expectAt(from, to, n, [], leader, extraAt(to)).captureLikely, 100000);
@@ -138,6 +175,8 @@ export function planSweep(b: Board, rivals: readonly PlayerId[], free: Map<Terri
   const mass: Queue = [];
   const sweep: Queue = [];
   const blanket: Queue = [];
+  /** Session 20d: the chains after the first (what they didn't reach), each with its own gathering. */
+  const side: Queue = [];
   const order = (o: Order, from: TerritoryId, into: Queue) => into.push([o, from]);
 
   /**
@@ -390,6 +429,8 @@ export function planSweep(b: Board, rivals: readonly PlayerId[], free: Map<Terri
   // Its troops come from land they can't reach (so the chain doesn't start from land they took), set aside before the
   // masses take everything; on the way in, each hop takes back whatever they took.
   const danger = new Set(plans.flatMap((p) => [...p.reach]));
+  // (And our land next to where they might be, in the fog: session 20d.)
+  for (const t of might) for (const nb of idx.neighbors.get(t)!) if (owned(nb)) danger.add(nb);
   const blanketAt = [...danger]
     .filter((t) => may(t) && !holding.has(t) && !plans.some((p) => p.stage === t))
     .sort((a, c) => Number(idx.neighbors.get(c)!.some((x) => theirs.includes(x))) - Number(idx.neighbors.get(a)!.some((x) => theirs.includes(x))) || (a < c ? -1 : 1));
@@ -422,50 +463,38 @@ export function planSweep(b: Board, rivals: readonly PlayerId[], free: Map<Terri
     }
   }
 
-  // ---------- 7. The masses: the smaller groups first, each with what it needs; the main group gets the rest ----------
-  // (The main group is the biggest army's, ringed or not: its mass sweeps on through every group's land.)
-  const needOf = (p: Plan) => Math.ceil(p.g.reduce((a, x) => a + (isArmy(x) ? (sure(p.stage!, x) ?? look(x).troops * 3) : 2), 0) * 1.25) + p.reach.size;
-  const main = plans.find((p) => p.stage) ?? null;
-  for (const p of [...plans].reverse()) {
-    if ((p.ring && p !== main) || !p.stage) continue;
-    const want = p === main ? Infinity : Math.max(0, needOf(p) - leftAt(p.stage) + 1);
-    // The Leader marches with the main mass: a troop comes from where it stands, so it has an army to go with.
-    const L = p === main ? opt.leader : null;
-    if (L && may(L.at) && L.at !== p.stage && (free.get(L.at) ?? 0) <= 0 && leftAt(L.at) > garrison && !holding.has(L.at)) free.set(L.at, 1);
-    const got = want > 0 ? gather(p.stage, want, mass, { bold: true }) : null;
-    if (!L) continue;
-    if (L.at === p.stage) result.leaderPlaced = true;
-    else if (got?.orders.some((o) => o.kind === "move" && o.from === L.at)) {
-      const path = new Set<TerritoryId>();
-      for (let x: TerritoryId | null | undefined = L.at; x && x !== p.stage; x = got.parent.get(x)) path.add(x);
-      for (const o of got.orders) if (o.kind === "move" && path.has(o.from)) Object.assign(o, L.goes);
-      result.leaderPlaced = true;
-    }
-  }
-  // ---------- 8. The sweeps: one chain from each staging territory through everywhere they are and could get to ----------
-  for (const p of plans) {
-    if ((p.ring && p !== main) || !p.stage) continue;
-    if (!p.ring) result.modes.push("sweep");
-    result.staging.push(p.stage);
-    const goes: Goes = p === main && result.leaderPlaced && opt.leader ? opt.leader.goes : {};
-    const leader = !!goes.withLeader;
-    // What the chain should still have, hop by hop (our best guess: losses on the way, 1 left in each territory).
-    let strength = leftAt(p.stage) - garrison;
-    // Everywhere they are and everywhere their armies could get to (the main mass: on through every group's land),
-    // and on into land we've never seen that joins theirs (that's where the rest of them must be).
-    const visit = new Set([...(p === main ? theirs : p.g), ...p.reach]);
+  // ---------- Each chain's way (session 20c; a function since session 20d's more chains) ----------
+  /** Everywhere a group's chain goes: their land (the main mass: every group's, and where they might be), and their reach. */
+  const visitOf = (p: Plan): Set<TerritoryId> => {
+    const visit = new Set([...(p === main ? theirs : p.g), ...p.reach, ...(p === main ? might : [])]);
+    // ...and on into land we've never seen that joins theirs (that's where the rest of them must be).
     for (const t of [...visit]) {
       if (!isTarget.has(look0(t) ?? "")) continue;
       const q = [t];
       for (let h = 0; h < q.length; h++)
         for (const nb of idx.neighbors.get(q[h]!)!) if (unknown(nb) && !visit.has(nb)) (visit.add(nb), q.push(nb));
     }
-    visit.delete(p.stage);
+    return visit;
+  };
+  /** Roughly what a chain needs to take all of `land` (what stands there with the margin, and 1 left in each). */
+  const chainNeed = (land: Iterable<TerritoryId>) => {
+    let n = 0;
+    for (const t of land) n += owned(t) ? garrison : Math.ceil((look(t).troops + extraAt(t)) * opt.margin) + garrison;
+    return n;
+  };
+  /**
+   * One chain from `start` with `strength0` troops, through everywhere in `visit`: their armies first (`ofGroup`'s),
+   * then the nearest (their land before ours at the same distance), back through our own land where it must. Returns
+   * what it went for.
+   */
+  const chain = (start: TerritoryId, strength0: number, visit: Set<TerritoryId>, goes: Goes, ofGroup: Set<TerritoryId>, into: Queue): Set<TerritoryId> => {
+    const leader = !!goes.withLeader;
+    let strength = strength0;
     // (What another strike has gone for is passed through, not struck again.)
     const done = new Set<TerritoryId>([...visit].filter((t) => targeted.has(t)));
-    let at = p.stage;
+    const went = new Set<TerritoryId>();
+    let at = start;
     let hops = 0;
-    const ofGroup = new Set(p.g);
     // Their armies first (this group's), then the nearest (their land before ours at the same distance).
     const rank = (t: TerritoryId) => (isArmy(t) && ofGroup.has(t) ? 0 : 1);
     while (strength > garrison && hops < 400) {
@@ -495,7 +524,8 @@ export function planSweep(b: Board, rivals: readonly PlayerId[], free: Map<Terri
         }
       }
       if (!found.length) break;
-      const next = found.sort((a, c) => rank(a) - rank(c) || Number(unknown(a)) - Number(unknown(c)) || d.get(a)! - d.get(c)! || Number(owned(a)) - Number(owned(c)) || look(c).troops - look(a).troops || (a < c ? -1 : 1))[0]!;
+      // (Session 20d: land in the fog takes its turn by distance, no longer last.)
+      const next = found.sort((a, c) => rank(a) - rank(c) || (opt.fog ? 0 : Number(unknown(a)) - Number(unknown(c))) || d.get(a)! - d.get(c)! || Number(owned(a)) - Number(owned(c)) || look(c).troops - look(a).troops || (a < c ? -1 : 1))[0]!;
       const path: TerritoryId[] = [];
       for (let x: TerritoryId | undefined = next; x && x !== at; x = prev.get(x)) path.unshift(x);
       let from = at;
@@ -513,11 +543,12 @@ export function planSweep(b: Board, rivals: readonly PlayerId[], free: Map<Terri
             // Too big for now: struck only if it marches out (as it would leave it: one troop).
             e = b.expectAt(from, to, strength, [], leader, garrison - look(to).troops);
           }
-          strike(from, to, "all", sweep, goes);
+          strike(from, to, "all", into, goes);
           strength = Math.floor(strength - e.expectedAttackerLosses) - garrison;
           done.add(to);
+          went.add(to);
         } else {
-          order({ id: id(), kind: "move", from, to, troops: "all", preset: { id: "onlyIfStronger" }, ...goes }, from, sweep);
+          order({ id: id(), kind: "move", from, to, troops: "all", preset: { id: "onlyIfStronger" }, ...goes }, from, into);
           if (owned(to)) targeted.add(to);
           strength -= garrison;
         }
@@ -531,10 +562,71 @@ export function planSweep(b: Board, rivals: readonly PlayerId[], free: Map<Terri
       }
       done.add(next);
     }
+    return went;
+  };
+
+  // ---------- 7. The masses: the smaller groups first, each with what it needs; the main group gets the rest ----------
+  // (The main group is the biggest army's, ringed or not: its mass sweeps on through every group's land.)
+  const needOf = (p: Plan) => Math.ceil(p.g.reduce((a, x) => a + (isArmy(x) ? (sure(p.stage!, x) ?? look(x).troops * 3) : 2), 0) * 1.25) + p.reach.size;
+  const main = plans.find((p) => p.stage) ?? null;
+  for (const p of [...plans].reverse()) {
+    if ((p.ring && p !== main) || !p.stage) continue;
+    const want = p === main ? (opt.massCap ? Math.max(0, Math.ceil(chainNeed(visitOf(p)) * opt.massCap) - leftAt(p.stage) + garrison) : Infinity) : Math.max(0, needOf(p) - leftAt(p.stage) + 1);
+    // The Leader marches with the main mass: a troop comes from where it stands, so it has an army to go with.
+    const L = p === main ? opt.leader : null;
+    if (L && may(L.at) && L.at !== p.stage && (free.get(L.at) ?? 0) <= 0 && leftAt(L.at) > garrison && !holding.has(L.at)) free.set(L.at, 1);
+    const got = want > 0 ? gather(p.stage, want, mass, { bold: true }) : null;
+    if (!L) continue;
+    if (L.at === p.stage) result.leaderPlaced = true;
+    else if (got?.orders.some((o) => o.kind === "move" && o.from === L.at)) {
+      const path = new Set<TerritoryId>();
+      for (let x: TerritoryId | null | undefined = L.at; x && x !== p.stage; x = got.parent.get(x)) path.add(x);
+      for (const o of got.orders) if (o.kind === "move" && path.has(o.from)) Object.assign(o, L.goes);
+      result.leaderPlaced = true;
+    }
+  }
+  // ---------- 8. The sweeps: one chain from each staging territory through everywhere they are and could get to ----------
+  const swept = new Set<TerritoryId>();
+  const everywhere = new Set<TerritoryId>();
+  for (const p of plans) {
+    if ((p.ring && p !== main) || !p.stage) continue;
+    if (!p.ring) result.modes.push("sweep");
+    result.staging.push(p.stage);
+    const goes: Goes = p === main && result.leaderPlaced && opt.leader ? opt.leader.goes : {};
+    const visit = visitOf(p);
+    for (const t of visit) everywhere.add(t);
+    visit.delete(p.stage);
+    // What the chain should still have, hop by hop (our best guess: losses on the way, 1 left in each territory).
+    for (const t of chain(p.stage, leftAt(p.stage) - garrison, visit, goes, new Set(p.g), sweep)) swept.add(t);
+  }
+
+  // ---------- 9. More chains (session 20d): wherever the first chains didn't reach, from the spare troops left ----------
+  // Strongest first: from the territory of ours next to what's left that can gather the most (within 3 steps), one
+  // chain through that stretch of their land, the fog and the land their armies could reach.
+  if (opt.more) {
+    let left = [...everywhere].filter((t) => !owned(t) && !swept.has(t) && !targeted.has(t));
+    for (let tries = 0; left.length && tries < 50; tries++) {
+      const options = new Map<TerritoryId, number>();
+      for (const x of left) for (const g of near(x)) if (!options.has(g)) options.set(g, gather(g, Infinity, [], { dry: true, hops: 3 }).got);
+      const best = [...options].filter(([, got]) => got > garrison).sort((a, c) => c[1] - a[1] || (a[0] < c[0] ? -1 : 1))[0];
+      if (!best) break;
+      const [g] = best;
+      // That stretch: what's left joined to it (through what's left).
+      const first = left.filter((x) => near(x).includes(g));
+      const stretch = new Set<TerritoryId>(first);
+      const q = [...first];
+      const rest = new Set(left);
+      for (let h = 0; h < q.length; h++) for (const nb of idx.neighbors.get(q[h]!)!) if (rest.has(nb) && !stretch.has(nb)) (stretch.add(nb), q.push(nb));
+      const got = gather(g, Math.ceil(chainNeed(stretch) * 1.25), side, { hops: 3 });
+      const went = chain(g, Math.min(got.got, leftAt(g) - garrison), new Set(stretch), {}, new Set(), side);
+      // (Whatever it couldn't take this turn waits for next turn.)
+      for (const x of [...went, ...stretch]) swept.add(x);
+      left = left.filter((t) => !swept.has(t) && !targeted.has(t));
+    }
   }
 
   // Into the queue: the early orders first of all, then the masses, the sweeps and the blanket.
   for (const [o, from] of early) army(o, from, true);
-  for (const [o, from] of [...mass, ...sweep, ...blanket]) army(o, from);
+  for (const [o, from] of [...mass, ...sweep, ...side, ...blanket]) army(o, from);
   return result;
 }

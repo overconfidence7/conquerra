@@ -1,6 +1,7 @@
 import type { LeaderPlanning } from "@conquerra/content";
 import { investCost, isRecruitSiteIn, wallRules, type LeaderStyle, type Order, type PlayerId, type StewardCommand, type TerritoryId } from "@conquerra/engine";
 import type { Board } from "../board";
+import { realmShape, type RealmShape } from "./realm";
 
 /**
  * A Steward's spending (session 18): culture, buildings, forts and the economy, from its own purse, with the Marshal's
@@ -20,6 +21,11 @@ import type { Board } from "../board";
  *    barracks where there's nowhere to recruit, and a level of culture a turn where it protects (the capital and choke
  *    points facing an army). Culture bought only for its income doesn't pay back under today's rules (session 18's
  *    sims: it halved a Captain's wins), so "Run the realm" leaves it to "Raise culture here" and "Grow the economy".
+ *  - Run the realm with a plan (session 20d, Nate's third note; your Steward, `planned`): markets and barracks in the
+ *    interior (realm.ts), forts at choke points and on wall candidates (the capital's province, provinces held whole
+ *    that face a rival, the province your Leader stands in), and the wall up fast: several levels of culture in one
+ *    territory in a turn, the fort first. Threatened (a rival army near the capital's province, or a runaway), it puts
+ *    everything into the wall until it stands; otherwise what's left after the markets goes into it.
  *
  * It only ever reads its owner's view (the board), and never builds where something is already going up or another
  * leader of yours is building this turn (`taken`).
@@ -31,6 +37,8 @@ interface Wish {
   territory: TerritoryId;
   cost: number;
   urgent: boolean;
+  /** Session 20d: another level of culture on a place already bought for this turn (a wall going up fast). */
+  stack?: boolean;
 }
 
 export function planSteward(
@@ -47,6 +55,11 @@ export function planSteward(
   style: LeaderStyle | null = null,
   /** Walls (session 20b): finish one where at most this much gold is left (the Marshal's personality; default the Steward's own). */
   wallsNear?: number,
+  /**
+   * Session 20d: Run the realm with a plan (your Steward; the Marshal's realm share keeps session 20b's way), and where
+   * your Leader stands (it walls that province too: the two leaders work together).
+   */
+  extra: { planned?: boolean; leaderAt?: TerritoryId | null } = {},
 ): Order[] {
   const { rules, idx, mine, seen, owned, rivalAt, troopsAt, biggestEnemyNear, holdNeed, chokeHolder, capital, capThreatened, look0, view } = b;
   const building = (t: TerritoryId) => !!seen(t)?.building || !!seen(t)?.construction || taken.has(t);
@@ -57,6 +70,21 @@ export function planSteward(
   const quiet = (t: TerritoryId) => idx.neighbors.get(t)!.every((x) => owned(x) || look0(x) === null);
   const facesRival = (t: TerritoryId, r?: PlayerId) => idx.neighbors.get(t)!.some((x) => (r ? rivalAt(x) === r : !!rivalAt(x)));
   const fort = rules.buildings.fort.cost, market = rules.buildings.market.cost, barracks = rules.buildings.barracks.cost, troop = rules.troops.cost;
+  /** Session 20d: the realm's shape, when it builds with a plan (Run the realm, your Steward). */
+  const plan = extra.planned && command.kind === "realm" && cfg.plan ? cfg.plan : null;
+  const shape: RealmShape | null = plan ? realmShape(b, plan.threat) : null;
+  /** Wall candidates, best first: the capital and its province, the province your Leader stands in (held whole), the rest. */
+  const candidates: TerritoryId[] = [];
+  if (shape) {
+    const lp = extra.leaderAt && owned(extra.leaderAt) ? provinceOf(extra.leaderAt) : null;
+    const withLeader = lp && holdsWhole(lp) ? members(lp) : [];
+    const capProv = capital ? provinceOf(capital) : null;
+    for (const t of [...shape.wallCandidates.filter((t) => capProv && provinceOf(t) === capProv), ...withLeader, ...shape.wallCandidates]) if (owned(t) && !candidates.includes(t)) candidates.push(t);
+  }
+  const candidateSet = new Set(candidates);
+  /** Plots kept for a fort (session 20d): wall candidates and choke points. */
+  const fortPlot = (t: TerritoryId) => !!shape && (candidateSet.has(t) || shape.choke.has(t));
+  const interior = (t: TerritoryId) => shape?.interior.get(t) ?? 0;
 
   // ---------- What could be bought, and what each is worth ----------
   /** A fort matters where a big enough rival army stands next door and the troops there couldn't hold alone. */
@@ -95,11 +123,12 @@ export function planSteward(
   const economy = (land: readonly TerritoryId[]): Wish[] => {
     const out: { w: Wish; pay: number }[] = [];
     for (const t of land) {
-      if (marketsPay && !building(t) && quiet(t) && !keepForFort(t)) out.push({ w: { order: { kind: "build", territory: t, building: "market" }, territory: t, cost: market, urgent: false }, pay: payback(t, "market") });
+      if (marketsPay && !building(t) && quiet(t) && !keepForFort(t) && !fortPlot(t)) out.push({ w: { order: { kind: "build", territory: t, building: "market" }, territory: t, cost: market, urgent: false }, pay: payback(t, "market") });
       const cost = investCost(rules, seen(t)!.culture);
       if (cost !== null) out.push({ w: { order: { kind: "invest", territory: t }, territory: t, cost, urgent: false }, pay: payback(t, "culture") });
     }
-    return out.sort((a, c) => c.pay - a.pay || (a.w.territory < c.w.territory ? -1 : 1)).map((x) => x.w);
+    // (With a plan, session 20d: the deepest land first among what pays the same.)
+    return out.sort((a, c) => c.pay - a.pay || interior(c.w.territory) - interior(a.w.territory) || (a.w.territory < c.w.territory ? -1 : 1)).map((x) => x.w);
   };
   const culture = (land: readonly TerritoryId[]): Wish[] =>
     land
@@ -145,12 +174,43 @@ export function planSteward(
       });
   };
 
+  /**
+   * Session 20d: the whole wall over `land`, best first: for each territory the fort (if it has none: it takes two turns)
+   * and then every level of culture still to buy, one wish a level (several in a turn: `stack`).
+   */
+  const wallPieces = (land: readonly TerritoryId[]): Wish[] => {
+    if (!W) return [];
+    const out: Wish[] = [];
+    for (const t of land) {
+      if (wallLeft(t) === null || walled.has(t)) continue;
+      const v = seen(t)!;
+      if (W.needsFort && v.building !== "fort" && v.construction?.building !== "fort") out.push({ order: { kind: "build", territory: t, building: "fort" }, territory: t, cost: fort, urgent: false });
+      for (let c = v.culture; c < W.culture; c++) out.push({ order: { kind: "invest", territory: t }, territory: t, cost: investCost(rules, c) ?? Infinity, urgent: false, stack: true });
+    }
+    return out;
+  };
+  /** Forts on choke points that face a rival (session 20d): where a wall may be wanted, and the cheapest half of one. */
+  const chokeForts = (): Wish[] =>
+    shape && plan?.chokeForts
+      ? mine
+          .filter((t) => shape.choke.has(t) && facesRival(t) && !building(t) && !candidateSet.has(t))
+          .sort((a, c) => biggestEnemyNear(c) - biggestEnemyNear(a) || (a < c ? -1 : 1))
+          .map((t): Wish => ({ order: { kind: "build", territory: t, building: "fort" }, territory: t, cost: fort, urgent: false }))
+      : [];
+
   const sites = mine.filter((t) => isRecruitSiteIn(b.ctx, view, t));
   /** A barracks where land facing rivals is more than a step from anywhere to recruit (or there's nowhere at all). */
   const barracksFor = (land: readonly TerritoryId[]): Wish[] => {
     if (mine.some((t) => seen(t)!.construction?.building === "barracks")) return [];
     const near = (t: TerritoryId) => sites.some((s) => s === t || idx.neighbors.get(t)!.includes(s));
-    const spot = land.filter((t) => !building(t) && facesRival(t) && (!sites.length || !near(t))).sort((a, c) => biggestEnemyNear(c) - biggestEnemyNear(a) || (a < c ? -1 : 1))[0];
+    let spot = land.filter((t) => !building(t) && facesRival(t) && (!sites.length || !near(t))).sort((a, c) => biggestEnemyNear(c) - biggestEnemyNear(a) || (a < c ? -1 : 1))[0];
+    // With a plan (session 20d): a step or two back from that front, as deep inside as it can, off the fort plots.
+    if (spot && shape) {
+      const d = new Map<TerritoryId, number>([[spot, 0]]);
+      const q = [spot];
+      for (let h = 0; h < q.length; h++) if (d.get(q[h]!)! < 2) for (const nb of idx.neighbors.get(q[h]!)!) if (owned(nb) && !d.has(nb)) (d.set(nb, d.get(q[h]!)! + 1), q.push(nb));
+      spot = [...d.keys()].filter((t) => !building(t) && !fortPlot(t)).sort((a, c) => interior(c) - interior(a) || d.get(a)! - d.get(c)! || (a < c ? -1 : 1))[0] ?? spot;
+    }
     return spot ? [{ order: { kind: "build", territory: spot, building: "barracks" }, territory: spot, cost: barracks, urgent: !sites.length }] : [];
   };
 
@@ -183,7 +243,24 @@ export function planSteward(
       const urgent = forts(mine).filter((w) => w.territory === capital || chokeHolder(w.territory) || w.urgent || asked.has(w.territory));
       // What pays (Part 2's sims): markets before culture bought for income, which doesn't pay back yet; culture only
       // where it protects (the capital and choke points facing an army), a level a turn.
-      wishes = turtle
+      // With a plan (session 20d): threatened, everything into the wall (after a threatened capital's fort); otherwise
+      // markets (deep inside), then the wall with what's left, then forts at choke points, then the rest.
+      const rush = shape?.threatened ? wallPieces(candidates) : [];
+      const steady = shape && !shape.threatened ? wallPieces(candidates) : [];
+      wishes = shape
+        ? [
+            ...urgent.filter((w) => w.territory === capital && !candidateSet.has(capital)),
+            ...rush,
+            ...urgent.filter((w) => !candidateSet.has(w.territory) || !shape.threatened),
+            ...(turtle ? steady : []),
+            ...economy(mine).filter((w) => w.order.kind === "build").slice(0, merchant?.markets ?? Infinity),
+            ...steady,
+            ...chokeForts(),
+            ...barracksFor(mine),
+            ...(turtle ? culture(mine).filter((w) => holdCulture(w.territory)).slice(0, turtle.culture) : culture(mine).filter((w) => (w.territory === capital || chokeHolder(w.territory)) && holdCulture(w.territory)).slice(0, 1)),
+            ...economy(mine).filter((w) => w.order.kind === "invest" && payback(w.territory, "culture") >= (merchant?.culturePays ?? cfg.culturePays)),
+          ]
+        : turtle
         ? [
             // The Turtle (session 20c): forts wherever an army stands next door, and culture where it protects, first.
             ...forts(mine),
@@ -222,18 +299,27 @@ export function planSteward(
   const orders: Order[] = [];
   let gold = purse;
   const bought = new Set<string>();
+  /** Levels of culture bought this turn, by place (session 20d: a wall's culture can rise several levels in a turn). */
+  const raised = new Map<TerritoryId, number>();
+  const builtHere = new Set<TerritoryId>();
   for (const w of wishes) {
-    // One thing per place a turn (culture rises one level at a time; a building needs an empty plot).
+    // One thing per place a turn (culture one level, or a building on an empty plot), except a wall going up with a
+    // plan (session 20d): its fort and as many levels of culture as the purse holds, each at its own price.
     const key = w.territory;
-    if (bought.has(key) || (w.order.kind === "build" && building(w.territory))) continue;
-    if (w.cost > gold) {
+    const stacking = !!w.stack;
+    if (w.order.kind === "build" ? building(w.territory) || builtHere.has(key) || (!plan && bought.has(key)) : stacking ? false : bought.has(key)) continue;
+    const level = (seen(w.territory)?.culture ?? 0) + (raised.get(key) ?? 0);
+    const cost = w.order.kind === "invest" && stacking ? investCost(rules, level) : w.cost;
+    if (cost === null || (w.order.kind === "invest" && !stacking && (raised.get(key) ?? 0) > 0)) continue;
+    if (cost > gold) {
       if (w.urgent) break;
       continue;
     }
     orders.push({ ...w.order, id: newId() } as Order);
-    gold -= w.cost;
+    gold -= cost;
     bought.add(key);
-    if (w.order.kind === "build") taken.add(w.territory);
+    if (w.order.kind === "invest") raised.set(key, (raised.get(key) ?? 0) + 1);
+    if (w.order.kind === "build") (taken.add(w.territory), builtHere.add(key));
   }
   // Garrisons (Fortify): troops recruited where the border is short, at the nearest recruit site (through our own
   // land), marched in (or a step on their way).

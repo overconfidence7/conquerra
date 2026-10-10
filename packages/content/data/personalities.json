@@ -40,7 +40,8 @@
       "opening": 0.5
     },
     "finish": { "margin": 1.5, "hops": 12, "sites": 6 },
-    "sweep": { "reach": 8, "blanket": 3, "ringUpTo": 3 },
+    "sweep": { "reach": 8, "blanket": 3, "ringUpTo": 3, "fog": 2, "more": true },
+    "wallGarrison": 4,
     "pause": { "back": 1 },
     "homeSweep": { "troops": 3, "first": false },
     "leaderGoes": true,
@@ -463,7 +464,8 @@
       "exposedWorth": 0.5,
       "culturePays": 0.3,
       "walls": { "near": 18, "each": 1 },
-      "styles": { "turtle": { "fortThreat": 3, "culture": 2, "walls": 39 }, "merchant": { "culturePays": 0.3, "walls": 18 } }
+      "styles": { "turtle": { "fortThreat": 3, "culture": 2, "walls": 39 }, "merchant": { "culturePays": 0.3, "walls": 18 } },
+      "plan": { "threat": 4, "chokeForts": true }
     }
   }
 }

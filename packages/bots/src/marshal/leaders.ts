@@ -62,6 +62,8 @@ export interface LeadersRequest {
   only?: readonly string[];
   /** Session 20b's sims: Stewards finish walls with at most this much gold left (default: their own judgement). */
   walls?: number;
+  /** Session 20d's sims: false plays the Steward without its plan (as session 20b). */
+  planned?: boolean;
 }
 
 export interface LeadersPlan {
@@ -262,7 +264,9 @@ export function planLeaders(req: LeadersRequest): LeadersPlan {
     // does one on Clean up that has joined the team (session 20c): its senior's orders spend its purse.
     if (command!.kind === "report" || pooled.has(key)) mine = [];
     else if (l.kind === "steward") {
-      if (!isMilitaryCommand(command!)) mine = own(planSteward(b, marshalData.leaders.steward, command as StewardCommand, purseOf(l), () => `${prefix}x${n++}`, taken, ctx.rules.game.maxTurnsHard, asked, l.personality ?? null, req.walls));
+      // (Session 20d: it builds with a plan, and walls the province your Leader stands in too.)
+      if (!isMilitaryCommand(command!))
+        mine = own(planSteward(b, marshalData.leaders.steward, command as StewardCommand, purseOf(l), () => `${prefix}x${n++}`, taken, ctx.rules.game.maxTurnsHard, asked, l.personality ?? null, req.walls, { planned: req.planned ?? true, leaderAt: leaderAt(view.me, { kind: "leader", of: view.me.id }) }));
     } else if (isMilitaryCommand(command!)) {
       const juniors = commandsOf(view, req.commands).filter((x) => x.l.kind === "leader" && x.command?.kind === "report" && x.command.to === l.of).map((x) => x.l);
       const team0 = team && team.senior === l ? team.pooled : [];

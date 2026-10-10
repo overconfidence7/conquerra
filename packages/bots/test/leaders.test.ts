@@ -151,11 +151,13 @@ describe("Hold, Defend, Push and Raid recruit from the purse", () => {
 describe("Stewards", () => {
   it("Run the realm: a fort where an army masses on the capital first, saving up for it rather than buying lesser things", () => {
     const { ctx, s } = grid(4, 2, { a0: ["p1", 4], a1: ["p1", 3], b0: ["p2", 12], d1: ["p2", 5] }, ["a0", "d1"]);
+    // (Session 18's way, without session 20d's plan: steward20d.test.ts has the plan, which walls the capital instead.)
+    const old = () => planLeaders({ ctx, view: viewFor(ctx, s, "p1"), planned: false });
     lead(s, "steward", { kind: "realm" }, 6);
-    const short = plan(ctx, s);
+    const short = old();
     expect(short.orders).toEqual([]);
     lead(s, "steward", { kind: "realm" }, 11);
-    const p = plan(ctx, s);
+    const p = old();
     expect(p.orders[0]).toMatchObject({ kind: "build", territory: "a0", building: "fort", steward: "p1" });
   });
 

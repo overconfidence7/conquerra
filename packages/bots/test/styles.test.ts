@@ -14,7 +14,8 @@ describe("Steward personalities on Run the realm (session 20c)", () => {
     s.turn = 5;
     const st = findLeader(s.players[0]!, { kind: "steward", of: "p1" })!;
     (st.command = { kind: "realm" }), (st.purse = purse), (st.personality = style);
-    return planLeaders({ ctx, view: viewFor(ctx, s, "p1") }).orders.filter((o) => o.steward === "p1");
+    // (Session 20b/20c's way, without session 20d's plan: steward20d.test.ts has the plan.)
+    return planLeaders({ ctx, view: viewFor(ctx, s, "p1"), planned: false }).orders.filter((o) => o.steward === "p1");
   };
   const first = (os: Order[]) => os.map((o) => (o.kind === "build" ? `${o.building}@${o.territory}` : o.kind === "invest" ? `culture@${o.territory}` : o.kind))[0];
 

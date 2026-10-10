@@ -18,7 +18,8 @@ describe("the Steward finishes walls where the land is worth holding (session 20
     extra(s);
     const st = findLeader(s.players[0]!, { kind: "steward", of: "p1" })!;
     (st.command = { kind: "realm" }), (st.purse = 30);
-    return planLeaders({ ctx, view: viewFor(ctx, s, "p1") }).orders.filter((o) => o.steward === "p1");
+    // (Session 20b/20c's way, without session 20d's plan: steward20d.test.ts has the plan.)
+    return planLeaders({ ctx, view: viewFor(ctx, s, "p1"), planned: false }).orders.filter((o) => o.steward === "p1");
   };
   const words = (os: Order[]) => os.map((o) => (o.kind === "build" ? `${o.building}@${o.territory}` : o.kind === "invest" ? `culture@${o.territory}` : o.kind));
   const nearly = (s: GameState, t: string) => Object.assign(s.territories[t]!, { culture: 4, building: "fort" });

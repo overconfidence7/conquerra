@@ -402,7 +402,8 @@ function planMoves(
     // A leader with nowhere of its own to recruit puts a barracks at its hottest front, if the purse allows and troops are left after.
     const own = recruitSites.some((t) => steer.commands(t));
     const spot = frontier.filter((t) => steer.commands(t) && !building(t)).sort((a, c) => frontRank(c) - frontRank(a) || (a < c ? -1 : 1))[0];
-    if (!own && !barracksBuilding && spot && gold >= rules.buildings.barracks.cost + troopCost * 4) {
+    // (With nowhere at all to recruit, session 20d, it builds one as soon as it can pay for it: the gold couldn't buy troops anyway.)
+    if (!own && !barracksBuilding && spot && gold >= rules.buildings.barracks.cost + (recruitSites.length ? troopCost * 4 : 0)) {
       spend({ id: id(), kind: "build", territory: spot, building: "barracks" });
       gold -= rules.buildings.barracks.cost;
       if (!recruitSites.length) saving.v = { gold, for: "barracks", at: spot };
@@ -553,7 +554,14 @@ function planMoves(
     const crowded = G.crowded === undefined || ctx.map.territories.length / view.players.length <= G.crowded;
     if (crowded && view.turn <= G.turns) capGuard = Math.max(capGuard, Math.ceil((troopsAt(capital) + (recruitedAt.get(capital) ?? 0)) * G.opening));
   }
-  const keep = (t: TerritoryId) => Math.max(keep0(t), t === capital ? capGuard : 0);
+  // A real garrison inside our walls (session 20d, Nate: the wall lends spare troops, so a garrisoned wall is the point):
+  // a leader keeps `wallGarrison` in each walled territory of a wall that faces a rival (not while it cleans up).
+  const wallKeep = steer && J.wallGarrison && !cleaningUp ? J.wallGarrison : 0;
+  const garrisoned = new Set<TerritoryId>();
+  if (wallKeep > 0)
+    for (const w of view.walls ?? [])
+      if (w.owner === me.id && w.territories.some((t) => idx.neighbors.get(t)!.some((x) => !!rivalAt(x)))) for (const t of w.territories) if (owned(t) && (!steer || steer.commands(t))) garrisoned.add(t);
+  const keep = (t: TerritoryId) => Math.max(keep0(t), t === capital ? capGuard : 0, garrisoned.has(t) ? wallKeep : 0);
   const keep0 = (t: TerritoryId) => {
     if (t === capital && capThreatened) return holdNeed(t);
     // A careful command keeps honest garrisons where it's contested (it takes and holds, not a thin line).
@@ -582,6 +590,9 @@ function planMoves(
       reach: J.sweep.reach,
       blanket: J.sweep.blanket,
       ringUpTo: J.sweep.ringUpTo,
+      ...(J.sweep.fog ? { fog: J.sweep.fog } : {}),
+      ...(J.sweep.more ? { more: true } : {}),
+      ...(J.sweep.massCap ? { massCap: J.sweep.massCap } : {}),
       ...(steer ? { commands: (t: TerritoryId) => steer.commands(t) || recruitedAt.has(t) } : {}),
       initiative: timing,
       recruited: recruitedAt,
@@ -749,6 +760,8 @@ function planMoves(
     else want(t, enemyPressure(t) > 0 ? 5 + enemyPressure(t) / 20 : 1);
   }
   for (const [t, v] of staging) want(t, 40 + v);
+  // Walled land short of its garrison draws troops (session 20d).
+  for (const t of garrisoned) if (troopsAt(t) + (recruitedAt.get(t) ?? 0) < wallKeep) want(t, 20);
   // Anticipate and counter (session 20): where a rival army will likely strike next and we didn't strike it first,
   // troops go there (and it asks for a fort).
   if (J.counter)

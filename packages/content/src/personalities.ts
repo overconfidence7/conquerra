@@ -234,7 +234,28 @@ export const MarshalJudgement = z.object({
    * `blanket` troops into each territory of ours they could reach, queued last, to take back anything they take. A
    * remnant of at most `ringUpTo` territories that it can strike everywhere at once gets session 20's ring instead.
    */
-  sweep: z.object({ reach: z.number().int().min(1), blanket: z.number().int().min(0), ringUpTo: z.number().int().min(0) }).optional(),
+  /**
+   * Session 20d (Nate's third note): a military leader keeps this many troops in each walled territory of ours that
+   * faces a rival (the wall lends all but 1 of them to any attack on it), and marches troops in where it's short.
+   * Missing: 1, as before.
+   */
+  wallGarrison: z.number().int().min(1).optional(),
+  sweep: z
+    .object({
+      reach: z.number().int().min(1),
+      blanket: z.number().int().min(0),
+      ringUpTo: z.number().int().min(0),
+      /**
+       * Session 20d (Nate's third note: the sweep covers the fog): land in the fog within `fog` steps of the remnant's
+       * (through fog that was empty, theirs or never seen when last looked at) might be theirs now, and is swept too.
+       */
+      fog: z.number().int().min(0).optional(),
+      /** Session 20d: what the first chains don't reach is swept by more chains, from the spare troops left (off: as 20c). */
+      more: z.boolean().optional(),
+      /** Session 20d: the main mass takes at most this many times what its chain should need (the rest stays for the other chains; absent: everything). */
+      massCap: z.number().min(1).optional(),
+    })
+    .optional(),
   /** Session 20: every Marshal builds like the Steward (each personality's `build.realm` share). Off: as before. */
   realm: z.boolean().optional(),
   /** ...on a crowded table too (at most `rules.leaders.crowdedTerritories` a player), where buildings pay back slowly. */
@@ -307,6 +328,15 @@ export const LeaderPlanning = z.object({
         merchant: z.object({ culturePays: z.number().min(0), /** Session 20b: walls, after its markets. */ walls: z.number().min(0).default(18), /** Session 20b: at most this many markets a turn (missing: as many as it can). */ markets: z.number().int().min(0).optional() }),
       })
       .default({ turtle: { fortThreat: 3, culture: 2, walls: 39 }, merchant: { culturePays: 0.3, walls: 18 } }),
+    /**
+     * Session 20d (Nate's third note): Run the realm builds with a plan. Markets and barracks go to the interior (most
+     * steps from any border), forts to choke points and wall candidates (the capital's province, and provinces held
+     * whole that border a rival), and the wall goes up fast: several culture levels in one territory in a turn. When
+     * the realm is threatened (a rival army of at least `threat` troops within 2 steps of the capital's province, or a
+     * runaway on the map) everything goes into the wall until it stands; otherwise what's left after markets does, a
+     * few turns at a time. Missing: as session 20b.
+     */
+    plan: z.object({ threat: z.number().int().min(1), /** Forts on choke points facing a rival, after markets (not urgent ones). */ chokeForts: z.boolean() }).optional(),
   }),
 });
 export type LeaderPlanning = z.infer<typeof LeaderPlanning>;
