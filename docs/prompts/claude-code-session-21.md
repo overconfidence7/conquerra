@@ -2,6 +2,8 @@
 
 **Run this session locally, in Claude Code on Nate's Windows computer, in the project folder** (`C:\Users\nkurt\Claude\Projects\Strategy Game`). It imports art from `art/incoming/` (which exists only there), needs his browser (screenshots, a GIF, the frame rate) and deploys. **Don't run the Gemini art chat alongside this session** (it reads and writes `art/incoming/`).
 
+**You run every command yourself, including the art import (`pnpm art:import`, in Part 1); Nate doesn't need to run anything.** The import comes right after the importer learns the black-background effects art (Part 1, item 1), so the smoke, flame and dust pieces come out with soft edges instead of black boxes.
+
 You are the lead developer on **Conquerra**, a fantasy, military-first strategy game. Players set queued orders in a 5-minute window, then everyone watches a shared replay of what they can see. The owner is Nate, who directs the project but isn't a full-time developer. Explain choices in plain language and keep setup steps copy-paste simple.
 
 **This session is the polish pass.** Nate (Oct 6): "I want this game to look like a large development team with a good budget made it, so visuals are important. Special effects would be a fun add too for the playback portion of the game." The plan is `docs/09-polish-and-effects-plan.md`; this prompt turns it into parts. Art batch 4 (42 pieces: all the effects, the key art, the specialists and spies, the redo pieces) has been waiting in `art/incoming/` since Oct 7.
@@ -31,9 +33,10 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
    - on every load, also compare the running build (`__BUILD__`) with a small `version.json` fetched with `cache: "no-store"` and credentials; if it differs and no update is waiting after a few seconds, show "A new version is ready: reload";
    - make sure the version is visible on the lobby's first screen (it's in Settings and, per `build.d.ts`, the lobby: check it is where a player sees it without opening anything).
    - Test it: deploy, open the preview in a browser that has an old service worker (the orchestrator will check from the browser pane), and say in the summary what you saw.
-3. **Three nits** from the orchestrator's checks: the exact-amount budget box keeps showing the typed number (99) after it's capped (show the capped value); the lobby's Autosave says "Nothing yet" right after a finished game (say "Last game finished", or keep the last autosave until a new game starts); the path box's "Shortest way / Full sweep" buttons have no accessible names (give them names).
-4. **The Spoils card's text overlaps its "1 mission" line** in the Leaders panel (`docs/art/screens/s20d-leaders.png`): fix the layout at both widths.
-5. **Commit and push.** (Run the full `pnpm test` before this and every push: session 20d pushed two red commits because a pinned test was only re-pinned later.)
+3. **Check that art batch 4 is there** before changing any code: compare `art/incoming/` with the file names in `docs/art/batch-4-report.md` (42 pieces) and say in one line what's present and anything missing. Don't import yet (Part 1 does it once the importer handles the black-background pieces).
+4. **Three nits** from the orchestrator's checks: the exact-amount budget box keeps showing the typed number (99) after it's capped (show the capped value); the lobby's Autosave says "Nothing yet" right after a finished game (say "Last game finished", or keep the last autosave until a new game starts); the path box's "Shortest way / Full sweep" buttons have no accessible names (give them names).
+5. **The Spoils card's text overlaps its "1 mission" line** in the Leaders panel (`docs/art/screens/s20d-leaders.png`): fix the layout at both widths.
+6. **Commit and push.** (Run the full `pnpm test` before this and every push: session 20d pushed two red commits because a pinned test was only re-pinned later.)
 
 ## Guardrails (all parts)
 - **The hard rules in `CLAUDE.md`.** Effects live in the web app only; the engine doesn't change.
