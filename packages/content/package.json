@@ -12,6 +12,7 @@
     ".": "./src/index.ts",
     "./maps": "./src/maps.ts",
     "./loadMap": "./src/loadMap.ts",
+    "./lines": "./src/lines.ts",
     "./data/maps/*": "./data/maps/*"
   }
 }

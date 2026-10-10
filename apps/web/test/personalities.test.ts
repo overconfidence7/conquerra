@@ -49,9 +49,13 @@ describe("leaders with personalities (session 20c)", () => {
     const view: PlayerView = g.update().view;
     const n = namer(g.ctx, view);
     const rival = view.players.find((p) => p.id !== view.me.id)!.id;
-    const said = leaderSays(n, view.me.id, ["Ashfell", "Pinemark"], rival);
-    expect(said).toMatch(/^Aldric, the Conqueror: “Took Ashfell and Pinemark; .+'s lot ran\.”$/);
+    // (Which version it says depends on the turn: every one names the land.)
+    for (let turn = 1; turn <= 12; turn++) {
+      const said = leaderSays(n, view.me.id, ["Ashfell", "Pinemark"], rival, turn);
+      expect(said).toMatch(/^Aldric, the Conqueror: “.*Ashfell and Pinemark.*”$/);
+      expect(said).toBe(leaderSays(n, view.me.id, ["Ashfell", "Pinemark"], rival, turn));
+    }
     const neutral = { ...view, me: { ...view.me, leaders: view.me.leaders.map((l) => ({ ...l, personality: null })) } };
-    expect(leaderSays(namer(g.ctx, neutral), view.me.id, ["Ashfell"], rival)).toBeNull();
+    expect(leaderSays(namer(g.ctx, neutral), view.me.id, ["Ashfell"], rival, 3)).toBeNull();
   });
 });

@@ -53,13 +53,13 @@ describe("bots' diplomacy: answers with one plain reason", () => {
     const sc = scenario({ line: "abcd", layout: { a: ["p1", 20], b: ["p1", 20], c: ["p2", 3], d: ["p2", 3] }, caps: ["a", "d"], gold: 20 });
     const a = judgeOffer(sc.ctx, viewFor(sc.ctx, sc.s, "p1"), offer("p2", "p1", truce()), "captain");
     expect(a.accept).toBe(false);
-    expect(["You're my target now; I'm not stopping.", "I'm holding our border well enough without a truce."]).toContain(a.reason);
+    expect(["You're my target now. I'm not stopping.", "I'm holding our border well enough without a truce."]).toContain(a.reason);
   });
 
   it("a truce when the proposer's army is at its capital's door: yes", () => {
     const sc = scenario({ line: "abcd", layout: { a: ["p1", 3], b: ["p2", 30], c: ["p2", 4], d: ["p2", 4] }, caps: ["a", "d"], gold: 20 });
     const a = judgeOffer(sc.ctx, viewFor(sc.ctx, sc.s, "p1"), offer("p2", "p1", truce()), "captain");
-    expect(a).toEqual({ accept: true, reason: "Your army is at my capital's door; I'll take peace." });
+    expect(a).toEqual({ accept: true, reason: "Your army is at my capital's door. I'll take peace." });
   });
 
   it("a fair gold trade: yes; a stingy one: a counter asking for more; a bad one: no", () => {
@@ -67,13 +67,13 @@ describe("bots' diplomacy: answers with one plain reason", () => {
     const v = viewFor(sc.ctx, sc.s, "p1");
     const fair = judgeOffer(sc.ctx, v, offer("p2", "p1", { kind: "trade", give: { gold: 10 }, get: { perTurn: 2 }, turns: 4 }), "captain");
     expect(fair.accept).toBe(true);
-    expect(fair.reason).toMatch(/a fair price\.$/);
+    expect(fair.reason).toMatch(/A fair price\.$/);
     const stingy = judgeOffer(sc.ctx, v, offer("p2", "p1", { kind: "trade", give: { gold: 4 }, get: { gold: 8 } }), "captain");
     expect(stingy.accept).toBe(false);
     expect(stingy.counter?.terms).toEqual({ kind: "trade", give: { gold: 9 }, get: { gold: 8 } });
     expect(stingy.reason).toBe("Make it 9 gold and it's a deal.");
     const bad = judgeOffer(sc.ctx, v, offer("p2", "p1", { kind: "trade", give: {}, get: { gold: 18 } }), "captain");
-    expect(bad).toMatchObject({ accept: false, reason: "I'd give 18 gold for too little: not enough." });
+    expect(bad).toMatchObject({ accept: false, reason: "I'd give 18 gold for too little. Not enough." });
   });
 
   it("a counteroffer: a truce that ties its hands too long comes back shorter (and a counter is never countered)", () => {
@@ -123,7 +123,7 @@ describe("bots' diplomacy: never helping a runaway leader", () => {
     const v = viewFor(sc.ctx, sc.s, "p1");
     for (const terms of [truce(), { kind: "passage", turns: 3, mutual: false }, { kind: "trade", give: { gold: 30 }, get: { gold: 1 } }, { kind: "war", target: "p3", turns: 4 }] as DealTerms[])
       expect(judgeOffer(sc.ctx, v, offer("p2", "p1", terms), "captain")).toEqual({ accept: false, reason: `You're running away with the map. ${terms.kind === "passage" ? "I won't let you through." : "I won't help you grow."}` });
-    expect(judgeOffer(sc.ctx, v, offer("p3", "p1", { kind: "war", target: "p2", turns: 4 }), "captain")).toEqual({ accept: true, reason: "Gladly: P2 is running away with the map." });
+    expect(judgeOffer(sc.ctx, v, offer("p3", "p1", { kind: "war", target: "p2", turns: 4 }), "captain")).toEqual({ accept: true, reason: "Gladly. P2 is running away with the map." });
     // The Recruit too.
     expect(judgeOffer(sc.ctx, v, offer("p2", "p1", truce()), "recruit").accept).toBe(false);
   });
@@ -146,7 +146,7 @@ describe("bots' diplomacy: trust", () => {
     rec("kept");
     expect(t().score).toBe(r.trustStart + r.trustKept);
     sc.s.record.push({ deal: "w", kind: "war", bond: "handshake", a: "p1", b: "p2", start: 1, end: 3, how: "kept", idle: ["p2"] });
-    expect(t()).toEqual({ score: r.trustStart + r.trustKept - r.trustWarIdle, why: "Our last joint war fell through: you never struck our target." });
+    expect(t()).toEqual({ score: r.trustStart + r.trustKept - r.trustWarIdle, why: "Our last joint war fell through. You never struck our target." });
     rec("broken", { by: "p2", at: "c" });
     expect(t()).toEqual({ score: r.trustStart + r.trustKept - r.trustWarIdle - r.trustBroken, why: "You broke our truce at C." });
     // A public mark lowers everyone's trust, even a bot it never wronged.
@@ -172,9 +172,9 @@ describe("bots' diplomacy: trust", () => {
 describe("bots' diplomacy: the Recruit's simpler rules", () => {
   it("takes a truce when it's weaker, refuses when it's stronger, and never proposes trades", () => {
     const weak = scenario({ line: "abcdef", layout: { a: ["p1", 3], b: ["p2", 3], c: ["p2", 3], d: ["p2", 3], e: ["p2", 3], f: ["p2", 3] }, memory: { c: ["p2", 3], d: ["p2", 3], e: ["p2", 3], f: ["p2", 3] }, caps: ["a", "f"], gold: 20 });
-    expect(judgeOffer(weak.ctx, viewFor(weak.ctx, weak.s, "p1"), offer("p2", "p1", truce()), "recruit")).toEqual({ accept: true, reason: "You're stronger than me; peace suits me." });
+    expect(judgeOffer(weak.ctx, viewFor(weak.ctx, weak.s, "p1"), offer("p2", "p1", truce()), "recruit")).toEqual({ accept: true, reason: "You're stronger than me. Peace suits me." });
     const strong = scenario({ line: "abcdef", layout: { a: ["p1", 3], b: ["p1", 3], c: ["p1", 3], d: ["p1", 3], e: ["p1", 3], f: ["p2", 3] }, caps: ["a", "f"], gold: 20 });
-    expect(judgeOffer(strong.ctx, viewFor(strong.ctx, strong.s, "p1"), offer("p2", "p1", truce()), "recruit")).toEqual({ accept: false, reason: "I'm stronger than you; I'll take my chances." });
+    expect(judgeOffer(strong.ctx, viewFor(strong.ctx, strong.s, "p1"), offer("p2", "p1", truce()), "recruit")).toEqual({ accept: false, reason: "I'm stronger than you. I'll take my chances." });
     weak.s.turn = 5;
     const props = proposeOffers(weak.ctx, viewFor(weak.ctx, weak.s, "p1"), "recruit");
     expect(props.map((o) => o.terms.kind)).toEqual(["truce"]);
@@ -275,7 +275,7 @@ describe("bots' diplomacy: keeping their word", () => {
     sc.s.deals[0]!.size = 4;
     const v = viewFor(sc.ctx, sc.s, "p1");
     const br = captainBreaks(sc.ctx, v);
-    expect(br).toEqual([{ id: expect.any(String), kind: "break", deal: "d1", note: "Your capital at C is mine for the taking; our truce isn't worth more than that." }]);
+    expect(br).toEqual([{ id: expect.any(String), kind: "break", deal: "d1", note: "Your capital at C is mine for the taking. Our truce isn't worth more than that." }]);
     // The orders: the break first, then the attack it was worth it for.
     const orders = sc.plan();
     expect(orders[0]!.kind).toBe("break");

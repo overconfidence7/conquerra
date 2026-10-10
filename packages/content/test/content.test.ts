@@ -6,12 +6,9 @@ describe("content", () => {
   it("rules parse", () => {
     expect(defaultRules.combat.luck).toBe(0.3);
   });
-  it("the Marshal's six personalities parse, each with its own voice (session 17)", () => {
+  it("the Marshal's six personalities parse (session 17; their voices are in the line library since session 22)", () => {
     expect(marshalData.personalities.map((p) => p.id)).toEqual(["conqueror", "blitzer", "turtle", "schemer", "opportunist", "merchant"]);
-    for (const p of marshalData.personalities) {
-      expect(p.title).toMatch(/^the [A-Z]/);
-      for (const line of Object.values(p.voice)) expect(line.length).toBeGreaterThan(5);
-    }
+    for (const p of marshalData.personalities) expect(p.title).toMatch(/^the [A-Z]/);
   });
   it("every map lists the player counts it suits (about 6–7 territories each at the top end)", () => {
     for (const m of Object.values(maps)) {

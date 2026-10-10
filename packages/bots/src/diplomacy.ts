@@ -27,6 +27,7 @@ import {
   type TerritoryId,
 } from "@conquerra/engine";
 import { CAPTAIN_CHAIN_MARGIN, readBoard, type Board } from "./board";
+import { say, speakerOf, type Speaker } from "./say";
 
 /**
  * The bots' diplomacy (session 14, design additions §2). Nate's requirement: strong, explainable logic behind every
@@ -115,7 +116,7 @@ export function direction(ctx: GameContext, mine: readonly TerritoryId[], land: 
  * Oathbreaker mark. `why`: the line it gives when trust is what decides ("You broke our truce at Old March").
  * The record is part of the game state, so trust is part of the saved game.
  */
-export function trustIn(ctx: GameContext, view: PlayerView, p: PlayerId): { score: number; why: string | null } {
+export function trustIn(ctx: GameContext, view: PlayerView, p: PlayerId, sp: Speaker = speakerOf(view)): { score: number; why: string | null } {
   const r = ctx.rules.diplomacy.bots;
   const me = view.me.id;
   const n = namesFor(ctx, view);
@@ -126,11 +127,11 @@ export function trustIn(ctx: GameContext, view: PlayerView, p: PlayerId): { scor
     const withMe = isParty(x, me);
     if (x.how === "broken" && x.by === p && withMe) {
       score -= r.trustBroken;
-      why = `You broke our ${DEAL_NAME[x.kind]}${x.at ? ` at ${n.place(x.at)}` : ""}.`;
+      why = x.at ? say(sp, "brokeOurAt", { deal: DEAL_NAME[x.kind], place: n.place(x.at) }, p) : say(sp, "brokeOur", { deal: DEAL_NAME[x.kind] }, p);
     } else if (withMe && x.how === "kept") {
       if (x.idle?.includes(p)) {
         score -= r.trustWarIdle;
-        why ??= "Our last joint war fell through: you never struck our target.";
+        why ??= say(sp, "warFellThrough", {}, p);
       } else score += r.trustKept;
     }
   }
@@ -138,7 +139,7 @@ export function trustIn(ctx: GameContext, view: PlayerView, p: PlayerId): { scor
   if (mark >= view.turn) {
     score -= r.trustOathbreaker;
     const last = [...view.record].reverse().find((x) => x.how === "broken" && x.by === p);
-    why ??= last ? `You broke your word to ${n.name(otherSide(last, p))}; you're an Oathbreaker.` : "You're an Oathbreaker.";
+    why ??= last ? say(sp, "oathbreakerTo", { rival: n.name(otherSide(last, p)) }, p) : say(sp, "oathbreaker", {}, p);
   }
   return { score: Math.max(0, Math.min(100, score)), why };
 }
@@ -209,32 +210,34 @@ export function judgeOffer(ctx: GameContext, view: PlayerView, offer: Offer, lev
   const t = offer.terms;
   const rules = ctx.rules;
   const no = (reason: string): Answer => ({ accept: false, reason });
-  if (offer.to !== me || p === me) return no("That offer isn't for me.");
-  if (termsProblem(rules, t)) return no("Those terms don't fit the rules.");
-  if (view.deals.some((d) => between(d, me, p) && d.kind === t.kind)) return no(`We already have a ${DEAL_NAME[t.kind]}.`);
+  // The Captain and the Recruit speak plainly. (`x`: tells apart two answers of the same kind in one turn.)
+  const sp = speakerOf(view);
+  const x = offer.id;
+  if (offer.to !== me || p === me) return no(say(sp, "notForMe", {}, x));
+  if (termsProblem(rules, t)) return no(say(sp, "badTerms", {}, x));
+  if (view.deals.some((d) => between(d, me, p) && d.kind === t.kind)) return no(say(sp, "alreadyHave", { deal: DEAL_NAME[t.kind] }, x));
   const b = readBoard(ctx, view, OPTS, lastTurn);
-  if (!b) return no("I have nothing left to bargain with.");
+  if (!b) return no(say(sp, "nothingLeft", {}, x));
   const n = namesFor(ctx, view);
   const idx = indexMap(ctx.map);
   const owner = dealBoard(view).owner;
   const cost = offer.bond === "binding" ? bindingCost(rules, dealSize(rules, idx, t, p, me, owner)) : 0;
   const myGold = view.me.gold - (t.kind === "trade" ? (t.get.gold ?? 0) : 0);
-  if (cost > 0 && cost > myGold) return no(`I can't spare ${cost} gold for a binding pact.`);
+  if (cost > 0 && cost > myGold) return no(say(sp, "cantSpare", { n: cost }, x));
   // Never help a runaway leader; always open to a joint war against one.
-  const grow = t.kind === "passage" ? "I won't let you through." : "I won't help you grow.";
-  if (b.runaway === p && helpsProposer(t)) return no(`You're running away with the map. ${grow}`);
+  if (b.runaway === p && helpsProposer(t)) return no(say(sp, t.kind === "passage" ? "runawayPass" : "runawayGrow", {}, x));
   // Deals are a softer test than attacks: under fog a runaway may not look like one yet, so the clear leader (as far
   // as it can tell) doesn't get help either.
-  if (helpsProposer(t) && t.kind !== "war" && leads(b, p)) return no(`You're the strongest of us. ${grow}`);
+  if (helpsProposer(t) && t.kind !== "war" && leads(b, p)) return no(say(sp, t.kind === "passage" ? "strongestPass" : "strongestGrow", {}, x));
   // Right of passage (session 15): never for someone attacking a partner of ours.
   if (t.kind === "passage") {
     const ally = attackingPartner(view, p, lastTurn);
-    if (ally) return no(`You're at war with ${n.name(ally)}, who has a deal with me. I won't let you through.`);
+    if (ally) return no(say(sp, "atWarWithPartner", { rival: n.name(ally) }, x));
   }
-  const trust = trustIn(ctx, view, p);
+  const trust = trustIn(ctx, view, p, sp);
   const r = rules.diplomacy.bots;
 
-  const verdict = level === "recruit" ? recruitWeighs(ctx, b, offer) : captainWeighs(ctx, view, b, offer, cost);
+  const verdict = level === "recruit" ? recruitWeighs(ctx, b, offer, sp) : captainWeighs(ctx, view, b, offer, cost, sp);
   const score = verdict.factors.reduce((a, f) => a + f.w, 0);
   const strongest = (sign: 1 | -1) => [...verdict.factors].filter((f) => Math.sign(f.w) === sign).sort((x, y) => Math.abs(y.w) - Math.abs(x.w))[0]?.text;
   const isCounter = !!offer.counterTo;
@@ -248,23 +251,25 @@ export function judgeOffer(ctx: GameContext, view: PlayerView, offer: Offer, lev
   if (offer.bond === "handshake" && trust.score < r.trustMin) {
     const price = bindingCost(rules, dealSize(rules, idx, t, me, p, owner));
     if (score > r.acceptMargin && !isCounter && level === "captain" && price <= myGold)
-      return counterOf(t, "binding", `${trust.why ?? "I don't trust you yet."} Make it binding and it's a deal.`);
-    return no(trust.why ?? "I don't trust you.");
+      return counterOf(t, "binding", say(sp, "makeBinding", { why: trust.why ?? say(sp, "noTrustYet", {}, x) }, x));
+    return no(trust.why ?? say(sp, "noTrust", {}, x));
   }
   if (score > r.acceptMargin && strongest(1)) return { accept: true, reason: strongest(1)! };
   // Close: one counteroffer (never to a counteroffer).
   if (verdict.counter && !isCounter && score >= -r.counterMargin && level === "captain") return counterOf(verdict.counter.terms, offer.bond, verdict.counter.why);
-  return no(strongest(-1) ?? "That doesn't help me.");
+  return no(strongest(-1) ?? say(sp, "noHelp", {}, x));
 }
 
 /** What the Captain weighs for each kind of deal (the Marshal weighs the same, plus its personality). */
-export function captainWeighs(ctx: GameContext, view: PlayerView, b: Board, offer: Offer, cost: number): { factors: Factor[]; counter?: { terms: DealTerms; why: string } } {
+export function captainWeighs(ctx: GameContext, view: PlayerView, b: Board, offer: Offer, cost: number, sp: Speaker = speakerOf(view)): { factors: Factor[]; counter?: { terms: DealTerms; why: string } } {
   const p = offer.from;
   const t = offer.terms;
   const n = namesFor(ctx, view);
   const rules = ctx.rules;
   const f: Factor[] = [];
-  if (cost) f.push({ w: -cost / 4, text: `A binding pact costs me ${cost} gold, and it isn't worth that.` });
+  /** A reason, in the speaker's voice (the offer's id keeps two answers in one turn apart). */
+  const why = (key: Parameters<typeof say>[1], vars?: Parameters<typeof say>[2]) => say(sp, key, vars, offer.id);
+  if (cost) f.push({ w: -cost / 4, text: why("bindingCosts", { n: cost }) });
   const front = frontWith(b, p);
   /** The biggest army facing us from anyone else, and where. */
   const others = [...b.facing].filter(([q]) => q !== p).sort((x, y) => y[1] - x[1] || (x[0] < y[0] ? -1 : 1));
@@ -274,30 +279,30 @@ export function captainWeighs(ctx: GameContext, view: PlayerView, b: Board, offe
   switch (t.kind) {
     case "truce": {
       if (!front.land.length) {
-        f.push({ w: 1, text: "We don't even share a border, so peace costs me nothing." });
-        if (cost) f.push({ w: -2, text: "We don't share a border: a binding pact isn't worth gold." });
+        f.push({ w: 1, text: why("noBorderPeace") });
+        if (cost) f.push({ w: -2, text: why("noBorderBinding") });
         break;
       }
       // Military first: a truce needs a reason.
-      f.push({ w: -1, text: "I'd rather keep my hands free." });
-      if (b.focus === p && front.mine >= front.theirs) f.push({ w: -8, text: "You're my target now; I'm not stopping." });
-      if (b.runaway && b.runaway !== p && b.facing.has(b.runaway)) f.push({ w: 5, text: `I need my army against ${n.name(b.runaway)}, who's running away with the map.` });
+      f.push({ w: -1, text: why("handsFree") });
+      if (b.focus === p && front.mine >= front.theirs) f.push({ w: -8, text: why("targetNotStopping") });
+      if (b.runaway && b.runaway !== p && b.facing.has(b.runaway)) f.push({ w: 5, text: why("needArmyRunaway", { rival: n.name(b.runaway) }) });
       // Another front where we're the weaker side: the army is needed there.
       if (other && other !== b.runaway && otherTroops >= 4) {
         const there = frontWith(b, other);
-        if (there.theirs > there.mine) f.push({ w: 2 + Math.min(3, (there.theirs - there.mine) / 6), text: `I need my army in ${direction(ctx, b.mine, otherLand)}.` });
+        if (there.theirs > there.mine) f.push({ w: 2 + Math.min(3, (there.theirs - there.mine) / 6), text: why("needArmyIn", { where: direction(ctx, b.mine, otherLand) }) });
       }
       // The balance on our own border.
       const lean = Math.max(-3, Math.min(3, (front.theirs - front.mine) / Math.max(4, front.mine)));
-      if (lean > 0) f.push({ w: lean, text: "Your army at our border is bigger than mine; peace suits me." });
-      else if (lean < 0) f.push({ w: lean, text: "I'm holding our border well enough without a truce." });
-      if (b.capThreatened && b.capital && b.facesRival(b.capital, p)) f.push({ w: 5, text: "Your army is at my capital's door; I'll take peace." });
-      if (front.mine >= 2 * Math.max(1, front.theirs) && !b.shieldsLeader.has(p)) f.push({ w: -2, text: "I'm stronger on our border; I'd rather fight." });
-      if (b.shieldsLeader.has(p)) f.push({ w: 2, text: `You're holding back ${n.name(b.runaway!)}; I won't stab you in the back.` });
-      if (t.until && t.until === b.runaway) f.push({ w: 2, text: `Peace until ${n.name(t.until)} is beaten suits me.` });
-      if (t.turns > rules.diplomacy.truce.defaultTurns) f.push({ w: -(t.turns - rules.diplomacy.truce.defaultTurns) * 0.75, text: `${t.turns} turns is too long to tie my hands.` });
+      if (lean > 0) f.push({ w: lean, text: why("theirArmyBigger") });
+      else if (lean < 0) f.push({ w: lean, text: why("holdingFine") });
+      if (b.capThreatened && b.capital && b.facesRival(b.capital, p)) f.push({ w: 5, text: why("capitalDoor") });
+      if (front.mine >= 2 * Math.max(1, front.theirs) && !b.shieldsLeader.has(p)) f.push({ w: -2, text: why("strongerFight") });
+      if (b.shieldsLeader.has(p)) f.push({ w: 2, text: why("shieldsRunaway", { rival: n.name(b.runaway!) }) });
+      if (t.until && t.until === b.runaway) f.push({ w: 2, text: why("peaceUntil", { rival: n.name(t.until) }) });
+      if (t.turns > rules.diplomacy.truce.defaultTurns) f.push({ w: -(t.turns - rules.diplomacy.truce.defaultTurns) * 0.75, text: why("truceTooLong", { n: t.turns }) });
       const short = Math.min(t.turns, rules.diplomacy.truce.defaultTurns);
-      if (t.turns > short || t.until) return { factors: f, counter: { terms: { kind: "truce", scope: t.scope, turns: short }, why: `${short} turns, not ${t.turns}, and we have a deal.` } };
+      if (t.turns > short || t.until) return { factors: f, counter: { terms: { kind: "truce", scope: t.scope, turns: short }, why: why("counterTruce", { n: short, m: t.turns }) } };
       return { factors: f };
     }
     case "war": {
@@ -305,55 +310,55 @@ export function captainWeighs(ctx: GameContext, view: PlayerView, b: Board, offe
       const vs = frontWith(b, target);
       // Always open to a joint war against a runaway leader (or the clear leader, as far as it can tell).
       if (target === b.runaway || leads(b, target)) {
-        const why = target === b.runaway ? `Gladly: ${n.name(target)} is running away with the map.` : `Gladly: ${n.name(target)} is the strongest of us.`;
-        return { factors: [{ w: 10, text: why }], counter: t.turns > rules.diplomacy.war.defaultTurns ? { terms: { ...t, turns: rules.diplomacy.war.defaultTurns }, why: `${rules.diplomacy.war.defaultTurns} turns, and I'm in.` } : undefined };
+        const gladly = why(target === b.runaway ? "gladlyRunaway" : "gladlyStrongest", { target: n.name(target) });
+        return { factors: [{ w: 10, text: gladly }], counter: t.turns > rules.diplomacy.war.defaultTurns ? { terms: { ...t, turns: rules.diplomacy.war.defaultTurns }, why: why("counterWar", { n: rules.diplomacy.war.defaultTurns }) } : undefined };
       }
-      if (b.focus === p && front.mine >= front.theirs) f.push({ w: -6, text: "You're my target; I won't make peace with you." });
-      if (b.shieldsLeader.has(target)) f.push({ w: -8, text: `${n.name(target)} is holding back ${n.name(b.runaway!)}; I won't weaken them.` });
-      if (view.deals.some((d) => between(d, view.me.id, target) && (d.kind === "truce" || d.kind === "war"))) f.push({ w: -10, text: `I have a truce with ${n.name(target)}.` });
-      if (!vs.land.length) f.push({ w: -4, text: `I can't reach ${n.name(target)} from where I stand.` });
+      if (b.focus === p && front.mine >= front.theirs) f.push({ w: -6, text: why("targetNoWar") });
+      if (b.shieldsLeader.has(target)) f.push({ w: -8, text: why("shieldsTarget", { target: n.name(target), rival: n.name(b.runaway!) }) });
+      if (view.deals.some((d) => between(d, view.me.id, target) && (d.kind === "truce" || d.kind === "war"))) f.push({ w: -10, text: why("truceWithTarget", { target: n.name(target) }) });
+      if (!vs.land.length) f.push({ w: -4, text: why("cantReach", { target: n.name(target) }) });
       else {
-        if (b.focus === target) f.push({ w: 5, text: `We both want ${n.name(target)} beaten.` });
-        if (vs.mine >= vs.theirs) f.push({ w: 3, text: `${n.name(target)}'s army near me is weak; let's do it.` });
-        else f.push({ w: -3, text: `${n.name(target)} is too strong for me to take on right now.` });
+        if (b.focus === target) f.push({ w: 5, text: why("bothWant", { target: n.name(target) }) });
+        if (vs.mine >= vs.theirs) f.push({ w: 3, text: why("targetWeak", { target: n.name(target) }) });
+        else f.push({ w: -3, text: why("targetStrong", { target: n.name(target) }) });
       }
       // Too long is the one thing a shorter war fixes.
       if (t.turns > rules.diplomacy.war.defaultTurns) {
-        f.push({ w: -1.5, text: "That's too long a war to promise." });
-        return { factors: f, counter: { terms: { ...t, turns: rules.diplomacy.war.defaultTurns }, why: `${rules.diplomacy.war.defaultTurns} turns, and I'm in.` } };
+        f.push({ w: -1.5, text: why("warTooLong") });
+        return { factors: f, counter: { terms: { ...t, turns: rules.diplomacy.war.defaultTurns }, why: why("counterWar", { n: rules.diplomacy.war.defaultTurns }) } };
       }
       return { factors: f };
     }
     case "passage": {
-      if (b.focus === p) f.push({ w: -8, text: "You're my target; I won't open my land to you." });
-      if (front.land.length && front.theirs > front.mine) f.push({ w: -4, text: "I don't want your armies in my land." });
-      else f.push({ w: 1, text: "You may pass; keep moving." });
+      if (b.focus === p) f.push({ w: -8, text: why("targetNoPassage") });
+      if (front.land.length && front.theirs > front.mine) f.push({ w: -4, text: why("noArmiesInLand") });
+      else f.push({ w: 1, text: why("mayPass") });
       // Where can they go through our land? To someone we'd like beaten, gladly.
       const beyond = reachedThrough(b, p);
       const foe = [b.runaway, b.focus].find((x): x is PlayerId => !!x && x !== p && beyond.has(x));
-      if (foe) f.push({ w: 4, text: `Go and beat ${n.name(foe)}; you may pass.` });
-      if (t.mutual) f.push({ w: 0.5, text: "And my armies may pass through yours: fair." });
+      if (foe) f.push({ w: 4, text: why("beatFoe", { rival: n.name(foe) }) });
+      if (t.mutual) f.push({ w: 0.5, text: why("mutualFair") });
       if (t.turns > rules.diplomacy.passage.defaultTurns) {
-        f.push({ w: -(t.turns - rules.diplomacy.passage.defaultTurns) * 0.75, text: `${t.turns} turns is too long to keep my land open.` });
-        return { factors: f, counter: { terms: { ...t, turns: rules.diplomacy.passage.defaultTurns }, why: `${rules.diplomacy.passage.defaultTurns} turns, and you may pass.` } };
+        f.push({ w: -(t.turns - rules.diplomacy.passage.defaultTurns) * 0.75, text: why("passageTooLong", { n: t.turns }) });
+        return { factors: f, counter: { terms: { ...t, turns: rules.diplomacy.passage.defaultTurns }, why: why("counterPassage", { n: rules.diplomacy.passage.defaultTurns }) } };
       }
       return { factors: f };
     }
     case "trade": {
-      const v = tradeValue(ctx, view, b, t);
-      if (v.cantPay) return { factors: [{ w: -20, text: "I don't have that much gold." }] };
+      const v = tradeValue(ctx, view, b, t, why);
+      if (v.cantPay) return { factors: [{ w: -20, text: why("cantPay") }] };
       if (v.giveLandBad) f.push({ w: -20, text: v.giveLandBad });
       const net = v.gain - v.cost;
-      const fair = !v.costWords ? `${v.gainWords}, and nothing asked in return: gladly.` : v.gainWords ? `${v.gainWords} for ${v.costWords}: a fair price.` : "A fair price.";
-      f.push({ w: net / 2, text: net >= 0 ? fair : `I'd give ${v.costWords || "too much"} for ${v.gainWords || "too little"}: not enough.` });
-      if (v.needGold) f.push({ w: -3, text: "I need my gold for troops." });
+      const fair = () => (!v.costWords ? why("giftGladly", { gain: v.gainWords }) : v.gainWords ? why("fairPrice", { gain: v.gainWords, cost: v.costWords }) : why("fairPricePlain"));
+      f.push({ w: net / 2, text: net >= 0 ? fair() : why("notEnough", { cost: v.costWords || "too much", gain: v.gainWords || "too little" }) });
+      if (v.needGold) f.push({ w: -3, text: why("needGold") });
       // Short of gold: gold now is worth more than gold later.
-      if ((t.give.gold ?? 0) > 0 && view.me.gold < rules.troops.cost * 5) f.push({ w: 1.5, text: "I could use the gold now." });
+      if ((t.give.gold ?? 0) > 0 && view.me.gold < rules.troops.cost * 5) f.push({ w: 1.5, text: why("useGold") });
       // Close: ask for the difference in gold.
       const more = Math.ceil(-net) + 1;
       if (net < 0 && more <= 12 && !v.giveLandBad) {
         const terms: DealTerms = { ...t, give: { ...t.give, gold: (t.give.gold ?? 0) + more } };
-        return { factors: f, counter: { terms, why: `Make it ${(t.give.gold ?? 0) + more} gold and it's a deal.` } };
+        return { factors: f, counter: { terms, why: why("counterGold", { n: (t.give.gold ?? 0) + more }) } };
       }
       return { factors: f };
     }
@@ -425,7 +430,7 @@ function passageToward(b: Board, target: PlayerId): PlayerId | null {
 }
 
 /** What a trade is worth to this bot, in gold: what it gets, what it gives, in words, and anything that rules it out. */
-function tradeValue(ctx: GameContext, view: PlayerView, b: Board, t: Extract<DealTerms, { kind: "trade" }>) {
+function tradeValue(ctx: GameContext, view: PlayerView, b: Board, t: Extract<DealTerms, { kind: "trade" }>, why: (key: "noCapital" | "guardsCapital", vars?: { place: string }) => string) {
   const n = namesFor(ctx, view);
   const turns = dealTurns(t);
   const each = t.give.perTurn || t.get.perTurn ? turns : 0;
@@ -443,9 +448,9 @@ function tradeValue(ctx: GameContext, view: PlayerView, b: Board, t: Extract<Dea
   let cost = (t.get.gold ?? 0) + (t.get.perTurn ?? 0) * each + (t.get.land ?? []).reduce((a, x) => a + 3 * b.valueOf(x) + 4 + (b.isFrontier(x) ? 2 : 0), 0);
   let giveLandBad: string | null = null;
   for (const x of t.get.land ?? []) {
-    if (x === b.capital || x === view.me.capital) giveLandBad = "I won't give up my capital.";
+    if (x === b.capital || x === view.me.capital) giveLandBad = why("noCapital");
     else if (b.idx.neighbors.get(x)!.includes(view.me.capital)) {
-      giveLandBad = `${n.place(x)} guards my capital; it isn't for sale.`;
+      giveLandBad = why("guardsCapital", { place: n.place(x) });
       cost += 20;
     }
   }
@@ -455,25 +460,26 @@ function tradeValue(ctx: GameContext, view: PlayerView, b: Board, t: Extract<Dea
 }
 
 /** The Recruit's simpler rules: a truce when it's weaker, not when it's stronger; fair gold; never gives land. */
-function recruitWeighs(ctx: GameContext, b: Board, offer: Offer): { factors: Factor[]; counter?: { terms: DealTerms; why: string } } {
+function recruitWeighs(ctx: GameContext, b: Board, offer: Offer, sp: Speaker): { factors: Factor[]; counter?: { terms: DealTerms; why: string } } {
   const p = offer.from;
+  const why = (key: Parameters<typeof say>[1]) => say(sp, key, {}, offer.id);
   const t = offer.terms;
   const mineLand = b.mine.length, theirs = b.knownLand.get(p) ?? 0;
   switch (t.kind) {
     case "truce":
-      return { factors: [mineLand < theirs ? { w: 2, text: "You're stronger than me; peace suits me." } : { w: -2, text: "I'm stronger than you; I'll take my chances." }] };
+      return { factors: [mineLand < theirs ? { w: 2, text: why("recruitWeaker") } : { w: -2, text: why("recruitStronger") }] };
     case "war": {
       const target = b.knownLand.get(t.target) ?? 0;
-      if (t.target === b.runaway) return { factors: [{ w: 3, text: "Gladly: they're running away with the map." }] };
-      return { factors: [mineLand > target ? { w: 1, text: "I'm strong enough to join you." } : { w: -1, text: "They're too strong for me." }] };
+      if (t.target === b.runaway) return { factors: [{ w: 3, text: why("recruitGladly") }] };
+      return { factors: [mineLand > target ? { w: 1, text: why("recruitJoin") } : { w: -1, text: why("recruitTooStrong") }] };
     }
     case "passage":
-      return { factors: [{ w: -1, text: "I don't let armies through my land." }] };
+      return { factors: [{ w: -1, text: why("recruitNoPassage") }] };
     case "trade": {
       const each = t.give.perTurn || t.get.perTurn ? dealTurns(t) : 0;
       const net = (t.give.gold ?? 0) + (t.give.perTurn ?? 0) * each - (t.get.gold ?? 0) - (t.get.perTurn ?? 0) * each;
-      if (t.get.land?.length) return { factors: [{ w: -2, text: "I don't give up land." }] };
-      return { factors: [net >= 0 ? { w: 1, text: "Fair enough." } : { w: -1, text: "No, thank you." }] };
+      if (t.get.land?.length) return { factors: [{ w: -2, text: why("recruitNoLand") }] };
+      return { factors: [net >= 0 ? { w: 1, text: why("recruitFair") } : { w: -1, text: why("recruitNo") }] };
     }
   }
 }
@@ -491,7 +497,7 @@ function askedLastTurn(lastTurn: readonly ReplayEvent[] | undefined, me: PlayerI
  *    afford while fighting elsewhere, a trade for land that completes a province, or one when it's short of gold
  *  - the Recruit: only a truce with a stronger neighbour (it never proposes trades)
  */
-export function proposeOffers(ctx: GameContext, view: PlayerView, level: DiplomatLevel, lastTurn?: readonly ReplayEvent[], read?: Board): Offer[] {
+export function proposeOffers(ctx: GameContext, view: PlayerView, level: DiplomatLevel, lastTurn?: readonly ReplayEvent[], read?: Board, voice: string | null = null): Offer[] {
   const rules = ctx.rules;
   const cap = rules.diplomacy.bots.offersPerTurn;
   if (!cap || !view.settings.diplomacy || view.winner || view.turn < 2) return [];
@@ -509,10 +515,13 @@ export function proposeOffers(ctx: GameContext, view: PlayerView, level: Diploma
   const add = (to: PlayerId, terms: DealTerms, note: string) => out.length < cap && out.push({ id: `${me}-t${view.turn}-o${k++}`, from: me, to, terms, bond: "handshake", note });
   const n = namesFor(ctx, view);
   const truceTurns = rules.diplomacy.truce.defaultTurns;
+  // Offers in the plain voice (the Marshal passes its own offers' notes through `voice` below).
+  const sp = speakerOf(view, voice);
+  const note = (key: Parameters<typeof say>[1], vars?: Parameters<typeof say>[2]) => say(sp, key, vars, `o${out.length}`);
 
   if (level === "recruit") {
     for (const [q] of [...b.facing].sort((x, y) => y[1] - x[1] || (x[0] < y[0] ? -1 : 1)))
-      if (q !== b.runaway && (b.knownLand.get(q) ?? 0) > b.mine.length * 1.2 && ok(q, "truce")) add(q, { kind: "truce", scope: { kind: "all" }, turns: truceTurns }, "You're stronger than me; let's keep the peace.");
+      if (q !== b.runaway && (b.knownLand.get(q) ?? 0) > b.mine.length * 1.2 && ok(q, "truce")) add(q, { kind: "truce", scope: { kind: "all" }, turns: truceTurns }, note("offerRecruitTruce"));
     return out;
   }
 
@@ -524,7 +533,7 @@ export function proposeOffers(ctx: GameContext, view: PlayerView, level: Diploma
       .map((x) => x.id)
       .filter((q) => q !== R && ok(q, "war") && (bordersR(q) || b.facing.has(R)))
       .sort((x, y) => (b.knownLand.get(y) ?? 0) - (b.knownLand.get(x) ?? 0) || (x < y ? -1 : 1))[0];
-    if (partner) add(partner, { kind: "war", target: R, turns: rules.diplomacy.war.defaultTurns }, `${n.name(R)} is running away with the map; let's stop them together.`);
+    if (partner) add(partner, { kind: "war", target: R, turns: rules.diplomacy.war.defaultTurns }, note("offerRunawayWar", { target: n.name(R) }));
   }
 
   // Right of passage toward a rival we want a front with but don't border (the runaway leader first): through a
@@ -535,8 +544,8 @@ export function proposeOffers(ctx: GameContext, view: PlayerView, level: Diploma
     if (out.length >= cap) break;
     const way = passageToward(b, target);
     if (!way || open.includes(way) || !ok(way, "passage")) continue;
-    const why = target === R ? `, who's running away with the map` : (b.knownLand.get(target) ?? 0) <= 3 ? ", who's nearly beaten" : "";
-    add(way, { kind: "passage", turns: rules.diplomacy.passage.defaultTurns, mutual: false }, `Let my armies through your land to reach ${n.name(target)}${why}.`);
+    const key = target === R ? "offerPassageRunaway" : (b.knownLand.get(target) ?? 0) <= 3 ? "offerPassageBeaten" : "offerPassage";
+    add(way, { kind: "passage", turns: rules.diplomacy.passage.defaultTurns, mutual: false }, note(key, { target: n.name(target) }));
     break;
   }
 
@@ -548,7 +557,7 @@ export function proposeOffers(ctx: GameContext, view: PlayerView, level: Diploma
       const f = frontWith(b, q);
       if (troops > f.mine * AFFORD || (b.capThreatened && b.capital && b.facesRival(b.capital, q))) {
         const elsewhere = fronts.find(([o]) => o !== q);
-        add(q, { kind: "truce", scope: { kind: "all" }, turns: truceTurns }, elsewhere ? `My army is needed in ${direction(ctx, b.mine, frontWith(b, elsewhere[0]).land)}; let's have peace on our border.` : "Let's have peace on our border.");
+        add(q, { kind: "truce", scope: { kind: "all" }, turns: truceTurns }, elsewhere ? note("offerTruceNeeded", { where: direction(ctx, b.mine, frontWith(b, elsewhere[0]).land) }) : note("offerTrucePlain"));
         break;
       }
     }
@@ -565,7 +574,7 @@ export function proposeOffers(ctx: GameContext, view: PlayerView, level: Diploma
     if (missing.length !== 1 || landProblem(b.idx, rules, board, v.owner, me, [t])) continue;
     const price = Math.min(Math.round(3 * b.valueOf(t)) + 6, view.me.gold - reserve);
     if (price < 4) continue;
-    add(v.owner, { kind: "trade", give: { gold: price }, get: { land: [t] } }, `${n.place(t)} would complete ${n.province(prov)} for me; ${price} gold for it?`);
+    add(v.owner, { kind: "trade", give: { gold: price }, get: { land: [t] } }, note("offerBuyLand", { place: n.place(t), province: n.province(prov), n: price }));
   }
 
   // Short of gold: sell a poor, quiet piece of border land to a neighbour (never next to our capital).
@@ -573,7 +582,7 @@ export function proposeOffers(ctx: GameContext, view: PlayerView, level: Diploma
     for (const t of [...b.frontier].sort((x, y) => b.valueOf(x) - b.valueOf(y) || (x < y ? -1 : 1))) {
       const buyer = b.idx.neighbors.get(t)!.map((x) => b.rivalAt(x)).find((q): q is PlayerId => !!q && q !== R && ok(q, "trade"));
       if (!buyer || b.idx.neighbors.get(t)!.includes(view.me.capital) || landProblem(b.idx, rules, board, me, buyer, [t])) continue;
-      add(buyer, { kind: "trade", give: { land: [t] }, get: { gold: Math.round(3 * b.valueOf(t)) + 6 } }, `I'm short of gold; ${n.place(t)} is yours for a fair price.`);
+      add(buyer, { kind: "trade", give: { land: [t] }, get: { gold: Math.round(3 * b.valueOf(t)) + 6 } }, note("offerSellLand", { place: n.place(t) }));
       break;
     }
   return out;
@@ -614,9 +623,7 @@ export function captainBreaks(ctx: GameContext, view: PlayerView, lastTurn?: rea
     const win = !view.settings.fog && b.alive.length === 2 && theirs.length === 1 && sure(theirs[0]!);
     const gain = win ? WIN_GAIN : capital ? CAPITAL_GAIN + b.valueOf(capital) : 0;
     if (!gain || gain < rules.diplomacy.bots.breakGain * penalty) continue;
-    const note = win
-      ? `One more battle wins the game; I won't let our ${DEAL_NAME[d.kind]} stop me.`
-      : `Your capital at ${n.place(capital!)} is mine for the taking; our ${DEAL_NAME[d.kind]} isn't worth more than that.`;
+    const note = win ? say(speakerOf(view), "breakWin", { deal: DEAL_NAME[d.kind] }, d.id) : say(speakerOf(view), "breakCapital", { place: n.place(capital!), deal: DEAL_NAME[d.kind] }, d.id);
     out.push({ id: `${view.me.id}-t${view.turn}-break-${d.id}`, kind: "break", deal: d.id, note });
   }
   return out;

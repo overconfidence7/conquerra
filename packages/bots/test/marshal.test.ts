@@ -1,4 +1,5 @@
 import { defaultRules, marshalData, type PersonalityId } from "@conquerra/content";
+import { lines } from "@conquerra/content/lines";
 import { maps } from "@conquerra/content/maps";
 import { createGame, replayFor, resolveTurn, viewFor, type GameContext, type GameState, type Order, type OrdersByPlayer, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
@@ -19,6 +20,7 @@ import {
   type MarshalMemory,
 } from "../src";
 import { scenario } from "./scenario";
+import { problems } from "../../content/test/voiceScan";
 
 const ember: GameContext = { map: maps.embervale!, rules: defaultRules };
 const J = marshalData.judgement;
@@ -29,6 +31,8 @@ function play(seed: string, bots: MarshalBot[], turns = 40) {
   let last = new Map<string, ReplayEvent[]>();
   const transcript: string[] = [];
   const snapshots: { s: GameState; last: Map<string, ReplayEvent[]> }[] = [];
+  /** Everything the bots said: answers, offers' notes and the lines they gave for breaking a deal. */
+  const said: string[] = [];
   for (let i = 0; i < turns && !s.winner; i++) {
     snapshots.push({ s, last });
     const living = s.players.filter((p) => p.eliminatedTurn === null);
@@ -36,18 +40,33 @@ function play(seed: string, bots: MarshalBot[], turns = 40) {
     const bot = (id: string) => bots[s.players.findIndex((p) => p.id === id)]!;
     const talk = negotiate(ember, living.map((p) => ({ id: p.id, level: bot(p.id).diplomat })), (id) => views.get(id)!, (id) => last.get(id), null);
     const agreed = agreedIn(talk.orders);
+    for (const t of talk.talks) said.push(...[t.offer.note, t.answer?.reason].filter((x): x is string => !!x));
     const orders: OrdersByPlayer = {};
     for (const p of living) orders[p.id] = [...(talk.orders[p.id] ?? []), ...bot(p.id).plan(ember, withAgreed(views.get(p.id)!, agreed), last.get(p.id))];
+    for (const p of living) for (const o of orders[p.id]!) if (o.kind === "break" && o.note) said.push(o.note);
     transcript.push(JSON.stringify(orders));
     const before = s;
     const r = resolveTurn(ember, s, orders);
     s = r.state;
     last = new Map(s.players.map((p) => [p.id, replayFor(ember, before, r, p.id)]));
   }
-  return { s, transcript: transcript.join("\n"), snapshots };
+  return { s, transcript: transcript.join("\n"), snapshots, said };
 }
 
 const fourOf = (ids: readonly PersonalityId[] = ["conqueror", "schemer", "turtle", "opportunist"]) => ids.map((p) => makeMarshalBot(p));
+
+describe("the Marshal's words (session 22)", () => {
+  it("every line it says in real games is filled in, in its voice, and keeps the voice guide's hard rules", () => {
+    const said = [...play("m-words", fourOf(), 30).said, ...play("m-words-2", fourOf(["blitzer", "merchant", "conqueror", "turtle"]), 30).said];
+    expect(said.length).toBeGreaterThan(40);
+    for (const line of said) {
+      expect(line, line).not.toMatch(/[{}]|undefined|null|NaN/);
+      expect(problems({ file: "bots", text: line, speaker: true }), line).toEqual([]);
+    }
+    // More than one version of what they say.
+    expect(new Set(said).size).toBeGreaterThan(15);
+  });
+});
 
 describe("the Marshal: fair play", () => {
   it("is deterministic: the same seed gives the same game, deals and all", () => {
@@ -149,7 +168,9 @@ describe("the Marshal's personalities", () => {
     const sc = scenario({ line: "abcdefghijkl", layout: { a: ["p1", 6], b: ["p1", 6], c: ["p2", 6], d: ["p2", 6], e: ["p2", 6], f: ["p2", 6], g: ["p3", 6], h: ["p3", 6], i: ["p3", 6], j: ["p4", 6], k: ["p4", 6], l: ["p4", 6] }, memory: { d: ["p2", 6], e: ["p2", 6], f: ["p2", 6], g: ["p3", 6], h: ["p3", 6], i: ["p3", 6], j: ["p4", 6], k: ["p4", 6], l: ["p4", 6] }, caps: ["a", "f", "i", "l"], gold: 20 });
     const offer = { id: "x1", from: "p2", to: "p1", terms: { kind: "truce" as const, scope: { kind: "all" as const }, turns: 3 }, bond: "handshake" as const };
     const turtle = judgeBy(sc.ctx, makeMarshalBot("turtle").diplomat, viewFor(sc.ctx, sc.s, "p1"), offer);
-    expect(turtle).toEqual({ accept: true, reason: "Peace suits me; my walls aren't finished." });
+    // One of the Turtle's own truce lines (which one depends on the game, the turn and the bot).
+    expect(turtle.accept).toBe(true);
+    expect(lines.bots.turtle.truceYes).toContain(turtle.reason);
     const blitzer = judgeBy(sc.ctx, makeMarshalBot("blitzer").diplomat, viewFor(sc.ctx, sc.s, "p1"), offer);
     expect(blitzer.accept).toBe(false);
   });

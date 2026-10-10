@@ -140,7 +140,7 @@ export function chronicleLines(ctx: GameContext, reports: readonly TurnReport[],
     const wins = new Map<string, Extract<ReplayEvent, { type: "battle" }>[]>();
     for (const e of r.events) if (e.type === "battle" && e.captured && e.general && n.isMe(e.player)) wins.set(e.general, [...(wins.get(e.general) ?? []), e]);
     for (const [g, run] of wins) {
-      const said = leaderSays(n, g, run.map((x) => n.place(x.to)), run[0]!.defender ?? null);
+      const said = leaderSays(n, g, run.map((x) => n.place(x.to)), run[0]!.defender ?? null, r.turn);
       if (said) lines.push({ text: said, tone: "info", kind: "leader", at: run[0]!.to, mine: true });
     }
     for (const f of fogged.values())

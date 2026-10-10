@@ -94,20 +94,6 @@
         "breakGain": 2,
         "offersTruces": true,
         "offersWars": true
-      },
-      "voice": {
-        "truceYes": "My war is elsewhere; peace on our border suits me.",
-        "truceNo": "My armies go where I send them; no truce.",
-        "warYes": "One front, one enemy: I'm with you.",
-        "warNo": "I fight one war at a time, and it isn't that one.",
-        "tradeYes": "A fair price; I'll take it.",
-        "tradeNo": "Land is won with armies, not gold.",
-        "passageYes": "March through; keep moving.",
-        "passageNo": "My land is my staging ground; find another road.",
-        "breaks": "{place} is mine for the taking; our deal isn't worth more than that.",
-        "offerTruce": "My war is elsewhere; let's have peace on our border.",
-        "offerWar": "Strike {target} with me; one front, one enemy.",
-        "took": "Took {places}; {rival} ran."
       }
     },
     {
@@ -151,20 +137,6 @@
         "breakGain": 2,
         "offersTruces": false,
         "offersWars": false
-      },
-      "voice": {
-        "truceYes": "Fine: fewer borders to watch while I run.",
-        "truceNo": "I don't stop for anyone.",
-        "warYes": "More land to take: I'm in.",
-        "warNo": "Too slow; I'll take my own road.",
-        "tradeYes": "Quick and fair; done.",
-        "tradeNo": "I'd rather just take it.",
-        "passageYes": "Run through, I won't slow you.",
-        "passageNo": "My armies need every road.",
-        "breaks": "{place} is right there; I'm not stopping.",
-        "offerTruce": "Let's not waste time on each other.",
-        "offerWar": "Let's run {target} over together.",
-        "took": "{places}: taken. On to the next."
       }
     },
     {
@@ -208,20 +180,6 @@
         "breakGain": 3,
         "offersTruces": true,
         "offersWars": false
-      },
-      "voice": {
-        "truceYes": "Peace suits me; my walls aren't finished.",
-        "truceNo": "My walls hold well enough without a truce.",
-        "warYes": "When I march, I march once. Now is the time.",
-        "warNo": "My army stays behind my walls for now.",
-        "tradeYes": "A fair price, and peace with it: agreed.",
-        "tradeNo": "I don't give up what I've built.",
-        "passageYes": "Pass quietly, and keep away from my walls.",
-        "passageNo": "No foreign army walks past my walls.",
-        "breaks": "My army is ready, and {place} is the prize; our deal is over.",
-        "offerTruce": "Peace suits us both; let's leave each other be.",
-        "offerWar": "Strike {target} with me, and I'll bring the big army.",
-        "took": "{places} taken, and walls going up behind us."
       }
     },
     {
@@ -265,20 +223,6 @@
         "breakGain": 1.2,
         "offersTruces": true,
         "offersWars": true
-      },
-      "voice": {
-        "truceYes": "Of course, friend. Peace between us.",
-        "truceNo": "Not now; I have other plans for that border.",
-        "warYes": "Together, then. They'll never see it coming.",
-        "warNo": "That war serves you, not me.",
-        "tradeYes": "A pleasure doing business.",
-        "tradeNo": "You'll have to sweeten that.",
-        "passageYes": "Pass, friend; I'll remember the favour.",
-        "passageNo": "I'd rather know where your armies are.",
-        "breaks": "{place} was always going to be mine; you should have read the terms more carefully.",
-        "offerTruce": "Why fight? Let's have peace on our border.",
-        "offerWar": "{target} has it coming; strike with me.",
-        "took": "{places} fell, as I planned; {rival} never saw it coming."
       }
     },
     {
@@ -322,20 +266,6 @@
         "breakGain": 1.6,
         "offersTruces": false,
         "offersWars": true
-      },
-      "voice": {
-        "truceYes": "Fine; I'll find easier pickings.",
-        "truceNo": "I don't tie my hands while someone's bleeding.",
-        "warYes": "They're weak; let's finish it.",
-        "warNo": "There's nothing to pick over there.",
-        "tradeYes": "A good price; I'll take it.",
-        "tradeNo": "Not worth my while.",
-        "passageYes": "Go on through; I'll be watching.",
-        "passageNo": "I'll keep my roads to myself.",
-        "breaks": "{place} is wide open; I'd be a fool not to take it.",
-        "offerTruce": "Let's not bleed each other for the others' sake.",
-        "offerWar": "{target} is wounded; let's finish them.",
-        "took": "{rival} was bleeding; {places} came cheap."
       }
     },
     {
@@ -379,20 +309,6 @@
         "breakGain": 2.5,
         "offersTruces": true,
         "offersWars": false
-      },
-      "voice": {
-        "truceYes": "Peace is good for business; agreed.",
-        "truceNo": "Peace with you would cost me more than it's worth.",
-        "warYes": "A war that pays: count me in.",
-        "warNo": "Wars are bad for business.",
-        "tradeYes": "A fine bargain; done.",
-        "tradeNo": "The numbers don't add up for me.",
-        "passageYes": "Pass through; trade follows armies.",
-        "passageNo": "Armies on my roads scare off the traders.",
-        "breaks": "{place} is worth more than our deal; business is business.",
-        "offerTruce": "Peace is good for business; shall we?",
-        "offerWar": "{target} is bad for business; strike with me.",
-        "took": "{places} taken: good land, and it will pay."
       }
     }
   ],
@@ -436,19 +352,6 @@
         "breakGain": 2,
         "offersTruces": true,
         "offersWars": true
-      },
-      "voice": {
-        "truceYes": "My war is elsewhere; peace on our border suits me.",
-        "truceNo": "My armies go where I send them; no truce.",
-        "warYes": "One front, one enemy: I'm with you.",
-        "warNo": "I fight one war at a time, and it isn't that one.",
-        "tradeYes": "A fair price; I'll take it.",
-        "tradeNo": "Land is won with armies, not gold.",
-        "passageYes": "March through; keep moving.",
-        "passageNo": "My land is my staging ground; find another road.",
-        "breaks": "{place} is mine for the taking; our deal isn't worth more than that.",
-        "offerTruce": "My war is elsewhere; let's have peace on our border.",
-        "offerWar": "Strike {target} with me; one front, one enemy."
       }
     },
     "expand": {

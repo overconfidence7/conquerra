@@ -1,0 +1,720 @@
+{
+  "bots": {
+    "conqueror": {
+      "truceYes": [
+        "My war is somewhere else. Peace on our border suits me fine.",
+        "Agreed. I have one war, and you aren't it.",
+        "Peace on our border. My army already has a front.",
+        "Fine. One front at a time, and ours isn't the one."
+      ],
+      "truceNo": [
+        "No truce. My armies go where I send them.",
+        "No. I don't sign away a border I might need.",
+        "My plan doesn't have a truce in it. No.",
+        "No truce. I'd rather keep my options and my army."
+      ],
+      "warYes": [
+        "One front, one enemy. I'm with you.",
+        "Yes. Point me at them.",
+        "Agreed. My army was going that way anyway.",
+        "A single target. That's how I like it. I'm in."
+      ],
+      "warNo": [
+        "I fight one war at a time, and it isn't that one.",
+        "No. My army already has a front.",
+        "Not that war. I picked mine already."
+      ],
+      "tradeYes": [
+        "A fair price. I'll take it.",
+        "Done. Fair is fair.",
+        "Agreed. Now back to the war."
+      ],
+      "tradeNo": [
+        "Land is won with armies, not gold.",
+        "No. I take land, I don't buy it.",
+        "I'll keep my land. I remember how I got it."
+      ],
+      "passageYes": [
+        "March through. Keep moving.",
+        "Go ahead. Don't stop to admire the view.",
+        "Pass through. My land is for marching, so march."
+      ],
+      "passageNo": [
+        "My land is my staging ground. Find another road.",
+        "No. My roads are busy with my own army.",
+        "You want to march an army through my land. Bold. No."
+      ],
+      "offerTruce": [
+        "My war is somewhere else. Let's have peace on our border.",
+        "I have one front, and it isn't you. Peace on our border.",
+        "Peace on our border. I'd like my army pointed one way."
+      ],
+      "offerWar": [
+        "Strike {target} with me. One front, one enemy.",
+        "{target} is my target. Join me and it goes faster.",
+        "Hit {target} with me. I'll do most of the work."
+      ],
+      "breaks": [
+        "{place} is mine for the taking. Our deal isn't worth more than that.",
+        "Our deal is over. {place} was always the plan.",
+        "I'm taking {place}. The deal had a good run."
+      ],
+      "yesTail": [
+        "That's my answer.",
+        "Agreed.",
+        "Good."
+      ],
+      "noTail": [
+        "That's my answer.",
+        "No.",
+        "My plan stands."
+      ]
+    },
+    "blitzer": {
+      "truceYes": [
+        "Fine. Fewer borders to watch while I run.",
+        "Done. Can't stop to fight you anyway.",
+        "Peace. Quickly, I'm busy.",
+        "Sure. One less border, more running."
+      ],
+      "truceNo": [
+        "I don't stop for anyone.",
+        "No. Too slow.",
+        "No truce. I'm already moving.",
+        "Can't. Your land is on my way."
+      ],
+      "warYes": [
+        "More land to take. I'm in.",
+        "Yes. Already moving.",
+        "In. Try to keep up."
+      ],
+      "warNo": [
+        "Too slow. I'll take my own road.",
+        "No. Wrong direction.",
+        "Not that one. I'm running the other way."
+      ],
+      "tradeYes": [
+        "Quick and fair. Done.",
+        "Done. Next.",
+        "Fine. Fast."
+      ],
+      "tradeNo": [
+        "I'd rather just take it.",
+        "No. Taking it is quicker.",
+        "Pass. I'll get there myself."
+      ],
+      "passageYes": [
+        "Run through. I won't slow you.",
+        "Go. Just don't stop.",
+        "Through you go. Keep the pace up."
+      ],
+      "passageNo": [
+        "My armies need every road.",
+        "No. My roads are full of my own army.",
+        "Can't. Traffic."
+      ],
+      "offerTruce": [
+        "Let's not waste time on each other.",
+        "Peace on our border. I've got places to be.",
+        "Truce. I'm running somewhere else."
+      ],
+      "offerWar": [
+        "Let's run {target} over together.",
+        "Hit {target} with me. This turn, ideally.",
+        "{target}. You and me. Now."
+      ],
+      "breaks": [
+        "{place} is right there. I'm not stopping.",
+        "Deal's over. {place} was open.",
+        "Took the deal, now taking {place}. Busy turn."
+      ],
+      "yesTail": [
+        "Done.",
+        "Moving on.",
+        "Next."
+      ],
+      "noTail": [
+        "Next.",
+        "Moving on.",
+        "No time."
+      ]
+    },
+    "turtle": {
+      "truceYes": [
+        "Peace works for me. My walls aren't finished yet.",
+        "Agreed. I'd rather build than fight.",
+        "Peace suits me. The masons were getting nervous.",
+        "Yes. Fewer armies near my walls is always welcome."
+      ],
+      "truceNo": [
+        "My walls hold well enough without a truce.",
+        "No. I trust my walls more than a signature.",
+        "No truce. Come and look at my walls first."
+      ],
+      "warYes": [
+        "When I march, I march once. Now is the time.",
+        "Agreed. The big army has been waiting for this.",
+        "Yes. I've been saving up for this one."
+      ],
+      "warNo": [
+        "My army stays behind my walls for now.",
+        "No. My walls need their army.",
+        "Not yet. I march once, and this isn't it."
+      ],
+      "tradeYes": [
+        "A fair price, and peace with it. Agreed.",
+        "Agreed. Gold builds walls.",
+        "Fair. The masons thank you."
+      ],
+      "tradeNo": [
+        "I don't give up what I've built.",
+        "No. Everything I own took a long time to build.",
+        "No. I built that."
+      ],
+      "passageYes": [
+        "Pass quietly, and keep away from my walls.",
+        "Go through. Mind the walls.",
+        "You may pass. Stay on the road and off my walls."
+      ],
+      "passageNo": [
+        "No foreign army walks past my walls. Find another road.",
+        "No. Armies near my walls make me nervous.",
+        "No. The walls are for keeping people out, and that includes you."
+      ],
+      "offerTruce": [
+        "Peace suits us both. Let's leave each other be.",
+        "Let's have peace on our border. I have walls to finish.",
+        "Peace. I'd rather spend the gold on stone."
+      ],
+      "offerWar": [
+        "Strike {target} with me, and I'll bring the big army.",
+        "I've been building up for {target}. Join me.",
+        "{target} is next. My army has been waiting behind the walls for this."
+      ],
+      "breaks": [
+        "My army is ready, and {place} is the prize. Our deal is over.",
+        "I waited a long time for {place}. The deal is done.",
+        "Built, saved, ready. {place} is next, deal or no deal."
+      ],
+      "yesTail": [
+        "Carefully, of course.",
+        "Agreed, slowly.",
+        "The walls approve."
+      ],
+      "noTail": [
+        "The walls stay as they are.",
+        "I'll be behind my walls.",
+        "Safe is better than sorry."
+      ]
+    },
+    "schemer": {
+      "truceYes": [
+        "Of course, friend. Peace between us.",
+        "Peace, friend. For now, which is all anyone can promise.",
+        "Gladly, friend. I'll remember the favour.",
+        "Peace it is, friend. I do love a signed promise."
+      ],
+      "truceNo": [
+        "Not now, friend. I have other plans for that border.",
+        "Not this time, friend. Nothing personal.",
+        "I'd rather keep that border interesting, friend."
+      ],
+      "warYes": [
+        "Together, then. They'll never see it coming.",
+        "Of course, friend. I've been meaning to.",
+        "Count me in, friend. I'll be right behind you."
+      ],
+      "warNo": [
+        "That war serves you, not me.",
+        "Pass, friend. That one's all yours.",
+        "Not that one, friend. I have my eye on someone else."
+      ],
+      "tradeYes": [
+        "A pleasure doing business.",
+        "Done, friend. I'll remember this.",
+        "Lovely. A pleasure, as always."
+      ],
+      "tradeNo": [
+        "You'll have to sweeten that, friend.",
+        "Not at that price, friend.",
+        "Close, friend. Sweeten it."
+      ],
+      "passageYes": [
+        "Pass, friend. I'll remember the favour.",
+        "Go on through, friend. I'll be watching. Out of friendship.",
+        "Of course, friend. Mind where you leave your army."
+      ],
+      "passageNo": [
+        "I'd rather know where your armies are, friend.",
+        "Not through my land, friend. I like you where I can see you.",
+        "No, friend. Nothing personal. Mostly."
+      ],
+      "offerTruce": [
+        "Let's not fight over this border. Peace, friend.",
+        "Peace, friend. We have so much in common.",
+        "Peace on our border, friend. I'll remember it."
+      ],
+      "offerWar": [
+        "{target} has it coming. Strike with me.",
+        "Strike {target} with me, friend. I'll be right behind you.",
+        "Between us, {target} has been asking for it. Join me."
+      ],
+      "breaks": [
+        "{place} was always going to be mine. Honestly, you should have read the terms.",
+        "Our deal was lovely while it lasted. It lasted until {place} looked unguarded.",
+        "Sorry, friend. {place} was too good to pass up. I'll send flowers."
+      ],
+      "yesTail": [
+        "I'll remember this, friend.",
+        "For now, friend.",
+        "Lovely."
+      ],
+      "noTail": [
+        "Nothing personal, friend.",
+        "Another time, friend.",
+        "No hard feelings, friend."
+      ]
+    },
+    "opportunist": {
+      "truceYes": [
+        "Fine. I'll find easier pickings.",
+        "Peace. There's softer land elsewhere.",
+        "Agreed. You're not the weak one this turn."
+      ],
+      "truceNo": [
+        "Not while someone's bleeding. I keep my hands free.",
+        "No. Something nearby is about to fall over.",
+        "No truce. I like my options open and my neighbours tired."
+      ],
+      "warYes": [
+        "They're weak. Let's finish it.",
+        "Gladly. I know a wounded House when I see one.",
+        "In. I can't pass this one up."
+      ],
+      "warNo": [
+        "There's nothing to pick over there.",
+        "No. They're too healthy for my taste.",
+        "Pass. I wait for the bleeding to start."
+      ],
+      "tradeYes": [
+        "A good price. I'll take it.",
+        "Done. Somebody's loss, my gain.",
+        "Fair. I'd have been a fool to say no."
+      ],
+      "tradeNo": [
+        "Not worth my while.",
+        "No. I'll wait for it to get cheaper.",
+        "Pass. Prices only go down from here."
+      ],
+      "passageYes": [
+        "Go on through. I'll be watching.",
+        "Pass. I'm curious how it goes.",
+        "Through you go. I'll be nearby, just in case."
+      ],
+      "passageNo": [
+        "I'll keep my roads to myself.",
+        "No. My roads are for my own errands.",
+        "No. I don't let anyone get behind me."
+      ],
+      "offerTruce": [
+        "Let's not bleed each other for the others' sake.",
+        "Peace. Let someone else do the fighting for a while.",
+        "Truce. We both have better targets."
+      ],
+      "offerWar": [
+        "{target} is wounded. Let's finish them.",
+        "{target} has had a bad few turns. Let's make it worse.",
+        "{target} is bleeding. I'd hate to waste that."
+      ],
+      "breaks": [
+        "{place} is wide open. I'd be a fool not to take it.",
+        "{place} was just sitting there. The deal is over.",
+        "Nothing personal. {place} was unguarded and I'm practical."
+      ],
+      "yesTail": [
+        "I'd be a fool to say no.",
+        "Easy call.",
+        "Practical."
+      ],
+      "noTail": [
+        "Nothing in it for me.",
+        "Practical, that's all.",
+        "Ask me again when things change."
+      ]
+    },
+    "merchant": {
+      "truceYes": [
+        "Peace is good for business. Agreed.",
+        "Agreed. Fair terms, and cheaper than a war.",
+        "Done. Peace pays better than fighting."
+      ],
+      "truceNo": [
+        "Peace with you would cost me more than it's worth.",
+        "I ran the numbers. Peace with you doesn't pay.",
+        "Thanks for the offer, but it doesn't work for me."
+      ],
+      "warYes": [
+        "A war that pays. Count me in.",
+        "Agreed. The numbers on this one work.",
+        "Thanks for bringing it to me. I'm in."
+      ],
+      "warNo": [
+        "Wars are bad for business.",
+        "I ran the numbers, and that war loses money.",
+        "Thanks, but that war doesn't pay for itself."
+      ],
+      "tradeYes": [
+        "A fine bargain. Done.",
+        "Fair offer. Done.",
+        "Thanks, that's a good price. Done."
+      ],
+      "tradeNo": [
+        "The numbers don't work for me. Walk me through how you got there.",
+        "Thanks for the offer. Walk me through the math, because I'm not seeing it.",
+        "I appreciate it, but the price is off. Walk me through it."
+      ],
+      "passageYes": [
+        "Pass through. Trade follows armies.",
+        "Go ahead. Spend some gold in my markets on the way.",
+        "Agreed. Safe roads are good for everyone's business."
+      ],
+      "passageNo": [
+        "Armies on my roads scare off the traders.",
+        "No. Armies on my roads are bad for the markets.",
+        "Thanks, but my roads are for wagons."
+      ],
+      "offerTruce": [
+        "Peace is good for business. Let's have some.",
+        "A truce. It's cheaper for both of us.",
+        "Peace on our border. I'll show you the math if you like."
+      ],
+      "offerWar": [
+        "{target} is bad for business. Strike with me.",
+        "Join me against {target}. The numbers work for both of us.",
+        "{target} is costing us both. Let's fix that."
+      ],
+      "breaks": [
+        "{place} is worth more than our deal. Nothing personal, it's just the math.",
+        "I ran the numbers on {place}. The deal lost.",
+        "Our deal was good business until {place} was better business."
+      ],
+      "yesTail": [
+        "Good doing business with you.",
+        "The numbers work.",
+        "Thanks for bringing it to me."
+      ],
+      "noTail": [
+        "Walk me through it if I've got it wrong.",
+        "The numbers are the numbers.",
+        "Thanks for asking, though."
+      ]
+    }
+  },
+  "reasons": {
+    "plain": {
+      "notForMe": [
+        "That offer isn't for me."
+      ],
+      "badTerms": [
+        "Those terms don't fit the rules."
+      ],
+      "alreadyHave": [
+        "We already have a {deal}."
+      ],
+      "nothingLeft": [
+        "I have nothing left to bargain with."
+      ],
+      "cantSpare": [
+        "I can't spare {n} gold for a binding pact."
+      ],
+      "runawayGrow": [
+        "You're running away with the map. I won't help you grow."
+      ],
+      "runawayPass": [
+        "You're running away with the map. I won't let you through."
+      ],
+      "strongestGrow": [
+        "You're the strongest of us. I won't help you grow."
+      ],
+      "strongestPass": [
+        "You're the strongest of us. I won't let you through."
+      ],
+      "atWarWithPartner": [
+        "You're at war with {rival}, who has a deal with me. I won't let you through."
+      ],
+      "brokeOur": [
+        "You broke our {deal}."
+      ],
+      "brokeOurAt": [
+        "You broke our {deal} at {place}."
+      ],
+      "warFellThrough": [
+        "Our last joint war fell through. You never struck our target."
+      ],
+      "oathbreakerTo": [
+        "You broke your word to {rival}. That makes you an Oathbreaker."
+      ],
+      "oathbreaker": [
+        "You're an Oathbreaker."
+      ],
+      "noTrustYet": [
+        "I don't trust you yet."
+      ],
+      "noTrust": [
+        "I don't trust you."
+      ],
+      "makeBinding": [
+        "{why} Make it binding and it's a deal."
+      ],
+      "noHelp": [
+        "That doesn't help me."
+      ],
+      "bindingCosts": [
+        "A binding pact costs me {n} gold, and it isn't worth that."
+      ],
+      "noBorderPeace": [
+        "We don't even share a border, so peace costs me nothing."
+      ],
+      "noBorderBinding": [
+        "We don't share a border, so a binding pact isn't worth gold."
+      ],
+      "handsFree": [
+        "I'd rather keep my hands free."
+      ],
+      "targetNotStopping": [
+        "You're my target now. I'm not stopping."
+      ],
+      "needArmyRunaway": [
+        "I need my army against {rival}, who's running away with the map."
+      ],
+      "needArmyIn": [
+        "I need my army in {where}."
+      ],
+      "theirArmyBigger": [
+        "Your army at our border is bigger than mine. Peace suits me."
+      ],
+      "holdingFine": [
+        "I'm holding our border well enough without a truce."
+      ],
+      "capitalDoor": [
+        "Your army is at my capital's door. I'll take peace."
+      ],
+      "strongerFight": [
+        "I'm stronger on our border. I'd rather fight."
+      ],
+      "shieldsRunaway": [
+        "You're holding back {rival}. I won't stab you in the back."
+      ],
+      "peaceUntil": [
+        "Peace until {rival} is beaten suits me."
+      ],
+      "truceTooLong": [
+        "{n} turns is too long to tie my hands."
+      ],
+      "counterTruce": [
+        "{n} turns, not {m}, and we have a deal."
+      ],
+      "gladlyRunaway": [
+        "Gladly. {target} is running away with the map."
+      ],
+      "gladlyStrongest": [
+        "Gladly. {target} is the strongest of us."
+      ],
+      "counterWar": [
+        "{n} turns, and I'm in."
+      ],
+      "targetNoWar": [
+        "You're my target. I'm not joining a war on your side."
+      ],
+      "shieldsTarget": [
+        "{target} is holding back {rival}. I won't weaken them."
+      ],
+      "truceWithTarget": [
+        "I have a truce with {target}."
+      ],
+      "cantReach": [
+        "I can't reach {target} from where I stand."
+      ],
+      "bothWant": [
+        "We both want {target} beaten."
+      ],
+      "targetWeak": [
+        "{target}'s army near me is weak. Let's do it."
+      ],
+      "targetStrong": [
+        "{target} is too strong for me to take on right now."
+      ],
+      "warTooLong": [
+        "That's too long a war to promise."
+      ],
+      "targetNoPassage": [
+        "You're my target. I won't open my land to you."
+      ],
+      "noArmiesInLand": [
+        "I don't want your armies in my land."
+      ],
+      "mayPass": [
+        "You may pass. Keep moving."
+      ],
+      "beatFoe": [
+        "Go and beat {rival}. You may pass."
+      ],
+      "mutualFair": [
+        "And my armies may pass through yours. That's fair."
+      ],
+      "passageTooLong": [
+        "{n} turns is too long to keep my land open."
+      ],
+      "counterPassage": [
+        "{n} turns, and you may pass."
+      ],
+      "cantPay": [
+        "I don't have that much gold."
+      ],
+      "noCapital": [
+        "I won't give up my capital."
+      ],
+      "guardsCapital": [
+        "{place} guards my capital. It isn't for sale."
+      ],
+      "giftGladly": [
+        "{gain}, and nothing asked in return. Gladly."
+      ],
+      "fairPrice": [
+        "{gain} for {cost}. A fair price."
+      ],
+      "fairPricePlain": [
+        "A fair price."
+      ],
+      "notEnough": [
+        "I'd give {cost} for {gain}. Not enough."
+      ],
+      "needGold": [
+        "I need my gold for troops."
+      ],
+      "useGold": [
+        "I could use the gold now."
+      ],
+      "counterGold": [
+        "Make it {n} gold and it's a deal."
+      ],
+      "recruitWeaker": [
+        "You're stronger than me. Peace suits me."
+      ],
+      "recruitStronger": [
+        "I'm stronger than you. I'll take my chances."
+      ],
+      "recruitGladly": [
+        "Gladly. They're running away with the map."
+      ],
+      "recruitJoin": [
+        "I'm strong enough to join you."
+      ],
+      "recruitTooStrong": [
+        "They're too strong for me."
+      ],
+      "recruitNoPassage": [
+        "I don't let armies through my land."
+      ],
+      "recruitNoLand": [
+        "I don't give up land."
+      ],
+      "recruitFair": [
+        "Fair enough."
+      ],
+      "recruitNo": [
+        "No, thank you."
+      ],
+      "offerRunawayWar": [
+        "{target} is running away with the map. Let's stop them together."
+      ],
+      "offerPassage": [
+        "Let my armies through your land to reach {target}."
+      ],
+      "offerPassageRunaway": [
+        "Let my armies through your land to reach {target}, who's running away with the map."
+      ],
+      "offerPassageBeaten": [
+        "Let my armies through your land to reach {target}, who's nearly beaten."
+      ],
+      "offerTruceNeeded": [
+        "My army is needed in {where}. Let's have peace on our border."
+      ],
+      "offerTrucePlain": [
+        "Let's have peace on our border."
+      ],
+      "offerRecruitTruce": [
+        "You're stronger than me. Let's keep the peace."
+      ],
+      "offerBuyLand": [
+        "{place} would complete {province} for me. I'll pay {n} gold for it."
+      ],
+      "offerSellLand": [
+        "I'm short of gold. {place} is yours for a fair price."
+      ],
+      "breakWin": [
+        "One more battle wins the game. I won't let our {deal} stop me."
+      ],
+      "breakCapital": [
+        "Your capital at {place} is mine for the taking. Our {deal} isn't worth more than that."
+      ],
+      "breakRunaway": [
+        "You're running away with the map. Our {deal} is over."
+      ]
+    },
+    "voiced": {
+      "conqueror": {},
+      "blitzer": {},
+      "turtle": {},
+      "schemer": {},
+      "opportunist": {},
+      "merchant": {}
+    }
+  },
+  "leaders": {
+    "conqueror": {
+      "took": [
+        "Took {places}. {rival} ran before we got there.",
+        "Took {places} from {rival}. One plan, working as planned.",
+        "Took {places}. {rival} didn't hold the line for long.",
+        "Took {places}. Next."
+      ]
+    },
+    "blitzer": {
+      "took": [
+        "Took {places}. Already moving.",
+        "Took {places}. Didn't stop to look around.",
+        "Took {places}. {rival} were slow.",
+        "{places}. Done. Next."
+      ]
+    },
+    "turtle": {
+      "took": [
+        "Took {places}, and the walls are going up behind us.",
+        "Took {places}. Carefully. Now we hold it.",
+        "Took {places} from {rival}. I'd like a wall there next."
+      ]
+    },
+    "schemer": {
+      "took": [
+        "Took {places}, as planned. {rival} never saw it coming.",
+        "Took {places}. {rival} trusted the wrong neighbour.",
+        "Took {places}. Exactly as I said it would go. Well, as I thought it would."
+      ]
+    },
+    "opportunist": {
+      "took": [
+        "{rival} left {places} wide open. I'd have been a fool not to.",
+        "Took {places}. It came cheap.",
+        "Took {places}. {rival} weren't looking."
+      ]
+    },
+    "merchant": {
+      "took": [
+        "Took {places}. Good land, and it will pay.",
+        "Took {places}. That's income every turn from here on.",
+        "Took {places}. The ledger looks better already."
+      ]
+    }
+  }
+}

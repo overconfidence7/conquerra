@@ -20,6 +20,7 @@ import {
   type TerritoryId,
 } from "@conquerra/engine";
 import { attackingPartner, captainWeighs, dealBoard, frontWith, helpsProposer, leads, namesFor, proposeOffers, trustIn, type Answer } from "../diplomacy";
+import { say, sayOwn, speakerOf } from "../say";
 import type { Insight } from "./judge";
 import { marshalBoard } from "./plan";
 
@@ -27,7 +28,8 @@ import { marshalBoard } from "./plan";
  * The Marshal's diplomacy (session 17). It weighs an offer exactly as the Captain does (its fronts, who's ahead, what
  * the deal frees up or costs, trust), on its own reading of the board (its land estimates and runaway rule), and adds
  * its personality: how much it likes each kind of deal. When its style is what decides, it says so in its own voice
- * ("Peace suits me; my walls aren't finished."). Every answer still has one plain reason.
+ * ("Peace works for me. My walls aren't finished yet."). Every answer still has one plain reason, and the shared
+ * reasons are said in its voice too (the line library, session 22).
  */
 
 const CAPITAL_GAIN = 40;
@@ -36,7 +38,7 @@ const WIN_GAIN = 1000;
 const RUNAWAY_GAIN = 30;
 
 /** The offer's kind, in the personality's voice: yes and no. */
-type Line = Exclude<keyof Personality["voice"], "took">;
+type Line = "truceYes" | "truceNo" | "warYes" | "warNo" | "tradeYes" | "tradeNo" | "passageYes" | "passageNo";
 const VOICE: Record<DealKind, [Line, Line]> = {
   truce: ["truceYes", "truceNo"],
   war: ["warYes", "warNo"],
@@ -50,33 +52,34 @@ export function marshalJudge(ctx: GameContext, view: PlayerView, offer: Offer, P
   const t = offer.terms;
   const rules = ctx.rules;
   const no = (reason: string): Answer => ({ accept: false, reason });
-  if (offer.to !== me || p === me) return no("That offer isn't for me.");
-  if (termsProblem(rules, t)) return no("Those terms don't fit the rules.");
-  if (view.deals.some((d) => between(d, me, p) && d.kind === t.kind)) return no(`We already have a ${DEAL_NAME[t.kind]}.`);
+  const sp = speakerOf(view, P.id);
+  const x = offer.id;
+  if (offer.to !== me || p === me) return no(say(sp, "notForMe", {}, x));
+  if (termsProblem(rules, t)) return no(say(sp, "badTerms", {}, x));
+  if (view.deals.some((d) => between(d, me, p) && d.kind === t.kind)) return no(say(sp, "alreadyHave", { deal: DEAL_NAME[t.kind] }, x));
   const b = marshalBoard(ctx, view, insight, lastTurn);
-  if (!b) return no("I have nothing left to bargain with.");
+  if (!b) return no(say(sp, "nothingLeft", {}, x));
   const n = namesFor(ctx, view);
   const idx = indexMap(ctx.map);
   const owner = dealBoard(view).owner;
   const cost = offer.bond === "binding" ? bindingCost(rules, dealSize(rules, idx, t, p, me, owner)) : 0;
   const myGold = view.me.gold - (t.kind === "trade" ? (t.get.gold ?? 0) : 0);
-  if (cost > 0 && cost > myGold) return no(`I can't spare ${cost} gold for a binding pact.`);
-  const grow = t.kind === "passage" ? "I won't let you through." : "I won't help you grow.";
-  if (b.runaway === p && helpsProposer(t)) return no(`You're running away with the map. ${grow}`);
-  if (helpsProposer(t) && t.kind !== "war" && leads(b, p)) return no(`You're the strongest of us. ${grow}`);
+  if (cost > 0 && cost > myGold) return no(say(sp, "cantSpare", { n: cost }, x));
+  if (b.runaway === p && helpsProposer(t)) return no(say(sp, t.kind === "passage" ? "runawayPass" : "runawayGrow", {}, x));
+  if (helpsProposer(t) && t.kind !== "war" && leads(b, p)) return no(say(sp, t.kind === "passage" ? "strongestPass" : "strongestGrow", {}, x));
   if (t.kind === "passage") {
     const ally = attackingPartner(view, p, lastTurn);
-    if (ally) return no(`You're at war with ${n.name(ally)}, who has a deal with me. I won't let you through.`);
+    if (ally) return no(say(sp, "atWarWithPartner", { rival: n.name(ally) }, x));
   }
-  const trust = trustIn(ctx, view, p);
+  const trust = trustIn(ctx, view, p, sp);
   const r = rules.diplomacy.bots;
-  const verdict = captainWeighs(ctx, view, b, offer, cost);
+  const verdict = captainWeighs(ctx, view, b, offer, cost, sp);
   // Its personality: how much it likes this kind of deal, said in its own voice.
   const bias = P.deals[t.kind];
   const [yes, nay] = VOICE[t.kind];
-  if (bias) verdict.factors.push({ w: bias, text: P.voice[bias > 0 ? yes : nay] });
+  if (bias) verdict.factors.push({ w: bias, text: sayOwn(sp, bias > 0 ? yes : nay, {}, x) ?? "" });
   // Every Marshal is in on a joint war against the runaway leader.
-  if (t.kind === "war" && t.target === insight.runaway) verdict.factors.push({ w: 10, text: `Gladly: ${n.name(t.target)} is running away with the map.` });
+  if (t.kind === "war" && t.target === insight.runaway) verdict.factors.push({ w: 10, text: say(sp, "gladlyRunaway", { target: n.name(t.target) }, x) });
   const score = verdict.factors.reduce((a, f) => a + f.w, 0);
   const strongest = (sign: 1 | -1) => [...verdict.factors].filter((f) => Math.sign(f.w) === sign).sort((x, y) => Math.abs(y.w) - Math.abs(x.w))[0]?.text;
   const isCounter = !!offer.counterTo;
@@ -87,12 +90,12 @@ export function marshalJudge(ctx: GameContext, view: PlayerView, offer: Offer, P
   });
   if (offer.bond === "handshake" && trust.score < r.trustMin) {
     const price = bindingCost(rules, dealSize(rules, idx, t, me, p, owner));
-    if (score > r.acceptMargin && !isCounter && price <= myGold) return counterOf(t, "binding", `${trust.why ?? "I don't trust you yet."} Make it binding and it's a deal.`);
-    return no(trust.why ?? "I don't trust you.");
+    if (score > r.acceptMargin && !isCounter && price <= myGold) return counterOf(t, "binding", say(sp, "makeBinding", { why: trust.why ?? say(sp, "noTrustYet", {}, x) }, x));
+    return no(trust.why ?? say(sp, "noTrust", {}, x));
   }
   if (score > r.acceptMargin && strongest(1)) return { accept: true, reason: strongest(1)! };
   if (verdict.counter && !isCounter && score >= -r.counterMargin) return counterOf(verdict.counter.terms, offer.bond, verdict.counter.why);
-  return no(strongest(-1) ?? "That doesn't help me.");
+  return no(strongest(-1) ?? say(sp, "noHelp", {}, x));
 }
 
 /**
@@ -108,6 +111,7 @@ export function marshalPropose(ctx: GameContext, view: PlayerView, P: Personalit
   if (!b) return [];
   const me = view.me.id;
   const n = namesFor(ctx, view);
+  const sp = speakerOf(view, P.id);
   const R = insight.runaway;
   // A joint war against the runaway leader comes first and sticks (Part 3): for as long as a war can run, with a rival
   // that borders it (or anyone, if we border it ourselves), and again as soon as one ends (no waiting a few turns).
@@ -121,10 +125,10 @@ export function marshalPropose(ctx: GameContext, view: PlayerView, P: Personalit
       .filter((q) => trustIn(ctx, view, q).score >= rules.diplomacy.bots.trustMin && (bordersR(q) || b.facing.has(R)))
       .filter((q) => !(lastTurn ?? []).some((e) => e.type === "offerLapsed" && e.offer.from === me && e.offer.to === q && e.offer.terms.kind === "war"))
       .sort((x, y) => Number(bordersR(y)) - Number(bordersR(x)) || (b.knownLand.get(y) ?? 0) - (b.knownLand.get(x) ?? 0) || (x < y ? -1 : 1))[0];
-    return partner ? { id: `${me}-t${view.turn}-ow`, from: me, to: partner, terms: { kind: "war", target: R, turns: rules.diplomacy.war.maxTurns }, bond: "handshake", note: `${n.name(R)} is running away with the map; let's stop them together.` } : null;
+    return partner ? { id: `${me}-t${view.turn}-ow`, from: me, to: partner, terms: { kind: "war", target: R, turns: rules.diplomacy.war.maxTurns }, bond: "handshake", note: say(sp, "offerRunawayWar", { target: n.name(R) }, "ow") } : null;
   };
   const first = runawayWar();
-  const out = first ? [first, ...proposeOffers(ctx, view, "captain", lastTurn, b).filter((o) => !(o.terms.kind === "war" && o.terms.target === R))].slice(0, cap) : proposeOffers(ctx, view, "captain", lastTurn, b);
+  const out = first ? [first, ...proposeOffers(ctx, view, "captain", lastTurn, b, P.id).filter((o) => !(o.terms.kind === "war" && o.terms.target === R))].slice(0, cap) : proposeOffers(ctx, view, "captain", lastTurn, b, P.id);
   if (out.length >= cap) return out;
   const has = (q: PlayerId, kind: DealKind) => view.deals.some((d) => between(d, me, q) && d.kind === kind);
   const recent = (q: PlayerId, kind: DealKind) => view.record.some((x) => x.kind === kind && between(x, me, q) && x.end >= view.turn - 3);
@@ -140,14 +144,14 @@ export function marshalPropose(ctx: GameContext, view: PlayerView, P: Personalit
       .map((x) => x.id)
       .filter((q) => q !== target && q !== R && ok(q, "war") && bordersT(q) && !view.deals.some((d) => between(d, q, target) && (d.kind === "truce" || d.kind === "war")))
       .sort((x, y) => (b.knownLand.get(y) ?? 0) - (b.knownLand.get(x) ?? 0) || (x < y ? -1 : 1))[0];
-    if (partner) add(partner, { kind: "war", target, turns: rules.diplomacy.war.defaultTurns }, P.voice.offerWar.replace("{target}", n.name(target)));
+    if (partner) add(partner, { kind: "war", target, turns: rules.diplomacy.war.defaultTurns }, sayOwn(sp, "offerWar", { target: n.name(target) }, `o${out.length}`)!);
   }
   // A truce with a neighbour it isn't fighting (never the runaway or its target).
   if (P.deals.offersTruces && out.length < cap) {
     const quiet = [...b.facing]
       .filter(([q]) => q !== R && q !== b.focus && q !== target && !insight.warTargets.has(q) && ok(q, "truce"))
       .sort((x, y) => y[1] - x[1] || (x[0] < y[0] ? -1 : 1))[0];
-    if (quiet) add(quiet[0], { kind: "truce", scope: { kind: "all" }, turns: rules.diplomacy.truce.defaultTurns }, P.voice.offerTruce);
+    if (quiet) add(quiet[0], { kind: "truce", scope: { kind: "all" }, turns: rules.diplomacy.truce.defaultTurns }, sayOwn(sp, "offerTruce", {}, `o${out.length}`)!);
   }
   return out;
 }
@@ -164,6 +168,7 @@ export function marshalBreaks(ctx: GameContext, view: PlayerView, P: Personality
   if (!b) return [];
   const rules = ctx.rules;
   const n = namesFor(ctx, view);
+  const sp = speakerOf(view, P.id);
   const out: Order[] = [];
   for (const d of handshakes) {
     const p = otherSide(d, view.me.id);
@@ -181,8 +186,7 @@ export function marshalBreaks(ctx: GameContext, view: PlayerView, P: Personality
     const stop = p === insight.runaway && b.facing.has(p) && frontWith(b, p).mine >= frontWith(b, p).theirs;
     const gain = win ? WIN_GAIN : capital ? CAPITAL_GAIN + b.valueOf(capital) : stop ? RUNAWAY_GAIN : 0;
     if (!gain || gain < P.deals.breakGain * penalty) continue;
-    const place = capital ? n.place(capital) : stop ? `Stopping ${n.name(p)}` : "The win";
-    const note = win ? `One more battle wins the game; I won't let our ${DEAL_NAME[d.kind]} stop me.` : stop ? `You're running away with the map; our ${DEAL_NAME[d.kind]} is over.` : P.voice.breaks.replace("{place}", place);
+    const note = win ? say(sp, "breakWin", { deal: DEAL_NAME[d.kind] }, d.id) : stop ? say(sp, "breakRunaway", { deal: DEAL_NAME[d.kind] }, d.id) : (sayOwn(sp, "breaks", { place: n.place(capital!) }, d.id) ?? say(sp, "breakCapital", { place: n.place(capital!), deal: DEAL_NAME[d.kind] }, d.id));
     out.push({ id: `${view.me.id}-t${view.turn}-break-${d.id}`, kind: "break", deal: d.id, note });
   }
   return out;

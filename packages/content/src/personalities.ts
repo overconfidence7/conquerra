@@ -9,28 +9,6 @@ import { z } from "zod";
 
 const Odds = z.number().min(0);
 
-/** What one personality says in its own voice when its style decides an answer (one plain line). */
-const Voice = z.object({
-  truceYes: z.string(),
-  truceNo: z.string(),
-  warYes: z.string(),
-  warNo: z.string(),
-  tradeYes: z.string(),
-  tradeNo: z.string(),
-  passageYes: z.string(),
-  passageNo: z.string(),
-  /** Breaking a handshake deal: `{place}` is the prize. */
-  breaks: z.string(),
-  /** Its own offers' notes: a truce, a joint war (`{target}`), a trade. */
-  offerTruce: z.string(),
-  offerWar: z.string(),
-  /**
-   * Session 20c: a leader of yours with this personality, in the report when it took land: `{places}` (the land it
-   * took) and `{rival}` (whose it was: "Morwen's lot", or "the locals" for empty land). None: it says nothing.
-   */
-  took: z.string().optional(),
-});
-
 export const Personality = z.object({
   /** The six bots' personalities; "delegate" is the style your leaders plan with (session 18), never dealt to a bot. */
   id: z.enum(["conqueror", "blitzer", "turtle", "schemer", "opportunist", "merchant", "delegate"]),
@@ -108,7 +86,6 @@ export const Personality = z.object({
     /** It offers joint wars against its own target, not only against a runaway. */
     offersWars: z.boolean(),
   }),
-  voice: Voice,
 });
 export type Personality = z.infer<typeof Personality>;
 export type PersonalityId = Personality["id"];
