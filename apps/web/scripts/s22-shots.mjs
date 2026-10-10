@@ -138,4 +138,86 @@ if (want("replay")) {
   }
 }
 
+// ---------- Part 2: the six personalities on the deal card, a bot's offer, a broken deal in the report ----------
+/** Play a turn to its end (the replay skipped), the report closed. */
+async function playTurn(p) {
+  await p.evaluate(() => void window.__conquerraStore.getState().lockIn());
+  await p.waitForFunction(() => window.__conquerraStore.getState().replay, { timeout: 90000 });
+  await endReplay(p);
+  await p.waitForFunction(() => !window.__conquerraStore.getState().replay && !window.__conquerraStore.getState().busy, { timeout: 90000 });
+}
+if (want("deals")) {
+  const said = [];
+  for (const phone of [false, true]) {
+    const sfx = phone ? "-phone" : "";
+    const done = new Set();
+    for (const save of ["s20d-purse.json", "s20b-save.json"]) {
+      const p = await page(phone);
+      await p.goto(URL, { waitUntil: "networkidle0" });
+      await load(p, file(save));
+      // A bot's offer to you, if one is waiting.
+      if (!done.has("offer") && (await p.evaluate(() => (window.__conquerraStore.getState().offers ?? []).length > 0))) {
+        await p.evaluate(() => { const s = window.__conquerraStore.getState(); s.openOffer(s.offers[0]); });
+        await shot(p, "s22-deal-offer", sfx, { wait: 900 });
+        said.push(await p.evaluate(() => document.querySelector(".deal-answer")?.textContent ?? ""));
+        await p.evaluate(() => window.__conquerraStore.getState().closeDeal());
+        done.add("offer");
+      }
+      const bots = await p.evaluate(() => window.__conquerraStore.getState().view.players.filter((x) => x.eliminatedTurn === null && x.id !== window.__conquerraStore.getState().view.me.id).map((x) => ({ id: x.id, name: x.name })));
+      const style = JSON.parse(file(save)).state.players.reduce((m, x) => ((m[x.id] = x.leaders[0]?.personality), m), {});
+      for (const b of bots) {
+        const who = style[b.id];
+        if (!who || done.has(who) || (phone && !["merchant", "schemer"].includes(who))) continue;
+        for (const kind of ["truce", "passage"]) {
+          await p.evaluate((to, kind) => window.__conquerraStore.getState().openPropose(to, kind), b.id, kind);
+          await sleep(400);
+          await p.evaluate(async () => { const s = window.__conquerraStore.getState(); await s.sendOffer(s.deal.offer); });
+          await p.waitForSelector(".deal-answer", { timeout: 5000 }).catch(() => {});
+          const text = await p.evaluate(() => document.querySelector(".deal-answer")?.textContent ?? "");
+          said.push(`${who} ${kind}: ${text}`);
+          await shot(p, `s22-deal-${who}-${kind}`, sfx, { wait: 600 });
+          await p.evaluate(() => window.__conquerraStore.getState().closeDeal());
+        }
+        done.add(who);
+      }
+      await p.close();
+    }
+  }
+  // A broken deal in the report: play the Wyrmland game on (your Leader running the military) until a bot breaks one
+  // where you can see it.
+  const p = await page(false);
+  await p.goto(URL, { waitUntil: "networkidle0" });
+  await load(p, file(process.env.BROKEN_SAVE ?? "s20b-save.json"));
+  await p.evaluate(async () => {
+    const s = window.__conquerraStore.getState();
+    await s.setInstruction(`leader:${s.view.me.id}`, { kind: "military" });
+    await s.setBudget(`leader:${s.view.me.id}`, { share: 0.6 });
+  });
+  let broke = false;
+  for (let turn = 0; turn < 30 && !broke; turn++) {
+    // Accept every offer, and offer a truce to everyone: more deals for someone to break.
+    await p.evaluate(async () => {
+      const s = window.__conquerraStore.getState();
+      for (const o of s.offers ?? []) s.answerOffer(o, true);
+      for (const x of s.view.players.filter((x) => x.eliminatedTurn === null && x.id !== s.view.me.id)) {
+        s.openPropose(x.id, "truce");
+        const st = window.__conquerraStore.getState();
+        if (st.deal) await st.sendOffer(st.deal.offer);
+        window.__conquerraStore.getState().closeDeal();
+      }
+    });
+    await playTurn(p);
+    broke = await p.evaluate(() => (window.__conquerraStore.getState().report?.events ?? []).some((e) => e.type === "dealBroken" && e.note));
+    if (broke) {
+      await p.evaluate(() => window.__conquerraStore.getState().setShowReport(true));
+      await shot(p, "s22-report-broken", "", { wait: 1500 });
+      said.push(await p.evaluate(() => [...document.querySelectorAll(".log li")].map((x) => x.textContent).filter((t) => /broke/.test(t)).join(" | ")));
+    }
+    if (await p.evaluate(() => !!window.__conquerraStore.getState().view.winner)) break;
+  }
+  if (!broke) console.log("  (no broken deal seen in 30 turns)");
+  await p.close();
+  console.log(said.join("\n"));
+}
+
 await browser.close();
