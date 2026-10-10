@@ -49,6 +49,12 @@ describe("title cards", () => {
     for (let i = 1; i < cards.length; i++) expect(cards[i]!.at - cards[i - 1]!.at).toBeGreaterThanOrEqual(cards[i - 1]!.ms);
   });
 
+  it("knows its event, so the event's small banner stays quiet (session 22: one headline per event)", () => {
+    const fall = battle(2, cap, true);
+    const cards = titleCards(buildTimeline([battle(1, from, true, "p3"), fall]), view, ctx.map);
+    expect(cards.map((c) => c.event)).toEqual([fall]);
+  });
+
   it("never for a fogged event: a fogged battle, even at your capital's province, is only a pulse", () => {
     const prov = ctx.map.territories.find((t) => t.id === cap)!.province;
     const tl = buildTimeline([{ type: "surface", step: 1, what: "battle", province: prov }]);

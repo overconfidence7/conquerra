@@ -18,7 +18,8 @@ export function useReplay(
   ctx: GameContext | null,
   replay: { before: PlayerView; report: TurnReport; key: number } | null,
   renderer: React.MutableRefObject<MapRenderer | null>,
-  onBeat: (b: Beat) => void,
+  /** `carded`: the events that have a title card (their small banner stays quiet: one headline per event). */
+  onBeat: (b: Beat, carded: ReadonlySet<unknown>) => void,
   onEnd: () => void,
 ) {
   const timeline = useMemo(() => (replay ? buildTimeline(replay.report.events) : null), [replay]);
@@ -27,6 +28,7 @@ export function useReplay(
   const [progress, setProgress] = useState(0);
   // Title cards for the moments that matter (session 21): a capital falling, a House knocked out.
   const cards = useMemo(() => (replay && timeline && ctx ? titleCards(timeline, replay.before, ctx.map) : []), [replay, timeline, ctx]);
+  const carded = useMemo(() => new Set<unknown>(cards.map((c) => c.event)), [cards]);
   const [card, setCard] = useState<TitleCard | null>(null);
   const skipRef = useRef(false);
   const cb = useRef({ onBeat, onEnd });
@@ -85,7 +87,7 @@ export function useReplay(
         lastApplyAt = now;
         setApplied((lastApplied = f.applied));
       }
-      if (f.beat && f.beat !== lastBeat) cb.current.onBeat((lastBeat = f.beat));
+      if (f.beat && f.beat !== lastBeat) cb.current.onBeat((lastBeat = f.beat), carded);
       const c = f.done ? null : cardAt(cards, t);
       if (c !== lastCard) setCard((lastCard = c));
       const p = timeline.total ? Math.min(1, t / timeline.total) : 1;
@@ -104,7 +106,7 @@ export function useReplay(
       comeBack();
       renderer.current?.setReplay(null);
     };
-  }, [replay, timeline, spots, renderer, cards]);
+  }, [replay, timeline, spots, renderer, cards, carded]);
 
   const shown: PlayerView | null = useMemo(() => (replay ? replayView(replay.before, replay.report.events, applied) : null), [replay, applied]);
   return { view: shown, progress, card, skip: () => (skipRef.current = true), total: timeline?.total ?? 0, ctx };

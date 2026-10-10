@@ -259,11 +259,12 @@ export function GameScreen() {
   }, []);
 
   const onBeat = useCallback(
-    (b: Beat) => {
+    (b: Beat, carded: ReadonlySet<unknown>) => {
       if (!ctx || !view) return;
       let n = 0;
       for (const e of b.events) {
-        const t = toastFor(ctx, view, e);
+        // A title card already says it (session 22): one headline per event.
+        const t = carded.has(e) ? null : toastFor(ctx, view, e);
         // Banners always show; at most two other toasts a beat.
         if (t && (t.banner || n++ < 2)) pushToast(t);
       }
@@ -645,7 +646,7 @@ export function GameScreen() {
   // The vista for the selected territory: a slim strip at the top of its panel.
   const vista = selected && act && !draft && !recruitOpen ? <SelectedVista ctx={ctx} id={selected} /> : null;
   return (
-    <div className={`game desktop ${dockOpen ? "dock-open" : "dock-folded"} ${clock?.pausedLeft !== undefined ? "timer-paused" : ""}`}>
+    <div className={`game desktop ${dockOpen ? "dock-open" : "dock-folded"} ${replaying ? "replaying" : ""} ${clock?.pausedLeft !== undefined ? "timer-paused" : ""}`}>
       {map}
       {topbar}
       <div className="map-tools" style={{ top: DESKTOP_INSETS.top + 4, right: DESKTOP_INSETS.right + 4 }}>

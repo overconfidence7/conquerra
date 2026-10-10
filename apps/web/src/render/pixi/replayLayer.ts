@@ -27,6 +27,9 @@ import type { FxLayer } from "./fxLayer";
  */
 
 const GOLD = 0xc9a45c, GOLD_HI = 0xe3c77e, PARCH = 0xede6d6, INK = 0x1b1206, NAVY = 0x0f1620;
+/** Numbers in the info font; words (what popped up) in the game's display font. */
+const NUMBER_FONT = "Manrope, sans-serif", WORD_FONT = "Cinzel, serif";
+const capitalised = (s: string) => (s ? s[0]!.toUpperCase() + s.slice(1) : s);
 /** A figure's height on screen at Mid zoom (px). */
 const FIGURE_PX = 40;
 
@@ -104,14 +107,15 @@ export class ReplayLayer {
     this.show.visible = level !== "off";
   }
 
-  private text(i: number, value: string, size: number, color: number): Text {
+  private text(i: number, value: string, size: number, color: number, font: string = NUMBER_FONT): Text {
     let t = this.texts[i];
     if (!t) {
-      t = new Text({ text: value, style: { fontFamily: "Manrope, sans-serif", fontWeight: "800", fontSize: size, fill: color, stroke: { color: INK, width: 3 } }, resolution: 2 });
+      t = new Text({ text: value, style: { fontFamily: font, fontWeight: "800", fontSize: size, fill: color, stroke: { color: INK, width: 3 } }, resolution: 2 });
       t.anchor.set(0.5);
       this.texts.push(t);
       this.root.addChild(t);
     }
+    if (t.style.fontFamily !== font) t.style.fontFamily = font;
     if (t.text !== value) t.text = value;
     if (t.style.fontSize !== size) t.style.fontSize = size;
     if (t.style.fill !== color) t.style.fill = color;
@@ -323,9 +327,16 @@ export class ReplayLayer {
         const col = colour(it.player);
         const ring = (10 + 26 * it.progress) * zk;
         g.circle(x, y, ring).stroke({ width: 3, color: col, alpha: 1 - it.progress });
-        const t = this.text(ti++, it.label, 14 * Math.min(1.2, zk), 0xffe9b0);
-        t.position.set(x, y - (20 + 18 * it.progress) * zk);
-        t.alpha = Math.min(1, (1 - it.progress) * 2.5);
+        // The word on a small ink plate with its House's colour, in the game's display font (session 22), like the
+        // result plaque: "Fire", "Culture", "Fort".
+        const fade = Math.min(1, (1 - it.progress) * 2.5);
+        const t = this.text(ti++, capitalised(it.label), 13 * Math.min(1.2, zk), GOLD_HI, WORD_FONT);
+        const ty = y - (20 + 18 * it.progress) * zk;
+        t.position.set(x, ty);
+        t.alpha = fade;
+        const w = t.width + 16 * zk, h = t.height + 4 * zk;
+        g.roundRect(x - w / 2, ty - h / 2, w, h, 6 * zk).fill({ color: NAVY, alpha: 0.9 * fade }).stroke({ width: 1.2, color: GOLD, alpha: fade });
+        g.rect(x - w / 2, ty - h / 2, 4 * zk, h).fill({ color: col, alpha: fade });
       } else {
         // Something stirs in the fog: two soft rings and a pale dot, the same for every fogged event.
         const [x, y] = scr(it);

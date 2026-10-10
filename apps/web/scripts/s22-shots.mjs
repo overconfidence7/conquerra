@@ -1,0 +1,141 @@
+/**
+ * Session 22 screenshots (the language pass), desktop and a 384 px phone, into docs/art/screens/s22-*.png.
+ *   node apps/web/scripts/s22-shots.mjs [part...]     parts: replay (Step 0), deals (Part 2), leaders (Part 3),
+ *                                                    words (Part 4); none = all
+ *   ONLY=name for one shot, MAP_URL=... for another server.
+ * Needs the built game running (`pnpm build`, then the web-preview server on 4173). Real saves: session 20d's
+ * Wyrmland game (s20d-purse.json) and session 20c's finishing save (s20c-save.json).
+ */
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import puppeteer from "puppeteer-core";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
+const out = process.env.OUT ?? join(root, "docs/art/screens");
+const URL = process.env.MAP_URL ?? "http://localhost:4173/";
+const only = process.env.ONLY ?? "";
+const parts = new Set(process.argv.slice(2));
+const want = (p) => !parts.size || parts.has(p);
+const file = (n) => readFileSync(join(root, `docs/art/screens/${n}`), "utf8");
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const browser = await puppeteer.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true, args: ["--enable-gpu", "--use-angle=d3d11"] });
+const shot = async (p, name, sfx, opts = {}) => {
+  if (only && !name.includes(only)) return;
+  await sleep(opts.wait ?? 900);
+  await p.screenshot({ path: join(out, `${name}${sfx}.png`), ...(opts.clip ? { clip: opts.clip } : {}) });
+  console.log("  saved", `${name}${sfx}.png`);
+};
+const mapReady = (p) => p.waitForFunction(() => { const s = window.__conquerraMap?.stats?.(); return s && s.firstMapMs > 0 && s.tilesBaked === s.tileCount; }, { timeout: 120000, polling: 200 });
+const load = async (p, f) => {
+  await p.evaluate((f) => window.__conquerraStore.getState().load({ file: f }), f);
+  await p.waitForFunction(() => window.__conquerraStore.getState().view, { timeout: 60000 });
+  await mapReady(p);
+  await p.evaluate(() => window.__conquerraStore.getState().setShowReport?.(false));
+};
+/** Centre the map on some territories at a zoom: a territory this many px wide on screen (120 Mid, 260 Near). */
+const look = (p, ids, px) =>
+  p.evaluate((ids, px) => {
+    const st = window.__conquerraStore.getState();
+    const g = st.ctx.map.geometry;
+    const pts = ids.map((id) => g.territories.find((x) => x.id === id)?.label).filter(Boolean);
+    const x = pts.reduce((a, q) => a + q.x, 0) / pts.length, y = pts.reduce((a, q) => a + q.y, 0) / pts.length;
+    const cam = window.__conquerraMap.camera;
+    cam.centreOn(x, y, px / cam.territorySize);
+  }, ids, px);
+const settle = (p) => p.waitForFunction(() => (window.__conquerraMap?.pendingNear?.() ?? 0) === 0, { timeout: 30000, polling: 100 }).catch(() => {});
+
+async function page(phone) {
+  const p = await browser.newPage();
+  if (phone) await p.emulate({ viewport: { width: 384, height: 832, deviceScaleFactor: 2.5, isMobile: true, hasTouch: true }, userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Mobile Safari/537.36" });
+  else await p.setViewport({ width: 1440, height: 900 });
+  p.on("pageerror", (e) => console.log("page error:", e.message));
+  return p;
+}
+
+/** Lock in and wait for the replay, held at its start. Returns the timeline's beats with what each is about. */
+async function replayTurn(p) {
+  await p.evaluate(() => (window.__conquerraReplayAt = 0));
+  await p.evaluate(() => void window.__conquerraStore.getState().lockIn());
+  await p.waitForFunction(() => window.__conquerraTimeline && window.__conquerraStore.getState().replay, { timeout: 90000 });
+  return p.evaluate(() => {
+    const st = window.__conquerraStore.getState();
+    const before = st.replay.before;
+    const capitals = new Set([before.me.capital, ...Object.entries(before.territories).filter(([, t]) => t.detail === "full" && t.capitalOf).map(([id]) => id)]);
+    return window.__conquerraTimeline.beats.map((b, i) => {
+      const e = b.events[0];
+      const battles = b.events.filter((x) => x.type === "battle");
+      return {
+        i, kind: b.kind, start: b.start, duration: b.duration,
+        to: e?.to ?? e?.territory ?? null,
+        troops: battles.reduce((n, x) => n + x.attackers.troops + x.defenders.troops, 0),
+        captured: battles.some((x) => x.captured),
+        capital: battles.some((x) => x.captured && capitals.has(x.to)),
+        out: b.events.find((x) => x.type === "eliminated")?.player ?? null,
+        mine: b.events.some((x) => x.player === before.me.id || x.defender === before.me.id),
+      };
+    });
+  });
+}
+/** Hold the replay at a moment, the camera at Mid on a territory (the replay's own camera stops: you "moved" it). */
+async function holdAt(p, at, focus, px) {
+  await p.evaluate((at) => (window.__conquerraReplayAt = at), at);
+  if (focus) await look(p, [focus], px);
+  await p.evaluate(() => (window.__conquerraMap.camera.userMoves = (window.__conquerraMap.camera.userMoves ?? 0) + 1));
+  await sleep(1200);
+}
+const endReplay = (p) => p.evaluate(() => { delete window.__conquerraReplayAt; const g = window.__conquerraStore.getState(); g.endReplay?.(); g.setShowReport?.(false); });
+
+
+// ---------- Step 0: the replay has the whole map on the desktop; one headline per event; the floating words ----------
+if (want("replay")) {
+  for (const width of [1440, 1024]) {
+    const p = await page(false);
+    await p.setViewport({ width, height: 900 });
+    await p.evaluateOnNewDocument(() => { localStorage.setItem("conquerra.effects", "full"); localStorage.setItem("conquerra.effects.noAuto", "1"); localStorage.setItem("conquerra.dock", "open"); });
+    await p.goto(URL, { waitUntil: "networkidle0" });
+    await load(p, file("s20d-purse.json"));
+    // Planning, with a territory chosen: the panel and the dock are open.
+    await p.evaluate(() => { const s = window.__conquerraStore.getState(); s.select(s.view.me.capital); });
+    await shot(p, `s22-plan-${width}`, "", { wait: 1500 });
+    const beats = await replayTurn(p);
+    const big = [...beats].filter((b) => b.kind === "battle").sort((a, b) => b.troops - a.troops)[0];
+    if (big) (await holdAt(p, big.start + big.duration * 0.56, big.to, 170), await shot(p, `s22-replay-${width}`, "", { wait: 1200 }));
+    // A pop on the map: the word on its plate (a recruit, a building, culture).
+    const pop = beats.find((b) => b.kind === "pop" && b.mine) ?? beats.find((b) => b.kind === "pop");
+    if (pop) (console.log("  pop", JSON.stringify(pop)), await holdAt(p, pop.start + pop.duration * 0.25, pop.to, 220), await shot(p, `s22-pop-${width}`, "", { wait: 600 }));
+    await endReplay(p);
+    await shot(p, `s22-after-${width}`, "", { wait: 1200 });
+    await p.close();
+  }
+  // A capital falling: the title card only, no banner for the same news (session 20c's finishing save).
+  for (const phone of [false, true]) {
+    const sfx = phone ? "-phone" : "";
+    const p = await page(phone);
+    await p.evaluateOnNewDocument(() => { localStorage.setItem("conquerra.effects", "full"); localStorage.setItem("conquerra.effects.noAuto", "1"); });
+    await p.goto(URL, { waitUntil: "networkidle0" });
+    await load(p, file("s20c-save.json"));
+    await p.evaluate(async () => {
+      const s = window.__conquerraStore.getState();
+      await s.setInstruction(`leader:${s.view.me.id}`, { kind: "military" });
+      await s.setBudget(`leader:${s.view.me.id}`, { share: 0.8 });
+    });
+    let got = false;
+    for (let turn = 0; turn < 6 && !got; turn++) {
+      const beats = await replayTurn(p);
+      const b = beats.find((x) => x.capital) ?? beats.find((x) => x.out);
+      if (b) {
+        await holdAt(p, b.start + b.duration * (b.capital ? 0.8 : 0.3), b.to, phone ? 120 : 170);
+        await p.waitForSelector(".title-card", { timeout: 3000 }).catch(() => {});
+        await shot(p, "s22-title", sfx, { wait: 300 });
+        got = true;
+      }
+      await endReplay(p);
+      if (await p.evaluate(() => !!window.__conquerraStore.getState().view.winner)) break;
+    }
+    if (!got) console.log(`  (no title card seen${sfx})`);
+    await p.close();
+  }
+}
+
+await browser.close();

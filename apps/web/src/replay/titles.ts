@@ -1,5 +1,5 @@
 import type { MapDef } from "@conquerra/content";
-import type { PlayerView } from "@conquerra/engine";
+import type { PlayerView, ReplayEvent } from "@conquerra/engine";
 import { houseOf } from "../map/houses";
 import { RESULT_AT, type Beat, type Timeline } from "./timeline";
 
@@ -20,6 +20,8 @@ export interface TitleCard {
   house: string | null;
   /** Higher first when there are too many. */
   weight: number;
+  /** The event it's for: its small banner (toast) doesn't show as well (session 22: one headline per event). */
+  event: ReplayEvent;
 }
 
 /** At most this many a turn. */
@@ -40,16 +42,16 @@ export function titleCards(tl: Timeline, before: PlayerView, map: MapDef): Title
       if (e.type === "battle" && e.captured && capitals.has(e.to)) {
         const yours = capitals.get(e.to) === me;
         const text = yours ? `Your capital, ${name.get(e.to)}, falls to House ${house(e.player)}` : e.player === me ? `${name.get(e.to)} falls to you` : `${name.get(e.to)} falls to House ${house(e.player)}`;
-        cards.push({ at: at(b, RESULT_AT), ms: CARD_MS, text, house: e.player, weight: yours || e.player === me ? 3 : 2 });
+        cards.push({ at: at(b, RESULT_AT), ms: CARD_MS, text, house: e.player, weight: yours || e.player === me ? 3 : 2, event: e });
       } else if (e.type === "dealBroken") {
         const who = (p: string) => before.players.find((x) => x.id === p)?.name ?? "A House";
         const what = e.kind === "war" ? "joint war" : e.kind === "passage" ? "right of passage" : e.kind;
         const other = e.by === e.a ? e.b : e.a;
         const text = e.by === me ? `You break the ${what} with ${who(other)}` : `${who(e.by)} breaks the ${what}`;
-        cards.push({ at: at(b, 0.2), ms: CARD_MS, text, house: e.by, weight: e.by === me || other === me ? 3 : 1 });
+        cards.push({ at: at(b, 0.2), ms: CARD_MS, text, house: e.by, weight: e.by === me || other === me ? 3 : 1, event: e });
       } else if (e.type === "eliminated") {
         const text = e.player === me ? "Your House is no more" : `House ${house(e.player)} is no more`;
-        cards.push({ at: b.start, ms: CARD_MS, text, house: e.player, weight: e.player === me || e.by === me ? 4 : 1 });
+        cards.push({ at: b.start, ms: CARD_MS, text, house: e.player, weight: e.player === me || e.by === me ? 4 : 1, event: e });
       }
     }
   }

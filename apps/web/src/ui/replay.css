@@ -69,3 +69,9 @@
 .cine-bar.bottom { bottom: 0; transform-origin: bottom; }
 .cine.on .cine-bar { transform: scaleY(1); }
 @media (max-width: 700px) { .cine-bar { height: 3.2vh; } }
+/* On the desktop the territory panel and the order dock slide out of the way while the replay plays (session 22), and
+   come back as they were. The Houses column and the top bar stay. */
+.game.desktop .selcell, .game.desktop .dock { transition: transform 0.3s ease, opacity 0.3s ease, visibility 0s linear 0s; }
+.game.desktop.replaying .selcell { transform: translateX(calc(-100% - 16px)); opacity: 0; visibility: hidden; pointer-events: none; transition: transform 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s; }
+.game.desktop.replaying .dock { transform: translateY(calc(100% + 16px)); opacity: 0; visibility: hidden; pointer-events: none; transition: transform 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s; }
+@media (prefers-reduced-motion: reduce) { .game.desktop .selcell, .game.desktop .dock, .game.desktop.replaying .selcell, .game.desktop.replaying .dock { transition: none; } }
