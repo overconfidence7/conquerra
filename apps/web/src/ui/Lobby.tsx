@@ -46,10 +46,12 @@ export function Lobby() {
   const marshals = Math.min(lobby.bots, lobby.marshals ?? Math.ceil(lobby.bots / 2));
   const rec = map.recommendedPlayers;
   const emblem = useArtUrl("emblem");
+  // The title screen's key art behind the lobby (batch 4, session 21); its left third is dark and calm for the menu.
+  const keyArt = useArtUrl("art-title");
   // Left blank, your Steward gets a name from the game's seed; this is the kind of name it'll be.
   const [stewardSuggestion] = useState(() => suggestLeaderName("steward", String(Date.now())));
   return (
-    <div className="lobby">
+    <div className={`lobby ${keyArt ? "with-art" : ""}`} style={keyArt ? ({ "--key-art": `url("${keyArt}")` } as React.CSSProperties) : undefined}>
       <Frame>
       <div className="logo">
         {emblem && <img src={emblem} alt="" />}

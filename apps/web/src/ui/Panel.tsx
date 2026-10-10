@@ -552,7 +552,7 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
             ))}
             {spyHire && (
               <button disabled={!spyHire.ok} title={spyHire.why ?? SPY_HELP} onClick={() => add({ kind: "hireSpy", territory: selected })}>
-                <span aria-hidden>🕵</span> Spy <span className="cost">{spyHire.cost}g</span>
+                <ArtIcon name="icon-spy" size={20} /> Spy <span className="cost">{spyHire.cost}g</span>
                 <span className="small muted block">{spyHire.why ?? SPY_HELP}</span>
               </button>
             )}

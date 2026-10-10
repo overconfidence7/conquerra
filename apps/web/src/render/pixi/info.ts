@@ -348,7 +348,8 @@ export class InfoLayer {
       }
       if (s.kind !== "seen" || !s.owner || s.troops <= 0) continue;
       const house = houseOf(view, s.owner);
-      const names = ["figure-army", ...s.specialists.map((sp) => `figure-${sp}`)].filter((n) => (FIGURE_SPRITES as readonly string[]).includes(n));
+      // (Batch 4 brought the rangers' and the standard-bearer's figures; the spy's isn't a specialist.)
+      const names = ["figure-army", ...s.specialists.map((sp) => (sp === "standardBearer" ? "figure-standard-bearer" : `figure-${sp}`))].filter((n) => n !== "figure-spy" && (FIGURE_SPRITES as readonly string[]).includes(n));
       names.forEach((name, i) => {
         const tex = this.bank.get(name);
         if (!tex) return;

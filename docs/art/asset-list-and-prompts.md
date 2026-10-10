@@ -142,67 +142,9 @@ Lobby and title background art, the game-over screen, faction-specific castles, 
 ### Later: Steward portraits (for session 18's Stewards)
 *Not to make yet. Session 18 gives each House a Steward (culture, building, the economy) beside its Leader; until these exist, a Steward shows its House's shield with a quill badge.* Ten square portraits, chest-up, dark navy background like the Leader portraits, but civic rather than military: a chancellor, a master builder, a scholar, a merchant prince, a priestess, a royal treasurer and the like, in fine robes and chains of office, holding a ledger, a quill, a set square or a key.
 
-### Batch 4 (Oct 6): to make now, for sessions 16 and 20
-*About 50 images, for the polish pass (`docs/09-polish-and-effects-plan.md`) and the fixes found on the bench. Same rules as above: the style line first (except where noted), PNG into `art/incoming/` with the exact file name. Work in the order below; anything missing simply waits for a later batch. Session 20 (the polish pass) registers these names and moves this list into its own "## Batch 4" section after Batch 3 (it sits under Tier 3 until then, because a test counts the names from the Batch 3 heading onward against the game's registry).*
+### Batch 4, group 6: scenery additions (made Oct 7, not in the game yet)
+*Made by the art chat on Oct 7, after its report (`docs/art/batch-4-report.md`) was written: all 12 are in `art/incoming/`. They stay here, under Tier 3, until a session draws them (the scenery rules don't place them yet, and registering art the map doesn't draw would only make every game load it). The rest of batch 4 is imported: see the Batch 4 section at the end.*
 
-**Two new backgrounds in this batch:**
-- **Magenta** (as before) for solid objects.
-- **Pure black (#000000)** for soft effects (`fx-` pieces marked "black"): smoke, dust, flames, mist, lightning and the like. The importer turns their brightness into transparency, so they keep soft edges with no fringe. End those prompts with: *"on a pure black (#000000) background filling the entire image; soft edges fading smoothly into the black; nothing touches the edges of the image; no ground, no other objects."*
-
-#### 1. Redo (same file names; the new file replaces the old one)
-| File | Prompt (after the style line) | Why |
-|---|---|---|
-| `terrain-hills.png` | Bird's-eye view looking straight down from very high above at vast rolling green upland pasture: short lush grass in several greens, small darker tufts, a few tiny pale stones, only a little bare earth. Completely flat, even lighting, no shadows, no big shapes. One continuous scene, nothing repeats, no grid. (16:9; crop a square from the middle.) | Reads as brown dirt at Near. |
-| `tree-conifer-1.png`, `tree-conifer-2.png` | As batch 3's pines (a small cluster of 3–5 tall, narrow pointed pines seen from above at a slight angle, a dark green star of spiky branch tips around a pointed top, a narrow pointed shadow), but **a warm deep green like the oak trees, not blue-green**. Attach `tree-broadleaf-1.png` as the colour reference. | Bluer than the broadleaf trees. |
-| `scaffold.png` | Low, wide wooden construction scaffolding, **about as tall as it is wide**: a single storey of rough timber poles and lashed crossbeams with wide open gaps between them, one short ladder, a small rope hoist, a few planks and cut stone blocks at its foot. Nothing inside it. | Too tall; it hid the building. |
-| `bridge-wood.png` | A rustic wooden bridge, **longer and lighter**: pale weathered planks on light timber trestles with simple rails, running diagonally, clearly longer than it is wide. Only the bridge: no water, no banks. | Small and dark at Mid. |
-
-#### 2. The new specialists and spies
-Icons as in Tier 2 (bold, simple, reads at 24 px, thin light-gold rim, magenta, *"Every part fully solid. Single icon centered filling about 60% of the image, wide empty margin, no shadow, no badge, no circle, no frame behind it, no text."*). Figures as the other figures (three-quarter view, plain white/light-grey cloth so the game can tint them, magenta).
-| File | Prompt (after the style line) |
-|---|---|
-| `icon-rangers.png` | A longbow with an arrow nocked, held diagonally, a small sprig of green oak leaves tied at its grip. |
-| `icon-standard-bearer.png` | A tall wooden pole with a gold finial and a swallow-tailed war banner streaming to the right, plain white/light-grey cloth with gold trim. |
-| `icon-spy.png` | A dark hooded cloak seen from the front with the face hidden in shadow, a slim dagger held diagonally in front of it. |
-| `figure-rangers.png` | Two woodland rangers in hooded plain white/light-grey cloaks over green-brown leather, one drawing a longbow, one kneeling with an arrow ready, a few fern leaves at their feet. |
-| `figure-standard-bearer.png` | A single armoured soldier in a plain white/light-grey tabard holding a tall pole with a large swallow-tailed plain white war banner streaming in the wind. |
-| `figure-spy.png` | A lone hooded figure in a long plain dark-grey cloak, mid-stride, face hidden, one hand on a dagger at the belt. |
-
-#### 3. Effects for battles (for the replay)
-| File | Background | Prompt (after the style line) |
-|---|---|---|
-| `fx-smoke-1.png` … `-3.png` | black | A single soft billowing puff of battle smoke, white and pale grey with gentle shading, soft and cloudy. (Make 3 different shapes: one round puff, one tall rising column, one wide low drift.) |
-| `fx-dust-1.png`, `fx-dust-2.png` | black | A low, wide cloud of dust kicked up from the ground, warm pale tan and cream, wispy edges. (Make 2: one wide and low, one round swirl.) |
-| `fx-flame-1.png` … `-3.png` | black | A single tongue of fire: bright yellow-white core, orange and deep red at the edges, flickering upward. (Make 3 different flames: small, tall, and a wide cluster.) |
-| `fx-impact.png` | black | A burst of earth, dust and small stone debris flying outward from a single point of impact, seen from three-quarter view above, warm grey-brown. |
-| `fx-arrow.png` | magenta | A single wooden arrow with grey goose feathers and an iron tip, pointing right, perfectly horizontal. |
-| `fx-stone.png` | magenta | A single rough round catapult stone, grey granite with chips and a little moss. |
-
-#### 4. Effects for events, deals and the map
-| File | Background | Prompt (after the style line unless noted) |
-|---|---|---|
-| `fx-splash.png` | black | A splash of water thrown up into the air, white foam and droplets, seen from three-quarter view above. |
-| `fx-wisp-1.png`, `fx-wisp-2.png` | black | A thin drifting wisp of mist, white, translucent and swirling. (Make 2 different shapes.) The game tints it (sickly green for plague, grey for fog). |
-| `fx-lightning-1.png`, `fx-lightning-2.png` | black | A single forked lightning bolt, bright white with a pale blue glow, top to bottom. (Make 2 different forks.) |
-| `fx-crack.png` | black | A single jagged crack, like a split in stone or a torn line, bright white, running left to right. No style line. |
-| `fx-storm-cloud.png` | magenta | A dark brooding storm cloud seen from above at a slight angle, charcoal and slate blue, heavy and billowing, wider than tall. |
-| `fx-rock-1.png`, `fx-rock-2.png` | magenta | A single tumbling rough grey boulder with sharp broken edges. (Make 2 different rocks.) |
-| `fx-coin.png` | magenta | A single thick gold coin seen at a slight angle, with an engraved compass-star on its face. |
-| `fx-leaf.png` | magenta | A single green laurel leaf with a touch of gold at its edge. |
-| `fx-wheat.png` | magenta | A single golden ear of wheat with its stalk, curving gently. |
-| `fx-scroll.png` | magenta | An unrolled parchment scroll seen from the front, warm cream paper with wooden rollers at the top and bottom, completely blank, wider than tall. |
-| `fx-birds.png` | magenta | A small loose flock of five dark birds in flight seen from above, wings spread, in a rough V. |
-| `landmark-windmill-body.png` | magenta | The same medieval wooden post windmill as `landmark-windmill.png` (attach it), but **with no sails at all**: only the wooden body, its roof and its stone base, the hub where the sails would join visible on the front. |
-| `landmark-windmill-sails.png` | magenta | Only the four lattice windmill sails in a clean symmetrical X, seen straight from the front, with the round hub in the exact centre. No building, nothing else. (The game turns them.) |
-
-#### 5. Key art (no magenta; Gemini's widest ratio)
-| File | Prompt (after the style line) |
-|---|---|
-| `art-title.png` | A grand painted scene of a fantasy campaign table in a war tent at night: a richly painted atlas of islands and mountains spread across the table, brass compass and dividers, small carved army figures and ships, red wax seals, a dagger pinning a corner, candlelight and lantern glow, the tent's canvas dark around the edges. **The left third calmer and darker** (the menu sits there). No text, no people's faces. |
-| `art-victory.png` | A triumphant army on a green hilltop at sunrise, seen from behind and a little above: ranks of soldiers raising spears, a tall plain gold-and-white banner at the front, a castle on the next hill with smoke clearing, golden light breaking through clouds. No text. |
-| `art-defeat.png` | A lone torn banner on a broken pole in the mud of a quiet battlefield at dusk, a fallen shield and helmet beside it, smoke drifting over a burned-out castle in the distance, crows on a dead tree, cold blue-grey light. No text. |
-
-#### 6. Scenery additions (for the polish pass, session 21)
 | File | Prompt (after the style line) |
 |---|---|
 | `peak-narrow-1.png` … `-3.png` | A single tall, narrow mountain peak, much taller than it is wide, cold blue-grey granite with heavy snow on the upper third, small dark pines at the base. (Make 3 different peaks.) For ranges that run up and down the screen. |
@@ -212,7 +154,6 @@ Icons as in Tier 2 (bold, simple, reads at 24 px, thin light-gold rim, magenta, 
 | `glade-1.png`, `glade-2.png` | A small round forest meadow seen straight from above: soft grass, a few wildflowers, a fallen mossy log, edges fading softly into the magenta. (Make 2.) |
 | `paper-grain.png` | No style line, no magenta: bird's-eye view of a large sheet of warm neutral parchment paper, very flat and even, fine fibres and faint mottling only, no stains, no edges, no folds, one continuous sheet, nothing repeats. (16:9; crop a square from the middle.) |
 
-*(This list sits under Tier 3 on purpose: a test counts the file names in Tiers 1–2 and from the Batch 3 heading onward against the game's art list. Session 20 moves it.)*
 
 ---
 
@@ -251,3 +192,63 @@ Icons as in Tier 2 (bold, simple, reads at 24 px, thin light-gold rim, magenta, 
 | File | Prompt (after the style line) |
 |---|---|
 | `frame-plaque.png` | An empty ornate nameplate, front view: a wide horizontal plate of dark navy enamel, about four times wider than tall, with a thin polished gold rim and small scrolled gold end caps on the left and right. Completely empty in the middle, no text, every part fully solid. (The game writes the province name and bonus on it.) |
+
+## Batch 4 (Oct 6–7): imported in session 21, the polish pass
+*Made in Gemini on Oct 6–7 (report: `docs/art/batch-4-report.md`); imported by session 21 with `pnpm art:import`. Effects marked "black" were painted on pure black: the importer turns their brightness into transparency and keeps the colour (soft edges, no fringe), and the registry says how each is blended (flames and lightning add light; splashes and cracks screen; smoke, dust and mist sit on the land). The others are cut out of magenta as usual. Group 6 (scenery) is still under Tier 3.*
+
+**Two backgrounds in this batch:**
+- **Magenta** (as before) for solid objects.
+- **Pure black (#000000)** for soft effects (`fx-` pieces marked "black"): smoke, dust, flames, mist, lightning and the like. End those prompts with: *"on a pure black (#000000) background filling the entire image; soft edges fading smoothly into the black; nothing touches the edges of the image; no ground, no other objects."*
+
+### 1. Redo (same file names; the new file replaces the old one)
+| File | Prompt (after the style line) | Why |
+|---|---|---|
+| `terrain-hills.png` | Bird's-eye view looking straight down from very high above at vast rolling green upland pasture: short lush grass in several greens, small darker tufts, a few tiny pale stones, only a little bare earth. Completely flat, even lighting, no shadows, no big shapes. One continuous scene, nothing repeats, no grid. (16:9; crop a square from the middle.) | Reads as brown dirt at Near. |
+| `tree-conifer-1.png`, `tree-conifer-2.png` | As batch 3's pines (a small cluster of 3–5 tall, narrow pointed pines seen from above at a slight angle, a dark green star of spiky branch tips around a pointed top, a narrow pointed shadow), but **a warm deep green like the oak trees, not blue-green**. Attach `tree-broadleaf-1.png` as the colour reference. | Bluer than the broadleaf trees. |
+| `scaffold.png` | Low, wide wooden construction scaffolding, **about as tall as it is wide**: a single storey of rough timber poles and lashed crossbeams with wide open gaps between them, one short ladder, a small rope hoist, a few planks and cut stone blocks at its foot. Nothing inside it. | Too tall; it hid the building. |
+| `bridge-wood.png` | A rustic wooden bridge, **longer and lighter**: pale weathered planks on light timber trestles with simple rails, running diagonally, clearly longer than it is wide. Only the bridge: no water, no banks. | Small and dark at Mid. |
+
+### 2. The new specialists and spies
+Icons as in Tier 2 (bold, simple, reads at 24 px, thin light-gold rim, magenta, *"Every part fully solid. Single icon centered filling about 60% of the image, wide empty margin, no shadow, no badge, no circle, no frame behind it, no text."*). Figures as the other figures (three-quarter view, plain white/light-grey cloth so the game can tint them, magenta).
+| File | Prompt (after the style line) |
+|---|---|
+| `icon-rangers.png` | A longbow with an arrow nocked, held diagonally, a small sprig of green oak leaves tied at its grip. |
+| `icon-standard-bearer.png` | A tall wooden pole with a gold finial and a swallow-tailed war banner streaming to the right, plain white/light-grey cloth with gold trim. |
+| `icon-spy.png` | A dark hooded cloak seen from the front with the face hidden in shadow, a slim dagger held diagonally in front of it. |
+| `figure-rangers.png` | Two woodland rangers in hooded plain white/light-grey cloaks over green-brown leather, one drawing a longbow, one kneeling with an arrow ready, a few fern leaves at their feet. |
+| `figure-standard-bearer.png` | A single armoured soldier in a plain white/light-grey tabard holding a tall pole with a large swallow-tailed plain white war banner streaming in the wind. |
+| `figure-spy.png` | A lone hooded figure in a long plain dark-grey cloak, mid-stride, face hidden, one hand on a dagger at the belt. |
+
+### 3. Effects for battles (for the replay)
+| File | Background | Prompt (after the style line) |
+|---|---|---|
+| `fx-smoke-1.png` … `-3.png` | black | A single soft billowing puff of battle smoke, white and pale grey with gentle shading, soft and cloudy. (Make 3 different shapes: one round puff, one tall rising column, one wide low drift.) |
+| `fx-dust-1.png`, `fx-dust-2.png` | black | A low, wide cloud of dust kicked up from the ground, warm pale tan and cream, wispy edges. (Make 2: one wide and low, one round swirl.) |
+| `fx-flame-1.png` … `-3.png` | black | A single tongue of fire: bright yellow-white core, orange and deep red at the edges, flickering upward. (Make 3 different flames: small, tall, and a wide cluster.) |
+| `fx-impact.png` | black | A burst of earth, dust and small stone debris flying outward from a single point of impact, seen from three-quarter view above, warm grey-brown. |
+| `fx-arrow.png` | magenta | A single wooden arrow with grey goose feathers and an iron tip, pointing right, perfectly horizontal. |
+| `fx-stone.png` | magenta | A single rough round catapult stone, grey granite with chips and a little moss. |
+
+### 4. Effects for events, deals and the map
+| File | Background | Prompt (after the style line unless noted) |
+|---|---|---|
+| `fx-splash.png` | black | A splash of water thrown up into the air, white foam and droplets, seen from three-quarter view above. |
+| `fx-wisp-1.png`, `fx-wisp-2.png` | black | A thin drifting wisp of mist, white, translucent and swirling. (Make 2 different shapes.) The game tints it (sickly green for plague, grey for fog). |
+| `fx-lightning-1.png`, `fx-lightning-2.png` | black | A single forked lightning bolt, bright white with a pale blue glow, top to bottom. (Make 2 different forks.) |
+| `fx-crack.png` | black | A single jagged crack, like a split in stone or a torn line, bright white, running left to right. No style line. |
+| `fx-storm-cloud.png` | magenta | A dark brooding storm cloud seen from above at a slight angle, charcoal and slate blue, heavy and billowing, wider than tall. |
+| `fx-rock-1.png`, `fx-rock-2.png` | magenta | A single tumbling rough grey boulder with sharp broken edges. (Make 2 different rocks.) |
+| `fx-coin.png` | magenta | A single thick gold coin seen at a slight angle, with an engraved compass-star on its face. |
+| `fx-leaf.png` | magenta | A single green laurel leaf with a touch of gold at its edge. |
+| `fx-wheat.png` | magenta | A single golden ear of wheat with its stalk, curving gently. |
+| `fx-scroll.png` | magenta | An unrolled parchment scroll seen from the front, warm cream paper with wooden rollers at the top and bottom, completely blank, wider than tall. |
+| `fx-birds.png` | magenta | A small loose flock of five dark birds in flight seen from above, wings spread, in a rough V. |
+| `landmark-windmill-body.png` | magenta | The same medieval wooden post windmill as `landmark-windmill.png` (attach it), but **with no sails at all**: only the wooden body, its roof and its stone base, the hub where the sails would join visible on the front. |
+| `landmark-windmill-sails.png` | magenta | Only the four lattice windmill sails in a clean symmetrical X, seen straight from the front, with the round hub in the exact centre. No building, nothing else. (The game turns them.) |
+
+### 5. Key art (no magenta; Gemini's widest ratio)
+| File | Prompt (after the style line) |
+|---|---|
+| `art-title.png` | A grand painted scene of a fantasy campaign table in a war tent at night: a richly painted atlas of islands and mountains spread across the table, brass compass and dividers, small carved army figures and ships, red wax seals, a dagger pinning a corner, candlelight and lantern glow, the tent's canvas dark around the edges. **The left third calmer and darker** (the menu sits there). No text, no people's faces. |
+| `art-victory.png` | A triumphant army on a green hilltop at sunrise, seen from behind and a little above: ranks of soldiers raising spears, a tall plain gold-and-white banner at the front, a castle on the next hill with smoke clearing, golden light breaking through clouds. No text. |
+| `art-defeat.png` | A lone torn banner on a broken pole in the mud of a quiet battlefield at dusk, a fallen shield and helmet beside it, smoke drifting over a burned-out castle in the distance, crows on a dead tree, cold blue-grey light. No text. |

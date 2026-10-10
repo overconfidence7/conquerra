@@ -123,6 +123,12 @@ p.good { color: var(--good); margin: 0; }
 /* ---------- Lobby & game over ---------- */
 .lobby, .over { min-height: 100%; padding: 28px 16px; display: flex; justify-content: center; align-items: flex-start;
   background: radial-gradient(ellipse at top, #1e2c3f, var(--navy) 70%); overflow: auto; }
+/* Key art (batch 4, session 21): the title scene behind the lobby, victory or defeat behind the results. It stays put
+   while the menu scrolls; a dark wash keeps the menu readable. On a wide screen the lobby sits in the art's calm left third. */
+.lobby.with-art, .over.with-art { background: linear-gradient(90deg, rgba(10, 14, 22, 0.88), rgba(10, 14, 22, 0.55) 45%, rgba(10, 14, 22, 0.2)), var(--key-art) center / cover no-repeat fixed, var(--navy); }
+.over.with-art { background: linear-gradient(rgba(10, 14, 22, 0.35), rgba(10, 14, 22, 0.85) 60%), var(--key-art) center top / cover no-repeat fixed, var(--navy); }
+@media (min-width: 1000px) { .lobby.with-art { justify-content: flex-start; padding-left: max(32px, 6vw); } }
+@media (max-width: 700px) { .lobby.with-art { background: linear-gradient(rgba(10, 14, 22, 0.6), rgba(10, 14, 22, 0.92) 40%), var(--key-art) 30% top / auto 46vh no-repeat, var(--navy); } }
 .lobby .frame, .over > .frame { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 16px; padding: 22px; }
 .over > .frame { max-width: 960px; }
 .logo { display: flex; align-items: center; gap: 12px; }

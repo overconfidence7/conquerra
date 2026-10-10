@@ -43,7 +43,8 @@ export class ArtBook {
     await Promise.all(
       Object.entries(manifest.assets).map(async ([name, e]) => {
         const spec = ASSET_BY_NAME.get(name);
-        if (!spec || spec.kind === "portrait" || spec.kind === "vista") return;
+        // Menus load portraits and vistas; the key art is shown by URL; effects load with the replay (`loadFx`).
+        if (!spec || spec.kind === "portrait" || spec.kind === "vista" || spec.kind === "keyart" || spec.kind === "fx") return;
         try {
           const image = await loadImage(`${base}art/${e.file}`);
           const tintMask = e.tintMask ? await loadImage(`${base}art/${e.tintMask}`) : undefined;
@@ -91,6 +92,26 @@ export class ArtBook {
           n++;
         } catch (err) {
           console.warn(`Art "${name}" (Near size) failed to load; the usual size paints it`, err);
+        }
+      }),
+    );
+    return n;
+  }
+
+  /**
+   * Load the replay's effects and the living map's pieces (session 21): smoke, flames, coins, birds. Called by the
+   * map once it's on screen, never by the lobby. Returns how many arrived (also kept by `get`).
+   */
+  async loadFx(base: string = import.meta.env.BASE_URL): Promise<number> {
+    let n = 0;
+    await Promise.all(
+      Object.entries(this.manifest.assets).map(async ([name, e]) => {
+        if (ASSET_BY_NAME.get(name)?.kind !== "fx" || this.loaded.has(name)) return;
+        try {
+          this.loaded.set(name, { image: await loadImage(`${base}art/${e.file}`), real: true });
+          n++;
+        } catch (err) {
+          console.warn(`Effect "${name}" failed to load; the replay draws without it`, err);
         }
       }),
     );

@@ -1,3 +1,4 @@
+import { ArtIcon } from "./ArtIcon";
 import { indexMap, type GameContext, type PlayerView, type TerritoryId } from "@conquerra/engine";
 import { useGame } from "../store";
 
@@ -16,7 +17,7 @@ export function SpyRows({ ctx, view, at }: { ctx: GameContext; view: PlayerView;
   const province = idx.byId.get(at)?.province ?? "";
   return (
     <div className="spy-rows">
-      {reported && <p className="muted small">🕵 What your spy reported as the last turn ended.</p>}
+      {reported && <p className="muted small"><ArtIcon name="icon-spy" size={16} /> What your spy reported as the last turn ended.</p>}
       {here.map((s) => {
         const order = queue.find((o) => o.kind === "spy" && o.spy === s.id);
         const doing =
@@ -29,7 +30,7 @@ export function SpyRows({ ctx, view, at }: { ctx: GameContext; view: PlayerView;
         return (
           <div key={s.id} className="spy-row">
             <p className="small">
-              <span aria-hidden>{s.status === "in" ? "👁" : s.status === "defend" ? "🛡" : "🕵"}</span> Your spy, {doing}.{next ? ` ${next}` : ""}
+              {s.status === "travel" ? <ArtIcon name="icon-spy" size={18} /> : <span aria-hidden>{s.status === "in" ? "👁" : "🛡"}</span>} Your spy, {doing}.{next ? ` ${next}` : ""}
             </p>
             <div className="row">
               <button className={spyPick === s.id ? "primary" : ""} onClick={() => sendSpy(s.id)} aria-pressed={spyPick === s.id}>

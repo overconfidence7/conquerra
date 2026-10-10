@@ -29,6 +29,9 @@ export const GROUND_TARGETS: Record<string, ColourTarget> = {
 
 /** Sprite families: every member is nudged toward the same look. Matched by name prefix. */
 export const SPRITE_FAMILIES: { family: string; prefixes: string[]; target: ColourTarget }[] = [
+  // Pines (session 21): batch 3's firs read as pines at game size but came out blue-green; warmed hard toward the
+  // oaks' green. (Batch 4's warm-green redo read as round clumps, like the oaks: kept in art/incoming/_old/.)
+  { family: "pines", prefixes: ["tree-conifer-1", "tree-conifer-2"], target: { colour: "#3f5a2c", contrast: 40, strength: 0.8 } },
   { family: "trees", prefixes: ["tree-"], target: { colour: "#3e5a2e", contrast: 40, strength: 0.45 } },
   { family: "mountains", prefixes: ["mountain-", "ridge-"], target: { colour: "#8b8681", contrast: 46, strength: 0.4 } },
   { family: "hills", prefixes: ["hill-"], target: { colour: "#7b7a46", contrast: 30, strength: 0.4 } },

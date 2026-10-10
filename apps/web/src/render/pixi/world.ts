@@ -35,6 +35,18 @@ const CASTLE_SIZE = 46;
 /** How strong the House wash is at a realm's edge (it fades to nothing about 15 map units in). */
 const OWNER_WASH = 0.5;
 
+/**
+ * The windmill in two pieces (batch 4): the body as wide as the one-piece windmill's body would be, and its sails on
+ * the hub near the top of its front. Shared with the living map (session 21), which turns the sails.
+ */
+export function windmillParts(l: { x: number; y: number; w: number; v: number }) {
+  // The one-piece windmill is 210 x 256 with its sails; the body alone is 122 x 256 at the same height.
+  const bodyW = l.w * (122 / 210);
+  const bodyH = bodyW * (256 / 122);
+  const top = l.y - bodyH * 0.88;
+  return { bodyW, hubX: l.x, hubY: top + bodyH * 0.21, sailsW: l.w * 0.92, angle: ((l.v * 37) % 90) * (Math.PI / 180) };
+}
+
 export interface WorldOptions {
   /** Painted pixels per map unit (detail at Mid zoom). */
   ppu: number;
@@ -75,6 +87,8 @@ const quad = (x: number, y: number, w: number, h: number) =>
   });
 
 export class WorldLayer {
+  /** Paint the windmills' sails into the map (false when the living map turns them, session 21). */
+  bakeSails = true;
   /** What's on screen: the Far image or the tiles. */
   readonly view = new Container();
   readonly display: UniformGroup<{
@@ -409,7 +423,23 @@ export class WorldLayer {
     }
     // Sea cliffs, landmarks and the pass gatehouses: only once their art has arrived.
     if (hasArt("cliff-1")) for (const c of sc.cliffs) piece(`cliff-${c.v}`, c, 0.9, false);
-    for (const l of sc.landmarks) if (hasArt(`landmark-${l.kind}`)) piece(`landmark-${l.kind}`, l);
+    for (const l of sc.landmarks) {
+      // The windmill in two pieces (batch 4): the body, and its sails on the hub (so they can turn).
+      if (l.kind === "windmill" && hasArt("landmark-windmill-body") && hasArt("landmark-windmill-sails")) {
+        const w = windmillParts(l);
+        piece("landmark-windmill-body", { ...l, w: w.bodyW });
+        if (this.bakeSails)
+          items.push({
+            y: l.y + 0.001,
+            make: () => {
+              const s = place("landmark-windmill-sails", w.hubX, w.hubY, w.sailsW, false);
+              s.anchor.set(0.5);
+              s.rotation = w.angle;
+              return s;
+            },
+          });
+      } else if (hasArt(`landmark-${l.kind}`)) piece(`landmark-${l.kind}`, l);
+    }
     if (hasArt("pass-gate")) for (const p of sc.gates) piece("pass-gate", p, 0.8);
     // Bridges where territories meet across a river: wooden on streams and farmland (stone until that art arrives).
     for (const b of sc.bridges) piece(b.kind === "wood" && hasArt("bridge-wood") ? "bridge-wood" : "bridge", b, 0.55, false);

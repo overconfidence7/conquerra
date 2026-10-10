@@ -48,6 +48,8 @@ function AwardCard({ view, award }: { view: PlayerView; award: Award }) {
 export function GameOver() {
   const { ctx, view, report, fastForwarded, playAgain, seats } = useGame();
   const emblem = useArtUrl("emblem");
+  // Victory or defeat in full (batch 4, session 21), behind the results.
+  const keyArt = useArtUrl(view && view.winner === view.me.id ? "art-victory" : "art-defeat");
   if (!ctx || !view) return null;
   const me = view.players.find((p) => p.id === view.me.id)!;
   const winner = view.winner;
@@ -57,7 +59,7 @@ export function GameOver() {
   const youWon = winner === view.me.id;
   const outBy = me.eliminatedBy ? view.players.find((p) => p.id === me.eliminatedBy)?.name : null;
   return (
-    <div className="over">
+    <div className={`over ${keyArt ? "with-art" : ""}`} style={keyArt ? ({ "--key-art": `url("${keyArt}")` } as React.CSSProperties) : undefined}>
       <Frame>
         <div className="logo">
           {emblem && <img src={emblem} alt="" />}

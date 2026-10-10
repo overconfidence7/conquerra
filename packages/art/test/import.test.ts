@@ -5,7 +5,7 @@ import sharp from "sharp";
 import { afterAll, describe, expect, it } from "vitest";
 import { ASSETS, FIGURE_SPRITES, TERRAIN_TEXTURES, WATER_TEXTURES } from "../src/registry";
 import { colourTargetFor } from "../src/palette";
-import { colourStats, cutOutMagenta, flattenLighting, formatReport, hasMagentaBackground, importArt, makeSeamless, matchColour, matchFileName, opaqueBounds, removeStrayBlobs, type Rgba } from "../src/import";
+import { blackToAlpha, colourStats, cutOutMagenta, hasBlackBackground, flattenLighting, formatReport, hasMagentaBackground, importArt, makeSeamless, matchColour, matchFileName, opaqueBounds, removeStrayBlobs, type Rgba } from "../src/import";
 
 const tmp = mkdtempSync(join(tmpdir(), "conquerra-art-"));
 afterAll(() => rmSync(tmp, { recursive: true, force: true }));
@@ -27,7 +27,7 @@ describe("art file names", () => {
   it("knows every name in the prompt pack, exactly", () => {
     for (const name of ["terrain-grass", "tree-conifer-3", "mountain-4", "capital-2", "figure-army", "banner-flag", "cloud-1", "icon-healers", "leader-10", "vista-harbor"])
       expect(matchFileName(`${name}.png`)).toMatchObject({ kind: "ok", spec: { name } });
-    expect(ASSETS.filter((a) => a.tier === 1)).toHaveLength(10 + 3 + 3 + 4 + 3 + 3 + 2 + 2 + 4 + 6 + 1 + 1 + 1 + 3 + /* batch 3 */ 3 + 3 + 1 + 1 + 1 + 4);
+    expect(ASSETS.filter((a) => a.tier === 1)).toHaveLength(10 + 3 + 3 + 4 + 3 + 3 + 2 + 2 + 4 + 6 + 1 + 1 + 1 + 3 + /* batch 3 */ 3 + 3 + 1 + 1 + 1 + 4 + /* batch 4: figures, the windmill in two */ 3 + 2);
   });
 
   it("forgives case, spaces, underscores and a missing dash before the number", () => {
@@ -273,4 +273,90 @@ describe("session 6: Nate's whole art list", () => {
     expect(files).toContain("figure-scouts.tint.webp");
     expect(second.report.unknown).toEqual([]);
   }, 30_000);
+});
+
+describe("session 21: effects painted on black", () => {
+  /** A w×h image on black with a soft round puff of `colour`, brightest in the middle. */
+  function blackPuff(w: number, h: number, colour: [number, number, number]): Rgba {
+    const data = new Uint8ClampedArray(w * h * 4);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const d = Math.hypot(x - w / 2, y - h / 2) / (Math.min(w, h) / 3);
+        const k = Math.max(0, 1 - d);
+        data.set([colour[0] * k, colour[1] * k, colour[2] * k, 255].map(Math.round), (y * w + x) * 4);
+      }
+    return { data, width: w, height: h };
+  }
+  const SPEC = { floor: 10, density: 0.7 };
+
+  it("finds a black background, and not a magenta one", () => {
+    expect(hasBlackBackground(blackPuff(64, 64, [240, 240, 240]))).toBe(true);
+    expect(hasBlackBackground(magentaSprite(64, 64))).toBe(false);
+  });
+
+  it("black becomes see-through; the puff keeps its colour, so its soft edge has no dark fringe", () => {
+    const img = blackPuff(64, 64, [255, 140, 40]);
+    blackToAlpha(img, SPEC.floor, SPEC.density);
+    expect(px(img, 0, 0)[3]).toBe(0);
+    const mid = px(img, 32, 32);
+    expect(mid[3]).toBeGreaterThan(250);
+    // Out at the soft edge: faint, but the same orange, not a darker brown.
+    const edge = px(img, 32 + 18, 32);
+    expect(edge[3]).toBeGreaterThan(0);
+    expect(edge[3]).toBeLessThan(200);
+    // (The painted edge pixel is about 95,52,15 on black: it comes out much brighter, at the same hue.)
+    const painted = (1 - 18 / (64 / 3)) * 255;
+    expect(edge[0]).toBeGreaterThan(painted * 1.5);
+    expect(edge[0]! / edge[1]!).toBeCloseTo(255 / 140, 0);
+  });
+
+  it("drawn over black it looks exactly like the painting (so flames add the same light)", () => {
+    const original = blackPuff(48, 48, [230, 230, 220]);
+    const img = { ...original, data: new Uint8ClampedArray(original.data) };
+    blackToAlpha(img, SPEC.floor, SPEC.density);
+    for (const [x, y] of [[24, 24], [30, 24], [34, 28], [24, 36]] as const) {
+      const a = px(img, x, y), o = px(original, x, y);
+      if (Math.max(o[0]!, o[1]!, o[2]!) <= SPEC.floor + 2) continue;
+      for (let c = 0; c < 3; c++) expect(Math.abs((a[c]! * a[3]!) / 255 - o[c]!)).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it("grey smoke stays fairly solid (denser than plain brightness), keeping its own shading", () => {
+    const img = { data: new Uint8ClampedArray([128, 128, 128, 255, 64, 64, 64, 255]), width: 2, height: 1 };
+    blackToAlpha(img, SPEC.floor, SPEC.density);
+    expect(img.data[3]).toBeGreaterThan(128);
+    expect(img.data[0]).toBeLessThan(255);
+    expect(img.data[7]).toBeLessThan(img.data[3]!);
+  });
+
+  it("the import cuts black effects and magenta effects each their own way, and keeps the key art whole", async () => {
+    const { mkdirSync } = await import("node:fs");
+    const incoming = join(tmp, "fx-in"), out = join(tmp, "fx-out");
+    mkdirSync(incoming);
+    const smoke = blackPuff(300, 300, [235, 235, 230]);
+    await sharp(Buffer.from(smoke.data), { raw: { width: 300, height: 300, channels: 4 } }).png().toFile(join(incoming, "fx-smoke-1.png"));
+    const coin = magentaSprite(200, 200);
+    await sharp(Buffer.from(coin.data), { raw: { width: 200, height: 200, channels: 4 } }).png().toFile(join(incoming, "fx-coin.png"));
+    await sharp({ create: { width: 1376, height: 768, channels: 3, background: { r: 60, g: 40, b: 30 } } }).png().toFile(join(incoming, "art-title.png"));
+    const { manifest, report } = await importArt({ incomingDir: incoming, outDir: out });
+    expect(report.imported.find((i) => i.asset === "fx-smoke-1")?.note).toMatch(/black background/);
+    expect(report.imported.find((i) => i.asset === "fx-coin")?.note).toMatch(/magenta/);
+    expect(report.warnings).toEqual([]);
+    // Trimmed to the puff (the black margin went), and see-through at its corners.
+    const s = manifest.assets["fx-smoke-1"]!;
+    expect(s.width).toBeLessThan(256);
+    const { data, info } = await sharp(join(out, s.file)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    expect(data[3]).toBe(0);
+    expect(data[((info.height >> 1) * info.width + (info.width >> 1)) * 4 + 3]).toBeGreaterThan(230);
+    expect(manifest.assets["art-title"]).toMatchObject({ width: 1280, height: 714 });
+  }, 30_000);
+
+  it("every effect says how it's blended, and every black one is marked as black", () => {
+    const fx = ASSETS.filter((a) => a.kind === "fx");
+    expect(fx.length).toBe(25);
+    for (const a of fx) expect(a.blend).toBeDefined();
+    expect(fx.filter((a) => a.background === "black").map((a) => a.name)).toEqual(expect.arrayContaining(["fx-smoke-2", "fx-flame-3", "fx-wisp-1", "fx-lightning-2", "fx-crack", "fx-impact", "fx-splash", "fx-dust-2"]));
+    expect(ASSETS.find((a) => a.name === "fx-flame-1")?.blend).toBe("add");
+    expect(ASSETS.find((a) => a.name === "fx-coin")?.background).toBeUndefined();
+  });
 });

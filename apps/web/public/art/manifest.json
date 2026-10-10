@@ -1,6 +1,21 @@
 {
   "version": 1,
   "assets": {
+    "art-defeat": {
+      "file": "art-defeat.webp",
+      "width": 1280,
+      "height": 714
+    },
+    "art-title": {
+      "file": "art-title.webp",
+      "width": 1280,
+      "height": 714
+    },
+    "art-victory": {
+      "file": "art-victory.webp",
+      "width": 1280,
+      "height": 714
+    },
     "banner-base": {
       "file": "banner-base.webp",
       "width": 92,
@@ -16,11 +31,11 @@
     "bridge-wood": {
       "file": "bridge-wood.webp",
       "width": 192,
-      "height": 159,
+      "height": 164,
       "hd": {
         "file": "bridge-wood.hd.webp",
         "width": 384,
-        "height": 318
+        "height": 328
       }
     },
     "bridge": {
@@ -147,6 +162,12 @@
       "height": 215,
       "tintMask": "figure-healers.tint.webp"
     },
+    "figure-rangers": {
+      "file": "figure-rangers.webp",
+      "width": 256,
+      "height": 245,
+      "tintMask": "figure-rangers.tint.webp"
+    },
     "figure-scouts": {
       "file": "figure-scouts.webp",
       "width": 202,
@@ -159,6 +180,18 @@
       "height": 240,
       "tintMask": "figure-siege.tint.webp"
     },
+    "figure-spy": {
+      "file": "figure-spy.webp",
+      "width": 158,
+      "height": 256,
+      "tintMask": "figure-spy.tint.webp"
+    },
+    "figure-standard-bearer": {
+      "file": "figure-standard-bearer.webp",
+      "width": 217,
+      "height": 256,
+      "tintMask": "figure-standard-bearer.tint.webp"
+    },
     "frame-corner": {
       "file": "frame-corner.webp",
       "width": 255,
@@ -168,6 +201,131 @@
       "file": "frame-plaque.webp",
       "width": 512,
       "height": 106
+    },
+    "fx-arrow": {
+      "file": "fx-arrow.webp",
+      "width": 128,
+      "height": 15
+    },
+    "fx-birds": {
+      "file": "fx-birds.webp",
+      "width": 192,
+      "height": 192
+    },
+    "fx-coin": {
+      "file": "fx-coin.webp",
+      "width": 93,
+      "height": 96
+    },
+    "fx-crack": {
+      "file": "fx-crack.webp",
+      "width": 256,
+      "height": 108
+    },
+    "fx-dust-1": {
+      "file": "fx-dust-1.webp",
+      "width": 256,
+      "height": 135
+    },
+    "fx-dust-2": {
+      "file": "fx-dust-2.webp",
+      "width": 256,
+      "height": 255
+    },
+    "fx-flame-1": {
+      "file": "fx-flame-1.webp",
+      "width": 82,
+      "height": 192
+    },
+    "fx-flame-2": {
+      "file": "fx-flame-2.webp",
+      "width": 43,
+      "height": 192
+    },
+    "fx-flame-3": {
+      "file": "fx-flame-3.webp",
+      "width": 192,
+      "height": 123
+    },
+    "fx-impact": {
+      "file": "fx-impact.webp",
+      "width": 256,
+      "height": 229
+    },
+    "fx-leaf": {
+      "file": "fx-leaf.webp",
+      "width": 79,
+      "height": 96
+    },
+    "fx-lightning-1": {
+      "file": "fx-lightning-1.webp",
+      "width": 136,
+      "height": 256
+    },
+    "fx-lightning-2": {
+      "file": "fx-lightning-2.webp",
+      "width": 157,
+      "height": 256
+    },
+    "fx-rock-1": {
+      "file": "fx-rock-1.webp",
+      "width": 127,
+      "height": 128
+    },
+    "fx-rock-2": {
+      "file": "fx-rock-2.webp",
+      "width": 128,
+      "height": 124
+    },
+    "fx-scroll": {
+      "file": "fx-scroll.webp",
+      "width": 384,
+      "height": 222
+    },
+    "fx-smoke-1": {
+      "file": "fx-smoke-1.webp",
+      "width": 256,
+      "height": 237
+    },
+    "fx-smoke-2": {
+      "file": "fx-smoke-2.webp",
+      "width": 140,
+      "height": 256
+    },
+    "fx-smoke-3": {
+      "file": "fx-smoke-3.webp",
+      "width": 256,
+      "height": 77
+    },
+    "fx-splash": {
+      "file": "fx-splash.webp",
+      "width": 256,
+      "height": 199
+    },
+    "fx-stone": {
+      "file": "fx-stone.webp",
+      "width": 96,
+      "height": 96
+    },
+    "fx-storm-cloud": {
+      "file": "fx-storm-cloud.webp",
+      "width": 384,
+      "height": 223
+    },
+    "fx-wheat": {
+      "file": "fx-wheat.webp",
+      "width": 82,
+      "height": 128
+    },
+    "fx-wisp-1": {
+      "file": "fx-wisp-1.webp",
+      "width": 256,
+      "height": 241
+    },
+    "fx-wisp-2": {
+      "file": "fx-wisp-2.webp",
+      "width": 256,
+      "height": 95
     },
     "hill-1": {
       "file": "hill-1.webp",
@@ -244,6 +402,11 @@
       "width": 128,
       "height": 115
     },
+    "icon-rangers": {
+      "file": "icon-rangers.webp",
+      "width": 127,
+      "height": 128
+    },
     "icon-scouts": {
       "file": "icon-scouts.webp",
       "width": 128,
@@ -253,6 +416,16 @@
       "file": "icon-siege.webp",
       "width": 128,
       "height": 123
+    },
+    "icon-spy": {
+      "file": "icon-spy.webp",
+      "width": 124,
+      "height": 128
+    },
+    "icon-standard-bearer": {
+      "file": "icon-standard-bearer.webp",
+      "width": 80,
+      "height": 128
     },
     "icon-troops": {
       "file": "icon-troops.webp",
@@ -293,6 +466,21 @@
         "width": 512,
         "height": 431
       }
+    },
+    "landmark-windmill-body": {
+      "file": "landmark-windmill-body.webp",
+      "width": 122,
+      "height": 256,
+      "hd": {
+        "file": "landmark-windmill-body.hd.webp",
+        "width": 244,
+        "height": 512
+      }
+    },
+    "landmark-windmill-sails": {
+      "file": "landmark-windmill-sails.webp",
+      "width": 192,
+      "height": 192
     },
     "landmark-windmill": {
       "file": "landmark-windmill.webp",
@@ -436,8 +624,8 @@
     },
     "scaffold": {
       "file": "scaffold.webp",
-      "width": 208,
-      "height": 256
+      "width": 256,
+      "height": 251
     },
     "seal": {
       "file": "seal.webp",
@@ -496,8 +684,8 @@
       "height": 512,
       "hd": {
         "file": "terrain-hills.hd.webp",
-        "width": 1024,
-        "height": 1024
+        "width": 768,
+        "height": 768
       }
     },
     "terrain-rock": {

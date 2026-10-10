@@ -4,6 +4,9 @@
  *   - ground and water textures: crop square, resize, and make them tile seamlessly
  *   - tinted art (shields, banners, flags, army figures): also writes a mask of the light grey parts,
  *     which the game colours with each House's tincture
+ *   - effects painted on pure black (session 21: smoke, dust, flames, mist, lightning): brightness becomes transparency
+ *     and the colour is kept, so the soft edges have no dark fringe (blackToAlpha)
+ *   - key art (title, victory, defeat): resized and kept as painted
  *   - making the art match (palette.ts): ground textures have big baked-in light and dark patches evened out, and
  *     textures and sprite families (trees, mountains, hills, settlements) are nudged toward one colour and contrast
  * Node only (uses sharp). Run it with `pnpm art:import`.
@@ -121,6 +124,55 @@ export function cutOutMagenta(img: Rgba): number {
     const spill = Math.max(0, Math.min(r, b) - g) * spillW;
     data[i] = r - spill;
     data[i + 2] = b - spill;
+  }
+  return cleared;
+}
+
+/** Is the image on a pure black background? (At least 3 of the 4 corners, and most of the border, are near black.) */
+export function hasBlackBackground(img: Rgba): boolean {
+  const { data, width: w, height: h } = img;
+  const dark = (x: number, y: number) => {
+    const i = (y * w + x) * 4;
+    return Math.max(data[i]!, data[i + 1]!, data[i + 2]!) < 24;
+  };
+  let corners = 0;
+  for (const [x, y] of [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]] as const) if (dark(x, y)) corners++;
+  let edge = 0, n = 0;
+  for (let k = 0; k < w; k += Math.max(1, w >> 6)) (n += 2), (edge += +dark(k, 0) + +dark(k, h - 1));
+  for (let k = 0; k < h; k += Math.max(1, h >> 6)) (n += 2), (edge += +dark(0, k) + +dark(w - 1, k));
+  return corners >= 3 && edge >= n * 0.8;
+}
+
+/** Below this brightness a black-background pixel is background (Gemini's "black" is rarely exactly 0). */
+export const BLACK_FLOOR = 10;
+/** How opaque the mid-tones come out: 1 = brightness exactly, lower = denser smoke that keeps its own shading. */
+export const BLACK_DENSITY = 0.7;
+
+/**
+ * Effects painted on pure black (session 21): brightness becomes transparency, and the colour is kept at full
+ * strength, so a soft puff of smoke fades into the land with no dark fringe. Drawn over black, the result looks
+ * exactly like the painting (colour × alpha = the original), so additive blending (flames, lightning) is unchanged too.
+ * Changes `img` in place. Returns how many pixels became fully transparent.
+ */
+export function blackToAlpha(img: Rgba, floor = BLACK_FLOOR, density = BLACK_DENSITY): number {
+  const { data } = img;
+  let cleared = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i]!, g = data[i + 1]!, b = data[i + 2]!;
+    const m = Math.max(r, g, b);
+    const lin = Math.max(0, Math.min(1, (m - floor) / (255 - floor)));
+    const a = lin ** density;
+    if (a <= 0) {
+      cleared++;
+      data[i] = data[i + 1] = data[i + 2] = data[i + 3] = 0;
+      continue;
+    }
+    // Un-premultiply: the colour that, at this alpha over black, gives back the painted pixel.
+    const k = 1 / a;
+    data[i] = Math.min(255, Math.round(r * k));
+    data[i + 1] = Math.min(255, Math.round(g * k));
+    data[i + 2] = Math.min(255, Math.round(b * k));
+    data[i + 3] = Math.round(data[i + 3]! * a);
   }
   return cleared;
 }
@@ -405,6 +457,32 @@ export async function importArt({ incomingDir, outDir }: ImportOptions): Promise
       }
       if (target) notes.push("colour matched");
       width = height = spec.size;
+    } else if (spec.kind === "keyart") {
+      // Kept as painted: one size (phones and laptops alike), compressed a little harder (the lobby loads it).
+      width = Math.min(spec.size, w0);
+      height = Math.round((h0 / w0) * width);
+      await src.clone().resize(width, height, { kernel: "lanczos3" }).webp({ quality: 80 }).toFile(join(outDir, outName));
+    } else if (spec.kind === "fx") {
+      const img = await raw(src.clone());
+      if (spec.background === "black") {
+        if (!hasBlackBackground(img)) report.warnings.push(`${file} should be on pure black, but its edges aren't: check it on the contact sheet.`);
+        blackToAlpha(img);
+        notes.push("black background turned to transparency");
+      } else if (hasMagentaBackground(img)) {
+        cutOutMagenta(img);
+        removeStrayBlobs(img);
+        notes.push("magenta background removed");
+      } else report.warnings.push(`${file} should be on magenta, but its corners aren't.`);
+      const box = opaqueBounds(img, 4);
+      if (!box) {
+        report.warnings.push(`${file} came out completely see-through, so it was skipped.`);
+        continue;
+      }
+      const scale = Math.min(1, spec.size / Math.max(box.width, box.height));
+      width = Math.max(1, Math.round(box.width * scale));
+      height = Math.max(1, Math.round(box.height * scale));
+      const sized = await raw(fromRaw(await raw(fromRaw(img).extract(box))).resize(width, height, { kernel: "lanczos3" }));
+      await fromRaw(sized).webp({ quality: 88, alphaQuality: 100 }).toFile(join(outDir, outName));
     } else if (spec.kind === "portrait" || spec.kind === "vista") {
       const [w, h] = spec.kind === "portrait" ? [spec.size, spec.size] : [spec.size, spec.size / 2];
       if (Math.abs(w0 / h0 - w / h) > 0.15) notes.push(`cropped to ${w}×${h} shape from ${w0}×${h0}`);
@@ -492,5 +570,7 @@ export function formatReport(report: ImportReport): string {
   if (t1.length) out.push(`Still missing from Tier 1 (the map), ${t1.length}, shown as placeholders: ${t1.map((a) => a.name).join(", ")}`);
   else out.push("Tier 1 (the map) is complete.");
   if (t2.length) out.push(`Still missing from Tier 2 (icons, portraits, vistas): ${t2.length}.`);
+  const t3 = report.missing.filter((a) => a.tier === 3);
+  if (t3.length) out.push(`Still missing from Tier 3 (effects and key art), ${t3.length}: ${t3.map((a) => a.name).join(", ")}`);
   return out.join("\n");
 }
