@@ -5,6 +5,9 @@ import { dealNames, namer } from "../logic/text";
 import { useGame } from "../store";
 import { Frame } from "./Frame";
 
+/** "1 turn", "5 turns". */
+const turnWord = (n: number) => `${n} turn${n === 1 ? "" : "s"}`;
+
 /**
  * The deal card (session 14): propose a deal (a plain truce comes ready to send), or answer an offer to you (Accept
  * is one tap). Loaded the first time it's opened: nothing about diplomacy is in the start-up bundle.
@@ -43,22 +46,22 @@ function TermRows({ ctx, view, offer, changed }: { ctx: GameContext; view: Playe
   if (t.kind === "truce") {
     const where = t.scope.kind === "all" ? "Everywhere between you" : t.scope.kind === "province" ? `In ${ctx.map.provinces.find((p) => p.id === (t.scope as { province: string }).province)?.name}` : `${t.scope.borders.length} border${t.scope.borders.length === 1 ? "" : "s"} (on the map)`;
     rows.push(["Where", where, mark("scope")]);
-    rows.push(["How long", t.until ? `Until ${nameOf(view, t.until)} is knocked out (${t.turns} turns at most)` : `${t.turns} turns`, mark("turns") || mark("scope")]);
+    rows.push(["How long", t.until ? `Until ${nameOf(view, t.until)} is knocked out (${turnWord(t.turns)} at most)` : turnWord(t.turns), mark("turns") || mark("scope")]);
   }
   if (t.kind === "war") {
     rows.push(["Target", nameOf(view, t.target), mark("target")]);
-    rows.push(["How long", `${t.turns} turns`, mark("turns")]);
+    rows.push(["How long", turnWord(t.turns), mark("turns")]);
   }
   if (t.kind === "passage") {
     const through = offer.from === view.me.id ? `You through ${nameOf(view, offer.to)}'s land` : `${nameOf(view, offer.from)} through your land`;
     rows.push(["Which way", t.mutual ? "Both ways" : through, mark("scope")]);
-    rows.push(["How long", `${t.turns} turns`, mark("turns")]);
+    rows.push(["How long", turnWord(t.turns), mark("turns")]);
   }
   if (t.kind === "trade") {
     const side = (s: TradeSide) => {
       const parts: string[] = [];
       if (s.gold) parts.push(`${s.gold} gold now`);
-      if (s.perTurn) parts.push(`${s.perTurn} gold a turn for ${t.turns ?? 1} turns`);
+      if (s.perTurn) parts.push(`${s.perTurn} gold a turn for ${turnWord(t.turns ?? 1)}`);
       for (const l of s.land ?? []) parts.push(n.place(l));
       return parts.join(", ") || "nothing";
     };

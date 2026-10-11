@@ -1,6 +1,7 @@
 import { capturedLine, leaderLine, lines, type CapturedSituation, type LeaderSituation, type LeaderVoice, type Vars } from "@conquerra/content/lines";
 import { indexMap, previewAttack, type GameContext, type LeaderRecord, type LeaderRef, type LeaderStyle, type PlayerId, type PlayerView, type ReplayEvent, type TerritoryId } from "@conquerra/engine";
 import { houseOf } from "../map/houses";
+import type { ComebackMemory } from "./comeback";
 
 /**
  * Your leaders' voices (session 22, the language pass): after each turn, what your Leader, your Steward and the
@@ -45,6 +46,8 @@ export interface VoiceMemory {
   needled?: Record<string, number>;
   /** When each captured leader joined you. */
   captured?: Record<string, number>;
+  /** Your House's comeback (session 23): its most land, whether it fell to a quarter of it, and when the card played. */
+  comeback?: ComebackMemory;
 }
 
 const L = () => lines.limits;
@@ -138,7 +141,7 @@ export function leaderVoices(ctx: GameContext, before: PlayerView, after: Player
     if (!l) continue;
     (mem.captured ??= {})[key(l)] = turn;
     const boss = r!.kind === "leader" ? yourLeader : steward;
-    add(l, 8, "firstReport", caught(l, "firstReport", { name: l.name, house: house(l.of), leader: boss?.name ?? "you" }));
+    add(l, 8, "firstReport", caught(l, "firstReport", { name: l.name, house: house(l.of), leader: boss?.name ?? "you", turn }));
   }
 
   // The Steward's wall (only one it paid for itself this turn).

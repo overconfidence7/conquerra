@@ -24,15 +24,19 @@ export interface TitleCard {
   house: string | null;
   /** Higher first when there are too many. */
   weight: number;
-  /** The event it's for: its small banner (toast) doesn't show as well (session 22: one headline per event). */
-  event: ReplayEvent;
+  /** The event it's for: its small banner (toast) doesn't show as well (session 22: one headline per event). Null: the comeback, which is about the whole turn. */
+  event: ReplayEvent | null;
 }
 
 /** At most this many a turn. */
 export const MAX_CARDS = 2;
 export const CARD_MS = 2200;
 
-export function titleCards(tl: Timeline, before: PlayerView, map: MapDef): TitleCard[] {
+/**
+ * `comeback`: your House is back from a quarter of its most land to over half of it (the host worked it out from your
+ * own land; session 23). Its card plays as the replay ends, with a sarcastic subline.
+ */
+export function titleCards(tl: Timeline, before: PlayerView, map: MapDef, comeback = false): TitleCard[] {
   const me = before.me.id;
   const name = new Map(map.territories.map((t) => [t.id, t.name]));
   // Capitals this view knows of: yours, and any it has seen.
@@ -65,6 +69,11 @@ export function titleCards(tl: Timeline, before: PlayerView, map: MapDef): Title
         cards.push({ at: b.start, ms: CARD_MS, text, ...(sub ? { sub } : {}), house: e.player, weight: e.player === me || e.by === me ? 4 : 1, event: e });
       }
     }
+  }
+  if (comeback) {
+    const last = tl.beats.at(-1);
+    const end = last ? last.start + last.duration : 0;
+    cards.push({ at: Math.max(0, end - CARD_MS), ms: CARD_MS, text: `House ${house(me)} is back`, sub: screenLine("titleComeback", `${before.gameId}|${before.turn}|comeback`), house: me, weight: 3, event: null });
   }
   // The most important ones, then in time order, and never two on screen at once.
   const kept: TitleCard[] = [];

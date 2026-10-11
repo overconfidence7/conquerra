@@ -1,0 +1,21 @@
+marshals embervale:4      s23base: 300 games | length median 22, avg 23.1, at the 60 cap 0.0%, draws 0.0% | halfway leader won 54.7% | 15s
+  blitzer      won  29.9% = 1.19x (211 seats) | buildings 21g culture 1g | walled in 0.0% of games (0.00 walls) | attacks/turn 3.16 | land at turn 10 11.7
+  conqueror    won  28.1% = 1.12x (203 seats) | buildings 29g culture 9g | walled in 6.4% of games (0.07 walls) | attacks/turn 3.16 | land at turn 10 11.2
+  merchant     won  27.9% = 1.12x (190 seats) | buildings 41g culture 36g | walled in 0.0% of games (0.00 walls) | attacks/turn 2.43 | land at turn 10 6.3
+  opportunist  won  24.1% = 0.96x (199 seats) | buildings 25g culture 1g | walled in 0.0% of games (0.00 walls) | attacks/turn 3.05 | land at turn 10 11.6
+  schemer      won  20.8% = 0.83x (202 seats) | buildings 25g culture 8g | walled in 5.4% of games (0.05 walls) | attacks/turn 2.84 | land at turn 10 9.9
+  turtle       won  19.0% = 0.76x (195 seats) | buildings 49g culture 39g | walled in 20.5% of games (0.21 walls) | attacks/turn 2.21 | land at turn 10 5.6
+marshals wyrmland:6       s23base: 300 games | length median 40, avg 41.3, at the 60 cap 13.7%, draws 0.0% | halfway leader won 41.7% | 42s
+  blitzer      won   7.0% = 0.42x (300 seats) | buildings 48g culture 15g | walled in 0.7% of games (0.01 walls) | attacks/turn 4.29 | land at turn 10 19.8
+  conqueror    won  14.7% = 0.88x (300 seats) | buildings 107g culture 89g | walled in 12.3% of games (0.16 walls) | attacks/turn 4.21 | land at turn 10 18.3
+  merchant     won  27.3% = 1.64x (300 seats) | buildings 155g culture 166g | walled in 34.3% of games (0.53 walls) | attacks/turn 4.66 | land at turn 10 16.2
+  opportunist  won  12.3% = 0.74x (300 seats) | buildings 83g culture 65g | walled in 7.0% of games (0.08 walls) | attacks/turn 4.16 | land at turn 10 17.4
+  schemer      won  15.0% = 0.90x (300 seats) | buildings 110g culture 101g | walled in 13.3% of games (0.16 walls) | attacks/turn 4.36 | land at turn 10 17.1
+  turtle       won  23.7% = 1.42x (300 seats) | buildings 149g culture 191g | walled in 50.3% of games (1.81 walls) | attacks/turn 4.32 | land at turn 10 15.2
+marshals rootholm:8       s23base: 300 games | length median 45, avg 44.6, at the 60 cap 21.7%, draws 0.0% | halfway leader won 45.7% | 65s
+  blitzer      won   3.8% = 0.30x (397 seats) | buildings 57g culture 19g | walled in 0.8% of games (0.01 walls) | attacks/turn 4.40 | land at turn 10 25.6
+  conqueror    won  10.3% = 0.82x (399 seats) | buildings 144g culture 146g | walled in 12.3% of games (0.16 walls) | attacks/turn 4.68 | land at turn 10 21.9
+  merchant     won  21.6% = 1.72x (399 seats) | buildings 185g culture 252g | walled in 31.6% of games (0.58 walls) | attacks/turn 5.29 | land at turn 10 21.7
+  opportunist  won   5.6% = 0.45x (411 seats) | buildings 112g culture 99g | walled in 5.6% of games (0.07 walls) | attacks/turn 4.37 | land at turn 10 22.6
+  schemer      won  11.9% = 0.95x (396 seats) | buildings 146g culture 144g | walled in 11.9% of games (0.14 walls) | attacks/turn 4.62 | land at turn 10 21.9
+  turtle       won  22.1% = 1.77x (398 seats) | buildings 195g culture 314g | walled in 56.8% of games (2.49 walls) | attacks/turn 5.14 | land at turn 10 21.6

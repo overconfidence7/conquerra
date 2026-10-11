@@ -191,7 +191,8 @@ export type LeaderSituation = keyof typeof LEADER_SITUATIONS;
  * with the facts. `{house}`: its old House ("House Azure"); `{ruler}`: its old ruler; `{leader}`: who it reports to.
  */
 export const CAPTURED_SITUATIONS = {
-  firstReport: ["name", "house", "leader"],
+  /** `{turn}`: the turn it was captured (Nate's pick, Oct 10: "I've always admired your House. Since turn {turn}."). */
+  firstReport: ["name", "house", "leader", "turn"],
   took: ["places", "place", "house"],
   pushedBack: ["place", "n"],
   capitalTaken: ["capital", "rival", "house"],
@@ -211,6 +212,8 @@ export const SCREEN_SITUATIONS = {
   titleHouseOut: ["house"],
   titleCapitalFalls: ["house"],
   titleDealBroken: [],
+  /** Your own House's comeback (session 23): back from a quarter of its most land to over half of it. */
+  titleComeback: [],
   overWon: ["n"],
   overLost: ["n", "winner"],
   overDraw: ["n"],
@@ -275,6 +278,11 @@ export const Lines = z.object({
       needleEvery: Count,
     })
     .strict(),
+  /**
+   * Situations Nate picked his versions for (Oct 10, `docs/voice/nate-picks-oct10.md`), as paths like
+   * "leaders.conqueror.capitalLost": the library's three-version minimum doesn't apply to them.
+   */
+  picked: z.array(z.string()).default([]),
   /** Each personality's own lines. */
   bots: z.object(Object.fromEntries(VOICES.map((v) => [v, checked(BOT_SITUATIONS, true)])) as Record<VoiceId, ReturnType<typeof checked<BotSituation>>>).strict(),
   /** The shared reasons: `plain` for everyone, and a personality's own versions of some of them. */

@@ -1,67 +1,19 @@
-# Lines for Nate (session 22, the language pass)
+# Lines for Nate (the line library)
 
-*Every line a bot or a leader can say, grouped by who says it and when, with every version. Strike or change anything that doesn't sound like you (edit this file, or mark it up in a copy): the next session applies your marks to `packages/content/data/lines.json`. `{place}` and the like are filled in by the game with the real names and numbers. Lines marked **(unsure)** are the ones I'd look at first.*
+*Every line a bot or a leader can say, grouped by who says it and when, with every version. Strike or change anything that doesn't sound like you (edit this file, or mark it up in a copy): the next session applies your marks to `packages/content/data/lines.json`. `{place}` and the like are filled in by the game with the real names and numbers. *(your pick)* marks a situation where you picked the versions (Oct 10, `nate-picks-oct10.md`): those keep only what you kept.*
 
-*Generated from the line library on Oct 10. Counts: 241 bot lines, 83 plain reasons, 147 personality reasons, 445 leader lines, 27 captured-leader lines, 59 screen lines.*
+*Generated from the line library by `packages/content/test/lines-sheet.ts`. Counts: 239 bot lines, 83 plain reasons, 147 personality reasons, 441 leader lines, 23 captured-leader lines, 59 screen lines.*
 
-## Thirteen to pick first (two or three versions each)
-1. **The lobby's tagline** (under the title)
-   - Set your orders, lock in, and watch every plan play out at once. *(today's)*
-   - Everyone moves at once. Plan accordingly.
-   - Set your orders, lock in, and watch everyone's plans collide.
-2. **Victory** ("Victory!", then)
-   - {n} turns played. The bards are already arguing about the details.
-   - {n} turns played, and the map is yours.
-   - {n} turns played. Someone should tell the other Houses. They know.
-3. **Defeat** ("Lady Morwen wins", then)
-   - {n} turns played, which is {n} more than nothing.
-   - {n} turns played. {winner} sends their regards. Probably.
-   - {n} turns played. There's always the next game.
-4. **Your capital falling** (the title card stays plain: "Rookhome falls to House Purpure"; your Leader, the Conqueror, in the report)
-   - {capital} is gone. {rival} brought {n} troops. I'll want them back.
-   - For the record, it took {rival} {n} troops to take {capital}. We'll remember the number.
-   - {capital} fell to {rival}. I have a plan for that too.
-5. **A House knocked out** (the title card's subline)
-   - They had a good run. Mostly the running.
-   - {house}'s banners are now available, slightly used.
-   - {house} will be remembered. Briefly.
-6. **A deal broken** (the subline, and the Schemer's own line)
-   - The ink was barely dry.
-   - It was a lovely deal while it lasted.
-   - {place} was always going to be mine. Honestly, you should have read the terms.
-   - Our deal was lovely while it lasted. It lasted until {place} looked unguarded.
-7. **Your Leader's first line of a game** (the Conqueror)
-   - {leader} here. {capital} is ours, and I have plans for the rest of the map.
-   - {leader} reporting. One plan, one front. I'll tell you which one when I've picked it.
-   - {leader} here. Point me at someone and I'll handle the rest.
-8. **Your Steward's wall** (the Turtle)
-   - {place}'s wall is up. Anyone who wants {capital} now has to go through all of it.
-   - {place} is walled. I'll sleep better.
-   - The wall at {place} is finished. It's beautiful. {capital} thanks you.
-9. **A captured leader's first report**
-   - {name} here. Formerly of {house}, which as you know is no longer a thing. Reporting to {leader}.
-   - {name}, reporting to {leader}. I've always admired your House. Since this turn.
-   - {name} here. My loyalty to {house} lasted right up until {house} stopped existing. I'm all yours now.
-10. **A captured leader brownnosing** (taking land)
-   - Took {places}, my liege. Your wisdom guided my every step. Mostly the steps toward {place}.
-   - Took {places}. I'd say I did it for {house}, but I've never heard of them.
-   - Took {places}, Your Grace. History will be kind to you. I'll make sure of it.
-11. **Your Leader judging one of your bad moves** (the Conqueror)
-   - You sent {n} against {place}'s {m}. Bold. I'd have waited a turn and brought the {k} from {other}.
-   - {n} against {m} at {place}. I'd have brought the {k} from {other} and done it once.
-   - You hit {place}'s {m} with {n}. The {k} at {other} were right there. One front, all of it, next time.
-12. **The Steward's handout** (session 23 turns it on)
-   - Sent {n} gold back. Wanted the peasants to have something.
-   - Returning {n} gold. Don't spend it all in one place. Or do, it's only {n}.
-   - Here's {n} gold. Nothing out here worth building, and I know things have been tight at the palace.
-13. **The Merchant's no** (a trade)
-   - The numbers don't work for me. Walk me through how you got there.
-   - Thanks for the offer. Walk me through the math, because I'm not seeing it.
-   - I appreciate it, but the price is off. Walk me through it.
+## Your picks, applied (Oct 10)
+- The lobby's tagline: "Set your orders, lock in, and watch everyone's plans collide."
+- The Blitzer's lobby blurb: "The Blitzer: never stops and never pulls back. Eats lunch on the march." ("Brakes not included." is gone.)
+- The Merchant's no to a trade has your line: "The math isn't mathing here."
+- A captured leader's first report knows the turn it joined: "I've always admired your House. Since turn {turn}."
+- Busy buttons keep the dots ("Sealing…").
+- New in session 23: the comeback card's sublines (below, under the title cards).
 
 ## The six bot personalities
 *What each says when its own style decides an answer, its offers, and breaking a deal. The game picks a version from the game, the turn and the bot, so a reload says the same thing.*
-
 
 ### The Conqueror
 
@@ -106,7 +58,7 @@
 **Right of passage: no**
 - My land is my staging ground. Find another road.
 - No. My roads are busy with my own army.
-- You want to march an army through my land. Bold. No. **(unsure: the guide's line, without the 'you're massed on my border' condition)**
+- You want to march an army through my land. Bold. No.
 
 **Offers a truce**
 - My war is somewhere else. Let's have peace on our border.
@@ -135,6 +87,11 @@
 
 **Its own versions of the shared reasons**
 
+*cantSpare*
+- I can't spare {n} gold for a binding pact. That's troops.
+- {n} gold for a binding pact is {n} gold I won't spend on my army. No.
+- No. {n} gold for a binding pact is more than I can spare.
+
 *runawayGrow*
 - You're running away with the map. I don't help the one I'll have to beat.
 - You're running away with the map. No help from me.
@@ -144,6 +101,11 @@
 - You're running away with the map. My roads stay shut to you.
 - No. You're running away with the map, and you won't do it through my land.
 - You're running away with the map. Not through here.
+
+*brokeOurAt*
+- You broke our {deal} at {place}. I don't forget that.
+- You broke our {deal} at {place}. My army remembers it too.
+- {place}. You broke our {deal} there. No.
 
 *gladlyRunaway*
 - Gladly. {target} is running away with the map, and that ends now.
@@ -155,26 +117,15 @@
 - {target} is running away with the map. One front, one enemy. Join me.
 - {target} is running away with the map. I'm going after them. Come along.
 
-*breakRunaway*
-- You're running away with the map. Our {deal} is over.
-- Our {deal} is over. You're running away with the map, and I'm stopping it.
-- You're running away with the map. I'm ending our {deal} and starting the war.
-
 *breakWin*
 - One more battle wins the game. Our {deal} doesn't get a vote.
 - One battle left. I won't let our {deal} stop me.
 - One more battle wins the game. Our {deal} ends here.
 
-*cantSpare*
-- I can't spare {n} gold for a binding pact. That's troops.
-- {n} gold for a binding pact is {n} gold I won't spend on my army. No.
-- No. {n} gold for a binding pact is more than I can spare.
-
-*brokeOurAt*
-- You broke our {deal} at {place}. I don't forget that.
-- You broke our {deal} at {place}. My army remembers it too.
-- {place}. You broke our {deal} there. No.
-
+*breakRunaway*
+- You're running away with the map. Our {deal} is over.
+- Our {deal} is over. You're running away with the map, and I'm stopping it.
+- You're running away with the map. I'm ending our {deal} and starting the war.
 
 ### The Blitzer
 
@@ -218,7 +169,7 @@
 **Right of passage: no**
 - My armies need every road.
 - No. My roads are full of my own army.
-- Can't. Traffic. **(unsure: too jokey for a deal answer?)**
+- Can't. Traffic.
 
 **Offers a truce**
 - Let's not waste time on each other.
@@ -247,6 +198,11 @@
 
 **Its own versions of the shared reasons**
 
+*cantSpare*
+- I can't spare {n} gold for a binding pact. Too slow anyway.
+- {n} gold for a binding pact. No. That's recruits.
+- No. {n} gold for a binding pact is {n} gold not marching.
+
 *runawayGrow*
 - You're running away with the map. Faster than me, even. No.
 - No. You're running away with the map.
@@ -256,6 +212,11 @@
 - You're running away with the map. Not through my roads.
 - No. You're running away with the map. Go around.
 - You're running away with the map. Not on my roads.
+
+*brokeOurAt*
+- You broke our {deal} at {place}. I was busy, but I noticed.
+- You broke our {deal} at {place}. No.
+- {place}. Our {deal}. You broke it. Next.
 
 *gladlyRunaway*
 - Gladly. {target} is running away with the map. Let's go.
@@ -267,26 +228,15 @@
 - {target} is running away with the map. You and me, this turn.
 - Let's run {target} down. They're running away with the map.
 
-*breakRunaway*
-- You're running away with the map. Our {deal} is over.
-- Our {deal} is done. You're running away with the map.
-- No time for our {deal}. You're running away with the map.
-
 *breakWin*
 - One more battle wins it. Our {deal} is over.
 - One more battle. Can't stop for our {deal}.
 - Our {deal} is done. One battle left and I'm taking it.
 
-*cantSpare*
-- I can't spare {n} gold for a binding pact. Too slow anyway.
-- {n} gold for a binding pact. No. That's recruits.
-- No. {n} gold for a binding pact is {n} gold not marching.
-
-*brokeOurAt*
-- You broke our {deal} at {place}. I was busy, but I noticed.
-- You broke our {deal} at {place}. No.
-- {place}. Our {deal}. You broke it. Next.
-
+*breakRunaway*
+- You're running away with the map. Our {deal} is over.
+- Our {deal} is done. You're running away with the map.
+- No time for our {deal}. You're running away with the map.
 
 ### The Turtle
 
@@ -358,6 +308,11 @@
 
 **Its own versions of the shared reasons**
 
+*cantSpare*
+- I can't spare {n} gold for a binding pact. That's a wall.
+- {n} gold for a binding pact. That's a lot of stone. No.
+- No. {n} gold for a binding pact is more than I can spare.
+
 *runawayGrow*
 - You're running away with the map. Helping you grow is how I end up besieged.
 - No. You're running away with the map, and my walls would be next.
@@ -367,6 +322,11 @@
 - You're running away with the map. Not past my walls.
 - No. You're running away with the map, and you'd be marching right past my walls.
 - You're running away with the map. My gates stay shut.
+
+*brokeOurAt*
+- You broke our {deal} at {place}. I still have the dent in my wall from it.
+- We had a {deal} once. You broke it at {place}, and I rebuilt the wall.
+- You broke our {deal} at {place}. The masons still talk about it.
 
 *gladlyRunaway*
 - Gladly. {target} is running away with the map. The big army is ready.
@@ -378,26 +338,15 @@
 - {target} is running away with the map. Let's stop them before they reach my walls.
 - {target} is running away with the map. Join me. I've been saving up for this.
 
-*breakRunaway*
-- You're running away with the map. Our {deal} is over, and my army is coming out.
-- Our {deal} is over. You're running away with the map, and I'd rather fight you now than at my walls.
-- You're running away with the map. I'm ending our {deal}.
-
 *breakWin*
 - One more battle wins the game. Our {deal} is over.
 - One more battle wins it. I've waited long enough, {deal} or no {deal}.
 - One more battle wins the game. Our {deal} was nice while it lasted.
 
-*cantSpare*
-- I can't spare {n} gold for a binding pact. That's a wall.
-- {n} gold for a binding pact. That's a lot of stone. No.
-- No. {n} gold for a binding pact is more than I can spare.
-
-*brokeOurAt*
-- You broke our {deal} at {place}. I still have the dent in my wall from it.
-- We had a {deal} once. You broke it at {place}, and I rebuilt the wall.
-- You broke our {deal} at {place}. The masons still talk about it.
-
+*breakRunaway*
+- You're running away with the map. Our {deal} is over, and my army is coming out.
+- Our {deal} is over. You're running away with the map, and I'd rather fight you now than at my walls.
+- You're running away with the map. I'm ending our {deal}.
 
 ### The Schemer
 
@@ -452,10 +401,9 @@
 - Strike {target} with me, friend. I'll be right behind you.
 - Between us, {target} has been asking for it. Join me.
 
-**Breaks a deal for a prize**
+**Breaks a deal for a prize** *(your pick)*
 - {place} was always going to be mine. Honestly, you should have read the terms.
-- Our deal was lovely while it lasted. It lasted until {place} looked unguarded.
-- Sorry, friend. {place} was too good to pass up. I'll send flowers. **(unsure: flowers: too cute?)**
+- Sorry, friend. {place} was too good to pass up. I'll send flowers.
 
 **Its turn of phrase after a plain yes**
 - I'll remember this, friend.
@@ -469,6 +417,11 @@
 
 **Its own versions of the shared reasons**
 
+*cantSpare*
+- I can't spare {n} gold for a binding pact, friend. A handshake should do.
+- {n} gold for a binding pact. Between friends, that's too much.
+- Not {n} gold, friend. I can't spare that for a binding pact.
+
 *runawayGrow*
 - You're running away with the map, friend. I won't help you grow.
 - Friend, you're running away with the map. I can't help with that.
@@ -478,6 +431,11 @@
 - You're running away with the map, friend. Not through my land.
 - Not through here, friend. You're running away with the map.
 - You're running away with the map, friend. I like you where you are.
+
+*brokeOurAt*
+- You broke our {deal} at {place}, friend. I remember these things.
+- Friend, you broke our {deal} at {place}. I was saving that for myself.
+- You broke our {deal} at {place}. I admire it, honestly. I still won't trust you.
 
 *gladlyRunaway*
 - Gladly. {target} is running away with the map. They'll never see it coming.
@@ -489,26 +447,15 @@
 - Between us, {target} is running away with the map. Strike with me.
 - {target} is running away with the map, friend. I'll be right behind you.
 
-*breakRunaway*
-- You're running away with the map, friend. Our {deal} is over.
-- Our {deal} was lovely, friend. You're running away with the map, so it's over.
-- Sorry, friend. You're running away with the map. Our {deal} ends now.
-
 *breakWin*
 - One more battle wins the game. You should have read the terms of our {deal}.
 - Sorry, friend. One more battle wins it, and our {deal} is in the way.
 - One more battle wins the game. Our {deal} was always going to end like this.
 
-*cantSpare*
-- I can't spare {n} gold for a binding pact, friend. A handshake should do.
-- {n} gold for a binding pact. Between friends, that's too much.
-- Not {n} gold, friend. I can't spare that for a binding pact.
-
-*brokeOurAt*
-- You broke our {deal} at {place}, friend. I remember these things.
-- Friend, you broke our {deal} at {place}. I was saving that for myself.
-- You broke our {deal} at {place}. I admire it, honestly. I still won't trust you.
-
+*breakRunaway*
+- You're running away with the map, friend. Our {deal} is over.
+- Our {deal} was lovely, friend. You're running away with the map, so it's over.
+- Sorry, friend. You're running away with the map. Our {deal} ends now.
 
 ### The Opportunist
 
@@ -579,6 +526,11 @@
 
 **Its own versions of the shared reasons**
 
+*cantSpare*
+- I can't spare {n} gold for a binding pact. Not worth it.
+- {n} gold for a binding pact. I'll pass.
+- No. {n} gold for a binding pact is gold I need for better chances.
+
 *runawayGrow*
 - You're running away with the map. I don't help the strong. I wait for them to slip.
 - No. You're running away with the map, and I'd rather pick at you than feed you.
@@ -589,36 +541,30 @@
 - No. You're running away with the map, and I'm not letting you behind me.
 - You're running away with the map. My roads are closed.
 
+*brokeOurAt*
+- You broke our {deal} at {place}. I'd have done the same, which is exactly why I won't trust you.
+- You broke our {deal} at {place}. I learned from it.
+- {place}, our {deal}, broken by you. Noted.
+
 *gladlyRunaway*
-- Gladly. {target} has been very comfortable lately. Running away with the map, in fact. **(unsure: your sample, with the plain reason added after it)**
+- Gladly. {target} has been very comfortable lately. Running away with the map, in fact.
 - Gladly. {target} is running away with the map, and everyone's tired of it.
 - {target} is running away with the map. Somebody had to ask. I'm in.
 
 *offerRunawayWar*
 - {target} is running away with the map. Everyone wants a piece. Let's be first.
 - {target} is running away with the map. Let's finish it before they get further.
-- {target} has been very comfortable lately. Running away with the map, in fact. Join me. **(unsure: same)**
-
-*breakRunaway*
-- You're running away with the map. Our {deal} is over.
-- Our {deal} is over. You're running away with the map, and I'm practical.
-- You're running away with the map. I'd be a fool to keep our {deal}.
+- {target} has been very comfortable lately. Running away with the map, in fact. Join me.
 
 *breakWin*
 - One more battle wins the game. I'd be a fool to let our {deal} stop me.
 - One more battle wins it. Our {deal} is over.
 - Our {deal} is over. One battle from the win, and I'm practical.
 
-*cantSpare*
-- I can't spare {n} gold for a binding pact. Not worth it.
-- {n} gold for a binding pact. I'll pass.
-- No. {n} gold for a binding pact is gold I need for better chances.
-
-*brokeOurAt*
-- You broke our {deal} at {place}. I'd have done the same, which is exactly why I won't trust you.
-- You broke our {deal} at {place}. I learned from it.
-- {place}, our {deal}, broken by you. Noted.
-
+*breakRunaway*
+- You're running away with the map. Our {deal} is over.
+- Our {deal} is over. You're running away with the map, and I'm practical.
+- You're running away with the map. I'd be a fool to keep our {deal}.
 
 ### The Merchant
 
@@ -647,10 +593,9 @@
 - Fair offer. Done.
 - Thanks, that's a good price. Done.
 
-**Trade: no**
-- The numbers don't work for me. Walk me through how you got there.
+**Trade: no** *(your pick)*
 - Thanks for the offer. Walk me through the math, because I'm not seeing it.
-- I appreciate it, but the price is off. Walk me through it.
+- The math isn't mathing here.
 
 **Right of passage: yes**
 - Pass through. Trade follows armies.
@@ -689,6 +634,11 @@
 
 **Its own versions of the shared reasons**
 
+*cantSpare*
+- I can't spare {n} gold for a binding pact. Walk me through why it's worth that.
+- {n} gold for a binding pact. The numbers don't work for me.
+- Thanks, but {n} gold for a binding pact is more than I can spare.
+
 *runawayGrow*
 - You're running away with the map. Helping you grow is bad business for me.
 - I ran the numbers. You're running away with the map, so I won't help you grow.
@@ -699,41 +649,35 @@
 - You're running away with the map. Letting you through is bad business.
 - No. You're running away with the map, and my traders would like to keep their roads.
 
-*gladlyRunaway*
-- Gladly. {target} is running away with the map, and that's bad for everyone's business.
-- Thanks for asking. {target} is running away with the map. I'm in.
-- {target} is running away with the map. The numbers on stopping them work. Count me in.
-
-*offerRunawayWar*
-- {target} is running away with the map. That's bad for business. Let's stop them together.
-- {target} is running away with the map. It's cheaper to stop them now. Join me.
-- Join me against {target}. They're running away with the map, and the math only gets worse.
-
-*breakRunaway*
-- You're running away with the map. Our {deal} is over. Nothing personal, it's just the math.
-- I ran the numbers. You're running away with the map, so our {deal} is over.
-- Our {deal} is over. You're running away with the map, and that's bad for business.
-
-*breakWin*
-- One more battle wins the game. Our {deal} can't compete with that.
-- One more battle wins it. Nothing personal about our {deal}, it's just the math.
-- Our {deal} is over. One battle from the win is very good business.
-
-*cantSpare*
-- I can't spare {n} gold for a binding pact. Walk me through why it's worth that.
-- {n} gold for a binding pact. The numbers don't work for me.
-- Thanks, but {n} gold for a binding pact is more than I can spare.
-
 *brokeOurAt*
 - You broke our {deal} at {place}. That's a bad credit history.
 - You broke our {deal} at {place}. I keep records.
 - You broke our {deal} at {place}. Walk me through why I'd trust you now.
+
+*gladlyRunaway*
+- Gladly. {target} is running away with the map, and that's bad for everyone's business.
+- Thanks for asking. {target} is running away with the map. I'm in.
+- {target} is running away with the map. The numbers on stopping them work. Count me in.
 
 *counterGold*
 - Close. Make it {n} gold and it's a deal.
 - Make it {n} gold and we're done. I can walk you through the math.
 - {n} gold and it's a deal. That's the number that works for me.
 
+*offerRunawayWar*
+- {target} is running away with the map. That's bad for business. Let's stop them together.
+- {target} is running away with the map. It's cheaper to stop them now. Join me.
+- Join me against {target}. They're running away with the map, and the math only gets worse.
+
+*breakWin*
+- One more battle wins the game. Our {deal} can't compete with that.
+- One more battle wins it. Nothing personal about our {deal}, it's just the math.
+- Our {deal} is over. One battle from the win is very good business.
+
+*breakRunaway*
+- You're running away with the map. Our {deal} is over. Nothing personal, it's just the math.
+- I ran the numbers. You're running away with the map, so our {deal} is over.
+- Our {deal} is over. You're running away with the map, and that's bad for business.
 
 ## The shared reasons, plain (the Captain and the Recruit, and any personality without its own version)
 
@@ -821,14 +765,12 @@
 - *breakCapital*: Your capital at {place} is mine for the taking. Our {deal} isn't worth more than that.
 - *breakRunaway*: You're running away with the map. Our {deal} is over.
 
-
 ## Your leaders
 *Shown in the turn report under 'Your leaders', in the Chronicle, and (the latest) in the Leaders panel. At most one line per leader a turn and three a report.*
 
-
 ### The Conqueror
 
-**Its first word of the game**
+**Its first word of the game** *(your pick)*
 - {leader} here. {capital} is ours, and I have plans for the rest of the map.
 - {leader} reporting. One plan, one front. I'll tell you which one when I've picked it.
 - {leader} here. Point me at someone and I'll handle the rest.
@@ -849,9 +791,7 @@
 - Took {capital}. That was {rival}'s capital, for the record.
 - {capital} has a new owner. One plan, working as planned.
 
-**Your capital fell**
-- {capital} is gone. {rival} brought {n} troops. I'll want them back.
-- For the record, it took {rival} {n} troops to take {capital}. We'll remember the number. **(unsure: sharp when n is small (2 troops took the capital))**
+**Your capital fell** *(your pick)*
 - {capital} fell to {rival}. I have a plan for that too.
 
 **Finished a rival**
@@ -879,15 +819,14 @@
 - {place} is walled. Good. One less thing to defend.
 - Wall's up at {place}. Back to the war.
 
-**Judging your failed attack (with the army that was next to it)**
+**Judging your failed attack (with the army that was next to it)** *(your pick)*
 - You sent {n} against {place}'s {m}. Bold. I'd have waited a turn and brought the {k} from {other}.
 - {n} against {m} at {place}. I'd have brought the {k} from {other} and done it once.
-- You hit {place}'s {m} with {n}. The {k} at {other} were right there. One front, all of it, next time.
 
 **Judging your failed attack (nothing next to it)**
 - You sent {n} against {place}'s {m}. Bold. I'd have waited a turn for more.
 - {n} against {m} at {place}. I'd have waited until the numbers were ours.
-- You hit {place}'s {m} with {n}. I admire the confidence. I'd have brought more. **(unsure: reads oddly when n is 1 ('Moonwood's 41 with 1'))**
+- You hit {place}'s {m} with {n}. I admire the confidence. I'd have brought more.
 
 **Judging land you left thin**
 - You left {place} with {n} next to {rival}'s {m}. {rival} noticed.
@@ -939,11 +878,10 @@
 - {rival} again, at {place}. Fine. They're good. I'll still beat them.
 - {place} as well. {rival} has earned a grudging nod from me. Grudging.
 
-**The Steward's handout (session 23)**
+**The Steward's handout (nothing worth building)**
 - Sent {n} gold back. My war chest has standards.
 - Returning {n} gold. Spend it on something with a sword.
 - Here's {n} gold back. Nothing worth conquering with it this turn.
-
 
 ### The Blitzer
 
@@ -1029,7 +967,7 @@
 - {n} at {capital}, {m} of {rival}'s next door. Even I'd have guarded that.
 
 **A grudging compliment**
-- {place}. Nice. Fast. **(unsure: too short?)**
+- {place}. Nice. Fast.
 - Good hit at {place}. I'd have done it a turn earlier.
 - That worked at {place}. Keep going.
 
@@ -1058,11 +996,10 @@
 - {rival} again at {place}. Faster than I'd like. Respect.
 - {place} as well. {rival} is good. Annoyingly.
 
-**The Steward's handout (session 23)**
+**The Steward's handout (nothing worth building)**
 - Sent {n} gold back. No time to spend it.
 - Returning {n} gold. Too busy marching.
 - {n} gold, back to you. Spend it fast.
-
 
 ### The Turtle
 
@@ -1107,11 +1044,11 @@
 - Heads up, {rival} is two steps from {capital} with {n}. I'd hold, not attack.
 
 **Its purse is empty**
-- Purse is empty. The masons are working for exposure. **(unsure: modern idiom)**
+- Purse is empty. The masons are working for exposure.
 - Out of gold. The walls will have to finish themselves.
 - My purse is empty. I'm told stone doesn't grow on trees.
 
-**A wall finished (the Steward)**
+**A wall finished (the Steward)** *(your pick)*
 - {place}'s wall is up. Anyone who wants {capital} now has to go through all of it.
 - {place} is walled. I'll sleep better.
 - The wall at {place} is finished. It's beautiful. {capital} thanks you.
@@ -1176,11 +1113,10 @@
 - {rival} again at {place}. Fine. They're good at this.
 - {place} too. {rival} has my respect. Not my land.
 
-**The Steward's handout (session 23)**
+**The Steward's handout (nothing worth building)**
 - Sent {n} gold back. Wanted the peasants to have something.
 - Returning {n} gold. Every wall I wanted is built.
 - Here's {n} gold. Nothing out here worth building, and I know things have been tight at the palace.
-
 
 ### The Schemer
 
@@ -1294,11 +1230,10 @@
 - {rival} again at {place}. Fine. Worthy opponents get the best plans.
 - {place} as well. {rival} is cleverer than I thought. I'll adjust.
 
-**The Steward's handout (session 23)**
+**The Steward's handout (nothing worth building)**
 - Sent {n} gold back. Don't tell anyone where it came from.
 - Returning {n} gold. Consider it a favour. I'll remember it.
 - Here's {n} gold. Spend it on friends.
-
 
 ### The Opportunist
 
@@ -1412,11 +1347,10 @@
 - {rival} again at {place}. They think like me. I hate it.
 - {place} as well. {rival} has earned some respect. Grudging.
 
-**The Steward's handout (session 23)**
+**The Steward's handout (nothing worth building)**
 - Sent {n} gold back. Nothing worth buying out here.
 - Returning {n} gold. No bargains this turn.
 - Here's {n} gold. I'll find you something cheap later.
-
 
 ### The Merchant
 
@@ -1530,11 +1464,9 @@
 - {rival} again at {place}. I respect a good operator.
 - {place} as well. {rival} knows what they're doing. I'll adjust the forecast.
 
-**The Steward's handout (session 23)**
+**The Steward's handout (nothing worth building)** *(your pick)*
 - Sent {n} gold back. Wanted the peasants to have something.
-- Returning {n} gold. Don't spend it all in one place. Or do, it's only {n}.
 - Here's {n} gold. Nothing out here worth building, and I know things have been tight at the palace.
-
 
 ### Neutral (dry and brief)
 
@@ -1610,23 +1542,18 @@
 **The grudge turns to respect**
 - {rival} took {place} as well. They're good.
 
-**The Steward's handout (session 23)**
+**The Steward's handout (nothing worth building)**
 - Sent {n} gold back. Nothing to spend it on.
-
 
 ### Captured leaders (whatever their personality: the loyalty is the voice)
 
-**Its first report**
+**Its first report** *(your pick)*
 - {name} here. Formerly of {house}, which as you know is no longer a thing. Reporting to {leader}.
-- {name}, reporting to {leader}. I've always admired your House. Since this turn. **(unsure: the guide says 'Since turn 31': the turn number isn't in this situation's placeholders)**
+- {name}, reporting to {leader}. I've always admired your House. Since turn {turn}.
 - {name} here. My loyalty to {house} lasted right up until {house} stopped existing. I'm all yours now.
-- {name}, at your service. {house} never appreciated me. You will, I can tell. Reporting to {leader}.
 
-**Took land**
-- Took {places}, my liege. Your wisdom guided my every step. Mostly the steps toward {place}.
-- Took {places}. I'd say I did it for {house}, but I've never heard of them. **(unsure)**
+**Took land** *(your pick)*
 - Took {places}, Your Grace. History will be kind to you. I'll make sure of it.
-- Took {places}. Another brilliant order. I'm only the hands.
 
 **Driven back**
 - {place} held, my liege. Lost {n}. My fault entirely. Your plan was flawless.
@@ -1659,14 +1586,12 @@
 - Walled {place}. A wall worthy of Your Grace.
 - {place} is walled. I've never been so loyal to a wall.
 
-
 ## Title cards, game over, the awards, waiting
 
-**Subline: a House knocked out**
+**Subline: a House knocked out** *(your pick)*
 - They had a good run. Mostly the running.
 - {house}'s banners are now available, slightly used.
 - {house} will be remembered. Briefly.
-- It was a good House. For a while.
 
 **Subline: a rival's capital falls**
 - {house} would like that back.
@@ -1674,18 +1599,21 @@
 - {house} has had better turns.
 - {house} is reviewing its wall budget.
 
-**Subline: a deal broken (not by you)**
+**Subline: a deal broken (not by you)** *(your pick)*
 - The ink was barely dry.
 - It was a lovely deal while it lasted.
-- Oathbreaker, officially.
-- Nobody is surprised. Well, almost nobody.
 
-**Game over: you won**
+**Subline: your own comeback ("House Or is back")**
+- The obituaries have been recalled.
+- Everyone who wrote us off, please form an orderly line.
+- That last stand was more of a first draft.
+- Back, and only slightly singed.
+
+**Game over: you won** *(your pick)*
 - {n} turns played. The bards are already arguing about the details.
 - {n} turns played, and the map is yours.
-- {n} turns played. Someone should tell the other Houses. They know.
 
-**Game over: you lost**
+**Game over: you lost** *(your pick)*
 - {n} turns played, which is {n} more than nothing.
 - {n} turns played. {winner} sends their regards. Probably.
 - {n} turns played. There's always the next game.
@@ -1728,7 +1656,7 @@
 **Award remark: Kingslayer**
 - The royal office would rather not discuss it.
 - A record nobody else wanted to hold.
-- Certified dangerous to stand near. **(unsure)**
+- Certified dangerous to stand near.
 
 **Award remark: Fortune**
 - The auditors found no evidence of cheating. They looked.
@@ -1743,7 +1671,7 @@
 **Award remark: Oathbreaker**
 - An honour of sorts.
 - A record, in its own way.
-- The royal office has stopped accepting their signature. **(unsure)**
+- The royal office has stopped accepting their signature.
 
 **Award remark: Survivor**
 - Last to leave the party.
@@ -1759,21 +1687,5 @@
 - The others are finishing the game. Some faster than others.
 - The others are playing on. It won't be long.
 
-
-**Title cards themselves** (plain): "Rookhome falls to House Purpure" (your capital), "Whitemarch is yours" (a capital you took), "Galeholt falls to House Gules" (a rival's), "House Azure is no more", "Your House is no more", "Lady Morwen breaks the truce", "You break the truce with Baron Krell".
-
-## Notices and other words I changed (Part 4)
-- The replay moved to Light: "Heads up, the replay was running slowly, so Effects are on Light now. You can change it in Settings."
-- The empty order queue: "No orders yet. The army is enjoying its day off. Tap your land, then a neighbour to attack, or use the round buttons."
-- No saves yet: "Nothing saved yet. The game saves itself every turn, so you don't have to."
-- The game engine stopping: "Sorry, the game engine stopped. Reload the page, and Continue picks up from the start of this turn."
-- The turn order in the report: "Turn order: Gules, then Azure, then Or."
-- The Spoils sets' flavour lines: "Troops and gold, and nobody asks where they came from." / "A fort, finished and delivered. The masons have already left." / "Culture by royal decree. The poets are paid in compliments." / "A little of everything, which is why it pays best."
-- Map blurbs with a beat: Embervale "Your neighbours are very close.", Greatmarch "always someone at your border", the Twin Realms "Everyone will want the bridge.", the Moon Coast "Nobody's lead is safe here.", the Ringsea "which everyone notices quickly", Wyrmland "Pack accordingly." **(unsure)**
-- Personality blurbs: the Conqueror "Subtle it is not.", the Blitzer "Brakes not included." **(unsure)**, the Schemer "Calls everyone friend.", the Turtle "Very proud of its walls.", the Merchant "Happy to walk you through the math."
-
-## Things I wasn't sure about
-- **Ellipses on busy buttons** ("Sealing…", "Starting…", "Playing…", "More…") are left as they are: the guide says no ellipses in menus, but these are the standard "working on it" signal. Your call.
-- **A comeback** title card (the guide's third subline case) needs the game to know what a comeback is; not built.
-- **The bots' broken-deal lines are rare in play:** a bot breaks a deal with a line only when it's sure of a capital or the win, or to stop a runaway. In 20 headless games and 54 played turns in the browser none did, so there's no screenshot of one in the report.
+**Title cards themselves** (plain): "Rookhome falls to House Purpure" (your capital), "Whitemarch is yours" (a capital you took), "Galeholt falls to House Gules" (a rival's), "House Azure is no more", "Your House is no more", "Lady Morwen breaks the truce", "You break the truce with Baron Krell", "House Or is back" (your comeback: down to a quarter of your most land, then back above half; once a game, yours only).
 

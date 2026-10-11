@@ -3,13 +3,15 @@ import { BOT_SITUATIONS, CAPTURED_SITUATIONS, fill, SCREEN_SITUATIONS, LEADER_SI
 
 /** The line library (session 22): enough versions, every placeholder known and filled, and a deterministic pick. */
 const sample = (keys: readonly string[]) => Object.fromEntries(keys.map((k) => [k, `<${k}>`]));
+/** The fewest versions a situation may have: three, or one where Nate picked his own (`picked` in the data). */
+const least = (path: string) => (lines.picked.includes(path) ? 1 : 3);
 
 describe("the line library", () => {
   it("every personality has three to five versions of each of its own lines", () => {
     for (const v of VOICES)
       for (const k of Object.keys(BOT_SITUATIONS) as (keyof typeof BOT_SITUATIONS)[]) {
         const n = lines.bots[v][k].length;
-        expect(n, `${v}.${k}`).toBeGreaterThanOrEqual(3);
+        expect(n, `${v}.${k}`).toBeGreaterThanOrEqual(least(`bots.${v}.${k}`));
         expect(n, `${v}.${k}`).toBeLessThanOrEqual(5);
       }
   });
@@ -23,7 +25,7 @@ describe("the line library", () => {
           if (lines.leaders.neutral) expect(n, `${v}.${k}`).toBeGreaterThanOrEqual(1);
           continue;
         }
-        expect(n, `${v}.${k}`).toBeGreaterThanOrEqual(3);
+        expect(n, `${v}.${k}`).toBeGreaterThanOrEqual(least(`leaders.${v}.${k}`));
         expect(n, `${v}.${k}`).toBeLessThanOrEqual(5);
       }
   });
@@ -51,9 +53,17 @@ describe("the line library", () => {
 
   it("a captured leader has three to five versions of each line", () => {
     for (const k of Object.keys(CAPTURED_SITUATIONS) as (keyof typeof CAPTURED_SITUATIONS)[]) {
-      expect(lines.captured[k].length, k).toBeGreaterThanOrEqual(3);
+      expect(lines.captured[k].length, k).toBeGreaterThanOrEqual(least(`captured.${k}`));
       expect(lines.captured[k].length, k).toBeLessThanOrEqual(5);
     }
+  });
+
+  it("every situation Nate picked exists and keeps at least one version", () => {
+    for (const path of lines.picked) {
+      const xs = path.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], lines);
+      expect(Array.isArray(xs) && xs.length > 0, path).toBe(true);
+    }
+    for (const [k, xs] of Object.entries(lines.screens)) expect(xs.length, k).toBeGreaterThanOrEqual(1);
   });
 
   it("the pick is deterministic (the game, the turn, the speaker), and a long game hears more than one version", () => {

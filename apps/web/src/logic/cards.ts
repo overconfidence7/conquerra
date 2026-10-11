@@ -9,6 +9,8 @@ import { BUILDING_NAME, SPECIALIST_NAME, type Namer } from "./text";
 
 /** "1 troop", "6 troops". */
 export const troopWord = (n: number) => `${n} troop${n === 1 ? "" : "s"}`;
+/** "1 rebel", "4 rebels". */
+export const rebelWord = (n: number) => `${n} rebel${n === 1 ? "" : "s"}`;
 
 export const MARK_NAME: Record<SpoilsMark, string> = { sword: "Sword", tower: "Tower", laurel: "Laurel" };
 export const MARK_ICON: Record<SpoilsMark, string> = { sword: "⚔", tower: "♜", laurel: "❦" };
@@ -115,8 +117,8 @@ export function fateLine(ctx: GameContext, e: FateEv, n: Namer): string {
     }
     case "uprising":
       return e.flipped
-        ? `${drew}${name} in ${where}: ${e.rebels} rebels threw ${holder === "you" ? "you" : holder} out and hold it now.`
-        : `${drew}${name} in ${where}, but its ${e.rebels} rebel${e.rebels === 1 ? "" : "s"} couldn't take it.`;
+        ? `${drew}${name} in ${where}: ${rebelWord(e.rebels ?? 0)} threw ${holder === "you" ? "you" : holder} out and hold it now.`
+        : `${drew}${name} in ${where}, but its ${rebelWord(e.rebels ?? 0)} couldn't take it.`;
     default:
       return `${drew}${name} in ${where}.`;
   }
@@ -133,7 +135,7 @@ export function rewardText(m: Mission): string {
   const r = m.reward;
   const parts: string[] = [];
   if (r.gold) parts.push(`+${r.gold} gold`);
-  if (r.troops) parts.push(`+${r.troops} troops ${m.territory && (m.kind === "fort" || m.kind === "hold") ? "there" : "at your capital"}`);
+  if (r.troops) parts.push(`+${troopWord(r.troops)} ${m.territory && (m.kind === "fort" || m.kind === "hold") ? "there" : "at your capital"}`);
   if (r.culture) parts.push(`+${r.culture} culture ${m.territory || m.province ? "there" : "at your capital"}`);
   if (r.specialist) parts.push(`a free ${SPECIALIST_NAME[r.specialist]}`);
   return parts.join(", ");

@@ -82,7 +82,7 @@ export function PowerGraph({ view, territories }: { view: PlayerView; territorie
     <div className="power-graph" ref={box}>
       <h3>Power by turn: each House's share of the map</h3>
       <div className="graph-wrap">
-        <svg width={width} height={H} role="img" aria-label={`Each House's share of the map over ${turns.at(-1)} turns. ${series.map((s) => `${name(s.player)}: ${pct(s.points.at(-1)!.share)} at the end`).join("; ")}.`} onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
+        <svg width={width} height={H} role="img" aria-label={`Each House's share of the map over ${turns.at(-1)} turn${turns.at(-1) === 1 ? "" : "s"}. ${series.map((s) => `${name(s.player)}: ${pct(s.points.at(-1)!.share)} at the end`).join("; ")}.`} onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
           {ticks.map((t) => (
             <g key={t}>
               <line x1={M.left} x2={width - M.right} y1={y(t)} y2={y(t)} className="grid" />

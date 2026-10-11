@@ -27,7 +27,7 @@ export function useReplay(
   const [applied, setApplied] = useState(0);
   const [progress, setProgress] = useState(0);
   // Title cards for the moments that matter (session 21): a capital falling, a House knocked out.
-  const cards = useMemo(() => (replay && timeline && ctx ? titleCards(timeline, replay.before, ctx.map) : []), [replay, timeline, ctx]);
+  const cards = useMemo(() => (replay && timeline && ctx ? titleCards(timeline, replay.before, ctx.map, !!replay.report.comeback) : []), [replay, timeline, ctx]);
   const carded = useMemo(() => new Set<unknown>(cards.map((c) => c.event)), [cards]);
   const [card, setCard] = useState<TitleCard | null>(null);
   const skipRef = useRef(false);

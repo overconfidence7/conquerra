@@ -113,7 +113,8 @@ describe("what your leaders say, and how much", () => {
     const first = said.lines.find((l) => l.situation === "firstReport")!;
     expect(first.leader).toBe("leader:p2");
     expect(first.text).toContain("Brannoc");
-    expect(first.text).toMatch(/House [A-Z]/);
+    // Its old House by name, or (Nate's pick) the turn it joined: "I've always admired your House. Since turn 3."
+    expect(first.text).toMatch(new RegExp(`House [A-Z]|Since turn ${v.turn}\.`));
     expect(said.memory.captured).toEqual({ "leader:p2": v.turn });
   });
 

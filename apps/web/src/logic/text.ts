@@ -142,7 +142,7 @@ export function styleNote(p: LeaderStyle | null, kind: LeaderRef["kind"]): strin
 }
 const STYLE_NOTE: Record<LeaderStyle, string> = {
   conqueror: "The Conqueror: picks one front and masses there, holding the others with just enough. Subtle it is not.",
-  blitzer: "The Blitzer: never stops and never pulls back. Brakes not included.",
+  blitzer: "The Blitzer: never stops and never pulls back. Eats lunch on the march.",
   opportunist: "The Opportunist: goes for whoever just fought and is bleeding.",
   schemer: "The Schemer: picks off the weakened, and keeps a little back on each front. Calls everyone friend.",
   turtle: "The Turtle: forts and culture first, then markets. Very proud of its walls.",

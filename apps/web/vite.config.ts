@@ -57,7 +57,7 @@ export default defineConfig({
       manifest: {
         name: "Conquerra",
         short_name: "Conquerra",
-        description: "A fantasy strategy game: set your orders, lock in, and watch every plan play out at once.",
+        description: "A fantasy strategy game: set your orders, lock in, and watch everyone's plans collide.",
         theme_color: "#0f1620",
         background_color: "#0f1620",
         display: "standalone",

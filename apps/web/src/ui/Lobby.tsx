@@ -65,7 +65,7 @@ export function Lobby() {
         {emblem && <img src={emblem} alt="" />}
         <h1>Conquerra</h1>
       </div>
-      <p className="muted">Set your orders, lock in, and watch every plan play out at once.</p>
+      <p className="muted">Set your orders, lock in, and watch everyone's plans collide.</p>
       <VersionLine />
       {auto && (
         <button className="primary wide big continue" onClick={() => void load({ slot: "auto" })} disabled={busy}>

@@ -14,6 +14,21 @@
     "grudgeEvery": 6,
     "needleEvery": 6
   },
+  "picked": [
+    "screens.overWon",
+    "screens.overLost",
+    "leaders.conqueror.capitalLost",
+    "screens.titleHouseOut",
+    "screens.titleDealBroken",
+    "bots.schemer.breaks",
+    "leaders.conqueror.opening",
+    "leaders.turtle.wallBuilt",
+    "captured.firstReport",
+    "captured.took",
+    "leaders.conqueror.judgeAttack",
+    "leaders.merchant.handout",
+    "bots.merchant.tradeNo"
+  ],
   "bots": {
     "conqueror": {
       "truceYes": [
@@ -276,7 +291,6 @@
       ],
       "breaks": [
         "{place} was always going to be mine. Honestly, you should have read the terms.",
-        "Our deal was lovely while it lasted. It lasted until {place} looked unguarded.",
         "Sorry, friend. {place} was too good to pass up. I'll send flowers."
       ],
       "yesTail": [
@@ -384,9 +398,8 @@
         "Thanks, that's a good price. Done."
       ],
       "tradeNo": [
-        "The numbers don't work for me. Walk me through how you got there.",
         "Thanks for the offer. Walk me through the math, because I'm not seeing it.",
-        "I appreciate it, but the price is off. Walk me through it."
+        "The math isn't mathing here."
       ],
       "passageYes": [
         "Pass through. Trade follows armies.",
@@ -961,8 +974,6 @@
         "{capital} has a new owner. One plan, working as planned."
       ],
       "capitalLost": [
-        "{capital} is gone. {rival} brought {n} troops. I'll want them back.",
-        "For the record, it took {rival} {n} troops to take {capital}. We'll remember the number.",
         "{capital} fell to {rival}. I have a plan for that too."
       ],
       "finished": [
@@ -992,8 +1003,7 @@
       ],
       "judgeAttack": [
         "You sent {n} against {place}'s {m}. Bold. I'd have waited a turn and brought the {k} from {other}.",
-        "{n} against {m} at {place}. I'd have brought the {k} from {other} and done it once.",
-        "You hit {place}'s {m} with {n}. The {k} at {other} were right there. One front, all of it, next time."
+        "{n} against {m} at {place}. I'd have brought the {k} from {other} and done it once."
       ],
       "judgeAttackAlone": [
         "You sent {n} against {place}'s {m}. Bold. I'd have waited a turn for more.",
@@ -1638,7 +1648,6 @@
       ],
       "handout": [
         "Sent {n} gold back. Wanted the peasants to have something.",
-        "Returning {n} gold. Don't spend it all in one place. Or do, it's only {n}.",
         "Here's {n} gold. Nothing out here worth building, and I know things have been tight at the palace."
       ]
     },
@@ -1723,15 +1732,11 @@
   "captured": {
     "firstReport": [
       "{name} here. Formerly of {house}, which as you know is no longer a thing. Reporting to {leader}.",
-      "{name}, reporting to {leader}. I've always admired your House. Since this turn.",
-      "{name} here. My loyalty to {house} lasted right up until {house} stopped existing. I'm all yours now.",
-      "{name}, at your service. {house} never appreciated me. You will, I can tell. Reporting to {leader}."
+      "{name}, reporting to {leader}. I've always admired your House. Since turn {turn}.",
+      "{name} here. My loyalty to {house} lasted right up until {house} stopped existing. I'm all yours now."
     ],
     "took": [
-      "Took {places}, my liege. Your wisdom guided my every step. Mostly the steps toward {place}.",
-      "Took {places}. I'd say I did it for {house}, but I've never heard of them.",
-      "Took {places}, Your Grace. History will be kind to you. I'll make sure of it.",
-      "Took {places}. Another brilliant order. I'm only the hands."
+      "Took {places}, Your Grace. History will be kind to you. I'll make sure of it."
     ],
     "pushedBack": [
       "{place} held, my liege. Lost {n}. My fault entirely. Your plan was flawless.",
@@ -1769,8 +1774,7 @@
     "titleHouseOut": [
       "They had a good run. Mostly the running.",
       "{house}'s banners are now available, slightly used.",
-      "{house} will be remembered. Briefly.",
-      "It was a good House. For a while."
+      "{house} will be remembered. Briefly."
     ],
     "titleCapitalFalls": [
       "{house} would like that back.",
@@ -1780,14 +1784,17 @@
     ],
     "titleDealBroken": [
       "The ink was barely dry.",
-      "It was a lovely deal while it lasted.",
-      "Oathbreaker, officially.",
-      "Nobody is surprised. Well, almost nobody."
+      "It was a lovely deal while it lasted."
+    ],
+    "titleComeback": [
+      "The obituaries have been recalled.",
+      "Everyone who wrote us off, please form an orderly line.",
+      "That last stand was more of a first draft.",
+      "Back, and only slightly singed."
     ],
     "overWon": [
       "{n} turns played. The bards are already arguing about the details.",
-      "{n} turns played, and the map is yours.",
-      "{n} turns played. Someone should tell the other Houses. They know."
+      "{n} turns played, and the map is yours."
     ],
     "overLost": [
       "{n} turns played, which is {n} more than nothing.",

@@ -1,5 +1,5 @@
 import { dealLine, explainFizzle, explainHold, findLeader, fizzleIsQuiet, governLine, spyLine, type GameContext, type LeaderRef, type PlayerView, type ReplayEvent } from "@conquerra/engine";
-import { fateLine, fateTone, MARK_NAME, missionLine, SET_NAME, troopWord } from "./cards";
+import { fateLine, fateTone, MARK_NAME, missionLine, rebelWord, SET_NAME, troopWord } from "./cards";
 import { army, BUILDING_NAME, dealNames, generalName, instructionDoing, KIND_NAME, leaderName, leaderShortName, leaderStatus, SPECIALIST_NAME, styledName, WORLD_EVENT_NAME, type LogLine, type Namer, type Tone } from "./text";
 
 /**
@@ -34,8 +34,8 @@ export function worldEventLine(e: Extract<ReplayEvent, { type: "worldEvent" }>, 
       return `The Fallen sent a storm: the border between ${n.place(e.border![0])} and ${n.place(e.border![1])} was closed this turn.`;
     case "uprising":
       return e.flipped
-        ? `The Fallen stirred an uprising in ${n.place(e.target)}: ${e.rebels} rebels threw ${n.isMe(e.against) ? "you" : n.who(e.against)} out, and hold it now.`
-        : `The Fallen stirred an uprising in ${n.place(e.target)}, but ${e.rebels ? `its ${e.rebels} rebels` : "the rebels"} couldn't take it.`;
+        ? `The Fallen stirred an uprising in ${n.place(e.target)}: ${rebelWord(e.rebels ?? 0)} threw ${n.isMe(e.against) ? "you" : n.who(e.against)} out, and hold it now.`
+        : `The Fallen stirred an uprising in ${n.place(e.target)}, but ${e.rebels ? `its ${rebelWord(e.rebels)}` : "the rebels"} couldn't take it.`;
     case "mercenaries":
       return `The Fallen hired ${e.troops} mercenaries: a neutral army now holds ${n.place(e.at!)}, next to ${whose} ${n.place(e.target)}.`;
     case "famine":

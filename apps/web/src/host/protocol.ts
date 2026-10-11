@@ -57,6 +57,8 @@ export interface TurnReport {
   events: ReplayEvent[];
   /** What your leaders said about it (session 22), in their own voices. */
   voices?: VoiceLine[];
+  /** Your House came back from a quarter of its most land to over half of it (session 23): the comeback card plays. */
+  comeback?: true;
 }
 
 export interface HostUpdate {

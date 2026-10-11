@@ -45,6 +45,7 @@ import {
 } from "@conquerra/engine";
 import { buildTimeline } from "../replay/timeline";
 import { chronicleOf } from "../logic/chronicleKeep";
+import { comebackStep, ownLand } from "../logic/comeback";
 import { leaderVoices, type VoiceMemory } from "../logic/voices";
 import { BOT_NAMES } from "./names";
 import { DEFAULT_HOUSE } from "../map/houses";
@@ -460,7 +461,10 @@ export class LocalGame {
     // What your leaders say about the turn, from your own view and replay only (session 22).
     const said = this.knockedOut ? null : leaderVoices(this.ctx, viewFor(this.ctx, before, HUMAN_ID), viewFor(this.ctx, this.state, HUMAN_ID), events, this.voiceMemory);
     if (said) this.voiceMemory = said.memory;
-    const report: TurnReport = { turn: before.turn, events, ...(said?.lines.length ? { voices: said.lines } : {}) };
+    // Your comeback (session 23), from your own land only.
+    const back = this.knockedOut ? null : comebackStep(this.voiceMemory.comeback, ownLand(viewFor(this.ctx, this.state, HUMAN_ID)), before.turn);
+    if (back) this.voiceMemory = { ...this.voiceMemory, comeback: back.memory };
+    const report: TurnReport = { turn: before.turn, events, ...(said?.lines.length ? { voices: said.lines } : {}), ...(back?.card ? { comeback: true as const } : {}) };
     this.chronicle.push(chronicleOf(report));
     this.startClock(buildTimeline(report.events).total);
     return report;

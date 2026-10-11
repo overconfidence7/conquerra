@@ -41,7 +41,7 @@ const DEFS: { id: string; title: string; for: string; stat: Stat; unit: (n: numb
   { id: "wall", title: "Iron Wall", for: "The most attacks held off", stat: "holds", unit: (n) => `${n} attack${n === 1 ? "" : "s"} held off` },
   { id: "kingslayer", title: "Kingslayer", for: "The most rival Leaders felled", stat: "leadersKilled", unit: (n) => `${n} Leader${n === 1 ? "" : "s"} felled` },
   { id: "fortune", title: "Fortune's Favourite", for: "The most good Fate on their land", stat: "fateGood", unit: (n) => `${n} good turn${n === 1 ? "" : "s"} of Fate` },
-  { id: "quartermaster", title: "Quartermaster", for: "The most troops raised", stat: "recruited", unit: (n) => `${n} troops recruited` },
+  { id: "quartermaster", title: "Quartermaster", for: "The most troops raised", stat: "recruited", unit: (n) => `${n} troop${n === 1 ? "" : "s"} recruited` },
   { id: "oathbreaker", title: "Oathbreaker", for: "The most handshake deals broken", stat: "dealsBroken", unit: (n) => `${n} deal${n === 1 ? "" : "s"} broken` },
 ];
 
