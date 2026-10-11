@@ -135,7 +135,7 @@
     "reach": null,
     "lendAll": true,
     "oneBattleATurn": false,
-    "stackPerTerritory": 0,
+    "stackPerTerritory": 0.1,
     "stackMax": 0.4
   },
   "economy": {

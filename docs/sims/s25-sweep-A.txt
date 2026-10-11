@@ -1,0 +1,40 @@
+s25-walls A | rules walls.stackPerTerritory=0.05,walls.stackMax=0.2 | seed s25, 300 games a table
+(a) payback embervale:4 : walls its core 29.0% | never walls 30.0% | Marshals 20.5% | fair 25.0% | edge -1.0 points | 57s
+(b) the walling seat: walls built 1.42/game | garrisoned (more than 1 troop) 76.6% of walled territory-turns | attacks on walls 0.08/game, held 4.0% (1 of 25)
+(b) everyone at that table: walls built 2.98/game | garrisoned (more than 1 troop) 77.0% of walled territory-turns | attacks on walls 0.20/game, held 3.3% (2 of 60)
+marshals embervale:4      s25: 300 games | length median 23, avg 23.0, at the 60 cap 0.3%, draws 0.0% | halfway leader won 50.0% | 50s
+  blitzer      won  28.1% = 1.12x (196 seats) | buildings 21g culture 1g | walled in 0.0% of games (0.00 walls) | attacks/turn 3.20 | land at turn 10 12.8
+  conqueror    won  25.2% = 1.01x (202 seats) | buildings 29g culture 10g | walled in 4.5% of games (0.04 walls) | attacks/turn 3.13 | land at turn 10 10.7
+  merchant     won  25.0% = 1.00x (188 seats) | buildings 41g culture 36g | walled in 1.1% of games (0.01 walls) | attacks/turn 2.44 | land at turn 10 7.0
+  opportunist  won  24.6% = 0.99x (203 seats) | buildings 26g culture 1g | walled in 0.0% of games (0.00 walls) | attacks/turn 2.99 | land at turn 10 10.8
+  schemer      won  24.2% = 0.97x (186 seats) | buildings 23g culture 7g | walled in 4.8% of games (0.05 walls) | attacks/turn 2.90 | land at turn 10 9.7
+  turtle       won  23.1% = 0.92x (225 seats) | buildings 48g culture 36g | walled in 12.4% of games (0.13 walls) | attacks/turn 2.18 | land at turn 10 6.1
+(b) all-Marshal: walls built 0.16/game | garrisoned (more than 1 troop) 89.8% of walled territory-turns | attacks on walls 0.00/game, held 0.0% (0 of 0)
+delegate embervale:4      s25: delegate-80 won 30.7% = 1.23x fair (fair 25.0%) | buildings 28g culture 85g walls 1.30 | length avg 23.5 | 54s
+SUMMARY A embervale:4: walls 29.0 / never 30.0 (edge -1.0) | ab walls held 3.3% of 60 | length 23.0 | halfway 50.0% | turtle 0.92 | top blitzer 1.12 | marshal walls held 0.0% of 0, built 0.16/game | delegate 1.23x
+(a) payback wyrmland:6  : walls its core 20.7% | never walls 25.3% | Marshals 13.5% | fair 16.7% | edge -4.7 points | 177s
+(b) the walling seat: walls built 7.61/game | garrisoned (more than 1 troop) 54.2% of walled territory-turns | attacks on walls 0.71/game, held 3.8% (8 of 212)
+(b) everyone at that table: walls built 17.11/game | garrisoned (more than 1 troop) 52.3% of walled territory-turns | attacks on walls 1.57/game, held 3.0% (14 of 471)
+marshals wyrmland:6       s25: 300 games | length median 39, avg 41.3, at the 60 cap 15.3%, draws 0.0% | halfway leader won 46.7% | 151s
+  blitzer      won   6.0% = 0.36x (300 seats) | buildings 46g culture 17g | walled in 0.7% of games (0.01 walls) | attacks/turn 4.13 | land at turn 10 19.9
+  conqueror    won  16.3% = 0.98x (300 seats) | buildings 112g culture 103g | walled in 12.0% of games (0.17 walls) | attacks/turn 4.55 | land at turn 10 19.0
+  merchant     won  21.7% = 1.30x (300 seats) | buildings 142g culture 137g | walled in 24.0% of games (0.45 walls) | attacks/turn 4.29 | land at turn 10 16.9
+  opportunist  won   8.7% = 0.52x (300 seats) | buildings 77g culture 59g | walled in 7.3% of games (0.08 walls) | attacks/turn 4.05 | land at turn 10 16.2
+  schemer      won  18.3% = 1.10x (300 seats) | buildings 102g culture 93g | walled in 12.0% of games (0.15 walls) | attacks/turn 4.21 | land at turn 10 15.8
+  turtle       won  29.0% = 1.74x (300 seats) | buildings 163g culture 231g | walled in 60.0% of games (2.18 walls) | attacks/turn 4.75 | land at turn 10 15.9
+(b) all-Marshal: walls built 3.03/game | garrisoned (more than 1 troop) 34.5% of walled territory-turns | attacks on walls 0.14/game, held 4.7% (2 of 43)
+delegate wyrmland:6       s25: delegate-80 won 22.0% = 1.32x fair (fair 16.7%) | buildings 100g culture 315g walls 7.25 | length avg 41.2 | 174s
+SUMMARY A wyrmland:6: walls 20.7 / never 25.3 (edge -4.7) | ab walls held 3.0% of 471 | length 41.3 | halfway 46.7% | turtle 1.74 | top turtle 1.74 | marshal walls held 4.7% of 43, built 3.03/game | delegate 1.32x
+(a) payback rootholm:8  : walls its core 12.3% | never walls 11.3% | Marshals 12.7% | fair 12.5% | edge 1.0 points | 277s
+(b) the walling seat: walls built 8.90/game | garrisoned (more than 1 troop) 43.6% of walled territory-turns | attacks on walls 0.98/game, held 1.4% (4 of 295)
+(b) everyone at that table: walls built 21.21/game | garrisoned (more than 1 troop) 39.2% of walled territory-turns | attacks on walls 2.03/game, held 1.0% (6 of 609)
+marshals rootholm:8       s25: 300 games | length median 44, avg 45.5, at the 60 cap 24.0%, draws 0.0% | halfway leader won 45.7% | 237s
+  blitzer      won   5.0% = 0.40x (403 seats) | buildings 56g culture 22g | walled in 1.0% of games (0.01 walls) | attacks/turn 4.43 | land at turn 10 25.2
+  conqueror    won  10.7% = 0.85x (412 seats) | buildings 153g culture 165g | walled in 15.8% of games (0.23 walls) | attacks/turn 4.96 | land at turn 10 24.0
+  merchant     won  18.6% = 1.49x (403 seats) | buildings 190g culture 250g | walled in 37.0% of games (0.71 walls) | attacks/turn 5.35 | land at turn 10 22.1
+  opportunist  won   8.8% = 0.71x (397 seats) | buildings 109g culture 112g | walled in 8.3% of games (0.10 walls) | attacks/turn 4.37 | land at turn 10 21.8
+  schemer      won  13.3% = 1.06x (391 seats) | buildings 144g culture 152g | walled in 14.3% of games (0.18 walls) | attacks/turn 4.70 | land at turn 10 22.4
+  turtle       won  18.8% = 1.50x (394 seats) | buildings 185g culture 315g | walled in 62.7% of games (2.70 walls) | attacks/turn 5.16 | land at turn 10 20.5
+(b) all-Marshal: walls built 5.20/game | garrisoned (more than 1 troop) 25.6% of walled territory-turns | attacks on walls 0.14/game, held 0.0% (0 of 43)
+delegate rootholm:8       s25: delegate-80 won 14.0% = 1.12x fair (fair 12.5%) | buildings 113g culture 415g walls 9.53 | length avg 45.2 | 279s
+SUMMARY A rootholm:8: walls 12.3 / never 11.3 (edge 1.0) | ab walls held 1.0% of 609 | length 45.5 | halfway 45.7% | turtle 1.50 | top turtle 1.50 | marshal walls held 0.0% of 43, built 5.20/game | delegate 1.12x

@@ -47,9 +47,10 @@ describe("walls on the page (session 20b)", () => {
   it("the card's 'Walled: 10 defend' is exactly who defends in the engine's battle", () => {
     const s = game();
     const rival = viewFor(ctx, s, "rival");
-    expect(wallLine(ctx, rival, z)).toBe(`Walled: 10 defend (with ${name(y)} and ${name(x)})`);
+    // Session 25: with the wall bonus as shipped (+10% a walled territory beyond the first), "+20% for 3 walled".
+    expect(wallLine(ctx, rival, z)).toBe(`Walled: 10 defend (with ${name(y)} and ${name(x)}), +20% for 3 walled`);
     const card = territoryCard(ctx, rival, z);
-    expect(card.lines.find((l) => l.label === "Wall")?.value).toBe(`Walled: 10 defend (with ${name(y)} and ${name(x)})`);
+    expect(card.lines.find((l) => l.label === "Wall")?.value).toBe(`Walled: 10 defend (with ${name(y)} and ${name(x)}), +20% for 3 walled`);
     const order: Order = { id: "a", kind: "move", from: w, to: z, troops: 12 };
     const fight = resolveTurn(ctx, s, { rival: [order] }).events.find((e) => e.type === "battle");
     expect(fight?.type === "battle" && fight.defenders.troops).toBe(10);
@@ -76,10 +77,10 @@ describe("walls on the page (session 20b)", () => {
     Object.assign(s.territories[w]!, { owner: "you", troops: 3, culture: 4, building: "fort" });
     const you = viewFor(ctx, s, "you");
     expect(cultureNext(ctx, you, w, 4)).toContain("Completes a wall: walled at the end of this turn");
-    expect(wallHint(ctx, you, w, "culture")).toBe("Completes a wall: walled at the end of this turn");
+    expect(wallHint(ctx, you, w, "culture")).toBe("Completes a wall: walled at the end of this turn (+10% for each walled territory it joins)");
     // Culture 5 and no fort yet: the fort completes it.
     Object.assign(s.territories[w]!, { culture: 5, building: null });
-    expect(wallHint(ctx, viewFor(ctx, s, "you"), w, "fort")).toBe("Completes a wall once it's finished");
+    expect(wallHint(ctx, viewFor(ctx, s, "you"), w, "fort")).toBe("Completes a wall once it's finished (+10% for each walled territory it joins)");
     // Already walled, or not close: nothing to say.
     expect(wallHint(ctx, you, x, "culture")).toBeNull();
     Object.assign(s.territories[w]!, { culture: 2, building: "fort" });

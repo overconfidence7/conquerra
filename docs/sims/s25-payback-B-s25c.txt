@@ -1,0 +1,13 @@
+s25-walls B | rules walls.stackPerTerritory=0.1,walls.stackMax=0.4 | seed s25c, 300 games a table
+(a) payback embervale:4 : walls its core 28.3% | never walls 28.3% | Marshals 21.7% | fair 25.0% | edge 0.0 points | 56s
+(b) the walling seat: walls built 1.40/game | garrisoned (more than 1 troop) 78.8% of walled territory-turns | attacks on walls 0.07/game, held 4.8% (1 of 21)
+(b) everyone at that table: walls built 2.82/game | garrisoned (more than 1 troop) 78.4% of walled territory-turns | attacks on walls 0.16/game, held 2.1% (1 of 47)
+SUMMARY B embervale:4: walls 28.3 / never 28.3 (edge 0.0) | ab walls held 2.1% of 47
+(a) payback wyrmland:6  : walls its core 21.3% | never walls 24.3% | Marshals 13.6% | fair 16.7% | edge -3.0 points | 178s
+(b) the walling seat: walls built 7.89/game | garrisoned (more than 1 troop) 58.3% of walled territory-turns | attacks on walls 0.73/game, held 2.7% (6 of 219)
+(b) everyone at that table: walls built 18.45/game | garrisoned (more than 1 troop) 54.8% of walled territory-turns | attacks on walls 1.73/game, held 2.7% (14 of 520)
+SUMMARY B wyrmland:6: walls 21.3 / never 24.3 (edge -3.0) | ab walls held 2.7% of 520
+(a) payback rootholm:8  : walls its core 9.7% | never walls 10.3% | Marshals 13.3% | fair 12.5% | edge -0.7 points | 272s
+(b) the walling seat: walls built 8.74/game | garrisoned (more than 1 troop) 41.0% of walled territory-turns | attacks on walls 0.92/game, held 2.2% (6 of 275)
+(b) everyone at that table: walls built 23.29/game | garrisoned (more than 1 troop) 38.4% of walled territory-turns | attacks on walls 2.19/game, held 1.7% (11 of 657)
+SUMMARY B rootholm:8: walls 9.7 / never 10.3 (edge -0.7) | ab walls held 1.7% of 657
