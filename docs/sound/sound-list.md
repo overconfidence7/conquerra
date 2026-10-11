@@ -70,6 +70,6 @@
 
 | Cue | When it plays | Files | Made from |
 |---|---|---|---|
-| `wind` | under the map while planning | 1 | Bashar3A, Mild Wind Background Noise |
+| `wind` | under the map while planning | 1 | Bashar from Skirmish.io, Mild Wind Background Noise |
 | `sea` | when the camera shows coast | 1 | RandomMind, Sea and river wave sounds |
 | `birds` | now and then | 1 | isaiah658, Ambient Bird Sounds |

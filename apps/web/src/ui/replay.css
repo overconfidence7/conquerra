@@ -88,3 +88,6 @@
 /* Settings grew the sound rows (session 24): on a short screen it scrolls instead of running off the bottom. */
 .game .popover { max-height: calc(100dvh - 82px); overflow-y: auto; overscroll-behavior: contain; }
 .game.phone .popover { max-height: calc(100dvh - 68px); }
+/* Settings → Sound on the phone (session 25): the sliders fold under the row; Mute stays on it. */
+.sound-head .sound-fold { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; display: flex; gap: 8px; align-items: baseline; flex: 1; }
+.sound-head { align-items: center; }

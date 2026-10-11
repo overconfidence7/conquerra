@@ -31,7 +31,7 @@
 | Medieval: Victory Theme | RandomMind | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/medieval-victory-theme> | 2026-10-11 | `sfx-capture`, `music-victory` |
 | Medieval: Defeat Theme | RandomMind | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/medieval-defeat-theme> | 2026-10-11 | `music-defeat` |
 | Sea and river wave sounds | RandomMind | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/sea-and-river-wave-sounds> | 2026-10-11 | `amb-sea` |
-| Mild Wind Background Noise | Bashar3A | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/mild-wind-background-noise> | 2026-10-11 | `amb-wind` |
+| Mild Wind Background Noise | Bashar from Skirmish.io | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/mild-wind-background-noise> | 2026-10-11 | `amb-wind` |
 | Ambient Bird Sounds | isaiah658 | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/ambient-bird-sounds> | 2026-10-11 | `amb-birds` |
 
 ## How a sound gets replaced

@@ -119,7 +119,7 @@ function useCovered(active: boolean, phone: boolean, reserveSelPanel: boolean, s
   return covered;
 }
 
-function Settings({ tactical, onTactical, onFit, onReport, onSaves, onLeave, onClose }: { tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onClose(): void }) {
+function Settings({ phone, tactical, onTactical, onFit, onReport, onSaves, onLeave, onClose }: { phone: boolean; tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onClose(): void }) {
   const [credits, setCredits] = useState(false);
   if (credits)
     return (
@@ -149,7 +149,7 @@ function Settings({ tactical, onTactical, onFit, onReport, onSaves, onLeave, onC
       </button>
       <LayoutSetting />
       <EffectsSetting />
-      <SoundSetting />
+      <SoundSetting folded={phone} />
       <button className="menu-item" onClick={() => setCredits(true)}>
         Credits <span className="muted">sound and music</span>
       </button>
@@ -207,23 +207,42 @@ function EffectsSetting() {
 /**
  * Settings → Sound (session 24): Master, Music and Sound effects volumes, and Mute, remembered on this device.
  * Separate from Effects: Effects Off doesn't silence sound, and Mute doesn't change what you see.
+ * On the phone (session 25) the three sliders fold under the Sound row (tap it to open them); Mute stays on the row,
+ * so muting is still two taps from the map. The desktop has the room, so it shows them all.
  */
-function SoundSetting() {
+function SoundSetting({ folded }: { folded: boolean }) {
   const s = useSound();
+  const [open, setOpen] = useState(false);
   const slider = (label: string, key: "master" | "music" | "effects") => (
     <label className="menu-item sound-row">
       <span>{label}</span>
       <input type="range" min={0} max={100} step={5} value={Math.round(s[key] * 100)} disabled={s.muted} aria-label={`${label} volume`} onChange={(e) => s.set({ [key]: Number(e.target.value) / 100 })} />
     </label>
   );
+  const showSliders = !folded || open;
   return (
     <div className="sound-settings" role="group" aria-label="Sound">
-      <button className="menu-item" onClick={() => s.set({ muted: !s.muted })} aria-pressed={!s.muted}>
-        Sound <span className="muted">{s.muted ? "Muted" : "On"}</span>
-      </button>
-      {slider("Master", "master")}
-      {slider("Music", "music")}
-      {slider("Sound effects", "effects")}
+      <div className="menu-item sound-head">
+        {folded ? (
+          <button className="sound-fold" onClick={() => setOpen(!open)} aria-expanded={open}>
+            Sound <span className="muted">{open ? "▾" : "▸ volumes"}</span>
+          </button>
+        ) : (
+          <span>Sound</span>
+        )}
+        <span className="seg">
+          <button aria-pressed={s.muted} className={s.muted ? "on" : ""} onClick={() => s.set({ muted: !s.muted })}>
+            {s.muted ? "Muted" : "Mute"}
+          </button>
+        </span>
+      </div>
+      {showSliders && (
+        <>
+          {slider("Master", "master")}
+          {slider("Music", "music")}
+          {slider("Sound effects", "effects")}
+        </>
+      )}
     </div>
   );
 }
@@ -549,6 +568,7 @@ export function GameScreen() {
   );
   const settingsMenu = settings && (
     <Settings
+      phone={phone}
       tactical={tactical}
       onTactical={toggleTactical}
       onFit={() => renderer.current?.fit()}
