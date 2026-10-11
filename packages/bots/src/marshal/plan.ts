@@ -575,7 +575,8 @@ function planMoves(
   // A real garrison inside our walls (session 20d, Nate: the wall lends spare troops, so a garrisoned wall is the point):
   // a leader keeps `wallGarrison` in each walled territory of a wall that faces a rival (not while it cleans up).
   // (Session 23: the Marshal's own Leader too, once its realm builds with the plan.)
-  const wallKeep = (steer || (J.realmPlan && (typeof J.realmPlan !== "object" || J.realmPlan.garrison))) && J.wallGarrison && !cleaningUp ? J.wallGarrison : 0;
+  // (Session 25: with walls that pay back, the Marshal's own armies can keep `marshalWallGarrison` there too.)
+  const wallKeep = cleaningUp ? 0 : (steer || (J.realmPlan && (typeof J.realmPlan !== "object" || J.realmPlan.garrison))) && J.wallGarrison ? J.wallGarrison : !steer ? (J.marshalWallGarrison ?? 0) : 0;
   const garrisoned = new Set<TerritoryId>();
   if (wallKeep > 0)
     for (const w of view.walls ?? [])

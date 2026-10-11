@@ -217,6 +217,11 @@ export const MarshalJudgement = z.object({
    * Missing: 1, as before.
    */
   wallGarrison: z.number().int().min(1).optional(),
+  /**
+   * Session 25 (walls that pay back): the Marshal's own armies keep this many troops in each walled territory of its
+   * that faces a rival, as its leaders do with `wallGarrison`. Missing: none kept (1, as before).
+   */
+  marshalWallGarrison: z.number().int().min(1).optional(),
   sweep: z
     .object({
       reach: z.number().int().min(1),
