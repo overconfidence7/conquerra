@@ -82,6 +82,7 @@ export function describeOrder(o: Order, n: Namer, attack: boolean, sending?: str
     }
     case "budget": {
       const ref: LeaderRef = { kind: o.role === "steward" ? "steward" : "leader", of: o.general };
+      if (o.handBack) return `${leaderName(n, ref)}: hand back what's over ${o.handBack.keep} gold as the turn ends (nothing more worth building)`;
       return `${leaderName(n, ref)}: ${[o.budget ? `budget ${budgetLabel(o.budget)}` : "", o.takeBack ? "take its purse back" : ""].filter(Boolean).join(", ")}`;
     }
     case "release":
@@ -224,6 +225,8 @@ export function leaderNoteLine(note: LeaderNote, n: Namer): string {
     }
     case "saving":
       return `Saving ${note.gold} gold: nowhere to recruit until ${note.at ? `the barracks at ${n.place(note.at)}` : "a barracks"} is up`;
+    case "handout":
+      return `Nothing more worth building, so about ${note.gold} gold goes back to you as the turn ends. It keeps ${note.keep}`;
   }
 }
 

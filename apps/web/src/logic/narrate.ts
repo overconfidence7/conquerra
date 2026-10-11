@@ -183,6 +183,7 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
     case "generalReleased":
       return { text: `You let ${who(e.general)}'s ${e.steward ? "Steward" : "Leader"} go (you may keep ${(n.ctx?.rules.leaders.maxOfKind ?? 4)} of each kind, your own included).${e.gold ? ` The ${e.gold} gold in its purse came home.` : ""}`, tone: "info" };
     case "purseTaken":
+      if (e.handout) return { text: `${leaderShortName(n, e.leader)} handed ${e.gold} gold back from its purse as the turn ended: nothing more worth building.`, tone: "info" };
       return { text: `You took ${e.gold} gold back from ${leaderShortName(n, e.leader)}'s purse (${n.isMe(e.leader.of) ? "your" : `${who(e.leader.of)}'s old`} ${KIND_NAME[e.leader.kind]}).`, tone: "info" };
     case "purses": {
       // (Upkeep the purses paid is on the income line.)

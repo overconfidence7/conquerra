@@ -530,8 +530,10 @@ export type OrderBody =
   /**
    * A leader's budget (session 18), and gold taken back from its purse into your treasury (`takeBack`: how much; more
    * than it holds takes it all). Applied as the turn starts; takes no slot.
+   * `handBack` (session 23, Nate): the leader's own order when it has nothing worth building: at the end of the turn,
+   * after every order, whatever its purse holds over `keep` (two turns of its budget) goes back to your treasury.
    */
-  | { kind: "budget"; general: PlayerId; role?: "steward"; budget?: Budget; takeBack?: number }
+  | { kind: "budget"; general: PlayerId; role?: "steward"; budget?: Budget; takeBack?: number; handBack?: { keep: number } }
   /** Let a captured leader go (with one too many of a kind, you choose who goes). Applied as the turn starts. */
   | { kind: "release"; general: PlayerId; role?: "steward" }
   /**
@@ -766,8 +768,11 @@ export type GameEvent =
   | { type: "generalLost"; player: PlayerId; general: PlayerId; territory: TerritoryId; by: PlayerId | null; /** Gold its purse held, back in your treasury. */ gold?: number }
   /** You let a captured general go (you may keep only so many). */
   | { type: "generalReleased"; player: PlayerId; general: PlayerId; /** A Steward let go (session 18). */ steward?: boolean; /** Gold its purse held, back in your treasury. */ gold?: number }
-  /** Gold you took back from a leader's purse into your treasury (session 18), as the turn starts. Only you see it. */
-  | { type: "purseTaken"; player: PlayerId; leader: LeaderRef; gold: number }
+  /**
+   * Gold you took back from a leader's purse into your treasury (session 18), as the turn starts. `handout` (session
+   * 23): the leader handed it back itself at the end of the turn (nothing worth building). Only you see it.
+   */
+  | { type: "purseTaken"; player: PlayerId; leader: LeaderRef; gold: number; handout?: true }
   /**
    * Leaders' purses as income came in (session 18): what purses paid toward upkeep you couldn't pay (before anyone
    * deserted), then each leader's budget paid in. `goldAfter` and `purses` are your treasury and every purse

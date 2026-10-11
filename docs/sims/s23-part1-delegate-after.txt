@@ -1,0 +1,2 @@
+delegate embervale:4      s23p1: delegate-80 won 27.7% = 1.11x fair (fair 25.0%) | buildings 32g culture 89g walls 1.45 | length avg 25.7 | 18s
+delegate rootholm:8       s23p1: delegate-80 won 13.3% = 1.07x fair (fair 12.5%) | buildings 127g culture 405g walls 9.45 | length avg 48.2 | 84s

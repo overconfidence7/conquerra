@@ -40,8 +40,13 @@ export interface FinishResult {
   usedInitiative: boolean;
 }
 
-/** Rivals down to a handful (as far as we know): at most `territories` or `share` of ours, and a third of ours at most. With `all` (Clean up), everyone. */
-export function remnantRivals(b: Board, finish: { territories: number; share: number }, all = false): PlayerId[] {
+/**
+ * Rivals down to a handful: at most `territories` or `share` of ours, and a third of ours at most. With `all` (Clean
+ * up), everyone. Judged honestly under fog (session 23, orchestrator default): their land as far as we know, plus the
+ * land in the fog they could plausibly hold (the sweep's "might be", `fog` steps; see plausibleLand). On turn 6 a rival
+ * we've barely seen isn't down to a handful just because we've seen little of it.
+ */
+export function remnantRivals(b: Board, finish: { territories: number; share: number }, all = false, fog = 2): PlayerId[] {
   const ours = b.mine.length;
   const known = new Map<PlayerId, number>();
   for (const t of b.idx.ids) {
@@ -53,10 +58,48 @@ export function remnantRivals(b: Board, finish: { territories: number; share: nu
     .filter((p) => p !== b.me.id && (known.get(p) ?? 0) > 0)
     .filter((p) => {
       if (all) return true;
-      const land = Math.max(known.get(p)!, b.knownLand.get(p) ?? 0);
+      const land = Math.max(known.get(p)!, b.knownLand.get(p) ?? 0) + plausibleLand(b, p, fog);
       return land * 3 <= ours && (land <= finish.territories || land <= finish.share * ours);
     })
     .sort((x, y) => (known.get(x) ?? 0) - (known.get(y) ?? 0) || (x < y ? -1 : 1));
+}
+
+/**
+ * Land in the fog `rival` could plausibly hold that we don't know is theirs (the sweep's "might be", session 20d):
+ * land we've never seen that joins up with theirs through the fog, and fogged land within `fog` steps of it (or of
+ * theirs) that was empty, theirs or ours when we last saw it. Land a third House held stays theirs as far as we know.
+ * With the fog off, none. It only reads our view: the remnant could be there, so it counts.
+ */
+export function plausibleLand(b: Board, rival: PlayerId, fog: number): number {
+  const { idx, owned } = b;
+  const fogged = (t: TerritoryId) => b.view.territories[t]?.detail !== "full";
+  const never = (t: TerritoryId) => {
+    const v = b.view.territories[t];
+    return !v || (v.detail !== "full" && !v.lastSeen);
+  };
+  const open = (t: TerritoryId) => {
+    if (owned(t) || !fogged(t)) return false;
+    if (never(t)) return true;
+    const o = b.look0(t);
+    return o === null || o === b.me.id || o === rival;
+  };
+  const seeds = idx.ids.filter((t) => !owned(t) && b.look0(t) === rival);
+  const d = new Map<TerritoryId, number>(seeds.map((t) => [t, 0]));
+  const q = [...seeds];
+  for (let h = 0; h < q.length; h++) {
+    const cur = q[h]!;
+    for (const nb of idx.neighbors.get(cur)!) {
+      if (!open(nb)) continue;
+      // Never-seen land joins up at no cost; fog we've seen costs a step. (A shorter way in goes round again.)
+      const step = never(nb) ? 0 : d.get(cur)! + 1;
+      if (step > fog || (d.has(nb) && d.get(nb)! <= step)) continue;
+      d.set(nb, step);
+      q.push(nb);
+    }
+  }
+  let n = 0;
+  for (const t of d.keys()) if (b.look0(t) !== rival) n++;
+  return n;
 }
 
 /**

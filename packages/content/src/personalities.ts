@@ -326,6 +326,14 @@ export const LeaderPlanning = z.object({
         rush: z.enum(["capital", "all"]).default("all"),
       })
       .optional(),
+    /**
+     * Session 23 (Nate, Oct 10): a Steward with nothing worth building (nothing on its list this turn, and nothing it's
+     * saving toward that it can afford within this many turns of its budget) hands back whatever its purse holds over
+     * this many turns of its budget, at the end of the turn. 0: never.
+     */
+    handBackTurns: z.number().int().min(0).default(2),
+    /** Less than this much spare gold isn't worth handing back (a report line every turn for pocket change). */
+    handBackMin: z.number().int().min(0).default(5),
   }),
 });
 export type LeaderPlanning = z.infer<typeof LeaderPlanning>;

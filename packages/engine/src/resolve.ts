@@ -35,7 +35,7 @@ import { checkMissions, drawFate } from "./fate";
 import { anyDealAcross, attackAcross, diplomacyEndOfTurn, diplomacyStart, partnersOf, passageFor } from "./diplomacy";
 import { visibleTerritories } from "./vision";
 import { hireSpy, spiesEndOfTurn, spyOrders, spyReports } from "./spies";
-import { authorOf, captureLeaders, commandLeaders, findLeader, loseCaptured, payBudgets, pursesPayUpkeep } from "./leaders";
+import { authorOf, captureLeaders, commandLeaders, findLeader, handBack, loseCaptured, payBudgets, pursesPayUpkeep } from "./leaders";
 import { recordTurn } from "./history";
 import { shareWallLosses, updateWalls, wallLenders, wallRules, type Lend } from "./walls";
 
@@ -866,6 +866,12 @@ export function resolveTurn(ctx: GameContext, state: GameState, orders: OrdersBy
       t.construction = null;
       if (t.owner) T.emit({ type: "completed", player: t.owner, territory: id, building: t.building });
     }
+  }
+
+  // ----- A leader with nothing worth building hands back its spare gold (session 23) -----
+  for (const pid of seats) {
+    const p = T.player(pid);
+    if (p.eliminatedTurn === null && Array.isArray(orders[pid])) handBack(T, p, orders[pid]!);
   }
 
   // ----- Fallen Leaders come back for free: at the capital, or the strongest territory if it's lost -----

@@ -906,7 +906,8 @@ export function restoredQueue(orders: readonly Order[]): { queue: Order[]; instr
   const diplomacy: Order[] = [];
   for (const o of orders) {
     if (o.kind === "instruct") instructions[`${o.role === "steward" ? "steward" : "leader"}:${o.general}`] = o.instruction;
-    else if (o.kind === "budget") budgets[`${o.role === "steward" ? "steward" : "leader"}:${o.general}`] = { ...(o.budget ? { budget: o.budget } : {}), ...(o.takeBack ? { takeBack: o.takeBack } : {}) };
+    // (A leader's own hand-back order is one of its orders, not a budget change of yours: session 23.)
+    else if (o.kind === "budget" && !o.handBack) budgets[`${o.role === "steward" ? "steward" : "leader"}:${o.general}`] = { ...(o.budget ? { budget: o.budget } : {}), ...(o.takeBack ? { takeBack: o.takeBack } : {}) };
     else if (o.kind === "release") releases.push(o.role === "steward" ? `steward:${o.general}` : o.general);
     else if (o.kind === "propose" || o.kind === "answer" || o.kind === "break") diplomacy.push(o);
     else queue.push(o);

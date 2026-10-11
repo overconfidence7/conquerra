@@ -257,6 +257,15 @@ export function leaderVoices(ctx: GameContext, before: PlayerView, after: Player
     add(l, 1, "needle", caught(l, "needle", { ruler: player(old), house: house(old) }), undefined, (m) => ((m.needled ??= {})[key(l)] = turn));
   }
 
+  // A Steward with nothing worth building handed its spare gold back (session 23, Nate's running bit: a rich person's
+  // handout to the poor). Your own leaders only (a captured one's report line says it plainly), and like a grumble about
+  // the purse, at most once every few turns (the report's plain line says it every time).
+  for (const e of events)
+    if (e.type === "purseTaken" && e.handout && e.player === me) {
+      const l = find(e.leader);
+      if (l && !captured(l) && turn - (mem.purse?.[key(l)] ?? -99) >= L().purseEvery) add(l, 4, "handout", own(l, "handout", { n: e.gold }), undefined, (m) => ((m.purse ??= {})[key(l)] = turn));
+    }
+
   // An empty purse: a grumble, at most once every few turns per leader.
   for (const l of after.me.leaders)
     if (l.command && l.purse === 0 && turn - (mem.purse?.[key(l)] ?? -99) >= L().purseEvery)

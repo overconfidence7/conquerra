@@ -41,7 +41,8 @@ export function playGame(table: string, share: number, g: number, turns: number,
   const [map, n] = table.split(":") as [string, string];
   const ctx: GameContext = { map: maps[map]!, rules: defaultRules };
   const key = leaderKey({ kind: "leader", of: "p1" });
-  const seed = `s20d-purse-${map}-${n}-${g}`;
+  // (PURSE_SEED, session 23: fresh seeds for a re-run; the workers inherit it.)
+  const seed = `${process.env.PURSE_SEED ?? "s20d-purse"}-${map}-${n}-${g}`;
   const plans = new Map<number, { view: PlayerView; orders: Order[]; note: string | null }>();
   const seat = makeDelegateSeat(share, {
     stewardShare: share >= 0.8 ? Math.round((1 - share) * 100) / 100 : 0.2,

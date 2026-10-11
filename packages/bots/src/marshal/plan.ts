@@ -327,7 +327,7 @@ function planMoves(
   // Cleaning up, session 20d: every rival is one to finish, even one that borders whoever it reads as running away;
   // holding 75% of the map, nobody is shielding anyone from us.)
   const toFinish = J.finish && !calm && (cleanUp || view.turn > (J.opening?.turns ?? 0))
-    ? remnantRivals(b, rules.leaders.finish, cleanUp).filter((r) => !atPeace(r) && (cleanUp || !shieldsLeader.has(r)) && (steer?.finishes ? steer.finishes(r) : !steer?.aim || idx.ids.some((t) => b.look0(t) === r && steer.aim!(t, 1) !== null)))
+    ? remnantRivals(b, rules.leaders.finish, cleanUp, J.sweep?.fog ?? 2).filter((r) => !atPeace(r) && (cleanUp || !shieldsLeader.has(r)) && (steer?.finishes ? steer.finishes(r) : !steer?.aim || idx.ids.some((t) => b.look0(t) === r && steer.aim!(t, 1) !== null)))
     : [];
   /** How far each of our territories is from their land, through our own (for recruiting near them). */
   const toRemnant = new Map<TerritoryId, number>();

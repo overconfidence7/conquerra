@@ -532,3 +532,46 @@ describe("your Steward's share at the start (session 19)", () => {
     expect(startingStewardShare(defaultRules, 80, 10)).toBe(0.1);
   });
 });
+
+describe("a Steward with nothing worth building hands its spare gold back (session 23)", () => {
+  const two = () => {
+    const s = lineGame(ctx);
+    board(s, { a: ["p1", 5], b: ["p1", 3], e: ["p2", 5] });
+    player(s, "p1").gold = 0;
+    return s;
+  };
+  const handBack = (keep: number): Order => ({ id: "h", kind: "budget", general: "p1", role: "steward", steward: "p1", handBack: { keep } });
+
+  it("at the end of the turn, after its own orders, whatever is over `keep` goes to your treasury: exactly that much", () => {
+    const s = two();
+    rec(s, "p1", "steward")!.purse = 40;
+    // Its market is paid first (the purse pays its orders), then it hands back what's over 10.
+    const r = resolveTurn(ctx, s, { p1: [handBack(10), { id: "m", kind: "build", territory: "b", building: "market", steward: "p1" }] });
+    const market = defaultRules.buildings.market.cost;
+    const back = find(r.events, "purseTaken")!;
+    expect(back).toMatchObject({ player: "p1", leader: { kind: "steward", of: "p1" }, gold: 40 - market - 10, handout: true });
+    // After the orders: the market's event comes before the handout.
+    expect(r.events.findIndex((e) => e.type === "built")).toBeLessThan(r.events.indexOf(back));
+    expect(rec(r.state, "p1", "steward")!.purse).toBe(10);
+    const inc = find(r.events, "income")!;
+    expect(player(r.state, "p1").gold).toBe(40 - market - 10 + inc.income - inc.upkeep);
+  });
+
+  it("nothing over `keep`, nothing handed back; and only you see it", () => {
+    const s = two();
+    rec(s, "p1", "steward")!.purse = 8;
+    const r = resolveTurn(ctx, s, { p1: [handBack(10)] });
+    expect(find(r.events, "purseTaken")).toBeUndefined();
+    expect(rec(r.state, "p1", "steward")!.purse).toBe(8);
+    const s2 = two();
+    rec(s2, "p1", "steward")!.purse = 30;
+    const r2 = resolveTurn(ctx, s2, { p1: [handBack(4)] });
+    expect(replayFor(ctx, s2, r2, "p1").some((e) => e.type === "purseTaken" && e.handout)).toBe(true);
+    expect(replayFor(ctx, s2, r2, "p2").some((e) => e.type === "purseTaken")).toBe(false);
+    // The replay's own board ends where the turn did.
+    const tv = new TurnVision(ctx, s2, r2.events, ["p1"]);
+    for (const e of r2.events) tv.step(e);
+    expect(player(tv.board, "p1").gold).toBe(player(r2.state, "p1").gold);
+    expect(player(tv.board, "p1").leaders.map((l) => l.purse)).toEqual(player(r2.state, "p1").leaders.map((l) => l.purse));
+  });
+});

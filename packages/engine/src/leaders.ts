@@ -277,6 +277,23 @@ export function commandLeaders(h: LeadersHost, p: PlayerState, list: readonly Or
 }
 
 /**
+ * A leader with nothing worth building hands back what its purse holds over `keep` (session 23, Nate), at the end of
+ * the turn, after every order: its own `budget` order with `handBack`.
+ */
+export function handBack(h: LeadersHost, p: PlayerState, list: readonly Order[]): void {
+  for (const o of list) {
+    if (o.kind !== "budget" || !o.handBack) continue;
+    const r = findLeader(p, { kind: o.role === "steward" ? "steward" : "leader", of: o.general });
+    if (!r) continue;
+    const gold = Math.floor(r.purse - Math.max(0, o.handBack.keep));
+    if (gold <= 0) continue;
+    r.purse -= gold;
+    p.gold += gold;
+    h.emit({ type: "purseTaken", player: p.id, leader: refOf(r), gold, handout: true });
+  }
+}
+
+/**
  * Budgets add up to at most all of your income (session 20, Nate found he could give more): shares over 100% are
  * trimmed in roster order (your Leader first). Exact amounts are paid only from what the treasury holds anyway.
  */

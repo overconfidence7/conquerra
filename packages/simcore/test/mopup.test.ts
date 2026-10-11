@@ -277,11 +277,13 @@ describe("leaders with personalities on the mop-up fixtures (session 20c)", () =
     // (Walls off, session 20b: the Marshals' walls changed these games, and the Schemer, which plays like Neutral in
     // most positions, no longer met one where it doesn't. Planning with walls on, on the same positions, is the same.)
     const ctx: GameContext = { map: maps.wyrmland!, rules: { ...defaultRules, walls: { ...defaultRules.walls!, on: false } } };
-    // Each position with what every seat watched last turn (the Opportunist goes for whoever just fought).
+    // Each position with what every seat watched last turn (the Opportunist goes for whoever just fought). (Turn 24,
+    // session 23: at turn 16 the Opportunist wrote what Neutral would in every position once a rival seen only in part
+    // stopped counting as a remnant. Its one trait of its own, the vulture, rarely changes an order under fog.)
     const positions = [1, 2, 3].map((g) => {
       let watched: ReadonlyMap<string, readonly ReplayEvent[]> = new Map();
       const final = playTable(ctx, `styles-${g}`, Array.from({ length: 6 }, (_, i) => marshal(["conqueror", "blitzer", "turtle", "schemer", "opportunist", "merchant"][i]!)), {
-        stop: (s) => s.turn >= 16,
+        stop: (s) => s.turn >= 24,
         onTurn: (_s, _v, last) => (watched = last),
       }).final!;
       return { final, watched };

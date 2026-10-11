@@ -1,5 +1,6 @@
 import { marshalData, type MarshalJudgement, type Personality } from "@conquerra/content";
 import {
+  budgetAmount,
   distancesFrom,
   isMilitaryCommand,
   isRecruitSiteIn,
@@ -82,7 +83,9 @@ export interface LeadersPlan {
 export type LeaderNote =
   | { kind: "finishing"; rivals: { rival: PlayerId; land: number }[] }
   | { kind: "pushBack"; rival: PlayerId; going: TerritoryId[]; avoiding: { at: TerritoryId; troops: number } | null; striking: boolean }
-  | { kind: "saving"; gold: number; for: "barracks"; at: TerritoryId | null };
+  | { kind: "saving"; gold: number; for: "barracks"; at: TerritoryId | null }
+  /** A Steward with nothing worth building (session 23): it hands back about `gold` at the end of the turn, keeping `keep`. */
+  | { kind: "handout"; gold: number; keep: number };
 
 /** Which of our armies each leader commands this turn (a narrower command keeps its armies over a wider one). */
 export interface Claims {
@@ -265,8 +268,36 @@ export function planLeaders(req: LeadersRequest): LeadersPlan {
     if (command!.kind === "report" || pooled.has(key)) mine = [];
     else if (l.kind === "steward") {
       // (Session 20d: it builds with a plan, and walls the province your Leader stands in too.)
-      if (!isMilitaryCommand(command!))
-        mine = own(planSteward(b, marshalData.leaders.steward, command as StewardCommand, purseOf(l), () => `${prefix}x${n++}`, taken, ctx.rules.game.maxTurnsHard, asked, l.personality ?? null, req.walls, { planned: req.planned ?? true, leaderAt: leaderAt(view.me, { kind: "leader", of: view.me.id }) }));
+      if (!isMilitaryCommand(command!)) {
+        const spend = (board: Board, purse: number, out: { left: number }, places: Set<TerritoryId>, newId: () => string) =>
+          planSteward(board, marshalData.leaders.steward, command as StewardCommand, purse, newId, places, ctx.rules.game.maxTurnsHard, asked, l.personality ?? null, req.walls, { planned: req.planned ?? true, leaderAt: leaderAt(view.me, { kind: "leader", of: view.me.id }), out });
+        const spare = { left: 0 };
+        const bought = spend(b, purseOf(l), spare, taken, () => `${prefix}x${n++}`);
+        mine = own(bought);
+        // Nothing worth building (session 23, Nate): what's over two turns of its budget goes back to you, unless it's
+        // saving it for something. Its own judgement: with this turn's purchases made, what would it buy over the next
+        // two turns, with its budget coming in each turn?
+        const keep = handBackKeep(l, spare.left, lastTurn, (left, perTurn) => {
+          let v = afterBuying(view, bought);
+          let purse = left;
+          let spent = 0;
+          for (let turn = 0; turn < marshalData.leaders.steward.handBackTurns; turn++) {
+            const next = marshalBoard(ctx, v, thought.insight, lastTurn);
+            if (!next) return left;
+            purse += perTurn;
+            const out = { left: purse };
+            const os = spend(next, purse, out, new Set(taken), () => "next");
+            spent += purse - out.left;
+            purse = out.left;
+            v = afterBuying(v, os);
+          }
+          return spent;
+        });
+        if (keep !== null) {
+          mine.push(...own([{ id: "h", kind: "budget", general: l.of, ...(l.kind === "steward" ? { role: "steward" as const } : {}), handBack: { keep } } as Order]));
+          notes[key] = { kind: "handout", gold: spare.left - keep, keep };
+        }
+      }
     } else if (isMilitaryCommand(command!)) {
       const juniors = commandsOf(view, req.commands).filter((x) => x.l.kind === "leader" && x.command?.kind === "report" && x.command.to === l.of).map((x) => x.l);
       const team0 = team && team.senior === l ? team.pooled : [];
@@ -284,6 +315,36 @@ export function planLeaders(req: LeadersRequest): LeadersPlan {
     orders.push(...mine);
   }
   return { orders: respectDeals(ctx, view, orders), memory: thought.memory, written, notes };
+}
+
+/**
+ * A Steward with nothing worth building (session 23, Nate's rule) keeps two turns of its budget and hands back the
+ * rest of what's `left` after this turn's orders. It never hands back gold it's saving for something it will buy
+ * within two turns: `ahead` is what it would spend over the next two turns (from what's left, its budget paid in each
+ * turn), and it keeps that much if it's more. Its budget is last turn's (what last turn earned, from the report you saw). Returns
+ * what it keeps, or null: it keeps it all.
+ */
+export function handBackKeep(l: LeaderRecord, left: number, lastTurn: readonly ReplayEvent[] | undefined, ahead: (left: number, perTurn: number) => number): number | null {
+  const turns = marshalData.leaders.steward.handBackTurns;
+  if (turns <= 0) return null;
+  const inc = lastTurn?.find((e): e is Extract<ReplayEvent, { type: "income" }> => e.type === "income");
+  if (!inc && "share" in l.budget) return null;
+  const perTurn = budgetAmount(l.budget, inc ? inc.income - inc.upkeep - (inc.famine ?? 0) : 0);
+  if (left <= turns * perTurn) return null;
+  const keep = Math.max(turns * perTurn, ahead(left, perTurn));
+  return left - keep >= Math.max(1, marshalData.leaders.steward.handBackMin) ? keep : null;
+}
+
+/** Your view as it will be once these purchases are made: culture raised, buildings going up (for judging next turn). */
+function afterBuying(view: PlayerView, orders: readonly Order[]): PlayerView {
+  const territories = { ...view.territories };
+  for (const o of orders) {
+    if (o.kind !== "invest" && o.kind !== "build") continue;
+    const v = territories[o.territory];
+    if (!v || v.detail !== "full") continue;
+    territories[o.territory] = o.kind === "invest" ? { ...v, culture: v.culture + 1 } : { ...v, construction: { building: o.building, doneAtEndOfTurn: view.turn + 1 } };
+  }
+  return { ...view, territories };
 }
 
 /**

@@ -57,9 +57,10 @@ export function planSteward(
   wallsNear?: number,
   /**
    * Session 20d: Run the realm with a plan (your Steward; the Marshal's realm share keeps session 20b's way), and where
-   * your Leader stands (it walls that province too: the two leaders work together).
+   * your Leader stands (it walls that province too: the two leaders work together). `out.left`: what its purse holds
+   * once this turn's orders are paid for (session 23).
    */
-  extra: { planned?: boolean; leaderAt?: TerritoryId | null } = {},
+  extra: { planned?: boolean; leaderAt?: TerritoryId | null; out?: { left: number } } = {},
 ): Order[] {
   const { rules, idx, mine, seen, owned, rivalAt, troopsAt, biggestEnemyNear, holdNeed, chokeHolder, capital, capThreatened, look0, view } = b;
   const building = (t: TerritoryId) => !!seen(t)?.building || !!seen(t)?.construction || taken.has(t);
@@ -341,5 +342,6 @@ export function planSteward(
     if (step) orders.push({ id: newId(), kind: "move", from: site, to: step, troops: count } as Order);
     gold -= count * troop;
   }
+  if (extra.out) extra.out.left = gold;
   return orders;
 }

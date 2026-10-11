@@ -70,10 +70,11 @@ export function titleCards(tl: Timeline, before: PlayerView, map: MapDef, comeba
       }
     }
   }
+  // (Once a game, and your own: it outranks every other card that turn.)
   if (comeback) {
     const last = tl.beats.at(-1);
     const end = last ? last.start + last.duration : 0;
-    cards.push({ at: Math.max(0, end - CARD_MS), ms: CARD_MS, text: `House ${house(me)} is back`, sub: screenLine("titleComeback", `${before.gameId}|${before.turn}|comeback`), house: me, weight: 3, event: null });
+    cards.push({ at: Math.max(0, end - CARD_MS), ms: CARD_MS, text: `House ${house(me)} is back`, sub: screenLine("titleComeback", `${before.gameId}|${before.turn}|comeback`), house: me, weight: 5, event: null });
   }
   // The most important ones, then in time order, and never two on screen at once.
   const kept: TitleCard[] = [];

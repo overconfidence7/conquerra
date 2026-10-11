@@ -237,6 +237,12 @@ export function planQueue(ctx: GameContext, view: PlayerView, queue: readonly Or
     plan.costs.push(cost);
     plan.sent.push(sent);
   }
+  // A Steward with nothing worth building hands back what's over `keep` as the turn ends (session 23).
+  for (const o of queue)
+    if (o.kind === "budget" && o.handBack) {
+      const k = `${o.role === "steward" ? "steward" : "leader"}:${o.general}`;
+      if (purses.has(k)) purses.set(k, Math.min(purses.get(k)!, Math.max(0, o.handBack.keep)));
+    }
   plan.goldLeft = gold;
   return plan;
 }
