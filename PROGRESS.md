@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–23 (with 20b, 20c, 20d) are done; 23 awaits the orchestrator's review. M3 is ready to close after Nate's play test ("Things to test after session 23"), then sound. The orchestrator-09 prompt is due now (after 23).**
+**Phase: M3 (depth and balance). Sessions 7–23 are done and reviewed. Next: **session 24, sound** (the prompt is written; the last M3 session), Nate's play test ("Things to test after session 23": it can run alongside), then **session 25** (a wall's stacking defense bonus and the seat rule, after the play test). Orchestrator-09 is written; the next is due after session 26.**
 
 Claude Code sessions completed: **23** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -1350,6 +1350,14 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
 - **Part 3, the head start:** extra troops at a weak spot's capital (+2, +4 or +6), in the map recipes beside the pinned layouts, shown as turn 1 starts ("Wildfield starts with 6 extra troops (a harder spot).", `s23-bonus-notice.png`), on the card and panel on turn 1, and in the first report. Saves carry it (state version 13); old saves' histories replay as they were played. **The finding:** start troops barely move a weak spot. Across 24 tables 59 spots win under half of fair; on average they win 3.3% before and 3.6% with the bonus (the 49 with +6: 2.8% to 3.0%), and 5 reach half of fair. Bonuses on all 12 maps (none needed on Greatmarch 10 and The Twin Realms 4), nothing above fair. Table: `docs/sim-results-m3-balance.md`. Screenshots `s23-bonus-notice`, `-card`, `-report`.
 - **Start-up bundle:** 487.8 to 489.8 KB (gzip 150.3). Deployed: `7fcff7f6` (Part 1), `c8011f15` (Part 2), `4e5e6b1f` (Part 3's first six tables), **`efdc5ad4`** (final; the lock check passed each time). 1,030 tests pass; typecheck and the web build pass (the full run twice before the last push). Nate: please check the repo's Actions page for the last commit.
 - **Questions for Nate:** (1) The Steward's plan made the Marshals weaker, not stronger: leave it to your leaders, or should the Marshal get a lighter wall habit of its own (a separate design)? (2) Start troops barely help the weakest spots (+6 often leaves them at 1 to 5% on 6 to 10 player tables): keep the bonus as sized, try another lever (gold, a Spoils card, a fort at the capital), or move those spots (the map maker)? (3) Your Leader with the Opportunist's or the Schemer's personality often plays like a Neutral one mid-game under fog: give them a stronger trait of their own?
+
+### Oct 11: Orchestrator review of session 23
+- **The code:** all five commits green; nothing slipped (no 23b).
+- **The start bonus doesn't move weak spots, confirmed with the orchestrator's own seed:** Embervale 6's three weak spots win 3.3%, 4.0% and 5.0% without it and about 2 to 6% with +2 to +6 troops (fair 16.7%); the session's own 24 tables say the same (2.8% to 3.0% for the spots that got +6). The position is the problem, not the army. **Nate: keep it and judge by play**, and **weak spots are used last and go to bots first** (session 25).
+- **The screenshots read well:** "Wildfield starts with 6 extra troops (a harder spot)" on the notice, the card and the first report; the comeback card ("House Gules is back. Everyone who wrote us off, please form an orderly line."); the Steward's handout in the panel and the report.
+- **Seen in the screenshots:** the turn-55 report has one line per culture level the Steward raised (four lines for Larkgarth alone); "Squalls at sea strikes Hollydale"; "handed 908 gold back from its purse". All three in session 24's Step 0. The handout's voiced line ("Wanted the peasants to have something.") didn't show in the shots because the wall line outranked it that turn (one line per leader a turn); it shows on quieter turns.
+- **Nate's calls:** (1) keep the start bonus, plus the seat rule; (2) **walls need payback:** a stacking defense bonus per connected wall territory, which session 25 tests capped against stop rules (the orchestrator's read: today's walls fall because they're thinly held, and an uncapped stack could make a big stocked wall untakeable); (3) sharper Opportunist and Schemer leaders later, with the top-tier bot; (4) **sound from free packs with commercial-use licenses first**.
+- **Written:** session 24's prompt (sound), orchestrator-09.
 
 ### Things to test after session 23 (Nate's next play test)
 *Laptop first; the phone where it applies.*
