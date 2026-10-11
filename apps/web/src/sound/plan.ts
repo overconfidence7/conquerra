@@ -119,6 +119,7 @@ export function soundPlan(tl: Timeline, ctx: SoundContext, events: readonly Repl
   for (const e of events) {
     if (e.type === "spy") add(e, e.outcome === "killed" ? "spy-caught" : "spy", spyFrom);
     else if (e.type === "spyCaught") add(e, "spy-caught", spyFrom);
+    else if (e.type === "spoilsEarned") add(e, "card", Math.max(0, tl.total - 700));
     else if (e.type === "income" && e.player === ctx.me && e.income > 0) add(e, "coins-income", Math.max(0, tl.total - 450));
   }
   // Each cue's cooldown: not again within that long (worked out here, so Watch again is the same).

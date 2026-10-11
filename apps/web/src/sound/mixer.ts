@@ -68,6 +68,7 @@ class Mixer {
   private loaded = new Map<string, Promise<import("@pixi/sound").Sound | null>>();
   private playing: Playing[] = [];
   private recent = new Map<string, number[]>();
+  private lastUi = new Map<string, number>();
   /** Bytes of sound asked for so far (the measurements read it). */
   bytes = 0;
 
@@ -140,6 +141,9 @@ class Mixer {
     const bus = busGains(levels)[c.bus];
     if (bus <= 0 || !this.lib || (typeof document !== "undefined" && document.hidden)) return;
     const now = performance.now();
+    // A tap's sound has its own cooldown here (the replay's are worked out in its plan, sound/plan.ts).
+    if (c.beat === "ui" && c.cooldown && now - (this.lastUi.get(cue) ?? -Infinity) < c.cooldown) return;
+    if (c.beat === "ui") this.lastUi.set(cue, now);
     const verdict = admit({ playing: this.playing, recent: this.recent }, cue, now, isPhone() ? MAX_AT_ONCE.phone : MAX_AT_ONCE.laptop);
     if (!verdict.play) return;
     const { file, speed } = pick(cue, seed);

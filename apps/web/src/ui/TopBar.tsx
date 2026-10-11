@@ -1,6 +1,7 @@
 import type { PlayerView } from "@conquerra/engine";
 import { useEffect, useRef, useState } from "react";
 import { reducedMotion, useFx } from "../replay/fx/settings";
+import { mixer } from "../sound/mixer";
 import { Rolling } from "./Rolling";
 import { formatClock, remainingMs, timerTone, type TurnClock } from "../logic/timer";
 import { useArtUrl } from "./art";
@@ -15,8 +16,15 @@ export function TimerPill({ clock, paused }: { clock: TurnClock | null; paused: 
     const id = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(id);
   }, [clock]);
+  const left = clock ? remainingMs(clock, now) : Infinity;
+  // A soft tick in each of the last 10 seconds (session 24).
+  const tickSec = !clock || paused || clock.pausedLeft !== undefined || left >= 10_000 || left <= 0 ? null : Math.ceil(left / 1000);
+  const ticked = useRef<number | null>(null);
+  useEffect(() => {
+    if (tickSec !== null && tickSec !== ticked.current) mixer.play("timer-tick", tickSec);
+    ticked.current = tickSec;
+  }, [tickSec]);
   if (!clock) return <span className="timer none">No timer</span>;
-  const left = remainingMs(clock, now);
   if (clock.pausedLeft !== undefined)
     return (
       <span className="timer paused" role="timer" aria-label={`Paused, ${formatClock(left)} left to give orders`} data-tone="paused" title={`${formatClock(left)} left when you resume`}>

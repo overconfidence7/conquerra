@@ -6,6 +6,8 @@ import { PowerGraph } from "./PowerGraph";
 import { personaLine, portraitOf } from "./PlayersPanel";
 import { useGame } from "../store";
 import { useArtUrl } from "./art";
+import { useEffect } from "react";
+import { music } from "../sound/music";
 import { Frame } from "./Frame";
 import "./over.css";
 import { MapView, readTactical } from "./MapView";
@@ -53,6 +55,9 @@ export function GameOver() {
   const emblem = useArtUrl("emblem");
   // Victory or defeat in full (batch 4, session 21), behind the results.
   const keyArt = useArtUrl(view && view.winner === view.me.id ? "art-victory" : "art-defeat");
+  // The victory or defeat sting (session 24): what played before fades away under it.
+  const won = !!view && view.winner === view.me.id;
+  useEffect(() => music.play(won ? "victory" : "defeat", 1500), [won]);
   if (!ctx || !view) return null;
   const me = view.players.find((p) => p.id === view.me.id)!;
   const winner = view.winner;

@@ -12,6 +12,7 @@ import { Frame } from "./Frame";
 import { VersionLine } from "./Diagnostics";
 import { savedWhen, slotLine } from "./saveText";
 import { DEFAULT_HOUSE, HOUSE_PLAIN, HOUSES } from "../map/houses";
+import { unlockedAudio } from "../sound/unlock";
 
 /** Load game: loaded the first time it's opened. */
 const SavesDialog = lazy(() => import("./Saves"));
@@ -30,7 +31,21 @@ const LUCK = [
   { value: 0.5, label: "High" },
 ];
 
+/**
+ * The title music (session 24), after the first tap: phones allow sound only then. It loads only then too (the music
+ * player, not the sound effects), and crossfades into the planning music when a game starts.
+ */
+function useTitleMusic() {
+  useEffect(() => {
+    const go = () => void import("../sound/music").then((m) => m.music.play("title")).catch(() => {});
+    if (unlockedAudio()) return go();
+    addEventListener("conquerra-audio", go, { once: true });
+    return () => removeEventListener("conquerra-audio", go);
+  }, []);
+}
+
 export function Lobby() {
+  useTitleMusic();
   const { lobby, setLobby, start, load, busy, error, slots, refreshSlots } = useGame();
   const [loading, setLoading] = useState(false);
   // Load the game engine, the maps and the map painter while the player picks settings; see what's saved.

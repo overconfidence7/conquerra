@@ -37,6 +37,7 @@ import type { LayoutChoice } from "../logic/layout";
 import { FX_LEVELS, useFx } from "../replay/fx/settings";
 import { useSound } from "../sound/settings";
 import { mixer } from "../sound/mixer";
+import { music } from "../sound/music";
 import { houseOf } from "../map/houses";
 import { namer, startBonusLine } from "../logic/text";
 import "./replay.css";
@@ -225,6 +226,9 @@ function SoundSetting() {
   );
 }
 
+/** Orders that spend gold as they're added (the coins' sound). */
+const COSTS_GOLD = new Set<string>(["recruit", "hire", "hireSpy", "build", "invest"]);
+
 let toastId = 0;
 
 const NO_AREA: readonly string[] = [];
@@ -258,9 +262,18 @@ export function GameScreen() {
     sweptTurn.current = view.turn;
     if (first) return;
     setSweepTurn(view.turn);
+    mixer.play("turn-sweep");
     const t = setTimeout(() => setSweepTurn(null), 1500);
     return () => clearTimeout(t);
   }, [view, replay]);
+  // The music (session 24): the planning loop while you plan, the replay loop while it plays (crossfading, carrying on
+  // where each was: it never starts over each turn).
+  const replayOn = !!replay;
+  useEffect(() => music.play(replayOn ? "replay" : "planning"), [replayOn]);
+  // A notice, softly (at most one every 1.5 s).
+  useEffect(() => {
+    if (g.notice) mixer.play("notice");
+  }, [g.notice]);
   // The sound effects load with the game screen (session 24), once it's up (never with the lobby).
   useEffect(() => {
     const idle = (window as { requestIdleCallback?: (f: () => void) => number }).requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300));
@@ -399,6 +412,19 @@ export function GameScreen() {
   const waiting = useMemo(() => waitingOffers(offers, diplomacy), [offers, diplomacy]);
   const out = !!view && knockedOut(view);
   const replaying = !!replay;
+  // Coins when an order that costs gold is added; a very soft page when a panel opens (session 24).
+  const queued = useRef(queue.length);
+  useEffect(() => {
+    const last = queue[queue.length - 1];
+    if (queue.length > queued.current && last && COSTS_GOLD.has(last.kind)) mixer.play("coins-spend", queue.length);
+    queued.current = queue.length;
+  }, [queue]);
+  const opened = [settings, chronicleOpen, cardsOpen, !!saves, phone && sheet !== "closed"].filter(Boolean).length;
+  const wasOpen = useRef(opened);
+  useEffect(() => {
+    if (opened > wasOpen.current) mixer.play("panel", opened);
+    wasOpen.current = opened;
+  }, [opened]);
   // On a phone the open sheet covers the lower part of the map: the map keeps what you're looking at above it.
   const sheetPx = !phone || replaying || out || sheet === "closed" ? 0 : Math.round(window.innerHeight * (sheet === "half" ? 0.46 : 0.86));
   // The menus over the map, measured (session 16): the map fits, and pans, within the biggest clear part of the screen.
@@ -459,7 +485,7 @@ export function GameScreen() {
   );
 
   const army = <Panel ctx={ctx} view={view} plan={plan} queue={queue} selected={selected} draft={draft} spendOpen={spendOpen} />;
-  const seal = <LockSeal count={queue.length} busy={busy} disabled={!act} onLock={() => void g.lockIn()} />;
+  const seal = <LockSeal count={queue.length} busy={busy} disabled={!act} onLock={() => (mixer.play("seal"), void g.lockIn())} />;
   const actions = (
     <ActionBar
       ctx={ctx}

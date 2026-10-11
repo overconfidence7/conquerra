@@ -40,6 +40,11 @@ class Music {
   private last = 0;
   private hooked = false;
 
+  /** Each track's state, for the scripts: where it is (s), its fade level, and whether it's playing. */
+  state(): Record<string, { at: number; level: number; playing: boolean }> {
+    return Object.fromEntries([...this.tracks.values()].map((t) => [t.cue, { at: Math.round(t.el.currentTime * 10) / 10, level: Math.round(t.level * 100) / 100, playing: !t.el.paused }]));
+  }
+
   /** What's playing (or fading in). */
   get playing(): MusicCue | null {
     return this.current;
@@ -146,3 +151,5 @@ class Music {
 
 /** The one music player. */
 export const music = new Music();
+// (For the scripts: which track plays, and where each one is.)
+if (typeof window !== "undefined") (window as unknown as { __conquerraMusic?: Music }).__conquerraMusic = music;
