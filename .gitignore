@@ -9,3 +9,7 @@ dist-types/
 # Raw art from Nate stays on his machine (large PNGs); the processed WebP files in apps/web/public/art are committed.
 art/incoming/*
 !art/incoming/README.md
+
+# Sound packs downloaded for the importer stay on this machine (session 24); the game-ready MP3s in apps/web/public/sound are committed.
+sound/incoming/*
+!sound/incoming/README.md

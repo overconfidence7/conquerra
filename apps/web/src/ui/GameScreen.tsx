@@ -48,6 +48,8 @@ const OutPanel = lazy(() => import("./Out").then((m) => ({ default: m.OutPanel }
 const KeepGenerals = lazy(() => import("./KeepGenerals"));
 /** Your cards (Spoils and missions): loaded the first time you open them. */
 const CardsSheet = lazy(() => import("./Cards"));
+/** Settings → Credits (session 24): loaded the first time it's opened. */
+const SoundCredits = lazy(() => import("./SoundCredits"));
 /** The Chronicle (session 16): loaded the first time it's opened. */
 const ChronicleSheet = lazy(() => import("./Chronicle"));
 /** The deal card (session 14): loaded the first time you propose a deal or open an offer. */
@@ -113,6 +115,13 @@ function useCovered(active: boolean, phone: boolean, reserveSelPanel: boolean, s
 }
 
 function Settings({ tactical, onTactical, onFit, onReport, onSaves, onLeave, onClose }: { tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onClose(): void }) {
+  const [credits, setCredits] = useState(false);
+  if (credits)
+    return (
+      <Suspense fallback={null}>
+        <SoundCredits onClose={() => setCredits(false)} />
+      </Suspense>
+    );
   return (
     <Frame className="popover" title="Settings" extra={<button className="link" onClick={onClose}>Close</button>}>
       <PlacementSwitch />
@@ -135,6 +144,9 @@ function Settings({ tactical, onTactical, onFit, onReport, onSaves, onLeave, onC
       </button>
       <LayoutSetting />
       <EffectsSetting />
+      <button className="menu-item" onClick={() => setCredits(true)}>
+        Credits <span className="muted">sound and music</span>
+      </button>
       <hr className="rule" />
       <button className="menu-item" onClick={onLeave}>
         Leave this game <span className="muted">Continue picks it up</span>

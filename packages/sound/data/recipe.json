@@ -1,0 +1,1019 @@
+{
+ "$comment": "How each game sound is made from the sources in credits.json (session 24). `pnpm sound:import` reads this, mixes each variant's layers (each cut from `start` for `duration` seconds, placed `at` seconds in, `gain` in dB, `rate` changes pitch and speed together), trims the silence, normalises the loudness and writes apps/web/public/sound/<kind>-<cue>[-n].mp3 plus data/registry.json. To swap one sound: drop a file named like the output (sfx-battle-1.wav) into sound/incoming/replace/ and give that variant `replace: <credit id>`.",
+ "cues": [
+  {
+   "cue": "march-small",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "kenney-rpg-audio",
+       "file": "footstep00.ogg"
+      },
+      {
+       "src": "kenney-rpg-audio",
+       "file": "footstep01.ogg",
+       "at": 0.3
+      },
+      {
+       "src": "kenney-rpg-audio",
+       "file": "footstep02.ogg",
+       "at": 0.6
+      },
+      {
+       "src": "kenney-rpg-audio",
+       "file": "footstep03.ogg",
+       "at": 0.9
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney-rpg-audio",
+       "file": "footstep04.ogg"
+      },
+      {
+       "src": "kenney-rpg-audio",
+       "file": "footstep05.ogg",
+       "at": 0.3
+      },
+      {
+       "src": "kenney-rpg-audio",
+       "file": "footstep06.ogg",
+       "at": 0.6
+      },
+      {
+       "src": "kenney-rpg-audio",
+       "file": "footstep07.ogg",
+       "at": 0.9
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "march-medium",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "hector-war-drums",
+       "file": "horde_war_drums_by_william_hector.wav",
+       "start": 0,
+       "duration": 1.85
+      }
+     ],
+     "fadeOut": 0.45
+    },
+    {
+     "layers": [
+      {
+       "src": "hector-war-drums",
+       "file": "horde_war_drums_by_william_hector.wav",
+       "start": 3.69,
+       "duration": 1.85
+      }
+     ],
+     "fadeOut": 0.45
+    }
+   ]
+  },
+  {
+   "cue": "march-large",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "hector-war-drums",
+       "file": "horde_war_drums_by_william_hector.wav",
+       "start": 7.38,
+       "duration": 3.7
+      }
+     ],
+     "fadeOut": 0.8
+    },
+    {
+     "layers": [
+      {
+       "src": "hector-war-drums",
+       "file": "horde_war_drums_by_william_hector.wav",
+       "start": 11.05,
+       "duration": 3.7
+      }
+     ],
+     "fadeOut": 0.8
+    }
+   ]
+  },
+  {
+   "cue": "battle",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "blade_01.ogg"
+      },
+      {
+       "src": "kenney-impact-sounds",
+       "file": "impactMetal_medium_000.ogg",
+       "at": 0.2
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "blade_02.ogg"
+      },
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "metal_03.ogg",
+       "at": 0.22,
+       "gain": -4
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "blade_03.ogg"
+      },
+      {
+       "src": "kenney-impact-sounds",
+       "file": "impactMetal_medium_001.ogg",
+       "at": 0.16
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "battle-big",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "starninjas-crowd",
+       "file": "crowd_shouting.ogg",
+       "start": 2.0,
+       "duration": 1.9,
+       "fadeIn": 0.08,
+       "fadeOut": 0.6,
+       "gain": -3
+      },
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "blade_02.ogg",
+       "at": 0.12
+      },
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "metal_02.ogg",
+       "at": 0.6,
+       "gain": -3
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "starninjas-crowd",
+       "file": "crowd_shouting.ogg",
+       "start": 9.5,
+       "duration": 1.9,
+       "fadeIn": 0.08,
+       "fadeOut": 0.6,
+       "gain": -3
+      },
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "blade_01.ogg",
+       "at": 0.12
+      },
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "metal_03.ogg",
+       "at": 0.6,
+       "gain": -3
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "starninjas-crowd",
+       "file": "crowd_shouting.ogg",
+       "start": 17.0,
+       "duration": 1.9,
+       "fadeIn": 0.08,
+       "fadeOut": 0.6,
+       "gain": -3
+      },
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "blade_03.ogg",
+       "at": 0.12
+      },
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "metal_02.ogg",
+       "at": 0.6,
+       "gain": -3
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "arrows",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "artisticdude-swishes",
+       "file": "swish-1.wav"
+      },
+      {
+       "src": "artisticdude-swishes",
+       "file": "swish-4.wav",
+       "at": 0.09
+      },
+      {
+       "src": "artisticdude-swishes",
+       "file": "swish-6.wav",
+       "at": 0.21
+      },
+      {
+       "src": "kenney-impact-sounds",
+       "file": "impactWood_light_000.ogg",
+       "at": 0.5,
+       "gain": -6
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "artisticdude-swishes",
+       "file": "swish-2.wav"
+      },
+      {
+       "src": "artisticdude-swishes",
+       "file": "swish-5.wav",
+       "at": 0.12
+      },
+      {
+       "src": "artisticdude-swishes",
+       "file": "swish-8.wav",
+       "at": 0.19
+      },
+      {
+       "src": "kenney-impact-sounds",
+       "file": "impactWood_light_002.ogg",
+       "at": 0.48,
+       "gain": -6
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "siege",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "thimras-battle-at-sea",
+       "file": "cannon_hit_wall_no_splash.ogg"
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "thimras-battle-at-sea",
+       "file": "cannon_hit_wall_no_splash.ogg",
+       "rate": 0.88
+      },
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "stones_01.ogg",
+       "at": 0.2,
+       "gain": -4
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "capture",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "randommind-victory",
+       "file": "victory.wav",
+       "start": 0,
+       "duration": 2.8
+      }
+     ],
+     "fadeOut": 1.0
+    }
+   ]
+  },
+  {
+   "cue": "capture-rival",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "stumpystrust-horn",
+       "file": "theircoming.ogg",
+       "start": 0,
+       "duration": 3.3,
+       "rate": 0.9
+      }
+     ],
+     "fadeOut": 1.2
+    }
+   ]
+  },
+  {
+   "cue": "held",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "kenney-impact-sounds",
+       "file": "impactPlate_heavy_000.ogg"
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney-impact-sounds",
+       "file": "impactPlate_heavy_002.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "capital-falls",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "nenadsimic-explosion",
+       "file": "NenadSimic - Muffled Distant Explosion.wav"
+      },
+      {
+       "src": "thimras-battle-at-sea",
+       "file": "cannon_hit_wall_no_splash.ogg",
+       "gain": -3
+      },
+      {
+       "src": "rubberduck-100-sfx",
+       "file": "bell_01.ogg",
+       "at": 0.65,
+       "gain": -4
+      },
+      {
+       "src": "rubberduck-100-sfx",
+       "file": "gong_01.ogg",
+       "at": 0.66,
+       "gain": -8
+      }
+     ],
+     "fadeOut": 1.5
+    }
+   ]
+  },
+  {
+   "cue": "knocked-out",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "hector-war-drums",
+       "file": "horde_war_drums_by_william_hector.wav",
+       "start": 0,
+       "duration": 5.5,
+       "rate": 0.85
+      }
+     ],
+     "fadeOut": 4.0
+    }
+   ]
+  },
+  {
+   "cue": "leader-falls",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "stumpystrust-horn",
+       "file": "theircoming3.ogg",
+       "start": 0,
+       "duration": 3.6,
+       "rate": 0.8
+      }
+     ],
+     "fadeOut": 2.0
+    }
+   ]
+  },
+  {
+   "cue": "recruits",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "artisticdude-rpg",
+       "file": "inventory/chainmail1.wav",
+       "gain": -4
+      },
+      {
+       "src": "kenney-rpg-audio",
+       "file": "footstep01.ogg",
+       "gain": -2
+      },
+      {
+       "src": "kenney-rpg-audio",
+       "file": "footstep03.ogg",
+       "at": 0.2,
+       "gain": -2
+      },
+      {
+       "src": "kenney-rpg-audio",
+       "file": "footstep05.ogg",
+       "at": 0.4,
+       "gain": -2
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "artisticdude-rpg",
+       "file": "inventory/chainmail2.wav",
+       "gain": -4
+      },
+      {
+       "src": "kenney-rpg-audio",
+       "file": "footstep02.ogg",
+       "gain": -2
+      },
+      {
+       "src": "kenney-rpg-audio",
+       "file": "footstep06.ogg",
+       "at": 0.2,
+       "gain": -2
+      },
+      {
+       "src": "kenney-rpg-audio",
+       "file": "footstep08.ogg",
+       "at": 0.4,
+       "gain": -2
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "wall",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "stones_03.ogg"
+      },
+      {
+       "src": "rubberduck-100-sfx",
+       "file": "slam_02.ogg",
+       "at": 0.4,
+       "gain": -3
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "built",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "rubberduck-metal-wood",
+       "file": "hammer_01.ogg"
+      },
+      {
+       "src": "rubberduck-metal-wood",
+       "file": "hammer_02.ogg",
+       "at": 0.28
+      },
+      {
+       "src": "kenney-impact-sounds",
+       "file": "impactPlank_medium_000.ogg",
+       "at": 0.62
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "rubberduck-metal-wood",
+       "file": "hammer_03.ogg"
+      },
+      {
+       "src": "rubberduck-metal-wood",
+       "file": "hammer_04.ogg",
+       "at": 0.26
+      },
+      {
+       "src": "kenney-impact-sounds",
+       "file": "impactPlank_medium_002.ogg",
+       "at": 0.6
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "culture",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "rubberduck-100-sfx",
+       "file": "bell_02.ogg"
+      }
+     ],
+     "fadeOut": 0.2
+    }
+   ]
+  },
+  {
+   "cue": "fog",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "nenadsimic-explosion",
+       "file": "NenadSimic - Muffled Distant Explosion.wav",
+       "lowpass": 500
+      }
+     ],
+     "fadeOut": 1.5
+    },
+    {
+     "layers": [
+      {
+       "src": "nenadsimic-explosion",
+       "file": "NenadSimic - Muffled Distant Explosion.wav",
+       "rate": 0.82,
+       "lowpass": 450
+      }
+     ],
+     "fadeOut": 1.5
+    }
+   ]
+  },
+  {
+   "cue": "fate",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "kenney-casino-audio",
+       "file": "card-slide-1.ogg"
+      },
+      {
+       "src": "kenney-casino-audio",
+       "file": "card-place-1.ogg",
+       "at": 0.25
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "fallen",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "owlishmedia-chanting",
+       "file": "ethereal_chant_Subclip 01_01.wav",
+       "duration": 3.2,
+       "gain": 6
+      },
+      {
+       "src": "railkill-mystery",
+       "file": "mystery_sting.ogg",
+       "rate": 0.75,
+       "gain": -6
+      }
+     ],
+     "fadeOut": 1.6
+    }
+   ]
+  },
+  {
+   "cue": "deal-sealed",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "rubberduck-100-sfx",
+       "file": "paper_02.ogg",
+       "gain": 4
+      },
+      {
+       "src": "kenney-impact-sounds",
+       "file": "impactSoft_heavy_000.ogg",
+       "at": 0.35
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "deal-broken",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "rubberduck-metal-wood",
+       "file": "wood_breaking_01.ogg"
+      },
+      {
+       "src": "vehicle-tinysized",
+       "file": "cover-paper-tear-01.wav",
+       "at": 0.08,
+       "duration": 0.8,
+       "gain": -2
+      }
+     ],
+     "fadeOut": 0.3
+    }
+   ]
+  },
+  {
+   "cue": "spy",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "kenney-rpg-audio",
+       "file": "cloth1.ogg"
+      },
+      {
+       "src": "kenney-rpg-audio",
+       "file": "cloth3.ogg",
+       "at": 0.32,
+       "gain": -3
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "spy-caught",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "vehicle-tinysized",
+       "file": "handcuffs-metal-lock-01.wav"
+      },
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "chain_02.ogg",
+       "at": 0.12,
+       "gain": -6
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "seal",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "kenney-impact-sounds",
+       "file": "impactSoft_heavy_001.ogg"
+      },
+      {
+       "src": "kenney-rpg-audio",
+       "file": "dropLeather.ogg",
+       "at": 0.02,
+       "gain": -4
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "coins-spend",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "kenney-rpg-audio",
+       "file": "handleCoins.ogg"
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "item_coins_03.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "coins-income",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "rubberduck-rpg-sfx",
+       "file": "item_coins_04.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "timer-tick",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "kenney-interface-sounds",
+       "file": "tick_001.ogg"
+      }
+     ]
+    },
+    {
+     "layers": [
+      {
+       "src": "kenney-interface-sounds",
+       "file": "tick_002.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "panel",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "vehicle-tinysized",
+       "file": "book-page-01.wav",
+       "duration": 0.55
+      }
+     ],
+     "fadeOut": 0.2
+    }
+   ]
+  },
+  {
+   "cue": "spoils",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "kenney-casino-audio",
+       "file": "card-fan-1.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "turn-sweep",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "artisticdude-swishes",
+       "file": "swish-7.wav",
+       "rate": 0.7
+      },
+      {
+       "src": "hector-war-drums",
+       "file": "horde_war_drums_by_william_hector.wav",
+       "at": 0.15,
+       "start": 0,
+       "duration": 0.45,
+       "gain": -8
+      }
+     ],
+     "fadeOut": 0.15
+    }
+   ]
+  },
+  {
+   "cue": "notice",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "rubberduck-100-sfx",
+       "file": "bell_02.ogg",
+       "rate": 1.25
+      }
+     ],
+     "fadeOut": 0.15
+    }
+   ]
+  },
+  {
+   "cue": "card",
+   "kind": "sfx",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "kenney-casino-audio",
+       "file": "card-place-2.ogg"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "cue": "planning",
+   "kind": "music",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "randommind-kings-feast",
+       "file": "Loop_Kings_Feast_0.wav"
+      }
+     ],
+     "trim": false
+    }
+   ]
+  },
+  {
+   "cue": "replay",
+   "kind": "music",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "randommind-battle",
+       "file": "battle_1.wav"
+      }
+     ],
+     "trim": false
+    }
+   ]
+  },
+  {
+   "cue": "title",
+   "kind": "music",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "randommind-rejoicing",
+       "file": "Loop_Rejoicing.wav"
+      }
+     ],
+     "trim": false
+    }
+   ]
+  },
+  {
+   "cue": "victory",
+   "kind": "music",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "randommind-victory",
+       "file": "victory.wav",
+       "duration": 20
+      }
+     ],
+     "fadeOut": 5
+    }
+   ]
+  },
+  {
+   "cue": "defeat",
+   "kind": "music",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "randommind-defeat",
+       "file": "defeat.wav",
+       "duration": 20
+      }
+     ],
+     "fadeOut": 5
+    }
+   ]
+  },
+  {
+   "cue": "wind",
+   "kind": "ambience",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "bashar3a-wind",
+       "file": "wind background noise 2.wav",
+       "start": 2,
+       "duration": 36
+      }
+     ],
+     "trim": false
+    }
+   ]
+  },
+  {
+   "cue": "sea",
+   "kind": "ambience",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "randommind-waves",
+       "file": "Vistula.mp3",
+       "start": 600,
+       "duration": 36
+      }
+     ],
+     "trim": false
+    }
+   ]
+  },
+  {
+   "cue": "birds",
+   "kind": "ambience",
+   "variants": [
+    {
+     "layers": [
+      {
+       "src": "isaiah658-birds",
+       "file": "birds-isaiah658.ogg"
+      }
+     ],
+     "trim": false
+    }
+   ]
+  }
+ ]
+}

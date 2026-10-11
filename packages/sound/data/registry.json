@@ -1,0 +1,759 @@
+{
+ "target": {
+  "sfx": -16,
+  "music": -18,
+  "ambience": -24,
+  "peak": -1
+ },
+ "files": [
+  {
+   "name": "sfx-march-small-1",
+   "cue": "march-small",
+   "kind": "sfx",
+   "file": "sound/sfx-march-small-1.mp3",
+   "bytes": 9865,
+   "durationMs": 1202,
+   "lufs": -18.5,
+   "peak": -2.1,
+   "sources": [
+    "kenney-rpg-audio"
+   ]
+  },
+  {
+   "name": "sfx-march-small-2",
+   "cue": "march-small",
+   "kind": "sfx",
+   "file": "sound/sfx-march-small-2.mp3",
+   "bytes": 9656,
+   "durationMs": 1176,
+   "lufs": -19.1,
+   "peak": -2.3,
+   "sources": [
+    "kenney-rpg-audio"
+   ]
+  },
+  {
+   "name": "sfx-march-medium-1",
+   "cue": "march-medium",
+   "kind": "sfx",
+   "file": "sound/sfx-march-medium-1.mp3",
+   "bytes": 15298,
+   "durationMs": 1881,
+   "lufs": -16.4,
+   "peak": -4.8,
+   "sources": [
+    "hector-war-drums"
+   ]
+  },
+  {
+   "name": "sfx-march-medium-2",
+   "cue": "march-medium",
+   "kind": "sfx",
+   "file": "sound/sfx-march-medium-2.mp3",
+   "bytes": 15298,
+   "durationMs": 1881,
+   "lufs": -16.5,
+   "peak": -5,
+   "sources": [
+    "hector-war-drums"
+   ]
+  },
+  {
+   "name": "sfx-march-large-1",
+   "cue": "march-large",
+   "kind": "sfx",
+   "file": "sound/sfx-march-large-1.mp3",
+   "bytes": 30136,
+   "durationMs": 3736,
+   "lufs": -16.5,
+   "peak": -5,
+   "sources": [
+    "hector-war-drums"
+   ]
+  },
+  {
+   "name": "sfx-march-large-2",
+   "cue": "march-large",
+   "kind": "sfx",
+   "file": "sound/sfx-march-large-2.mp3",
+   "bytes": 30136,
+   "durationMs": 3736,
+   "lufs": -16.4,
+   "peak": -5,
+   "sources": [
+    "hector-war-drums"
+   ]
+  },
+  {
+   "name": "sfx-battle-1",
+   "cue": "battle",
+   "kind": "sfx",
+   "file": "sound/sfx-battle-1.mp3",
+   "bytes": 4222,
+   "durationMs": 496,
+   "lufs": -16.5,
+   "peak": -1.3,
+   "sources": [
+    "rubberduck-rpg-sfx",
+    "kenney-impact-sounds"
+   ]
+  },
+  {
+   "name": "sfx-battle-2",
+   "cue": "battle",
+   "kind": "sfx",
+   "file": "sound/sfx-battle-2.mp3",
+   "bytes": 5058,
+   "durationMs": 601,
+   "lufs": -16.5,
+   "peak": -2,
+   "sources": [
+    "rubberduck-rpg-sfx"
+   ]
+  },
+  {
+   "name": "sfx-battle-3",
+   "cue": "battle",
+   "kind": "sfx",
+   "file": "sound/sfx-battle-3.mp3",
+   "bytes": 3177,
+   "durationMs": 366,
+   "lufs": -16.7,
+   "peak": -1.7,
+   "sources": [
+    "rubberduck-rpg-sfx",
+    "kenney-impact-sounds"
+   ]
+  },
+  {
+   "name": "sfx-battle-big-1",
+   "cue": "battle-big",
+   "kind": "sfx",
+   "file": "sound/sfx-battle-big-1.mp3",
+   "bytes": 15716,
+   "durationMs": 1933,
+   "lufs": -16.4,
+   "peak": -2.8,
+   "sources": [
+    "starninjas-crowd",
+    "rubberduck-rpg-sfx"
+   ]
+  },
+  {
+   "name": "sfx-battle-big-2",
+   "cue": "battle-big",
+   "kind": "sfx",
+   "file": "sound/sfx-battle-big-2.mp3",
+   "bytes": 15716,
+   "durationMs": 1933,
+   "lufs": -16.7,
+   "peak": -2.4,
+   "sources": [
+    "starninjas-crowd",
+    "rubberduck-rpg-sfx"
+   ]
+  },
+  {
+   "name": "sfx-battle-big-3",
+   "cue": "battle-big",
+   "kind": "sfx",
+   "file": "sound/sfx-battle-big-3.mp3",
+   "bytes": 15716,
+   "durationMs": 1933,
+   "lufs": -16.5,
+   "peak": -2,
+   "sources": [
+    "starninjas-crowd",
+    "rubberduck-rpg-sfx"
+   ]
+  },
+  {
+   "name": "sfx-arrows-1",
+   "cue": "arrows",
+   "kind": "sfx",
+   "file": "sound/sfx-arrows-1.mp3",
+   "bytes": 5476,
+   "durationMs": 653,
+   "lufs": -16.4,
+   "peak": -2.1,
+   "sources": [
+    "artisticdude-swishes",
+    "kenney-impact-sounds"
+   ]
+  },
+  {
+   "name": "sfx-arrows-2",
+   "cue": "arrows",
+   "kind": "sfx",
+   "file": "sound/sfx-arrows-2.mp3",
+   "bytes": 5476,
+   "durationMs": 653,
+   "lufs": -16.7,
+   "peak": -2.1,
+   "sources": [
+    "artisticdude-swishes",
+    "kenney-impact-sounds"
+   ]
+  },
+  {
+   "name": "sfx-siege-1",
+   "cue": "siege",
+   "kind": "sfx",
+   "file": "sound/sfx-siege-1.mp3",
+   "bytes": 13626,
+   "durationMs": 1672,
+   "lufs": -16.1,
+   "peak": -1.8,
+   "sources": [
+    "thimras-battle-at-sea"
+   ]
+  },
+  {
+   "name": "sfx-siege-2",
+   "cue": "siege",
+   "kind": "sfx",
+   "file": "sound/sfx-siege-2.mp3",
+   "bytes": 15507,
+   "durationMs": 1907,
+   "lufs": -16.3,
+   "peak": -2.4,
+   "sources": [
+    "thimras-battle-at-sea",
+    "rubberduck-rpg-sfx"
+   ]
+  },
+  {
+   "name": "sfx-capture-1",
+   "cue": "capture",
+   "kind": "sfx",
+   "file": "sound/sfx-capture-1.mp3",
+   "bytes": 23030,
+   "durationMs": 2847,
+   "lufs": -16,
+   "peak": -5.3,
+   "sources": [
+    "randommind-victory"
+   ]
+  },
+  {
+   "name": "sfx-capture-rival-1",
+   "cue": "capture-rival",
+   "kind": "sfx",
+   "file": "sound/sfx-capture-rival-1.mp3",
+   "bytes": 29300,
+   "durationMs": 3631,
+   "lufs": -16.1,
+   "peak": -4.8,
+   "sources": [
+    "stumpystrust-horn"
+   ]
+  },
+  {
+   "name": "sfx-held-1",
+   "cue": "held",
+   "kind": "sfx",
+   "file": "sound/sfx-held-1.mp3",
+   "bytes": 4431,
+   "durationMs": 522,
+   "lufs": -19.2,
+   "peak": -1.8,
+   "sources": [
+    "kenney-impact-sounds"
+   ]
+  },
+  {
+   "name": "sfx-held-2",
+   "cue": "held",
+   "kind": "sfx",
+   "file": "sound/sfx-held-2.mp3",
+   "bytes": 4431,
+   "durationMs": 522,
+   "lufs": -18.2,
+   "peak": -1.8,
+   "sources": [
+    "kenney-impact-sounds"
+   ]
+  },
+  {
+   "name": "sfx-capital-falls-1",
+   "cue": "capital-falls",
+   "kind": "sfx",
+   "file": "sound/sfx-capital-falls-1.mp3",
+   "bytes": 22821,
+   "durationMs": 2821,
+   "lufs": -16.6,
+   "peak": -2.1,
+   "sources": [
+    "nenadsimic-explosion",
+    "thimras-battle-at-sea",
+    "rubberduck-100-sfx"
+   ]
+  },
+  {
+   "name": "sfx-knocked-out-1",
+   "cue": "knocked-out",
+   "kind": "sfx",
+   "file": "sound/sfx-knocked-out-1.mp3",
+   "bytes": 52287,
+   "durationMs": 6504,
+   "lufs": -16.4,
+   "peak": -4.6,
+   "sources": [
+    "hector-war-drums"
+   ]
+  },
+  {
+   "name": "sfx-leader-falls-1",
+   "cue": "leader-falls",
+   "kind": "sfx",
+   "file": "sound/sfx-leader-falls-1.mp3",
+   "bytes": 36405,
+   "durationMs": 4519,
+   "lufs": -15.9,
+   "peak": -5.8,
+   "sources": [
+    "stumpystrust-horn"
+   ]
+  },
+  {
+   "name": "sfx-recruits-1",
+   "cue": "recruits",
+   "kind": "sfx",
+   "file": "sound/sfx-recruits-1.mp3",
+   "bytes": 5894,
+   "durationMs": 705,
+   "lufs": -16.6,
+   "peak": -2.1,
+   "sources": [
+    "artisticdude-rpg",
+    "kenney-rpg-audio"
+   ]
+  },
+  {
+   "name": "sfx-recruits-2",
+   "cue": "recruits",
+   "kind": "sfx",
+   "file": "sound/sfx-recruits-2.mp3",
+   "bytes": 5894,
+   "durationMs": 705,
+   "lufs": -16.7,
+   "peak": -1.9,
+   "sources": [
+    "artisticdude-rpg",
+    "kenney-rpg-audio"
+   ]
+  },
+  {
+   "name": "sfx-wall-1",
+   "cue": "wall",
+   "kind": "sfx",
+   "file": "sound/sfx-wall-1.mp3",
+   "bytes": 7984,
+   "durationMs": 967,
+   "lufs": -16.6,
+   "peak": -2.1,
+   "sources": [
+    "rubberduck-rpg-sfx",
+    "rubberduck-100-sfx"
+   ]
+  },
+  {
+   "name": "sfx-built-1",
+   "cue": "built",
+   "kind": "sfx",
+   "file": "sound/sfx-built-1.mp3",
+   "bytes": 9029,
+   "durationMs": 1097,
+   "lufs": -17.3,
+   "peak": -2.5,
+   "sources": [
+    "rubberduck-metal-wood",
+    "kenney-impact-sounds"
+   ]
+  },
+  {
+   "name": "sfx-built-2",
+   "cue": "built",
+   "kind": "sfx",
+   "file": "sound/sfx-built-2.mp3",
+   "bytes": 9029,
+   "durationMs": 1097,
+   "lufs": -18,
+   "peak": -2,
+   "sources": [
+    "rubberduck-metal-wood",
+    "kenney-impact-sounds"
+   ]
+  },
+  {
+   "name": "sfx-culture-1",
+   "cue": "culture",
+   "kind": "sfx",
+   "file": "sound/sfx-culture-1.mp3",
+   "bytes": 4013,
+   "durationMs": 470,
+   "lufs": -16.5,
+   "peak": -3.1,
+   "sources": [
+    "rubberduck-100-sfx"
+   ]
+  },
+  {
+   "name": "sfx-fog-1",
+   "cue": "fog",
+   "kind": "sfx",
+   "file": "sound/sfx-fog-1.mp3",
+   "bytes": 22194,
+   "durationMs": 2743,
+   "lufs": -16.6,
+   "peak": -2.4,
+   "sources": [
+    "nenadsimic-explosion"
+   ]
+  },
+  {
+   "name": "sfx-fog-2",
+   "cue": "fog",
+   "kind": "sfx",
+   "file": "sound/sfx-fog-2.mp3",
+   "bytes": 28255,
+   "durationMs": 3500,
+   "lufs": -16.7,
+   "peak": -2.3,
+   "sources": [
+    "nenadsimic-explosion"
+   ]
+  },
+  {
+   "name": "sfx-fate-1",
+   "cue": "fate",
+   "kind": "sfx",
+   "file": "sound/sfx-fate-1.mp3",
+   "bytes": 7357,
+   "durationMs": 888,
+   "lufs": -19.8,
+   "peak": -2.2,
+   "sources": [
+    "kenney-casino-audio"
+   ]
+  },
+  {
+   "name": "sfx-fallen-1",
+   "cue": "fallen",
+   "kind": "sfx",
+   "file": "sound/sfx-fallen-1.mp3",
+   "bytes": 54377,
+   "durationMs": 6766,
+   "lufs": -16.6,
+   "peak": -6.2,
+   "sources": [
+    "owlishmedia-chanting",
+    "railkill-mystery"
+   ]
+  },
+  {
+   "name": "sfx-deal-sealed-1",
+   "cue": "deal-sealed",
+   "kind": "sfx",
+   "file": "sound/sfx-deal-sealed-1.mp3",
+   "bytes": 7566,
+   "durationMs": 914,
+   "lufs": -16.6,
+   "peak": -2,
+   "sources": [
+    "rubberduck-100-sfx",
+    "kenney-impact-sounds"
+   ]
+  },
+  {
+   "name": "sfx-deal-broken-1",
+   "cue": "deal-broken",
+   "kind": "sfx",
+   "file": "sound/sfx-deal-broken-1.mp3",
+   "bytes": 7357,
+   "durationMs": 888,
+   "lufs": -16.4,
+   "peak": -1.5,
+   "sources": [
+    "rubberduck-metal-wood",
+    "vehicle-tinysized"
+   ]
+  },
+  {
+   "name": "sfx-spy-1",
+   "cue": "spy",
+   "kind": "sfx",
+   "file": "sound/sfx-spy-1.mp3",
+   "bytes": 6730,
+   "durationMs": 810,
+   "lufs": -16.6,
+   "peak": -2.2,
+   "sources": [
+    "kenney-rpg-audio"
+   ]
+  },
+  {
+   "name": "sfx-spy-caught-1",
+   "cue": "spy-caught",
+   "kind": "sfx",
+   "file": "sound/sfx-spy-caught-1.mp3",
+   "bytes": 4222,
+   "durationMs": 496,
+   "lufs": -16.4,
+   "peak": -1,
+   "sources": [
+    "vehicle-tinysized",
+    "rubberduck-rpg-sfx"
+   ]
+  },
+  {
+   "name": "sfx-seal-1",
+   "cue": "seal",
+   "kind": "sfx",
+   "file": "sound/sfx-seal-1.mp3",
+   "bytes": 5058,
+   "durationMs": 601,
+   "lufs": -16.3,
+   "peak": -2.4,
+   "sources": [
+    "kenney-impact-sounds",
+    "kenney-rpg-audio"
+   ]
+  },
+  {
+   "name": "sfx-coins-spend-1",
+   "cue": "coins-spend",
+   "kind": "sfx",
+   "file": "sound/sfx-coins-spend-1.mp3",
+   "bytes": 6312,
+   "durationMs": 758,
+   "lufs": -18.2,
+   "peak": -2.6,
+   "sources": [
+    "kenney-rpg-audio"
+   ]
+  },
+  {
+   "name": "sfx-coins-spend-2",
+   "cue": "coins-spend",
+   "kind": "sfx",
+   "file": "sound/sfx-coins-spend-2.mp3",
+   "bytes": 4431,
+   "durationMs": 522,
+   "lufs": -16.8,
+   "peak": -1.9,
+   "sources": [
+    "rubberduck-rpg-sfx"
+   ]
+  },
+  {
+   "name": "sfx-coins-income-1",
+   "cue": "coins-income",
+   "kind": "sfx",
+   "file": "sound/sfx-coins-income-1.mp3",
+   "bytes": 12999,
+   "durationMs": 1593,
+   "lufs": -16.7,
+   "peak": -1.6,
+   "sources": [
+    "rubberduck-rpg-sfx"
+   ]
+  },
+  {
+   "name": "sfx-timer-tick-1",
+   "cue": "timer-tick",
+   "kind": "sfx",
+   "file": "sound/sfx-timer-tick-1.mp3",
+   "bytes": 878,
+   "durationMs": 78,
+   "lufs": -31.8,
+   "peak": -4.4,
+   "sources": [
+    "kenney-interface-sounds"
+   ]
+  },
+  {
+   "name": "sfx-timer-tick-2",
+   "cue": "timer-tick",
+   "kind": "sfx",
+   "file": "sound/sfx-timer-tick-2.mp3",
+   "bytes": 669,
+   "durationMs": 52,
+   "lufs": -29.4,
+   "peak": -4.8,
+   "sources": [
+    "kenney-interface-sounds"
+   ]
+  },
+  {
+   "name": "sfx-panel-1",
+   "cue": "panel",
+   "kind": "sfx",
+   "file": "sound/sfx-panel-1.mp3",
+   "bytes": 4222,
+   "durationMs": 496,
+   "lufs": -16,
+   "peak": -2.3,
+   "sources": [
+    "vehicle-tinysized"
+   ]
+  },
+  {
+   "name": "sfx-spoils-1",
+   "cue": "spoils",
+   "kind": "sfx",
+   "file": "sound/sfx-spoils-1.mp3",
+   "bytes": 6312,
+   "durationMs": 758,
+   "lufs": -16.5,
+   "peak": -1.4,
+   "sources": [
+    "kenney-casino-audio"
+   ]
+  },
+  {
+   "name": "sfx-turn-sweep-1",
+   "cue": "turn-sweep",
+   "kind": "sfx",
+   "file": "sound/sfx-turn-sweep-1.mp3",
+   "bytes": 5267,
+   "durationMs": 627,
+   "lufs": -16.6,
+   "peak": -2.3,
+   "sources": [
+    "artisticdude-swishes",
+    "hector-war-drums"
+   ]
+  },
+  {
+   "name": "sfx-notice-1",
+   "cue": "notice",
+   "kind": "sfx",
+   "file": "sound/sfx-notice-1.mp3",
+   "bytes": 3386,
+   "durationMs": 392,
+   "lufs": -17.1,
+   "peak": -3.6,
+   "sources": [
+    "rubberduck-100-sfx"
+   ]
+  },
+  {
+   "name": "sfx-card-1",
+   "cue": "card",
+   "kind": "sfx",
+   "file": "sound/sfx-card-1.mp3",
+   "bytes": 4222,
+   "durationMs": 496,
+   "lufs": -22.3,
+   "peak": -1.8,
+   "sources": [
+    "kenney-casino-audio"
+   ]
+  },
+  {
+   "name": "music-planning",
+   "cue": "planning",
+   "kind": "music",
+   "file": "sound/music-planning.mp3",
+   "bytes": 808273,
+   "durationMs": 80797,
+   "lufs": -18.4,
+   "peak": -4.2,
+   "sources": [
+    "randommind-kings-feast"
+   ]
+  },
+  {
+   "name": "music-replay",
+   "cue": "replay",
+   "kind": "music",
+   "file": "sound/music-replay.mp3",
+   "bytes": 789726,
+   "durationMs": 78942,
+   "lufs": -18.4,
+   "peak": -4.9,
+   "sources": [
+    "randommind-battle"
+   ]
+  },
+  {
+   "name": "music-title",
+   "cue": "title",
+   "kind": "music",
+   "file": "sound/music-title.mp3",
+   "bytes": 418526,
+   "durationMs": 41822,
+   "lufs": -18.4,
+   "peak": -7.5,
+   "sources": [
+    "randommind-rejoicing"
+   ]
+  },
+  {
+   "name": "music-victory",
+   "cue": "victory",
+   "kind": "music",
+   "file": "sound/music-victory.mp3",
+   "bytes": 200664,
+   "durationMs": 20036,
+   "lufs": -18.4,
+   "peak": -7.1,
+   "sources": [
+    "randommind-victory"
+   ]
+  },
+  {
+   "name": "music-defeat",
+   "cue": "defeat",
+   "kind": "music",
+   "file": "sound/music-defeat.mp3",
+   "bytes": 200664,
+   "durationMs": 20036,
+   "lufs": -18.5,
+   "peak": -8.3,
+   "sources": [
+    "randommind-defeat"
+   ]
+  },
+  {
+   "name": "amb-wind",
+   "cue": "wind",
+   "kind": "ambience",
+   "file": "sound/amb-wind.mp3",
+   "bytes": 216520,
+   "durationMs": 36049,
+   "lufs": -24.6,
+   "peak": -2.2,
+   "sources": [
+    "bashar3a-wind"
+   ]
+  },
+  {
+   "name": "amb-sea",
+   "cue": "sea",
+   "kind": "ambience",
+   "file": "sound/amb-sea.mp3",
+   "bytes": 216520,
+   "durationMs": 36049,
+   "lufs": -24,
+   "peak": -8.3,
+   "sources": [
+    "randommind-waves"
+   ]
+  },
+  {
+   "name": "amb-birds",
+   "cue": "birds",
+   "kind": "ambience",
+   "file": "sound/amb-birds.mp3",
+   "bytes": 184546,
+   "durationMs": 30720,
+   "lufs": -24,
+   "peak": -4.9,
+   "sources": [
+    "isaiah658-birds"
+   ]
+  }
+ ]
+}

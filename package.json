@@ -13,6 +13,7 @@
     "sim": "tsx apps/sim/src/cli.ts",
     "build-maps": "pnpm --filter @conquerra/mapgen build-maps",
     "art:import": "pnpm --filter @conquerra/art run art-import",
+    "sound:import": "pnpm --filter @conquerra/sound run sound-import",
     "map-check": "node apps/web/scripts/map-check.mjs",
     "ui-check": "node apps/web/scripts/ui-check.mjs",
     "deploy:preview": "pnpm test && pnpm build && node apps/web/scripts/bundle-size.mjs && wrangler deploy --config apps/web/wrangler.jsonc && node apps/web/scripts/check-preview.mjs",

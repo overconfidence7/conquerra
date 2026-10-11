@@ -1,0 +1,19 @@
+{
+  "name": "@conquerra/sound",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/registry.ts",
+  "types": "src/registry.ts",
+  "exports": {
+    ".": "./src/registry.ts",
+    "./import": "./src/import.ts",
+    "./recipe": "./src/recipe.ts"
+  },
+  "scripts": {
+    "sound-import": "tsx scripts/import.ts"
+  },
+  "dependencies": {
+    "zod": "^3.24.0"
+  }
+}
