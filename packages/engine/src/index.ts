@@ -1,5 +1,5 @@
 export * from "./types";
-export { createGame, type NewGameOptions } from "./setup";
+export { createGame, dealSeats, type NewGameOptions } from "./setup";
 export { resolveTurn, type TurnObserver } from "./resolve";
 export { viewFor, trueDetail, copyDetail, seesPolitically, dealView, wallViews, type WallView, type PlayerView, type TerritoryView, type TerritoryDetail, type DealView, type SpyView } from "./view";
 export { spreadTroops, buildingSpot, type SpreadLand } from "./spoils";

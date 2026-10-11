@@ -297,6 +297,21 @@ export function Lobby() {
         </span>
       </div>
 
+      <div className="field">
+        <span className="field-name">Harder spots</span>
+        <span className="seg" role="radiogroup" aria-label="Harder spots">
+          <button role="radio" aria-checked={lobby.hardSpots !== "anyone"} className={lobby.hardSpots !== "anyone" ? "on" : ""} onClick={() => setLobby({ hardSpots: "bots" })}>
+            Bots first
+          </button>
+          <button role="radio" aria-checked={lobby.hardSpots === "anyone"} className={lobby.hardSpots === "anyone" ? "on" : ""} onClick={() => setLobby({ hardSpots: "anyone" })}>
+            Anyone
+          </button>
+        </span>
+        <span className="muted small">
+          {lobby.hardSpots === "anyone" ? "You might start at a harder spot (it starts with extra troops)." : "A harder capital spot (it starts with extra troops) goes to a bot before you."}
+        </span>
+      </div>
+
       {error && !loading && <p className="warn">{error}</p>}
       <button className={`${auto ? "" : "primary "}wide big`} onClick={start} disabled={busy}>
         {busy ? "Starting…" : auto ? "Start a new game" : "Start"}

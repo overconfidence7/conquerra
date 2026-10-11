@@ -247,7 +247,7 @@ export class LocalGame {
         },
         ...BOT_NAMES.slice(0, bots).map((name, i) => {
           const p = levels[botIds[i]!]?.level === "marshal" ? style(levels[botIds[i]!]!.personality) : null;
-          return { id: botIds[i]!, name, ...(p ? { leaderPersonality: p, stewardPersonality: p } : {}) };
+          return { id: botIds[i]!, name, bot: true, ...(p ? { leaderPersonality: p, stewardPersonality: p } : {}) };
         }),
       ];
       const setup: NewGameOptions = {
@@ -263,8 +263,10 @@ export class LocalGame {
           fate: settings.fate ?? true,
           diplomacy: settings.diplomacy ?? true,
         },
-        // A harder capital spot starts with extra troops (session 23).
+        // A harder capital spot starts with extra troops (session 23), and goes to a bot before you (session 25)
+        // unless the lobby said "anyone". The setup keeps the choice, so a save replays as it was played.
         startBonus: true,
+        seatRule: settings.hardSpots === "anyone" ? "anyone" : "botsFirst",
       };
       this.state = createGame(this.ctx, setup);
       for (const [id, s] of Object.entries(levels)) this.seats.set(id, seatBot(s.level, s.personality));

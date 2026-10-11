@@ -42,6 +42,11 @@ export interface TournamentSpec {
   layout?: string[];
   /** Start bonuses to try (session 23): extra troops by capital spot, instead of the map's own. */
   bonus?: Record<string, number>;
+  /**
+   * The seat rule (session 25): harder spots go to bots first. The delegating seats ("delegate-...") stand in for a
+   * person; every other seat is a bot. Left out: every spot at random, as before.
+   */
+  seatRule?: boolean;
 }
 
 /** `b` merged into `a`, objects deep (arrays and numbers replaced). */
@@ -194,7 +199,8 @@ export function playOne(spec: TournamentSpec, i: number): TableResult & { kinds:
   const kinds = seatsFor(spec, i, seed);
   const bots = kinds.map((k) => botFor(k, spec.tweak));
   const sighted = kinds.flatMap((k, s) => (k.startsWith("sighted:") ? [s] : []));
-  const r = playTable(ctx, seed, bots, { settings: { fog: spec.fog, diplomacy: spec.diplomacy, ...(spec.settings ?? {}) }, sighted, styles: kinds.map(stylesOf) });
+  const people = spec.seatRule ? kinds.flatMap((k, s) => (k.replace(/^sighted:/, "").startsWith("delegate-") ? [s] : [])) : undefined;
+  const r = playTable(ctx, seed, bots, { settings: { fog: spec.fog, diplomacy: spec.diplomacy, ...(spec.settings ?? {}) }, sighted, styles: kinds.map(stylesOf), ...(people ? { people, seatRule: "botsFirst" as const } : {}) });
   return { ...r, kinds };
 }
 

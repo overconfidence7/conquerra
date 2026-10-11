@@ -16,14 +16,38 @@ export interface NewGameOptions {
    * `leaderName` / `stewardName` (session 18): what you named your Leader and Steward (default: dealt from the seed).
    * `delegate`: a person's seat: their Steward starts on "Run the realm" with `rules.leaders.stewardShare` of their
    * income (a bot plans its whole realm itself, so its Steward starts idle).
+   * `bot` (session 25): a bot's seat (people are the default), for the seat rule.
    */
-  players: { id: string; name: string; house?: number; leaderName?: string; stewardName?: string; leaderPersonality?: string | null; stewardPersonality?: string | null; delegate?: boolean }[];
+  players: { id: string; name: string; bot?: boolean; house?: number; leaderName?: string; stewardName?: string; leaderPersonality?: string | null; stewardPersonality?: string | null; delegate?: boolean }[];
   settings?: Partial<GameSettings>;
   /**
    * The start bonus (session 23): a harder capital spot starts with the extra troops the map's layout gives it. New
    * games say so; a setup saved before it (a save's history) doesn't, so an old game replays exactly as it was played.
    */
   startBonus?: boolean;
+  /**
+   * The seat rule (session 25, Nate's call): "botsFirst" deals the harder capital spots (the layout's slots with a start
+   * bonus) to bots before people; "anyone" (or missing: a setup saved before it) deals every spot at random, as before.
+   */
+  seatRule?: "botsFirst" | "anyone";
+}
+
+/**
+ * The seat rule (session 25): after the seeded shuffle, a person dealt a harder spot (`weak`) swaps with the first bot
+ * (in the shuffle's order) dealt an ordinary one, until no person holds a harder spot or no bot is left to swap with
+ * (then the people left over keep theirs, with its head start, as before). Everything else keeps the shuffle's order,
+ * and a table of bots only (or of people only) is dealt exactly as before. No dice are used, so the game's own dice
+ * are the same either way.
+ */
+export function dealSeats<T extends { bot?: boolean }>(seats: readonly T[], capitals: readonly string[], weak: ReadonlySet<string>): T[] {
+  const out = [...seats];
+  for (let i = 0; i < out.length; i++) {
+    if (!weak.has(capitals[i]!) || out[i]!.bot) continue;
+    const j = out.findIndex((p, k) => p.bot && !weak.has(capitals[k]!));
+    if (j < 0) break;
+    [out[i], out[j]] = [out[j]!, out[i]!];
+  }
+  return out;
 }
 
 /**
@@ -89,9 +113,12 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   }
 
   const rng = new Rng(seedRng(opts.seed));
-  const seats = rng.shuffle(opts.players);
+  const shuffled = rng.shuffle(opts.players);
   const capitals = pickCapitals(map, n, rng);
-  const bonusAt = (opts.startBonus && map.capitalLayouts?.find((l) => l.players === n)?.bonus) || {};
+  const layoutBonus = map.capitalLayouts?.find((l) => l.players === n)?.bonus ?? {};
+  const bonusAt = (opts.startBonus && layoutBonus) || {};
+  // Harder spots go to bots first (session 25). Only a pinned layout marks them: capitals spread without one have none.
+  const seats = opts.seatRule === "botsFirst" ? dealSeats(shuffled, capitals, new Set(Object.keys(layoutBonus).filter((k) => (layoutBonus[k] ?? 0) > 0))) : shuffled;
 
   const territories: Record<string, TerritoryState> = {};
   for (const t of map.territories)
