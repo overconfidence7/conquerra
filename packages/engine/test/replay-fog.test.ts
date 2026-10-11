@@ -363,7 +363,9 @@ describe("the step-by-step replay never leaks", () => {
                         ? [e.at, ...(e.border ?? []), ...e.land.map((l) => l.territory)]
                         : e.type === "missionDone"
                           ? e.land.map((l) => l.territory)
-                          : "territory" in e
+                          : e.type === "walled"
+                            ? e.territories
+                            : "territory" in e
                             ? [e.territory]
                             : [];
               if (e.type === "fate") fateShown++;
@@ -386,7 +388,7 @@ describe("the step-by-step replay never leaks", () => {
         }
       }),
       // Every case the random inputs found once stays as a fixed regression case.
-      { numRuns: 40, examples: [["{T", 5]] },
+      { numRuns: 40, examples: [["{T", 5], ["-CT", 5]] },
     );
     expect(checkedVision).toBeGreaterThan(200);
     expect(checkedRival).toBeGreaterThan(50);

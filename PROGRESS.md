@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–22 (with 20b, 20c, 20d) are done; 22 waits for review. Next: Nate reads `docs/voice/lines-for-nate.md` and marks it up (the next session applies his marks), his play test from "Things to test after session 22", then session 23 (bots and balance: the start bonus, the Marshal adopts the Merchant's lesson and the Steward's plan, idle Steward gold handed back with the lines already written, a remnant judged honestly under fog), then sound.**
+**Phase: M3 (depth and balance). Sessions 7–22 (with 20b, 20c, 20d) are done and reviewed. Nate picked his key lines with the orchestrator (`docs/voice/nate-picks-oct10.md`, applied in 23's Step 0). Next: his play test from "Things to test after session 22" (it can run alongside), **session 23** (bots and balance: the prompt is written), then sound. The orchestrator-09 prompt is due after 23.**
 
 Claude Code sessions completed: **22** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -1313,6 +1313,16 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
 - **Lines written:** about 1,000: 241 personality deal lines, 147 personality reasons, 83 plain reasons, 445 leader lines (six personalities and Neutral), 27 captured-leader lines, 59 screen lines.
 - **Words only:** the same seeded sims before and after every part match exactly (6 Marshals on Wyrmland with diplomacy: same win rates by seat and personality, games avg 43.5 turns, 40.7 deals and 5.10 broken a game; a Blitzer and three Captains on Embervale: avg 26.8 turns, 9.8 deals, 0.90 broken). The determinism test passes; tests that pinned old wording now pin the new.
 - **Start-up bundle** 491.2 → 487.8 KB (the old voice block left the lobby's bundle; the line library loads with the game screen and the bots' worker). **Deployed** four times: `16fc915d` (Part 2), `5178dde7` (Part 3), `aff89578` (Part 4) and **`910e40e4`** (final, after the docs); the lock check passed each time. 999 tests pass. Nate: please check the repo's Actions page for the last commit.
+
+### Oct 10: Orchestrator review of session 22
+- **The code:** every part done, no 22b. Two commits went red mid-session; the last two are green.
+  - `507ba26` (Part 3): a test still pinned the old trade wording. It was re-pinned in the next commit, but it should have been in the same one.
+  - `202374c`: a random-input fog test failed when a rival watched a wall go up. **Not a fog leak:** the engine shows a wall to anyone who can see any part of it, but the test never learned about walls (session 20b) and found no place to check. Reproduced with the failing case, fixed the test, kept the case as a fixed example (orchestrator commit).
+- **Only the words changed, checked with the orchestrator's own seed:** 30 games of six Marshals on Wyrmland with diplomacy, at the commit before the session and after it. Every game came out the same (only the timings differ).
+- **The screenshots read well:** the laptop replay now has the whole map (the panels slide away), one headline per event, the floating words on a plate, your leaders speaking in the report ("Baron Krell has 57 troops two steps from Whitemarch. I'm pulling the army home to meet them."), the Leader judging a bad attack, the awards as a royal audit.
+- **One nit left:** the Fallen's uprising line still says "its 1 rebels" (the Fate card's line was fixed). Session 23's Step 0.
+- **Nate's calls:** extra troops at the capital for the start bonus; a comeback title card (your own House only: a rival's land size is hidden, so a card about it would leak what the fog hides); keep the dots on busy buttons; he picked his key lines with the orchestrator (`docs/voice/nate-picks-oct10.md`) and added one of his own for the Merchant: "The math isn't mathing here."
+- **Session 23's prompt is written** (`docs/prompts/claude-code-session-23.md`).
 
 ### Things to test after session 22 (Nate's next play test)
 *Laptop first; the phone where it applies.*
