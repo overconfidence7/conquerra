@@ -105,7 +105,10 @@ for (const [mapId, botsArg] of mapsArg.split(",").map((x) => x.split(":"))) {
     for (let k = 0; k < TURNS; k++) replays.push(await oneReplay(page));
     await sleep(500);
     const bytes = fetched.reduce((a, [, n]) => a + n, 0);
-    const row = { map: mapId, players: Number(botsArg) + 1, device: DEVICE, sound: mode, replayFps: Math.round((replays.reduce((a, r) => a + r.fps, 0) / replays.length) * 10) / 10, worstFps: Math.min(...replays.map((r) => r.fps)), lobbySoundFiles: lobbySound, soundFiles: fetched.length, soundKB: Math.round(bytes / 1024), replays };
+    // (An audio element streaming a long file asks for parts of it more than once: the distinct files are what a first
+    // game needs; the browser's cache keeps the rest.)
+    const distinct = [...new Map(fetched.map(([f, n]) => [f, Math.max(n, 0)])).keys()];
+    const row = { map: mapId, players: Number(botsArg) + 1, device: DEVICE, sound: mode, replayFps: Math.round((replays.reduce((a, r) => a + r.fps, 0) / replays.length) * 10) / 10, worstFps: Math.min(...replays.map((r) => r.fps)), lobbySoundFiles: lobbySound, soundFiles: fetched.length, soundKB: Math.round(bytes / 1024), distinctFiles: distinct, replays };
     rows.push(row);
     console.log(JSON.stringify({ map: row.map, sound: mode, replayFps: row.replayFps, worst: row.worstFps, lobbySoundFiles: lobbySound, soundFiles: row.soundFiles, soundKB: row.soundKB, mostAtOnce: replays.map((r) => r.mostAtOnce), sounds: replays.map((r) => r.sounds.length) }));
     await page.close();

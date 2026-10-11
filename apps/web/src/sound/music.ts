@@ -57,14 +57,18 @@ class Music {
     if (!ctx && !this.tracks.size && typeof document !== "undefined" && !navigator.userActivation?.hasBeenActive) return;
     this.hook();
     for (const t of this.tracks.values()) if (t.cue !== cue) this.fade(t, 0, fadeMs);
+    this.current = cue;
+    // (Muted, or Music at 0: nothing is fetched or played until it's turned up; then this track starts.)
+    if (busGains(useSound.getState()).music > 0) this.start(cue, fadeMs);
+    this.run();
+  }
+
+  private start(cue: MusicCue, fadeMs: number) {
     const t = this.track(cue);
     // A sting plays from the start; a loop carries on where it was.
-    if (!LOOPS.has(cue)) t.el.currentTime = 0;
+    if (!LOOPS.has(cue) && t.target <= 0) t.el.currentTime = 0;
     this.fade(t, 1, fadeMs);
-    this.current = cue;
-    // (Muted, or Music at 0: nothing is fetched or played until it's turned up.)
-    if (busGains(useSound.getState()).music > 0) void t.el.play().catch(() => {});
-    this.run();
+    if (!document.hidden) void t.el.play().catch(() => {});
   }
 
   /** Fades the music out. */
@@ -134,6 +138,7 @@ class Music {
     this.hooked = true;
     useSound.subscribe((l) => {
       const on = busGains(l).music > 0;
+      if (on && this.current && !(this.tracks.get(this.current)?.target ?? 0)) this.start(this.current, CROSSFADE_MS);
       for (const t of this.tracks.values()) {
         if (!on) t.el.pause();
         else if (t.target > 0 && t.el.paused && !document.hidden) void t.el.play().catch(() => {});

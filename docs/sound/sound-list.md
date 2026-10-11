@@ -19,8 +19,8 @@
 | `battle-big` | a fight with 15 or more troops in it, on top of `battle` | 3 | shouts (StarNinjas' crowd) and steel |
 | `arrows` | defenders shoot from a fort or a wall | 2 | arrow swishes (artisticdude) and a thunk |
 | `siege` | a Siege engine's stone lands | 2 | a stone on a wall (Thimras) |
-| `capture` | you take land | 1 | ⚠ the first bar of RandomMind's Victory theme |
-| `capture-rival` | a rival takes land you can see | 1 | a low horn (StumpyStrust) |
+| `capture` | you take land (at most every 2.5 s) | 1 | ⚠ the first bar of RandomMind's Victory theme |
+| `capture-rival` | a rival takes land you can see from someone (not neutral land; at most every 3.5 s) | 1 | a low horn (StumpyStrust) |
 | `held` | an attack is beaten back | 2 | a blow on a shield (Kenney) |
 | `capital-falls` | a capital falls | 1 | a heavy, distant blast, a stone hit, a bell and a gong |
 | `knocked-out` | a House is knocked out | 1 | war drums, slowed, fading away |
@@ -29,7 +29,7 @@
 | `wall` | a wall goes up | 1 | stones and a slam |
 | `built` | a building is finished | 2 | hammer blows and a thump |
 | `culture` | culture rises | 1 | a small bell |
-| `fog` | anything in the fog (the same for everything) | 2 | a muffled, distant rumble |
+| `fog` | anything in the fog: one rumble per beat, the same whatever it was | 2 | a muffled, distant rumble |
 
 ## Fate, the Fallen, deals, spies
 
