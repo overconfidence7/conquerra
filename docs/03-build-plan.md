@@ -114,7 +114,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
   - **24: sound** (Nate, Oct 7 and 11; prompt `docs/prompts/claude-code-session-24.md`): free packs with commercial-use licenses first, a sound bench for Nate's review, Master/Music/Effects volumes and Mute (`09-polish-and-effects-plan.md` §9).
   - **25: bots and balance, part two, after Nate's play test** (Nate, Oct 11; `04-design-additions.md` §16, last block): a wall's stacking defense bonus, tested capped with stop rules (then the Marshal and the Steward's plan re-tested with it); the seat rule (weak spots used last and given to bots first).
 - **Later: a top-tier bot above the Marshal** (Nate, Oct 9), built from the leaders' tricks and Nate's own saved games once the sims show they beat the Marshal; the Marshal stays the default hard level.
-- After sound (24), M3 is done; 25 follows Nate's play test. **What comes next is decided after Nate plays** (then M4).
+- After sound (24), M3's code is done; 25 was written on Oct 11 with orchestrator defaults (Nate's call: keep Claude Code busy; his play test runs alongside and his notes outrank the defaults). **What comes next is decided after Nate plays** (then M4).
 - Orchestrator prompts: orchestrator-07 was written after session 18; orchestrator-08 after session 20d (with session 21's prompt); orchestrator-09 after session 23 (with session 24's prompt); the next is due after session 26.
 - Leader-as-general (standing instructions) and captured generals.
 - Spoils and Fate decks (events and missions).

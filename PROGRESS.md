@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–24 are done and reviewed; session 24 (sound) was the last M3 build. M3 is done when Nate's play test is in ("Things to test after session 24"; the sound bench at `?lab=sound`). Next: **session 25** (a wall's stacking defense bonus and the seat rule), written after the play test. Orchestrator-09 is running; the next is due after session 26.**
+**Phase: M3 (depth and balance). Sessions 7–24 are done and reviewed. Nate is playing "Things to test after session 24" (the sound bench at `?lab=sound` included) while **session 25** (a wall's stacking defense bonus and the seat rule; prompt written Oct 11 with orchestrator defaults) runs; his notes go in `PROGRESS.md` as "Nate's play test after session 24" and outrank the defaults. M3 is done when 25 is reviewed and his play test is in. Orchestrator-09 is running; the next is due after session 26.**
 
 Claude Code sessions completed: **24** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -1390,6 +1390,7 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
 - **Sizes re-counted:** effects 602 KB, music 2.3 MB, ambience 603 KB (3.6 MB on disk, 3.1 MB for a first game). The bundle's +1.4 KB is inside the allowance.
 - **The screenshots:** Settings → Sound and Credits read well on the laptop and the phone; the bench lists the busy turn's 61 sounds in order. **Seen in them:** Settings on the phone is now a long scroll (Leaders' orders, six buttons, Layout, Effects, Sound and three sliders, Credits, Leave): worth folding the sliders under the Sound row later. In the busy turn the capture fanfare plays three times in six seconds (10.0, 12.9, 15.5 s): a bar of music that often may grate; Nate's ear on the bench decides.
 - **Not checked here:** the sounds themselves (no ears in this review either) and the phone's frame rate with sound; both are Nate's.
+- **Nate's call:** write session 25 now (`docs/prompts/claude-code-session-25.md`, with orchestrator defaults for the wall bonus and the seat rule) and play the whole test list alongside it. His notes outrank the defaults: the session reads "Nate's play test after session 24" in this file if it's there.
 
 ### Things to test after session 24 (Nate's next play test, the last of M3)
 *Laptop first; the phone where it applies. Sound on (it's on by default).*
