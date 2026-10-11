@@ -1,5 +1,5 @@
 import type { GameContext, ReplayEvent, SeenTerritory, VisionEvent } from "@conquerra/engine";
-import { BUILDING_NAME, type LogLine, type Namer } from "./text";
+import { BUILDING_NAME, startBonusLine, type LogLine, type Namer } from "./text";
 import { narrate } from "./narrate";
 
 /**
@@ -48,6 +48,8 @@ const involvesMe = (e: ReplayEvent, n: Namer): boolean => {
 export function groupReport(ctx: GameContext, events: readonly ReplayEvent[], n: Namer): GroupedReport {
   const out: GroupedReport = { yours: [], seen: [], fog: [] };
   const top: LogLine[] = [];
+  // The first turn's report: your capital's head start, if it had one (session 23).
+  const bonus = n.view && events.some((e) => e.type === "turnStart" && e.turn === 1) ? startBonusLine(n.view, n.place) : null;
   const fog = new Map<string, { battles: number; leaders: number; stirs: number }>();
   out.fog.push(...revealedLines(ctx, events.filter((e): e is VisionEvent => e.type === "vision"), n));
   for (const e of events) {
@@ -68,7 +70,8 @@ export function groupReport(ctx: GameContext, events: readonly ReplayEvent[], n:
   // Fate and the Fallen on your land first (they're easy to miss), then your wins and losses, then the rest of your
   // news (orders, recruits), with the gold line last.
   const rank = (l: LogLine) => (l.text.startsWith("Income") ? 3 : l.tone === "bad" ? 0 : l.tone === "good" ? 1 : 2);
-  out.yours = [...top, ...out.yours.map((l, i) => ({ l, i })).sort((a, b) => rank(a.l) - rank(b.l) || a.i - b.i).map((x) => x.l)];
+  // (The head start, session 23, after any Fate or Fallen news on your land.)
+  out.yours = [...top, ...(bonus ? [{ text: bonus, tone: "info" as const }] : []), ...out.yours.map((l, i) => ({ l, i })).sort((a, b) => rank(a.l) - rank(b.l) || a.i - b.i).map((x) => x.l)];
   for (const [prov, f] of fog) {
     const name = ctx.map.provinces.find((p) => p.id === prov)?.name ?? "the fog";
     if (f.battles) out.fog.push({ text: f.battles > 1 ? `Battles in ${name} (${f.battles})` : `A battle in ${name}`, tone: "quiet" });

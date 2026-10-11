@@ -1,0 +1,8 @@
+spots wyrmland:6 s23p3: Wildfield 5.0%, Harrowmarch 27.0%, Rookhome 14.0%, Larkstead 29.7%, Whitemarch 4.0%, Longrest 20.3% | fair 16.7%, half 8.3%
+try wyrmland:6 +2: Wildfield (+2) 3.7%, Harrowmarch 27.7%, Rookhome 17.0%, Larkstead 25.7%, Whitemarch (+2) 3.7%, Longrest 22.3%
+try wyrmland:6 +4: Wildfield (+4) 6.7%, Harrowmarch 23.0%, Rookhome 15.7%, Larkstead 30.3%, Whitemarch (+4) 3.7%, Longrest 20.7%
+try wyrmland:6 +6: Wildfield (+6) 6.7%, Harrowmarch 20.7%, Rookhome 15.0%, Larkstead 27.7%, Whitemarch (+6) 4.7%, Longrest 25.3%
+choose wyrmland:6 Wildfield (t048): before 5.0%, +6 -> 6.7%
+choose wyrmland:6 Whitemarch (t077): before 4.0%, +6 -> 4.7%
+check wyrmland:6: Wildfield (+6) 6.7%, Harrowmarch 20.7%, Rookhome 15.0%, Larkstead 27.7%, Whitemarch (+6) 4.7%, Longrest 25.3%
+recipe wyrmland:6: {"t048":6,"t077":6} | listed: Wildfield (+6 isn't enough: 6.7%); Whitemarch (+6 isn't enough: 4.7%) | 227s

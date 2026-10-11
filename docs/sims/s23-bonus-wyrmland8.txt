@@ -1,0 +1,9 @@
+spots wyrmland:8 s23p3: Willowshire 5.7%, Rookhome 12.3%, Elderton 4.0%, Coldton 5.0%, Harrowmarch 17.0%, Brightmarch 10.7%, Larkstead 21.0%, Kingsholt 24.3% | fair 12.5%, half 6.3%
+try wyrmland:8 +2: Willowshire (+2) 4.7%, Rookhome 14.3%, Elderton (+2) 6.0%, Coldton (+2) 5.0%, Harrowmarch 16.7%, Brightmarch 9.3%, Larkstead 24.0%, Kingsholt 20.0%
+try wyrmland:8 +4: Willowshire (+4) 3.7%, Rookhome 15.0%, Elderton (+4) 4.7%, Coldton (+4) 7.0%, Harrowmarch 18.3%, Brightmarch 8.7%, Larkstead 21.0%, Kingsholt 21.7%
+try wyrmland:8 +6: Willowshire (+6) 6.3%, Rookhome 13.0%, Elderton (+6) 8.0%, Coldton (+6) 7.3%, Harrowmarch 13.7%, Brightmarch 10.3%, Larkstead 23.7%, Kingsholt 17.7%
+choose wyrmland:8 Willowshire (t012): before 5.7%, +6 -> 6.3%
+choose wyrmland:8 Elderton (t046): before 4.0%, +6 -> 8.0%
+choose wyrmland:8 Coldton (t056): before 5.0%, +4 -> 7.0%
+check wyrmland:8: Willowshire (+6) 4.3%, Rookhome 11.3%, Elderton (+6) 4.3%, Coldton (+4) 8.0%, Harrowmarch 15.3%, Brightmarch 9.0%, Larkstead 25.3%, Kingsholt 22.3%
+recipe wyrmland:8: {"t012":6,"t046":6,"t056":4} | 281s

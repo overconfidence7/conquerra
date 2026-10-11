@@ -1,0 +1,7 @@
+spots embervale:4 s23p3: Eldermere 11.7%, Wildford 38.0%, Sunshire 17.7%, Wolfcrest 32.7% | fair 25.0%, half 12.5%
+try embervale:4 +2: Eldermere (+2) 13.0%, Wildford 32.0%, Sunshire 13.7%, Wolfcrest 41.3%
+try embervale:4 +4: Eldermere (+4) 12.0%, Wildford 32.0%, Sunshire 16.7%, Wolfcrest 39.3%
+try embervale:4 +6: Eldermere (+6) 15.0%, Wildford 28.7%, Sunshire 14.0%, Wolfcrest 42.3%
+choose embervale:4 Eldermere (t02): before 11.7%, +2 -> 13.0%
+check embervale:4: Eldermere (+2) 13.0%, Wildford 32.0%, Sunshire 13.7%, Wolfcrest 41.3%
+recipe embervale:4: {"t02":2} | 78s

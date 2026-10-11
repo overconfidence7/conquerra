@@ -1,0 +1,9 @@
+spots rootholm:8 s23p3: Wolfhold 10.7%, Glenleigh 1.0%, Westerford 24.7%, Coldreach 23.3%, Larkfield 1.3%, Brightfield 13.0%, Fairfall 0.7%, Nettlehelm 25.3% | fair 12.5%, half 6.3%
+try rootholm:8 +2: Wolfhold 11.7%, Glenleigh (+2) 1.7%, Westerford 27.0%, Coldreach 19.7%, Larkfield (+2) 2.0%, Brightfield 15.0%, Fairfall (+2) 1.7%, Nettlehelm 21.3%
+try rootholm:8 +4: Wolfhold 12.3%, Glenleigh (+4) 4.3%, Westerford 23.0%, Coldreach 14.3%, Larkfield (+4) 0.3%, Brightfield 16.0%, Fairfall (+4) 2.0%, Nettlehelm 27.7%
+try rootholm:8 +6: Wolfhold 10.0%, Glenleigh (+6) 7.0%, Westerford 27.0%, Coldreach 14.7%, Larkfield (+6) 0.3%, Brightfield 13.3%, Fairfall (+6) 2.7%, Nettlehelm 25.0%
+choose rootholm:8 Glenleigh (t016): before 1.0%, +6 -> 7.0%
+choose rootholm:8 Larkfield (t106): before 1.3%, +6 -> 0.3%
+choose rootholm:8 Fairfall (t195): before 0.7%, +6 -> 2.7%
+check rootholm:8: Wolfhold 10.0%, Glenleigh (+6) 7.0%, Westerford 27.0%, Coldreach 14.7%, Larkfield (+6) 0.3%, Brightfield 13.3%, Fairfall (+6) 2.7%, Nettlehelm 25.0%
+recipe rootholm:8: {"t016":6,"t106":6,"t195":6} | listed: Larkfield (+6 isn't enough: 0.3%); Fairfall (+6 isn't enough: 2.7%) | 362s

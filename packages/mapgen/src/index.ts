@@ -53,6 +53,11 @@ export interface MapGenOptions {
    * often than others). By player count; every spot must be one of the map's capital spots.
    */
   capitals?: Record<number, string[]>;
+  /**
+   * The start bonus (session 23, sized with `apps/sim/scripts/s23-bonus.ts`): extra troops at the capital for a spot
+   * that wins under half its fair share among equal bots. By player count, then spot (one of that layout's).
+   */
+  startBonus?: Record<number, Record<string, number>>;
   /** Share of the map that is water (default 0.38). */
   water?: number;
   /** Inland seas or big gulfs (default 1). */
@@ -487,7 +492,12 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
     ...draft(),
     provinces,
     capitalSlots: [...slotSet].sort(),
-    capitalLayouts: [...layouts].map(([players, slots]) => ({ players, slots: o.capitals?.[players] ? [...o.capitals[players]!] : slots })),
+    capitalLayouts: [...layouts].map(([players, slots]) => {
+      const chosen = o.capitals?.[players] ? [...o.capitals[players]!] : slots;
+      // (Only spots of this layout: a recipe tried with another seed makes other spots.)
+      const bonus = Object.fromEntries(Object.entries(o.startBonus?.[players] ?? {}).filter(([t]) => chosen.includes(t)));
+      return { players, slots: chosen, ...(Object.keys(bonus).length ? { bonus } : {}) };
+    }),
     generator: { version: MAPGEN_VERSION, seed: o.seed, attempt },
     geometry: {
       width,

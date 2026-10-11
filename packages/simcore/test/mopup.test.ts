@@ -277,17 +277,17 @@ describe("leaders with personalities on the mop-up fixtures (session 20c)", () =
     // (Walls off, session 20b: the Marshals' walls changed these games, and the Schemer, which plays like Neutral in
     // most positions, no longer met one where it doesn't. Planning with walls on, on the same positions, is the same.)
     const ctx: GameContext = { map: maps.wyrmland!, rules: { ...defaultRules, walls: { ...defaultRules.walls!, on: false } } };
-    // Each position with what every seat watched last turn (the Opportunist goes for whoever just fought). (Turn 28,
-    // session 23: at turns 16 to 24 the Opportunist or the Schemer wrote what Neutral would in every position once your
-    // leaders stopped counting a rival seen only in part as a remnant. Mid-game under fog, their own traits rarely change
-    // an order.)
-    const positions = [1, 2, 3].map((g) => {
-      let watched: ReadonlyMap<string, readonly ReplayEvent[]> = new Map();
-      const final = playTable(ctx, `styles-${g}`, Array.from({ length: 6 }, (_, i) => marshal(["conqueror", "blitzer", "turtle", "schemer", "opportunist", "merchant"][i]!)), {
-        stop: (s) => s.turn >= 28,
-        onTurn: (_s, _v, last) => (watched = last),
-      }).final!;
-      return { final, watched };
+    // Each position with what every seat watched last turn (the Opportunist goes for whoever just fought). (Session 23:
+    // turns 16, 22 and 28 of each game. One turn alone kept changing which personality met no position where it differs
+    // from Neutral as the Marshals changed: mid-game under fog, the Opportunist's and the Schemer's own traits rarely
+    // change an order.)
+    const positions = [1, 2, 3].flatMap((g) => {
+      const kept: { final: GameState; watched: ReadonlyMap<string, readonly ReplayEvent[]> }[] = [];
+      playTable(ctx, `styles-${g}`, Array.from({ length: 6 }, (_, i) => marshal(["conqueror", "blitzer", "turtle", "schemer", "opportunist", "merchant"][i]!)), {
+        stop: (s) => s.turn > 28,
+        onTurn: (s, _v, last) => void ([16, 22, 28].includes(s.turn) && kept.push({ final: structuredClone(s), watched: last })),
+      });
+      return kept;
     });
     const orders = (style: string | null) =>
       positions.flatMap(({ final: st, watched }) =>

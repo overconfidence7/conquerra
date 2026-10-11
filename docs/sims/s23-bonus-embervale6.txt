@@ -1,0 +1,9 @@
+spots embervale:6 s23p3: Yewmarch 3.7%, Galeholt 34.3%, Brightdale 2.3%, Wildford 36.3%, Sunshire 4.7%, Deephollow 18.7% | fair 16.7%, half 8.3%
+try embervale:6 +2: Yewmarch (+2) 4.0%, Galeholt 33.7%, Brightdale (+2) 3.7%, Wildford 30.3%, Sunshire (+2) 6.7%, Deephollow 21.7%
+try embervale:6 +4: Yewmarch (+4) 2.3%, Galeholt 38.3%, Brightdale (+4) 2.3%, Wildford 30.0%, Sunshire (+4) 6.0%, Deephollow 20.7%
+try embervale:6 +6: Yewmarch (+6) 2.3%, Galeholt 39.7%, Brightdale (+6) 3.0%, Wildford 27.0%, Sunshire (+6) 6.0%, Deephollow 22.0%
+choose embervale:6 Yewmarch (t03): before 3.7%, +6 -> 2.3%
+choose embervale:6 Brightdale (t18): before 2.3%, +6 -> 3.0%
+choose embervale:6 Sunshire (t28): before 4.7%, +6 -> 6.0%
+check embervale:6: Yewmarch (+6) 2.3%, Galeholt 39.7%, Brightdale (+6) 3.0%, Wildford 27.0%, Sunshire (+6) 6.0%, Deephollow 22.0%
+recipe embervale:6: {"t03":6,"t18":6,"t28":6} | listed: Yewmarch (+6 isn't enough: 2.3%); Brightdale (+6 isn't enough: 3.0%); Sunshire (+6 isn't enough: 6.0%) | 116s

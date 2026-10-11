@@ -35,3 +35,11 @@ describe("the start bonus, in words", () => {
     expect(turn2.value).toBe("16 troops");
   });
 });
+
+describe("the start bonus in the grouped report", () => {
+  it("the first turn's report opens your news with it", async () => {
+    const { groupReport } = await import("../src/logic/report");
+    const g = groupReport(ctx, [{ type: "turnStart", step: 0, turn: 1, seats: ["p1", "p2"] }], namer(ctx, view));
+    expect(g.yours[0]!.text).toBe(`${capital} starts with 4 extra troops (a harder spot).`);
+  });
+});

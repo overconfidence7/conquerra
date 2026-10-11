@@ -97,6 +97,37 @@ if (want("handout")) {
   }
 }
 
+// ---------- Part 3: the start bonus ----------
+// New Wyrmland 6 games until you sit at a harder spot (two of its six get +6): the notice as turn 1 starts, your
+// capital's card, and the first turn's report.
+if (want("bonus")) {
+  for (const phone of [false, true]) {
+    const sfx = phone ? "-phone" : "";
+    const p = await page(phone);
+    await p.goto(URL, { waitUntil: "networkidle0" });
+    let bonus = 0;
+    for (let tries = 0; tries < 20 && !bonus; tries++) {
+      await p.evaluate(() => { const s = window.__conquerraStore.getState(); s.playAgain?.(); });
+      await sleep(300);
+      await p.evaluate(() => window.__conquerraStore.getState().setLobby({ mapId: "wyrmland", bots: 5, botLevel: "marshal", turnSeconds: null }));
+      await p.evaluate(() => window.__conquerraStore.getState().start());
+      await p.waitForFunction(() => window.__conquerraStore.getState().view?.turn === 1, { timeout: 60000 });
+      bonus = await p.evaluate(() => window.__conquerraStore.getState().view.me.startBonus ?? 0);
+    }
+    console.log("  start bonus:", bonus);
+    await mapReady(p);
+    await shot(p, "s23-bonus-notice", sfx, { wait: 1200 });
+    await p.evaluate(() => { const s = window.__conquerraStore.getState(); s.select(s.view.me.capital); });
+    if (phone) await p.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => x.textContent?.trim() === "Card"); b?.click(); });
+    await shot(p, "s23-bonus-card", sfx, { wait: 1500 });
+    await p.evaluate(() => window.__conquerraStore.getState().select?.(null));
+    await playTurn(p);
+    await p.evaluate(() => window.__conquerraStore.getState().setShowReport(true));
+    await shot(p, "s23-bonus-report", sfx, { wait: 1500 });
+    await p.close();
+  }
+}
+
 // ---------- Step 0: the comeback card ----------
 // Session 20c's save with a comeback set up in your leaders' memory (you once held 150 territories, fell to a quarter
 // of that, and hold about 96 now): the card plays as this turn's replay ends.
