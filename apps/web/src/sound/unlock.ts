@@ -19,7 +19,7 @@ function unlock() {
     const C = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!C) return stop();
     ctx ??= new C();
-    while (audioPool.length < 3) {
+    while (audioPool.length < 8) {
       const a = new Audio();
       a.preload = "none";
       a.load();

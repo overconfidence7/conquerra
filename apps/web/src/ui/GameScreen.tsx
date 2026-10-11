@@ -38,6 +38,8 @@ import { FX_LEVELS, useFx } from "../replay/fx/settings";
 import { useSound } from "../sound/settings";
 import { mixer } from "../sound/mixer";
 import { music } from "../sound/music";
+import { ambience, closenessOf, waterInView } from "../sound/ambience";
+import { typicalTerritorySize } from "../map/zoom";
 import { houseOf } from "../map/houses";
 import { namer, startBonusLine } from "../logic/text";
 import "./replay.css";
@@ -270,6 +272,19 @@ export function GameScreen() {
   // where each was: it never starts over each turn).
   const replayOn = !!replay;
   useEffect(() => music.play(replayOn ? "replay" : "planning"), [replayOn]);
+  // The ambience bed under the map while you plan (Part 4): wind, the sea where the camera shows coast, birds now and
+  // then, a little louder closer in. It fades out for the replay.
+  useEffect(() => {
+    if (replayOn || !ctx) return void ambience.set(null);
+    const size = typicalTerritorySize(ctx.map);
+    const look = () => {
+      const v = renderer.current?.viewState();
+      if (v) ambience.set({ closeness: closenessOf(v.cam, size), water: waterInView(ctx.map, v.cam, v.vp) });
+    };
+    look();
+    const id = setInterval(look, 500);
+    return () => (clearInterval(id), ambience.set(null));
+  }, [replayOn, ctx]);
   // A notice, softly (at most one every 1.5 s).
   useEffect(() => {
     if (g.notice) mixer.play("notice");

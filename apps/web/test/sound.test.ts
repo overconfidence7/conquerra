@@ -12,6 +12,7 @@ import { soundPlan, soundsBetween, troopGain, type SoundContext } from "../src/s
 import { busGains, readLevels, SOUND_DEFAULTS } from "../src/sound/settings";
 import { DUCK_BACK_MS, DUCK_TO, duck, duckLevel } from "../src/sound/duck";
 import { fadeStep, MUSIC_VOLUME } from "../src/sound/music";
+import { BED_VOLUME, BIRD_CYCLE_MS, BIRD_ON_MS, bedLevels, closenessOf, waterInView } from "../src/sound/ambience";
 
 /** Session 24: the game's sound. */
 const ctx: GameContext = { map: maps.embervale!, rules: defaultRules };
@@ -210,5 +211,40 @@ describe("the music", () => {
     expect(duckLevel(10_500)).toBe(DUCK_TO);
     expect(duckLevel(11_000 + DUCK_BACK_MS / 2)).toBeCloseTo((DUCK_TO + 1) / 2);
     expect(duckLevel(11_000 + DUCK_BACK_MS)).toBe(1);
+  });
+});
+
+describe("the ambience under the map (Part 4)", () => {
+  it("plays at the cue list's volumes, under Music's", () => {
+    for (const [bed, v] of Object.entries(BED_VOLUME)) expect(CUE_SPECS[bed as keyof typeof CUE_SPECS].volume, bed).toBe(v);
+    for (const bed of Object.keys(BED_VOLUME)) expect(CUE_SPECS[bed as keyof typeof CUE_SPECS].bus).toBe("ambience");
+  });
+
+  it("closer in is a little louder; the sea only where there's water in view", () => {
+    const far = bedLevels({ closeness: 0, water: 0.3 }, 0), near = bedLevels({ closeness: 1, water: 0.3 }, 0);
+    expect(near.wind).toBeGreaterThan(far.wind);
+    expect(near.sea).toBeGreaterThan(far.sea);
+    expect(near.wind).toBeLessThanOrEqual(far.wind * 1.5);
+    expect(bedLevels({ closeness: 1, water: 0 }, 0).sea).toBe(0);
+  });
+
+  it("the birds come and go", () => {
+    const at = (t: number) => bedLevels({ closeness: 1, water: 0 }, t).birds;
+    expect(at(BIRD_ON_MS / 2)).toBeGreaterThan(0.5);
+    expect(at(BIRD_ON_MS + 5000)).toBe(0);
+    expect(at(BIRD_CYCLE_MS + BIRD_ON_MS / 2)).toBe(at(BIRD_ON_MS / 2));
+  });
+
+  it("reads closeness from the camera and water from the map's ground", () => {
+    expect(closenessOf({ x: 0, y: 0, scale: 1 }, 48)).toBe(0);
+    expect(closenessOf({ x: 0, y: 0, scale: 1 }, 260)).toBe(1);
+    const map = ctx.map;
+    const g = map.geometry!;
+    // The whole map in view has some water; looking far off its edge is all sea.
+    const fit = { x: 0, y: 0, scale: 400 / g.width };
+    const w = waterInView(map, fit, { width: 400, height: (g.height * 400) / g.width });
+    expect(w).toBeGreaterThan(0);
+    expect(w).toBeLessThan(1);
+    expect(waterInView(map, { x: -100000, y: 0, scale: 1 }, { width: 400, height: 300 })).toBe(1);
   });
 });
