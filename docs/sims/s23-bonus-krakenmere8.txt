@@ -1,0 +1,8 @@
+spots krakenmere:8 s23p3: Moonford 0.7%, Willowfall 14.3%, Rookstone 0.3%, Oldfell 7.3%, Briarleigh 11.0%, Glenby 11.7%, Coldwick 6.3%, Amberhaven 48.3% | fair 12.5%, half 6.3%
+try krakenmere:8 +2: Moonford (+2) 0.3%, Willowfall 15.7%, Rookstone (+2) 0.3%, Oldfell 8.3%, Briarleigh 11.3%, Glenby 9.0%, Coldwick 8.7%, Amberhaven 46.3%
+try krakenmere:8 +4: Moonford (+4) 1.3%, Willowfall 14.0%, Rookstone (+4) 0.0%, Oldfell 10.3%, Briarleigh 11.0%, Glenby 8.3%, Coldwick 3.7%, Amberhaven 51.3%
+try krakenmere:8 +6: Moonford (+6) 1.7%, Willowfall 11.3%, Rookstone (+6) 0.0%, Oldfell 10.3%, Briarleigh 12.7%, Glenby 12.3%, Coldwick 6.7%, Amberhaven 44.3%
+choose krakenmere:8 Moonford (t013): before 0.7%, +6 -> 1.7%
+choose krakenmere:8 Rookstone (t104): before 0.3%, +6 -> 0.0%
+check krakenmere:8: Moonford (+6) 1.7%, Willowfall 11.3%, Rookstone (+6) 0.0%, Oldfell 10.3%, Briarleigh 12.7%, Glenby 12.3%, Coldwick 6.7%, Amberhaven 44.3%
+recipe krakenmere:8: {"t013":6,"t104":6} | listed: Moonford (+6 isn't enough: 1.7%); Rookstone (+6 isn't enough: 0.0%) | 379s

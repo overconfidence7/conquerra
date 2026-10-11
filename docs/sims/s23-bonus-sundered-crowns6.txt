@@ -1,0 +1,8 @@
+spots sundered-crowns:6 s23p3: Sorrowgarth 14.7%, Stagrest 0.7%, Northrest 28.7%, Stonemere 25.7%, Oldwood 4.3%, Redhome 26.0% | fair 16.7%, half 8.3%
+try sundered-crowns:6 +2: Sorrowgarth 12.0%, Stagrest (+2) 1.0%, Northrest 25.0%, Stonemere 32.0%, Oldwood (+2) 4.0%, Redhome 26.0%
+try sundered-crowns:6 +4: Sorrowgarth 14.3%, Stagrest (+4) 0.7%, Northrest 24.0%, Stonemere 26.0%, Oldwood (+4) 5.0%, Redhome 29.3%
+try sundered-crowns:6 +6: Sorrowgarth 14.0%, Stagrest (+6) 0.3%, Northrest 27.0%, Stonemere 32.3%, Oldwood (+6) 4.3%, Redhome 22.0%
+choose sundered-crowns:6 Stagrest (t017): before 0.7%, +6 -> 0.3%
+choose sundered-crowns:6 Oldwood (t120): before 4.3%, +6 -> 4.3%
+check sundered-crowns:6: Sorrowgarth 14.0%, Stagrest (+6) 0.3%, Northrest 27.0%, Stonemere 32.3%, Oldwood (+6) 4.3%, Redhome 22.0%
+recipe sundered-crowns:6: {"t017":6,"t120":6} | listed: Stagrest (+6 isn't enough: 0.3%); Oldwood (+6 isn't enough: 4.3%) | 242s

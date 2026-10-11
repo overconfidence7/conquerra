@@ -1,0 +1,10 @@
+spots crownlands:10 s23p3: Yewhelm 14.7%, Wolfstone 5.0%, Elderstead 3.3%, Willowden 4.3%, Norththorpe 19.3%, Heaththorpe 2.3%, Salthollow 8.7%, Northwatch 27.7%, Ashton 2.3%, Pinefell 12.0% | fair 10.0%, half 5.0%
+try crownlands:10 +2: Yewhelm 17.7%, Wolfstone 2.0%, Elderstead (+2) 2.7%, Willowden (+2) 2.3%, Norththorpe 18.0%, Heaththorpe (+2) 2.3%, Salthollow 12.3%, Northwatch 28.3%, Ashton (+2) 2.3%, Pinefell 11.7%
+try crownlands:10 +4: Yewhelm 15.3%, Wolfstone 5.3%, Elderstead (+4) 4.0%, Willowden (+4) 5.7%, Norththorpe 13.7%, Heaththorpe (+4) 1.3%, Salthollow 15.0%, Northwatch 27.0%, Ashton (+4) 2.7%, Pinefell 10.0%
+try crownlands:10 +6: Yewhelm 17.7%, Wolfstone 2.7%, Elderstead (+6) 4.0%, Willowden (+6) 2.7%, Norththorpe 17.0%, Heaththorpe (+6) 1.7%, Salthollow 15.3%, Northwatch 24.7%, Ashton (+6) 2.3%, Pinefell 12.0%
+choose crownlands:10 Elderstead (t46): before 3.3%, +6 -> 4.0%
+choose crownlands:10 Willowden (t49): before 4.3%, +4 -> 5.7%
+choose crownlands:10 Heaththorpe (t51): before 2.3%, +6 -> 1.7%
+choose crownlands:10 Ashton (t13): before 2.3%, +6 -> 2.3%
+check crownlands:10: Yewhelm 16.0%, Wolfstone 5.7%, Elderstead (+6) 3.7%, Willowden (+4) 4.0%, Norththorpe 17.0%, Heaththorpe (+6) 1.0%, Salthollow 11.0%, Northwatch 26.3%, Ashton (+6) 1.7%, Pinefell 13.7%
+recipe crownlands:10: {"t46":6,"t49":4,"t51":6,"t13":6} | listed: Elderstead (+6 isn't enough: 4.0%); Heaththorpe (+6 isn't enough: 1.7%); Ashton (+6 isn't enough: 2.3%) | 244s

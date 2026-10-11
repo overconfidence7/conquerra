@@ -18,7 +18,11 @@ for (const f of readdirSync("docs/sims").filter((x) => /^s23-bonus-.*\.txt$/.tes
     bonus.set(m[1]!, per);
   }
 }
-let src = readFileSync(cfg, "utf8").replace(/ ?startBonus: \{[^\n]*?\}\},?\n?/g, (x) => (x.endsWith("\n") ? "" : ""));
+// (Run again, it replaces what it put there before: the comment line, and the setting on its own line or inline.)
+let src = readFileSync(cfg, "utf8")
+  .replace(/ *\/\/ Session 23: extra troops[^\n]*\n/g, "")
+  .replace(/^ *startBonus: \{(?:[^{}]|\{[^{}]*\})*\},\n/gm, "")
+  .replace(/ startBonus: \{(?:[^{}]|\{[^{}]*\})*\},/g, "");
 for (const [id, per] of [...bonus].sort()) {
   const text = `startBonus: ${JSON.stringify(per)},`;
   const multi = `    id: "${id}",\n`;

@@ -1,0 +1,9 @@
+spots crownlands:6 s23p3: Kingshaven 0.7%, Ironmarch 16.7%, Northwatch 8.0%, Hollyden 30.3%, Embermouth 37.7%, Hawkcrest 6.7% | fair 16.7%, half 8.3%
+try crownlands:6 +2: Kingshaven (+2) 2.7%, Ironmarch 18.3%, Northwatch (+2) 12.3%, Hollyden 24.3%, Embermouth 36.7%, Hawkcrest (+2) 5.7%
+try crownlands:6 +4: Kingshaven (+4) 1.3%, Ironmarch 15.0%, Northwatch (+4) 14.7%, Hollyden 21.3%, Embermouth 43.0%, Hawkcrest (+4) 4.7%
+try crownlands:6 +6: Kingshaven (+6) 1.0%, Ironmarch 14.3%, Northwatch (+6) 13.0%, Hollyden 23.0%, Embermouth 44.3%, Hawkcrest (+6) 4.3%
+choose crownlands:6 Kingshaven (t03): before 0.7%, +6 -> 1.0%
+choose crownlands:6 Northwatch (t19): before 8.0%, +2 -> 12.3%
+choose crownlands:6 Hawkcrest (t98): before 6.7%, +6 -> 4.3%
+check crownlands:6: Kingshaven (+6) 1.3%, Ironmarch 13.3%, Northwatch (+2) 13.7%, Hollyden 21.0%, Embermouth 44.3%, Hawkcrest (+6) 6.3%
+recipe crownlands:6: {"t03":6,"t19":2,"t98":6} | listed: Kingshaven (+6 isn't enough: 1.0%); Hawkcrest (+6 isn't enough: 4.3%) | 191s

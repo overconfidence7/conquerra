@@ -1,0 +1,9 @@
+spots shattered-isles:6 s23p3: Thornmere 1.0%, Brightfall 45.7%, Pinehold 7.7%, Hollyrest 36.0%, Rosemarch 1.3%, Hawkby 8.3% | fair 16.7%, half 8.3%
+try shattered-isles:6 +2: Thornmere (+2) 0.7%, Brightfall 47.0%, Pinehold (+2) 8.7%, Hollyrest 36.7%, Rosemarch (+2) 0.3%, Hawkby 6.7%
+try shattered-isles:6 +4: Thornmere (+4) 1.0%, Brightfall 39.7%, Pinehold (+4) 10.0%, Hollyrest 40.0%, Rosemarch (+4) 1.7%, Hawkby 7.7%
+try shattered-isles:6 +6: Thornmere (+6) 0.7%, Brightfall 41.3%, Pinehold (+6) 11.3%, Hollyrest 36.7%, Rosemarch (+6) 1.0%, Hawkby 8.7%
+choose shattered-isles:6 Thornmere (t03): before 1.0%, +6 -> 0.7%
+choose shattered-isles:6 Pinehold (t24): before 7.7%, +2 -> 8.7%
+choose shattered-isles:6 Rosemarch (t44): before 1.3%, +6 -> 1.0%
+check shattered-isles:6: Thornmere (+6) 1.3%, Brightfall 41.0%, Pinehold (+2) 7.3%, Hollyrest 40.7%, Rosemarch (+6) 1.0%, Hawkby 8.7%
+recipe shattered-isles:6: {"t03":6,"t24":2,"t44":6} | listed: Thornmere (+6 isn't enough: 0.7%); Rosemarch (+6 isn't enough: 1.0%) | 128s

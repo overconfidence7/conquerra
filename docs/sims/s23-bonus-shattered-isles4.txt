@@ -1,0 +1,8 @@
+spots shattered-isles:4 s23p3: Thornmere 5.3%, Brightfall 45.3%, Wyrmhurst 42.0%, Fairthorpe 7.3% | fair 25.0%, half 12.5%
+try shattered-isles:4 +2: Thornmere (+2) 4.7%, Brightfall 47.3%, Wyrmhurst 43.3%, Fairthorpe (+2) 4.7%
+try shattered-isles:4 +4: Thornmere (+4) 2.0%, Brightfall 53.7%, Wyrmhurst 38.0%, Fairthorpe (+4) 6.3%
+try shattered-isles:4 +6: Thornmere (+6) 2.0%, Brightfall 49.3%, Wyrmhurst 38.0%, Fairthorpe (+6) 10.7%
+choose shattered-isles:4 Thornmere (t03): before 5.3%, +6 -> 2.0%
+choose shattered-isles:4 Fairthorpe (t51): before 7.3%, +6 -> 10.7%
+check shattered-isles:4: Thornmere (+6) 2.0%, Brightfall 49.3%, Wyrmhurst 38.0%, Fairthorpe (+6) 10.7%
+recipe shattered-isles:4: {"t03":6,"t51":6} | listed: Thornmere (+6 isn't enough: 2.0%); Fairthorpe (+6 isn't enough: 10.7%) | 98s

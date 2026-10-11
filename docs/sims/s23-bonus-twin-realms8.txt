@@ -1,0 +1,8 @@
+spots twin-realms:8 s23p3: Elderby 7.7%, Hallowstone 22.3%, Westerfall 3.0%, Rosecrest 6.3%, Fairfield 22.7%, Longwell 5.7%, Harrowdale 14.7%, Silverhurst 17.3% | fair 12.5%, half 6.3%
+try twin-realms:8 +2: Elderby 8.0%, Hallowstone 16.3%, Westerfall (+2) 6.3%, Rosecrest 8.7%, Fairfield 23.0%, Longwell (+2) 3.0%, Harrowdale 15.0%, Silverhurst 19.7%
+try twin-realms:8 +4: Elderby 8.7%, Hallowstone 17.3%, Westerfall (+4) 1.7%, Rosecrest 9.0%, Fairfield 26.3%, Longwell (+4) 6.3%, Harrowdale 14.0%, Silverhurst 16.7%
+try twin-realms:8 +6: Elderby 6.7%, Hallowstone 21.3%, Westerfall (+6) 5.0%, Rosecrest 12.0%, Fairfield 19.3%, Longwell (+6) 4.0%, Harrowdale 12.7%, Silverhurst 19.0%
+choose twin-realms:8 Westerfall (t31): before 3.0%, +2 -> 6.3%
+choose twin-realms:8 Longwell (t62): before 5.7%, +4 -> 6.3%
+check twin-realms:8: Elderby 5.0%, Hallowstone 24.0%, Westerfall (+2) 5.0%, Rosecrest 10.7%, Fairfield 23.7%, Longwell (+4) 1.7%, Harrowdale 12.3%, Silverhurst 17.7%
+recipe twin-realms:8: {"t31":2,"t62":4} | 186s

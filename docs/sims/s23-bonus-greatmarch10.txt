@@ -1,0 +1,2 @@
+spots greatmarch:10 s23p3: Northmark 12.0%, Rookthorpe 6.3%, Oakshire 7.3%, Northcrest 12.0%, Stoneden 10.3%, Brightden 10.3%, Kingswick 14.7%, Goldcrest 5.3%, Brightby 16.3%, Silvercrest 5.3% | fair 10.0%, half 5.0%
+recipe greatmarch:10: none (no spot under half of fair) | 43s

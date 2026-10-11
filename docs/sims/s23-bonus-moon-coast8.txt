@@ -1,0 +1,10 @@
+spots moon-coast:8 s23p3: Ironbury 3.7%, Stonemark 3.3%, Kingsthorpe 3.0%, Greygate 2.0%, Sorrowmouth 8.0%, Ironden 9.7%, Greygarth 33.3%, Thorncrest 37.0% | fair 12.5%, half 6.3%
+try moon-coast:8 +2: Ironbury (+2) 3.3%, Stonemark (+2) 5.3%, Kingsthorpe (+2) 5.3%, Greygate (+2) 4.3%, Sorrowmouth 8.3%, Ironden 6.0%, Greygarth 38.0%, Thorncrest 29.3%
+try moon-coast:8 +4: Ironbury (+4) 5.0%, Stonemark (+4) 2.3%, Kingsthorpe (+4) 3.0%, Greygate (+4) 2.3%, Sorrowmouth 7.0%, Ironden 5.7%, Greygarth 34.0%, Thorncrest 40.7%
+try moon-coast:8 +6: Ironbury (+6) 1.7%, Stonemark (+6) 5.0%, Kingsthorpe (+6) 2.7%, Greygate (+6) 4.7%, Sorrowmouth 6.3%, Ironden 6.0%, Greygarth 37.3%, Thorncrest 36.3%
+choose moon-coast:8 Ironbury (t12): before 3.7%, +6 -> 1.7%
+choose moon-coast:8 Stonemark (t15): before 3.3%, +6 -> 5.0%
+choose moon-coast:8 Kingsthorpe (t36): before 3.0%, +6 -> 2.7%
+choose moon-coast:8 Greygate (t42): before 2.0%, +6 -> 4.7%
+check moon-coast:8: Ironbury (+6) 1.7%, Stonemark (+6) 5.0%, Kingsthorpe (+6) 2.7%, Greygate (+6) 4.7%, Sorrowmouth 6.3%, Ironden 6.0%, Greygarth 37.3%, Thorncrest 36.3%
+recipe moon-coast:8: {"t12":6,"t15":6,"t36":6,"t42":6} | listed: Ironbury (+6 isn't enough: 1.7%); Stonemark (+6 isn't enough: 5.0%); Kingsthorpe (+6 isn't enough: 2.7%); Greygate (+6 isn't enough: 4.7%) | 174s

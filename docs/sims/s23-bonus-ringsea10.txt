@@ -1,0 +1,9 @@
+spots ringsea:10 s23p3: Rushrest 3.3%, Elderhome 8.3%, Mistwick 2.7%, Northridge 22.3%, Galestead 15.0%, Willowhollow 5.7%, Dunleigh 9.3%, Heathmouth 19.0%, Longmere 3.7%, Wolfton 10.7% | fair 10.0%, half 5.0%
+try ringsea:10 +2: Rushrest (+2) 5.0%, Elderhome 10.7%, Mistwick (+2) 2.3%, Northridge 24.0%, Galestead 16.0%, Willowhollow 7.0%, Dunleigh 9.0%, Heathmouth 14.3%, Longmere (+2) 3.0%, Wolfton 8.7%
+try ringsea:10 +4: Rushrest (+4) 3.0%, Elderhome 13.3%, Mistwick (+4) 1.7%, Northridge 21.7%, Galestead 14.7%, Willowhollow 5.3%, Dunleigh 11.7%, Heathmouth 13.3%, Longmere (+4) 3.7%, Wolfton 11.7%
+try ringsea:10 +6: Rushrest (+6) 2.7%, Elderhome 12.7%, Mistwick (+6) 2.7%, Northridge 23.7%, Galestead 14.0%, Willowhollow 6.0%, Dunleigh 11.0%, Heathmouth 14.7%, Longmere (+6) 5.0%, Wolfton 7.7%
+choose ringsea:10 Rushrest (t02): before 3.3%, +2 -> 5.0%
+choose ringsea:10 Mistwick (t24): before 2.7%, +6 -> 2.7%
+choose ringsea:10 Longmere (t93): before 3.7%, +6 -> 5.0%
+check ringsea:10: Rushrest (+2) 4.0%, Elderhome 12.3%, Mistwick (+6) 1.3%, Northridge 25.3%, Galestead 13.3%, Willowhollow 6.3%, Dunleigh 12.7%, Heathmouth 13.0%, Longmere (+6) 4.7%, Wolfton 7.0%
+recipe ringsea:10: {"t02":2,"t24":6,"t93":6} | listed: Mistwick (+6 isn't enough: 2.7%) | 245s

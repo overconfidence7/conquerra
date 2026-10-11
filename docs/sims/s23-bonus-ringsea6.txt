@@ -1,0 +1,7 @@
+spots ringsea:6 s23p3: Dawnmouth 16.0%, Rushfall 6.3%, Dunleigh 30.7%, Deephaven 12.3%, Heathmouth 20.7%, Longmere 14.0% | fair 16.7%, half 8.3%
+try ringsea:6 +2: Dawnmouth 17.0%, Rushfall (+2) 6.0%, Dunleigh 31.0%, Deephaven 8.7%, Heathmouth 23.7%, Longmere 13.7%
+try ringsea:6 +4: Dawnmouth 17.0%, Rushfall (+4) 7.3%, Dunleigh 28.0%, Deephaven 9.7%, Heathmouth 25.7%, Longmere 12.3%
+try ringsea:6 +6: Dawnmouth 17.3%, Rushfall (+6) 5.7%, Dunleigh 34.7%, Deephaven 7.0%, Heathmouth 22.7%, Longmere 12.7%
+choose ringsea:6 Rushfall (t35): before 6.3%, +6 -> 5.7%
+check ringsea:6: Dawnmouth 17.3%, Rushfall (+6) 5.7%, Dunleigh 34.7%, Deephaven 7.0%, Heathmouth 22.7%, Longmere 12.7%
+recipe ringsea:6: {"t35":6} | listed: Rushfall (+6 isn't enough: 5.7%) | 200s

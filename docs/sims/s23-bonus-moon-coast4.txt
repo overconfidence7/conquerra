@@ -1,0 +1,8 @@
+spots moon-coast:4 s23p3: Hallowstead 3.0%, Ironbury 4.3%, Thorncrest 51.7%, Briarby 41.0% | fair 25.0%, half 12.5%
+try moon-coast:4 +2: Hallowstead (+2) 2.0%, Ironbury (+2) 6.7%, Thorncrest 41.3%, Briarby 50.0%
+try moon-coast:4 +4: Hallowstead (+4) 5.0%, Ironbury (+4) 5.7%, Thorncrest 43.0%, Briarby 46.3%
+try moon-coast:4 +6: Hallowstead (+6) 5.7%, Ironbury (+6) 5.7%, Thorncrest 37.7%, Briarby 51.0%
+choose moon-coast:4 Hallowstead (t13): before 3.0%, +6 -> 5.7%
+choose moon-coast:4 Ironbury (t12): before 4.3%, +6 -> 5.7%
+check moon-coast:4: Hallowstead (+6) 5.7%, Ironbury (+6) 5.7%, Thorncrest 37.7%, Briarby 51.0%
+recipe moon-coast:4: {"t13":6,"t12":6} | listed: Hallowstead (+6 isn't enough: 5.7%); Ironbury (+6 isn't enough: 5.7%) | 112s

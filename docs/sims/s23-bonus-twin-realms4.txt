@@ -1,0 +1,2 @@
+spots twin-realms:4 s23p3: Northmark 22.0%, Dawnreach 12.7%, Greyleigh 28.0%, Embervale 37.3% | fair 25.0%, half 12.5%
+recipe twin-realms:4: none (no spot under half of fair) | 21s

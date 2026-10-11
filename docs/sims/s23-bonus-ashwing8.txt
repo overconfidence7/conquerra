@@ -1,0 +1,10 @@
+spots ashwing:8 s23p3: Glenthorpe 26.0%, Stagfield 29.0%, Saltbury 2.0%, Coldcrest 3.0%, Sorrowrest 3.3%, Harrowkeep 0.7%, Greyden 19.3%, Galewell 16.7% | fair 12.5%, half 6.3%
+try ashwing:8 +2: Glenthorpe 23.0%, Stagfield 25.7%, Saltbury (+2) 2.3%, Coldcrest (+2) 3.0%, Sorrowrest (+2) 4.0%, Harrowkeep (+2) 1.7%, Greyden 21.3%, Galewell 19.0%
+try ashwing:8 +4: Glenthorpe 22.3%, Stagfield 27.7%, Saltbury (+4) 1.3%, Coldcrest (+4) 3.3%, Sorrowrest (+4) 3.7%, Harrowkeep (+4) 1.3%, Greyden 20.0%, Galewell 20.0%
+try ashwing:8 +6: Glenthorpe 18.7%, Stagfield 23.0%, Saltbury (+6) 3.0%, Coldcrest (+6) 3.7%, Sorrowrest (+6) 4.7%, Harrowkeep (+6) 0.7%, Greyden 25.7%, Galewell 20.7%
+choose ashwing:8 Saltbury (t065): before 2.0%, +6 -> 3.0%
+choose ashwing:8 Coldcrest (t074): before 3.0%, +6 -> 3.7%
+choose ashwing:8 Sorrowrest (t091): before 3.3%, +6 -> 4.7%
+choose ashwing:8 Harrowkeep (t109): before 0.7%, +6 -> 0.7%
+check ashwing:8: Glenthorpe 18.7%, Stagfield 23.0%, Saltbury (+6) 3.0%, Coldcrest (+6) 3.7%, Sorrowrest (+6) 4.7%, Harrowkeep (+6) 0.7%, Greyden 25.7%, Galewell 20.7%
+recipe ashwing:8: {"t065":6,"t074":6,"t091":6,"t109":6} | listed: Saltbury (+6 isn't enough: 3.0%); Coldcrest (+6 isn't enough: 3.7%); Sorrowrest (+6 isn't enough: 4.7%); Harrowkeep (+6 isn't enough: 0.7%) | 330s

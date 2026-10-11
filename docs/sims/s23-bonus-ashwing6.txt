@@ -1,0 +1,8 @@
+spots ashwing:6 s23p3: Ambergate 7.3%, Dunkeep 23.7%, Oldrest 22.0%, Rushkeep 4.0%, Dawnhaven 19.3%, Northgarth 23.3% | fair 16.7%, half 8.3%
+try ashwing:6 +2: Ambergate (+2) 5.3%, Dunkeep 19.7%, Oldrest 30.7%, Rushkeep (+2) 4.7%, Dawnhaven 17.3%, Northgarth 22.3%
+try ashwing:6 +4: Ambergate (+4) 2.3%, Dunkeep 22.3%, Oldrest 32.3%, Rushkeep (+4) 3.0%, Dawnhaven 17.3%, Northgarth 22.7%
+try ashwing:6 +6: Ambergate (+6) 3.0%, Dunkeep 25.0%, Oldrest 28.7%, Rushkeep (+6) 3.7%, Dawnhaven 18.3%, Northgarth 21.3%
+choose ashwing:6 Ambergate (t000): before 7.3%, +6 -> 3.0%
+choose ashwing:6 Rushkeep (t092): before 4.0%, +6 -> 3.7%
+check ashwing:6: Ambergate (+6) 3.0%, Dunkeep 25.0%, Oldrest 28.7%, Rushkeep (+6) 3.7%, Dawnhaven 18.3%, Northgarth 21.3%
+recipe ashwing:6: {"t000":6,"t092":6} | listed: Ambergate (+6 isn't enough: 3.0%); Rushkeep (+6 isn't enough: 3.7%) | 300s

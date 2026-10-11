@@ -1,0 +1,9 @@
+spots sundered-crowns:8 s23p3: Moonden 0.7%, Rookreach 16.0%, Thornhurst 5.7%, Stonemere 17.3%, Redstone 0.7%, Ravenkeep 44.3%, Wolfholt 6.3%, Coldreach 8.7% | fair 12.5%, half 6.3%
+try sundered-crowns:8 +2: Moonden (+2) 1.3%, Rookreach 9.7%, Thornhurst (+2) 7.0%, Stonemere 24.0%, Redstone (+2) 1.0%, Ravenkeep 45.0%, Wolfholt 6.3%, Coldreach 5.3%
+try sundered-crowns:8 +4: Moonden (+4) 1.0%, Rookreach 11.3%, Thornhurst (+4) 3.7%, Stonemere 25.0%, Redstone (+4) 0.3%, Ravenkeep 41.7%, Wolfholt 6.7%, Coldreach 10.3%
+try sundered-crowns:8 +6: Moonden (+6) 0.3%, Rookreach 15.0%, Thornhurst (+6) 5.3%, Stonemere 26.3%, Redstone (+6) 1.0%, Ravenkeep 39.7%, Wolfholt 7.7%, Coldreach 4.3%
+choose sundered-crowns:8 Moonden (t009): before 0.7%, +6 -> 0.3%
+choose sundered-crowns:8 Thornhurst (t018): before 5.7%, +2 -> 7.0%
+choose sundered-crowns:8 Redstone (t084): before 0.7%, +6 -> 1.0%
+check sundered-crowns:8: Moonden (+6) 0.7%, Rookreach 10.7%, Thornhurst (+2) 3.7%, Stonemere 23.7%, Redstone (+6) 0.0%, Ravenkeep 47.0%, Wolfholt 7.3%, Coldreach 7.0%
+recipe sundered-crowns:8: {"t009":6,"t018":2,"t084":6} | listed: Moonden (+6 isn't enough: 0.3%); Redstone (+6 isn't enough: 1.0%) | 286s

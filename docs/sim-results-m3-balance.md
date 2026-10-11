@@ -337,7 +337,7 @@ Two cautions before building anything:
 - **Equal bots exaggerate it.** Whoever gets a small early edge snowballs, and every bot reacts the same way, so a 2% spot isn't 2% for a person (session 19's check: the same spots come out weak for every bot level, but the size of the gap is the bots').
 - **The capital spots themselves limit what a layout can do:** the map maker chose 14–32 spots per map, and the paper check (distance to the nearest rival within one border, gold within 2 steps within 30%) leaves few layouts on full tables.
 
-**The rule option (not built, Nate's call):** a start bonus for the weaker spots, set in the recipe per table size: for example **+4 troops or +10 gold** at a spot under half of fair (about a fifth of a capital's 12 starting troops). It would be measured the same way (each spot's win rate with and without), map by map. A second option is the map maker's own: more capital spots on the land the weak spots lack, which means rebuilding those maps.
+**The rule option (built in session 23 as extra troops: "The start bonus (session 23)" below):** a start bonus for the weaker spots, set in the recipe per table size: for example **+4 troops or +10 gold** at a spot under half of fair (about a fifth of a capital's 12 starting troops). It would be measured the same way (each spot's win rate with and without), map by map. A second option is the map maker's own: more capital spots on the land the weak spots lack, which means rebuilding those maps.
 
 ### The exposure check (map maker): does it agree with the sims?
 `exposureOf` (`packages/mapgen/src/checks.ts`) scores each capital spot by its **room** (land closer to it than to any rival, within 4 steps), its **front** (the borders that land must hold) and **rival capitals within 4 steps**: `exposure = (front + 3 × rivals) / room`, lower is safer. Against every layout the search measured (228 layouts, 24 map and table sizes):
@@ -345,3 +345,76 @@ Two cautions before building anything:
 - **The weakest spot was among the more exposed half in 192 of 228 layouts (84%).** It agrees best on Krakenmere, Rootholm, The Shattered Isles and The Twin Realms; least on The Crownlands, Wyrmland and Greatmarch 10.
 
 So it ranks the weak spots low most of the time, but not reliably enough to replace the sims: it's in the map maker (and the search uses it to order its tries), and **not yet a requirement** a map must pass. On Wyrmland and The Sundered Crowns 6 it always puts the weakest spot among the more exposed half but orders the rest poorly (correlation 0.19–0.25): what separates the middle spots there lies further out than 4 steps.
+
+## The start bonus (session 23)
+*Nate, Oct 9 and 10: a capital spot that wins under half its fair share among equal bots starts with extra troops at its capital. Script: `apps/sim/scripts/s23-bonus.ts`; raw runs `docs/sims/s23-bonus-<map><players>.txt`; the bonuses go into the map maker's recipes with `s23-apply-bonus.ts`; this table from `s23-bonus-table.ts`.*
+
+**How it was sized:** tables of Marshals after Part 2's changes (fog and diplomacy on), 300 games, the same games for every option (seed s23p3). First each spot's win rate with no bonus; every spot under half of fair is weak. Then all of a table's weak spots get +2, then +4, then +6 at once, and each keeps the smallest that brings it to at least half of fair without taking it above fair; if +6 doesn't, it keeps +6 and is listed. Then a last run with the chosen bonuses together ("with the bonus" below, which is why a few +2 and +4 spots that made it in their own try fall short there).
+
+**What it found: start troops barely move a weak spot.** Across 24 tables there are **59 weak spots** (only Greatmarch 10 and The Twin Realms 4 have none). On average they win **3.3% before and 3.6% with the bonus**; the 49 that got +6 went from **2.8% to 3.0%**. **Five reach half of fair** (Embervale 4's Eldermere with +2 is the clearest). Six troops are half a capital's starting army, but a spot that loses does so because of where it is (crowded, exposed, short of good land), and the extra troops are spent in the first few turns either way. With 300 games a spot's rate carries about 2 points of noise, and one changed spot reshuffles every game after turn 1, so most of the before and after differences below are within the noise.
+
+**Nothing went above fair**, and no spot gets less than today, so the bonuses do no harm; they're in as the rule says. **Equal bots exaggerate a weak spot** (session 19: the same spots come out weak for every bot level, but the size of the gap is the bots'): a person at a 3% spot isn't at 3%. Nate's play will say whether a person there still feels behind, and whether a different lever is wanted (gold, a fort at the capital, a Spoils card, or new capital spots from the map maker).
+
+| Map and table | Fair | Weak spot | Before | Bonus | With the bonus | Reaches half of fair? |
+|---|---|---|---|---|---|---|
+| Embervale 4 | 25.0% | Eldermere | 11.7% | +2 | 13.0% | yes |
+| Embervale 6 | 16.7% | Yewmarch | 3.7% | +6 | 2.3% | **no** (listed) |
+|  |  | Brightdale | 2.3% | +6 | 3.0% | **no** (listed) |
+|  |  | Sunshire | 4.7% | +6 | 6.0% | **no** (listed) |
+| Wyrmland 6 | 16.7% | Wildfield | 5.0% | +6 | 6.7% | **no** (listed) |
+|  |  | Whitemarch | 4.0% | +6 | 4.7% | **no** (listed) |
+| Wyrmland 8 | 12.5% | Willowshire | 5.7% | +6 | 4.3% | **no** (listed) |
+|  |  | Elderton | 4.0% | +6 | 4.3% | **no** (listed) |
+|  |  | Coldton | 5.0% | +4 | 8.0% | yes |
+| Rootholm 8 | 12.5% | Glenleigh | 1.0% | +6 | 7.0% | yes |
+|  |  | Larkfield | 1.3% | +6 | 0.3% | **no** (listed) |
+|  |  | Fairfall | 0.7% | +6 | 2.7% | **no** (listed) |
+| Rootholm 10 | 10.0% | Hallowmarch | 3.7% | +6 | 1.0% | **no** (listed) |
+|  |  | Nettlehold | 2.0% | +6 | 2.3% | **no** (listed) |
+|  |  | Silverfield | 0.7% | +6 | 0.0% | **no** (listed) |
+| The Shattered Isles 4 | 25.0% | Thornmere | 5.3% | +6 | 2.0% | **no** (listed) |
+|  |  | Fairthorpe | 7.3% | +6 | 10.7% | **no** (listed) |
+| The Shattered Isles 6 | 16.7% | Thornmere | 1.0% | +6 | 1.3% | **no** (listed) |
+|  |  | Pinehold | 7.7% | +2 | 7.3% | **no** (listed) |
+|  |  | Rosemarch | 1.3% | +6 | 1.0% | **no** (listed) |
+| The Moon Coast 4 | 25.0% | Hallowstead | 3.0% | +6 | 5.7% | **no** (listed) |
+|  |  | Ironbury | 4.3% | +6 | 5.7% | **no** (listed) |
+| The Moon Coast 8 | 12.5% | Ironbury | 3.7% | +6 | 1.7% | **no** (listed) |
+|  |  | Stonemark | 3.3% | +6 | 5.0% | **no** (listed) |
+|  |  | Kingsthorpe | 3.0% | +6 | 2.7% | **no** (listed) |
+|  |  | Greygate | 2.0% | +6 | 4.7% | **no** (listed) |
+| The Crownlands 6 | 16.7% | Kingshaven | 0.7% | +6 | 1.3% | **no** (listed) |
+|  |  | Northwatch | 8.0% | +2 | 13.7% | yes |
+|  |  | Hawkcrest | 6.7% | +6 | 6.3% | **no** (listed) |
+| The Crownlands 10 | 10.0% | Elderstead | 3.3% | +6 | 3.7% | **no** (listed) |
+|  |  | Willowden | 4.3% | +4 | 4.0% | **no** (listed) |
+|  |  | Heaththorpe | 2.3% | +6 | 1.0% | **no** (listed) |
+|  |  | Ashton | 2.3% | +6 | 1.7% | **no** (listed) |
+| The Sundered Crowns 6 | 16.7% | Stagrest | 0.7% | +6 | 0.3% | **no** (listed) |
+|  |  | Oldwood | 4.3% | +6 | 4.3% | **no** (listed) |
+| The Sundered Crowns 8 | 12.5% | Moonden | 0.7% | +6 | 0.7% | **no** (listed) |
+|  |  | Thornhurst | 5.7% | +2 | 3.7% | **no** (listed) |
+|  |  | Redstone | 0.7% | +6 | 0.0% | **no** (listed) |
+| Krakenmere 8 | 12.5% | Moonford | 0.7% | +6 | 1.7% | **no** (listed) |
+|  |  | Rookstone | 0.3% | +6 | 0.0% | **no** (listed) |
+| Krakenmere 10 | 10.0% | Dundale | 1.0% | +6 | 1.3% | **no** (listed) |
+|  |  | Moonford | 0.0% | +6 | 0.3% | **no** (listed) |
+|  |  | Rookstone | 0.0% | +6 | 0.0% | **no** (listed) |
+|  |  | Oldfell | 4.7% | +2 | 6.7% | yes |
+|  |  | Stagwood | 0.3% | +6 | 0.7% | **no** (listed) |
+| Ashwing 6 | 16.7% | Ambergate | 7.3% | +6 | 3.0% | **no** (listed) |
+|  |  | Rushkeep | 4.0% | +6 | 3.7% | **no** (listed) |
+| Ashwing 8 | 12.5% | Saltbury | 2.0% | +6 | 3.0% | **no** (listed) |
+|  |  | Coldcrest | 3.0% | +6 | 3.7% | **no** (listed) |
+|  |  | Sorrowrest | 3.3% | +6 | 4.7% | **no** (listed) |
+|  |  | Harrowkeep | 0.7% | +6 | 0.7% | **no** (listed) |
+| The Ringsea 6 | 16.7% | Rushfall | 6.3% | +6 | 5.7% | **no** (listed) |
+| The Ringsea 10 | 10.0% | Rushrest | 3.3% | +2 | 4.0% | **no** (listed) |
+|  |  | Mistwick | 2.7% | +6 | 1.3% | **no** (listed) |
+|  |  | Longmere | 3.7% | +6 | 4.7% | **no** (listed) |
+| Greatmarch 8 | 12.5% | Saltshire | 2.7% | +6 | 3.0% | **no** (listed) |
+|  |  | Fenstead | 5.3% | +6 | 5.3% | **no** (listed) |
+| Greatmarch 10 | 10.0% | none under half of fair | | | | |
+| The Twin Realms 4 | 25.0% | none under half of fair | | | | |
+| The Twin Realms 8 | 12.5% | Westerfall | 3.0% | +2 | 5.0% | **no** (listed) |
+|  |  | Longwell | 5.7% | +4 | 1.7% | **no** (listed) |

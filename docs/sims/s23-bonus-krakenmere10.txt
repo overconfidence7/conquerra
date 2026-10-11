@@ -1,0 +1,11 @@
+spots krakenmere:10 s23p3: Dundale 1.0%, Moonford 0.0%, Willowfall 6.3%, Rookstone 0.0%, Oldfell 4.7%, Stagwood 0.3%, Glenby 5.3%, Rookton 50.7%, Coldwick 5.0%, Emberfall 26.7% | fair 10.0%, half 5.0%
+try krakenmere:10 +2: Dundale (+2) 1.0%, Moonford (+2) 0.0%, Willowfall 5.0%, Rookstone (+2) 0.0%, Oldfell (+2) 8.0%, Stagwood (+2) 0.0%, Glenby 7.7%, Rookton 49.3%, Coldwick 6.0%, Emberfall 22.7%
+try krakenmere:10 +4: Dundale (+4) 2.3%, Moonford (+4) 0.0%, Willowfall 5.3%, Rookstone (+4) 0.3%, Oldfell (+4) 9.3%, Stagwood (+4) 0.0%, Glenby 4.3%, Rookton 47.7%, Coldwick 4.7%, Emberfall 25.7%
+try krakenmere:10 +6: Dundale (+6) 2.3%, Moonford (+6) 0.7%, Willowfall 6.0%, Rookstone (+6) 0.3%, Oldfell (+6) 12.3%, Stagwood (+6) 1.7%, Glenby 1.7%, Rookton 46.7%, Coldwick 5.3%, Emberfall 23.0%
+choose krakenmere:10 Dundale (t004): before 1.0%, +6 -> 2.3%
+choose krakenmere:10 Moonford (t013): before 0.0%, +6 -> 0.7%
+choose krakenmere:10 Rookstone (t104): before 0.0%, +6 -> 0.3%
+choose krakenmere:10 Oldfell (t120): before 4.7%, +2 -> 8.0%
+choose krakenmere:10 Stagwood (t133): before 0.3%, +6 -> 1.7%
+check krakenmere:10: Dundale (+6) 1.3%, Moonford (+6) 0.3%, Willowfall 6.3%, Rookstone (+6) 0.0%, Oldfell (+2) 6.7%, Stagwood (+6) 0.7%, Glenby 5.0%, Rookton 52.7%, Coldwick 3.0%, Emberfall 24.0%
+recipe krakenmere:10: {"t004":6,"t013":6,"t104":6,"t120":2,"t133":6} | listed: Dundale (+6 isn't enough: 2.3%); Moonford (+6 isn't enough: 0.7%); Rookstone (+6 isn't enough: 0.3%); Stagwood (+6 isn't enough: 1.7%) | 433s

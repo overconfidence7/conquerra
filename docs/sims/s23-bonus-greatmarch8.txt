@@ -1,0 +1,8 @@
+spots greatmarch:8 s23p3: Stoneden 23.0%, Rookthorpe 12.0%, Northcrest 24.0%, Saltshire 2.7%, Kingswick 9.7%, Goldcrest 9.0%, Fenstead 5.3%, Moonrest 14.3% | fair 12.5%, half 6.3%
+try greatmarch:8 +2: Stoneden 20.0%, Rookthorpe 16.0%, Northcrest 21.3%, Saltshire (+2) 2.7%, Kingswick 11.7%, Goldcrest 8.7%, Fenstead (+2) 3.3%, Moonrest 16.3%
+try greatmarch:8 +4: Stoneden 21.7%, Rookthorpe 11.3%, Northcrest 19.7%, Saltshire (+4) 3.0%, Kingswick 11.7%, Goldcrest 13.0%, Fenstead (+4) 4.3%, Moonrest 15.3%
+try greatmarch:8 +6: Stoneden 23.3%, Rookthorpe 12.7%, Northcrest 18.0%, Saltshire (+6) 3.0%, Kingswick 10.3%, Goldcrest 13.0%, Fenstead (+6) 5.3%, Moonrest 14.3%
+choose greatmarch:8 Saltshire (t52): before 2.7%, +6 -> 3.0%
+choose greatmarch:8 Fenstead (t70): before 5.3%, +6 -> 5.3%
+check greatmarch:8: Stoneden 23.3%, Rookthorpe 12.7%, Northcrest 18.0%, Saltshire (+6) 3.0%, Kingswick 10.3%, Goldcrest 13.0%, Fenstead (+6) 5.3%, Moonrest 14.3%
+recipe greatmarch:8: {"t52":6,"t70":6} | listed: Saltshire (+6 isn't enough: 3.0%); Fenstead (+6 isn't enough: 5.3%) | 194s
