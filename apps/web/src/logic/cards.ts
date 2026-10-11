@@ -76,6 +76,10 @@ export const FATE_LABEL: Record<string, string> = {
   uprising: "Uprising",
 };
 export const fateName = (card: string) => FATE_NAME[card] ?? "A twist of fate";
+/** Fate names that are plural ("Squalls at sea strike Hollydale", session 24). */
+export const FATE_PLURAL: ReadonlySet<string> = new Set(["squall", "veterans"]);
+/** "strikes" or "strike", agreeing with the card's name. */
+export const fateStrikes = (card: string) => (FATE_PLURAL.has(card) ? "strike" : "strikes");
 
 const CROSSING: Record<BorderType, string> = { normal: "border", river: "river crossing", pass: "pass", sea: "sea lane" };
 

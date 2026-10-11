@@ -1,6 +1,6 @@
 import type { GameContext, ReplayEvent, SeenTerritory, VisionEvent } from "@conquerra/engine";
 import { BUILDING_NAME, startBonusLine, type LogLine, type Namer } from "./text";
-import { narrate } from "./narrate";
+import { mergePurchases, narrate } from "./narrate";
 
 /**
  * The turn report, grouped by what matters to you first:
@@ -52,7 +52,7 @@ export function groupReport(ctx: GameContext, events: readonly ReplayEvent[], n:
   const bonus = n.view && events.some((e) => e.type === "turnStart" && e.turn === 1) ? startBonusLine(n.view, n.place) : null;
   const fog = new Map<string, { battles: number; leaders: number; stirs: number }>();
   out.fog.push(...revealedLines(ctx, events.filter((e): e is VisionEvent => e.type === "vision"), n));
-  for (const e of events) {
+  for (const e of mergePurchases(events)) {
     if (e.type === "turnStart" || e.type === "vision") continue;
     if (e.type === "surface" && !e.yours) {
       const f = fog.get(e.province) ?? { battles: 0, leaders: 0, stirs: 0 };

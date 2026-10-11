@@ -1,6 +1,6 @@
 import type { GameContext, PlayerView, ReplayEvent } from "@conquerra/engine";
 import { houseOf } from "../map/houses";
-import { fateName, MARK_NAME, SET_NAME } from "../logic/cards";
+import { fateName, fateStrikes, MARK_NAME, SET_NAME } from "../logic/cards";
 
 export interface Toast {
   text: string;
@@ -29,7 +29,7 @@ export function toastFor(ctx: GameContext, view: Pick<PlayerView, "players" | "m
     }
     case "fate":
       return {
-        text: `${me(e.holder) ? "Fate on your land: " : ""}${e.shrugged ? `${fateName(e.card)} is seen off at ${place(e.at)}` : e.tone === "good" ? `${fateName(e.card)} at ${place(e.at)}` : `${fateName(e.card)} strikes ${place(e.at)}`}`,
+        text: `${me(e.holder) ? "Fate on your land: " : ""}${e.shrugged ? `${fateName(e.card)} is seen off at ${place(e.at)}` : e.tone === "good" ? `${fateName(e.card)} at ${place(e.at)}` : `${fateName(e.card)} ${fateStrikes(e.card)} ${place(e.at)}`}`,
         tone: !me(e.holder) || e.shrugged ? "info" : e.tone === "good" ? "good" : "bad",
         house: house(e.holder)?.color ?? null,
         ...(me(e.holder) ? { banner: true } : {}),

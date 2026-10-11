@@ -11,6 +11,8 @@ import { inProcessHost } from "./inProcessHost";
 import type { Order } from "@conquerra/engine";
 import { chronicleOf } from "../src/logic/chronicleKeep";
 import { narrateTurn } from "../src/logic/narrate";
+import { chronicleLines } from "../src/logic/chronicle";
+import { fateStrikes } from "../src/logic/cards";
 import { budgetLabel, instructionName, namer } from "../src/logic/text";
 
 const ctx: GameContext = { map: maps.embervale!, rules: defaultRules };
@@ -57,6 +59,34 @@ describe("leaders in the report (session 18)", () => {
     ]);
     // The Chronicle keeps what your leaders bought, and not your own purchases.
     expect(chronicleOf({ turn: 3, events: [...ev, { type: "built", step: 6, player: "you", orderId: "x", territory: t(4), building: "market", cost: 6, doneAtEndOfTurn: 3 }] }).events.filter((e) => e.type === "built")).toHaveLength(2);
+  });
+
+  it("several levels or recruits at one place in one turn read as one line (session 24)", () => {
+    const view = game();
+    const steward = { kind: "steward", of: "you" } as const;
+    const lvl = (step: number, culture: number, cost: number): ReplayEvent => ({ type: "invested", step, player: "you", orderId: `c${step}`, territory: t(4), culture, cost, by: steward });
+    const rec = (step: number, count: number, player = "you"): ReplayEvent => ({ type: "recruited", step, player, orderId: `r${step}`, territory: t(player === "you" ? 0 : 6), count, cost: count * 2 });
+    const ev: ReplayEvent[] = [lvl(1, 2, 4), lvl(2, 3, 6), rec(3, 2), lvl(4, 4, 8), lvl(5, 5, 10), rec(6, 4), lvl(7, 2, 4)].map((e, i) => (i === 6 ? { ...e, territory: t(3) } as ReplayEvent : e));
+    const lines = narrateTurn(ctx, ev, namer(ctx, view)).map((l) => l.text);
+    expect(lines).toEqual([
+      `Your Steward, Odo, running the realm, raised culture at ${name(4)} from 1 to 5 (28 gold).`,
+      `You recruited 6 at ${name(0)}.`,
+      `Your Steward, Odo, running the realm, raised culture at ${name(3)} to 2 (4 gold).`,
+    ]);
+    // The Chronicle reads the same way.
+    const chron = chronicleLines(ctx, [{ turn: 55, events: ev } as never], namer(ctx, view));
+    expect(chron[0]!.lines.filter((l) => l.text.includes("raised culture")).map((l) => l.text)).toEqual([
+      `Your Steward, Odo, running the realm, raised culture at ${name(4)} from 1 to 5 (28 gold).`,
+      `Your Steward, Odo, running the realm, raised culture at ${name(3)} to 2 (4 gold).`,
+    ]);
+  });
+
+  it("the handout and a plural Fate card read right (session 24)", () => {
+    const view = game();
+    const lines = narrateTurn(ctx, [{ type: "purseTaken", step: 1, player: "you", leader: { kind: "steward", of: "you" }, gold: 908, handout: true } as ReplayEvent], namer(ctx, view)).map((l) => l.text);
+    expect(lines[0]).toBe("Odo handed 908 gold back from the purse as the turn ended: nothing more worth building.");
+    expect(fateStrikes("squall")).toBe("strike");
+    expect(fateStrikes("fire")).toBe("strikes");
   });
 
   it("purses paying upkeep, gold taken back, and a captured Steward, in plain words", () => {

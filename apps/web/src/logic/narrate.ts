@@ -55,6 +55,44 @@ function leaderPhrase(view: PlayerView | undefined, n: Namer, r: LeaderRef | nul
 }
 const generalPhrase = (view: PlayerView | undefined, n: Namer, general: string | undefined, at?: string) => (general ? leaderPhrase(view, n, { kind: "leader", of: general }, at) : null);
 
+/**
+ * Several purchases of one kind at one place in one turn read as one line (session 24): "Your Steward, Odo, raised
+ * culture at Larkgarth from 1 to 5 (28 gold)", "recruited 6 at Ashfell (12 gold)", not a line per level or order.
+ * The merged event keeps the first one's place in the turn; the level it started from is kept beside it.
+ */
+const CULTURE_FROM = new WeakMap<object, number>();
+type Purchase = Extract<ReplayEvent, { type: "recruited" | "invested" }>;
+export function mergePurchases(events: readonly ReplayEvent[]): ReplayEvent[] {
+  const key = (e: Purchase) => `${e.type}|${e.player}|${e.territory}|${e.by ? `${e.by.kind}:${e.by.of}` : ""}`;
+  const groups = new Map<string, Purchase[]>();
+  for (const e of events) if (e.type === "recruited" || e.type === "invested") groups.set(key(e), [...(groups.get(key(e)) ?? []), e]);
+  const out: ReplayEvent[] = [];
+  for (const e of events) {
+    if (e.type !== "recruited" && e.type !== "invested") {
+      out.push(e);
+      continue;
+    }
+    const g = groups.get(key(e))!;
+    if (g.length === 1) out.push(e);
+    else if (g[0] === e) {
+      const cost = g.reduce((a, x) => a + x.cost, 0);
+      if (e.type === "recruited") out.push({ ...e, count: (g as (typeof e)[]).reduce((a, x) => a + x.count, 0), cost });
+      else {
+        const levels = (g as (typeof e)[]).map((x) => x.culture);
+        const merged = { ...e, culture: Math.max(...levels), cost };
+        CULTURE_FROM.set(merged, Math.min(...levels) - 1);
+        out.push(merged);
+      }
+    }
+  }
+  return out;
+}
+/** "to 3", or "from 1 to 5" for several levels at once. */
+const cultureSteps = (e: Extract<ReplayEvent, { type: "invested" }>) => {
+  const from = CULTURE_FROM.get(e);
+  return from !== undefined && from < e.culture - 1 ? `from ${from} to ${e.culture}` : `to ${e.culture}`;
+};
+
 /** A purchase a leader of yours made from its purse: "Your Steward, Odo, running the realm, finished a market at Pinemark (6 gold)." */
 function boughtBy(ctx: GameContext, e: Extract<ReplayEvent, { type: "recruited" | "hired" | "built" | "invested" }>, n: Namer): LogLine | null {
   if (!e.by || !n.isMe(e.player)) return null;
@@ -65,7 +103,7 @@ function boughtBy(ctx: GameContext, e: Extract<ReplayEvent, { type: "recruited" 
       : e.type === "hired"
         ? `hired ${SPECIALIST_NAME[e.specialist].toLowerCase()} at ${n.place(e.territory)}`
         : e.type === "invested"
-          ? `raised culture at ${n.place(e.territory)} to ${e.culture}`
+          ? `raised culture at ${n.place(e.territory)} ${cultureSteps(e)}`
           : `${e.doneAtEndOfTurn === null || ctx.rules.buildings[e.building].buildTurns <= 1 ? "finished" : "began"} a ${BUILDING_NAME[e.building].toLowerCase()} at ${n.place(e.territory)}`;
   return { text: `${who} ${did} (${e.cost} gold).`, tone: "info" };
 }
@@ -106,7 +144,7 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
     case "completed":
       return { text: `${isMe(e.player) ? "Your" : `${who(e.player)}'s`} ${BUILDING_NAME[e.building].toLowerCase()} at ${place(e.territory)} is finished.`, tone: "quiet" };
     case "invested":
-      return boughtBy(ctx, e, n) ?? { text: `${who(e.player)} raised culture at ${place(e.territory)} to ${e.culture}.`, tone: "quiet" };
+      return boughtBy(ctx, e, n) ?? { text: `${who(e.player)} raised culture at ${place(e.territory)} ${cultureSteps(e)}.`, tone: "quiet" };
     // Walls (session 20b): "Pinemark is walled: its spare troops now help defend Ashfell and Galeholt."
     case "walled": {
       const list = e.territories.map(place);
@@ -178,12 +216,12 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       return { text: `${leaderShortName(n, { kind: "steward", of: e.steward })}, ${who(e.steward)}'s Steward, joins you too, reporting to ${leaderShortName(n, { kind: "steward", of: e.player })}. Give it a command of its own in the Leaders panel.`, tone: "good" };
     case "generalLost":
       return isMe(e.player)
-        ? { text: `${leaderShortName(n, { kind: "leader", of: e.general })}, your captured Leader, is gone for good: ${place(e.territory)} ${e.by ? `fell to ${who(e.by)}` : "was lost"}.${e.gold ? ` The ${e.gold} gold in its purse came home.` : ""}`, tone: "bad" }
+        ? { text: `${leaderShortName(n, { kind: "leader", of: e.general })}, your captured Leader, is gone for good: ${place(e.territory)} ${e.by ? `fell to ${who(e.by)}` : "was lost"}.${e.gold ? ` The ${e.gold} gold in the purse came home.` : ""}`, tone: "bad" }
         : { text: `${who(e.player)}'s captured Leader (once ${who(e.general)}'s) is gone for good, at ${place(e.territory)}.`, tone: isMe(e.by) ? "good" : "quiet" };
     case "generalReleased":
-      return { text: `You let ${who(e.general)}'s ${e.steward ? "Steward" : "Leader"} go (you may keep ${(n.ctx?.rules.leaders.maxOfKind ?? 4)} of each kind, your own included).${e.gold ? ` The ${e.gold} gold in its purse came home.` : ""}`, tone: "info" };
+      return { text: `You let ${who(e.general)}'s ${e.steward ? "Steward" : "Leader"} go (you may keep ${(n.ctx?.rules.leaders.maxOfKind ?? 4)} of each kind, your own included).${e.gold ? ` The ${e.gold} gold in the purse came home.` : ""}`, tone: "info" };
     case "purseTaken":
-      if (e.handout) return { text: `${leaderShortName(n, e.leader)} handed ${e.gold} gold back from its purse as the turn ended: nothing more worth building.`, tone: "info" };
+      if (e.handout) return { text: `${leaderShortName(n, e.leader)} handed ${e.gold} gold back from the purse as the turn ended: nothing more worth building.`, tone: "info" };
       return { text: `You took ${e.gold} gold back from ${leaderShortName(n, e.leader)}'s purse (${n.isMe(e.leader.of) ? "your" : `${who(e.leader.of)}'s old`} ${KIND_NAME[e.leader.kind]}).`, tone: "info" };
     case "purses": {
       // (Upkeep the purses paid is on the income line.)
@@ -279,7 +317,7 @@ export function narrateTurn(ctx: GameContext, events: readonly ReplayEvent[], n:
   // The first turn's report: your capital's head start, if it had one (session 23).
   const bonus = n.view && events.some((e) => e.type === "turnStart" && e.turn === 1) ? startBonusLine(n.view, n.place) : null;
   if (bonus) lines.push({ text: bonus, tone: "info" });
-  for (const e of events) {
+  for (const e of mergePurchases(events)) {
     if (e.type === "surface" && e.what !== "fate") {
       if (e.what === "battle") fog.set(e.province, (fog.get(e.province) ?? 0) + 1);
       else fallen++;

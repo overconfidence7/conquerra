@@ -2,7 +2,7 @@ import type { GameContext, ReplayEvent, TerritoryId } from "@conquerra/engine";
 export { chronicleOf, keepForChronicle } from "./chronicleKeep";
 import type { TurnReport } from "../host/protocol";
 import { keepForChronicle } from "./chronicleKeep";
-import { narrate } from "./narrate";
+import { mergePurchases, narrate } from "./narrate";
 import { voiceText } from "./text";
 import { onYourLand } from "./report";
 import type { Namer, Tone } from "./text";
@@ -111,7 +111,7 @@ export function chronicleLines(ctx: GameContext, reports: readonly TurnReport[],
     const lines: ChronicleLine[] = [];
     // Fighting in the fog: one line per province and kind, with how many ("Battles in Mistreach ×3 (in the fog)").
     const fogged = new Map<string, { line: ChronicleLine; n: number; what: string; province: string }>();
-    for (const e of r.events) {
+    for (const e of mergePurchases(r.events)) {
       if (!keepForChronicle(e)) continue;
       let text: string | null = null;
       let tone: Tone = "quiet";
