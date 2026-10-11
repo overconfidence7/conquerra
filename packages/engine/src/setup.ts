@@ -19,6 +19,11 @@ export interface NewGameOptions {
    */
   players: { id: string; name: string; house?: number; leaderName?: string; stewardName?: string; leaderPersonality?: string | null; stewardPersonality?: string | null; delegate?: boolean }[];
   settings?: Partial<GameSettings>;
+  /**
+   * The start bonus (session 23): a harder capital spot starts with the extra troops the map's layout gives it. New
+   * games say so; a setup saved before it (a save's history) doesn't, so an old game replays exactly as it was played.
+   */
+  startBonus?: boolean;
 }
 
 /**
@@ -86,6 +91,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   const rng = new Rng(seedRng(opts.seed));
   const seats = rng.shuffle(opts.players);
   const capitals = pickCapitals(map, n, rng);
+  const bonusAt = (opts.startBonus && map.capitalLayouts?.find((l) => l.players === n)?.bonus) || {};
 
   const territories: Record<string, TerritoryState> = {};
   for (const t of map.territories)
@@ -96,7 +102,8 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   const stewardShare = startingStewardShare(rules, ctx.map.territories.length, opts.players.length);
   const players: PlayerState[] = seats.map((p, i) => {
     const cap = capitals[i]!;
-    territories[cap] = { owner: p.id, troops: rules.setup.startTroops, specialists: [], building: null, construction: null, culture: 0 };
+    const bonus = bonusAt[cap] ?? 0;
+    territories[cap] = { owner: p.id, troops: rules.setup.startTroops + bonus, specialists: [], building: null, construction: null, culture: 0 };
     return {
       id: p.id,
       name: p.name,
@@ -104,6 +111,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
       eliminatedTurn: null,
       eliminatedBy: null,
       capital: cap,
+      ...(bonus ? { startBonus: bonus } : {}),
       leader: { alive: true, territory: cap },
       cooldowns: { seize: 0, lie: 0 },
       captured: [],
@@ -119,7 +127,7 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   players.sort((a, b) => opts.players.findIndex((p) => p.id === a.id) - opts.players.findIndex((p) => p.id === b.id));
 
   const state: GameState = {
-    version: 12,
+    version: 13,
     gameId: opts.gameId,
     mapId: map.id,
     turn: 1,

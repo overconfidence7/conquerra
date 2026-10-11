@@ -7,6 +7,7 @@ import { handBackKeep } from "../src/marshal/leaders";
 /** Session 23 (Nate, Oct 10): a Steward with nothing worth building hands back what's over two turns of its budget. */
 const steward = (budget: LeaderRecord["budget"]): LeaderRecord => ({ kind: "steward", of: "p1", name: "Odo", personality: null, command: { kind: "realm" }, budget, purse: 0 });
 const never = () => 0;
+/** (The look-ahead's third argument: it may stop once it has found this much to spend.) */
 const income = (gross: number, upkeep: number): ReplayEvent[] => [{ type: "income", step: 0, player: "p1", income: gross, upkeep, goldAfter: 0, deserted: 0, deserters: [] }];
 
 describe("the Steward's handout: when, and how much", () => {

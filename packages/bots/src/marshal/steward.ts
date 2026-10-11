@@ -41,6 +41,17 @@ interface Wish {
   stack?: boolean;
 }
 
+/** How long a game on a map this size is likely to run (turns), from `lengths` ([territories, turns]; in between, the straight line). */
+export function likelyLength(lengths: readonly (readonly [number, number])[], territories: number): number {
+  const xs = [...lengths].sort((a, b) => a[0] - b[0]);
+  if (territories <= xs[0]![0]) return xs[0]![1];
+  for (let i = 1; i < xs.length; i++) {
+    const [a, ta] = xs[i - 1]!, [c, tc] = xs[i]!;
+    if (territories <= c) return ta + ((tc - ta) * (territories - a)) / (c - a);
+  }
+  return xs[xs.length - 1]![1];
+}
+
 export function planSteward(
   b: Board,
   cfg: LeaderPlanning["steward"],
@@ -58,9 +69,9 @@ export function planSteward(
   /**
    * Session 20d: Run the realm with a plan (your Steward; the Marshal's realm share keeps session 20b's way), and where
    * your Leader stands (it walls that province too: the two leaders work together). `out.left`: what its purse holds
-   * once this turn's orders are paid for (session 23).
+   * once this turn's orders are paid for (session 23). `lesson: false`: not the Merchant's lesson (the Turtle Marshal).
    */
-  extra: { planned?: boolean; leaderAt?: TerritoryId | null; out?: { left: number } } = {},
+  extra: { planned?: boolean; leaderAt?: TerritoryId | null; out?: { left: number }; lesson?: boolean } = {},
 ): Order[] {
   const { rules, idx, mine, seen, owned, rivalAt, troopsAt, biggestEnemyNear, holdNeed, chokeHolder, capital, capThreatened, look0, view } = b;
   const building = (t: TerritoryId) => !!seen(t)?.building || !!seen(t)?.construction || taken.has(t);
@@ -124,10 +135,15 @@ export function planSteward(
     return ((rules.culture.incomePerLevel + bonus) / cost) * safe;
   };
   const marketsPay = view.turn <= maxTurns - cfg.marketsStopBefore;
+  // The Merchant's lesson (session 23): a market pays when it pays for itself before the game is likely to end.
+  const L = extra.lesson === false ? undefined : cfg.lesson;
+  const turnsLeft = L ? likelyLength(L.lengths, idx.ids.length) - view.turn : 0;
+  const marketPays = (t: TerritoryId) =>
+    L ? rules.buildings.market.buildTurns + market / (rules.buildings.market.income * (quiet(t) ? 1 : cfg.exposedWorth)) + L.spare <= turnsLeft : marketsPay;
   const economy = (land: readonly TerritoryId[]): Wish[] => {
     const out: { w: Wish; pay: number }[] = [];
     for (const t of land) {
-      if (marketsPay && !building(t) && quiet(t) && !keepForFort(t) && !fortPlot(t)) out.push({ w: { order: { kind: "build", territory: t, building: "market" }, territory: t, cost: market, urgent: false }, pay: payback(t, "market") });
+      if (marketPays(t) && !building(t) && quiet(t) && !keepForFort(t) && !fortPlot(t)) out.push({ w: { order: { kind: "build", territory: t, building: "market" }, territory: t, cost: market, urgent: false }, pay: payback(t, "market") });
       const cost = investCost(rules, seen(t)!.culture);
       if (cost !== null) out.push({ w: { order: { kind: "invest", territory: t }, territory: t, cost, urgent: false }, pay: payback(t, "culture") });
     }
@@ -218,6 +234,17 @@ export function planSteward(
     return spot ? [{ order: { kind: "build", territory: spot, building: "barracks" }, territory: spot, cost: barracks, urgent: !sites.length }] : [];
   };
 
+  /** The last piece of a wall (session 23): what's left to pay is one fort, or one level of culture. */
+  const oneStep = (t: TerritoryId) => {
+    const left = wallLeft(t);
+    if (!W || left === null || left <= 0) return false;
+    const v = seen(t)!;
+    const next = W.needsFort && v.building !== "fort" && v.construction?.building !== "fort" ? fort : (investCost(rules, v.culture) ?? Infinity);
+    return left <= next;
+  };
+  /** The Merchant's lesson for a Neutral Steward on Run the realm (session 23): see `cfg.lesson`. */
+  const learn = !!L && command.kind === "realm" && !turtle && !merchant && extra.lesson !== false;
+
   // ---------- Each command's list, best first ----------
   let wishes: Wish[] = [];
   const garrisons: { t: TerritoryId; short: number }[] = [];
@@ -245,6 +272,11 @@ export function planSteward(
       break;
     case "realm": {
       const urgent = forts(mine).filter((w) => w.territory === capital || chokeHolder(w.territory) || w.urgent || asked.has(w.territory));
+      // The Merchant's lesson (session 23): only a fort a rival army next door could make the difference for next turn
+      // (or one asked for) is pressing; the capital's and the choke points' other forts wait behind markets that pay.
+      const pressing = learn ? urgent.filter((w) => w.urgent || asked.has(w.territory)) : urgent;
+      const lesser = learn ? urgent.filter((w) => !pressing.includes(w)) : [];
+      const markets = economy(mine).filter((w) => w.order.kind === "build");
       // What pays (Part 2's sims): markets before culture bought for income, which doesn't pay back yet; culture only
       // where it protects (the capital and choke points facing an army), a level a turn.
       // With a plan (session 20d): threatened, everything into the wall (after a threatened capital's fort); otherwise
@@ -253,11 +285,12 @@ export function planSteward(
       const steady = shape && !shape.threatened ? wallPieces(plan!.steady === "capital" ? core : candidates) : [];
       wishes = shape
         ? [
-            ...urgent.filter((w) => w.territory === capital && !candidateSet.has(capital)),
+            ...pressing.filter((w) => w.territory === capital && !candidateSet.has(capital)),
             ...rush,
-            ...urgent.filter((w) => !candidateSet.has(w.territory) || !shape.threatened),
-            ...(turtle ? steady : []),
-            ...economy(mine).filter((w) => w.order.kind === "build").slice(0, merchant?.markets ?? Infinity),
+            ...pressing.filter((w) => !candidateSet.has(w.territory) || !shape.threatened),
+            ...(turtle ? steady : learn ? steady.filter((w) => oneStep(w.territory)) : []),
+            ...markets.slice(0, merchant?.markets ?? Infinity),
+            ...lesser.filter((w) => !candidateSet.has(w.territory) || !shape.threatened),
             ...steady,
             ...chokeForts(),
             ...barracksFor(mine),
@@ -287,8 +320,10 @@ export function planSteward(
               ...economy(mine).filter((w) => w.order.kind === "invest" && payback(w.territory, "culture") >= merchant.culturePays),
             ]
           : [
-              ...urgent,
-              ...economy(mine).filter((w) => w.order.kind === "build"),
+              ...pressing,
+              ...(learn ? walls(mine).filter((w) => oneStep(w.territory)) : []),
+              ...markets,
+              ...lesser,
               ...walls(mine),
               ...barracksFor(mine),
               ...culture(mine).filter((w) => (w.territory === capital || chokeHolder(w.territory)) && holdCulture(w.territory)).slice(0, 1),

@@ -50,6 +50,7 @@
     "carryCaptured": true,
     "counter": { "minArmy": 3, "strike": 1.5, "block": 60 },
     "realm": true,
+    "lesson": true,
     "anticipate": { "guard": true, "reach": true, "fort": true }
   },
   "personalities": [
@@ -370,7 +371,8 @@
       "styles": { "turtle": { "fortThreat": 3, "culture": 2, "walls": 39 }, "merchant": { "culturePays": 0.3, "walls": 18 } },
       "plan": { "threat": 4, "chokeForts": true, "runaway": "near" },
       "handBackTurns": 2,
-      "handBackMin": 5
+      "handBackMin": 5,
+      "lesson": { "lengths": [[40, 22], [120, 36], [200, 44]], "spare": 1 }
     }
   }
 }

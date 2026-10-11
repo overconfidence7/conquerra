@@ -286,7 +286,7 @@ describe("walls: determinism and saves", () => {
     expect(read.ok).toBe(true);
     if (!read.ok) return;
     expect(read.migrated).toBe(true);
-    expect(read.save.state.version).toBe(12);
+    expect(read.save.state.version).toBe(13);
     expect(read.save.state.territories.a!.walled).toBe(true);
     expect("walled" in read.save.state.territories.b!).toBe(false);
   });

@@ -1,0 +1,6 @@
+delegate embervale:4      s23p2b: delegate-80 won 31.3% = 1.25x fair (fair 25.0%) | buildings 29g culture 89g walls 1.36 | length avg 24.6 | 16s
+delegate wyrmland:6       s23p2b: delegate-80 won 22.7% = 1.36x fair (fair 16.7%) | buildings 103g culture 339g walls 7.99 | length avg 42.0 | 48s
+delegate rootholm:8       s23p2b: delegate-80 won 11.7% = 0.93x fair (fair 12.5%) | buildings 120g culture 399g walls 9.06 | length avg 44.9 | 82s
+delegate moon-coast:6     s23p2b: delegate-80 won 18.3% = 1.10x fair (fair 16.7%) | buildings 49g culture 136g walls 2.69 | length avg 31.0 | 32s
+delegate crownlands:8     s23p2b: delegate-80 won 14.3% = 1.15x fair (fair 12.5%) | buildings 46g culture 189g walls 4.10 | length avg 34.9 | 42s
+delegate ashwing:7        s23p2b: delegate-80 won 13.3% = 0.93x fair (fair 14.3%) | buildings 119g culture 394g walls 9.43 | length avg 47.2 | 74s

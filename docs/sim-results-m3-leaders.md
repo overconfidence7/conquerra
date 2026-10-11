@@ -420,3 +420,87 @@ Krakenmere, 10 players, 20 games, every system on (`s19-speed.ts`, run alone). *
 So 20d plans about 4% slower than the session start (the Marshal is unchanged until it cleans up; the rest is noise and the finish's wider sweep), about 13 ms on session 20c's yardstick: the 50 ms average limit holds. (The Leaders and Stewards aren't in this measure: a seat of yours plans them once a turn.)
 
 **Finishing turns** (the leading seat's whole plan, the Leader on Run the military, today's machine): the 20 fixtures 36.6 → **34.9 ms** on average (worst 85 → 69 ms); the 60 wide positions 68.5 → **25.4 ms** (worst 257 → 72 ms; the two runs are noisy, but not slower), with about 106–108 orders a turn (most 277). The orchestrator measured about 290 ms for a finishing turn on its own machine in session 20c.
+
+# Session 23: your leaders' last fixes, and what the Marshal learned from them
+
+*Raw runs: `docs/sims/s23-*.txt`. Scripts: `apps/sim/scripts/s23-tables.ts` (the delegating seat, all-Marshal tables with each personality's win rate and style, the Recruit), `s23-handout.ts` (the turn-54 save). "Before" is the code at the start of the session, run on the same games side by side (a copy of the Step 0 commit). 300 games a line, about ±2.5 points.*
+
+## Part 1: idle gold handed back, a remnant judged honestly
+
+**The handout** (Nate, Oct 10). A Steward with nothing more worth building keeps two turns of its budget, or what it would spend over the next two turns if that's more (it asks its own planner, with this turn's purchases made and its budget paid in each turn), and hands back the rest at the end of the turn, after every order. Under 5 gold isn't worth a report line. On the turn-54 save (`s20c-save.json`: Odo, the Turtle, Run the realm at 20%, 1,157 gold in its purse):
+
+| Turn | Purse at the start | Bought | Kept | Handed back |
+|---|---|---|---|---|
+| 54 | 1,157 | 37 levels of culture (walls and income) | 110 | **916** |
+| 55 | 170 | 2 | 120 | 43 |
+| 56 | 181 | 2 | 122 | 51 |
+
+In the browser (the same save, one turn on so your leaders plan afresh): the panel said "about 908 gold goes back", and 908 came back.
+
+**A remnant judged honestly.** The "Duke Varric (17 territories left)" line in session 20d's screenshot was turn 54, cleaning up at 80% of the map (every rival is one to finish then), not turn 6. Before turn 15 the opening blocks finishing altogether. The rule is built anyway for what it was meant for: before cleaning up, a rival is down to a handful only when its known land plus the fogged land it could hold (land never seen that joins up with theirs, and fog within two steps) is a handful. **It applies to your leaders, not to the Marshal's own turn:** judged that way, the Marshals finished rivals later and all-Marshal games on Rootholm 8 ran about 3 turns longer (44.4 to 47.6 on average, 19% to 24% at the 60-turn cap, seed s23p2), over the session's limit. Counting less of the fog (never-seen land within two steps only) didn't change that (47.7).
+
+**Part 1 alone** (seed s23p1): the delegating seat on Embervale 4 28.0% to 27.7% (1.12 to 1.11 times fair), Rootholm 8 10.0% to 13.3% (0.80 to 1.07 times). The Leader's purse is unchanged (Wyrmland 6 at 50%: 6.3% to 5.9% unspent; Rootholm 9 at 80%: 5.2% to 4.6%).
+
+## Part 2: what the Marshal learned
+
+**The Merchant's lesson** (on, for the Marshal and your Neutral Steward): a market that pays for itself before the game is likely to end comes before a fort that isn't urgent. Urgent: a rival army next door could take the land next turn (or a military leader asked for it), or the fort is the last piece of a wall. The game's likely length comes from the map's size (`leaders.steward.lesson`: 40 territories 22 turns, 120 territories 36, 200 territories 44, the straight line in between), and a market pays when its build turn, its price over its income and a spare turn fit in what's left. The Turtle keeps its forts first; the Merchant already builds markets first. Markets now stop when they'd no longer pay back (before: up to 4 turns before the 60-turn cap).
+
+**The Steward's plan for the Marshal: tried, and left off.** Six ways, 300 games each on the same games (seed s23p2, `s23-part2-ab.txt` and `s23-part2-ab2.txt`):
+
+| Marshals | Delegating seat, Embervale 4 / Wyrmland 6 / Rootholm 8 | All-Marshal Rootholm 8: length, at the cap | Games walled on Wyrmland, Conqueror / Merchant |
+|---|---|---|---|
+| Today (Part 1) | 1.17 / 1.02 / 0.91 | 47.6, 24% | 13% / 31% |
+| The lesson | 1.12 / 1.06 / 0.85 | 48.0, 23% | 13% / 30% |
+| The plan | 1.17 / **1.42** / **1.15** | **50.5, 37%** | **57% / 82%** |
+| Both | 1.12 / **1.48** / 1.04 | **50.7, 38%** | **59% / 82%** |
+| The plan, no wall garrison | 1.11 / 1.32 / 1.07 | 51.0, 37% | |
+| The plan, walls round the capital only | 1.11 / 1.32 / 0.99 | | |
+
+With the plan the Marshals got weaker against the delegating seat (Wyrmland 1.02 to 1.42 times fair), games on Rootholm got 3 turns longer with more than a third at the turn cap, and every personality walled up (the Conqueror in 57 to 69% of games instead of 13%), so they played more alike. Taking away the 4-troop garrison or walling only the capital didn't change that. **By Nate's own rule (a behaviour that beats the Marshals is one they adopt), the plan doesn't qualify for the Marshal:** it helps a seat whose Leader runs the military on 80% and whose Steward builds on 20%, but in the Marshal's single budget the wall money comes out of its army. It stays a switch (`judgement.realmPlan`, off). A question for Nate in PROGRESS.
+
+## The delegating seat at fair (seed s23p2b, before and after)
+
+| Table | Fair | Before | After |
+|---|---|---|---|
+| Embervale 4 | 25% | 33.0% (1.32x) | 31.3% (**1.25x**) |
+| Wyrmland 6 | 16.7% | 21.7% (1.30x) | 22.7% (**1.36x**) |
+| Rootholm 8 | 12.5% | 10.0% (0.80x) | 11.7% (**0.93x**) |
+| The Moon Coast 6 (80) | 16.7% | 17.0% (1.02x) | 18.3% (**1.10x**) |
+| The Crownlands 8 (100) | 12.5% | 16.7% (1.33x) | 14.3% (**1.15x**) |
+| Ashwing 7 (160) | 14.3% | 11.3% (0.79x) | 13.3% (**0.93x**) |
+
+Four of six tables are inside 0.85 to 1.2 times fair. **Embervale 4 and Wyrmland 6 are still above** (1.25 and 1.36 times; on another seed, s23p2, they were 1.17 and 1.02, so they move about 0.15 either way with the seed). What's left between your leaders and the Marshals there is the Steward's plan: walls up fast around the capital and the Leader's province, a garrison inside them. It's what makes the delegating seat strong on small and middle tables, and the Marshal can't use it without starving its army (above). The big tables (Rootholm, Ashwing) moved up to about 0.93 times with the handout (the gold goes into troops).
+
+## All-Marshal tables (seed s23p2b, before and after)
+
+| Table | Average length | Median | At the 60 cap | Halfway leader won |
+|---|---|---|---|---|
+| Embervale 4 | 22.9, 22.9 | 21, 21 | 0.7%, 0.7% | 56.0%, 55.3% |
+| Wyrmland 6 | 41.1, 41.0 | 39, 39 | 17.3%, 15.0% | 43.0%, 41.1% |
+| Rootholm 8 | 44.1, 43.7 | 43, 42 | 15.7%, 15.7% | 45.7%, 43.0% |
+| The Moon Coast 6 | 31.3, 31.2 | 29, 29 | 3.3%, 2.7% | 58.0%, 57.5% |
+| The Crownlands 8 | 34.7, 35.1 | 32, 33 | 6.7%, 7.0% | 60.3%, 58.2% |
+| Ashwing 7 | 47.2, 46.9 | 47, 47 | 29.3%, 28.0% | 39.6%, 40.3% |
+
+No table got longer.
+
+## Each personality (all-Marshal, seed s23p2b, before and after: win rate as times fair; games walled and attacks a turn after)
+
+| | Embervale 4 | Wyrmland 6 | Rootholm 8 |
+|---|---|---|---|
+| Blitzer | 1.22, 1.24 (0%, 3.3) | 0.38, 0.34 (1%, 4.0) | 0.34, 0.28 (1%, 4.3) |
+| Conqueror | 0.88, 0.88 (2%, 3.0) | 1.06, 1.00 (14%, 4.5) | 1.02, 0.97 (13%, 4.9) |
+| Merchant | 0.86, 0.82 (1%, 2.4) | 1.42, 1.40 (26%, 4.5) | 1.27, 1.37 (29%, 4.8) |
+| Opportunist | 0.97, 0.97 (1%, 2.9) | 0.54, 0.66 (7%, 4.2) | 0.78, 0.72 (5%, 4.5) |
+| Schemer | 1.11, 1.15 (5%, 3.1) | 0.90, 0.84 (13%, 4.0) | 0.66, 0.64 (13%, 4.3) |
+| Turtle | 0.95, 0.93 (16%, 2.2) | 1.70, 1.74 (55%, 4.6) | 1.94, 2.03 (60%, 5.6) |
+
+They still play differently (the Turtle walls in 55 to 60% of games on the big maps, the Blitzer almost never; the Turtle spends 49 gold on buildings on Embervale, the Blitzer 23). On the big maps the builders (Turtle, Merchant) still win most and the Blitzer least, as at the start of the session.
+
+**Seen on the way:** your Leader with the Opportunist's or the Schemer's personality often plays like a Neutral one in the middle of a game under fog. Most of their attack traits are floored to the shared style, and the Opportunist's own (going for whoever just fought) rarely changes an order when most fights are in the fog. A mop-up test that looked for a difference at turn 16 had been finding it only through the old remnant quirk; it now looks at turn 28.
+
+## The Captain, the Recruit, planning time
+- **The Captain's fingerprint is unchanged:** `232617a30b1f8b47` (15,639 orders), at the start and the end.
+- **The Recruit is still easy:** one Recruit against three Captains on Embervale wins 8.7% before and after (0.35 times fair).
+- **The Marshals plan as fast as before** (Krakenmere 10, 20 games, every system on, run alone, side by side): all ten bots 10.9 and 11.5 ms (session start, two runs), 11.4 ms now; one Marshal 1.2 to 1.3 ms either way.
+- **Your own leaders plan about 0.5 ms a turn slower** (a delegating seat on Wyrmland 6, 40 games: 1.5 ms to 2.1 ms): the handout's look-ahead (the Steward's planner run for the next two turns). That's over the 20% guideline in relative terms; reusing the board and the realm's shape didn't help (the Steward's own list is the cost). It runs once a turn for your seat, not for the bots.

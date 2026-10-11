@@ -269,21 +269,24 @@ export function planLeaders(req: LeadersRequest): LeadersPlan {
     else if (l.kind === "steward") {
       // (Session 20d: it builds with a plan, and walls the province your Leader stands in too.)
       if (!isMilitaryCommand(command!)) {
+        const spare = { left: 0 };
         const spend = (board: Board, purse: number, out: { left: number }, places: Set<TerritoryId>, newId: () => string) =>
           planSteward(board, marshalData.leaders.steward, command as StewardCommand, purse, newId, places, ctx.rules.game.maxTurnsHard, asked, l.personality ?? null, req.walls, { planned: req.planned ?? true, leaderAt: leaderAt(view.me, { kind: "leader", of: view.me.id }), out });
-        const spare = { left: 0 };
         const bought = spend(b, purseOf(l), spare, taken, () => `${prefix}x${n++}`);
         mine = own(bought);
         // Nothing worth building (session 23, Nate): what's over two turns of its budget goes back to you, unless it's
         // saving it for something. Its own judgement: with this turn's purchases made, what would it buy over the next
         // two turns, with its budget coming in each turn?
-        const keep = handBackKeep(l, spare.left, lastTurn, (left, perTurn) => {
+        const keep = handBackKeep(l, spare.left, lastTurn, (left, perTurn, enough) => {
           let v = afterBuying(view, bought);
           let purse = left;
           let spent = 0;
-          for (let turn = 0; turn < marshalData.leaders.steward.handBackTurns; turn++) {
-            const next = marshalBoard(ctx, v, thought.insight, lastTurn);
-            if (!next) return left;
+          // (It stops looking as soon as it knows it needs the gold: `enough` is when nothing would be handed back.)
+          for (let turn = 0; turn < marshalData.leaders.steward.handBackTurns && spent < enough; turn++) {
+            // (This turn's board with the culture and buildings bought: all a Steward reads of them. Cheaper than reading
+            // the board again.)
+            const after = v;
+            const next: Board = { ...b, view: after, seen: (t: TerritoryId) => { const x = after.territories[t]; return x?.detail === "full" ? x : null; } };
             purse += perTurn;
             const out = { left: purse };
             const os = spend(next, purse, out, new Set(taken), () => "next");
@@ -324,15 +327,16 @@ export function planLeaders(req: LeadersRequest): LeadersPlan {
  * turn), and it keeps that much if it's more. Its budget is last turn's (what last turn earned, from the report you saw). Returns
  * what it keeps, or null: it keeps it all.
  */
-export function handBackKeep(l: LeaderRecord, left: number, lastTurn: readonly ReplayEvent[] | undefined, ahead: (left: number, perTurn: number) => number): number | null {
+export function handBackKeep(l: LeaderRecord, left: number, lastTurn: readonly ReplayEvent[] | undefined, ahead: (left: number, perTurn: number, enough: number) => number): number | null {
   const turns = marshalData.leaders.steward.handBackTurns;
   if (turns <= 0) return null;
   const inc = lastTurn?.find((e): e is Extract<ReplayEvent, { type: "income" }> => e.type === "income");
   if (!inc && "share" in l.budget) return null;
   const perTurn = budgetAmount(l.budget, inc ? inc.income - inc.upkeep - (inc.famine ?? 0) : 0);
-  if (left <= turns * perTurn) return null;
-  const keep = Math.max(turns * perTurn, ahead(left, perTurn));
-  return left - keep >= Math.max(1, marshalData.leaders.steward.handBackMin) ? keep : null;
+  const least = Math.max(1, marshalData.leaders.steward.handBackMin);
+  if (left - turns * perTurn < least) return null;
+  const keep = Math.max(turns * perTurn, ahead(left, perTurn, left - least + 1));
+  return left - keep >= least ? keep : null;
 }
 
 /** Your view as it will be once these purchases are made: culture raised, buildings going up (for judging next turn). */

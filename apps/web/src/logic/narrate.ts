@@ -1,6 +1,6 @@
 import { dealLine, explainFizzle, explainHold, findLeader, fizzleIsQuiet, governLine, spyLine, type GameContext, type LeaderRef, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 import { fateLine, fateTone, MARK_NAME, missionLine, rebelWord, SET_NAME, troopWord } from "./cards";
-import { army, BUILDING_NAME, dealNames, generalName, instructionDoing, KIND_NAME, leaderName, leaderShortName, leaderStatus, SPECIALIST_NAME, styledName, WORLD_EVENT_NAME, type LogLine, type Namer, type Tone } from "./text";
+import { army, BUILDING_NAME, startBonusLine, dealNames, generalName, instructionDoing, KIND_NAME, leaderName, leaderShortName, leaderStatus, SPECIALIST_NAME, styledName, WORLD_EVENT_NAME, type LogLine, type Namer, type Tone } from "./text";
 
 /**
  * The turn report's lines (split from text.ts in session 14): plain English for every replay event. Loaded with the
@@ -276,6 +276,9 @@ export function narrateTurn(ctx: GameContext, events: readonly ReplayEvent[], n:
   type Win = Extract<ReplayEvent, { type: "battle" }>;
   const wins = new Map<string, Win[]>();
   for (const e of events) if (e.type === "battle" && e.captured && e.general && n.isMe(e.player)) wins.set(e.general, [...(wins.get(e.general) ?? []), e]);
+  // The first turn's report: your capital's head start, if it had one (session 23).
+  const bonus = n.view && events.some((e) => e.type === "turnStart" && e.turn === 1) ? startBonusLine(n.view, n.place) : null;
+  if (bonus) lines.push({ text: bonus, tone: "info" });
   for (const e of events) {
     if (e.type === "surface" && e.what !== "fate") {
       if (e.what === "battle") fog.set(e.province, (fog.get(e.province) ?? 0) + 1);

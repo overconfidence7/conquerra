@@ -9,11 +9,13 @@
  *   npx tsx apps/sim/scripts/s23-tables.ts recruit <games> <map:players,...> <seed>
  *     one Recruit against Captains (it should stay easy).
  *
+ * A last argument, a JSON change to the Marshals' shared judgement ('{"lesson":true}'), plays the Marshal seats with it.
  * Fog and diplomacy on; seats rotated each game. Uses every core but one.
  */
 import { runTournament } from "../src/tournament";
 
-const [mode = "marshals", gamesArg = "300", tablesArg = "embervale:4", seed = "s23"] = process.argv.slice(2);
+const [mode = "marshals", gamesArg = "300", tablesArg = "embervale:4", seed = "s23", tweakArg = ""] = process.argv.slice(2);
+const tweak = tweakArg ? { tweak: { judgement: JSON.parse(tweakArg) as Record<string, unknown> } } : {};
 const games = Number(gamesArg);
 const pct = (k: number, of: number) => `${((100 * k) / Math.max(1, of)).toFixed(1)}%`;
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
@@ -26,7 +28,7 @@ for (const t of tablesArg.split(",")) {
   if (mode === "delegate" || mode === "recruit") {
     const seat = mode === "delegate" ? "delegate-80" : "recruit";
     const others = mode === "delegate" ? "marshal" : "captain";
-    const r = await runTournament({ map, players, seats: [seat, ...Array(players - 1).fill(others)], games, seed, fog: true, diplomacy: true });
+    const r = await runTournament({ map, players, seats: [seat, ...Array(players - 1).fill(others)], games, seed, fog: true, diplomacy: true, ...tweak });
     const mine = r.map((g) => g.seats[g.kinds.indexOf(seat)]!);
     const won = mine.filter((s) => s.won).length;
     const turns = r.map((g) => g.turns);
@@ -35,7 +37,7 @@ for (const t of tablesArg.split(",")) {
     );
     continue;
   }
-  const r = await runTournament({ map, players, seats: ["marshal"], games, seed, fog: true, diplomacy: true });
+  const r = await runTournament({ map, players, seats: ["marshal"], games, seed, fog: true, diplomacy: true, ...tweak });
   const turns = r.map((g) => g.turns).sort((a, b) => a - b);
   const won = r.filter((g) => g.winner !== "draw");
   const half = won.filter((g) => g.leaderHalfway);

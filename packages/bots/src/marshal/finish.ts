@@ -44,9 +44,10 @@ export interface FinishResult {
  * Rivals down to a handful: at most `territories` or `share` of ours, and a third of ours at most. With `all` (Clean
  * up), everyone. Judged honestly under fog (session 23, orchestrator default): their land as far as we know, plus the
  * land in the fog they could plausibly hold (the sweep's "might be", `fog` steps; see plausibleLand). On turn 6 a rival
- * we've barely seen isn't down to a handful just because we've seen little of it.
+ * we've barely seen isn't down to a handful just because we've seen little of it. `fog` null: as before, on the land
+ * we know of (the Marshal's own turn: judging honestly made all-Marshal games on Rootholm 8 about 3 turns longer).
  */
-export function remnantRivals(b: Board, finish: { territories: number; share: number }, all = false, fog = 2): PlayerId[] {
+export function remnantRivals(b: Board, finish: { territories: number; share: number }, all = false, fog: number | null = 2): PlayerId[] {
   const ours = b.mine.length;
   const known = new Map<PlayerId, number>();
   for (const t of b.idx.ids) {
@@ -58,7 +59,7 @@ export function remnantRivals(b: Board, finish: { territories: number; share: nu
     .filter((p) => p !== b.me.id && (known.get(p) ?? 0) > 0)
     .filter((p) => {
       if (all) return true;
-      const land = Math.max(known.get(p)!, b.knownLand.get(p) ?? 0) + plausibleLand(b, p, fog);
+      const land = Math.max(known.get(p)!, b.knownLand.get(p) ?? 0) + (fog === null ? 0 : plausibleLand(b, p, fog));
       return land * 3 <= ours && (land <= finish.territories || land <= finish.share * ours);
     })
     .sort((x, y) => (known.get(x) ?? 0) - (known.get(y) ?? 0) || (x < y ? -1 : 1));

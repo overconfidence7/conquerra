@@ -40,6 +40,8 @@ export interface TournamentSpec {
   settings?: Record<string, unknown>;
   /** A capital layout to try for this many players (session 19's fair seats), instead of the map's own. */
   layout?: string[];
+  /** Start bonuses to try (session 23): extra troops by capital spot, instead of the map's own. */
+  bonus?: Record<string, number>;
 }
 
 /** `b` merged into `a`, objects deep (arrays and numbers replaced). */
@@ -182,7 +184,11 @@ export function seatsFor(spec: TournamentSpec, i: number, seed: string): string[
 
 export function playOne(spec: TournamentSpec, i: number): TableResult & { kinds: string[] } {
   const base = maps[spec.map]!;
-  const map = spec.layout ? { ...base, capitalLayouts: [...(base.capitalLayouts ?? []).filter((l) => l.players !== spec.players), { players: spec.players, slots: spec.layout }] } : base;
+  const own = base.capitalLayouts?.find((l) => l.players === spec.players);
+  const map =
+    spec.layout || spec.bonus
+      ? { ...base, capitalLayouts: [...(base.capitalLayouts ?? []).filter((l) => l.players !== spec.players), { players: spec.players, slots: spec.layout ?? own!.slots, ...(spec.bonus ? { bonus: spec.bonus } : own?.bonus ? { bonus: own.bonus } : {}) }] }
+      : base;
   const ctx: GameContext = { map, rules: spec.rules ? merge(defaultRules, spec.rules) : defaultRules };
   const seed = `${spec.seed}-${spec.map}-${spec.players}p-${i}`;
   const kinds = seatsFor(spec, i, seed);

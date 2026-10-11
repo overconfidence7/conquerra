@@ -263,6 +263,8 @@ export class LocalGame {
           fate: settings.fate ?? true,
           diplomacy: settings.diplomacy ?? true,
         },
+        // A harder capital spot starts with extra troops (session 23).
+        startBonus: true,
       };
       this.state = createGame(this.ctx, setup);
       for (const [id, s] of Object.entries(levels)) this.seats.set(id, seatBot(s.level, s.personality));

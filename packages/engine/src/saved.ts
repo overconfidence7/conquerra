@@ -75,7 +75,7 @@ export interface SavedGameV1 {
 }
 
 /** The game state's current shape. Bump it (and add a migration below) whenever GameState changes. */
-export const STATE_VERSION: GameState["version"] = 12;
+export const STATE_VERSION: GameState["version"] = 13;
 
 /**
  * How to bring an older game state up to date, one version at a time: `STATE_MIGRATIONS[n]` turns a version-n
@@ -199,6 +199,11 @@ export const STATE_MIGRATIONS: Record<number, (s: Record<string, unknown>, you?:
       Object.entries(s.territories as Record<string, TerritoryState>).map(([id, t]) => [id, qualifiesForWall(defaultRules, t) ? { ...t, walled: true } : t]),
     ),
   }),
+  /**
+   * 12 -> 13 (session 23): the start bonus. A game started before it had none: nothing to add (a player's
+   * `startBonus` is only there when it got one).
+   */
+  12: (s) => s,
 };
 
 export function stateFingerprint(s: GameState): string {

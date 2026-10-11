@@ -238,6 +238,18 @@ export const MarshalJudgement = z.object({
   /** ...on a crowded table too (at most `rules.leaders.crowdedTerritories` a player), where buildings pay back slowly. */
   realmCrowded: z.boolean().optional(),
   /**
+   * Session 23 (Nate's rule: a leader's behaviour that beats the Marshals is one they adopt): the Marshal's realm share
+   * builds with the Steward's plan (session 20d: markets and barracks deep inside, forts on choke points and wall
+   * candidates, walls up fast when threatened), and its Leader keeps `wallGarrison` in walled land facing a rival.
+   * Off: as session 20b.
+   */
+  realmPlan: z.union([z.boolean(), z.object({ garrison: z.boolean(), rush: z.enum(["capital", "all"]), steady: z.enum(["capital", "all"]) })]).optional(),
+  /**
+   * Session 23: the Merchant's lesson for the Marshal's own building (crowded tables, where it builds without the
+   * Steward): a market that pays for itself (the Steward's `lesson`) before a fort that isn't urgent. Off: as before.
+   */
+  lesson: z.boolean().optional(),
+  /**
    * Session 20 (Nate's playbook, a one-change test): once it holds `from` of the map, it picks the best region within
    * reach (a province and the provinces around it: their bonuses and land, less the rival armies in it), drives
    * everyone else out of it (its land worth `pull` times more), asks for forts on its border, and outside it takes only
@@ -334,6 +346,15 @@ export const LeaderPlanning = z.object({
     handBackTurns: z.number().int().min(0).default(2),
     /** Less than this much spare gold isn't worth handing back (a report line every turn for pocket change). */
     handBackMin: z.number().int().min(0).default(5),
+    /**
+     * Session 23, the Merchant's lesson (it beat the Marshals on the big maps): a market that pays for itself before
+     * the game is likely to end comes before a fort that isn't urgent (urgent: a rival army next door could take the
+     * land next turn, or the fort is the last piece of a wall). The game's likely length is read from the map's size,
+     * `lengths` ([territories, turns], in between: the straight line); a market pays when its build turns, its price
+     * over its income (less on land facing a rival) and `spare` turns fit in what's left. The Turtle keeps its forts
+     * first; the Merchant already builds markets first. Missing: as before (markets until a few turns before the cap).
+     */
+    lesson: z.object({ lengths: z.array(z.tuple([z.number().int().min(1), z.number().min(1)])).min(1), spare: z.number().min(0) }).optional(),
   }),
 });
 export type LeaderPlanning = z.infer<typeof LeaderPlanning>;

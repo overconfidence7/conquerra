@@ -36,6 +36,7 @@ import { VersionLine } from "./Diagnostics";
 import type { LayoutChoice } from "../logic/layout";
 import { FX_LEVELS, useFx } from "../replay/fx/settings";
 import { houseOf } from "../map/houses";
+import { namer, startBonusLine } from "../logic/text";
 import "./replay.css";
 
 /** Save game / Load game: loaded the first time it's opened (it isn't needed to play a turn). */
@@ -257,6 +258,15 @@ export function GameScreen() {
     // A banner (Fate or the Fallen on your land) stays longer.
     setTimeout(() => setToasts((list) => list.filter((x) => x.id !== id)), t.banner ? 6500 : 3600);
   }, []);
+
+  // The start bonus (session 23): a harder spot's head start, said as the first turn's planning starts (once a game).
+  const bonusSaid = useRef<string | null>(null);
+  useEffect(() => {
+    if (!ctx || !view || view.turn !== 1 || bonusSaid.current === view.gameId) return;
+    bonusSaid.current = view.gameId;
+    const line = startBonusLine(view, namer(ctx, view).place);
+    if (line) pushToast({ text: line, tone: "info", house: view.me.id, banner: true });
+  }, [ctx, view, pushToast]);
 
   const onBeat = useCallback(
     (b: Beat, carded: ReadonlySet<unknown>) => {

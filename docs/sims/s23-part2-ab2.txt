@@ -1,0 +1,130 @@
+=== tight  X=1
+delegate embervale:4      s23p2: delegate-80 won 29.3% = 1.17x fair (fair 25.0%) | buildings 27g culture 92g walls 1.43 | length avg 25.4 | 14s
+delegate wyrmland:6       s23p2: delegate-80 won 18.3% = 1.10x fair (fair 16.7%) | buildings 105g culture 309g walls 7.20 | length avg 42.2 | 47s
+delegate rootholm:8       s23p2: delegate-80 won 8.0% = 0.64x fair (fair 12.5%) | buildings 116g culture 386g walls 9.08 | length avg 48.1 | 84s
+marshals embervale:4      s23p2: 300 games | length median 22, avg 23.8, at the 60 cap 0.7%, draws 0.0% | halfway leader won 55.3% | 18s
+  blitzer      won  27.6% = 1.10x (196 seats) | buildings 22g culture 1g | walled in 0.0% of games (0.00 walls) | attacks/turn 3.17 | land at turn 10 12.1
+  conqueror    won  26.0% = 1.04x (208 seats) | buildings 27g culture 10g | walled in 8.2% of games (0.09 walls) | attacks/turn 3.05 | land at turn 10 11.7
+  merchant     won  25.9% = 1.03x (205 seats) | buildings 41g culture 38g | walled in 2.0% of games (0.02 walls) | attacks/turn 2.44 | land at turn 10 6.8
+  opportunist  won  25.5% = 1.02x (204 seats) | buildings 27g culture 1g | walled in 0.0% of games (0.00 walls) | attacks/turn 2.97 | land at turn 10 10.7
+  schemer      won  24.4% = 0.97x (197 seats) | buildings 26g culture 9g | walled in 6.1% of games (0.06 walls) | attacks/turn 2.83 | land at turn 10 9.5
+  turtle       won  20.5% = 0.82x (190 seats) | buildings 49g culture 40g | walled in 17.9% of games (0.21 walls) | attacks/turn 2.11 | land at turn 10 5.6
+marshals wyrmland:6       s23p2: 300 games | length median 42, avg 42.9, at the 60 cap 17.0%, draws 0.3% | halfway leader won 44.8% | 48s
+  blitzer      won   8.3% = 0.50x (300 seats) | buildings 49g culture 16g | walled in 0.3% of games (0.00 walls) | attacks/turn 4.14 | land at turn 10 19.9
+  conqueror    won  19.3% = 1.16x (300 seats) | buildings 121g culture 112g | walled in 14.7% of games (0.19 walls) | attacks/turn 4.67 | land at turn 10 18.6
+  merchant     won  26.3% = 1.58x (300 seats) | buildings 152g culture 172g | walled in 31.7% of games (0.54 walls) | attacks/turn 4.83 | land at turn 10 16.6
+  opportunist  won  12.7% = 0.76x (300 seats) | buildings 83g culture 73g | walled in 8.0% of games (0.10 walls) | attacks/turn 4.09 | land at turn 10 17.0
+  schemer      won  13.0% = 0.78x (300 seats) | buildings 99g culture 88g | walled in 16.0% of games (0.21 walls) | attacks/turn 4.00 | land at turn 10 16.1
+  turtle       won  20.0% = 1.20x (300 seats) | buildings 147g culture 199g | walled in 54.0% of games (2.00 walls) | attacks/turn 4.27 | land at turn 10 15.6
+marshals rootholm:8       s23p2: 300 games | length median 48, avg 47.7, at the 60 cap 25.0%, draws 0.3% | halfway leader won 49.8% | 71s
+  blitzer      won   1.7% = 0.14x (412 seats) | buildings 57g culture 18g | walled in 0.5% of games (0.00 walls) | attacks/turn 4.24 | land at turn 10 25.8
+  conqueror    won  12.4% = 0.99x (394 seats) | buildings 156g culture 166g | walled in 15.7% of games (0.21 walls) | attacks/turn 4.86 | land at turn 10 23.9
+  merchant     won  21.3% = 1.70x (390 seats) | buildings 183g culture 256g | walled in 37.4% of games (0.75 walls) | attacks/turn 5.24 | land at turn 10 21.3
+  opportunist  won   8.4% = 0.67x (403 seats) | buildings 111g culture 110g | walled in 6.7% of games (0.08 walls) | attacks/turn 4.30 | land at turn 10 21.1
+  schemer      won  11.9% = 0.95x (396 seats) | buildings 145g culture 158g | walled in 17.2% of games (0.25 walls) | attacks/turn 4.53 | land at turn 10 21.7
+  turtle       won  19.5% = 1.56x (405 seats) | buildings 191g culture 343g | walled in 60.2% of games (2.84 walls) | attacks/turn 5.37 | land at turn 10 21.2
+=== tight-lesson {"lesson":true} X=1
+delegate embervale:4      s23p2: delegate-80 won 27.7% = 1.11x fair (fair 25.0%) | buildings 27g culture 88g walls 1.37 | length avg 25.3 | 20s
+delegate wyrmland:6       s23p2: delegate-80 won 18.3% = 1.10x fair (fair 16.7%) | buildings 105g culture 310g walls 7.28 | length avg 42.4 | 53s
+delegate rootholm:8       s23p2: delegate-80 won 8.0% = 0.64x fair (fair 12.5%) | buildings 117g culture 394g walls 9.25 | length avg 47.7 | 82s
+marshals embervale:4      s23p2: 300 games | length median 22, avg 23.8, at the 60 cap 0.0%, draws 0.0% | halfway leader won 55.3% | 19s
+  blitzer      won  28.6% = 1.14x (196 seats) | buildings 22g culture 1g | walled in 0.0% of games (0.00 walls) | attacks/turn 3.16 | land at turn 10 12.1
+  conqueror    won  27.4% = 1.10x (208 seats) | buildings 27g culture 10g | walled in 8.2% of games (0.08 walls) | attacks/turn 3.08 | land at turn 10 11.7
+  merchant     won  24.4% = 0.98x (205 seats) | buildings 40g culture 37g | walled in 2.0% of games (0.02 walls) | attacks/turn 2.43 | land at turn 10 6.8
+  opportunist  won  26.5% = 1.06x (204 seats) | buildings 27g culture 1g | walled in 0.0% of games (0.00 walls) | attacks/turn 3.01 | land at turn 10 10.7
+  schemer      won  24.4% = 0.97x (197 seats) | buildings 26g culture 9g | walled in 6.1% of games (0.07 walls) | attacks/turn 2.84 | land at turn 10 9.6
+  turtle       won  18.4% = 0.74x (190 seats) | buildings 48g culture 38g | walled in 18.9% of games (0.20 walls) | attacks/turn 2.08 | land at turn 10 5.6
+marshals wyrmland:6       s23p2: 300 games | length median 42, avg 42.8, at the 60 cap 17.0%, draws 0.0% | halfway leader won 47.0% | 48s
+  blitzer      won   8.3% = 0.50x (300 seats) | buildings 47g culture 18g | walled in 0.3% of games (0.00 walls) | attacks/turn 4.15 | land at turn 10 19.9
+  conqueror    won  17.7% = 1.06x (300 seats) | buildings 118g culture 112g | walled in 15.3% of games (0.20 walls) | attacks/turn 4.63 | land at turn 10 18.7
+  merchant     won  27.3% = 1.64x (300 seats) | buildings 151g culture 172g | walled in 30.0% of games (0.55 walls) | attacks/turn 4.84 | land at turn 10 16.6
+  opportunist  won  12.0% = 0.72x (300 seats) | buildings 81g culture 71g | walled in 9.3% of games (0.11 walls) | attacks/turn 4.05 | land at turn 10 17.0
+  schemer      won  11.7% = 0.70x (300 seats) | buildings 97g culture 84g | walled in 15.3% of games (0.21 walls) | attacks/turn 3.95 | land at turn 10 16.1
+  turtle       won  23.0% = 1.38x (300 seats) | buildings 148g culture 200g | walled in 53.3% of games (2.00 walls) | attacks/turn 4.28 | land at turn 10 15.6
+marshals rootholm:8       s23p2: 300 games | length median 49, avg 48.5, at the 60 cap 27.0%, draws 0.0% | halfway leader won 47.3% | 74s
+  blitzer      won   1.9% = 0.16x (412 seats) | buildings 54g culture 20g | walled in 0.7% of games (0.01 walls) | attacks/turn 4.19 | land at turn 10 25.7
+  conqueror    won  12.9% = 1.04x (394 seats) | buildings 152g culture 167g | walled in 15.2% of games (0.18 walls) | attacks/turn 4.83 | land at turn 10 23.8
+  merchant     won  22.6% = 1.81x (390 seats) | buildings 183g culture 273g | walled in 40.0% of games (0.81 walls) | attacks/turn 5.34 | land at turn 10 21.2
+  opportunist  won   7.2% = 0.58x (403 seats) | buildings 113g culture 102g | walled in 6.9% of games (0.08 walls) | attacks/turn 4.29 | land at turn 10 21.1
+  schemer      won  11.6% = 0.93x (396 seats) | buildings 146g culture 165g | walled in 19.9% of games (0.29 walls) | attacks/turn 4.59 | land at turn 10 21.7
+  turtle       won  19.3% = 1.54x (405 seats) | buildings 191g culture 353g | walled in 61.7% of games (3.01 walls) | attacks/turn 5.35 | land at turn 10 21.3
+=== tight, the delegating seat's Steward without the lesson
+delegate embervale:4      s23p2: delegate-80 won 30.3% = 1.21x fair (fair 25.0%) | buildings 30g culture 89g walls 1.39 | length avg 25.2 | 20s
+delegate wyrmland:6       s23p2: delegate-80 won 21.3% = 1.28x fair (fair 16.7%) | buildings 107g culture 338g walls 7.73 | length avg 42.7 | 52s
+delegate rootholm:8       s23p2: delegate-80 won 8.0% = 0.64x fair (fair 12.5%) | buildings 118g culture 376g walls 8.85 | length avg 48.3 | 83s
+=== plan-nogarrison {"lesson":true,"realmPlan":{"garrison":false,"rush":"all","steady":"all"}} X=1
+delegate embervale:4      s23p2: delegate-80 won 27.7% = 1.11x fair (fair 25.0%) | buildings 27g culture 88g walls 1.37 | length avg 25.3 | 20s
+delegate wyrmland:6       s23p2: delegate-80 won 22.0% = 1.32x fair (fair 16.7%) | buildings 114g culture 335g walls 7.89 | length avg 44.0 | 53s
+delegate rootholm:8       s23p2: delegate-80 won 13.3% = 1.07x fair (fair 12.5%) | buildings 143g culture 465g walls 11.23 | length avg 51.3 | 88s
+marshals embervale:4      s23p2: 300 games | length median 22, avg 23.8, at the 60 cap 0.0%, draws 0.0% | halfway leader won 55.3% | 18s
+  blitzer      won  28.6% = 1.14x (196 seats) | buildings 22g culture 1g | walled in 0.0% of games (0.00 walls) | attacks/turn 3.16 | land at turn 10 12.1
+  conqueror    won  27.4% = 1.10x (208 seats) | buildings 27g culture 10g | walled in 8.2% of games (0.08 walls) | attacks/turn 3.08 | land at turn 10 11.7
+  merchant     won  24.4% = 0.98x (205 seats) | buildings 40g culture 37g | walled in 2.0% of games (0.02 walls) | attacks/turn 2.43 | land at turn 10 6.8
+  opportunist  won  26.5% = 1.06x (204 seats) | buildings 27g culture 1g | walled in 0.0% of games (0.00 walls) | attacks/turn 3.01 | land at turn 10 10.7
+  schemer      won  24.4% = 0.97x (197 seats) | buildings 26g culture 9g | walled in 6.1% of games (0.07 walls) | attacks/turn 2.84 | land at turn 10 9.6
+  turtle       won  18.4% = 0.74x (190 seats) | buildings 48g culture 38g | walled in 18.9% of games (0.20 walls) | attacks/turn 2.08 | land at turn 10 5.6
+marshals wyrmland:6       s23p2: 300 games | length median 42, avg 42.7, at the 60 cap 16.3%, draws 0.0% | halfway leader won 51.0% | 44s
+  blitzer      won   5.0% = 0.30x (300 seats) | buildings 48g culture 17g | walled in 1.7% of games (0.02 walls) | attacks/turn 3.82 | land at turn 10 18.9
+  conqueror    won  13.0% = 0.78x (300 seats) | buildings 99g culture 175g | walled in 60.0% of games (3.64 walls) | attacks/turn 4.14 | land at turn 10 17.1
+  merchant     won  30.7% = 1.84x (300 seats) | buildings 147g culture 359g | walled in 82.0% of games (8.61 walls) | attacks/turn 4.58 | land at turn 10 18.3
+  opportunist  won  10.3% = 0.62x (300 seats) | buildings 74g culture 119g | walled in 46.0% of games (2.03 walls) | attacks/turn 3.82 | land at turn 10 16.9
+  schemer      won  12.0% = 0.72x (300 seats) | buildings 93g culture 186g | walled in 61.3% of games (3.81 walls) | attacks/turn 3.94 | land at turn 10 16.1
+  turtle       won  29.0% = 1.74x (300 seats) | buildings 142g culture 325g | walled in 79.3% of games (7.75 walls) | attacks/turn 4.21 | land at turn 10 16.8
+marshals rootholm:8       s23p2: 300 games | length median 53, avg 51.0, at the 60 cap 37.0%, draws 0.0% | halfway leader won 47.0% | 76s
+  blitzer      won   3.6% = 0.29x (412 seats) | buildings 58g culture 35g | walled in 8.0% of games (0.17 walls) | attacks/turn 4.19 | land at turn 10 26.9
+  conqueror    won  11.2% = 0.89x (394 seats) | buildings 148g culture 299g | walled in 68.5% of games (6.68 walls) | attacks/turn 4.67 | land at turn 10 23.2
+  merchant     won  16.9% = 1.35x (390 seats) | buildings 172g culture 540g | walled in 82.3% of games (13.02 walls) | attacks/turn 4.65 | land at turn 10 21.7
+  opportunist  won   6.2% = 0.50x (403 seats) | buildings 106g culture 162g | walled in 49.1% of games (3.21 walls) | attacks/turn 4.08 | land at turn 10 20.9
+  schemer      won  14.4% = 1.15x (396 seats) | buildings 132g culture 296g | walled in 63.4% of games (6.44 walls) | attacks/turn 4.25 | land at turn 10 21.0
+  turtle       won  23.0% = 1.84x (405 seats) | buildings 191g culture 604g | walled in 82.2% of games (14.38 walls) | attacks/turn 4.90 | land at turn 10 21.4
+=== plan-capital {"lesson":true,"realmPlan":{"garrison":true,"rush":"capital","steady":"capital"}} X=1
+delegate embervale:4      s23p2: delegate-80 won 27.7% = 1.11x fair (fair 25.0%) | buildings 27g culture 88g walls 1.36 | length avg 25.3 | 20s
+delegate wyrmland:6       s23p2: delegate-80 won 22.0% = 1.32x fair (fair 16.7%) | buildings 108g culture 352g walls 8.25 | length avg 44.3 | 53s
+delegate rootholm:8       s23p2: delegate-80 won 12.3% = 0.99x fair (fair 12.5%) | buildings 135g culture 444g walls 10.80 | length avg 49.4 | 81s
+marshals embervale:4      s23p2: 300 games | length median 22, avg 23.8, at the 60 cap 0.0%, draws 0.0% | halfway leader won 55.3% | 17s
+  blitzer      won  28.6% = 1.14x (196 seats) | buildings 22g culture 1g | walled in 0.0% of games (0.00 walls) | attacks/turn 3.16 | land at turn 10 12.1
+  conqueror    won  27.4% = 1.10x (208 seats) | buildings 27g culture 10g | walled in 8.2% of games (0.08 walls) | attacks/turn 3.08 | land at turn 10 11.7
+  merchant     won  24.4% = 0.98x (205 seats) | buildings 40g culture 37g | walled in 2.0% of games (0.02 walls) | attacks/turn 2.42 | land at turn 10 6.8
+  opportunist  won  26.5% = 1.06x (204 seats) | buildings 27g culture 1g | walled in 0.0% of games (0.00 walls) | attacks/turn 3.01 | land at turn 10 10.7
+  schemer      won  24.4% = 0.97x (197 seats) | buildings 26g culture 9g | walled in 6.1% of games (0.07 walls) | attacks/turn 2.84 | land at turn 10 9.6
+  turtle       won  18.4% = 0.74x (190 seats) | buildings 48g culture 39g | walled in 18.9% of games (0.21 walls) | attacks/turn 2.08 | land at turn 10 5.6
+marshals wyrmland:6       s23p2: 300 games | length median 41, avg 42.8, at the 60 cap 19.3%, draws 0.0% | halfway leader won 52.0% | 45s
+  blitzer      won   3.3% = 0.20x (300 seats) | buildings 46g culture 17g | walled in 1.0% of games (0.02 walls) | attacks/turn 3.82 | land at turn 10 18.9
+  conqueror    won  12.3% = 0.74x (300 seats) | buildings 101g culture 138g | walled in 57.7% of games (2.25 walls) | attacks/turn 4.07 | land at turn 10 17.1
+  merchant     won  33.0% = 1.98x (300 seats) | buildings 153g culture 278g | walled in 83.3% of games (4.40 walls) | attacks/turn 4.64 | land at turn 10 18.3
+  opportunist  won   9.3% = 0.56x (300 seats) | buildings 78g culture 114g | walled in 45.3% of games (1.63 walls) | attacks/turn 3.84 | land at turn 10 16.8
+  schemer      won  13.7% = 0.82x (300 seats) | buildings 94g culture 154g | walled in 61.3% of games (2.52 walls) | attacks/turn 3.86 | land at turn 10 16.1
+  turtle       won  28.3% = 1.70x (300 seats) | buildings 147g culture 251g | walled in 79.7% of games (4.08 walls) | attacks/turn 4.28 | land at turn 10 16.9
+marshals rootholm:8       s23p2: 300 games | length median 50, avg 49.3, at the 60 cap 32.7%, draws 0.0% | halfway leader won 50.0% | 71s
+  blitzer      won   3.9% = 0.31x (412 seats) | buildings 58g culture 26g | walled in 6.8% of games (0.14 walls) | attacks/turn 4.21 | land at turn 10 26.8
+  conqueror    won  12.9% = 1.04x (394 seats) | buildings 154g culture 247g | walled in 68.3% of games (3.02 walls) | attacks/turn 4.81 | land at turn 10 23.2
+  merchant     won  19.7% = 1.58x (390 seats) | buildings 174g culture 326g | walled in 80.3% of games (4.15 walls) | attacks/turn 4.80 | land at turn 10 21.7
+  opportunist  won   6.0% = 0.48x (403 seats) | buildings 107g culture 152g | walled in 50.6% of games (2.01 walls) | attacks/turn 4.11 | land at turn 10 20.9
+  schemer      won  11.4% = 0.91x (396 seats) | buildings 138g culture 205g | walled in 62.6% of games (2.59 walls) | attacks/turn 4.17 | land at turn 10 21.0
+  turtle       won  21.5% = 1.72x (405 seats) | buildings 192g culture 380g | walled in 81.5% of games (5.07 walls) | attacks/turn 5.02 | land at turn 10 21.5
+=== plan-capital-nogarrison {"lesson":true,"realmPlan":{"garrison":false,"rush":"capital","steady":"capital"}} X=1
+delegate embervale:4      s23p2: delegate-80 won 27.7% = 1.11x fair (fair 25.0%) | buildings 27g culture 88g walls 1.37 | length avg 25.3 | 20s
+delegate wyrmland:6       s23p2: delegate-80 won 23.0% = 1.38x fair (fair 16.7%) | buildings 109g culture 335g walls 7.90 | length avg 44.0 | 54s
+delegate rootholm:8       s23p2: delegate-80 won 13.0% = 1.04x fair (fair 12.5%) | buildings 134g culture 455g walls 11.16 | length avg 49.9 | 84s
+marshals embervale:4      s23p2: 300 games | length median 22, avg 23.8, at the 60 cap 0.0%, draws 0.0% | halfway leader won 55.3% | 18s
+  blitzer      won  28.6% = 1.14x (196 seats) | buildings 22g culture 1g | walled in 0.0% of games (0.00 walls) | attacks/turn 3.16 | land at turn 10 12.1
+  conqueror    won  27.4% = 1.10x (208 seats) | buildings 27g culture 10g | walled in 8.2% of games (0.08 walls) | attacks/turn 3.08 | land at turn 10 11.7
+  merchant     won  24.4% = 0.98x (205 seats) | buildings 40g culture 37g | walled in 2.0% of games (0.02 walls) | attacks/turn 2.43 | land at turn 10 6.8
+  opportunist  won  26.5% = 1.06x (204 seats) | buildings 27g culture 1g | walled in 0.0% of games (0.00 walls) | attacks/turn 3.01 | land at turn 10 10.7
+  schemer      won  24.4% = 0.97x (197 seats) | buildings 26g culture 9g | walled in 6.1% of games (0.07 walls) | attacks/turn 2.84 | land at turn 10 9.6
+  turtle       won  18.4% = 0.74x (190 seats) | buildings 48g culture 38g | walled in 18.9% of games (0.20 walls) | attacks/turn 2.08 | land at turn 10 5.6
+marshals wyrmland:6       s23p2: 300 games | length median 42, avg 42.6, at the 60 cap 18.0%, draws 0.0% | halfway leader won 50.3% | 43s
+  blitzer      won   4.3% = 0.26x (300 seats) | buildings 47g culture 17g | walled in 1.0% of games (0.01 walls) | attacks/turn 3.85 | land at turn 10 19.0
+  conqueror    won  14.3% = 0.86x (300 seats) | buildings 101g culture 143g | walled in 57.3% of games (2.41 walls) | attacks/turn 4.14 | land at turn 10 17.1
+  merchant     won  27.7% = 1.66x (300 seats) | buildings 152g culture 262g | walled in 83.0% of games (4.25 walls) | attacks/turn 4.54 | land at turn 10 18.3
+  opportunist  won  10.7% = 0.64x (300 seats) | buildings 78g culture 114g | walled in 45.3% of games (1.74 walls) | attacks/turn 3.88 | land at turn 10 16.8
+  schemer      won  14.3% = 0.86x (300 seats) | buildings 95g culture 166g | walled in 58.7% of games (2.61 walls) | attacks/turn 3.99 | land at turn 10 16.1
+  turtle       won  28.7% = 1.72x (300 seats) | buildings 146g culture 253g | walled in 79.7% of games (4.18 walls) | attacks/turn 4.32 | land at turn 10 16.9
+marshals rootholm:8       s23p2: 300 games | length median 51, avg 49.6, at the 60 cap 32.7%, draws 0.0% | halfway leader won 56.0% | 69s
+  blitzer      won   3.4% = 0.27x (412 seats) | buildings 59g culture 28g | walled in 7.0% of games (0.16 walls) | attacks/turn 4.22 | land at turn 10 26.8
+  conqueror    won  13.2% = 1.06x (394 seats) | buildings 154g culture 252g | walled in 68.5% of games (3.13 walls) | attacks/turn 4.81 | land at turn 10 23.2
+  merchant     won  19.7% = 1.58x (390 seats) | buildings 172g culture 323g | walled in 80.5% of games (4.19 walls) | attacks/turn 4.68 | land at turn 10 21.7
+  opportunist  won   7.7% = 0.62x (403 seats) | buildings 109g culture 150g | walled in 50.4% of games (1.98 walls) | attacks/turn 4.03 | land at turn 10 20.9
+  schemer      won   9.6% = 0.77x (396 seats) | buildings 136g culture 200g | walled in 62.6% of games (2.59 walls) | attacks/turn 4.12 | land at turn 10 21.0
+  turtle       won  21.7% = 1.74x (405 seats) | buildings 192g culture 382g | walled in 81.2% of games (5.07 walls) | attacks/turn 4.95 | land at turn 10 21.5
+ALLDONE

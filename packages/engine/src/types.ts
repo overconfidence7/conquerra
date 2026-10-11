@@ -255,6 +255,11 @@ export interface PlayerState {
   /** Who took this player's last territory (null if still alive, or nobody did, e.g. unrest). M3 hands them this player's Leader as a general. */
   eliminatedBy: PlayerId | null;
   capital: TerritoryId;
+  /**
+   * The start bonus (session 23, Nate): extra troops this player's capital started with, a harder spot's head start
+   * (the map's layout sets it per spot and table size). Missing: none.
+   */
+  startBonus?: number;
   leader: { alive: boolean; territory: TerritoryId | null };
   /** Turns remaining before each leader ability can be used again (0 = ready). */
   cooldowns: { seize: number; lie: number };
@@ -403,7 +408,7 @@ export interface HistoryPoint {
 }
 
 export interface GameState {
-  version: 12;
+  version: 13;
   gameId: string;
   mapId: string;
   turn: number;

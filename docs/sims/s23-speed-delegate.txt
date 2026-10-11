@@ -1,0 +1,4 @@
+Strategy: delegate-80 avg 2.05 ms, worst 14.8 ms
+base: delegate-80 avg 1.53 ms, worst 24.3 ms
+Strategy: delegate-80 avg 2.17 ms, worst 15.0 ms
+base: delegate-80 avg 1.55 ms, worst 23.8 ms

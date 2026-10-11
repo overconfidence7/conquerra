@@ -9,7 +9,7 @@ import { startingStewardShare } from "@conquerra/engine";
 import { planFinish, remnantRivals } from "./finish";
 import { planSweep, type Goes } from "./sweep";
 import { planHomeSweep } from "./home";
-import { planSteward } from "./steward";
+import { likelyLength, planSteward } from "./steward";
 import { think, type Insight } from "./judge";
 import type { MarshalMemory } from "./memory";
 import { marshalBreaks } from "./talk";
@@ -327,7 +327,7 @@ function planMoves(
   // Cleaning up, session 20d: every rival is one to finish, even one that borders whoever it reads as running away;
   // holding 75% of the map, nobody is shielding anyone from us.)
   const toFinish = J.finish && !calm && (cleanUp || view.turn > (J.opening?.turns ?? 0))
-    ? remnantRivals(b, rules.leaders.finish, cleanUp, J.sweep?.fog ?? 2).filter((r) => !atPeace(r) && (cleanUp || !shieldsLeader.has(r)) && (steer?.finishes ? steer.finishes(r) : !steer?.aim || idx.ids.some((t) => b.look0(t) === r && steer.aim!(t, 1) !== null)))
+    ? remnantRivals(b, rules.leaders.finish, cleanUp, steer ? (J.sweep?.fog ?? 2) : null).filter((r) => !atPeace(r) && (cleanUp || !shieldsLeader.has(r)) && (steer?.finishes ? steer.finishes(r) : !steer?.aim || idx.ids.some((t) => b.look0(t) === r && steer.aim!(t, 1) !== null)))
     : [];
   /** How far each of our territories is from their land, through our own (for recruiting near them). */
   const toRemnant = new Map<TerritoryId, number>();
@@ -362,7 +362,13 @@ function planMoves(
     if (region) for (const t of frontier) if (inRegion(t) && idx.neighbors.get(t)!.some((x) => !inRegion(x) && rivalAt(x))) asked.add(t);
     const taken = new Set<TerritoryId>();
     const budget = Math.floor(gold * realmShare);
-    for (const o of planSteward(b, marshalData.leaders.steward, { kind: "realm" }, budget, id, taken, rules.game.maxTurnsHard, asked, null, B.walls)) {
+    // (Session 23: with `realmPlan`, the Steward's plan, its Leader's province walled too; the Turtle keeps its forts first.)
+    const lesson = !!J.lesson && P.id !== "turtle";
+    const plan = J.realmPlan ? { planned: true, leaderAt: me.leader.alive ? me.leader.territory : null, lesson } : { lesson };
+    const RP = typeof J.realmPlan === "object" ? J.realmPlan : null;
+    const S = marshalData.leaders.steward;
+    const cfg = RP && S.plan ? { ...S, plan: { ...S.plan, rush: RP.rush, steady: RP.steady } } : S;
+    for (const o of planSteward(b, cfg, { kind: "realm" }, budget, id, taken, rules.game.maxTurnsHard, asked, null, B.walls, plan)) {
       spend(o);
       gold -= o.kind === "build" ? rules.buildings[o.building].cost : o.kind === "invest" ? (investCost(rules, seen(o.territory)!.culture) ?? 0) : 0;
       if (o.kind === "recruit" && typeof o.count === "number") gold -= o.count * troopCost;
@@ -382,10 +388,16 @@ function planMoves(
   const fortBuilding = mine.some((t) => seen(t)!.construction?.building === "fort") || errand?.kind === "fort";
   const fortAt = fortSpots.sort((a, c) => (a === capital ? -1 : c === capital ? 1 : 0) || biggestEnemyNear(c) - biggestEnemyNear(a) || (a < c ? -1 : 1))[0];
   // (Forts are the Steward's, not a military leader's.)
-  if (!steer && fortAt && (!fortBuilding || B.fortAt > 0 || J.anticipate?.fort) && gold >= rules.buildings.fort.cost + troopCost * 3) {
-    spend({ id: id(), kind: "build", territory: fortAt, building: "fort" });
-    gold -= rules.buildings.fort.cost;
-  }
+  const buyFort = () => {
+    if (!steer && fortAt && (!fortBuilding || B.fortAt > 0 || J.anticipate?.fort) && gold >= rules.buildings.fort.cost + troopCost * 3) {
+      spend({ id: id(), kind: "build", territory: fortAt, building: "fort" });
+      gold -= rules.buildings.fort.cost;
+    }
+  };
+  // The Merchant's lesson (session 23): a fort that isn't urgent (its capital threatened, or a rival army next door that
+  // could take the land) waits behind a market that pays for itself. The Turtle keeps its forts first.
+  const fortWaits = !!J.lesson && !steer && !realmShare && P.id !== "turtle" && !!fortAt && !(fortAt === capital && capThreatened) && holdNeed(fortAt) <= troopsAt(fortAt);
+  if (!fortWaits) buyFort();
 
   // Barracks, recruit and hire sites: as the Captain. A leader recruits where it commands (else the site nearest its armies).
   const anySite = mine.filter((t) => isRecruitSiteIn(ctx, view, t));
@@ -421,13 +433,17 @@ function planMoves(
   // Markets on safe land (no rival next to it as far as it knows), up to its number, keeping gold for troops.
   const quiet = (t: TerritoryId) => idx.neighbors.get(t)!.every((x) => owned(x) || b.look0(x) === null);
   const markets = mine.filter((t) => seen(t)!.building === "market" || seen(t)!.construction?.building === "market").length;
-  if (!steer && !realmShare && view.turn >= B.marketsFrom && longRun && markets < B.markets && !capThreatened) {
+  // (With the lesson, session 23: only a market that pays for itself before the game is likely to end.)
+  const L = J.lesson ? marshalData.leaders.steward.lesson : undefined;
+  const pays = !L || rules.buildings.market.buildTurns + rules.buildings.market.cost / rules.buildings.market.income + L.spare <= likelyLength(L.lengths, idx.ids.length) - view.turn;
+  if (!steer && !realmShare && view.turn >= B.marketsFrom && longRun && markets < B.markets && !capThreatened && pays) {
     const spot = mine.filter((t) => !building(t) && quiet(t)).sort((a, c) => Number(isFrontier(a)) - Number(isFrontier(c)) || (a < c ? -1 : 1))[0];
     if (spot && gold >= rules.buildings.market.cost + troopCost * B.marketReserve) {
       spend({ id: id(), kind: "build", territory: spot, building: "market" });
       gold -= rules.buildings.market.cost;
     }
   }
+  if (fortWaits) buyFort();
 
   // Specialists: as the Captain.
   const byFront = (a: TerritoryId, c: TerritoryId) => Number(isFrontier(c)) - Number(isFrontier(a)) || frontRank(c) - frontRank(a) || (a < c ? -1 : 1);
@@ -558,7 +574,8 @@ function planMoves(
   }
   // A real garrison inside our walls (session 20d, Nate: the wall lends spare troops, so a garrisoned wall is the point):
   // a leader keeps `wallGarrison` in each walled territory of a wall that faces a rival (not while it cleans up).
-  const wallKeep = steer && J.wallGarrison && !cleaningUp ? J.wallGarrison : 0;
+  // (Session 23: the Marshal's own Leader too, once its realm builds with the plan.)
+  const wallKeep = (steer || (J.realmPlan && (typeof J.realmPlan !== "object" || J.realmPlan.garrison))) && J.wallGarrison && !cleaningUp ? J.wallGarrison : 0;
   const garrisoned = new Set<TerritoryId>();
   if (wallKeep > 0)
     for (const w of view.walls ?? [])
