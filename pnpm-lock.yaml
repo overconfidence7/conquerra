@@ -80,6 +80,9 @@ importers:
       '@fontsource/spectral':
         specifier: ^5.3.0
         version: 5.3.0
+      '@pixi/sound':
+        specifier: 6.0.1
+        version: 6.0.1(pixi.js@8.22.0)
       pixi.js:
         specifier: ^8.22.0
         version: 8.22.0
@@ -1406,6 +1409,11 @@ packages:
 
   '@pixi/colord@2.9.6':
     resolution: {integrity: sha512-nezytU2pw587fQstUu1AsJZDVEynjskwOL+kibwcdxsMBFqPsFFNA7xl0ii/gXuDi6M0xj3mfRJj8pBSc2jCfA==}
+
+  '@pixi/sound@6.0.1':
+    resolution: {integrity: sha512-hpFlQSScAR2L/CsEoIvDi7s1oGsu8y9Zd742Vd3982N+q3IF2vFuIfV9HN4ryjlGnhCT8yBlEgs1gp4G9Rt9TA==}
+    peerDependencies:
+      pixi.js: ^8.0.0
 
   '@poppinss/colors@4.1.6':
     resolution: {integrity: sha512-H9xkIdFswbS8n1d6vmRd8+c10t2Qe+rZITbbDHHkQixH5+2x1FDGmi/0K+WgWiqQFKPSlIYB7jlH6Kpfn6Fleg==}
@@ -4211,6 +4219,10 @@ snapshots:
   '@noble/hashes@1.8.0': {}
 
   '@pixi/colord@2.9.6': {}
+
+  '@pixi/sound@6.0.1(pixi.js@8.22.0)':
+    dependencies:
+      pixi.js: 8.22.0
 
   '@poppinss/colors@4.1.6':
     dependencies:

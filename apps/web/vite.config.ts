@@ -75,6 +75,13 @@ export default defineConfig({
         // version.json is never cached: it's how the app finds out a newer build is live.
         globIgnores: [...LATER_MAPS.map((id) => `**/assets/${id}-*.js`), "version.json"],
         runtimeCaching: [
+          // The game's sounds (session 24) aren't fetched up front: each is kept once it has played, and refreshed in the
+          // background (a replaced sound keeps its name).
+          {
+            urlPattern: /\/sound\/[\w-]+\.mp3$/,
+            handler: "StaleWhileRevalidate",
+            options: { cacheName: "sound", expiration: { maxEntries: 120 } },
+          },
           {
             urlPattern: new RegExp(String.raw`/assets/(${LATER_MAPS.join("|")})-[\w-]+\.js$`),
             handler: "CacheFirst",

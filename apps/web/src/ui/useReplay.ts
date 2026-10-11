@@ -5,6 +5,8 @@ import { bigMoment, CAMERA_EASE_MS, planReplayCamera, replaySpots, type CameraMo
 import { buildTimeline, frameAt, replayView, type Beat, type ReplayFrame } from "../replay/timeline";
 import type { MapRenderer } from "../render/types";
 import { cardAt, titleCards, type TitleCard } from "../replay/titles";
+import { mixer } from "../sound/mixer";
+import { soundPlan, soundsBetween } from "../sound/plan";
 
 /**
  * Drives the animated replay: a clock from the timeline (replay/timeline.ts), each frame handed to the renderer
@@ -51,6 +53,14 @@ export function useReplay(
     // Capitals this view knows of: the camera pushes in when one falls.
     const capitals = new Set([replay.before.me.capital, ...Object.entries(replay.before.territories).flatMap(([id, t]) => (t.detail === "full" && t.capitalOf ? [id] : []))]);
     const moves: CameraMove[] = start && spots ? planReplayCamera(timeline, spots, start.cam, start.vp, replay.before.me.id, { pushIn: (b) => bigMoment(b, capitals) }) : [];
+    // The replay's sounds (session 24), worked out from the timeline like the effects, and played as the clock passes
+    // them: "Watch again" sounds the same; Skip stops them.
+    const forts = new Set<string>();
+    for (const [id, t] of Object.entries(replay.before.territories)) if (t.detail === "full" && t.building === "fort") forts.add(id);
+    for (const w of replay.before.walls ?? []) for (const id of w.territories) forts.add(id);
+    const sounds = soundPlan(timeline, { gameId: replay.before.gameId, turn: replay.before.turn, me: replay.before.me.id, isCapital: (id) => capitals.has(id), fortified: (id) => forts.has(id) }, replay.report.events);
+    let heard = -1;
+    let skipped = false;
     // The effects need to know about the replay (and the map can be rebuilt as it starts: tell whichever is current).
     let toldRenderer: MapRenderer | null = null;
     let nextMove = 0;
@@ -76,6 +86,14 @@ export function useReplay(
       if (renderer.current && renderer.current !== toldRenderer) {
         toldRenderer = renderer.current;
         toldRenderer.startReplay?.(timeline, replay.report.events, replay.before);
+      }
+      if (skipRef.current) {
+        if (!skipped) mixer.stopEffects();
+        skipped = true;
+      } else {
+        // (A screenshot script holding the replay at a moment can move the clock back: nothing plays then.)
+        if (t >= heard) for (const s of soundsBetween(sounds, heard, t)) mixer.play(s.cue, s.seed, s.gain);
+        heard = t;
       }
       const f: ReplayFrame = frameAt(timeline, t);
       renderer.current?.setReplay(f.done ? null : f);

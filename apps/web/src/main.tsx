@@ -12,6 +12,8 @@ import "@fontsource/spectral/400.css";
 import "@fontsource/spectral/600.css";
 import "@fontsource/spectral/400-italic.css";
 import "./styles.css";
+// Phones allow sound only after a tap: the first tap anywhere wakes the audio (session 24).
+import "./sound/unlock";
 import { artUrl } from "./ui/art";
 
 // Nate's gold filigree corner replaces the drawn corners on every gilded frame once it has loaded.
@@ -75,6 +77,7 @@ const lab = LABS ? new URLSearchParams(location.search).get("lab") : null;
 const root = document.getElementById("root")!;
 if (LABS && lab === "maps") void import("./lab/maps/MapLab").then((m) => m.runMapLab(root));
 else if (LABS && (lab === "bench" || lab === "houses")) void import("./lab/bench/Bench").then((m) => m.runBench(root));
+else if (LABS && lab === "sound") void import("./lab/sound/SoundBench").then((m) => m.runSoundBench(root));
 else
   createRoot(root).render(
     <StrictMode>

@@ -35,6 +35,8 @@ import { useLayout, useLayoutChoice } from "./useLayout";
 import { VersionLine } from "./Diagnostics";
 import type { LayoutChoice } from "../logic/layout";
 import { FX_LEVELS, useFx } from "../replay/fx/settings";
+import { useSound } from "../sound/settings";
+import { mixer } from "../sound/mixer";
 import { houseOf } from "../map/houses";
 import { namer, startBonusLine } from "../logic/text";
 import "./replay.css";
@@ -144,6 +146,7 @@ function Settings({ tactical, onTactical, onFit, onReport, onSaves, onLeave, onC
       </button>
       <LayoutSetting />
       <EffectsSetting />
+      <SoundSetting />
       <button className="menu-item" onClick={() => setCredits(true)}>
         Credits <span className="muted">sound and music</span>
       </button>
@@ -198,6 +201,30 @@ function EffectsSetting() {
   );
 }
 
+/**
+ * Settings → Sound (session 24): Master, Music and Sound effects volumes, and Mute, remembered on this device.
+ * Separate from Effects: Effects Off doesn't silence sound, and Mute doesn't change what you see.
+ */
+function SoundSetting() {
+  const s = useSound();
+  const slider = (label: string, key: "master" | "music" | "effects") => (
+    <label className="menu-item sound-row">
+      <span>{label}</span>
+      <input type="range" min={0} max={100} step={5} value={Math.round(s[key] * 100)} disabled={s.muted} aria-label={`${label} volume`} onChange={(e) => s.set({ [key]: Number(e.target.value) / 100 })} />
+    </label>
+  );
+  return (
+    <div className="sound-settings" role="group" aria-label="Sound">
+      <button className="menu-item" onClick={() => s.set({ muted: !s.muted })} aria-pressed={!s.muted}>
+        Sound <span className="muted">{s.muted ? "Muted" : "On"}</span>
+      </button>
+      {slider("Master", "master")}
+      {slider("Music", "music")}
+      {slider("Sound effects", "effects")}
+    </div>
+  );
+}
+
 let toastId = 0;
 
 const NO_AREA: readonly string[] = [];
@@ -234,6 +261,11 @@ export function GameScreen() {
     const t = setTimeout(() => setSweepTurn(null), 1500);
     return () => clearTimeout(t);
   }, [view, replay]);
+  // The sound effects load with the game screen (session 24), once it's up (never with the lobby).
+  useEffect(() => {
+    const idle = (window as { requestIdleCallback?: (f: () => void) => number }).requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300));
+    idle(() => void mixer.load(mixer.allEffects()));
+  }, []);
   useEffect(() => {
     if (movedToLight) useGame.setState({ notice: "Heads up, the replay was running slowly, so Effects are on Light now. You can change it in Settings." });
   }, [movedToLight]);

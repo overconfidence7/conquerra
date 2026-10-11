@@ -464,8 +464,6 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .popover { position: absolute; z-index: 25; top: 66px; right: 8px; width: min(320px, calc(100% - 16px)); display: flex; flex-direction: column; gap: 8px; }
 .menu-item { display: flex; justify-content: space-between; align-items: center; width: 100%; text-align: left; }
 /* A label with its explanation underneath (Save to a file, Load a file): never squeezed into a column on a phone. */
-/* Settings → Credits (session 24). */
-.credits .credit-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; max-height: min(60vh, 420px); overflow-y: auto; font-size: var(--fs-small); }
 .menu-item.stacked { flex-direction: column; align-items: flex-start; gap: 2px; }
 .menu-item.stacked .muted { font-size: var(--fs-small); }
 
