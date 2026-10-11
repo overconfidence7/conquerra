@@ -86,3 +86,34 @@ describe("walls on the page (session 20b)", () => {
     expect(wallHint(ctx, viewFor(ctx, s, "you"), w, "culture")).toBeNull();
   });
 });
+
+describe("walls that pay back, on the page (session 25)", () => {
+  // The bonus on (+10% a walled territory beyond the first, up to +40%), whatever rules.json ships.
+  const on: GameContext = { map: ctx.map, rules: { ...defaultRules, walls: { ...defaultRules.walls!, stackPerTerritory: 0.1, stackMax: 0.4 } } };
+  const off: GameContext = { map: ctx.map, rules: { ...defaultRules, walls: { ...defaultRules.walls!, stackPerTerritory: 0, stackMax: 0.4 } } };
+
+  it("the card, the panel and the attack panel say the bonus in words: '+20% for 3 walled'", () => {
+    const s = game();
+    const rival = viewFor(on, s, "rival");
+    const line = `Walled: 10 defend (with ${name(y)} and ${name(x)}), +20% for 3 walled`;
+    expect(wallLine(on, rival, z)).toBe(line);
+    expect(territoryCard(on, rival, z).lines.find((l) => l.label === "Wall")?.value).toBe(line);
+    // Off (or an older game's rules): the line is as it was.
+    expect(wallLine(off, viewFor(off, s, "rival"), z)).toBe(`Walled: 10 defend (with ${name(y)} and ${name(x)})`);
+  });
+
+  it("a wall of one says nothing about a bonus (it has none)", () => {
+    const s = game();
+    for (const t of [x, y]) Object.assign(s.territories[t]!, { culture: 0, building: null, walled: undefined });
+    expect(wallLine(on, viewFor(on, s, "rival"), z)).toBe("Walled: 4 defend (no spare troops nearby in its wall)");
+  });
+
+  it("the culture and fort buttons' 'Completes a wall' adds what a wall is worth, once", () => {
+    const s = game();
+    Object.assign(s.territories[w]!, { owner: "you", troops: 3, culture: 4, building: "fort" });
+    expect(wallHint(on, viewFor(on, s, "you"), w, "culture")).toBe("Completes a wall: walled at the end of this turn (+10% for each walled territory it joins)");
+    expect(wallHint(off, viewFor(off, s, "you"), w, "culture")).toBe("Completes a wall: walled at the end of this turn");
+    Object.assign(s.territories[w]!, { culture: 5, building: null });
+    expect(wallHint(on, viewFor(on, s, "you"), w, "fort")).toBe("Completes a wall once it's finished (+10% for each walled territory it joins)");
+  });
+});

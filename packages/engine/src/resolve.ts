@@ -37,7 +37,7 @@ import { visibleTerritories } from "./vision";
 import { hireSpy, spiesEndOfTurn, spyOrders, spyReports } from "./spies";
 import { authorOf, captureLeaders, commandLeaders, findLeader, handBack, loseCaptured, payBudgets, pursesPayUpkeep } from "./leaders";
 import { recordTurn } from "./history";
-import { shareWallLosses, updateWalls, wallLenders, wallRules, type Lend } from "./walls";
+import { shareWallLosses, updateWalls, wallLenders, wallRules, wallSteps, type Lend } from "./walls";
 
 /** Called after every event with the live board (tests use it to check the replay against the real game). */
 export type TurnObserver = (e: StepEvent, live: Readonly<GameState>) => void;
@@ -514,6 +514,12 @@ class Turn {
     return wallLenders(this.ctx, this.s.territories, toId, w.oneBattleATurn ? this.lent : undefined);
   }
 
+  /** How many territories `toId`'s wall has right now (0: not walled; session 25's stacking bonus counts them all). */
+  wallSize(toId: TerritoryId): number {
+    if (!wallRules(this.ctx.rules) || !this.terr(toId)?.walled) return 0;
+    return wallSteps(this.ctx, this.s.territories, toId).size;
+  }
+
   expect(pid: PlayerId, toId: TerritoryId, plan: MovePlan, lend = this.wallLend(toId)): BattleExpectation {
     const to = this.terr(toId)!;
     const defender = to.owner ? this.player(to.owner) : null;
@@ -529,6 +535,7 @@ class Turn {
       terrain: this.idx.byId.get(toId)!.terrain,
       building: to.building,
       culture: to.culture,
+      wallSize: this.wallSize(toId),
       border: plan.border,
       luck: this.s.settings.luck,
     });

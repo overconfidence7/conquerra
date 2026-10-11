@@ -289,6 +289,9 @@ export const Rules = z.object({
    * every other territory of its wall within `reach` steps along the wall (null: the whole wall) lends its spare troops
    * (all but the garrison; half of them unless `lendAll`) to the defence, each to one battle a turn if
    * `oneBattleATurn`. Defence only. Missing (an older game's rules) or `on: false`: no walls.
+   * The stacking bonus (session 25, Nate's call): a walled territory defends at × (1 + min(`stackMax`,
+   * `stackPerTerritory` × (wall size − 1))), the wall size being every territory of that wall. Both optional: missing
+   * means no bonus (an older save's rules play as they were); `stackMax` null means no cap.
    */
   walls: z
     .object({
@@ -298,6 +301,8 @@ export const Rules = z.object({
       reach: z.number().int().min(1).nullable(),
       lendAll: z.boolean(),
       oneBattleATurn: z.boolean(),
+      stackPerTerritory: z.number().min(0).optional(),
+      stackMax: z.number().min(0).nullable().optional(),
     })
     .optional(),
   economy: z.object({

@@ -24,18 +24,21 @@ export function previewAttack(ctx: GameContext, view: PlayerView, a: AttackPlan)
   if (!target || target.detail !== "full") return null;
   const idx = indexMap(ctx.map);
   const def = idx.byId.get(a.to)!;
+  const wall = view.walls?.find((w) => w.territories.includes(a.to));
   const border = idx.border(a.through?.[a.through.length - 1] ?? a.via ?? a.from, a.to) ?? "normal";
   return expectBattle(ctx.rules, {
     attackers: a.troops,
     attackerSpecialists: a.specialists ?? [],
     attackerLeader: !!a.withLeader,
     // A walled target: everyone its wall would send (the wall and its garrison are visible to anyone who sees part of it).
-    defenders: view.walls?.find((w) => w.territories.includes(a.to))?.defend[a.to] ?? target.troops,
+    defenders: wall?.defend[a.to] ?? target.troops,
     defenderSpecialists: target.specialists.map((s) => s.type),
     defenderLeader: target.owner !== null && target.leaders.includes(target.owner),
     terrain: def.terrain,
     building: target.building,
     culture: target.culture,
+    // Session 25: the wall's stacking bonus, from its size (the whole wall is in view, as the engine counts it).
+    wallSize: wall?.territories.length ?? 0,
     border,
     luck: view.settings.luck,
   });

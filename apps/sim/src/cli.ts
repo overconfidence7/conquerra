@@ -5,6 +5,7 @@ import { indexMap, replaySavedGame, stateFingerprint, type GameContext, type Gam
 import { CAPTAIN_CHAIN_MARGIN, dealPersonalities, makeCaptainBot, makeGeneralSeat, makeMarshalBot, makeRecruitBot, PERSONALITY_IDS, type Bot, type CaptainFeature, type GeneralSeatKind } from "@conquerra/bots";
 import type { PersonalityId } from "@conquerra/content";
 import { narrate } from "./narrate";
+import { applyRuleArgs } from "./ruleArgs";
 import { runGame, type GameSummary } from "./runGame";
 
 /**
@@ -86,14 +87,7 @@ const rules = JSON.parse(JSON.stringify(defaultRules)) as typeof defaultRules;
 if (arg("culture-defense", "")) rules.culture.defensePerLevel = Number(arg("culture-defense", ""));
 if (arg("culture-costs", "")) rules.culture.investCost = arg("culture-costs", "").split(",").map(Number);
 /** Any number in the rules: --rules fallen.influenceBase=1,fallen.events.plague.cost=10 (for tuning; dots are the JSON path). */
-for (const kv of arg("rules", "").split(",").filter(Boolean)) {
-  const [path, value] = kv.split("=");
-  const keys = path!.split(".");
-  let o = rules as unknown as Record<string, unknown>;
-  for (const k of keys.slice(0, -1)) o = o[k] as Record<string, unknown>;
-  if (!(keys[keys.length - 1]! in o)) throw new Error(`No rule ${path}`);
-  o[keys[keys.length - 1]!] = Number(value);
-}
+applyRuleArgs(rules, arg("rules", ""));
 /** Walls (session 20b): --walls off to compare (on by default); --rules walls.reach=2 etc. for its limits. */
 if (rules.walls) rules.walls.on = arg("walls", "on") !== "off";
 const tuned = arg("culture-defense", "") || arg("culture-costs", "") ? `, culture +${Math.round(rules.culture.defensePerLevel * 100)}%/level costing ${rules.culture.investCost.join("/")}` : "";

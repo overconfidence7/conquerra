@@ -202,6 +202,8 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
    * it's part of a wall we can see; null otherwise. The engine shows a wall's shared garrison to anyone who sees part of it.
    */
   const wallDefend = (t: TerritoryId): number | null => view.walls?.find((w) => w.territories.includes(t))?.defend[t] ?? null;
+  /** How many territories `t`'s wall has, as far as we can see (0: not walled); its stacking bonus, as the preview counts it (session 25). */
+  const wallSize = (t: TerritoryId): number => view.walls?.find((w) => w.territories.includes(t))?.territories.length ?? 0;
   /** Troops needed in `t` so that no rival army we can see next to it is likely to take it (crossings, terrain, fort and Leaders count). */
   const needCache = new Map<TerritoryId, number>();
   const holdNeed = (t: TerritoryId): number => {
@@ -226,6 +228,7 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
           terrain: idx.byId.get(t)!.terrain,
           building: v.building,
           culture: v.culture,
+          wallSize: wallSize(t),
           border: border(nb, t),
           luck: view.settings.luck,
         }).captureLikely;
@@ -278,6 +281,7 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
       terrain: idx.byId.get(to)!.terrain,
       building: g.building,
       culture: g.culture,
+      wallSize: wallSize(to),
       border: border(from, to),
       luck: view.settings.luck,
     });
@@ -326,6 +330,7 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
         terrain: idx.byId.get(at)!.terrain,
         building: look(at).building,
         culture: look(at).culture,
+        wallSize: owned(at) ? wallSize(at) : 0,
         border: border(x, at),
         luck: view.settings.luck,
       }).captureLikely;
@@ -349,7 +354,7 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
     ctx, view, rules, idx, me, garrison, on, blocked,
     seen, owned, rivalAt, troopsAt, specsAt, mine, border, crossing, isFrontier, frontier, enemyPressure, biggestEnemyNear,
     alive, look0, knownLand, facing, endgame, runaway, shieldsLeader, raider, facesRival, facesRaider, wantsFront,
-    focus, toFocusCapital, spearhead, holdNeed, chokeHolder, capital, capThreatened, look, expectAt, valueOf, needFor, exposed, wallDefend,
+    focus, toFocusCapital, spearhead, holdNeed, chokeHolder, capital, capThreatened, look, expectAt, valueOf, needFor, exposed, wallDefend, wallSize,
   };
 }
 

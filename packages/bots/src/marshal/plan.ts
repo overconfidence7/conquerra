@@ -309,7 +309,7 @@ function planMoves(
         const v = seen(t)!;
         const takes = expectBattle(rules, {
           attackers, attackerSpecialists: seen(x)!.specialists.map((s) => s.type), attackerLeader: seen(x)!.leaders.includes(r), defenders: b.wallDefend(t) ?? v.troops, defenderSpecialists: v.specialists.map((s) => s.type),
-          defenderLeader: v.leaders.includes(me.id), terrain: idx.byId.get(t)!.terrain, building: v.building, culture: v.culture, border: b.border(x, t), luck: view.settings.luck,
+          defenderLeader: v.leaders.includes(me.id), terrain: idx.byId.get(t)!.terrain, building: v.building, culture: v.culture, wallSize: b.wallSize(t), border: b.border(x, t), luck: view.settings.luck,
         }).captureLikely;
         if (!takes) continue;
         const score = (b.valueOf(t) + (t === capital ? 10 : 0)) / Math.max(1, v.troops);

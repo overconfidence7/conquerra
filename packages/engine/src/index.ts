@@ -45,7 +45,7 @@ export { TurnVision, recordTurnSightings, sightingOf, applyLand, type VisionDelt
 export { checkMissions, drawFate, type FateHost } from "./fate";
 export { SPOILS_MARKS, setsIn, withoutSet, homeOf, laurelLand, autoSpoils, turnInSpoils, spoilsEndOfTurn, type SpoilsHost } from "./spoils";
 export { PRESETS, expandPreset, type PresetInfo } from "./presets";
-export { expectBattle, rollLosses, healerReduction, cultureDefense, terrainDefense, bannerBonus, type BattleExpectation, type BattleInput } from "./combat";
+export { expectBattle, rollLosses, healerReduction, cultureDefense, wallDefense, terrainDefense, bannerBonus, type BattleExpectation, type BattleInput } from "./combat";
 export { SHARES, amountLabel, fewestToTake, isShare, recruitCount, recruitLabel, troopsFor, type RecruitAmount, type Share, type TroopAmount } from "./amounts";
 export { previewAttack, recruitSitesIn, isRecruitSiteIn, type AttackPlan } from "./preview";
 export { wallRules, qualifiesForWall, isWalled, wallSteps, allWalls, wallLenders, wallDefenders, shareWallLosses, updateWalls, type Lend, type WallRules } from "./walls";

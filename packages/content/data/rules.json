@@ -134,7 +134,9 @@
     "needsFort": true,
     "reach": null,
     "lendAll": true,
-    "oneBattleATurn": false
+    "oneBattleATurn": false,
+    "stackPerTerritory": 0,
+    "stackMax": 0.4
   },
   "economy": {
     "startGold": 20,

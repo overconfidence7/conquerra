@@ -1,4 +1,4 @@
-import { cultureProtection, investCost, wallRules, type GameContext, type PlayerView, type TerritoryId, type WallView } from "@conquerra/engine";
+import { cultureProtection, investCost, wallDefense, wallRules, type GameContext, type PlayerView, type TerritoryId, type WallView } from "@conquerra/engine";
 import { BUILDING_NAME, SPECIALIST_NAME } from "../logic/text";
 import { houseOf } from "./houses";
 
@@ -138,7 +138,8 @@ export const wallAt = (view: PlayerView, id: TerritoryId): WallView | null => vi
 /**
  * The card's wall line (session 20b): "Walled: 10 defend (with Pinemark and Ashfell)": everyone who'd defend it if it
  * were attacked now, and the land of its wall that would lend troops. A wall you only remember: "Walled when last
- * seen". Null: no wall here that you know of.
+ * seen". Null: no wall here that you know of. With the stacking bonus (session 25): ", +20% for 3 walled" (what the
+ * odds preview counts; nothing for a wall of one).
  */
 export function wallLine(ctx: GameContext, view: PlayerView, id: TerritoryId): string | null {
   const w = wallAt(view, id);
@@ -149,14 +150,22 @@ export function wallLine(ctx: GameContext, view: PlayerView, id: TerritoryId): s
   const name = (t: TerritoryId) => ctx.map.territories.find((x) => x.id === t)?.name ?? t;
   const lenders = w.with[id] ?? [];
   const shown = lenders.length > 3 ? [...lenders.slice(0, 3).map(name), `${lenders.length - 3} more`] : lenders.map(name);
-  return `Walled: ${w.defend[id]} defend${lenders.length ? ` (with ${listed(shown)})` : " (no spare troops nearby in its wall)"}`;
+  const bonus = Math.round((wallDefense(ctx.rules, w.territories.length) - 1) * 100);
+  return `Walled: ${w.defend[id]} defend${lenders.length ? ` (with ${listed(shown)})` : " (no spare troops nearby in its wall)"}${bonus > 0 ? `, +${bonus}% for ${w.territories.length} walled` : ""}`;
 }
 
 /**
  * Before you buy the last piece of a wall (session 20b), the culture and build panels say so: "Completes a wall:
  * walled at the end of this turn". `levels`: culture after the orders queued so far. Null: this doesn't complete one.
+ * With the stacking bonus on (session 25), the hint says what a wall adds, once: "(+10% for each walled territory it joins)".
  */
 export function wallHint(ctx: GameContext, view: PlayerView, id: TerritoryId, what: "culture" | "fort", levels?: ReadonlyMap<TerritoryId, number>): string | null {
+  const hint = completesWall(ctx, view, id, what, levels);
+  const per = Math.round((wallRules(ctx.rules)?.stackPerTerritory ?? 0) * 100);
+  return hint && per > 0 && wallDefense(ctx.rules, 2) > 1 && hint.startsWith("Completes") ? `${hint} (+${per}% for each walled territory it joins)` : hint;
+}
+
+function completesWall(ctx: GameContext, view: PlayerView, id: TerritoryId, what: "culture" | "fort", levels?: ReadonlyMap<TerritoryId, number>): string | null {
   const W = wallRules(ctx.rules);
   const v = view.territories[id];
   if (!W || v?.detail !== "full" || v.owner !== view.me.id || wallAt(view, id)) return null;

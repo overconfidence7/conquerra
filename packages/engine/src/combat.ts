@@ -13,6 +13,11 @@ export interface BattleInput {
   building: BuildingType | null;
   /** The defended territory's culture ("loyal land": each level adds `rules.culture.defensePerLevel` to its defense). */
   culture: number;
+  /**
+   * Walls (session 25): how many territories the defended territory's wall has (0 or missing: not walled). Each one
+   * beyond the first adds `rules.walls.stackPerTerritory` to the defence, up to `stackMax` (`wallDefense`).
+   */
+  wallSize?: number;
   border: BorderType;
   luck: number;
 }
@@ -55,6 +60,20 @@ export function cultureDefense(rules: Rules, culture: number): number {
   return 1 + Math.max(0, culture) * rules.culture.defensePerLevel;
 }
 
+/**
+ * Walls that pay back (session 25, Nate's call): the defence multiplier a wall of `size` territories gives each of
+ * them: 1 + min(stackMax, stackPerTerritory × (size − 1)). One territory alone gets nothing; with the defaults five
+ * or more get the cap. Missing numbers (an older game's rules) or walls off: 1. Siege doesn't cut it (only the fort's).
+ */
+export function wallDefense(rules: Rules, size: number): number {
+  const w = rules.walls;
+  if (!w?.on || size <= 1) return 1;
+  const per = w.stackPerTerritory ?? 0;
+  const cap = w.stackMax === undefined ? 0 : w.stackMax;
+  const bonus = per * (size - 1);
+  return 1 + Math.max(0, cap === null ? bonus : Math.min(cap, bonus));
+}
+
 /** Pure math: what should happen on average. Used for previews, bots, presets and resolution. */
 /**
  * The terrain's defense against this army (the culture ladder, session 15): Rangers make forest, hills and swamp defend
@@ -83,7 +102,7 @@ export function expectBattle(rules: Rules, b: BattleInput): BattleExpectation {
     const broken = count(b.attackerSpecialists, "siege") * rules.specialists.siege.fortBreak;
     fortMult = 1 + Math.max(0, bonus * (1 - broken));
   }
-  const defenseStrength = b.defenders * rules.troops.defense * terrainDefense(rules, b.terrain, b.attackerSpecialists) * fortMult * cultureDefense(rules, b.culture) * leaderD;
+  const defenseStrength = b.defenders * rules.troops.defense * terrainDefense(rules, b.terrain, b.attackerSpecialists) * fortMult * cultureDefense(rules, b.culture) * wallDefense(rules, b.wallSize ?? 0) * leaderD;
 
   const eDef = attackStrength * rules.combat.attackKillRate * (1 - healerReduction(rules, b.defenderSpecialists));
   const eAtk = defenseStrength * rules.combat.defenseKillRate * (1 - healerReduction(rules, b.attackerSpecialists));
