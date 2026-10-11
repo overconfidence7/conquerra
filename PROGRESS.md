@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–24 are done; session 24 (sound, the last M3 session) awaits review. M3 is done when Nate's play test is in ("Things to test after session 24"). Next: **session 25** (a wall's stacking defense bonus and the seat rule, after the play test). Orchestrator-09 is written; the next is due after session 26.**
+**Phase: M3 (depth and balance). Sessions 7–24 are done and reviewed; session 24 (sound) was the last M3 build. M3 is done when Nate's play test is in ("Things to test after session 24"; the sound bench at `?lab=sound`). Next: **session 25** (a wall's stacking defense bonus and the seat rule), written after the play test. Orchestrator-09 is running; the next is due after session 26.**
 
 Claude Code sessions completed: **24** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -1383,6 +1383,14 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
 - **Frame rate** (phone profile, the same pinned game muted and with sound, fog lifted, three turns): Wyrmland 6 muted 63.8, 81.8 and 72.9 fps, with sound 73.7, 83.4 and 88.0; Krakenmere 10 muted 74.9, 66.2 and 61.5, with sound 57.4, 64.5 and 57.7 (three passes; the last with the music and ambience in). Two muted runs of the same game differ by up to 28% on this laptop, so sound's cost is inside the noise; Krakenmere averages about 10% lower with sound, so watch it on your phone. A profile of a replay with sound on shows nothing from the sound library. Never more than 6 sounds at once on the phone profile.
 - **Tests and deploys:** 1,068 tests pass; typecheck and the web build pass. Deployed `e28f2a2d` (Part 2), `39843e94` (Part 3), `13ef2662` (Part 4) and **`33787070`** (final); the lock check passed each time. The full suite ran twice before the last push. Nate: please check the repo's Actions page for the last commit.
 
+### Oct 11: Orchestrator review of session 24
+- **The code:** six commits, all green (the write-up and the final PROGRESS commit were pushed together, so CI ran once, on the tip). Nothing slipped: no 24b.
+- **Every license checked at its source:** all 25 pages say CC0 (Kenney's four, the 21 on OpenGameArt). None owes credit; several say credit is "appreciated", and Settings → Credits does that. One nit for 25's Step 0: the wind recording's page asks to be credited as "Bashar from Skirmish.io", not "Bashar3A". The test refuses any file without an allowed license (CC0, public domain, CC BY); the license texts are in `docs/sound/licenses/`.
+- **Nothing in the game changed:** the same seeded sim (60 games, Embervale 4, a Blitzer against Captains) at the commit before the session and at the tip is identical, as it must be for a session that changed only words and sound.
+- **Sizes re-counted:** effects 602 KB, music 2.3 MB, ambience 603 KB (3.6 MB on disk, 3.1 MB for a first game). The bundle's +1.4 KB is inside the allowance.
+- **The screenshots:** Settings → Sound and Credits read well on the laptop and the phone; the bench lists the busy turn's 61 sounds in order. **Seen in them:** Settings on the phone is now a long scroll (Leaders' orders, six buttons, Layout, Effects, Sound and three sliders, Credits, Leave): worth folding the sliders under the Sound row later. In the busy turn the capture fanfare plays three times in six seconds (10.0, 12.9, 15.5 s): a bar of music that often may grate; Nate's ear on the bench decides.
+- **Not checked here:** the sounds themselves (no ears in this review either) and the phone's frame rate with sound; both are Nate's.
+
 ### Things to test after session 24 (Nate's next play test, the last of M3)
 *Laptop first; the phone where it applies. Sound on (it's on by default).*
 - **From session 24, most important first:**
@@ -1395,5 +1403,5 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
   7. **The ambience:** zoom in near a coast. Can you hear the sea? Is the wind too much? Do the birds ever get annoying?
   8. **The small sounds:** the seal when you lock in, coins when you recruit or build, the ticks in the last 10 seconds (try a 1-minute timer), the turn sweep. Any you'd rather not hear?
   9. **The report:** a Steward raising culture several levels at one place now reads as one line ("from 1 to 5 (28 gold)").
-- **Still open from session 23 (not tried yet):** your Steward's handout; starting at a weak spot; the Marshals tougher or the same; a delegating game on Embervale 4 or Wyrmland 6; the comeback card; your Leader's "Finishing them off" in the fog; the new words.
+- **Still open from session 23 (not tried yet, and the ones session 25 waits on):** your Steward's handout; starting at a weak spot; the Marshals tougher or the same; a delegating game on Embervale 4 or Wyrmland 6; the comeback card; your Leader's "Finishing them off" in the fog; the new words.
 - **Still open from session 22 and before:** read a whole turn's report; the six personalities' deal answers; your leaders saying too much; capturing a leader; lines you'd never say (`docs/voice/lines-for-nate.md`); the update notice on your phone; a whole replay on the phone on Full; Effects Off; "Watch again"; the buildings; the title and game over art; a capital falling; the living map; the menus' seal, ember and sweep; Run the military at 50 to 80%; the sweep into the fog; the Steward's walls; a 160-territory map; Embervale with 4; getting knocked out once; Conquest's 20 turns on a 200-territory map; a remembered wall in the fog.
