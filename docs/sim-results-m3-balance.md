@@ -418,3 +418,25 @@ So it ranks the weak spots low most of the time, but not reliably enough to repl
 | The Twin Realms 4 | 25.0% | none under half of fair | | | | |
 | The Twin Realms 8 | 12.5% | Westerfall | 3.0% | +2 | 5.0% | **no** (listed) |
 |  |  | Longwell | 5.7% | +4 | 1.7% | **no** (listed) |
+
+## The seat rule (session 25)
+*Nate's call (Oct 11): a weak capital spot is used only when every other spot at that table size is taken, and goes to a bot before a person. Raw runs: `docs/sims/s25-seats-random-*.txt` and `s25-seats-botsfirst-*.txt`.*
+
+**As built:** `createGame`'s `seatRule: "botsFirst"`. After the seeded shuffle of seats, a person dealt a harder spot (a slot with a start bonus in the map's layout for that table size) swaps with the first bot (in the shuffle's order) dealt an ordinary one; everything else keeps the shuffle's order. No dice are used, so the game's own dice are the same either way. A table of bots only is dealt exactly as before (tested: the same seeds, the same capitals, the same game), so the all-bot sims and the fingerprints don't move. With more harder spots than bots, the people left over keep theirs, with the head start. New games ask for it unless the lobby's **Harder spots** row says **Anyone**; the setup keeps the choice, so a save's history replays as it was played (an older setup has none: random, as it was).
+
+**"Used only when every other spot is taken"** is already true by construction: every pinned layout has exactly as many spots as players. Two notes for later: **the map maker (M5, random maps)** must keep that true (or mark its own weak spots), and **tables with no pinned layout** spread their capitals as far apart as they can with no weak marking, so the seat rule has nothing to do there.
+
+**The delegating seat both ways** (Leader 80%, Steward 20%, against dealt Marshals; the delegating seat stands in for the person and every other seat is a bot; 300 games a table; the wall bonus on as shipped; times fair):
+
+| Table | Harder spots at that size | Random spot, s23p2b | Bots first, s23p2b | Random spot, s25 | Bots first, s25 |
+|---|---|---|---|---|---|
+| Embervale 4 | 1 (+2) | 1.23 | 1.33 | 1.20 | 1.25 |
+| Wyrmland 6 | 2 (+6, +6) | 1.52 | **2.08** | 1.28 | **1.74** |
+| Rootholm 8 | 3 (+6 each) | 0.85 | 0.99 | 1.04 | 1.09 |
+| Moon Coast 6 | none | 1.08 | 1.08 | 1.24 | 1.24 |
+| Crownlands 8 | none | 1.39 | 1.39 | 1.33 | 1.33 |
+| Ashwing 7 | none | 0.93 | 0.93 | 1.14 | 1.14 |
+
+(Session 23's numbers at s23p2b, before the start bonus and the wall bonus: 1.25, 1.36, 0.93, 1.10, 1.15, 0.93. The random-spot column is the one to compare with them.)
+
+**What it does:** where a table has harder spots, a person never sits on one, so they take the average of the ordinary spots instead of all of them. The harder spots win about 3% among equal bots (session 23), so the ordinary ones win more than fair, and the person with them. On **Wyrmland 6** (two harder spots in six) the delegating seat goes from about 1.3 to 1.5 times fair to **1.7 to 2.1**; on Rootholm 8 and Embervale 4 it's a smaller step (inside or near the noise of about ±0.15 to 0.2 times fair). Where a table size has no marked spot (Moon Coast 6, Crownlands 8, Ashwing 7) nothing changes, as it must. That's the rule doing what it says: the weak spots' cost moves from the person to the bots. It also means a delegating game on Wyrmland 6 is now clearly easier than fair against Marshals; Nate's "a delegating game on Wyrmland 6: still too easy?" from session 23's list matters more now.

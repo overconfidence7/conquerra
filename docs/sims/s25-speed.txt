@@ -1,0 +1,27 @@
+Session 25, planning time side by side (apps/sim/scripts/s19-speed.ts, Krakenmere 10, 20 games, 4 workers, seed s19speed). This laptop ran about 3x slower today than in session 23 (idle, on power), so compare within this file only.
+
+== before the session (caed542), pass 1
+krakenmere, 10 players, 20 games, 928 turns, every system on:
+  resolving a turn: avg 29.9 ms, 95% 56.1 ms, worst 307.5 ms
+  all bots planning a turn (talks, orders, the Fallen): avg 33.8 ms, 95% 62.0 ms, worst 127.5 ms
+  one Marshal planning: avg 3.9 ms, 95% 10.3 ms, worst 102.2 ms
+== after Parts 1-3 (18c9ca8), pass 1
+krakenmere, 10 players, 20 games, 932 turns, every system on:
+  resolving a turn: avg 30.1 ms, 95% 54.5 ms, worst 244.9 ms
+  all bots planning a turn (talks, orders, the Fallen): avg 35.6 ms, 95% 63.2 ms, worst 109.6 ms
+  one Marshal planning: avg 4.1 ms, 95% 11.0 ms, worst 89.0 ms
+== after, pass 2
+krakenmere, 10 players, 20 games, 932 turns, every system on:
+  resolving a turn: avg 32.1 ms, 95% 61.3 ms, worst 281.6 ms
+  all bots planning a turn (talks, orders, the Fallen): avg 37.5 ms, 95% 70.7 ms, worst 145.7 ms
+  one Marshal planning: avg 4.3 ms, 95% 11.6 ms, worst 127.3 ms
+== before, pass 2
+krakenmere, 10 players, 20 games, 928 turns, every system on:
+  resolving a turn: avg 29.9 ms, 95% 55.9 ms, worst 330.4 ms
+  all bots planning a turn (talks, orders, the Fallen): avg 33.9 ms, 95% 60.9 ms, worst 164.0 ms
+  one Marshal planning: avg 3.9 ms, 95% 10.4 ms, worst 139.4 ms
+== after, with each target's wall looked up once per plan (packages/bots/src/board.ts)
+krakenmere, 10 players, 20 games, 932 turns, every system on:
+  resolving a turn: avg 28.0 ms, 95% 52.6 ms, worst 252.3 ms
+  all bots planning a turn (talks, orders, the Fallen): avg 32.3 ms, 95% 58.2 ms, worst 101.1 ms
+  one Marshal planning: avg 3.7 ms, 95% 10.1 ms, worst 82.3 ms

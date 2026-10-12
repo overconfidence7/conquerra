@@ -1,0 +1,13 @@
+s25-walls random | rules (as rules.json) | seed s25, 300 games a table
+delegate embervale:4      s25: delegate-80 won 30.0% = 1.20x fair (fair 25.0%) | buildings 28g culture 86g walls 1.32 | length avg 23.6 | 55s
+SUMMARY random embervale:4: delegate 1.20x
+delegate wyrmland:6       s25: delegate-80 won 21.3% = 1.28x fair (fair 16.7%) | buildings 100g culture 309g walls 7.09 | length avg 41.2 | 173s
+SUMMARY random wyrmland:6: delegate 1.28x
+delegate rootholm:8       s25: delegate-80 won 13.0% = 1.04x fair (fair 12.5%) | buildings 112g culture 415g walls 9.44 | length avg 45.0 | 253s
+SUMMARY random rootholm:8: delegate 1.04x
+delegate moon-coast:6     s25: delegate-80 won 20.7% = 1.24x fair (fair 16.7%) | buildings 51g culture 163g walls 3.38 | length avg 31.5 | 96s
+SUMMARY random moon-coast:6: delegate 1.24x
+delegate crownlands:8     s25: delegate-80 won 16.7% = 1.33x fair (fair 12.5%) | buildings 47g culture 172g walls 3.71 | length avg 34.5 | 137s
+SUMMARY random crownlands:8: delegate 1.33x
+delegate ashwing:7        s25: delegate-80 won 16.3% = 1.14x fair (fair 14.3%) | buildings 125g culture 488g walls 11.76 | length avg 49.2 | 217s
+SUMMARY random ashwing:7: delegate 1.14x

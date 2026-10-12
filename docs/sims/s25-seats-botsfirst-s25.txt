@@ -1,0 +1,13 @@
+s25-walls botsfirst | rules (as rules.json) | seed s25, 300 games a table | seat rule on
+delegate embervale:4      s25: delegate-80 won 31.3% = 1.25x fair (fair 25.0%) | buildings 27g culture 88g walls 1.33 | length avg 23.5 | 52s
+SUMMARY botsfirst embervale:4: delegate 1.25x
+delegate wyrmland:6       s25: delegate-80 won 29.0% = 1.74x fair (fair 16.7%) | buildings 122g culture 418g walls 10.04 | length avg 42.3 | 173s
+SUMMARY botsfirst wyrmland:6: delegate 1.74x
+delegate rootholm:8       s25: delegate-80 won 13.7% = 1.09x fair (fair 12.5%) | buildings 119g culture 446g walls 10.08 | length avg 44.3 | 265s
+SUMMARY botsfirst rootholm:8: delegate 1.09x
+delegate moon-coast:6     s25: delegate-80 won 20.7% = 1.24x fair (fair 16.7%) | buildings 51g culture 163g walls 3.38 | length avg 31.5 | 105s
+SUMMARY botsfirst moon-coast:6: delegate 1.24x
+delegate crownlands:8     s25: delegate-80 won 16.7% = 1.33x fair (fair 12.5%) | buildings 47g culture 172g walls 3.71 | length avg 34.5 | 145s
+SUMMARY botsfirst crownlands:8: delegate 1.33x
+delegate ashwing:7        s25: delegate-80 won 16.3% = 1.14x fair (fair 14.3%) | buildings 125g culture 488g walls 11.76 | length avg 49.2 | 239s
+SUMMARY botsfirst ashwing:7: delegate 1.14x

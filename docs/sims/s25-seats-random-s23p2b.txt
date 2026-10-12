@@ -1,0 +1,13 @@
+s25-walls random | rules (as rules.json) | seed s23p2b, 300 games a table
+delegate embervale:4      s23p2b: delegate-80 won 30.7% = 1.23x fair (fair 25.0%) | buildings 29g culture 96g walls 1.50 | length avg 25.0 | 60s
+SUMMARY random embervale:4: delegate 1.23x
+delegate wyrmland:6       s23p2b: delegate-80 won 25.3% = 1.52x fair (fair 16.7%) | buildings 98g culture 359g walls 8.36 | length avg 42.2 | 181s
+SUMMARY random wyrmland:6: delegate 1.52x
+delegate rootholm:8       s23p2b: delegate-80 won 10.7% = 0.85x fair (fair 12.5%) | buildings 115g culture 401g walls 9.32 | length avg 46.1 | 273s
+SUMMARY random rootholm:8: delegate 0.85x
+delegate moon-coast:6     s23p2b: delegate-80 won 18.0% = 1.08x fair (fair 16.7%) | buildings 48g culture 134g walls 2.63 | length avg 30.9 | 110s
+SUMMARY random moon-coast:6: delegate 1.08x
+delegate crownlands:8     s23p2b: delegate-80 won 17.3% = 1.39x fair (fair 12.5%) | buildings 46g culture 203g walls 4.33 | length avg 34.9 | 149s
+SUMMARY random crownlands:8: delegate 1.39x
+delegate ashwing:7        s23p2b: delegate-80 won 13.3% = 0.93x fair (fair 14.3%) | buildings 120g culture 404g walls 9.73 | length avg 47.3 | 243s
+SUMMARY random ashwing:7: delegate 0.93x

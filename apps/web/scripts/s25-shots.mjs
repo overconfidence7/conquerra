@@ -61,6 +61,14 @@ for (const phone of [false, true]) {
   await sleep(500);
   await centre(p, [RIVAL[0], FRONT], phone ? 1.3 : 2.0);
   await store(p, (s, t) => s.select(t), RIVAL[0]);
+  // On the phone the selection shows a strip with a "Card" button that opens the card.
+  if (phone) {
+    // A store selection doesn't open the phone's sheet (a tap on the map does): open it, then its Card tab.
+    await p.evaluate(() => document.querySelector('button[aria-label="Orders"]')?.click());
+    await sleep(500);
+    await p.evaluate(() => [...document.querySelectorAll("button")].find((x) => x.textContent?.trim() === "Card")?.click());
+  }
+  await sleep(600);
   const line = await p.evaluate(() => [...document.querySelectorAll("*")].map((e) => e.textContent ?? "").find((t) => /^Walled: \d+ defend/.test(t.trim()) && t.length < 140));
   console.log("  the card says:", line?.trim());
   await shot(p, "s25-wall-card", sfx);

@@ -504,3 +504,13 @@ They still play differently (the Turtle walls in 55 to 60% of games on the big m
 - **The Recruit is still easy:** one Recruit against three Captains on Embervale wins 8.7% before and after (0.35 times fair).
 - **The Marshals plan as fast as before** (Krakenmere 10, 20 games, every system on, run alone, side by side): all ten bots 10.9 and 11.5 ms (session start, two runs), 11.4 ms now; one Marshal 1.2 to 1.3 ms either way.
 - **Your own leaders plan about 0.5 ms a turn slower** (a delegating seat on Wyrmland 6, 40 games: 1.5 ms to 2.1 ms): the handout's look-ahead (the Steward's planner run for the next two turns). That's over the 20% guideline in relative terms; reusing the board and the realm's shape didn't help (the Steward's own list is the cost). It runs once a turn for your seat, not for the bots.
+
+## Session 25: the Steward's plan for the Marshal, re-tested with walls that pay back
+*With the wall's bonus on as shipped (+10% a walled territory beyond the first, at most +40%), session 23's closest variant (`judgement.realmPlan`: the plan with its wall garrison, walls rushed and built steadily round the capital only) on Wyrmland 6 and Rootholm 8, 300 games, seed s25, against the same games without it (`docs/sims/s25-part4-realmplan.txt`, against `s25-sweep-B.txt`).*
+
+| Marshals | Delegating seat, Wyrmland 6 / Rootholm 8 | All-Marshal length, Wyrmland / Rootholm | Halfway leader won | Top personality | Games walled, Conqueror (Wyrmland / Rootholm) |
+|---|---|---|---|---|---|
+| As shipped | 1.28 / 1.04 | 41.1 / 45.4 | 47.0% / 46.3% | Turtle 1.80 / Turtle 1.56 | 11% / 16% |
+| The plan, round the capital | **1.68 / 1.49** | 42.9 / 46.9 | 46.3% / 45.3% | Turtle 1.68 / Merchant 1.89 | **64% / 73%** |
+
+**Not adopted.** A wall that pays didn't change session 23's finding: with the plan the Marshals got much weaker against the delegating seat (by 0.40 and 0.45 times fair, well past the noise and the stop rule), games got 1.5 to 1.8 turns longer, and every personality walled up (the Conqueror in two games in three, the Opportunist and the Schemer in about half), so they played more alike. By Nate's rule (the Marshal must be at least as good as your leaders) it doesn't qualify. It stays a switch, off. The wall money still comes out of the Marshal's army in its single budget, and with the bonus the attackers just bring more.

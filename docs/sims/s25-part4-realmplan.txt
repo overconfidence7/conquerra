@@ -1,0 +1,27 @@
+s25-walls B+realmPlan-capital | rules (as rules.json) | seed s25, 300 games a table | tweak {"judgement":{"realmPlan":{"garrison":true,"rush":"capital","steady":"capital"}}}
+(a) payback wyrmland:6  : walls its core 25.3% | never walls 26.7% | Marshals 12.0% | fair 16.7% | edge -1.3 points | 185s
+(b) the walling seat: walls built 8.03/game | garrisoned (more than 1 troop) 54.5% of walled territory-turns | attacks on walls 0.72/game, held 3.7% (8 of 217)
+(b) everyone at that table: walls built 26.31/game | garrisoned (more than 1 troop) 49.4% of walled territory-turns | attacks on walls 2.51/game, held 3.1% (23 of 753)
+marshals wyrmland:6       s25: 300 games | length median 42, avg 42.9, at the 60 cap 19.7%, draws 0.0% | halfway leader won 46.3% | 154s
+  blitzer      won   5.3% = 0.32x (300 seats) | buildings 51g culture 19g | walled in 2.7% of games (0.03 walls) | attacks/turn 4.12 | land at turn 10 21.2
+  conqueror    won  20.0% = 1.20x (300 seats) | buildings 103g culture 168g | walled in 63.7% of games (2.62 walls) | attacks/turn 4.29 | land at turn 10 17.2
+  merchant     won  24.3% = 1.46x (300 seats) | buildings 131g culture 243g | walled in 76.3% of games (4.07 walls) | attacks/turn 4.18 | land at turn 10 16.1
+  opportunist  won   8.7% = 0.52x (300 seats) | buildings 75g culture 108g | walled in 42.3% of games (1.53 walls) | attacks/turn 3.96 | land at turn 10 16.9
+  schemer      won  13.7% = 0.82x (300 seats) | buildings 96g culture 138g | walled in 57.7% of games (2.24 walls) | attacks/turn 3.97 | land at turn 10 15.3
+  turtle       won  28.0% = 1.68x (300 seats) | buildings 158g culture 256g | walled in 83.7% of games (4.30 walls) | attacks/turn 4.41 | land at turn 10 17.0
+(b) all-Marshal: walls built 14.79/game | garrisoned (more than 1 troop) 41.4% of walled territory-turns | attacks on walls 1.50/game, held 2.0% (9 of 449)
+delegate wyrmland:6       s25: delegate-80 won 28.0% = 1.68x fair (fair 16.7%) | buildings 117g culture 333g walls 7.64 | length avg 44.5 | 178s
+SUMMARY B+realmPlan-capital wyrmland:6: walls 25.3 / never 26.7 (edge -1.3) | ab walls held 3.1% of 753 | length 42.9 | halfway 46.3% | turtle 1.68 | top turtle 1.68 | marshal walls held 2.0% of 449, built 14.79/game | delegate 1.68x
+(a) payback rootholm:8  : walls its core 15.3% | never walls 16.3% | Marshals 11.4% | fair 12.5% | edge -1.0 points | 298s
+(b) the walling seat: walls built 12.63/game | garrisoned (more than 1 troop) 43.3% of walled territory-turns | attacks on walls 1.31/game, held 1.3% (5 of 394)
+(b) everyone at that table: walls built 41.41/game | garrisoned (more than 1 troop) 32.6% of walled territory-turns | attacks on walls 3.89/game, held 2.4% (28 of 1167)
+marshals rootholm:8       s25: 300 games | length median 46, avg 46.9, at the 60 cap 24.0%, draws 0.0% | halfway leader won 45.3% | 245s
+  blitzer      won   4.0% = 0.32x (403 seats) | buildings 57g culture 25g | walled in 6.7% of games (0.17 walls) | attacks/turn 4.35 | land at turn 10 25.2
+  conqueror    won  10.9% = 0.87x (412 seats) | buildings 151g culture 226g | walled in 72.6% of games (3.07 walls) | attacks/turn 4.84 | land at turn 10 24.1
+  merchant     won  23.6% = 1.89x (403 seats) | buildings 181g culture 318g | walled in 86.6% of games (4.02 walls) | attacks/turn 4.84 | land at turn 10 20.8
+  opportunist  won   8.1% = 0.64x (397 seats) | buildings 111g culture 155g | walled in 54.9% of games (2.01 walls) | attacks/turn 4.40 | land at turn 10 23.0
+  schemer      won  10.5% = 0.84x (391 seats) | buildings 136g culture 212g | walled in 68.8% of games (2.90 walls) | attacks/turn 4.33 | land at turn 10 21.6
+  turtle       won  18.0% = 1.44x (394 seats) | buildings 188g culture 343g | walled in 88.6% of games (4.62 walls) | attacks/turn 4.78 | land at turn 10 20.6
+(b) all-Marshal: walls built 22.33/game | garrisoned (more than 1 troop) 20.6% of walled territory-turns | attacks on walls 1.83/game, held 2.0% (11 of 549)
+delegate rootholm:8       s25: delegate-80 won 18.7% = 1.49x fair (fair 12.5%) | buildings 137g culture 503g walls 11.93 | length avg 49.0 | 295s
+SUMMARY B+realmPlan-capital rootholm:8: walls 15.3 / never 16.3 (edge -1.0) | ab walls held 2.4% of 1167 | length 46.9 | halfway 45.3% | turtle 1.44 | top merchant 1.89 | marshal walls held 2.0% of 549, built 22.33/game | delegate 1.49x

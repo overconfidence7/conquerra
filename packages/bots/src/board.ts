@@ -201,9 +201,11 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
    * Walls (session 20b): everyone who'd defend `t` if it were attacked now (its troops plus what its wall lends), when
    * it's part of a wall we can see; null otherwise. The engine shows a wall's shared garrison to anyone who sees part of it.
    */
-  const wallDefend = (t: TerritoryId): number | null => view.walls?.find((w) => w.territories.includes(t))?.defend[t] ?? null;
+  // Each territory's wall, looked up once (the odds are checked many times a plan).
+  const wallOf = new Map((view.walls ?? []).flatMap((w) => w.territories.map((t) => [t, w] as const)));
+  const wallDefend = (t: TerritoryId): number | null => wallOf.get(t)?.defend[t] ?? null;
   /** How many territories `t`'s wall has, as far as we can see (0: not walled); its stacking bonus, as the preview counts it (session 25). */
-  const wallSize = (t: TerritoryId): number => view.walls?.find((w) => w.territories.includes(t))?.territories.length ?? 0;
+  const wallSize = (t: TerritoryId): number => wallOf.get(t)?.territories.length ?? 0;
   /** Troops needed in `t` so that no rival army we can see next to it is likely to take it (crossings, terrain, fort and Leaders count). */
   const needCache = new Map<TerritoryId, number>();
   const holdNeed = (t: TerritoryId): number => {
