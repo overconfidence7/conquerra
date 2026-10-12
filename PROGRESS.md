@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance) is code-complete (sessions 7–25 reviewed); it closes when Nate's play test is in ("Things to test after session 25", with the sound bench and the carry-overs). M4 (online with friends) is planned: `docs/10-online-plan.md` (Oct 12), sessions 26 to 29; session 26 is written once Nate has ticked the plan. His calls after 25: the wall cap comes off in 26's Step 0. Orchestrator-09 is running; orchestrator-10 is due after session 26.**
+**Phase: M3 (depth and balance) is code-complete (sessions 7–25 reviewed); it closes when Nate's play test is in ("Things to test after session 25", with the sound bench and the carry-overs). M4 (online with friends) is planned with Nate's calls: `docs/10-online-plan.md` (Oct 12), sessions 26 to 29. **Session 26 (the server) is written** (`docs/prompts/claude-code-session-26.md`); its Step 0 takes the wall cap off. Orchestrator-09 is running; orchestrator-10 is due after session 26.**
 
 Claude Code sessions completed: **25** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 

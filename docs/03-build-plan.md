@@ -127,7 +127,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
 - **Map lab** (dev-only, early in M3): seed and knobs in, the real illustrated map out, with its quality checks, a 12-seed gallery and the art test bench. See `docs/07-map-tooling.md`.
 
 ### M4: Online with friends (Cloudflare)
-- **The plan, with defaults: `docs/10-online-plan.md`** (Oct 12). Sessions 26 to 29, then Nate's play test with friends.
+- **The plan, with Nate's calls: `docs/10-online-plan.md`** (Oct 12). Sessions 26 (the server; prompt `docs/prompts/claude-code-session-26.md`), 27 (friends), 28 (deals, pause, chat for people), 29 (chat for bots and leaders, notifications), then Nate's play test with friends.
 - **Chat** (Nate, Oct 7; `04-design-additions.md` §13): one-to-one and group chats between people; your leaders' group chat; bots and leaders answered by multiple choice; personality, grudges and occasional trash talk. It works in single player too.
 - Live 5-minute turns, plus a longer-timer option.
 - Durable Object per game, WebSockets for the live replay.

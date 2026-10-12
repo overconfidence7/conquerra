@@ -27,9 +27,9 @@
 
 - **The planning window** starts when the room sends the turn. Lock in whenever you're ready; the turn resolves when everyone has, or when the clock runs out, whichever is first.
 - **The replay** runs on each client at its own pace (pause, skip, "Watch again" as today). The next window opens **after the replay's length plus 10 s** for everyone, so nobody plans while another is still watching. Skip is yours alone; the clock doesn't move for it.
-- **Timers:** 3, 5 (default), 10 minutes, and **a long game** option: 1 hour, 8 hours or 24 hours a turn, for games played across days ("your turn" notifications, §7). "No timer" is single player only.
-- **Away players:** when the clock runs out and you never locked in, **your queue as you left it** goes in, and your Leader and Steward fill the rest at **Run the military 80% / Run the realm 20%** (the delegating seat the sims have measured since session 18). The card tells the table: "Lady Morwen's leaders ran her House this turn." Nothing is decided for you that your leaders wouldn't decide when you delegate.
-- **Bot takeover:** after **three missed turns in a row**, or when you resign, a Marshal with the Neutral personality takes the seat for the rest of the game, and the players panel says so. The seat keeps your colour and name with "(bot)" after it. You can take it back within the same game if you return before the takeover; after it, you watch.
+- **Timers (Nate, Oct 12):** 3, 5 (default), 10 minutes, and **long turns**: 1 hour, 8 hours or 24 hours, for games played across days ("your turn" notifications, §7). **A turn ends early when everyone has locked in.** "No timer" is single player only.
+- **Away players (Nate, Oct 12):** when the clock runs out and you never locked in, **your queue as you left it** goes in. **Each player chooses when sitting down** whether, on a missed turn with no orders, **their leaders run the House** for that turn (on by default): the Leader and Steward at **Run the military 80% / Run the realm 20%**, from the **first** missed turn. The card tells the table: "Lady Morwen's leaders ran her House this turn." With the choice off, a missed turn with no orders is simply a turn where your House holds still.
+- **Bot takeover (orchestrator default, Nate to confirm in play):** after **three missed turns in a row**, or when you resign, a Marshal with the Neutral personality takes the seat for the rest of the game, and the players panel says so. The seat keeps your colour and name with "(bot)" after it. You can take it back within the same game if you return before the takeover; after it, you watch.
 - **Reconnect:** open the link and the room sends the current state: the planning window with your queue as you left it, or the replay you missed, then planning.
 
 ## 4. Seats, colours and the lobby
@@ -42,7 +42,7 @@
 ## 5. Deals between people, pause by vote
 
 - **Deals:** the presets and the two kinds (handshake, binding) as today. An offer to a person shows in their deals panel for the rest of the window; they accept, counter or decline, or it lapses at lock-in. Counters go back once. Deals are **public** (trade terms private), as with bots. Your leaders never answer for you, and a truce that would stop a finish still gets the warning card.
-- **Pause by vote (§10):** anyone asks; everyone else gets a card; the pause starts only if all confirm within 60 s; **at most 10 minutes, three times a player a game**. Bots always agree. Single player keeps its own pause.
+- **Pause by vote (§10; Nate, Oct 12):** anyone asks; everyone else gets a card; the pause starts only if all confirm within 60 s; **at most 15 minutes, three times a player a game, and it ends early when everyone says they're ready**. Bots always agree. Single player keeps its own pause.
 
 ## 6. Chat (§13, built in two steps)
 
@@ -80,5 +80,8 @@
 - Spectators, rankings, friends lists, replays shared by link: **after M5** (needs R2 and a public site).
 - Native apps: **M6**.
 
-## Nate's calls
-*(filled in as he answers)*
+## Nate's calls (Oct 12)
+- **Away players:** a per-player choice at the start, "If I miss a turn with no orders, my leaders run my House" (on by default), from the first missed turn. The Marshal takeover after three misses stays an orchestrator default until his friends' games say otherwise.
+- **Timers:** 3, 5 and 10 minutes, long turns of 1, 8 and 24 hours, and a turn ends early when everyone has locked in.
+- **Pause by vote:** all must agree within 60 s; 15 minutes at most; three a player a game; it ends early when everyone says they're ready.
+- **Order:** 26 the server, 27 friends, 28 deals, pause and chat for people, 29 chat for bots and leaders and notifications.
