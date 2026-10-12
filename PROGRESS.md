@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance). Sessions 7–25 are done and reviewed: M3's code is complete.** M3 closes when Nate's play test is in ("Things to test after session 25", with the sound bench and the carry-overs). What comes next (M4: online with friends) is planned after he plays; the orchestrator brings him the options. Orchestrator-09 is running; orchestrator-10 is due after session 26.**
+**Phase: M3 (depth and balance) is code-complete (sessions 7–25 reviewed); it closes when Nate's play test is in ("Things to test after session 25", with the sound bench and the carry-overs). M4 (online with friends) is planned: `docs/10-online-plan.md` (Oct 12), sessions 26 to 29; session 26 is written once Nate has ticked the plan. His calls after 25: the wall cap comes off in 26's Step 0. Orchestrator-09 is running; orchestrator-10 is due after session 26.**
 
 Claude Code sessions completed: **25** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -1426,6 +1426,7 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
 - **The seat rule re-run with the orchestrator's own seed, Wyrmland 6, the delegating seat against Marshals:** random spots **1.70× fair**, bots first **2.22×** (the session: 1.28 → 1.74 and 1.52 → 2.08 on its two seeds). The +0.5 is real and consistent; the random-spot figure itself ranges 1.28 to 1.70 across seeds, so that one seat on that map carries about ±0.2 of seed noise, more than the ±0.15 assumed so far. **Part of the rise is arithmetic:** Wyrmland 6 has two harder spots that win about 3% each, so a seat that never sits on one has a "position-fair" share of about 23% (1.4× the nominal 16.7%); measured against that, the delegating seat is about 1.25 to 1.6× fair, where it was before the rule. The rest is that your leaders match the best Marshal (the Turtle, 1.80) and beat the weak personalities (the Blitzer 0.34, the Opportunist 0.54), which is the old finding from session 23.
 - **The screenshots:** "Walled: 11 defend (with Yewstead and Wildstead), +20% for 3 walled" on the card; the attack panel's one-line explanation and "21, Just enough: Odds: LIKELY" against it (the odds math checked: the defence kill rate of 0.6 is why 21 beat 11 behind a wall; that's the 70/30 design, and whether it feels like enough is Nate's); the lobby's "Harder spots: Bots first / Anyone" with its one-line note. Phone versions read as well.
 - **Not checked here:** how a wall feels to hold, and whether a delegating game on Wyrmland 6 is now too easy; both are the play test.
+- **Nate's calls (Oct 12):** the cap comes off (26's Step 0); bot walls stay; Wyrmland judged by play; the M4 plan written first (`docs/10-online-plan.md`), then session 26.
 
 ### Things to test after session 25 (Nate's next play test, the last of M3)
 *Laptop first; the phone where it applies. The preview is `4c335f76`.*
