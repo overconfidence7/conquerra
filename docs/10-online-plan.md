@@ -46,8 +46,8 @@
 
 ## 6. Chat (§13, built in two steps)
 
-- **Step one, people:** a chat with the table and one-to-one chats, a sidebar of chats (bold when unread), the selected chat in the main area, a small pop-up when a message arrives; two screens on a phone. Messages are kept for the game and go with it.
-- **Step two, bots and leaders:** your leaders' group chat (what they did, in their voices, from the line library), bots that threaten, brag or needle **only when something calls for it** and with limits on how often each speaks, and your answers by **multiple choice** (a deal answer, a command, a budget, or just the mood). Every choice is an ordinary game action, so chat is never extra power, and a bot never mentions what's in your fog.
+- **Step one, people:** a chat with the whole table, one-to-one chats, and **group chats you make yourself: pick any players at the table and scheme against the rest** (Nate, Oct 13). A group chat is private to its members: the others don't see it, aren't told it exists, and can't join unless a member adds them. A player can be in any number of groups; anyone can start one. A sidebar lists your chats (bold when unread), the selected chat fills the main area, a small pop-up shows when a message arrives; two screens on a phone. Messages are kept for the game and go with it. (Deals stay public as designed: the plotting is private, the treaty isn't.)
+- **Step two, bots and leaders:** a bot can be added to a group chat and answers in character with its limited lines (it joins a scheme by making the deal, never by promising in words); your leaders' group chat (what they did, in their voices, from the line library), bots that threaten, brag or needle **only when something calls for it** and with limits on how often each speaks, and your answers by **multiple choice** (a deal answer, a command, a budget, or just the mood). Every choice is an ordinary game action, so chat is never extra power, and a bot never mentions what's in your fog.
 - **Not heavy:** no typing needed to play; a turn with chat ignored takes exactly the taps it takes today.
 
 ## 7. Notifications (last, can slip)
@@ -66,7 +66,7 @@
 
 1. **26: the server skeleton.** Step 0: the wall cap comes off (Nate, Oct 12; `rules.walls.stackMax: null`, tests and re-pins), plus his play-test nits. Then: the Worker gains an API, the `GameRoom` Durable Object runs `HostCore` and the clock, the WebSocket speaks `protocol.ts`, sign-in through Access's identity, D1 with accounts and games, **one person against bots playing an online game end to end on the preview**, the lobby's Online block, Workers Builds connected (Nate), the fog-on-the-wire test. Exit: Nate plays an online game against Marshals on his phone and laptop, closes the tab mid-game and comes back.
 2. **27: friends at the table.** Invite links, seats and colours, the live clock for several people, lock-in early, the replay in step, reconnect, away players run by their leaders, bot takeover, resign. Exit: Nate and one friend finish a game.
-3. **28: deals between people, pause by vote, chat for people.**
+3. **28: deals between people, pause by vote, chat for people** (the table chat, one-to-one, and private group chats a player makes to scheme against others).
 4. **29: chat for bots and leaders, notifications, the online polish pass** (what Nate's games with friends found).
 5. **Nate's play test with friends,** then M4 is done; M5 (public launch) planning follows.
 

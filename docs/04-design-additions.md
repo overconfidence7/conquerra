@@ -382,7 +382,7 @@ Nate's notes: his test game on Wyrmland against 5 Captains lasted only 12 turns,
 - **Reused by the chat later (M4):** one situation, several versions, the speaker's voice. Not built: the chat, multiple-choice replies, leaders asking questions, temperaments.
 
 ### Chat (with M4, the multiplayer milestone; it works in single player too)
-- **People with people:** a normal chat. One-to-one chats, and group chats with the players you pick.
+- **People with people:** a normal chat. One-to-one chats, and **group chats any player can make with the players they pick, to scheme against the others** (Nate, Oct 13): private to the members, invisible to everyone else, members can add more. Deals stay public; the plotting doesn't.
 - **The look:** like any chat app. Open the chat and a **left sidebar lists your chats** (bold when unread), the **selected chat fills the main area**, and **a small pop-up notification** shows when a message comes in. Easy to bring up and to dismiss. On a phone, the list and the chat are two screens.
 - **Your leaders' group chat:** your Leader, your Steward and any captured leaders tell you what they did, **in their own words and personality** ("Took Ashfell and Yewmarch. Morwen's lot ran before we got there.").
 - **Bots and leaders never chat like an open-ended AI:** your replies are **multiple choice**, quick and light:
