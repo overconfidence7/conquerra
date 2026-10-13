@@ -1,0 +1,7 @@
+/* The lobby's folded blocks, inside (session 25b): loaded with them, after the lobby is on screen. */
+.lobby .house-swatch { width: 36px; height: 36px; min-height: 36px; }
+.pick-row .name-input { flex: 2 1 11em; width: auto; }
+.picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px 12px; }
+.pick { display: flex; flex-direction: column; gap: 3px; }
+.fold label.check { display: flex; gap: 8px; align-items: center; min-height: 36px; }
+.fold label.check input { width: 18px; height: 18px; accent-color: var(--gold); flex: none; }
