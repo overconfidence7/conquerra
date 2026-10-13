@@ -1,4 +1,4 @@
-import { pursesTotal, recruitSitesIn, type GameContext, type Order, type PlayerView } from "@conquerra/engine";
+import { leaderAt, pursesTotal, recruitSitesIn, type GameContext, type Order, type PlayerView } from "@conquerra/engine";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { missionTargets } from "../logic/cards";
 import { passageLines, passageNow, truceLines, waitingOffers } from "../logic/deals";
@@ -437,6 +437,23 @@ export function GameScreen() {
     return area?.glow.length ? area.glow : NO_GLOW;
   }, [ctx, view, recruitOpen, missionId, area]);
   useEffect(() => setSpendOpen(false), [selected]);
+  // "Show me where" (session 25b, tap your Leader): the map glides there and pulses it once. On a phone a full sheet
+  // lowers to half first, so the place is in view above it (the map's insets follow the sheet a moment later).
+  const shown = g.shown;
+  useEffect(() => {
+    if (!shown || !ctx) return;
+    const t = ctx.map.geometry?.territories.find((x) => x.id === shown.at);
+    const go = () => {
+      if (t) renderer.current?.centreOn(t.label.x, t.label.y);
+      renderer.current?.pulse?.(shown.at);
+    };
+    if (phone && sheet === "full") {
+      setSheet("half");
+      const id = setTimeout(go, 80);
+      return () => clearTimeout(id);
+    }
+    go();
+  }, [shown]); // eslint-disable-line react-hooks/exhaustive-deps
   // Diplomacy: truce borders on the map (in force, and agreed this turn), and offers to you still waiting.
   const { diplomacy, answers, offers, deal } = g;
   const truces = useMemo(() => truceLines(g.pageDeals()), [view, diplomacy, answers, offers]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -710,7 +727,20 @@ export function GameScreen() {
           </button>
           {act && <CardStack ctx={ctx} view={view} onOpen={() => setCardsOpen(true)} compact />}
           {act && myLeader && (
-            <button className="icon-btn leader-btn" onClick={() => (setTab("leaders"), g.leaderOpen || g.openLeader(`leader:${view.me.id}`), setSheet((s) => (s === "closed" || tab !== "leaders" ? "half" : "closed")))} aria-label="Leaders" title="Your leaders">
+            <button
+              className="icon-btn leader-btn"
+              onClick={() => {
+                const opening = sheet === "closed" || tab !== "leaders";
+                setTab("leaders");
+                if (!g.leaderOpen) g.openLeader(`leader:${view.me.id}`);
+                setSheet(opening ? "half" : "closed");
+                // Where is your Leader (session 25b): the map shows it as the sheet opens.
+                const at = opening ? leaderAt(view.me, myLeader) : null;
+                if (at) g.showPlace(at);
+              }}
+              aria-label="Leaders"
+              title="Your leaders"
+            >
               <LeaderPortrait view={view} l={myLeader} size={34} />
             </button>
           )}
@@ -735,7 +765,7 @@ export function GameScreen() {
           <BottomSheet size={replaying ? "closed" : sheet} onSize={setSheet} bottom={76} tabs={tabs} tab={tab} onTab={setTab}>
             {tab === "army" && army}
             {tab === "orders" && <OrderQueue ctx={ctx} view={view} plan={plan} queue={shownQueue} bare />}
-            {tab === "leaders" && <LeadersPanel ctx={ctx} view={view} queue={queue} pursesLeft={plan?.pursesLeft} onShow={(t) => g.select(t)} onCards={() => setCardsOpen(true)} />}
+            {tab === "leaders" && <LeadersPanel ctx={ctx} view={view} queue={queue} pursesLeft={plan?.pursesLeft} onShow={(t) => (g.select(t), g.showPlace(t))} onCards={() => setCardsOpen(true)} />}
             {tab === "card" && (selected ? <TerritoryCard ctx={ctx} view={view} id={selected} /> : <p className="muted">Tap a territory to see its card. Tap and hold anywhere for a quick look.</p>)}
             {tab === "report" && report && (
               <Suspense fallback={null}>
@@ -778,7 +808,7 @@ export function GameScreen() {
       </div>
       <aside className="rightcol" ref={moreCue}>
         <PlayersPanel view={view} />
-        {!out && <LeadersPanel ctx={ctx} view={view} queue={queue} pursesLeft={plan?.pursesLeft} onShow={(t) => g.select(t)} onCards={() => setCardsOpen(true)} />}
+        {!out && <LeadersPanel ctx={ctx} view={view} queue={queue} pursesLeft={plan?.pursesLeft} onShow={(t) => (g.select(t), g.showPlace(t))} onCards={() => setCardsOpen(true)} />}
       </aside>
       {settingsMenu}
       <Toasts toasts={toasts} />

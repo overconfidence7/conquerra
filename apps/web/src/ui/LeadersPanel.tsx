@@ -126,7 +126,7 @@ export function LeadersPanel({
   /** Open your cards (Spoils and missions). */
   onCards(): void;
 }) {
-  const { instructions, budgets, paused, leaderOpen, openLeader, setBudget, takeBack, showMission, mission, leaderNotes, report } = useGame();
+  const { instructions, budgets, paused, leaderOpen, openLeader, setBudget, takeBack, showMission, mission, leaderNotes, report, showPlace } = useGame();
   const [menu, setMenu] = useState<"command" | "budget" | null>(null);
   const n = namer(ctx, view);
   const leaders = view.me.leaders ?? [];
@@ -162,7 +162,16 @@ export function LeadersPanel({
           const written = counts.get(key) ?? 0;
           return (
             <li key={key} className={`leader-row ${open ? "open" : ""}`}>
-              <button className="leader-head" aria-expanded={open} onClick={() => (openLeader(open ? null : key), setMenu(null))}>
+              <button
+                className="leader-head"
+                aria-expanded={open}
+                onClick={() => {
+                  openLeader(open ? null : key);
+                  setMenu(null);
+                  // Opening a leader shows where it is on the map (session 25b).
+                  if (!open && at) showPlace(at);
+                }}
+              >
                 <LeaderPortrait view={view} l={l} size={own && l.kind === "leader" ? 44 : 36} />
                 <span className="leader-who">
                   <b>{styledName(l.name, l.personality)}</b> <span className="muted small">{own ? `your ${KIND_NAME[l.kind]}` : `${n.who(l.of)}'s old ${KIND_NAME[l.kind]}`}</span>

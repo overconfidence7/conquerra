@@ -87,6 +87,8 @@ export interface MapRenderer {
   zoomBy(factor: number): void;
   /** Glide to a map point (the minimap's tap), keeping the zoom. */
   centreOn(x: number, y: number): void;
+  /** Pulse a territory once (session 25b: tap your Leader to see where it is). The plain map has none. */
+  pulse?(t: TerritoryId): void;
   /** The camera now and the screen it's for, plus a count of the player's own pans and zooms (the replay camera). */
   viewState(): { cam: Camera; vp: Viewport; userMoves: number };
   /** Glide to a camera over `ms` (the replay camera). */

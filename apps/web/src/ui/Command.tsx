@@ -34,7 +34,8 @@ const CommandMenu = lazy(() => import("./CommandMenu"));
  * generals stands.
  */
 export function CommandRow({ ctx, view, general }: { ctx: GameContext; view: PlayerView; general: PlayerId }) {
-  const { instructions, paused, picking, cancelPick } = useGame();
+  const { instructions, paused, picking, cancelPick, showPlace } = useGame();
+  const at = generalAt(view, general);
   const [open, setOpen] = useState(false);
   const n = namer(ctx, view);
   const key = `leader:${general}`;
@@ -45,7 +46,9 @@ export function CommandRow({ ctx, view, general }: { ctx: GameContext; view: Pla
   return (
     <div className="command">
       <div className="command-head">
-        <GeneralPortrait view={view} general={general} />
+        <button className="command-show" onClick={() => at && showPlace(at)} title="Show where it is" aria-label={`Show where ${generalName(n, general)} is`}>
+          <GeneralPortrait view={view} general={general} />
+        </button>
         <div className="command-who">
           <b>{generalName(n, general)}</b>
           {captured && <span className="muted small"> · captured general</span>}

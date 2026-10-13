@@ -1,4 +1,4 @@
-import { Application, Container } from "pixi.js";
+import { Application, Container, Graphics } from "pixi.js";
 import { ArtBook } from "../../art/book";
 import { centreOn, fitCamera, landFrame, toMap, type Camera, type Insets } from "../../map/camera";
 import { hitTester, type HitTester } from "../../map/shapes";
@@ -12,7 +12,7 @@ import { ReplayLayer } from "./replayLayer";
 import { FxLayer } from "./fxLayer";
 import { LivingLayer } from "./living";
 import type { ReplayFrame, Timeline } from "../../replay/timeline";
-import type { PlayerView, ReplayEvent } from "@conquerra/engine";
+import type { PlayerView, ReplayEvent, TerritoryId } from "@conquerra/engine";
 import { reducedMotion, useFx } from "../../replay/fx/settings";
 import { sceneryFor } from "./scenery";
 import { WorldLayer } from "./world";
@@ -93,6 +93,9 @@ class PixiMapRenderer implements MapRenderer {
   private resizeObs: ResizeObserver | null = null;
   private frameTimes: number[] = [];
   private t0 = performance.now();
+  /** "Where is my Leader?" (session 25b): one gold ring that spreads and fades over the place, in the info layer. */
+  private pulseRing = new Graphics();
+  private pulseAt: { x: number; y: number; start: number } | null = null;
   private firstMapMs = 0;
   private destroyed = false;
   private hovering: string | null = null;
@@ -166,7 +169,7 @@ class PixiMapRenderer implements MapRenderer {
     if (reducedMotion()) this.world.display.uniforms.uMotion = 0.35;
     if (!this.livingOn) this.living.root.visible = this.living.cloudsTop.visible = false;
     this.living.setLevel(useFx.getState().level);
-    this.mapLayer.addChild(this.world.view, this.living.root, this.living.cloudsTop, this.info.tactical, this.info.lines, this.info.realmLayer.root, this.info.walls, this.info.gates, this.info.glow, this.info.sites, this.info.figures, this.info.names, this.info.links, this.info.arrows);
+    this.mapLayer.addChild(this.world.view, this.living.root, this.living.cloudsTop, this.info.tactical, this.info.lines, this.info.realmLayer.root, this.info.walls, this.info.gates, this.info.glow, this.info.sites, this.info.figures, this.info.names, this.info.links, this.info.arrows, this.pulseRing);
     this.replay = new ReplayLayer(ctx.map, this.bank, phone);
     this.replay.setLevel(useFx.getState().level);
     this.unsubFx = useFx.subscribe((st) => {
@@ -257,6 +260,7 @@ class PixiMapRenderer implements MapRenderer {
     this.world.display.uniforms.uTime = (now - this.t0) / 1000;
     this.world.tickFog(now);
     this.info.realmLayer.tick((now - this.t0) / 1000);
+    if (this.pulseAt) this.drawPulse(now);
     // ("?noliving": the frame-rate script measures the map without it.)
     if (this.livingOn) this.living.tick((now - this.t0) / 1000, this.cam.cam, this.cam.vp, this.detail.far, this.detail.near, this.tactical);
     // Paint remaining tiles a couple per frame, nearest the screen first.
@@ -367,6 +371,29 @@ class PixiMapRenderer implements MapRenderer {
 
   centreOn(x: number, y: number) {
     this.cam.centreOn(x, y, this.cam.cam.scale, 320);
+  }
+
+  pulse(t: TerritoryId) {
+    const at = this.opts.ctx.map.geometry?.territories.find((x) => x.id === t)?.label;
+    if (!at) return;
+    this.pulseAt = { x: at.x, y: at.y, start: performance.now() };
+  }
+
+  /** The pulse: 1.1 s, a ring growing from half a territory to one and a half, fading as it goes. */
+  private drawPulse(now: number) {
+    const p = this.pulseAt!;
+    const k = (now - p.start) / 1100;
+    const g = this.pulseRing;
+    g.clear();
+    if (k >= 1) {
+      this.pulseAt = null;
+      return;
+    }
+    const ease = 1 - (1 - k) ** 2;
+    const r = this.territorySize * (0.25 + 0.55 * ease);
+    const px = 1 / this.cam.cam.scale;
+    g.circle(p.x, p.y, r).stroke({ width: 10 * px, color: 0x1a1208, alpha: 0.55 * (1 - k) });
+    g.circle(p.x, p.y, r).stroke({ width: 5 * px, color: 0xf3d68a, alpha: 1 - k });
   }
 
   setReplay(frame: ReplayFrame | null) {

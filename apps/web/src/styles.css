@@ -72,6 +72,8 @@ button.primary { background: linear-gradient(#e3c77e, #c9a45c); color: var(--nav
 button.wide { width: 100%; }
 button.big { padding: 12px 20px; font-size: 1.1rem; }
 button.link { background: none; border: none; color: var(--gold-hi); padding: 4px 6px; min-height: 0; text-decoration: underline; text-underline-offset: 3px; }
+/* The Recruit panel's Done (session 25b): a bigger target, easy to hit on a phone. */
+button.link.done { padding: 8px 12px; margin: -4px -8px -4px 0; min-height: 36px; }
 select { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--gold); background: var(--raised); color: var(--parch); min-height: 44px; }
 .muted { color: var(--muted); }
 .small { font-size: var(--fs-small); }
@@ -550,6 +552,8 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 /* Generals (session 12): the Command row on a general's territory, its portrait in the queue, captured generals on the Leader card. */
 .command { border: 1px solid rgba(201, 164, 92, 0.45); border-radius: 8px; padding: 6px 8px; margin: 6px 0; background: rgba(201, 164, 92, 0.06); }
 .command-head { display: flex; align-items: center; gap: 8px; }
+/* The portrait in the leader line is a button (session 25b): tap it to see where the leader is on the map. */
+.command-show { background: none; border: none; padding: 0; min-height: 0; border-radius: 50%; cursor: pointer; flex: none; line-height: 0; }
 .command-who { flex: 1; min-width: 0; font-size: var(--fs-small); line-height: 1.25; }
 .command-btn { font: 700 var(--fs-small) var(--font-head); padding: 6px 12px; border: 1.5px solid var(--gold); border-radius: 999px; background: rgba(201, 164, 92, 0.12); color: var(--gold-hi); white-space: nowrap; }
 .command-btn.on { background: var(--gold); color: #1a1408; }

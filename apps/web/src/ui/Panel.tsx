@@ -96,8 +96,9 @@ function Stepper({ value, min, max, onChange }: { value: number; min: number; ma
 
 /**
  * The Recruit panel: how much of your gold to spend (All, 3/4, 1/2, 1/4, or an exact number under More) and where.
- * Every recruit site glows on the map; tap one to recruit there instead. Split troops across sites with
- * "Somewhere else too". With no recruit to edit, it says why the selected land can't recruit and offers the nearest site.
+ * Every recruit site glows on the map; tap one to recruit there instead (a tap anywhere else only looks, session 25b).
+ * Split troops across sites with "Somewhere else too". With no recruit to edit, it says why the selected land can't
+ * recruit and offers the nearest site. Done (or Enter, Esc, a tap on the sea) closes it.
  */
 function RecruitPanel({ ctx, view, queue, selected, order: orderId }: Props & { order: string | null }) {
   const { recruitAt, setRecruitAmount, splitRecruit, closeRecruit, remove } = useGame();
@@ -109,7 +110,7 @@ function RecruitPanel({ ctx, view, queue, selected, order: orderId }: Props & { 
   const head = (title: string) => (
     <div className="panel-head">
       <h2>{title}</h2>
-      <button className="link" onClick={closeRecruit}>
+      <button className="link done" onClick={closeRecruit}>
         Done
       </button>
     </div>
@@ -167,7 +168,13 @@ function RecruitPanel({ ctx, view, queue, selected, order: orderId }: Props & { 
         </div>
       )}
       {troops === 0 && <p className="warn">No gold left for this one: the orders before it spend it all.</p>}
-      <p className="muted small">Tap a glowing territory to recruit there instead.</p>
+      {selected && selected !== order.territory && !isRecruitSite(ctx, view, selected) ? (
+        <p className="muted small">
+          {n.place(selected)} can't recruit. Tap a glowing territory to recruit there instead.
+        </p>
+      ) : (
+        <p className="muted small">Tap a glowing territory to recruit there instead.</p>
+      )}
       <div className="row">
         <button onClick={splitRecruit} title="Split your recruits: this one takes half, the next site you tap gets the rest">
           + Somewhere else too

@@ -17,7 +17,7 @@ import type { LeaderNote, Answer } from "@conquerra/bots";
 import { agreedThisTurn, attackCheck, counterFrom, dealsNow, newOffer, passageNow, type PageDeal } from "./logic/deals";
 import type { PathKind } from "./logic/paths";
 import { chronicleOf } from "./logic/chronicleKeep";
-import { draftToOrder, isRecruitSite, type NewOrder, planQueue, queueFor, removeOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
+import { draftToOrder, isMine, isRecruitSite, type NewOrder, planQueue, queueFor, removeOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
 
 export type Screen = "lobby" | "game" | "over";
 /** What a tap on the map picks for a leader's command. */
@@ -86,6 +86,12 @@ interface GameStore {
   /** The leader open in the Leaders panel (its command's area or target is outlined on the map), by leader key. */
   leaderOpen: string | null;
   openLeader(key: string | null): void;
+  /**
+   * "Show me where" (session 25b: tap your Leader): the map glides to the place and pulses it once. `n` counts the
+   * requests, so asking for the same place twice shows it twice.
+   */
+  shown: { at: TerritoryId; n: number } | null;
+  showPlace(at: TerritoryId): void;
   setLeaderPlacement(p: LeaderPlacement): void;
   /** A leader's budget (a share of income, or an exact amount), from this turn on. */
   setBudget(key: string, budget: Budget): Promise<void>;
@@ -325,6 +331,8 @@ export const useGame = create<GameStore>((set, get) => ({
   leaderPlacement: rememberedPlacement(),
   leaderOpen: null,
   openLeader: (key) => set({ leaderOpen: key }),
+  shown: null,
+  showPlace: (at) => set({ shown: { at, n: (get().shown?.n ?? 0) + 1 } }),
   spyPick: null,
   pathPick: null,
   path: null,
@@ -519,10 +527,21 @@ export const useGame = create<GameStore>((set, get) => ({
       if (i) void get().setInstruction(picking.general, i);
       return;
     }
-    // Recruit panel open: tapping a glowing site recruits there. Anything else closes the panel and taps as usual.
+    // Recruit panel open: tapping a glowing site recruits there. An enemy's (or neutral) territory next to the recruit
+    // still starts the attack from there, as before (Recruit, then attack, stays quick). Anything else only looks at
+    // it: the panel stays open, the recruit stays put, no move starts. Done, Esc or a tap on the sea closes it
+    // (session 25b, Nate: looking around used to close the panel or start a move, and the recruit ended up somewhere
+    // he didn't mean, with the panel he was pressing Done on gone or back again).
     if (recruit) {
       if (isRecruitSite(ctx, view, t)) return get().recruitAt(t);
-      set({ recruit: null });
+      const editing = queue.find((o) => o.id === recruit.order && o.kind === "recruit");
+      const from = editing?.kind === "recruit" ? editing.territory : selected;
+      if (!isMine(view, t) && from) {
+        const mine = asIfYouOrderFrom(view, queue, from);
+        const action = tapTerritory(ctx, view, planQueue(ctx, view, mine), from, t, mine, passageNow(view, get().pageDeals()));
+        if (action.kind === "draft") return set({ recruit: null, selected: from, draft: action.draft });
+      }
+      return set({ selected: t, draft: null });
     }
     // From a general's territory, its army counts as yours to order (giving it an order takes control back).
     const mineFirst = asIfYouOrderFrom(view, queue, selected);
@@ -573,6 +592,11 @@ export const useGame = create<GameStore>((set, get) => ({
     if (draft) {
       if (intent === "confirm") get().addDraft();
       else get().clearSelection();
+      return true;
+    }
+    // The Recruit panel: Enter or Esc is Done (the recruit is already in your orders).
+    if (get().recruit) {
+      get().closeRecruit();
       return true;
     }
     return false;
@@ -627,7 +651,7 @@ export const useGame = create<GameStore>((set, get) => ({
     const o = get().queue.find((x) => x.id === order);
     set({ recruit: { order }, draft: null, ...(o?.kind === "recruit" ? { selected: o.territory } : {}) });
   },
-  closeRecruit: () => set({ recruit: null }),
+  closeRecruit: () => set({ recruit: null, draft: null }),
 
   recruitAt(t) {
     const { queue, recruit } = get();

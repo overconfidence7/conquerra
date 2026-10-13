@@ -406,20 +406,20 @@ describe("the seat rule in a new game (session 25)", () => {
   const weak = new Set(Object.keys(wyrm.capitalLayouts!.find((l) => l.players === 6)!.bonus ?? {}));
   const six: LobbySettings = { ...settings, mapId: "wyrmland", bots: 5 };
 
-  it("the lobby's choice is in the game's setup (so a save replays as it was played); bots first by default", () => {
+  it("a new game's setup carries the rule (so a save replays as it was played): bots first, always (25b, no lobby row)", () => {
     expect(weak.size).toBeGreaterThan(0);
     const dflt = new LocalGame(wyrm, six, "seat-dflt").snapshot();
     expect(dflt.history?.setup.seatRule).toBe("botsFirst");
     expect(dflt.history?.setup.players.filter((p) => p.bot).length).toBe(5);
     expect(dflt.history?.setup.players.find((p) => p.id === HUMAN_ID)?.bot).toBeUndefined();
-    const anyone = new LocalGame(wyrm, { ...six, hardSpots: "anyone" }, "seat-any").snapshot();
-    expect(anyone.history?.setup.seatRule).toBe("anyone");
+    // An old lobby setting from session 25 is ignored.
+    const old = new LocalGame(wyrm, { ...six, hardSpots: "anyone" } as LobbySettings, "seat-any").snapshot();
+    expect(old.history?.setup.seatRule).toBe("botsFirst");
   });
 
-  it("with bots first you never start at a harder spot; with 'anyone' you sometimes do", () => {
+  it("you never start at a harder spot in a new game", () => {
     const mine = (s: LobbySettings, seed: string) => new LocalGame(wyrm, s, seed).update().view.me.capital;
     const seeds = Array.from({ length: 30 }, (_, i) => `seat-${i}`);
     expect(seeds.filter((seed) => weak.has(mine(six, seed)))).toEqual([]);
-    expect(seeds.filter((seed) => weak.has(mine({ ...six, hardSpots: "anyone" }, seed))).length).toBeGreaterThan(0);
   });
 });

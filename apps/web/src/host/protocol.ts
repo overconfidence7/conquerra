@@ -49,11 +49,6 @@ export interface LobbySettings {
   /** Session 20c: their personalities (Neutral when left out): war-minded for the Leader, building-minded for the Steward. */
   leaderPersonality?: LeaderStyle | null;
   stewardPersonality?: LeaderStyle | null;
-  /**
-   * Harder spots (session 25, the seat rule): a capital spot with a head start goes to a bot before you ("bots", the
-   * default), or to anyone at random ("anyone": so you can try one on purpose).
-   */
-  hardSpots?: "bots" | "anyone";
 }
 
 export interface TurnReport {

@@ -1,12 +1,12 @@
 import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
-import { createGame, incomeFor, resolveTurn, viewFor, type GameContext, type ReplayEvent } from "@conquerra/engine";
+import { createGame, incomeFor, indexMap, resolveTurn, viewFor, type GameContext, type ReplayEvent } from "@conquerra/engine";
 import { recruitBot } from "@conquerra/bots";
 import { beforeEach, describe, expect, it } from "vitest";
 import { LocalGame } from "../src/host/localGame";
 import type { GameHost, LobbySettings } from "../src/host/protocol";
 import { actionBarState, incomeEstimate, nearestRecruitSite } from "../src/logic/actions";
-import { isMine, justEnough, moveTargets, planQueue } from "../src/logic/orders";
+import { isMine, isRecruitSite, justEnough, moveTargets, planQueue } from "../src/logic/orders";
 import { groupReport } from "../src/logic/report";
 import { mapChoiceLabel, namer } from "../src/logic/text";
 import { setHostFactory, useGame } from "../src/store";
@@ -155,10 +155,14 @@ describe("Recruit panel", () => {
     expect(g().queue[1]).toMatchObject({ kind: "recruit", territory: cap, count: "all" });
     plan = planQueue(g().ctx!, g().view!, g().queue);
     expect(plan.goldLeft).toBeLessThan(2);
-    // Tapping land that can't recruit closes the panel and taps as usual.
+    // Tapping land that can't recruit only looks at it (session 25b): the panel stays, nothing moves, no draft.
     const other = Object.keys(g().view!.territories).find((t) => !isMine(g().view!, t))!;
+    const before = g().queue;
     g().tap(other);
-    expect(g().recruit).toBeNull();
+    expect(g().recruit).not.toBeNull();
+    expect(g().queue).toBe(before);
+    expect(g().draft).toBeNull();
+    expect(g().selected).toBe(other);
   });
 
   it("a recruit in the queue can be reopened and moved; selecting land that can't recruit offers the nearest site", async () => {
@@ -178,6 +182,77 @@ describe("Recruit panel", () => {
     expect(g().selected).toBe(cap);
     g().remove(g().queue[0]!.id);
     expect(g().recruit).toBeNull();
+  });
+});
+
+describe("Recruit, then other territories, then Done (Nate's glitch, session 25b)", () => {
+  beforeEach(() => {
+    setHostFactory(() => inProcessHost("recruit-glitch"));
+    useGame.getState().playAgain();
+  });
+
+  it("looking around leaves the recruit where it was; coming back and one Done leaves exactly one recruit there, panel closed", async () => {
+    await useGame.getState().start();
+    const g = () => useGame.getState();
+    const view = g().view!;
+    const cap = view.me.capital;
+    const idx = indexMap(g().ctx!.map);
+    // Two neighbours of the capital made yours: one with a barracks (a recruit site), one without (not a site).
+    const [b, c] = (idx.neighbors.get(cap) ?? []).filter((t) => {
+      const others = idx.provinceMembers.get(idx.byId.get(t)!.province) ?? [];
+      return others.length > 2; // so holding it doesn't complete a province
+    });
+    const own = (t: string, building?: "barracks") => ({ ...view.territories[t]!, detail: "full", owner: view.me.id, troops: 3, ...(building ? { building } : {}) });
+    useGame.setState({ view: { ...view, territories: { ...view.territories, [b!]: own(b!, "barracks"), [c!]: own(c!) } as typeof view.territories } });
+    expect(isRecruitSite(g().ctx!, g().view!, b!)).toBe(true);
+    expect(isRecruitSite(g().ctx!, g().view!, c!)).toBe(false);
+    // Choose Recruit at the capital, tap a site, a territory that can't recruit, an enemy's, then come back.
+    g().select(cap);
+    g().quickRecruit();
+    // (An enemy's or neutral land far from the recruit: looking at it changes nothing.)
+    const near = new Set([cap, b!, ...(idx.neighbors.get(cap) ?? []), ...(idx.neighbors.get(b!) ?? [])]);
+    const enemy = Object.keys(g().view!.territories).find((t) => !isMine(g().view!, t) && !near.has(t))!;
+    for (const t of [b!, c!, enemy, c!, cap]) g().tap(t);
+    expect(g().draft).toBeNull();
+    expect(g().recruit).not.toBeNull();
+    g().closeRecruit(); // one Done
+    expect(g().recruit).toBeNull();
+    expect(g().draft).toBeNull();
+    expect(g().queue).toMatchObject([{ kind: "recruit", territory: cap, count: "all" }]);
+  });
+
+  it("Recruit, then an enemy's land next to it: the attack starts from there at once (still one tap)", async () => {
+    await useGame.getState().start();
+    const g = () => useGame.getState();
+    const cap = g().view!.me.capital;
+    g().quickRecruit();
+    const target = (indexMap(g().ctx!.map).neighbors.get(cap) ?? []).find((t) => !isMine(g().view!, t))!;
+    g().tap(target);
+    expect(g().recruit).toBeNull();
+    expect(g().draft).toMatchObject({ from: cap, to: target });
+  });
+
+  it("Enter or Esc closes the Recruit panel too", async () => {
+    await useGame.getState().start();
+    const g = () => useGame.getState();
+    g().quickRecruit();
+    expect(g().recruit).not.toBeNull();
+    expect(g().pressKey({ key: "Escape" } as Parameters<ReturnType<typeof useGame.getState>["pressKey"]>[0])).toBe(true);
+    expect(g().recruit).toBeNull();
+    expect(g().queue).toHaveLength(1);
+  });
+});
+
+describe("tap your Leader, see where it is (session 25b)", () => {
+  it("each request counts, so showing the same place twice shows it twice; nothing else changes", () => {
+    useGame.getState().playAgain();
+    const before = useGame.getState();
+    before.showPlace("t01");
+    const one = useGame.getState().shown!;
+    useGame.getState().showPlace("t01");
+    expect(useGame.getState().shown).toEqual({ at: "t01", n: one.n + 1 });
+    expect(useGame.getState().selected).toBe(before.selected);
+    expect(useGame.getState().queue).toBe(before.queue);
   });
 });
 
