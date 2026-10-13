@@ -23,9 +23,10 @@ type Variant = z.infer<typeof VariantSchema>;
 /**
  * The loudness targets, in LUFS. Sound effects: their loudest 400 ms (EBU R128 momentary loudness; a short sound is
  * judged by its loudest moment, the way the ear hears it). Music and ambience: the whole file (integrated). Music sits
- * 2 LU under the effects and the in-game volumes put it lower still; ambience is a bed, well under both.
+ * 10 LU under the effects (session 25b: it was -18, and Nate wanted the music at about a fifth of that, so 8 dB here
+ * and the rest from the lower default slider); ambience follows it down, a bed 6 LU under the music.
  */
-export const LOUDNESS: Record<SoundKind, number> = { sfx: -16, music: -18, ambience: -24 };
+export const LOUDNESS: Record<SoundKind, number> = { sfx: -16, music: -26, ambience: -32 };
 /** True peak ceiling, dBTP (the limiter's ceiling is a little under it, for the MP3 encoder's overshoot). */
 export const PEAK_CEILING = -1;
 /** How each kind is encoded: effects mono (they're placed on the map in code), music stereo; all 44.1 kHz MP3. */

@@ -1,6 +1,6 @@
 import type { MapDef } from "@conquerra/content";
 import type { Camera, Viewport } from "../map/camera";
-import { duckLevel } from "./duck";
+import { duckLevel, setGain } from "./duck";
 import { busGains, useSound } from "./settings";
 import { audioPool, unlockedAudio } from "./unlock";
 
@@ -128,7 +128,7 @@ class Ambience {
       const b = this.bed(name);
       b.level = b.level < target ? Math.min(target, b.level + FADE_PER_MS * ms) : Math.max(target, b.level - FADE_PER_MS * ms);
       const v = Math.max(0, Math.min(1, b.level * BED_VOLUME[name] * bus * dip));
-      if (b.gain) b.gain.gain.value = v;
+      if (b.gain) setGain(b.gain, v);
       else b.el.volume = v;
       if (b.level > 0 && b.el.paused && !document.hidden) void b.el.play().catch(() => {});
       if (b.level <= 0 && !b.el.paused) b.el.pause();

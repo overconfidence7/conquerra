@@ -8,10 +8,11 @@ import { describe, expect, it } from "vitest";
 import { buildTimeline } from "../src/replay/timeline";
 import { Cues, CUE_NAMES, CUE_SPECS, CUES } from "../src/sound/cues";
 import { admit, MAX_AT_ONCE, pick, STACK_MS } from "../src/sound/mixer";
-import { soundPlan, soundsBetween, troopGain, type SoundContext } from "../src/sound/plan";
-import { busGains, readLevels, SOUND_DEFAULTS } from "../src/sound/settings";
+import { planStats, REPLAY_SOUND, soundLength, soundPlan, soundsBetween, troopGain, type SoundContext } from "../src/sound/plan";
+import { busGains, readLevels, SOUND_DEFAULTS, useSound } from "../src/sound/settings";
 import { DUCK_BACK_MS, DUCK_TO, duck, duckLevel } from "../src/sound/duck";
-import { fadeStep, MUSIC_VOLUME } from "../src/sound/music";
+import { fadeStep, MUSIC_VOLUME, trackGain } from "../src/sound/music";
+import recorded from "../src/lab/sound/recorded-turn.json";
 import { BED_VOLUME, BIRD_CYCLE_MS, BIRD_ON_MS, bedLevels, closenessOf, waterInView } from "../src/sound/ambience";
 
 /** Session 24: the game's sound. */
@@ -74,11 +75,15 @@ describe("the replay's sound follows its clock", () => {
     for (const s of a) expect(s.at).toBeGreaterThanOrEqual(0), expect(s.at).toBeLessThanOrEqual(tl.total);
   });
 
-  it("battles sound: a march, the clash and a result", () => {
+  it("battles sound: the clash and a result (a march only for an army of 20 or more, since 25b)", () => {
     const cues = new Set(soundPlan(tl, contextFor(state), events).map((s) => s.cue));
     expect(cues.has("battle")).toBe(true);
     expect([...cues].some((c) => c === "capture" || c === "capture-rival" || c === "held" || c === "capital-falls")).toBe(true);
-    expect([...cues].some((c) => c.startsWith("march-"))).toBe(true);
+    // Everyone attacking with 25: the drums are back; with 19, silence.
+    const big = events.map((e) => (e.type === "battle" ? { ...e, attackers: { ...e.attackers, troops: 25 } } : e));
+    expect(soundPlan(buildTimeline(big), contextFor(state), big).some((s) => s.cue === "march-large")).toBe(true);
+    const small = events.map((e) => (e.type === "battle" ? { ...e, attackers: { ...e.attackers, troops: 19 } } : e.type === "moved" ? { ...e, army: { ...e.army, troops: 19 } } : e));
+    expect(soundPlan(buildTimeline(small), contextFor(state), small).some((s) => s.cue === "march-large")).toBe(false);
   });
 
   it("walking the clock frame by frame plays each sound once, in order", () => {
@@ -90,8 +95,10 @@ describe("the replay's sound follows its clock", () => {
   });
 
   it("the variant and the pitch come from the game's public id, the turn and the event, not Math.random()", () => {
-    const one = soundPlan(tl, contextFor(state), events);
-    const other = soundPlan(tl, { ...contextFor(state), gameId: "another-game" }, events);
+    // (With no cap: which sounds fit under the cap depends on their lengths, so on the variant picked.)
+    const free = { ...REPLAY_SOUND, maxAtOnce: 99 };
+    const one = soundPlan(tl, contextFor(state), events, free);
+    const other = soundPlan(tl, { ...contextFor(state), gameId: "another-game" }, events, free);
     expect(other.map((s) => s.cue)).toEqual(one.map((s) => s.cue));
     expect(other.map((s) => s.seed)).not.toEqual(one.map((s) => s.seed));
   });
@@ -119,6 +126,50 @@ describe("a busy turn isn't a din", () => {
     expect(neutralTakes.length).toBeGreaterThan(0);
     const horns = plan.filter((s) => s.cue === "capture-rival").length;
     expect(horns).toBeLessThanOrEqual(events.filter((e) => e.type === "battle" && e.captured && e.defender && e.player !== "p1").length);
+  });
+});
+
+describe("the replay's sound, much simpler and shorter (Nate, session 25b)", () => {
+  const t = recorded as unknown as { gameId: string; turn: number; me: string; capitals: string[]; forts: string[]; events: ReplayEvent[] };
+  const caps = new Set(t.capitals), forts = new Set(t.forts);
+  const tl = buildTimeline(t.events);
+  const plan = soundPlan(tl, { gameId: t.gameId, turn: t.turn, me: t.me, isCapital: (id) => caps.has(id), fortified: (id) => forts.has(id) }, t.events);
+
+  it("the bench's busy turn: under half the sounds (61 before), never more than two at once", () => {
+    const stats = planStats(plan);
+    expect(stats.sounds).toBeLessThanOrEqual(28);
+    expect(REPLAY_SOUND.maxAtOnce).toBe(2);
+    expect(stats.mostAtOnce).toBeLessThanOrEqual(2);
+    // Sound for less of the replay than before (it ran 22.9 s in a 20 s replay; the long ones kept as they were, a
+    // Leader falling and a capital, carry most of what's left).
+    expect(stats.seconds * 1000).toBeLessThan(tl.total * 0.85);
+  });
+
+  it("one sound of each kind per beat", () => {
+    for (const b of tl.beats) {
+      const inBeat = plan.filter((s) => s.at >= b.start && s.at < b.start + b.duration).map((s) => s.cue);
+      expect(new Set(inBeat).size, `beat at ${b.start}`).toBe(inBeat.length);
+    }
+  });
+
+  it("short sounds: a clash under 0.6 s, a capture under 0.4 s, a rival's capture under 0.5 s, a march a second at most", () => {
+    const longest = (cue: keyof typeof CUES) => Math.max(...CUE_SPECS[cue].files.map((f) => REGISTRY.files.find((x) => x.name === f)!.durationMs));
+    expect(longest("battle")).toBeLessThan(600);
+    expect(longest("capture")).toBeLessThan(400);
+    expect(longest("capture-rival")).toBeLessThan(500);
+    expect(longest("march-large")).toBeLessThanOrEqual(1000);
+    for (const s of plan) expect(soundLength(s)).toBeGreaterThan(0);
+  });
+
+  it("no horn for a rival's capture, no crowd, no small marches: those are gone", () => {
+    for (const gone of ["march-small", "march-medium", "battle-big"]) expect(CUE_NAMES as string[]).not.toContain(gone);
+    expect(RECIPE.cues.find((c) => c.cue === "capture-rival")!.variants.flatMap((v) => v.layers.map((l) => l.src))).toEqual(["hector-war-drums"]);
+  });
+
+  it("with two sounding, a more important one still plays (a capital falling cuts the least one off); a lesser one waits", () => {
+    const capital = [...t.events.entries()].find(([, e]) => e.type === "battle" && e.captured && caps.has(e.to));
+    expect(capital).toBeTruthy();
+    expect(plan.some((s) => s.cue === "capital-falls")).toBe(true);
   });
 });
 
@@ -170,16 +221,19 @@ describe("never annoying", () => {
 });
 
 describe("Settings → Sound", () => {
-  it("starts on, at a moderate volume, music lower than effects", () => {
+  it("starts on, at a moderate volume, music lower than effects (Music at 25% since 25b)", () => {
     expect(readLevels(null)).toEqual(SOUND_DEFAULTS);
+    expect(SOUND_DEFAULTS.music).toBe(0.25);
     expect(SOUND_DEFAULTS.muted).toBe(false);
     expect(SOUND_DEFAULTS.music).toBeLessThan(SOUND_DEFAULTS.effects);
     expect(SOUND_DEFAULTS.master).toBeLessThan(1);
   });
 
   it("is remembered as it was set, and a bad value falls back to the default", () => {
-    expect(readLevels(JSON.stringify({ master: 0.4, music: 0, effects: 1, muted: true }))).toEqual({ master: 0.4, music: 0, effects: 1, muted: true });
-    expect(readLevels(JSON.stringify({ master: 7, music: "loud" }))).toEqual({ ...SOUND_DEFAULTS, master: 1 });
+    expect(readLevels(JSON.stringify({ v: 2, master: 0.4, music: 0, effects: 1, muted: true }))).toEqual({ master: 0.4, music: 0, effects: 1, muted: true });
+    expect(readLevels(JSON.stringify({ v: 2, master: 7, music: "loud" }))).toEqual({ ...SOUND_DEFAULTS, master: 1 });
+    // Saved before 25b: Master, Sound effects and Mute kept, Music back to the new default once.
+    expect(readLevels(JSON.stringify({ master: 0.4, music: 0.9, effects: 1, muted: true }))).toEqual({ master: 0.4, music: SOUND_DEFAULTS.music, effects: 1, muted: true });
     expect(readLevels("not json")).toEqual(SOUND_DEFAULTS);
   });
 
@@ -204,6 +258,29 @@ describe("the music", () => {
     expect(fadeStep(0.5, 1, rate, 800)).toBe(1);
     expect(fadeStep(1, 0, rate, 250)).toBeCloseTo(0.75);
     expect(fadeStep(0.1, 0, rate, 500)).toBe(0);
+  });
+
+  it("a slider sets the level directly: each move gives that value's gain at once, no overshoot, no silence between (25b)", () => {
+    const values = [0.25, 0.2, 0.15, 0.1, 0.05, 0.1, 0.3, 0.6, 0.35];
+    const gains = values.map((m) => trackGain(1, "planning", { ...SOUND_DEFAULTS, music: m }, 1));
+    gains.forEach((g, i) => {
+      expect(g).toBeCloseTo(MUSIC_VOLUME.planning * SOUND_DEFAULTS.master * values[i]!);
+      expect(g).toBeGreaterThan(0);
+      if (i > 0) expect(Math.sign(g - gains[i - 1]!)).toBe(Math.sign(values[i]! - values[i - 1]!));
+    });
+    // Moving a slider ends a dip under a big moment, so the level you set is the level you hear.
+    duck(4000);
+    expect(duckLevel()).toBe(DUCK_TO);
+    useSound.getState().set({ music: 0.2 });
+    expect(duckLevel()).toBe(1);
+  });
+
+  it("at the default it's about a fifth of before: 8 dB quieter files and Music at 25% instead of 45%", () => {
+    const before = 0.45 * 10 ** (-18 / 20), after = SOUND_DEFAULTS.music * 10 ** (REGISTRY.target.music! / 20);
+    expect(REGISTRY.target.music).toBe(-26);
+    expect(REGISTRY.target.ambience).toBe(-32);
+    expect(after / before).toBeGreaterThan(0.18);
+    expect(after / before).toBeLessThan(0.26);
   });
 
   it("dips under a big moment and comes back up", () => {

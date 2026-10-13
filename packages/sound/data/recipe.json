@@ -2,86 +2,6 @@
  "$comment": "How each game sound is made from the sources in credits.json (session 24). `pnpm sound:import` reads this, mixes each variant's layers (each cut from `start` for `duration` seconds, placed `at` seconds in, `gain` in dB, `rate` changes pitch and speed together), trims the silence, normalises the loudness and writes apps/web/public/sound/<kind>-<cue>[-n].mp3 plus data/registry.json. To swap one sound: drop a file named like the output (sfx-battle-1.wav) into sound/incoming/replace/ and give that variant `replace: <credit id>`.",
  "cues": [
   {
-   "cue": "march-small",
-   "kind": "sfx",
-   "variants": [
-    {
-     "layers": [
-      {
-       "src": "kenney-rpg-audio",
-       "file": "footstep00.ogg"
-      },
-      {
-       "src": "kenney-rpg-audio",
-       "file": "footstep01.ogg",
-       "at": 0.3
-      },
-      {
-       "src": "kenney-rpg-audio",
-       "file": "footstep02.ogg",
-       "at": 0.6
-      },
-      {
-       "src": "kenney-rpg-audio",
-       "file": "footstep03.ogg",
-       "at": 0.9
-      }
-     ]
-    },
-    {
-     "layers": [
-      {
-       "src": "kenney-rpg-audio",
-       "file": "footstep04.ogg"
-      },
-      {
-       "src": "kenney-rpg-audio",
-       "file": "footstep05.ogg",
-       "at": 0.3
-      },
-      {
-       "src": "kenney-rpg-audio",
-       "file": "footstep06.ogg",
-       "at": 0.6
-      },
-      {
-       "src": "kenney-rpg-audio",
-       "file": "footstep07.ogg",
-       "at": 0.9
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "cue": "march-medium",
-   "kind": "sfx",
-   "variants": [
-    {
-     "layers": [
-      {
-       "src": "hector-war-drums",
-       "file": "horde_war_drums_by_william_hector.wav",
-       "start": 0,
-       "duration": 1.85
-      }
-     ],
-     "fadeOut": 0.45
-    },
-    {
-     "layers": [
-      {
-       "src": "hector-war-drums",
-       "file": "horde_war_drums_by_william_hector.wav",
-       "start": 3.69,
-       "duration": 1.85
-      }
-     ],
-     "fadeOut": 0.45
-    }
-   ]
-  },
-  {
    "cue": "march-large",
    "kind": "sfx",
    "variants": [
@@ -91,10 +11,10 @@
        "src": "hector-war-drums",
        "file": "horde_war_drums_by_william_hector.wav",
        "start": 7.38,
-       "duration": 3.7
+       "duration": 0.95
       }
      ],
-     "fadeOut": 0.8
+     "fadeOut": 0.3
     },
     {
      "layers": [
@@ -102,10 +22,10 @@
        "src": "hector-war-drums",
        "file": "horde_war_drums_by_william_hector.wav",
        "start": 11.05,
-       "duration": 3.7
+       "duration": 0.95
       }
      ],
-     "fadeOut": 0.8
+     "fadeOut": 0.3
     }
    ]
   },
@@ -117,119 +37,50 @@
      "layers": [
       {
        "src": "rubberduck-rpg-sfx",
-       "file": "blade_01.ogg"
+       "file": "blade_01.ogg",
+       "duration": 0.45
       },
       {
        "src": "kenney-impact-sounds",
        "file": "impactMetal_medium_000.ogg",
-       "at": 0.2
+       "at": 0.2,
+       "duration": 0.3
       }
-     ]
+     ],
+     "fadeOut": 0.12
     },
     {
      "layers": [
       {
        "src": "rubberduck-rpg-sfx",
-       "file": "blade_02.ogg"
+       "file": "blade_02.ogg",
+       "duration": 0.45
       },
       {
        "src": "rubberduck-rpg-sfx",
        "file": "metal_03.ogg",
        "at": 0.22,
-       "gain": -4
+       "gain": -4,
+       "duration": 0.28
       }
-     ]
+     ],
+     "fadeOut": 0.12
     },
     {
      "layers": [
       {
        "src": "rubberduck-rpg-sfx",
-       "file": "blade_03.ogg"
+       "file": "blade_03.ogg",
+       "duration": 0.45
       },
       {
        "src": "kenney-impact-sounds",
        "file": "impactMetal_medium_001.ogg",
-       "at": 0.16
+       "at": 0.16,
+       "duration": 0.32
       }
-     ]
-    }
-   ]
-  },
-  {
-   "cue": "battle-big",
-   "kind": "sfx",
-   "variants": [
-    {
-     "layers": [
-      {
-       "src": "starninjas-crowd",
-       "file": "crowd_shouting.ogg",
-       "start": 2.0,
-       "duration": 1.9,
-       "fadeIn": 0.08,
-       "fadeOut": 0.6,
-       "gain": -3
-      },
-      {
-       "src": "rubberduck-rpg-sfx",
-       "file": "blade_02.ogg",
-       "at": 0.12
-      },
-      {
-       "src": "rubberduck-rpg-sfx",
-       "file": "metal_02.ogg",
-       "at": 0.6,
-       "gain": -3
-      }
-     ]
-    },
-    {
-     "layers": [
-      {
-       "src": "starninjas-crowd",
-       "file": "crowd_shouting.ogg",
-       "start": 9.5,
-       "duration": 1.9,
-       "fadeIn": 0.08,
-       "fadeOut": 0.6,
-       "gain": -3
-      },
-      {
-       "src": "rubberduck-rpg-sfx",
-       "file": "blade_01.ogg",
-       "at": 0.12
-      },
-      {
-       "src": "rubberduck-rpg-sfx",
-       "file": "metal_03.ogg",
-       "at": 0.6,
-       "gain": -3
-      }
-     ]
-    },
-    {
-     "layers": [
-      {
-       "src": "starninjas-crowd",
-       "file": "crowd_shouting.ogg",
-       "start": 17.0,
-       "duration": 1.9,
-       "fadeIn": 0.08,
-       "fadeOut": 0.6,
-       "gain": -3
-      },
-      {
-       "src": "rubberduck-rpg-sfx",
-       "file": "blade_03.ogg",
-       "at": 0.12
-      },
-      {
-       "src": "rubberduck-rpg-sfx",
-       "file": "metal_02.ogg",
-       "at": 0.6,
-       "gain": -3
-      }
-     ]
+     ],
+     "fadeOut": 0.12
     }
    ]
   },
@@ -323,13 +174,14 @@
     {
      "layers": [
       {
-       "src": "randommind-victory",
-       "file": "victory.wav",
-       "start": 0,
-       "duration": 2.8
+       "src": "hector-war-drums",
+       "file": "horde_war_drums_by_william_hector.wav",
+       "start": 1.61,
+       "duration": 0.36,
+       "rate": 1.15
       }
      ],
-     "fadeOut": 1.0
+     "fadeOut": 0.16
     }
    ]
   },
@@ -340,14 +192,15 @@
     {
      "layers": [
       {
-       "src": "stumpystrust-horn",
-       "file": "theircoming.ogg",
+       "src": "hector-war-drums",
+       "file": "horde_war_drums_by_william_hector.wav",
        "start": 0,
-       "duration": 3.3,
-       "rate": 0.9
+       "duration": 0.37,
+       "rate": 0.82,
+       "lowpass": 900
       }
      ],
-     "fadeOut": 1.2
+     "fadeOut": 0.24
     }
    ]
   },
@@ -419,7 +272,7 @@
        "rate": 0.85
       }
      ],
-     "fadeOut": 4.0
+     "fadeOut": 4
     }
    ]
   },
@@ -437,7 +290,7 @@
        "rate": 0.8
       }
      ],
-     "fadeOut": 2.0
+     "fadeOut": 2
     }
    ]
   },

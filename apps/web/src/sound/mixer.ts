@@ -134,8 +134,11 @@ class Mixer {
     return [...new Set(Object.values(CUE_SPECS).flatMap((c) => (c.bus === "sfx" ? c.files : [])))];
   }
 
-  /** Plays a cue now. `seed` picks the file and the pitch; `gain` scales its volume (troop counts). */
-  play(cue: CueName, seed = 0, gain = 1): void {
+  /**
+   * Plays a cue now. `seed` picks the file and the pitch; `gain` scales its volume (troop counts). `cap`: how many may
+   * sound at once (the replay passes its own, two since 25b, the same its plan was made with).
+   */
+  play(cue: CueName, seed = 0, gain = 1, cap?: number): void {
     const levels = useSound.getState();
     const c = CUE_SPECS[cue];
     const bus = busGains(levels)[c.bus];
@@ -144,7 +147,7 @@ class Mixer {
     // A tap's sound has its own cooldown here (the replay's are worked out in its plan, sound/plan.ts).
     if (c.beat === "ui" && c.cooldown && now - (this.lastUi.get(cue) ?? -Infinity) < c.cooldown) return;
     if (c.beat === "ui") this.lastUi.set(cue, now);
-    const verdict = admit({ playing: this.playing, recent: this.recent }, cue, now, isPhone() ? MAX_AT_ONCE.phone : MAX_AT_ONCE.laptop);
+    const verdict = admit({ playing: this.playing, recent: this.recent }, cue, now, cap ?? (isPhone() ? MAX_AT_ONCE.phone : MAX_AT_ONCE.laptop));
     if (!verdict.play) return;
     const { file, speed } = pick(cue, seed);
     // (For the scripts: what played, and when.)

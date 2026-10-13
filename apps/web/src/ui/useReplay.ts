@@ -6,7 +6,7 @@ import { buildTimeline, frameAt, replayView, type Beat, type ReplayFrame } from 
 import type { MapRenderer } from "../render/types";
 import { cardAt, titleCards, type TitleCard } from "../replay/titles";
 import { mixer } from "../sound/mixer";
-import { soundPlan, soundsBetween } from "../sound/plan";
+import { REPLAY_SOUND, soundPlan, soundsBetween } from "../sound/plan";
 
 /**
  * Drives the animated replay: a clock from the timeline (replay/timeline.ts), each frame handed to the renderer
@@ -92,7 +92,7 @@ export function useReplay(
         skipped = true;
       } else {
         // (A screenshot script holding the replay at a moment can move the clock back: nothing plays then.)
-        if (t >= heard) for (const s of soundsBetween(sounds, heard, t)) mixer.play(s.cue, s.seed, s.gain);
+        if (t >= heard) for (const s of soundsBetween(sounds, heard, t)) mixer.play(s.cue, s.seed, s.gain, REPLAY_SOUND.maxAtOnce);
         heard = t;
       }
       const f: ReplayFrame = frameAt(timeline, t);

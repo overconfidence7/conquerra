@@ -1,72 +1,20 @@
 {
  "target": {
   "sfx": -16,
-  "music": -18,
-  "ambience": -24,
+  "music": -26,
+  "ambience": -32,
   "peak": -1
  },
  "files": [
-  {
-   "name": "sfx-march-small-1",
-   "cue": "march-small",
-   "kind": "sfx",
-   "file": "sound/sfx-march-small-1.mp3",
-   "bytes": 9865,
-   "durationMs": 1202,
-   "lufs": -18.5,
-   "peak": -2.1,
-   "sources": [
-    "kenney-rpg-audio"
-   ]
-  },
-  {
-   "name": "sfx-march-small-2",
-   "cue": "march-small",
-   "kind": "sfx",
-   "file": "sound/sfx-march-small-2.mp3",
-   "bytes": 9656,
-   "durationMs": 1176,
-   "lufs": -19.1,
-   "peak": -2.3,
-   "sources": [
-    "kenney-rpg-audio"
-   ]
-  },
-  {
-   "name": "sfx-march-medium-1",
-   "cue": "march-medium",
-   "kind": "sfx",
-   "file": "sound/sfx-march-medium-1.mp3",
-   "bytes": 15298,
-   "durationMs": 1881,
-   "lufs": -16.4,
-   "peak": -4.8,
-   "sources": [
-    "hector-war-drums"
-   ]
-  },
-  {
-   "name": "sfx-march-medium-2",
-   "cue": "march-medium",
-   "kind": "sfx",
-   "file": "sound/sfx-march-medium-2.mp3",
-   "bytes": 15298,
-   "durationMs": 1881,
-   "lufs": -16.5,
-   "peak": -5,
-   "sources": [
-    "hector-war-drums"
-   ]
-  },
   {
    "name": "sfx-march-large-1",
    "cue": "march-large",
    "kind": "sfx",
    "file": "sound/sfx-march-large-1.mp3",
-   "bytes": 30136,
-   "durationMs": 3736,
+   "bytes": 8193,
+   "durationMs": 993,
    "lufs": -16.5,
-   "peak": -5,
+   "peak": -4.7,
    "sources": [
     "hector-war-drums"
    ]
@@ -76,8 +24,8 @@
    "cue": "march-large",
    "kind": "sfx",
    "file": "sound/sfx-march-large-2.mp3",
-   "bytes": 30136,
-   "durationMs": 3736,
+   "bytes": 8193,
+   "durationMs": 993,
    "lufs": -16.4,
    "peak": -5,
    "sources": [
@@ -103,9 +51,9 @@
    "cue": "battle",
    "kind": "sfx",
    "file": "sound/sfx-battle-2.mp3",
-   "bytes": 5058,
-   "durationMs": 601,
-   "lufs": -16.5,
+   "bytes": 4431,
+   "durationMs": 522,
+   "lufs": -16.4,
    "peak": -2,
    "sources": [
     "rubberduck-rpg-sfx"
@@ -123,48 +71,6 @@
    "sources": [
     "rubberduck-rpg-sfx",
     "kenney-impact-sounds"
-   ]
-  },
-  {
-   "name": "sfx-battle-big-1",
-   "cue": "battle-big",
-   "kind": "sfx",
-   "file": "sound/sfx-battle-big-1.mp3",
-   "bytes": 15716,
-   "durationMs": 1933,
-   "lufs": -16.4,
-   "peak": -2.8,
-   "sources": [
-    "starninjas-crowd",
-    "rubberduck-rpg-sfx"
-   ]
-  },
-  {
-   "name": "sfx-battle-big-2",
-   "cue": "battle-big",
-   "kind": "sfx",
-   "file": "sound/sfx-battle-big-2.mp3",
-   "bytes": 15716,
-   "durationMs": 1933,
-   "lufs": -16.7,
-   "peak": -2.4,
-   "sources": [
-    "starninjas-crowd",
-    "rubberduck-rpg-sfx"
-   ]
-  },
-  {
-   "name": "sfx-battle-big-3",
-   "cue": "battle-big",
-   "kind": "sfx",
-   "file": "sound/sfx-battle-big-3.mp3",
-   "bytes": 15716,
-   "durationMs": 1933,
-   "lufs": -16.5,
-   "peak": -2,
-   "sources": [
-    "starninjas-crowd",
-    "rubberduck-rpg-sfx"
    ]
   },
   {
@@ -227,12 +133,12 @@
    "cue": "capture",
    "kind": "sfx",
    "file": "sound/sfx-capture-1.mp3",
-   "bytes": 23030,
-   "durationMs": 2847,
-   "lufs": -16,
-   "peak": -5.3,
+   "bytes": 2968,
+   "durationMs": 340,
+   "lufs": -16.6,
+   "peak": -2.4,
    "sources": [
-    "randommind-victory"
+    "hector-war-drums"
    ]
   },
   {
@@ -240,12 +146,12 @@
    "cue": "capture-rival",
    "kind": "sfx",
    "file": "sound/sfx-capture-rival-1.mp3",
-   "bytes": 29300,
-   "durationMs": 3631,
-   "lufs": -16.1,
-   "peak": -4.8,
+   "bytes": 4222,
+   "durationMs": 496,
+   "lufs": -16.5,
+   "peak": -3.7,
    "sources": [
-    "stumpystrust-horn"
+    "hector-war-drums"
    ]
   },
   {
@@ -658,8 +564,8 @@
    "file": "sound/music-planning.mp3",
    "bytes": 808273,
    "durationMs": 80797,
-   "lufs": -18.4,
-   "peak": -4.2,
+   "lufs": -26.4,
+   "peak": -12.1,
    "sources": [
     "randommind-kings-feast"
    ]
@@ -671,8 +577,8 @@
    "file": "sound/music-replay.mp3",
    "bytes": 789726,
    "durationMs": 78942,
-   "lufs": -18.4,
-   "peak": -4.9,
+   "lufs": -26.4,
+   "peak": -12.4,
    "sources": [
     "randommind-battle"
    ]
@@ -684,8 +590,8 @@
    "file": "sound/music-title.mp3",
    "bytes": 418526,
    "durationMs": 41822,
-   "lufs": -18.4,
-   "peak": -7.5,
+   "lufs": -26.4,
+   "peak": -15.3,
    "sources": [
     "randommind-rejoicing"
    ]
@@ -697,8 +603,8 @@
    "file": "sound/music-victory.mp3",
    "bytes": 200664,
    "durationMs": 20036,
-   "lufs": -18.4,
-   "peak": -7.1,
+   "lufs": -26.4,
+   "peak": -15,
    "sources": [
     "randommind-victory"
    ]
@@ -710,8 +616,8 @@
    "file": "sound/music-defeat.mp3",
    "bytes": 200664,
    "durationMs": 20036,
-   "lufs": -18.5,
-   "peak": -8.3,
+   "lufs": -26.5,
+   "peak": -16.4,
    "sources": [
     "randommind-defeat"
    ]
@@ -723,8 +629,8 @@
    "file": "sound/amb-wind.mp3",
    "bytes": 216520,
    "durationMs": 36049,
-   "lufs": -24.6,
-   "peak": -2.2,
+   "lufs": -32.5,
+   "peak": -2.4,
    "sources": [
     "bashar3a-wind"
    ]
@@ -736,8 +642,8 @@
    "file": "sound/amb-sea.mp3",
    "bytes": 216520,
    "durationMs": 36049,
-   "lufs": -24,
-   "peak": -8.3,
+   "lufs": -32,
+   "peak": -16.5,
    "sources": [
     "randommind-waves"
    ]
@@ -749,8 +655,8 @@
    "file": "sound/amb-birds.mp3",
    "bytes": 184546,
    "durationMs": 30720,
-   "lufs": -24,
-   "peak": -4.9,
+   "lufs": -32,
+   "peak": -13.7,
    "sources": [
     "isaiah658-birds"
    ]

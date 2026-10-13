@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import { buildTimeline } from "../../replay/timeline";
 import { CUE_NAMES, CUE_SPECS, type CueName } from "../../sound/cues";
 import { mixer, pick, url } from "../../sound/mixer";
-import { soundPlan, type PlannedSound } from "../../sound/plan";
+import { planStats, REPLAY_SOUND, soundPlan, type PlannedSound, type ReplaySoundRules } from "../../sound/plan";
 import { busGains, useSound } from "../../sound/settings";
 import recorded from "./recorded-turn.json";
 import "../maps/lab.css";
@@ -18,7 +18,7 @@ import "./sound.css";
  */
 
 export const GROUPS: { title: string; cues: CueName[] }[] = [
-  { title: "The replay", cues: ["march-small", "march-medium", "march-large", "battle", "battle-big", "arrows", "siege", "capture", "capture-rival", "held", "capital-falls", "knocked-out", "leader-falls", "recruits", "wall", "built", "culture", "fog"] },
+  { title: "The replay", cues: ["march-large", "battle", "arrows", "siege", "capture", "capture-rival", "held", "capital-falls", "knocked-out", "leader-falls", "recruits", "wall", "built", "culture", "fog"] },
   { title: "Fate, the Fallen, deals, spies", cues: ["fate", "fallen", "deal-sealed", "deal-broken", "spy", "spy-caught"] },
   { title: "Planning and menus", cues: ["seal", "coins-spend", "coins-income", "timer-tick", "panel", "spoils", "turn-sweep", "notice", "card"] },
   { title: "Music", cues: ["planning", "replay", "title", "victory", "defeat"] },
@@ -128,17 +128,31 @@ function CueCard({ cue, notes, setNote }: { cue: CueName; notes: ReturnType<type
   );
 }
 
-function PlayTurn() {
+/** The bench's own try at the replay's rules (session 25b): remembered here only, and in "Copy my notes". */
+const RULES_KEY = "conquerra.soundBench.rules";
+const readRules = (): ReplaySoundRules => {
+  try {
+    return { ...REPLAY_SOUND, ...JSON.parse(localStorage.getItem(RULES_KEY) ?? "{}") };
+  } catch {
+    return { ...REPLAY_SOUND };
+  }
+};
+export const rulesNote = (r: ReplaySoundRules) =>
+  r.maxAtOnce === REPLAY_SOUND.maxAtOnce && r.marchFrom === REPLAY_SOUND.marchFrom ? "" : `replay rules: at most ${r.maxAtOnce} at once, marches from ${r.marchFrom} troops`;
+
+function PlayTurn({ rules, setRules }: { rules: ReplaySoundRules; setRules(r: ReplaySoundRules): void }) {
   const turn = TURN;
   const plan = useMemo<PlannedSound[]>(() => {
     const capitals = new Set(turn.capitals), forts = new Set(turn.forts);
-    return soundPlan(buildTimeline(turn.events), { gameId: turn.gameId, turn: turn.turn, me: turn.me, isCapital: (id) => capitals.has(id), fortified: (id) => forts.has(id) }, turn.events);
-  }, [turn]);
+    return soundPlan(buildTimeline(turn.events), { gameId: turn.gameId, turn: turn.turn, me: turn.me, isCapital: (id) => capitals.has(id), fortified: (id) => forts.has(id) }, turn.events, rules);
+  }, [turn, rules]);
+  const stats = planStats(plan);
   const [now, setNow] = useState<number | null>(null);
   const timers = useRef<number[]>([]);
   const stop = () => {
     for (const t of timers.current) clearTimeout(t);
     timers.current = [];
+    mixer.stopEffects();
     setNow(null);
   };
   useEffect(() => stop, []);
@@ -147,11 +161,16 @@ function PlayTurn() {
     await mixer.load(mixer.allEffects());
     const t0 = performance.now();
     setNow(0);
-    for (const s of plan) timers.current.push(window.setTimeout(() => (mixer.play(s.cue, s.seed, s.gain), setNow(performance.now() - t0)), s.at));
+    for (const s of plan) timers.current.push(window.setTimeout(() => (mixer.play(s.cue, s.seed, s.gain, rules.maxAtOnce), setNow(performance.now() - t0)), s.at));
     const end = (plan.at(-1)?.at ?? 0) + 1500;
     timers.current.push(window.setTimeout(() => setNow(null), end));
   };
   const total = buildTimeline(turn.events).total;
+  const num = (label: string, key: "maxAtOnce" | "marchFrom", min: number, max: number) => (
+    <label className="check">
+      {label} <input type="number" min={min} max={max} value={rules[key]} onChange={(e) => setRules({ ...rules, [key]: Math.max(min, Math.min(max, Number(e.target.value) || min)) })} />
+    </label>
+  );
   return (
     <section className="cue">
       <header className="row">
@@ -160,14 +179,20 @@ function PlayTurn() {
         </button>
         <button onClick={stop}>Stop</button>
         <span className="muted small">
-          A real replay's sounds in order: bots on Embervale with the fog on, their busiest turn ({turn.events.filter((e) => e.type === "battle").length} battles, {turn.events.filter((e) => e.type === "surface").length} things in the fog, {(total / 1000).toFixed(1)} s, {plan.length} sounds).
+          A real replay's sounds in order: bots on Embervale with the fog on, their busiest turn ({turn.events.filter((e) => e.type === "battle").length} battles, {turn.events.filter((e) => e.type === "surface").length} things in the fog, {(total / 1000).toFixed(1)} s). <b>{stats.sounds} sounds</b>, at most {stats.mostAtOnce} at once, {stats.seconds.toFixed(1)} s with any sound (session 24: 61 sounds, up to 9 at once, 22.9 s).
         </span>
       </header>
+      <div className="row">
+        {num("At most at once", "maxAtOnce", 1, 12)}
+        {num("Marches from (troops)", "marchFrom", 1, 200)}
+        <button onClick={() => setRules({ ...REPLAY_SOUND })}>Back to the game's</button>
+      </div>
       <ol className="turn">
         {plan.map((s, i) => (
           <li key={i} className={now !== null && s.at <= now ? "heard" : ""}>
             <span className="num">{(s.at / 1000).toFixed(2)} s</span> {s.cue}
             {s.gain !== 1 ? <span className="muted"> ×{s.gain.toFixed(2)}</span> : null}
+            {s.until !== undefined ? <span className="muted"> (cut at {(s.until / 1000).toFixed(2)} s)</span> : null}
           </li>
         ))}
       </ol>
@@ -196,6 +221,15 @@ function Volumes() {
 
 function SoundBench() {
   const [notes, setNotes] = useState(readNotes);
+  const [rules, setRulesState] = useState(readRules);
+  const setRules = (r: ReplaySoundRules) => {
+    setRulesState(r);
+    try {
+      localStorage.setItem(RULES_KEY, JSON.stringify({ maxAtOnce: r.maxAtOnce, marchFrom: r.marchFrom }));
+    } catch {
+      // Remembered for this visit only.
+    }
+  };
   const setNote = (cue: string, v: { mark: boolean; note: string }) =>
     setNotes((old) => {
       const next = { ...old, [cue]: v };
@@ -207,7 +241,7 @@ function SoundBench() {
       return next;
     });
   const marked = CUE_NAMES.filter((c) => notes[c]?.mark || notes[c]?.note);
-  const copy = () => void navigator.clipboard?.writeText(marked.map((c) => `${c}: ${notes[c]!.note || "(marked)"}`).join("\n")).catch(() => {});
+  const copy = () => void navigator.clipboard?.writeText([...marked.map((c) => `${c}: ${notes[c]!.note || "(marked)"}`), rulesNote(rules)].filter(Boolean).join("\n")).catch(() => {});
   const total = REGISTRY.files.reduce((a, f) => a + f.bytes, 0);
   return (
     <div className="lab sound-bench">
@@ -222,9 +256,9 @@ function SoundBench() {
         <span>
           {marked.length ? `${marked.length} marked: ${marked.join(", ")}` : "Nothing marked yet. Tick “I'd change this” on any sound, with a word on why."}
         </span>
-        {marked.length ? <button onClick={copy}>Copy my notes</button> : null}
+        {marked.length || rulesNote(rules) ? <button onClick={copy}>Copy my notes</button> : null}
       </div>
-      <PlayTurn />
+      <PlayTurn rules={rules} setRules={setRules} />
       {GROUPS.map((g) => (
         <div key={g.title}>
           <h2>{g.title}</h2>

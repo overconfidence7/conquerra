@@ -1,5 +1,5 @@
-import { duckLevel } from "./duck";
-import { busGains, useSound } from "./settings";
+import { duckLevel, setGain } from "./duck";
+import { busGains, useSound, type SoundLevels } from "./settings";
 import { audioPool, unlockedAudio } from "./unlock";
 
 /**
@@ -26,6 +26,14 @@ interface Track {
   level: number;
   target: number;
   rate: number;
+}
+
+/**
+ * A track's gain (0 to 1): its fade, its own volume, Settings and the dip. A slider move changes only `levels`, so the
+ * gain follows it straight away and in the same direction (session 25b: it used to sound like a fade).
+ */
+export function trackGain(fade: number, cue: MusicCue, levels: SoundLevels, dip: number): number {
+  return Math.max(0, Math.min(1, fade * MUSIC_VOLUME[cue] * busGains(levels).music * dip));
 }
 
 /** One step of a fade: from `level` toward `target`, `ms` later, at `rate` per ms. */
@@ -118,13 +126,13 @@ class Music {
     const now = performance.now();
     const ms = now - this.last;
     this.last = now;
-    const bus = busGains(useSound.getState()).music;
+    const levels = useSound.getState();
     const dip = duckLevel(now);
     let any = false;
     for (const t of this.tracks.values()) {
       t.level = fadeStep(t.level, t.target, t.rate, ms);
-      const v = Math.max(0, Math.min(1, t.level * MUSIC_VOLUME[t.cue] * bus * dip));
-      if (t.gain) t.gain.gain.value = v;
+      const v = trackGain(t.level, t.cue, levels, dip);
+      if (t.gain) setGain(t.gain, v);
       else t.el.volume = v;
       if (t.level <= 0 && t.target <= 0 && !t.el.paused) t.el.pause();
       if (t.level > 0 || t.target > 0) any = true;
@@ -138,6 +146,12 @@ class Music {
     this.hooked = true;
     useSound.subscribe((l) => {
       const on = busGains(l).music > 0;
+      // The new level at once, not at the next tick.
+      for (const t of this.tracks.values()) {
+        const v = trackGain(t.level, t.cue, l, duckLevel());
+        if (t.gain) setGain(t.gain, v);
+        else t.el.volume = v;
+      }
       if (on && this.current && !(this.tracks.get(this.current)?.target ?? 0)) this.start(this.current, CROSSFADE_MS);
       for (const t of this.tracks.values()) {
         if (!on) t.el.pause();
