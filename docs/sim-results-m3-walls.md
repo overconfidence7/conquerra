@@ -100,6 +100,8 @@ Since session 20d your Steward on Run the realm walls the capital's province (an
 
 **Shipped: B, +10% for each walled territory beyond the first, at most +40%** (`stackPerTerritory 0.1`, `stackMax 0.4`): a wall of 2 +10%, 3 +20%, 5 or more +40%.
 
+**Since session 26 (Oct 13): shipped uncapped on Nate's call (C, `stackMax: null`).** A 10-game all-Marshal check on Rootholm 4 (seed s26w) played identical games capped and uncapped: no wall of five or more was attacked.
+
 ### The sweep against the stop rules
 "len": all-Marshal game length (turns, average); "half": the halfway leader's win rate; "Turtle" and "top": personality win rates at an all-Marshal table, as times fair; "deleg.": the delegating seat (Leader 80%, Steward 20%) against Marshals, times fair; "edge": the walling seat (`delegate-80+walls39`) minus the never-walling seat (`delegate-80+nowalls`) at a table of Marshals, in points; "held": the share of attacks on walls (everyone's, at that table) the wall held.
 

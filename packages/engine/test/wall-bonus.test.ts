@@ -74,6 +74,9 @@ describe("walls that pay back: the stacking bonus (session 25)", () => {
     expect(wallDefense(rulesWith({ ...CAPPED, on: false }), 5)).toBe(1);
     // Whatever rules.json ships, one territory alone never gets a bonus.
     expect(wallDefense(defaultRules, 1)).toBe(1);
+    // What rules.json ships since session 26 (Nate, Oct 12): no cap, so a wall of 8 gets +70%.
+    expect(defaultRules.walls!.stackMax).toBeNull();
+    expect(wallDefense(defaultRules, 8)).toBeCloseTo(1.7, 10);
   });
 
   it("an older game's rules (no stacking numbers) give no bonus, so its history replays as it was played", () => {

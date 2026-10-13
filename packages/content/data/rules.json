@@ -136,7 +136,7 @@
     "lendAll": true,
     "oneBattleATurn": false,
     "stackPerTerritory": 0.1,
-    "stackMax": 0.4
+    "stackMax": null
   },
   "economy": {
     "startGold": 20,
