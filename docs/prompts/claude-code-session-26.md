@@ -28,7 +28,7 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 ## Step 0: sync, the wall cap, Nate's nits
 1. Run `git --no-optional-locks status`, then `git pull` and `pnpm install`. Work on `main` and push to `main`.
 2. **The wall bonus loses its cap (Nate, Oct 12):** `rules.walls.stackMax: null` in `rules.json`; the card, the attack panel and the "Completes a wall" hint drop "at most +40%" wherever they say it; `docs/rules-reference.md` (the walls paragraph) and `docs/sim-results-m3-walls.md` (one line: shipped uncapped on Nate's call) updated; the wall-bonus tests keep both the capped and uncapped cases (the capped one as a rule that can be set); **re-pin whatever changes in the same commit** (the all-bot sims were identical capped and uncapped at the sweep's seeds, so expect no fingerprint change, but check). A 10-game sim before and after should differ only where a wall of five or more was attacked.
-3. If `PROGRESS.md` has Nate's play-test notes after 24 or 25 with small fixes in them (wording, a sound to mute, a slider), do the ones that take minutes; list the rest for the orchestrator.
+3. **Session 25b handled Nate's notes after 24 and 25** (sound, the lobby redesign, the Recruit glitch, the Leader pan); if its summary in `PROGRESS.md` says something slipped to "26's Step 0", do it here. The Online block (Part 2) goes into the redesigned lobby, in the place 25b left for it.
 4. **Commit and push.** (Run the full `pnpm test` before this and every push.)
 
 ## Guardrails (all parts)

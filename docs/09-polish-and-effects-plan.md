@@ -141,3 +141,9 @@ Sound is the other half of feeling expensive: a march drum, the clash of steel, 
 4. Building, recruiting, gold, Spoils (§4), then Fate, the Fallen, diplomacy and spies (§5, §6).
 5. The living map (§7).
 6. Menus with weight, the title screen and game over (§8).
+
+### Nate's calls after playing session 24's sound (Oct 13; session 25b)
+- **Music at about a fifth of today's level.** The default Music slider comes down accordingly, and the music files themselves are quieter (so the slider has room both ways).
+- **The sliders set the level directly.** Moving Music made it fade in and out; a slider move is a level change, instant and monotonic, never a crossfade or a duck.
+- **The replay's sounds, far simpler and shorter.** They overlapped and cut into the enjoyment of the replay. Orchestrator defaults for 25b: at most two effects at once during the replay, one per beat; marches only for armies of 20 or more; one short clash per battle (under 0.6 s); a short tap for a capture; the long beds (the crowd, the drum loop) cut to a second or less; the fog's rumble one per beat as today. The busy turn on the bench (61 sounds in 20 s) should come down to about 20.
+- **"Losing a territory" (a rival takes your land) sounds like an error.** Replace it: a short low drum hit, not a horn.

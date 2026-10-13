@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M3 (depth and balance) is code-complete (sessions 7–25 reviewed); it closes when Nate's play test is in ("Things to test after session 25", with the sound bench and the carry-overs). M4 (online with friends) is planned with Nate's calls: `docs/10-online-plan.md` (Oct 12), sessions 26 to 29. **Session 26 (the server) is written** (`docs/prompts/claude-code-session-26.md`); its Step 0 takes the wall cap off. Orchestrator-09 is running; orchestrator-10 is due after session 26.**
+**Phase: M3 (depth and balance) is code-complete (sessions 7–25 reviewed). Nate's play test after 24 and 25 is in (Oct 13): **session 25b** (`docs/prompts/claude-code-session-25b.md`: sound quieter and simpler, the lobby redesigned, two controls) runs **before 26**. M4 (online with friends) is planned with Nate's calls: `docs/10-online-plan.md`, sessions 26 to 29; session 26 (the server) is written. Still untested by Nate: holding a wall, a weak spot, the Marshals' feel, the sound bench cue by cue. Orchestrator-09 is running; orchestrator-10 is due after session 26.**
 
 Claude Code sessions completed: **25** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -1427,6 +1427,14 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
 - **The screenshots:** "Walled: 11 defend (with Yewstead and Wildstead), +20% for 3 walled" on the card; the attack panel's one-line explanation and "21, Just enough: Odds: LIKELY" against it (the odds math checked: the defence kill rate of 0.6 is why 21 beat 11 behind a wall; that's the 70/30 design, and whether it feels like enough is Nate's); the lobby's "Harder spots: Bots first / Anyone" with its one-line note. Phone versions read as well.
 - **Not checked here:** how a wall feels to hold, and whether a delegating game on Wyrmland 6 is now too easy; both are the play test.
 - **Nate's calls (Oct 12):** the cap comes off (26's Step 0); bot walls stay; Wyrmland judged by play; the M4 plan written first (`docs/10-online-plan.md`), then session 26.
+
+### Oct 13: Nate's play test after sessions 24 and 25 (his notes, recorded by the orchestrator)
+- **Harder spots:** no lobby row; just deal them to bots before people, always.
+- **The lobby needs a redesign:** declutter, put things under dropdowns where possible (multiplayer will add more), and the text is larger than it needs to be.
+- **Sound is too much:** the background music should be about **20% of what it is now**; turning the Music slider down made it **fade in and out instead** of getting quieter; the replay's sounds **overlap and cut into the enjoyment**: they need to be **much simpler and shorter**; the sound for **losing a territory sounds like an error** and is terrible.
+- **A glitch:** choose Recruit in a territory, click other territories, come back to the first and press Done: it can take several presses of Done before it goes through.
+- **Your Leader:** clicking on your Leader should show where they are on the map.
+- **Not in these notes (still untested):** holding a wall, a game from a weak spot, the Marshals' feel, the comeback card, the sound bench's cue-by-cue review.
 
 ### Things to test after session 25 (Nate's next play test, the last of M3)
 *Laptop first; the phone where it applies. The preview is `4c335f76`.*

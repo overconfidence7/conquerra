@@ -34,6 +34,8 @@
 
 ## 4. Seats, colours and the lobby
 
+- **The lobby is redesigned first (Nate, Oct 13; session 25b),** so the Online block lands in a decluttered lobby: Map, Opponents and Start stay in view; the rest folds under dropdowns ("Your House": house, Leader, Steward; "Rules": luck, fog, Fate, diplomacy, victory, timer); text one size smaller; no "Harder spots" row (bots first, always). Starting a default game stays one tap.
+
 - **An online game is made in the lobby** as today, with one more block: **Online**, with "Make a game link" and the list of your online games ("Continue" shows them beside the local saves).
 - **Seats:** the host sets the table size; friends take seats as they arrive; the rest are bots at the host's level. The host starts the game when at least one friend is seated (or at once, with bots, to test).
 - **Colours:** each player picks a House colour from the ten palettes, first come first served; the host picks first. The seat rule (session 25) deals harder spots to bots before people, as in single player.
