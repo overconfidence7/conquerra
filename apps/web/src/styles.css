@@ -655,3 +655,53 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .leader-said { font-style: italic; color: #cdbf9f; margin-top: 2px; }
 .report-group.voices li { font-style: italic; }
 .flavour { font-style: italic; }
+
+/* The lobby, redesigned (session 25b, Nate: declutter, dropdowns, smaller text). One size smaller than the game's
+   menus (the title stays), tighter blocks; Map, Opponents and Start in view, Your House and Rules folded with their
+   choices in one line. On a phone the whole thing fits in about two screens, with Start always in reach. */
+.lobby .frame { gap: 12px; padding: 18px 18px 14px; font-size: var(--fs-small); }
+.lobby .field { gap: 4px; }
+.lobby .field-name { font-size: var(--fs-label); letter-spacing: 0.04em; }
+.lobby .small { font-size: var(--fs-label); }
+.lobby .tagline { margin: -4px 0 0; }
+.lobby select, .lobby .name-input { min-height: 40px; padding: 6px 8px; font-size: var(--fs-small); }
+.lobby .seg button { min-height: 40px; font-size: var(--fs-small); }
+.lobby .house-swatch { width: 36px; height: 36px; min-height: 36px; }
+.lobby button.big { padding: 10px 18px; font-size: 1rem; }
+.lobby .continue .small { font-size: var(--fs-label); }
+.lobby hr.rule { margin: 2px 0; }
+/* The map: its picture and name, the picker behind them (an invisible select over the whole row). */
+.map-choice { position: relative; display: flex; align-items: center; gap: 12px; padding: 6px; border: 1px solid rgba(201, 164, 92, 0.55); border-radius: 10px; background: var(--raised); cursor: pointer; }
+.map-choice:hover { border-color: var(--gold-hi); }
+.map-choice:focus-within { outline: 2px solid var(--gold-hi); outline-offset: 2px; }
+.map-picture { width: 96px; height: 64px; flex: none; border-radius: 6px; border: 1px solid rgba(201, 164, 92, 0.6); background: #1b3a52; image-rendering: auto; object-fit: cover; }
+.map-name { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.map-name b { font: 700 var(--fs-body) var(--font-head); color: var(--parch); }
+.map-name .change { color: var(--gold-hi); text-decoration: underline; text-underline-offset: 3px; }
+.map-choice select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; min-height: 0; }
+.pick-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pick-row select { flex: 1 1 9em; min-width: 0; }
+.pick-row .name-input { flex: 2 1 11em; width: auto; }
+/* The folded blocks: a header with the choices in one line; open, the choices themselves. */
+.fold { border: 1px solid rgba(201, 164, 92, 0.4); border-radius: 10px; background: rgba(10, 14, 22, 0.35); }
+.fold-head { width: 100%; display: grid; grid-template-columns: auto auto 1fr; align-items: baseline; gap: 4px 8px; text-align: left; background: none; border: none; padding: 10px 12px; min-height: 44px; }
+.fold-mark { color: var(--gold-hi); }
+.fold-title { font: 700 var(--fs-small) var(--font-head); color: var(--gold-hi); white-space: nowrap; }
+.fold-summary { font-size: var(--fs-label); color: var(--muted); line-height: 1.3; }
+.fold-body { display: flex; flex-direction: column; gap: 10px; padding: 2px 12px 12px; }
+.picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px 12px; }
+.pick { display: flex; flex-direction: column; gap: 3px; }
+.fold label.check { display: flex; gap: 8px; align-items: center; min-height: 36px; }
+.fold label.check input { width: 18px; height: 18px; accent-color: var(--gold); flex: none; }
+/* Start stays in reach: it sticks to the bottom of the screen while the folded blocks are open above it (the lobby
+   is its own scroller for that: a fixed height, scrolling inside). */
+.lobby { height: 100%; box-sizing: border-box; }
+.start-bar { position: sticky; bottom: 0; z-index: 2; padding: 6px 0; margin: 0 -4px; background: linear-gradient(rgba(16, 22, 36, 0), rgba(16, 22, 36, 0.92) 30%); }
+@media (max-width: 700px) {
+  .lobby { padding: 16px 10px; }
+  .lobby .frame { padding: 14px 14px 10px; gap: 10px; }
+  .logo h1 { font-size: 1.8rem; }
+  .logo img { width: 44px; height: 44px; }
+  .fold-head { grid-template-columns: auto 1fr; }
+  .fold-summary { grid-column: 2; }
+}

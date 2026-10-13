@@ -15,6 +15,7 @@
     "art:import": "pnpm --filter @conquerra/art run art-import",
     "sound:import": "pnpm --filter @conquerra/sound run sound-import",
     "map-check": "node apps/web/scripts/map-check.mjs",
+    "map-thumbs": "tsx apps/web/scripts/map-thumbs.ts",
     "ui-check": "node apps/web/scripts/ui-check.mjs",
     "deploy:preview": "pnpm test && pnpm build && node apps/web/scripts/bundle-size.mjs && wrangler deploy --config apps/web/wrangler.jsonc && node apps/web/scripts/check-preview.mjs",
     "check:preview": "node apps/web/scripts/check-preview.mjs",
