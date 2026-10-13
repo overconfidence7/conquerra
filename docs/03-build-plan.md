@@ -132,7 +132,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
 - Live 5-minute turns, plus a longer-timer option.
 - Durable Object per game, WebSockets for the live replay.
 - Google sign-in via the existing Cloudflare Access setup (Google login already configured), invite links.
-- Upgrade to Workers Paid ($5/month) at the start of M4, because turn resolution likely exceeds the Free plan's 10 ms of CPU per request.
+- Workers Paid ($5/month) **not needed for M4** (corrected Oct 13): the game room is a Durable Object, which gets 30 s of CPU per request on the Free plan; the Worker's own handlers stay trivial. Upgrade at M5.
 - Deploy from GitHub with Cloudflare's built-in Git integration.
 - Pause by vote: one player asks, everyone else confirms or declines (`04-design-additions.md` §10).
 - Resources to create: Worker `conquerra`, Durable Object `GameRoom`, D1 `conquerra_db`, R2 `conquerra-replays`, Access app "Conquerra". Full details in `docs/infra-cloudflare.md`.

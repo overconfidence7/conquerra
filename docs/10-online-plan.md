@@ -21,7 +21,7 @@
 - **Sign-in is Cloudflare Access with Google**, which the preview already uses. The Worker reads the signed identity Access attaches to every request and that's the account: no passwords, no sign-up form. Nate adds a friend's email to the "Conquerra players" policy and they're in (free up to 50 people, shared with Keel).
 - **A small database (D1 `conquerra_db`)** keeps accounts (email, display name, colour), the list of games and who sits where, and results. Saved online games live in their room's own storage. R2 (replay files) waits for M5 unless it's needed sooner.
 - **Deploys from GitHub** (Cloudflare's Workers Builds, the way the main site deploys): a push to `main` builds and deploys. `pnpm deploy:preview` stays as the manual fallback.
-- **Workers Paid ($5/month)** from the start of M4: the Free plan gives each request 10 ms of CPU, and a turn with ten Marshals planning takes about 35 ms on a laptop (3.7 ms a Marshal, `docs/sims/s25-speed.txt`), more on the server. Paid allows 30 s. Nate switches it on in the dashboard (only he can).
+- **No upgrade needed (corrected Oct 13).** The Free plan's 10 ms of CPU per request applies to the Worker's own handlers, which do almost nothing. The game room is a Durable Object, and those get **30 seconds of CPU per request on the Free plan** (checked against Cloudflare's limits pages), so the engine and the bots run inside the room with room to spare (a turn with ten Marshals planning takes about 35 ms on a laptop). The Free plan's other caps (100,000 requests and 13,000 GB-seconds of room time a day, 5 GB of storage) are far above a table of friends. Workers Paid ($5/month) waits for the public launch. `docs/infra-cloudflare.md` has the numbers.
 
 ## 3. The turn clock online (defaults)
 
@@ -64,7 +64,7 @@
 
 ## 9. The sessions (each one playable at the end)
 
-1. **26: the server skeleton.** Step 0: the wall cap comes off (Nate, Oct 12; `rules.walls.stackMax: null`, tests and re-pins), plus his play-test nits. Then: Workers Paid on (Nate), the Worker gains an API, the `GameRoom` Durable Object runs `HostCore` and the clock, the WebSocket speaks `protocol.ts`, sign-in through Access's identity, D1 with accounts and games, **one person against bots playing an online game end to end on the preview**, the lobby's Online block, Workers Builds connected (Nate), the fog-on-the-wire test. Exit: Nate plays an online game against Marshals on his phone and laptop, closes the tab mid-game and comes back.
+1. **26: the server skeleton.** Step 0: the wall cap comes off (Nate, Oct 12; `rules.walls.stackMax: null`, tests and re-pins), plus his play-test nits. Then: the Worker gains an API, the `GameRoom` Durable Object runs `HostCore` and the clock, the WebSocket speaks `protocol.ts`, sign-in through Access's identity, D1 with accounts and games, **one person against bots playing an online game end to end on the preview**, the lobby's Online block, Workers Builds connected (Nate), the fog-on-the-wire test. Exit: Nate plays an online game against Marshals on his phone and laptop, closes the tab mid-game and comes back.
 2. **27: friends at the table.** Invite links, seats and colours, the live clock for several people, lock-in early, the replay in step, reconnect, away players run by their leaders, bot takeover, resign. Exit: Nate and one friend finish a game.
 3. **28: deals between people, pause by vote, chat for people.**
 4. **29: chat for bots and leaders, notifications, the online polish pass** (what Nate's games with friends found).
@@ -72,7 +72,7 @@
 
 ## 10. What it costs
 
-- **Workers Paid:** $5/month, which includes far more requests and Durable Object time than a table of friends uses. D1 and Access stay on their free tiers at this size. Expect **$5 a month, flat**, through M4.
+- **Nothing** (corrected Oct 13): Workers, Durable Objects, D1 and Access all stay on their free tiers at a table of friends' size. Workers Paid ($5/month) comes with the public launch (M5).
 
 ## 11. Out of scope for M4 (where it goes)
 

@@ -37,8 +37,8 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 - **Provably fair:** the room commits to the seed's hash at the start (in the game's first message) and reveals the seed at game over.
 - **Single player untouched:** the local Web Worker path keeps working offline; the lobby's local games, pause and saves don't change. The start-up bundle stays within 2 KB of 492.6 KB (the online client code loads with the Online block or the game screen, not the lobby's first paint).
 - **Sign-in is Access, nothing else:** the Worker trusts a request only with a valid Access JWT (team domain `keel-nkurtz.cloudflareaccess.com`, the app's AUD tag as a Wrangler variable `ACCESS_AUD`); the email in it is the account. No sign-up form, no passwords. The lock check (`pnpm check:preview`) must still pass: every path, the API and the WebSocket included, redirects without a session.
-- **Plain language and copy-paste steps** for everything only Nate can do (the Paid plan, the AUD tag, Workers Builds): write them in `docs/infra-cloudflare.md` as a numbered list and tell him in the summary.
-- **Costs:** nothing beyond Workers Paid ($5/month). No R2 this session; D1 on its free tier.
+- **Plain language and copy-paste steps** for everything only Nate can do (the AUD tag, Workers Builds): write them in `docs/infra-cloudflare.md` as a numbered list and tell him in the summary.
+- **Costs: nothing. Stay on the Workers Free plan.** The Free plan's 10 ms of CPU per request applies to the Worker's own handlers, so **the engine and the bots run only inside the `GameRoom` Durable Object** (30 s of CPU per request on the Free plan, checked Oct 13) and the Worker's handlers do nothing heavier than checking the sign-in and opening the room. If `wrangler tail` ever shows error 1102 (CPU) or 1027 (requests), say so in the summary: the upgrade is Nate's dashboard switch, not a code change. No R2 this session; D1 on its free tier.
 
 ## Part 1: the server runs a game (no deploy yet)
 1. **The Worker gains a script.** `apps/web/wrangler.jsonc` gets `main` (a new `apps/web/server/` entry, or a new package `apps/server` if the build is cleaner: your call, say why), keeping the static assets as they are so the game is served as today. Bindings: the Durable Object `GameRoom` (SQLite-backed, with its migration), D1 `conquerra_db`, the `ACCESS_AUD` variable. Create the D1 database with Wrangler (the name from `docs/infra-cloudflare.md`); D1 migrations in the repo (`users`: id, email, name, colour, created; `games`: id, map, settings as JSON, status, host user, created, turn; `seats`: game, seat, user or bot kind, colour, name).
@@ -53,7 +53,7 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 2. **The game screen online:** the clock from the room (the deadline, not a local countdown that drifts), lock in, the replay, then the next window **after the replay's length plus 10 s** for everyone (one person: the same rule, so it's tested now). Pause is hidden online (pause by vote is session 28). "Leave this game" keeps the game on the server.
 3. **The fog-on-the-wire test:** a room with two people and bots, a listener on one seat recording every message; for every turn, assert the messages equal `viewFor` for that seat and the fog-trimmed replay, and that no territory, troop count or leader outside that view appears anywhere in them (including chat-free notices). Model it on the engine's fog tests.
 4. **Measure:** CPU per turn in the room on Embervale 4 and Rootholm 8 against Marshals (from the logs), the size of a turn's messages to one client, the start-up bundle.
-5. **Deploy** (`pnpm deploy:preview`, with its lock check; the deploy now creates the Durable Object migration and applies the D1 migration: put both in the script or say the one extra command). **Nate's steps first:** Workers Paid on; the AUD tag (write where to find it). **Then Nate plays an online game against Marshals on the preview, phone and laptop, closes the tab mid-replay and comes back.** Screenshots: the Online block (desktop and phone), the game screen with the server clock, "Your online games".
+5. **Deploy** (`pnpm deploy:preview`, with its lock check; the deploy now creates the Durable Object migration and applies the D1 migration: put both in the script or say the one extra command). **Nate's step first:** the AUD tag (write where to find it). **Then Nate plays an online game against Marshals on the preview, phone and laptop, closes the tab mid-replay and comes back.** Screenshots: the Online block (desktop and phone), the game screen with the server clock, "Your online games".
 6. **Commit and push.**
 
 ## Part 3: deploys from GitHub, and the online polish (the second deploy)
@@ -65,7 +65,7 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 Long turns (1, 8, 24 hours) hold through the Durable Object's hibernation: the alarm fires with nobody connected, the turn resolves, and the next window opens; a person who returns a day later lands in the replay they missed. A test with a fake clock; one real check with a 1-hour game left for an hour. **Commit and push** (deploy if it's in).
 
 ## Last: the write-up, the test list
-- `docs/10-online-plan.md`: a BUILT block for session 26 (what's on the server, the message shapes, the CPU per turn, what Nate had to do). `docs/infra-cloudflare.md`: the M4 section brought up to date (the Worker now has a script, the DO, D1, the variables, Workers Builds), and Nate's numbered steps.
+- `docs/10-online-plan.md`: a BUILT block for session 26 (what's on the server, the message shapes, the CPU per turn in the room against the Free plan's 30 s, what Nate had to do). `docs/infra-cloudflare.md`: the M4 section brought up to date (the Worker now has a script, the DO, D1, the variables, Workers Builds), and Nate's numbered steps.
 - `docs/rules-reference.md`: a short "Online" section (the clock, lock-in, the missed-turn choice, reconnecting). `docs/decisions.md`: one line per decision (where the server code lives, the DO's storage shape, the clock rules as built, anything the plan said that you changed and why).
 - **"Things to test after session 26"** in `PROGRESS.md`, most important first (an online game on the phone, closing the tab mid-replay, the lobby's Online block, the missed-turn choice, a 1-hour game left overnight). Carry over what Nate hasn't tried from "after session 25".
 - `PROGRESS.md` (the Phase line: M4 started; sessions completed: 26), `docs/decisions.md`.
@@ -88,6 +88,6 @@ Long turns (1, 8, 24 hours) hold through the Durable Object's hibernation: the a
 - which parts were finished and which slipped (for 26b)
 - where the server code lives and why; the DO's storage shape; the exact message flow for one turn (one paragraph)
 - CPU per turn in the room (Embervale 4, Rootholm 8), a turn's message size, the start-up bundle
-- what Nate did himself (Paid plan, AUD tag, Workers Builds) and what's still his to do
+- what Nate did himself (AUD tag, Workers Builds) and what's still his to do; whether `wrangler tail` ever showed a limit error
 - the deployed version, and whether it came from Workers Builds or `pnpm deploy:preview`
 - anything in `docs/10-online-plan.md` you built differently, and why

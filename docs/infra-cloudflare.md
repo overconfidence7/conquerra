@@ -46,13 +46,15 @@
 - Upgrade to Workers Paid if not already done (see below).
 - Stripe for the one-time purchase.
 
-## The one cost decision: Workers Paid ($5/month)
-- On the **Free** plan, each request gets **10 ms of CPU time**. Resolving a turn for 6–10 players, with bots planning for any AI seats, will likely take longer than that, and 50-player battle royale certainly will.
-- **Paid** ($5/month plus usage) raises the limit to 30 seconds by default (up to 5 minutes) and includes 10 million requests a month.
-- **Recommendation:** stay Free through M1–M3 (nothing runs on Cloudflare yet). Upgrade to Paid at the start of M4. Claude Code should measure real turn-resolution time in the sim first, so we know.
+## The one cost decision: Workers Paid ($5/month). Not needed for M4 (corrected Oct 13)
+- The Free plan's real limit is **10 ms of CPU per request on the Worker itself**. Resolving a turn with the bots planning takes 15 to 40 ms, so the Oct 2 note assumed the upgrade at the start of M4.
+- **Checked Oct 13 against Cloudflare's limits pages:** a **Durable Object gets 30 seconds of CPU per request on the Free plan too** (an HTTP request, a WebSocket message or an alarm each reset it). The game room is a Durable Object, and all the heavy work (the engine, the bots) happens inside it. The Worker's own handlers (checking the Access sign-in, opening the room) take well under a millisecond.
+- **What the Free plan caps, for a table of friends:** 100,000 requests a day (outgoing WebSocket messages are free; incoming ones count 20 for 1), 13,000 GB-seconds of room time a day (about 28 hours of a room actively working; rooms sleep between turns), 5 GB of storage in all (a saved game is tens of KB). Nowhere near.
+- **Rule for the code:** the engine and bots run only inside the room, never in the Worker's request handlers.
+- **If a limit is ever hit:** Cloudflare returns error 1102 (CPU) or 1027 (requests); the game is saved every turn; the upgrade is a dashboard switch with no code change. **Upgrade at the public launch (M5)**, for volume and storage, not before.
 
 ## Steps only Nate can do (when the time comes)
 1. M2 or M4: approve creating the Worker, custom domain and Access app. Claude Code can do this with Wrangler once Nate logs in (`npx wrangler login` opens a browser).
-2. M4: switch to Workers Paid ($5/month) under Workers plans → Upgrade.
+2. M4: nothing to pay (see above). M5: switch to Workers Paid ($5/month) under Workers plans → Upgrade.
 3. M4: add friends' emails to the Conquerra Access policy.
 4. M5: Stripe account for payments.
