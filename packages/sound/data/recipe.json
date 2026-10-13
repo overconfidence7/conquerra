@@ -176,12 +176,12 @@
       {
        "src": "hector-war-drums",
        "file": "horde_war_drums_by_william_hector.wav",
-       "start": 1.61,
-       "duration": 0.36,
-       "rate": 1.15
+       "start": 0,
+       "duration": 0.42,
+       "rate": 0.95
       }
      ],
-     "fadeOut": 0.16
+     "fadeOut": 0.22
     }
    ]
   },
@@ -743,22 +743,7 @@
    ]
   },
   {
-   "cue": "planning",
-   "kind": "music",
-   "variants": [
-    {
-     "layers": [
-      {
-       "src": "randommind-kings-feast",
-       "file": "Loop_Kings_Feast_0.wav"
-      }
-     ],
-     "trim": false
-    }
-   ]
-  },
-  {
-   "cue": "replay",
+   "cue": "game",
    "kind": "music",
    "variants": [
     {
@@ -766,21 +751,6 @@
       {
        "src": "randommind-battle",
        "file": "battle_1.wav"
-      }
-     ],
-     "trim": false
-    }
-   ]
-  },
-  {
-   "cue": "title",
-   "kind": "music",
-   "variants": [
-    {
-     "layers": [
-      {
-       "src": "randommind-rejoicing",
-       "file": "Loop_Rejoicing.wav"
       }
      ],
      "trim": false
@@ -847,21 +817,6 @@
        "file": "Vistula.mp3",
        "start": 600,
        "duration": 36
-      }
-     ],
-     "trim": false
-    }
-   ]
-  },
-  {
-   "cue": "birds",
-   "kind": "ambience",
-   "variants": [
-    {
-     "layers": [
-      {
-       "src": "isaiah658-birds",
-       "file": "birds-isaiah658.ogg"
       }
      ],
      "trim": false

@@ -1,20 +1,20 @@
-import { duckLevel, setGain } from "./duck";
+import { setGain } from "./duck";
 import { busGains, useSound, type SoundLevels } from "./settings";
 import { audioPool, unlockedAudio } from "./unlock";
 
 /**
- * The music (session 24): the planning loop under planning, the replay loop under the replay, the title music in the
- * lobby (after the first tap), the victory and defeat stings at game over. Each track streams from an audio element
+ * The music (session 24; one loop since 25b): the game's loop from the lobby (after the first tap) through planning
+ * and the replay alike, never switching or dipping (Nate: it kept fading in and out), then the victory or defeat sting. Each track streams from an audio element
  * (nothing is decoded whole, so an 80 s loop doesn't sit in memory), its volume set through the audio context the
  * first tap woke (a phone ignores an element's own volume). Changing track crossfades (about 1 s); a track you come
  * back to carries on where it was, so the music never starts over each turn. It dips under the big moments (duck.ts)
  * and stops while the tab is hidden. No sound effects library here: the lobby loads only this.
  */
 
-export type MusicCue = "planning" | "replay" | "title" | "victory" | "defeat";
+export type MusicCue = "game" | "victory" | "defeat";
 /** How loud each track is, before the volumes in Settings (the cue list's music volumes, kept here so the lobby doesn't load it). */
-export const MUSIC_VOLUME: Record<MusicCue, number> = { planning: 0.8, replay: 0.75, title: 0.8, victory: 0.9, defeat: 0.9 };
-const LOOPS = new Set<MusicCue>(["planning", "replay", "title"]);
+export const MUSIC_VOLUME: Record<MusicCue, number> = { game: 0.8, victory: 0.9, defeat: 0.9 };
+const LOOPS = new Set<MusicCue>(["game"]);
 export const CROSSFADE_MS = 1000;
 const TICK_MS = 50;
 
@@ -29,11 +29,12 @@ interface Track {
 }
 
 /**
- * A track's gain (0 to 1): its fade, its own volume, Settings and the dip. A slider move changes only `levels`, so the
- * gain follows it straight away and in the same direction (session 25b: it used to sound like a fade).
+ * A track's gain (0 to 1): its fade, its own volume and Settings. A slider move changes only `levels`, so the gain
+ * follows it straight away and in the same direction. The music never dips under a big moment (session 25b, Nate: it
+ * kept fading in and out).
  */
-export function trackGain(fade: number, cue: MusicCue, levels: SoundLevels, dip: number): number {
-  return Math.max(0, Math.min(1, fade * MUSIC_VOLUME[cue] * busGains(levels).music * dip));
+export function trackGain(fade: number, cue: MusicCue, levels: SoundLevels): number {
+  return Math.max(0, Math.min(1, fade * MUSIC_VOLUME[cue] * busGains(levels).music));
 }
 
 /** One step of a fade: from `level` toward `target`, `ms` later, at `rate` per ms. */
@@ -127,11 +128,10 @@ class Music {
     const ms = now - this.last;
     this.last = now;
     const levels = useSound.getState();
-    const dip = duckLevel(now);
     let any = false;
     for (const t of this.tracks.values()) {
       t.level = fadeStep(t.level, t.target, t.rate, ms);
-      const v = trackGain(t.level, t.cue, levels, dip);
+      const v = trackGain(t.level, t.cue, levels);
       if (t.gain) setGain(t.gain, v);
       else t.el.volume = v;
       if (t.level <= 0 && t.target <= 0 && !t.el.paused) t.el.pause();
@@ -148,7 +148,7 @@ class Music {
       const on = busGains(l).music > 0;
       // The new level at once, not at the next tick.
       for (const t of this.tracks.values()) {
-        const v = trackGain(t.level, t.cue, l, duckLevel());
+        const v = trackGain(t.level, t.cue, l);
         if (t.gain) setGain(t.gain, v);
         else t.el.volume = v;
       }

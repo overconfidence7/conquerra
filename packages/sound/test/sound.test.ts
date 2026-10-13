@@ -54,7 +54,7 @@ describe("the sounds and their licenses (session 24)", () => {
       }
     }
     expect(fileName("sfx", "battle", 0, 3)).toBe("sfx-battle-1");
-    expect(fileName("music", "planning", 0, 1)).toBe("music-planning");
+    expect(fileName("music", "game", 0, 1)).toBe("music-game");
     expect(fileName("ambience", "wind", 0, 1)).toBe("amb-wind");
   });
 
@@ -70,7 +70,7 @@ describe("the sounds and their licenses (session 24)", () => {
   });
 
   it("a first game's sound stays under about 4 MB", () => {
-    const first = REGISTRY.files.filter((f) => f.kind !== "music" || ["title", "planning", "replay", "defeat"].includes(f.cue));
+    const first = REGISTRY.files.filter((f) => f.kind !== "music" || ["game", "defeat"].includes(f.cue));
     expect(first.reduce((a, f) => a + f.bytes, 0)).toBeLessThan(4 * 1024 * 1024);
   });
 });

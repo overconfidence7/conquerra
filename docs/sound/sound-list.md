@@ -4,11 +4,11 @@
 
 *Where each sound comes from (author, page, license): `docs/sound/credits.md`. To hear them all: the sound bench, `?lab=sound`.*
 
-**Loudness:** effects at −16 LUFS at their loudest moment (momentary, 400 ms), music −26 LUFS and ambience −32 LUFS over the whole file (−18 and −24 until session 25b), every peak under −1 dBTP. The game's own volumes set the mix on top of that: Music defaults to 25% (45% until 25b), so the music at the default is about a fifth of what it was.
+**Loudness:** effects at −16 LUFS at their loudest moment (momentary, 400 ms), music −26 LUFS and ambience −32 LUFS over the whole file (−18 and −24 until session 25b), every peak under −1 dBTP. The game's own volumes set the mix on top of that: the Music slider runs on an even curve (24 dB top to bottom, silent only at 0), and its default, 50%, puts the music at about a fifth of session 24's. The music never dips under a big moment.
 
 **The replay since 25b (Nate: "much simpler and shorter"):** at most two sounds at once (a more important one cuts the least one off), one of each kind per beat, marches only for armies of 20 or more, one short clash per battle, short taps for captures. The bench's busy turn: 27 sounds (61 before), at most 2 at once (up to 9 planned before), 16.3 s with any sound in a 20 s replay (22.9 s before: the long ones kept as they were, a Leader falling, a capital, the fog, carry most of it).
 
-**Weak or makeshift** (to upgrade from a paid pack or an AI tool later; marked ⚠ below): no real whisper for a spy, the march is war drums (no boots-and-drums mix), the Fallen's choir is a chant layered on a sting, and the title music is short (42 s, it loops).
+**Weak or makeshift** (to upgrade from a paid pack or an AI tool later; marked ⚠ below): no real whisper for a spy, the march is war drums (no boots-and-drums mix), the Fallen's choir is a chant layered on a sting. The game's music is one 79 s loop until a darker track is picked (Nate, Oct 13: too jolly for a war game).
 
 ## The replay
 
@@ -18,7 +18,7 @@
 | `battle` | a fight: one short clash (under 0.6 s), at most one every 1.5 s | 3 | a sword clash (rubberduck, Kenney), cut short |
 | `arrows` | defenders shoot from a fort or a wall | 2 | arrow swishes (artisticdude) and a thunk |
 | `siege` | a Siege engine's stone lands | 2 | a stone on a wall (Thimras) |
-| `capture` | you take land (at most every 2.5 s) | 1 | a short, bright drum tap, under 0.4 s (William Hector's war drums, pitched up) |
+| `capture` | you take land (at most every 2.5 s) | 1 | one full, deep drum hit, under 0.5 s (William Hector's war drums; the bright tap sounded like a ping) |
 | `capture-rival` | a rival takes land you can see from someone (not neutral land; at most every 3.5 s) | 1 | one low drum hit, under 0.5 s (William Hector's war drums, pitched down and muffled); no horn since 25b |
 | `held` | an attack is beaten back (at most every 2.5 s) | 2 | a blow on a shield (Kenney) |
 | `capital-falls` | a capital falls | 1 | a heavy, distant blast, a stone hit, a bell and a gong |
@@ -59,9 +59,7 @@
 
 | Cue | When it plays | Files | Made from |
 |---|---|---|---|
-| `planning` | under planning (loops, 81 s) | 1 | RandomMind, Medieval: King's Feast (loop version) |
-| `replay` | under the replay (loops, 79 s) | 1 | RandomMind, Medieval: Battle |
-| `title` | the lobby, after the first tap (loops, 42 s) | 1 | RandomMind, Medieval: Rejoicing (loop version) |
+| `game` | from the lobby to game over, planning and replay alike (loops, 79 s); never switches or dips | 1 | RandomMind, Medieval: Battle (in for King's Feast, Battle and Rejoicing since 25b: too jolly, and switching made it fade) |
 | `victory` | game over, you won (once, 20 s) | 1 | RandomMind, Medieval: Victory Theme |
 | `defeat` | game over, you lost (once, 20 s) | 1 | RandomMind, Medieval: Defeat Theme |
 
@@ -69,6 +67,5 @@
 
 | Cue | When it plays | Files | Made from |
 |---|---|---|---|
-| `wind` | under the map while planning | 1 | Bashar from Skirmish.io, Mild Wind Background Noise |
+| `wind` | under the map, steady (planning and replay alike since 25b) | 1 | Bashar from Skirmish.io, Mild Wind Background Noise |
 | `sea` | when the camera shows coast | 1 | RandomMind, Sea and river wave sounds |
-| `birds` | now and then | 1 | isaiah658, Ambient Bird Sounds |

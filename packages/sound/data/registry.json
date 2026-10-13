@@ -133,10 +133,10 @@
    "cue": "capture",
    "kind": "sfx",
    "file": "sound/sfx-capture-1.mp3",
-   "bytes": 2968,
-   "durationMs": 340,
-   "lufs": -16.6,
-   "peak": -2.4,
+   "bytes": 4013,
+   "durationMs": 470,
+   "lufs": -16.5,
+   "peak": -4,
    "sources": [
     "hector-war-drums"
    ]
@@ -558,42 +558,16 @@
    ]
   },
   {
-   "name": "music-planning",
-   "cue": "planning",
+   "name": "music-game",
+   "cue": "game",
    "kind": "music",
-   "file": "sound/music-planning.mp3",
-   "bytes": 808273,
-   "durationMs": 80797,
-   "lufs": -26.4,
-   "peak": -12.1,
-   "sources": [
-    "randommind-kings-feast"
-   ]
-  },
-  {
-   "name": "music-replay",
-   "cue": "replay",
-   "kind": "music",
-   "file": "sound/music-replay.mp3",
+   "file": "sound/music-game.mp3",
    "bytes": 789726,
    "durationMs": 78942,
    "lufs": -26.4,
    "peak": -12.4,
    "sources": [
     "randommind-battle"
-   ]
-  },
-  {
-   "name": "music-title",
-   "cue": "title",
-   "kind": "music",
-   "file": "sound/music-title.mp3",
-   "bytes": 418526,
-   "durationMs": 41822,
-   "lufs": -26.4,
-   "peak": -15.3,
-   "sources": [
-    "randommind-rejoicing"
    ]
   },
   {
@@ -646,19 +620,6 @@
    "peak": -16.5,
    "sources": [
     "randommind-waves"
-   ]
-  },
-  {
-   "name": "amb-birds",
-   "cue": "birds",
-   "kind": "ambience",
-   "file": "sound/amb-birds.mp3",
-   "bytes": 184546,
-   "durationMs": 30720,
-   "lufs": -32,
-   "peak": -13.7,
-   "sources": [
-    "isaiah658-birds"
    ]
   }
  ]

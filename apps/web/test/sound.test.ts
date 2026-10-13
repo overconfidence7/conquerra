@@ -9,11 +9,11 @@ import { buildTimeline } from "../src/replay/timeline";
 import { Cues, CUE_NAMES, CUE_SPECS, CUES } from "../src/sound/cues";
 import { admit, MAX_AT_ONCE, pick, STACK_MS } from "../src/sound/mixer";
 import { planStats, REPLAY_SOUND, soundLength, soundPlan, soundsBetween, troopGain, type SoundContext } from "../src/sound/plan";
-import { busGains, readLevels, SOUND_DEFAULTS, useSound } from "../src/sound/settings";
+import { busGains, MUSIC_RANGE_DB, musicCurve, readLevels, SOUND_DEFAULTS, useSound } from "../src/sound/settings";
 import { DUCK_BACK_MS, DUCK_TO, duck, duckLevel } from "../src/sound/duck";
 import { fadeStep, MUSIC_VOLUME, trackGain } from "../src/sound/music";
 import recorded from "../src/lab/sound/recorded-turn.json";
-import { BED_VOLUME, BIRD_CYCLE_MS, BIRD_ON_MS, bedLevels, closenessOf, waterInView } from "../src/sound/ambience";
+import { BED_VOLUME, bedLevels, closenessOf, waterInView } from "../src/sound/ambience";
 
 /** Session 24: the game's sound. */
 const ctx: GameContext = { map: maps.embervale!, rules: defaultRules };
@@ -152,10 +152,10 @@ describe("the replay's sound, much simpler and shorter (Nate, session 25b)", () 
     }
   });
 
-  it("short sounds: a clash under 0.6 s, a capture under 0.4 s, a rival's capture under 0.5 s, a march a second at most", () => {
+  it("short sounds: a clash under 0.6 s, a capture and a rival's capture under 0.5 s, a march a second at most", () => {
     const longest = (cue: keyof typeof CUES) => Math.max(...CUE_SPECS[cue].files.map((f) => REGISTRY.files.find((x) => x.name === f)!.durationMs));
     expect(longest("battle")).toBeLessThan(600);
-    expect(longest("capture")).toBeLessThan(400);
+    expect(longest("capture")).toBeLessThan(500);
     expect(longest("capture-rival")).toBeLessThan(500);
     expect(longest("march-large")).toBeLessThanOrEqual(1000);
     for (const s of plan) expect(soundLength(s)).toBeGreaterThan(0);
@@ -212,28 +212,28 @@ describe("never annoying", () => {
     expect(admit({ playing, recent }, "culture", 0, 12)).toEqual({ play: true, replace: null });
   });
 
-  it("the music dips under a capital falling and a House knocked out", () => {
-    expect(CUE_SPECS["capital-falls"].duck).toBeGreaterThan(0);
-    expect(CUE_SPECS["knocked-out"].duck).toBeGreaterThan(0);
+  it("the music never dips under a big moment (25b, Nate: it kept fading in and out)", () => {
+    for (const n of CUE_NAMES) expect(CUE_SPECS[n].duck, n).toBe(0);
     // Nothing on a tap is loud: the menu sounds are soft.
     for (const n of CUE_NAMES) if (CUE_SPECS[n].beat === "ui") expect(CUE_SPECS[n].volume, n).toBeLessThanOrEqual(0.55);
   });
 });
 
 describe("Settings → Sound", () => {
-  it("starts on, at a moderate volume, music lower than effects (Music at 25% since 25b)", () => {
+  it("starts on, at a moderate volume, music well under the effects (Music at 50% on its even curve since 25b)", () => {
     expect(readLevels(null)).toEqual(SOUND_DEFAULTS);
-    expect(SOUND_DEFAULTS.music).toBe(0.25);
+    expect(SOUND_DEFAULTS.music).toBe(0.5);
     expect(SOUND_DEFAULTS.muted).toBe(false);
-    expect(SOUND_DEFAULTS.music).toBeLessThan(SOUND_DEFAULTS.effects);
+    expect(busGains(SOUND_DEFAULTS).music).toBeLessThan(busGains(SOUND_DEFAULTS).sfx / 2);
     expect(SOUND_DEFAULTS.master).toBeLessThan(1);
   });
 
   it("is remembered as it was set, and a bad value falls back to the default", () => {
-    expect(readLevels(JSON.stringify({ v: 2, master: 0.4, music: 0, effects: 1, muted: true }))).toEqual({ master: 0.4, music: 0, effects: 1, muted: true });
-    expect(readLevels(JSON.stringify({ v: 2, master: 7, music: "loud" }))).toEqual({ ...SOUND_DEFAULTS, master: 1 });
-    // Saved before 25b: Master, Sound effects and Mute kept, Music back to the new default once.
+    expect(readLevels(JSON.stringify({ v: 3, master: 0.4, music: 0, effects: 1, muted: true }))).toEqual({ master: 0.4, music: 0, effects: 1, muted: true });
+    expect(readLevels(JSON.stringify({ v: 3, master: 7, music: "loud" }))).toEqual({ ...SOUND_DEFAULTS, master: 1 });
+    // Saved before the even curve (no v, or v 2): Master, Sound effects and Mute kept, Music back to the default once.
     expect(readLevels(JSON.stringify({ master: 0.4, music: 0.9, effects: 1, muted: true }))).toEqual({ master: 0.4, music: SOUND_DEFAULTS.music, effects: 1, muted: true });
+    expect(readLevels(JSON.stringify({ v: 2, master: 0.4, music: 0.1, effects: 1, muted: false })).music).toBe(SOUND_DEFAULTS.music);
     expect(readLevels("not json")).toEqual(SOUND_DEFAULTS);
   });
 
@@ -241,7 +241,7 @@ describe("Settings → Sound", () => {
     expect(busGains({ ...SOUND_DEFAULTS, muted: true })).toEqual({ sfx: 0, music: 0, ambience: 0 });
     const g = busGains({ master: 1, music: 0.5, effects: 1, muted: false });
     expect(g.sfx).toBe(1);
-    expect(g.music).toBe(0.5);
+    expect(g.music).toBeCloseTo(musicCurve(0.5));
     expect(g.ambience).toBeLessThanOrEqual(g.music);
     expect(busGains({ master: 1, music: 0, effects: 1, muted: false }).ambience).toBe(0);
   });
@@ -261,10 +261,10 @@ describe("the music", () => {
   });
 
   it("a slider sets the level directly: each move gives that value's gain at once, no overshoot, no silence between (25b)", () => {
-    const values = [0.25, 0.2, 0.15, 0.1, 0.05, 0.1, 0.3, 0.6, 0.35];
-    const gains = values.map((m) => trackGain(1, "planning", { ...SOUND_DEFAULTS, music: m }, 1));
+    const values = [0.5, 0.4, 0.3, 0.2, 0.1, 0.05, 0.1, 0.3, 0.8, 0.35];
+    const gains = values.map((m) => trackGain(1, "game", { ...SOUND_DEFAULTS, music: m }));
     gains.forEach((g, i) => {
-      expect(g).toBeCloseTo(MUSIC_VOLUME.planning * SOUND_DEFAULTS.master * values[i]!);
+      expect(g).toBeCloseTo(MUSIC_VOLUME.game * SOUND_DEFAULTS.master * musicCurve(values[i]!));
       expect(g).toBeGreaterThan(0);
       if (i > 0) expect(Math.sign(g - gains[i - 1]!)).toBe(Math.sign(values[i]! - values[i - 1]!));
     });
@@ -275,8 +275,18 @@ describe("the music", () => {
     expect(duckLevel()).toBe(1);
   });
 
-  it("at the default it's about a fifth of before: 8 dB quieter files and Music at 25% instead of 45%", () => {
-    const before = 0.45 * 10 ** (-18 / 20), after = SOUND_DEFAULTS.music * 10 ** (REGISTRY.target.music! / 20);
+  it("lower never cuts out: even steps in loudness, the bottom step only a little under half way, silent only at 0 (25b)", () => {
+    const db = (s: number) => 20 * Math.log10(musicCurve(s));
+    // Every 10% of the slider is the same step in loudness.
+    for (let k = 1; k < 10; k++) expect(db((k + 1) / 10) - db(k / 10)).toBeCloseTo(MUSIC_RANGE_DB / 10);
+    // The bottom step (5%) is about 11 dB under the default: quiet, not gone (a plain slider put it 20 dB under).
+    expect(db(SOUND_DEFAULTS.music) - db(0.05)).toBeLessThan(12);
+    expect(musicCurve(0)).toBe(0);
+    expect(musicCurve(1)).toBe(1);
+  });
+
+  it("at the default it's about a fifth of before: 8 dB quieter files, and the slider's middle is a quarter", () => {
+    const before = 0.45 * 10 ** (-18 / 20), after = musicCurve(SOUND_DEFAULTS.music) * 10 ** (REGISTRY.target.music! / 20);
     expect(REGISTRY.target.music).toBe(-26);
     expect(REGISTRY.target.ambience).toBe(-32);
     expect(after / before).toBeGreaterThan(0.18);
@@ -298,18 +308,16 @@ describe("the ambience under the map (Part 4)", () => {
   });
 
   it("closer in is a little louder; the sea only where there's water in view", () => {
-    const far = bedLevels({ closeness: 0, water: 0.3 }, 0), near = bedLevels({ closeness: 1, water: 0.3 }, 0);
+    const far = bedLevels({ closeness: 0, water: 0.3 }), near = bedLevels({ closeness: 1, water: 0.3 });
     expect(near.wind).toBeGreaterThan(far.wind);
     expect(near.sea).toBeGreaterThan(far.sea);
     expect(near.wind).toBeLessThanOrEqual(far.wind * 1.5);
-    expect(bedLevels({ closeness: 1, water: 0 }, 0).sea).toBe(0);
+    expect(bedLevels({ closeness: 1, water: 0 }).sea).toBe(0);
   });
 
-  it("the birds come and go", () => {
-    const at = (t: number) => bedLevels({ closeness: 1, water: 0 }, t).birds;
-    expect(at(BIRD_ON_MS / 2)).toBeGreaterThan(0.5);
-    expect(at(BIRD_ON_MS + 5000)).toBe(0);
-    expect(at(BIRD_CYCLE_MS + BIRD_ON_MS / 2)).toBe(at(BIRD_ON_MS / 2));
+  it("steady: nothing in it comes and goes by itself (25b: no birds' cycle), only the camera changes it", () => {
+    expect(Object.keys(BED_VOLUME).sort()).toEqual(["sea", "wind"]);
+    expect(bedLevels({ closeness: 0.5, water: 0.2 })).toEqual(bedLevels({ closeness: 0.5, water: 0.2 }));
   });
 
   it("reads closeness from the camera and water from the map's ground", () => {

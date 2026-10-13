@@ -37,7 +37,7 @@ const BOT_LEVELS: { value: BotChoice; label: string; note: string }[] = [
  */
 function useTitleMusic() {
   useEffect(() => {
-    const go = () => void import("../sound/music").then((m) => m.music.play("title")).catch(() => {});
+    const go = () => void import("../sound/music").then((m) => m.music.play("game")).catch(() => {});
     if (unlockedAudio()) return go();
     addEventListener("conquerra-audio", go, { once: true });
     return () => removeEventListener("conquerra-audio", go);

@@ -2,7 +2,7 @@
 
 *Written by `pnpm sound:import` from `packages/sound/data/credits.json` (session 24); don't edit by hand. Every sound file in the game is made only from the sources below. The tests refuse a file whose source isn't listed here or whose license isn't allowed.*
 
-**Allowed licenses:** CC0 or public domain (best), CC BY with credit. Never "non-commercial", "personal use only", "editorial", or a license we can't find. **In use:** 24 sources, 24 CC0. None needs credit, but Settings → Credits lists every pack anyway (it's polite, and it's how a sound gets traced).
+**Allowed licenses:** CC0 or public domain (best), CC BY with credit. Never "non-commercial", "personal use only", "editorial", or a license we can't find. **In use:** 21 sources, 21 CC0. None needs credit, but Settings → Credits lists every pack anyway (it's polite, and it's how a sound gets traced).
 
 **License texts:** `docs/sound/licenses/` (the CC0 legal code, and the license files the packs ship with). The packs' own pages are linked below; each showed its license on the day it was downloaded.
 
@@ -24,14 +24,11 @@
 | Muffled Distant Explosion | NenadSimic | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/muffled-distant-explosion> | 2026-10-11 | `sfx-capital-falls`, `sfx-fog` |
 | Creepy Incoherent Chanting | OwlishMedia | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/creepy-incoherent-chanting> | 2026-10-11 | `sfx-fallen` |
 | Mystery Sting | railkill | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/mystery-sting> | 2026-10-11 | `sfx-fallen` |
-| Medieval: King's Feast | RandomMind | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/medieval-kings-feast> | 2026-10-11 | `music-planning` |
-| Medieval: Battle | RandomMind | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/medieval-battle> | 2026-10-11 | `music-replay` |
-| Medieval: Rejoicing | RandomMind | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/medieval-rejoicing> | 2026-10-11 | `music-title` |
+| Medieval: Battle | RandomMind | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/medieval-battle> | 2026-10-11 | `music-game` |
 | Medieval: Victory Theme | RandomMind | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/medieval-victory-theme> | 2026-10-11 | `music-victory` |
 | Medieval: Defeat Theme | RandomMind | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/medieval-defeat-theme> | 2026-10-11 | `music-defeat` |
 | Sea and river wave sounds | RandomMind | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/sea-and-river-wave-sounds> | 2026-10-11 | `amb-sea` |
 | Mild Wind Background Noise | Bashar from Skirmish.io | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/mild-wind-background-noise> | 2026-10-11 | `amb-wind` |
-| Ambient Bird Sounds | isaiah658 | CC0 1.0 (public domain dedication) | <https://opengameart.org/content/ambient-bird-sounds> | 2026-10-11 | `amb-birds` |
 
 ## How a sound gets replaced
 1. Put the new file in `sound/incoming/replace/`, named like the file it replaces (`sfx-battle-1.wav`; wav, ogg, mp3 or flac).

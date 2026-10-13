@@ -287,14 +287,14 @@ export function GameScreen() {
     const t = setTimeout(() => setSweepTurn(null), 1500);
     return () => clearTimeout(t);
   }, [view, replay]);
-  // The music (session 24): the planning loop while you plan, the replay loop while it plays (crossfading, carrying on
-  // where each was: it never starts over each turn).
+  // The music: one loop through planning and the replay alike (session 25b, Nate: switching made it fade in and out).
   const replayOn = !!replay;
-  useEffect(() => music.play(replayOn ? "replay" : "planning"), [replayOn]);
+  useEffect(() => music.play("game"), []);
   // The ambience bed under the map while you plan (Part 4): wind, the sea where the camera shows coast, birds now and
   // then, a little louder closer in. It fades out for the replay.
   useEffect(() => {
-    if (replayOn || !ctx) return void ambience.set(null);
+    // (It carries on through the replay too: steady, since 25b.)
+    if (!ctx) return void ambience.set(null);
     const size = typicalTerritorySize(ctx.map);
     const look = () => {
       const v = renderer.current?.viewState();
@@ -303,7 +303,7 @@ export function GameScreen() {
     look();
     const id = setInterval(look, 500);
     return () => (clearInterval(id), ambience.set(null));
-  }, [replayOn, ctx]);
+  }, [ctx]);
   // A notice, softly (at most one every 1.5 s).
   useEffect(() => {
     if (g.notice) mixer.play("notice");

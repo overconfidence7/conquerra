@@ -21,8 +21,8 @@ export const GROUPS: { title: string; cues: CueName[] }[] = [
   { title: "The replay", cues: ["march-large", "battle", "arrows", "siege", "capture", "capture-rival", "held", "capital-falls", "knocked-out", "leader-falls", "recruits", "wall", "built", "culture", "fog"] },
   { title: "Fate, the Fallen, deals, spies", cues: ["fate", "fallen", "deal-sealed", "deal-broken", "spy", "spy-caught"] },
   { title: "Planning and menus", cues: ["seal", "coins-spend", "coins-income", "timer-tick", "panel", "spoils", "turn-sweep", "notice", "card"] },
-  { title: "Music", cues: ["planning", "replay", "title", "victory", "defeat"] },
-  { title: "Ambience", cues: ["wind", "sea", "birds"] },
+  { title: "Music", cues: ["game", "victory", "defeat"] },
+  { title: "Ambience", cues: ["wind", "sea"] },
 ];
 const FILE = new Map(REGISTRY.files.map((f) => [f.name, f]));
 const NOTES_KEY = "conquerra.soundBench.notes";

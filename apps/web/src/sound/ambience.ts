@@ -1,6 +1,6 @@
 import type { MapDef } from "@conquerra/content";
 import type { Camera, Viewport } from "../map/camera";
-import { duckLevel, setGain } from "./duck";
+import { setGain } from "./duck";
 import { busGains, useSound } from "./settings";
 import { audioPool, unlockedAudio } from "./unlock";
 
@@ -11,12 +11,9 @@ import { audioPool, unlockedAudio } from "./unlock";
  * hidden. It streams like the music.
  */
 
-export type Bed = "wind" | "sea" | "birds";
+export type Bed = "wind" | "sea";
 /** Each bed's volume before Settings (the cue list's, kept here so the planning screen needn't load it). */
-export const BED_VOLUME: Record<Bed, number> = { wind: 0.5, sea: 0.5, birds: 0.35 };
-/** Birds sing for this long out of every BIRD_CYCLE_MS. */
-export const BIRD_CYCLE_MS = 70_000;
-export const BIRD_ON_MS = 25_000;
+export const BED_VOLUME: Record<Bed, number> = { wind: 0.5, sea: 0.5 };
 /** On-screen territory sizes (px) for "far" and "near": closeness runs 0 to 1 between them. */
 const FAR_PX = 48;
 const NEAR_PX = 260;
@@ -51,17 +48,14 @@ export function waterInView(map: MapDef, cam: Camera, vp: Viewport): number {
   return n ? water / n : 0;
 }
 
-/** How loud each bed is (0 to 1, before its own volume and Settings) for a scene, at a moment (the birds come and go). */
-export function bedLevels(s: AmbienceScene, now: number): Record<Bed, number> {
+/** How loud each bed is (0 to 1, before its own volume and Settings) for a scene: steady, nothing comes and goes by itself. */
+export function bedLevels(s: AmbienceScene): Record<Bed, number> {
   const near = 0.7 + 0.3 * s.closeness;
   // The sea where there's coast in view: louder the more water, up to half the view.
   const sea = Math.min(1, s.water * 2) * near;
-  const phase = now % BIRD_CYCLE_MS;
-  const birdsOn = phase < BIRD_ON_MS ? Math.min(1, phase / 3000, (BIRD_ON_MS - phase) / 3000) : 0;
   return {
     wind: near * (1 - 0.4 * sea),
     sea,
-    birds: birdsOn * (0.3 + 0.7 * s.closeness) * (1 - s.water),
   };
 }
 
@@ -119,15 +113,14 @@ class Ambience {
     const ms = now - this.last;
     this.last = now;
     const bus = busGains(useSound.getState()).ambience;
-    const want = this.scene && bus > 0 && !document.hidden ? bedLevels(this.scene, now) : { wind: 0, sea: 0, birds: 0 };
-    const dip = duckLevel(now);
+    const want = this.scene && bus > 0 && !document.hidden ? bedLevels(this.scene) : { wind: 0, sea: 0 };
     let any = false;
-    for (const name of ["wind", "sea", "birds"] as Bed[]) {
+    for (const name of ["wind", "sea"] as Bed[]) {
       const target = want[name];
       if (target <= 0 && !this.beds.has(name)) continue;
       const b = this.bed(name);
       b.level = b.level < target ? Math.min(target, b.level + FADE_PER_MS * ms) : Math.max(target, b.level - FADE_PER_MS * ms);
-      const v = Math.max(0, Math.min(1, b.level * BED_VOLUME[name] * bus * dip));
+      const v = Math.max(0, Math.min(1, b.level * BED_VOLUME[name] * bus));
       if (b.gain) setGain(b.gain, v);
       else b.el.volume = v;
       if (b.level > 0 && b.el.paused && !document.hidden) void b.el.play().catch(() => {});

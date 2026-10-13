@@ -6,9 +6,10 @@ import { clearDuck } from "./duck";
  * from Effects (the visual ones): Effects Off doesn't silence sound, and Mute doesn't change what you see. Ambience
  * sits under Music's volume. Default: on, moderate, music lower than effects.
  *
- * Session 25b (Nate: the music at about a fifth): Music defaults to 25% (it was 45%) and its files are 8 dB quieter, so
- * the default is about 20% of before with room on the slider both ways. Levels saved before 25b (no `v`) keep Master,
- * Sound effects and Mute, and start Music again at the new default once.
+ * Session 25b (Nate: the music at about a fifth, and lower must never cut out): the music files are 8 dB quieter, and
+ * the Music slider runs on an even curve (MUSIC_RANGE_DB from top to bottom, silent only at 0): 50%, the default, is
+ * the music at about a fifth of session 24's, and every step down is a little quieter, never gone. Levels saved before
+ * this (no `v: 3`) keep Master, Sound effects and Mute, and start Music again at the default once.
  */
 const KEY = "conquerra.sound";
 
@@ -18,9 +19,9 @@ export interface SoundLevels {
   effects: number;
   muted: boolean;
 }
-export const SOUND_DEFAULTS: SoundLevels = { master: 0.7, music: 0.25, effects: 0.8, muted: false };
-/** The saved levels' version: 2 since 25b's quieter music. */
-const VERSION = 2;
+export const SOUND_DEFAULTS: SoundLevels = { master: 0.7, music: 0.5, effects: 0.8, muted: false };
+/** The saved levels' version: 3 since the Music slider's even curve (25b). */
+const VERSION = 3;
 
 const clamp = (x: unknown, d: number) => (typeof x === "number" && Number.isFinite(x) ? Math.max(0, Math.min(1, x)) : d);
 export function readLevels(raw: string | null): SoundLevels {
@@ -59,8 +60,15 @@ export const useSound = create<SoundSettings>((set, get) => ({
   },
 }));
 
+/** The Music slider's span: the top is this many dB over the bottom step (the default, 50%, is half of it down). */
+export const MUSIC_RANGE_DB = 24;
+/** The Music slider (0 to 1) as a gain: even steps in loudness, silent only at 0. */
+export function musicCurve(s: number): number {
+  return s <= 0 ? 0 : 10 ** ((-MUSIC_RANGE_DB * (1 - Math.min(1, s))) / 20);
+}
 /** How loud each bus plays (0 to 1): what the volumes and Mute add up to. */
 export function busGains(l: SoundLevels): { sfx: number; music: number; ambience: number } {
   if (l.muted) return { sfx: 0, music: 0, ambience: 0 };
-  return { sfx: l.master * l.effects, music: l.master * l.music, ambience: l.master * l.music * 0.8 };
+  const music = l.master * musicCurve(l.music);
+  return { sfx: l.master * l.effects, music, ambience: music * 0.8 };
 }
