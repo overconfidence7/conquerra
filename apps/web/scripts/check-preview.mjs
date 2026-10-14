@@ -6,7 +6,8 @@ const SITE = process.env.PREVIEW_URL ?? "https://conquerra.overconfidenceonline.
 // "?lab=maps" and "?lab=bench": the map lab and the art test bench are on the preview only, behind the same sign-in.
 // Session 26: the online API and a game's WebSocket too (the Worker checks the sign-in itself as well, but Access
 // must stop them first).
-const paths = ["", "index.html", "manifest.webmanifest", "sw.js", "art/manifest.json", "?lab=maps", "?lab=bench", "?game=abcdefghijkm", "api/me", "api/games", "api/games/abcdefghijkm/ws"];
+// Session 27: a game link, and the API route it calls.
+const paths = ["", "index.html", "manifest.webmanifest", "sw.js", "art/manifest.json", "?lab=maps", "?lab=bench", "?game=abcdefghijkm", "?join=abcdefghij", "api/me", "api/games", "api/join/abcdefghij", "api/games/abcdefghijkm/ws"];
 let ok = true;
 for (const p of paths) {
   const url = new URL(p, SITE).toString();

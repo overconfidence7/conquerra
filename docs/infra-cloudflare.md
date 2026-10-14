@@ -65,7 +65,15 @@
    - **The fallback:** `pnpm deploy:preview` from this computer always works, Workers Builds or not.
    - **If a build fails:** the preview keeps the last good version (nothing half-deployed). The build log says why; paste it to Claude Code.
 
-**3. Friends (session 27):** add their emails to the "Conquerra players" policy (same page as step 1, **Policies** tab).
+**3. Friends (session 27): add a friend to the guest list (about 2 minutes, once per friend).** Someone whose email isn't on the list can't open the preview at all, link or not. The game link only gives a seat at one table; signing in is always Access.
+   1. Open https://one.dash.cloudflare.com and pick "Nkurtz@gmail.com's Account".
+   2. Left menu: **Access controls → Applications** (on older layouts: **Access → Applications**).
+   3. Find **Conquerra**, click the three dots (or its name), then **Edit** / **Configure**, and open the **Policies** tab.
+   4. Click the policy **Conquerra players**, then **Edit**.
+   5. Under **Include**, in the **Emails** rule, type the friend's email (the one they sign in to Google with) and press Enter. (If there's no Emails rule yet: **Add include → Selector: Emails**.)
+   6. **Save**. It works at once: send them the game link.
+   - The first time they open the link, Access's sign-in page asks them to sign in (with the same email you added).
+   - Free up to 50 people in all (shared with Keel). To remove someone, delete their email from the same rule.
 
 #### What M4 needed, as planned
 - **Worker** `conquerra`: serves the web app and the API on `conquerra.overconfidenceonline.com`.
