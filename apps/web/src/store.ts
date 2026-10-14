@@ -480,8 +480,9 @@ export const useGame = create<GameStore>((set, get) => ({
   },
 
   async togglePause() {
-    const { host, clock } = get();
-    if (!host || !clock) return;
+    const { host, clock, online } = get();
+    // Online there's no pause (pause by vote comes in session 28).
+    if (!host || !clock || online) return;
     try {
       const u = await (clock.pausedLeft !== undefined ? host.resume() : host.pause());
       set({ clock: u.clock });

@@ -4,7 +4,9 @@
  */
 const SITE = process.env.PREVIEW_URL ?? "https://conquerra.overconfidenceonline.com/";
 // "?lab=maps" and "?lab=bench": the map lab and the art test bench are on the preview only, behind the same sign-in.
-const paths = ["", "index.html", "manifest.webmanifest", "sw.js", "art/manifest.json", "?lab=maps", "?lab=bench"];
+// Session 26: the online API and a game's WebSocket too (the Worker checks the sign-in itself as well, but Access
+// must stop them first).
+const paths = ["", "index.html", "manifest.webmanifest", "sw.js", "art/manifest.json", "?lab=maps", "?lab=bench", "?game=abcdefghijkm", "api/me", "api/games", "api/games/abcdefghijkm/ws"];
 let ok = true;
 for (const p of paths) {
   const url = new URL(p, SITE).toString();
@@ -26,6 +28,24 @@ for (const p of paths) {
     console.log(`✗  ${url}: NOT locked (${res.status})${body.includes("Conquerra") ? " and it served the game!" : ""}`);
   }
 }
+// A real WebSocket to a game, with no sign-in: it must never open.
+const wsUrl = new URL("api/games/abcdefghijkm/ws", SITE).toString().replace(/^http/, "ws");
+const opened = await new Promise((resolve) => {
+  let ws;
+  try {
+    ws = new WebSocket(wsUrl);
+  } catch {
+    return resolve(false);
+  }
+  const done = (v) => (clearTimeout(timer), resolve(v));
+  const timer = setTimeout(() => (ws.close(), done(false)), 10_000);
+  ws.onopen = () => (ws.close(), done(true));
+  ws.onerror = () => done(false);
+});
+if (opened) {
+  ok = false;
+  console.log(`✗  ${wsUrl}: a WebSocket OPENED with no sign-in!`);
+} else console.log(`✓  ${wsUrl}: locked (no WebSocket without signing in)`);
 if (!ok) {
   console.log("\nThe preview is not locked behind Access. Check the Access application (README, 'The private preview').");
   process.exit(1);

@@ -472,6 +472,11 @@ export class LocalGame {
     return this.state.turn;
   }
 
+  /** The whole board: the host's own eyes (and the fog tests'). Never sent to anyone: pages get `viewFor` only. */
+  get fullState(): GameState {
+    return this.state;
+  }
+
   /** Who won (null while the game goes on). */
   get winner(): PlayerId | null {
     return this.state.winner;

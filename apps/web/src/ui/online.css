@@ -1,0 +1,13 @@
+/* The lobby's Online block (session 26): loaded with it, after the lobby is on screen. */
+.online-new, .online-list { display: flex; flex-direction: column; gap: 6px; }
+.online-list { margin-top: 6px; }
+.online-games { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.online-game { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 1px solid rgba(201, 164, 92, 0.3); border-radius: 8px; background: rgba(10, 14, 22, 0.4); }
+.online-game.yours { border-color: var(--gold); }
+.online-game-text { min-width: 0; line-height: 1.35; }
+.online-game-text .small { overflow-wrap: anywhere; }
+.online-game .gold { color: var(--gold-hi); }
+.online-game button { flex: none; }
+.fold .online-new label.check { display: flex; gap: 8px; align-items: center; min-height: 36px; }
+.fold .online-new label.check input { width: 18px; height: 18px; accent-color: var(--gold); flex: none; }
+.online-timer { display: flex; flex-direction: column; gap: 3px; max-width: 16em; }

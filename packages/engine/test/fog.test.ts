@@ -110,3 +110,20 @@ describe("fog-filtered replay", () => {
     s = result.state;
   });
 });
+
+describe("a rival's order ids (session 26: the fog on the wire)", () => {
+  it("events you may see keep your own order ids; a rival's arrive with the id blanked", () => {
+    const ctx = ctxWith();
+    const s = lineGame(ctx);
+    board(s, { a: ["p1", 5], b: ["p1", 3], c: ["p2", 3], d: ["p2", 20], e: ["p2", 5] });
+    const result = resolveTurn(ctx, s, { p1: [{ ...mv("a", "b", 2), id: "p1-own-order" }], p2: [{ ...mv("d", "c", 4), id: "p2-secret-plan" }, { id: "p2-secret-recruit", kind: "recruit", territory: "c", count: 1 }] });
+    const p1 = replayFor(ctx, s, result, "p1");
+    // p1 sees p2's land next to its own: p2's events show, but never p2's names for its orders.
+    expect(p1.some((e) => "player" in e && e.player === "p2" && "orderId" in e)).toBe(true);
+    expect(JSON.stringify(p1)).not.toContain("p2-secret");
+    for (const e of p1) if ("orderId" in e && "player" in e && e.player !== "p1" && typeof e.orderId === "string") expect(e.orderId).toBe("");
+    expect(JSON.stringify(p1)).toContain("p1-own-order");
+    // p2 keeps its own.
+    expect(JSON.stringify(replayFor(ctx, s, result, "p2"))).toContain("p2-secret-plan");
+  });
+});

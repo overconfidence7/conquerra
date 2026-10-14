@@ -51,12 +51,22 @@ export function ReportBody({ ctx, view, report }: { ctx: GameContext; view: Play
   );
 }
 
+/** Online (session 26): you missed the turn and your leaders played it for you. */
+const ranByLeaders = (view: PlayerView, report: Report) => !!report.ranByLeaders?.includes(view.me.id);
+
 export function TurnReportDialog({ ctx, view, report, autoLocked, onClose, onWatchAgain }: { ctx: GameContext; view: PlayerView; report: Report; autoLocked: boolean; onClose(): void; onWatchAgain(): void }) {
   return (
     <div className="overlay" onClick={onClose}>
       <Frame className="dialog" role="dialog" label="Turn report" title={`Turn ${report.turn} report`}>
         <div className="scroll" onClick={(e) => e.stopPropagation()}>
-          {autoLocked && <p className="tcard-intel">Time ran out, so your orders were locked in for you.</p>}
+          {autoLocked && !ranByLeaders(view, report) && <p className="tcard-intel">Time ran out, so your orders were locked in for you.</p>}
+          {report.ranByLeaders?.map((p) => (
+            <p key={p} className="tcard-intel">
+              {p === view.me.id
+                ? "Your leaders ran your House this turn: you sent no orders before time ran out. Your Leader runs the military on 80% of your income and your Steward the realm on 20%, until you change it."
+                : `${view.players.find((x) => x.id === p)?.name ?? p}'s leaders ran their House this turn.`}
+            </p>
+          ))}
           <ReportBody ctx={ctx} view={view} report={report} />
         </div>
         <div className="dialog-actions" onClick={(e) => e.stopPropagation()}>

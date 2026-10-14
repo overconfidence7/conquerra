@@ -17,10 +17,11 @@
     "map-check": "node apps/web/scripts/map-check.mjs",
     "map-thumbs": "tsx apps/web/scripts/map-thumbs.ts",
     "ui-check": "node apps/web/scripts/ui-check.mjs",
-    "deploy:preview": "pnpm test && pnpm build && node apps/web/scripts/bundle-size.mjs && wrangler deploy --config apps/web/wrangler.jsonc && node apps/web/scripts/check-preview.mjs",
+    "deploy:preview": "pnpm test && pnpm build && node apps/web/scripts/bundle-size.mjs && wrangler d1 migrations apply conquerra_db --remote --config apps/web/wrangler.jsonc && wrangler deploy --config apps/web/wrangler.jsonc && node apps/web/scripts/check-preview.mjs",
     "check:preview": "node apps/web/scripts/check-preview.mjs",
     "bundle-size": "node apps/web/scripts/bundle-size.mjs",
-    "tournament": "tsx apps/sim/src/tournament.ts"
+    "tournament": "tsx apps/sim/src/tournament.ts",
+    "server-maps": "node apps/web/scripts/server-maps.mjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261013.1",

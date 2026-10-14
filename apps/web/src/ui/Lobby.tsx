@@ -22,6 +22,9 @@ const SavesDialog = lazy(() => import("./Saves"));
 const folds = () => import("./LobbyFolds");
 const HouseBlock = lazy(() => folds().then((m) => ({ default: m.HouseBlock })));
 const RulesBlock = lazy(() => folds().then((m) => ({ default: m.RulesBlock })));
+/** The Online block's insides (session 26), with the online host: fetched after the lobby is on screen. */
+const online = () => import("./OnlineBlock");
+const OnlineBlock = lazy(online);
 
 const BOT_LEVELS: { value: BotChoice; label: string; note: string }[] = [
   { value: "marshal", label: "Marshal (hard)", note: "Attacks hard, each with its own personality (you learn which by how it plays), and spots a runaway early." },
@@ -75,9 +78,18 @@ function MapPicture({ id }: { id: string }) {
   return <canvas ref={canvas} className="map-picture" aria-hidden />;
 }
 
-/** Which folded blocks are open, remembered on this device (both closed at first). */
+/** The Online block's line: your online games, and how many are waiting on you. */
+function onlineSummary(games: { waitingOn: string[]; status: string }[] | null, problem: string | null): string {
+  if (problem) return problem.includes("isn't switched on") ? "not switched on yet" : "can't reach the server right now";
+  if (!games) return "play on the server: close the tab, come back any time";
+  if (!games.length) return "no games yet: start one";
+  const yours = games.filter((g) => g.status === "playing" && g.waitingOn.includes("you")).length;
+  return `${games.length} game${games.length === 1 ? "" : "s"}${yours ? `, ${yours} waiting on you` : ""}`;
+}
+
+/** Which folded blocks are open, remembered on this device (all closed at first). */
 const FOLD_KEY = "conquerra.lobby.open";
-function useFold(name: "house" | "rules"): [boolean, () => void] {
+function useFold(name: "house" | "rules" | "online"): [boolean, () => void] {
   const read = () => {
     try {
       return !!(JSON.parse(localStorage.getItem(FOLD_KEY) ?? "{}") as Record<string, boolean>)[name];
@@ -99,7 +111,7 @@ function useFold(name: "house" | "rules"): [boolean, () => void] {
 }
 
 /** A folded block: its name and its choices in one line, so nothing is hidden; tap to open it. */
-function Fold({ name, title, summary, children }: { name: "house" | "rules"; title: string; summary: string; children: ReactNode }) {
+function Fold({ name, title, summary, children }: { name: "house" | "rules" | "online"; title: string; summary: string; children: ReactNode }) {
   const [open, toggle] = useFold(name);
   return (
     <section className={`fold ${open ? "open" : ""}`}>
@@ -125,7 +137,7 @@ function Fold({ name, title, summary, children }: { name: "house" | "rules"; tit
  */
 export function Lobby() {
   useTitleMusic();
-  const { lobby, setLobby, start, load, busy, error, slots, refreshSlots } = useGame();
+  const { lobby, setLobby, start, load, busy, error, slots, refreshSlots, onlineGames, onlineProblem } = useGame();
   const [loading, setLoading] = useState(false);
   // Load the game engine, the maps and the map painter while the player picks settings; see what's saved.
   useEffect(() => {
@@ -134,6 +146,9 @@ export function Lobby() {
     void refreshSlots();
     void loadThumbs();
     void folds();
+    // Your online games, for the Online block's line (its code arrives after the lobby is on screen).
+    void import("../host/onlineActions").then((m) => m.refreshOnline());
+    void online();
   }, [refreshSlots]);
   const auto = slots.find((s) => s.slot === "auto");
   const map = mapCatalog.find((m) => m.id === lobby.mapId) ?? mapCatalog[0]!;
@@ -262,7 +277,12 @@ export function Lobby() {
             Load a saved game
           </button>
         )}
-        {/* Session 26: the Online block goes here, under the local game ("New online game", "Your online games"). */}
+        {/* Online (session 26): a game on the server, and your online games. */}
+        <Fold name="online" title="Online" summary={onlineSummary(onlineGames, onlineProblem)}>
+          <Suspense fallback={null}>
+            <OnlineBlock />
+          </Suspense>
+        </Fold>
         {loading && (
           <Suspense fallback={null}>
             <SavesDialog mode="load" inGame={false} onClose={() => setLoading(false)} />

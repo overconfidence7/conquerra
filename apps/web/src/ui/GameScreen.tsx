@@ -119,7 +119,7 @@ function useCovered(active: boolean, phone: boolean, reserveSelPanel: boolean, s
   return covered;
 }
 
-function Settings({ phone, tactical, onTactical, onFit, onReport, onSaves, onLeave, onClose }: { phone: boolean; tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onClose(): void }) {
+function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSaves, onLeave, onClose }: { phone: boolean; online: boolean; tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onClose(): void }) {
   const [credits, setCredits] = useState(false);
   if (credits)
     return (
@@ -141,12 +141,17 @@ function Settings({ phone, tactical, onTactical, onFit, onReport, onSaves, onLea
           Last turn's report
         </button>
       )}
-      <button className="menu-item" onClick={() => onSaves("save")}>
-        Save game <span className="muted">a slot, or a file</span>
-      </button>
-      <button className="menu-item" onClick={() => onSaves("load")}>
-        Load game
-      </button>
+      {/* Online (session 26) the game is saved on the server every turn: no slots, no files. */}
+      {!online && (
+        <>
+          <button className="menu-item" onClick={() => onSaves("save")}>
+            Save game <span className="muted">a slot, or a file</span>
+          </button>
+          <button className="menu-item" onClick={() => onSaves("load")}>
+            Load game
+          </button>
+        </>
+      )}
       <LayoutSetting />
       <EffectsSetting />
       <SoundSetting folded={phone} />
@@ -155,7 +160,7 @@ function Settings({ phone, tactical, onTactical, onFit, onReport, onSaves, onLea
       </button>
       <hr className="rule" />
       <button className="menu-item" onClick={onLeave}>
-        Leave this game <span className="muted">Continue picks it up</span>
+        Leave this game <span className="muted">{online ? "it goes on on the server: open it again from the lobby's Online block" : "Continue picks it up"}</span>
       </button>
       <VersionLine />
     </Frame>
@@ -586,6 +591,7 @@ export function GameScreen() {
   const settingsMenu = settings && (
     <Settings
       phone={phone}
+      online={!!g.online}
       tactical={tactical}
       onTactical={toggleTactical}
       onFit={() => renderer.current?.fit()}
@@ -606,7 +612,7 @@ export function GameScreen() {
       replaying={replaying}
       phone={phone}
       fallen={out ? { influence: view.me.influence, perTurn: influencePerTurn(ctx, view) } : null}
-      onPause={out || view.winner ? null : () => void g.togglePause()}
+      onPause={out || view.winner || g.online ? null : () => void g.togglePause()}
       onChronicle={() => setChronicleOpen(true)}
       onSettings={() => setSettings((s) => !s)}
     />

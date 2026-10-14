@@ -337,8 +337,10 @@ describe("the step-by-step replay never leaks", () => {
                 }
                 continue;
               }
-              // Nothing is invented or changed: a full event is the engine's event, word for word.
-              expect(e).toEqual(turn.events[e.step]);
+              // Nothing is invented or changed: a full event is the engine's event, word for word (but a rival's order id,
+              // which never leaves the turn: session 26).
+              const src = turn.events[e.step]!;
+              expect(e).toEqual("orderId" in src && "player" in src && src.player !== p.id && typeof src.orderId === "string" ? { ...src, orderId: "" } : src);
               if (out || e.type === "turnStart" || e.type === "eliminated" || e.type === "gameOver") continue;
               if ("player" in e && e.player === p.id) continue;
               if (e.type === "battle" && e.defender === p.id) continue;

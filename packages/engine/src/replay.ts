@@ -50,6 +50,20 @@ export type ReplayEvent = StepEvent | SurfaceEvent | VisionEvent;
  *  - after each step where their vision changes, a "vision" event says what came into view and what fogged over.
  */
 export function replayFor(ctx: GameContext, before: GameState, result: TurnResult, player: PlayerId): ReplayEvent[] {
+  return replayOf(ctx, before, result, player).map((e) => withoutTheirOrderId(e, player));
+}
+
+/**
+ * Session 26 (online, the fog on the wire): an event you're allowed to see keeps its order id only if the order was
+ * yours. A rival's order ids are how their own queue named them (a bot's say what the order was for), so they never
+ * leave the turn: blanked to "".
+ */
+function withoutTheirOrderId(e: ReplayEvent, player: PlayerId): ReplayEvent {
+  if (!("orderId" in e) || typeof e.orderId !== "string" || !("player" in e) || e.player === player) return e;
+  return { ...e, orderId: "" } as ReplayEvent;
+}
+
+function replayOf(ctx: GameContext, before: GameState, result: TurnResult, player: PlayerId): ReplayEvent[] {
   // The Fallen (political map): the public events and the world events, then who holds what at the end. No battles.
   if (seesPolitically(before, player) && !result.state.winner) return fallenReplay(ctx, result, player);
   const idx = indexMap(ctx.map);

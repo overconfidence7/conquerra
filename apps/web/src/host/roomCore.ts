@@ -316,6 +316,11 @@ export class RoomCore {
     this.pending.delete(seat);
   }
 
+  /** The room's game, as the room sees it (tests: the fog-on-the-wire test compares every message with it). */
+  get table(): LocalGame | null {
+    return this.game;
+  }
+
   /** The secret seed (tests: the fog test checks it never leaves the room before the game ends). */
   get secretSeed(): string {
     return this.meta?.seed ?? "";

@@ -47,12 +47,13 @@ export const ONLINE_TEXT = {
 export async function api<T>(path: string, init: RequestInit = {}, fetchImpl: typeof fetch = fetch, base = ""): Promise<T> {
   let res: Response;
   try {
-    res = await fetchImpl(`${base}${path}`, { credentials: "same-origin", ...init, headers: { "content-type": "application/json", ...(init.headers ?? {}) } });
+    // (No following redirects: with the sign-in run out, Access answers with one to its sign-in page.)
+    res = await fetchImpl(`${base}${path}`, { credentials: "same-origin", redirect: "manual", ...init, headers: { "content-type": "application/json", ...(init.headers ?? {}) } });
   } catch {
     throw new Error("Couldn't reach the server. Check your connection and try again.");
   }
   // Access's sign-in page instead of an answer: the sign-in has run out.
-  if (res.redirected || (res.headers.get("content-type") ?? "").includes("text/html")) throw new Error("Your sign-in has run out. Reload the page to sign in again.");
+  if (res.type === "opaqueredirect" || (res.status >= 300 && res.status < 400) || (res.headers.get("content-type") ?? "").includes("text/html")) throw new Error("Your sign-in has run out. Reload the page to sign in again.");
   const body = (await res.json().catch(() => ({}))) as { error?: string } & T;
   if (!res.ok) throw new Error(body.error ?? `The server said no (${res.status}).`);
   return body;
