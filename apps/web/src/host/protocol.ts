@@ -229,7 +229,9 @@ export type RoomRequest =
   | { id: number; type: "hello"; have?: number }
   | { id: number; type: "table"; act: TableAct }
   /** Session 27: leave the game for good: a Marshal plays the seat from now on (you can still watch). */
-  | { id: number; type: "resign" };
+  | { id: number; type: "resign" }
+  /** Session 27: a finished game's turn, to watch again (your own view of it). */
+  | { id: number; type: "turnReplay"; turn: number };
 
 /**
  * Session 27: what someone at the table screen can do before the game starts. Sit down (with a House colour and their
@@ -294,6 +296,8 @@ export type RoomMessage = { now: number } & (
   | { id: number; ok: true; table: TableView }
   /** Not an answer (session 27): who at the table has locked in this turn (id is 0). */
   | { id: 0; ok: true; ready: PlayerId[] }
+  /** Session 27: a finished game's turn as you saw it (your view before it, and its events from your seat). */
+  | { id: number; ok: true; turnReplay: { before: PlayerView; report: TurnReport } }
 );
 
 /** The game list (the lobby's "Your online games"), from the database. */

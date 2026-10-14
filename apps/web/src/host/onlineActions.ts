@@ -159,6 +159,18 @@ export async function resignFromList(id: string): Promise<void> {
   await refreshOnline();
 }
 
+/** A finished online game (session 27): watch any turn again, your own view of it, then back to the result. */
+export async function watchTurn(turn: number): Promise<void> {
+  const host = useGame.getState().host as RemoteHost | null;
+  if (!host || !("turnReplay" in host)) return;
+  try {
+    const r = await host.turnReplay(turn);
+    useGame.setState({ screen: "game", replay: { before: r.before, report: r.report, key: Date.now() }, error: null });
+  } catch (e) {
+    useGame.setState({ error: e instanceof Error ? e.message : String(e) });
+  }
+}
+
 /** A table's link, to send to friends. */
 export const tableLink = (code: string) => `${location.origin}/?join=${code}`;
 

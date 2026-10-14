@@ -541,6 +541,14 @@ export class RoomCore {
         case "planGenerals":
           this.reply(seat, { id: req.id, ok: true, plan: g.leaderOrders(req.instructions ?? {}, req.purses, seat) });
           return;
+        case "turnReplay": {
+          // A finished game only (while it goes on, "Watch again" has the last turn).
+          if (!g.over) throw new Error("You can watch any turn again once the game is over.");
+          const r = g.turnReplay(seat, req.turn);
+          if (!r) throw new Error("That turn can't be shown again.");
+          this.reply(seat, { id: req.id, ok: true, turnReplay: r });
+          return;
+        }
         case "resign":
           if (!(await this.resign(seat, req.id))) throw new Error("You can't resign from this game now.");
           return;

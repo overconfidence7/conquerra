@@ -8,3 +8,5 @@
 @keyframes mote-down { 0% { transform: translate(0, 0) rotate(0); opacity: 0; } 10% { opacity: 0.9; } 100% { transform: translate(-8vw, 115vh) rotate(540deg); opacity: 0.2; } }
 @media (prefers-reduced-motion: reduce) { .over-motes { display: none; } }
 .award-remark { display: block; font-style: italic; color: #d9cba8; }
+.watch-turn { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin: 10px 0; }
+.watch-turn label { display: flex; flex-direction: column; gap: 3px; }

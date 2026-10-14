@@ -942,6 +942,24 @@ export class LocalGame {
     return new Map(this.peopleIds.map((id) => [id, this.update(reports.get(id) ?? null, turns === Infinity ? n : 0, id)]));
   }
 
+  /**
+   * Online (session 27): any turn's replay as this person saw it (their view before it and their fog-trimmed events),
+   * worked out again from the game's recorded orders (the engine only: no bot plans again). Null if the game's record
+   * can't replay it (it was carried on under changed rules) or there's no such turn.
+   */
+  turnReplay(id: PlayerId, turn: number): { before: PlayerView; report: TurnReport } | null {
+    this.person(id);
+    if (!this.history || !Number.isInteger(turn) || turn < 1) return null;
+    let s = createGame(this.ctx, this.history.setup);
+    for (const orders of this.history.turns) {
+      if (s.winner) break;
+      const r = resolveTurn(this.ctx, s, orders);
+      if (s.turn === turn) return { before: viewFor(this.ctx, s, id), report: { turn, events: replayFor(this.ctx, s, r, id) } };
+      s = r.state;
+    }
+    return null;
+  }
+
   /** Online: this person's last replay (their view before it and their report), for someone coming back. */
   lastReplay(id: PlayerId): { before: PlayerView; report: TurnReport } | null {
     return this.person(id).last;

@@ -6,7 +6,7 @@ import { PowerGraph } from "./PowerGraph";
 import { personaLine, portraitOf } from "./PlayersPanel";
 import { useGame } from "../store";
 import { useArtUrl } from "./art";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { music } from "../sound/music";
 import { Frame } from "./Frame";
 import "./over.css";
@@ -50,8 +50,37 @@ function AwardCard({ view, award }: { view: PlayerView; award: Award }) {
   );
 }
 
+/** A finished online game (session 27): watch any turn again, from your own seat, as you saw it. */
+function WatchATurn({ last }: { last: number }) {
+  const [turn, setTurn] = useState(last);
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="watch-turn">
+      <label>
+        <span className="field-name">Watch a turn again</span>
+        <select value={turn} onChange={(e) => setTurn(Number(e.target.value))}>
+          {Array.from({ length: last }, (_, i) => last - i).map((n) => (
+            <option key={n} value={n}>
+              Turn {n}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        disabled={busy}
+        onClick={() => {
+          setBusy(true);
+          void import("../host/onlineActions").then((m) => m.watchTurn(turn)).finally(() => setBusy(false));
+        }}
+      >
+        {busy ? "Getting it…" : "Watch"}
+      </button>
+    </div>
+  );
+}
+
 export function GameOver() {
-  const { ctx, view, report, fastForwarded, playAgain, seats, fair } = useGame();
+  const { ctx, view, report, fastForwarded, playAgain, seats, fair, online, error } = useGame();
   const emblem = useArtUrl("emblem");
   // Victory or defeat in full (batch 4, session 21), behind the results.
   const keyArt = useArtUrl(view && view.winner === view.me.id ? "art-victory" : "art-defeat");
@@ -96,6 +125,8 @@ export function GameOver() {
             Fair play: the dice came from the seed <code>{fair.seed}</code>. Its SHA-256 fingerprint, <code>{fair.seedHash}</code>, was fixed before turn 1, so nothing was changed along the way.
           </p>
         )}
+        {online && <WatchATurn last={view.turn} />}
+        {online && error && <p className="warn small">{error}</p>}
         {/* The end of the game (session 16): the power graph and the awards (everything is revealed now). */}
         <PowerGraph view={view} territories={ctx.map.territories.length} />
         <Awards view={view} />

@@ -224,3 +224,29 @@ describe("nobody left playing (session 27)", () => {
     expect(t.alarm()).toBeNull();
   }, 120_000);
 });
+
+describe("a finished game's turns, watched again (session 27, Part 4)", () => {
+  it("any turn comes back exactly as this seat saw it then (its view before, its events), and only once the game is over", async () => {
+    const t = testRoom();
+    await t.room.create({ gameId: "rewatch", settings: { ...settings, botLevel: "captain" }, people: [{ id: "p1", name: "Nate", house: 0, leadersRun: false }], seed: "rewatch-seed" });
+    let s = await t.hello("p1");
+    const seen = new Map<number, { before: unknown; events: unknown }>();
+    expect(await t.ask("p1", { type: "turnReplay", turn: 1 })).toMatchObject({ ok: false });
+    for (let i = 0; i < 80 && !s.view.players.find((p) => p.id === "p1")!.eliminatedTurn && !s.view.winner; i++) {
+      const before = s.view;
+      const u = updateOf(await t.ask("p1", { type: "lockIn", orders: [], turn: s.view.turn }));
+      seen.set(u.report!.turn, { before, events: u.report!.events });
+      s = await t.hello("p1");
+    }
+    if (!s.view.winner) await t.ask("p1", { type: "finish" });
+    expect(t.room.table!.over).toBe(true);
+    for (const turn of [1, 2, Math.max(...seen.keys())]) {
+      const m = await t.ask("p1", { type: "turnReplay", turn });
+      if (!m || !("turnReplay" in m)) throw new Error(JSON.stringify(m));
+      expect(m.turnReplay.report.turn).toBe(turn);
+      expect(m.turnReplay.report.events).toEqual(seen.get(turn)!.events);
+      expect(m.turnReplay.before).toEqual(seen.get(turn)!.before);
+    }
+    expect(await t.ask("p1", { type: "turnReplay", turn: 999 })).toMatchObject({ ok: false });
+  }, 120_000);
+});

@@ -1,6 +1,6 @@
 import type { Answer } from "@conquerra/bots";
 import type { MapDef } from "@conquerra/content";
-import type { Order } from "@conquerra/engine";
+import type { Order, PlayerView } from "@conquerra/engine";
 import { chronicleOf } from "../logic/chronicleKeep";
 import type { GameHost, HostStart, HostUpdate, LeaderOrders, LobbySettings, NewOnlineGame, RoomBody, RoomMessage, RoomRequest, RoomStart, TableAct, TableView, TurnReport } from "./protocol";
 
@@ -73,6 +73,8 @@ export interface RemoteHost extends GameHost {
   resign(): Promise<HostUpdate>;
   /** Who at the table has locked in this turn, as it changes (session 27). */
   onReady(listener: (ready: string[]) => void): void;
+  /** A finished game's turn, as you saw it (session 27). */
+  turnReplay(turn: number): Promise<{ before: PlayerView; report: TurnReport }>;
 }
 
 export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
@@ -272,6 +274,8 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
     } else if ("table" in m) {
       tables.forEach((f) => f(m.table));
       p.resolve(m.table);
+    } else if ("turnReplay" in m) {
+      p.resolve(m.turnReplay);
     } else p.resolve("orders" in m ? m.orders : "plan" in m ? m.plan : "answer" in m ? m.answer : "save" in m ? m.save : "slot" in m ? m.slot : null);
   }
 
@@ -337,6 +341,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
     onReady: (f) => void readies.push(f),
     tableAct: (act) => ask<TableView>({ type: "table", act }),
     resign: () => ask<HostUpdate>({ type: "resign" }),
+    turnReplay: (turn) => ask<{ before: PlayerView; report: TurnReport }>({ type: "turnReplay", turn }),
     /** Make a table with these settings and open its table screen (the game starts when its host says so). */
     async start(settings: LobbySettings) {
       const { leadersRun, ...rest } = settings;
