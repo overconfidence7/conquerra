@@ -189,6 +189,7 @@ p.good { color: var(--good); margin: 0; }
 .timer.red { color: #fff; background: var(--danger); border-color: #ff9c86; animation: pulse 1s ease-in-out infinite; }
 .timer.none { color: var(--muted); font-size: 0.85rem; font-family: var(--font-body); font-weight: 600; }
 .timer.paused { color: var(--gold-hi); font-size: 0.85rem; font-family: var(--font-head); font-weight: 700; letter-spacing: 0.04em; border-style: dashed; }
+.timer.waiting { color: var(--muted); font-size: 0.85rem; font-family: var(--font-body); font-weight: 600; }
 .pause-btn { min-width: 36px; min-height: 36px; border-radius: 50%; }
 .pause-btn svg { width: 18px; height: 18px; }
 .influence-stat .unit { font: 600 var(--fs-label) var(--font-head); color: var(--muted); }

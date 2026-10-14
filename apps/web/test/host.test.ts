@@ -6,7 +6,7 @@ import { HostCore } from "../src/host/hostCore";
 import { memorySaveStore, SAVE_ERRORS, type SaveStore } from "../src/host/saves";
 import { describe, expect, it } from "vitest";
 import { HUMAN_ID, LocalGame, REPORT_GRACE_MS } from "../src/host/localGame";
-import { formatClock, remainingMs, timerTone } from "../src/logic/timer";
+import { formatClock, opensInMs, remainingMs, timerTone } from "../src/logic/timer";
 import type { HostUpdate, LobbySettings } from "../src/host/protocol";
 import { restoredQueue } from "../src/store";
 
@@ -191,6 +191,11 @@ describe("timer warnings", () => {
     expect(remainingMs(clock, 70_000)).toBe(30_000);
     expect(remainingMs(clock, 200_000)).toBe(0);
     expect(formatClock(299_100)).toBe("5:00");
+    // Session 27: before the window opens there is no countdown, only the time until it starts.
+    const later = { endsAt: 320_000, turnMs: 300_000 };
+    expect(opensInMs(later, 0)).toBe(20_000);
+    expect(opensInMs(later, 20_000)).toBe(0);
+    expect(opensInMs({ ...later, pausedLeft: 5_000 }, 0)).toBe(0);
     expect(formatClock(7_000)).toBe("0:07");
   });
 });

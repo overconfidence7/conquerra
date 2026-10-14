@@ -273,7 +273,7 @@ describe("turn log", () => {
     expect(lines).toEqual([
       "Turn order: You, then Bot.",
       "Fighting in the fog: East ×2. A Leader fell out of sight.",
-      "Income +10, upkeep −0: you now have 30 gold.",
+      "Income +10: you now have 30 gold.",
     ]);
     expect(lines.join(" ")).not.toContain("bot");
   });

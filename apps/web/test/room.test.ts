@@ -111,6 +111,42 @@ describe("the game room (session 26)", () => {
     expect(played.length).toBeGreaterThan(4);
   });
 
+  it("after missed turns, your own commands and budgets come back when you play a turn yourself (session 27)", async () => {
+    const t = testRoom();
+    await t.room.create({ gameId: "g5b", settings, people: [nate], seed: "s5b" });
+    const first = await t.hello("p1");
+    const mine = (s: RoomStart | HostUpdate) => s.view.me.leaders.filter((l) => l.of === "p1").map((l) => ({ kind: l.kind, command: l.command ?? null, budget: l.budget }));
+    const own = mine(first);
+    expect(first.leadersBack).toBeUndefined();
+    // Two missed turns in a row: the leaders run both at 80/20.
+    t.offline.add("p1");
+    for (let i = 0; i < 2; i++) {
+      t.advance((t.room.table!.nextDeadline ?? t.now()) - t.now());
+      await t.tick();
+    }
+    t.offline.delete("p1");
+    const back = await t.hello("p1");
+    expect(back.view.turn).toBe(3);
+    expect(mine(back)).not.toEqual(own);
+    // The page is handed the orders that put your own back (as changes of yours), and your leaders plan with them.
+    expect(back.leadersBack!.length).toBeGreaterThan(0);
+    for (const o of back.leadersBack!) expect(o.kind === "instruct" || o.kind === "budget").toBe(true);
+    // You lock in a turn yourself (the page sends them with your orders): your own settings are back.
+    const u = updateOf(await t.ask("p1", { type: "lockIn", orders: [...back.leadersBack!, ...back.generalOrders], turn: 3 }));
+    expect(mine(u)).toEqual(own);
+    expect(u.leadersBack).toBeUndefined();
+    expect(u.report!.ranByLeaders).toBeUndefined();
+    // And a room that slept in between keeps what to give back.
+    const store = memoryRoomStore();
+    const s = testRoom(store);
+    await s.room.create({ gameId: "g5c", settings, people: [nate], seed: "s5c" });
+    s.offline.add("p1");
+    s.advance(300_000);
+    await s.tick();
+    const woke = testRoom(store, s.now() + 1000);
+    expect((await woke.hello("p1")).leadersBack!.length).toBeGreaterThan(0);
+  });
+
   it("a missed turn with no orders and the choice off: your House holds still", async () => {
     const t = testRoom();
     await t.room.create({ gameId: "g6", settings, people: [{ ...nate, leadersRun: false }], seed: "s6" });

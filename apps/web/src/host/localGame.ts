@@ -35,6 +35,7 @@ import {
   viewFor,
   type GameContext,
   type GameState,
+  type Budget,
   type Instruction,
   type NewGameOptions,
   type Offer,
@@ -124,7 +125,15 @@ export interface PersonData {
   last?: { before: PlayerView; report: TurnReport };
   /** Nate, Oct 12: "If I miss a turn with no orders, my leaders run my House". */
   leadersRun?: boolean;
+  /** Their own commands and budgets from before their leaders ran a missed turn (back when they play one themselves). */
+  own?: OwnLeaders;
 }
+
+/**
+ * A person's own commands and budgets for their Leader and Steward, by leader key ("leader:p1"), kept while their
+ * leaders run their House on missed turns (session 27: the 80/20 stands in for those turns only).
+ */
+export type OwnLeaders = Record<string, { command: Instruction | null; budget: Budget }>;
 
 /** What this host keeps in a save besides the game itself (`SaveFile.host`). */
 export interface LocalHostData {
@@ -220,9 +229,35 @@ interface Person {
   /** Online: the last turn's replay as they saw it. */
   last: { before: PlayerView; report: TurnReport } | null;
   leadersRun: boolean;
+  /** Online: their own commands and budgets, while a missed turn's 80/20 stands in (null: nothing to give back). */
+  own: OwnLeaders | null;
 }
 
-const newPerson = (id: PlayerId, leadersRun = true): Person => ({ id, saved: [], savedPaused: [], restored: null, leaderMemory: freshMemory(), voiceMemory: {}, leaderNotes: {}, chronicle: [], touched: false, locked: false, last: null, leadersRun });
+const newPerson = (id: PlayerId, leadersRun = true): Person => ({ id, saved: [], savedPaused: [], restored: null, leaderMemory: freshMemory(), voiceMemory: {}, leaderNotes: {}, chronicle: [], touched: false, locked: false, last: null, leadersRun, own: null });
+
+/** A person's Leader's and Steward's commands and budgets as they stand. */
+function ownLeaders(view: PlayerView): OwnLeaders {
+  const own: OwnLeaders = {};
+  for (const l of view.me.leaders ?? []) if (l.of === view.me.id) own[`${l.kind}:${l.of}`] = { command: l.command ?? null, budget: l.budget };
+  return own;
+}
+
+/**
+ * The orders that put a person's own commands and budgets back (the page's own ids, so they read as changes the
+ * person made): only where the 80/20 changed them.
+ */
+export function leadersBackOrders(view: PlayerView, own: OwnLeaders): Order[] {
+  const orders: Order[] = [];
+  for (const [k, o] of Object.entries(own)) {
+    const [kind, of] = k.split(":") as ["leader" | "steward", PlayerId];
+    const now = view.me.leaders?.find((l) => l.kind === kind && l.of === of);
+    if (!now) continue;
+    const role = kind === "steward" ? { role: "steward" as const } : {};
+    if (JSON.stringify(now.command ?? null) !== JSON.stringify(o.command)) orders.push({ id: `instruct-${kind}-${of}`, kind: "instruct", general: of, ...role, instruction: o.command });
+    if (JSON.stringify(now.budget) !== JSON.stringify(o.budget)) orders.push({ id: `budget-${kind}-${of}`, kind: "budget", general: of, ...role, budget: o.budget });
+  }
+  return orders;
+}
 
 /**
  * A whole game: the full state, the bots and turn resolution, for a table of people (single player: you alone) and
@@ -498,17 +533,34 @@ export class LocalGame {
   /** What this person gets: their own fogged view and report, and nothing from anyone else's seat. */
   update(report: HostUpdate["report"] = null, fastForwarded = 0, id: PlayerId = HUMAN_ID): HostUpdate {
     const p = this.person(id);
+    const view = viewFor(this.ctx, this.state, id);
+    const back = this.leadersBack(id, view);
     return {
       playerId: id,
-      view: viewFor(this.ctx, this.state, id),
+      view,
       report,
       fastForwarded,
       clock: this.clock,
-      generalOrders: this.generalOrders({}, undefined, id),
+      // Back after a missed turn: your leaders plan with your own commands again (the page shows them as your changes).
+      generalOrders: this.generalOrders(back ? this.backCommands(id) : {}, undefined, id),
+      ...(back ? { leadersBack: back } : {}),
       leaderNotes: p.leaderNotes,
       offers: this.talk.turn === this.state.turn ? this.talk.toHuman.filter((o) => o.to === id) : [],
       ...(this.state.winner || this.showPersonalities ? { seats: this.seatInfo() } : {}),
     };
+  }
+
+  /** Online: the orders that give this person their own commands and budgets back, if a missed turn changed them. */
+  private leadersBack(id: PlayerId, view: PlayerView = viewFor(this.ctx, this.state, id)): Order[] | null {
+    const own = this.person(id).own;
+    if (!own || this.state.winner || this.isOut(id)) return null;
+    const orders = leadersBackOrders(view, own);
+    return orders.length ? orders : null;
+  }
+
+  /** Their own commands, by leader key (what their leaders plan with once they're back). */
+  private backCommands(id: PlayerId): Record<string, Instruction | null> {
+    return Object.fromEntries(Object.entries(this.person(id).own ?? {}).map(([k, o]) => [k, o.command]));
   }
 
   /** Each bot seat's level and personality ("the Turtle"), for the game-over screen (or "Show personalities"). */
@@ -703,12 +755,17 @@ export class LocalGame {
       if (p.locked || p.touched) orders[p.id] = p.saved;
       else if (p.leadersRun) {
         const last = this.lastTurn.get(p.id);
-        const run = leadersRunHouse(this.ctx, withAgreed(viewFor(this.ctx, this.state, p.id), this.agreed()), p.leaderMemory, last);
+        const view = viewFor(this.ctx, this.state, p.id);
+        // Their own commands and budgets, kept from the first missed turn in a row (they come back with the person).
+        p.own ??= ownLeaders(view);
+        const run = leadersRunHouse(this.ctx, withAgreed(view, this.agreed()), p.leaderMemory, last);
         orders[p.id] = run.orders;
         this.ranNow.push(p.id);
       } else orders[p.id] = [];
     }
     const locked = new Set(this.peopleIds.filter((id) => this.person(id).locked));
+    // Someone who played this turn themselves sent their own commands back with it (or chose new ones).
+    for (const p of this.people.values()) if (p.locked || p.touched) p.own = null;
     let reports: Map<PlayerId, TurnReport>;
     try {
       reports = this.play(orders);
@@ -820,7 +877,7 @@ export class LocalGame {
     if (this.online) {
       const people: Record<PlayerId, PersonData> = {};
       for (const p of this.people.values())
-        people[p.id] = { queued: queuedOf(p), chronicle: p.chronicle, leaderMemory: p.leaderMemory, voiceMemory: p.voiceMemory, touched: p.touched, locked: p.locked, leadersRun: p.leadersRun, ...(p.last ? { last: p.last } : {}) };
+        people[p.id] = { queued: queuedOf(p), chronicle: p.chronicle, leaderMemory: p.leaderMemory, voiceMemory: p.voiceMemory, touched: p.touched, locked: p.locked, leadersRun: p.leadersRun, ...(p.last ? { last: p.last } : {}), ...(p.own ? { own: p.own } : {}) };
       host = { ...base, talk: this.talk, people, online: { deadline: this.deadline, opensAt: this.opensAt } };
     } else {
       const you = this.person(HUMAN_ID);
@@ -859,5 +916,6 @@ function personFrom(id: PlayerId, d: PersonData): Person {
   if (d.leaderMemory) p.leaderMemory = d.leaderMemory;
   if (d.voiceMemory) p.voiceMemory = d.voiceMemory;
   if (d.last) p.last = d.last;
+  if (d.own) p.own = d.own;
   return p;
 }

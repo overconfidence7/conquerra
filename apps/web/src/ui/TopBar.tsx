@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { reducedMotion, useFx } from "../replay/fx/settings";
 import { mixer } from "../sound/mixer";
 import { Rolling } from "./Rolling";
-import { formatClock, remainingMs, timerTone, type TurnClock } from "../logic/timer";
+import { formatClock, opensInMs, remainingMs, timerTone, type TurnClock } from "../logic/timer";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
 import { Icon } from "./icons";
@@ -25,6 +25,16 @@ export function TimerPill({ clock, paused }: { clock: TurnClock | null; paused: 
     ticked.current = tickSec;
   }, [tickSec]);
   if (!clock) return <span className="timer none">No timer</span>;
+  // The window hasn't opened yet (the replay, then a moment for the report; online, the table's longest replay plus
+  // 10 s): no frozen full clock (session 27). During the replay the label beside it says "Replay"; after it, the time
+  // until the countdown starts.
+  const opensIn = opensInMs(clock, now);
+  if (opensIn > 0)
+    return paused ? null : (
+      <span className="timer waiting" role="timer" aria-label={`The turn starts in ${Math.ceil(opensIn / 1000)} seconds`} data-tone="waiting">
+        in {formatClock(opensIn)}
+      </span>
+    );
   if (clock.pausedLeft !== undefined)
     return (
       <span className="timer paused" role="timer" aria-label={`Paused, ${formatClock(left)} left to give orders`} data-tone="paused" title={`${formatClock(left)} left when you resume`}>

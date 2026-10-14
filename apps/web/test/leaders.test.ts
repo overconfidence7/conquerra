@@ -54,11 +54,24 @@ describe("leaders in the report (session 18)", () => {
       `Your Steward, Odo, running the realm, finished a market at ${name(4)} (6 gold).`,
       `Your Steward, Odo, running the realm, began a fort at ${name(4)} (8 gold).`,
       `Your Steward, Odo, running the realm, raised culture at ${name(4)} to 2 (4 gold).`,
-      "Income +14, upkeep −0: you now have 12 gold.",
-      "Into purses: 2 gold to your Steward.",
+      "Income +14: you now have 12 gold, after 2 to your Steward's purse.",
     ]);
     // The Chronicle keeps what your leaders bought, and not your own purchases.
     expect(chronicleOf({ turn: 3, events: [...ev, { type: "built", step: 6, player: "you", orderId: "x", territory: t(4), building: "market", cost: 6, doneAtEndOfTurn: 3 }] }).events.filter((e) => e.type === "built")).toHaveLength(2);
+  });
+
+  it("the gold line says what the header shows: after the purses are paid, and no upkeep part when it's zero (session 27)", () => {
+    const view = game();
+    const ev: ReplayEvent[] = [
+      { type: "income", step: 1, player: "you", income: 12, upkeep: 3, goldAfter: 23, deserted: 0, deserters: [] },
+      { type: "purses", step: 2, player: "you", upkeep: [], paid: [{ kind: "steward", of: "you", gold: 1 }], goldAfter: 22, purses: [{ kind: "steward", of: "you", purse: 1 }] },
+    ];
+    expect(narrateTurn(ctx, ev, namer(ctx, view)).map((l) => l.text)).toEqual(["Income +12, upkeep −3: you now have 22 gold, after 1 to your Steward's purse."]);
+    const both: ReplayEvent[] = [
+      { ...ev[0]!, upkeep: 0 } as ReplayEvent,
+      { ...ev[1]!, paid: [{ kind: "leader", of: "you", gold: 4 }, { kind: "steward", of: "you", gold: 1 }], goldAfter: 18 } as ReplayEvent,
+    ];
+    expect(narrateTurn(ctx, both, namer(ctx, view)).map((l) => l.text)).toEqual(["Income +12: you now have 18 gold, after 4 to your Leader's purse and 1 to your Steward's purse."]);
   });
 
   it("several levels or recruits at one place in one turn read as one line (session 24)", () => {
@@ -104,7 +117,7 @@ describe("leaders in the report (session 18)", () => {
     expect(lines[0]).toBe("You took 9 gold back from Odo's purse (your Steward).");
     // It arrives reporting to your own Steward (session 20b).
     expect(lines[1]).toMatch(/^.+, Lady Morwen's Steward, joins you too, reporting to Odo\./);
-    expect(lines[2]).toContain("Your leaders' purses paid 6 of it.");
+    expect(lines[2]).toContain("Your leaders' purses paid 6 of the upkeep.");
   });
 
   it("every command and budget has plain words", () => {

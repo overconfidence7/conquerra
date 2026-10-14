@@ -26,7 +26,7 @@ const kit: PersonSeat = { id: "p2", name: "Kit", house: 3, leaderName: "Lady Sor
 const SEATS = ["p1", "p2"] as const;
 /** The fields a room message and its update may carry; anything else is a leak waiting to happen. */
 const ENVELOPE = new Set(["id", "ok", "now", "start", "update", "pushed", "error", "orders", "plan", "answer"]);
-const UPDATE = new Set(["playerId", "view", "report", "fastForwarded", "clock", "generalOrders", "leaderNotes", "offers", "seats", "fair", "before", "autoLocked", "queued", "people"]);
+const UPDATE = new Set(["playerId", "view", "report", "fastForwarded", "clock", "generalOrders", "leaderNotes", "offers", "seats", "fair", "before", "autoLocked", "queued", "people", "leadersBack"]);
 const START = new Set([...UPDATE, "rules", "chronicle", "replay", "lockedIn", "gameId", "mapId", "mapVersion"]);
 /** Diplomacy's own ids are public to its two sides (an offer to you names itself). */
 const DIPLOMACY = /^(propose|answer|agreed|break)-|-t\d+-(o\d+|c-)/;
@@ -90,6 +90,8 @@ describe("the fog on the wire (session 26): only viewFor leaves the room", () =>
       const myLeaders = new Set(view.me.leaders.map((l) => `${l.kind}:${l.of}`));
       for (const key of Object.keys(u.leaderNotes ?? {})) expect(myLeaders.has(key), `notes from ${key}`).toBe(true);
       for (const o of u.offers ?? []) expect(o.to).toBe(seat);
+      // Your own commands and budgets coming back (session 27): orders for your own Leader and Steward only.
+      for (const o of u.leadersBack ?? []) expect((o.kind === "instruct" || o.kind === "budget") && o.general === seat, `leadersBack ${o.id}`).toBe(true);
       if (u.queued) for (const o of u.queued.orders) expect(given.get(seat)?.has(o.id) || DIPLOMACY.test(o.id) || u.generalOrders.some((g) => g.id === o.id), `queued ${o.id}`).toBe(true);
       if ("chronicle" in u && u.chronicle) expect(u.chronicle).toEqual(chronicles.get(seat));
       if (u.fair) expect(u.fair.seed === undefined || game().over).toBe(true);
@@ -145,7 +147,8 @@ describe("the fog on the wire (session 26): only viewFor leaves the room", () =>
         t.advance(Math.max(0, (game().nextDeadline ?? t.now()) - t.now()));
         await t.tick();
       }
-      expect(game().turn).toBe(turn + 1);
+      // (A game that ends stays on its last turn.)
+      expect(game().turn).toBe(game().over ? turn : turn + 1);
       // The turn's truth: resolve the recorded orders again from the board before it, and it must be the same game.
       const orders: OrdersByPlayer = game().snapshot().history!.turns.at(-1)!;
       const result = resolveTurn(ctx, before, orders);

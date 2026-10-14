@@ -99,6 +99,11 @@ export interface HostUpdate {
   before?: PlayerView;
   /** Online: who at the table is a person (the players panel marks them; everyone else is a bot). */
   people?: PlayerId[];
+  /**
+   * Online (session 27): back after a turn your leaders ran for you, the orders that put your own commands and budgets
+   * back (the page shows them as changes of yours this turn; they apply when your orders go in).
+   */
+  leadersBack?: Order[];
 }
 
 /**

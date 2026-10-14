@@ -44,3 +44,12 @@ export function formatClock(ms: number): string {
 }
 
 export const timerLabel = (seconds: number | null) => (seconds === null ? "No timer" : seconds >= 3600 ? `${seconds / 3600} h` : `${seconds / 60} min`);
+
+/**
+ * How long until the planning window opens (ms), or 0 once it has (session 27): before then the header shows the
+ * replay, then the time until the countdown starts, never a frozen full clock. Paused: 0.
+ */
+export function opensInMs(clock: TurnClock, now: number): number {
+  if (clock.pausedLeft !== undefined) return 0;
+  return Math.max(0, clock.endsAt - clock.turnMs - now);
+}

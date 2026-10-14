@@ -9,6 +9,8 @@ function buildLabel() {
   let commit = "local";
   try {
     commit = execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+    // A build with uncommitted changes says so ("8b6d540+"): it isn't exactly that commit (deploys refuse one).
+    if (execSync("git status --porcelain", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim()) commit += "+";
   } catch {
     // Not a git checkout.
   }

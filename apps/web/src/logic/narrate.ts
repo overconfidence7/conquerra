@@ -112,6 +112,23 @@ function boughtBy(ctx: GameContext, e: Extract<ReplayEvent, { type: "recruited" 
  * Plain-English line for a replay event, or null to skip it. Uses only what the replay contains,
  * so fogged events stay vague ("A battle somewhere in Northreach").
  */
+/**
+ * The turn's gold (session 27): "Income +12, upkeep −3: you now have 22 gold, after 1 to your Steward's purse." With
+ * the purses' payments folded in, the gold is what the header shows (the purses are paid after income comes in). No
+ * upkeep part when there's none to pay.
+ */
+export function incomeLine(e: Extract<ReplayEvent, { type: "income" }>, purses: Extract<ReplayEvent, { type: "purses" }> | null, n: Namer): LogLine {
+  const paid = purses?.paid.filter((x) => x.gold > 0) ?? [];
+  const whose = (x: (typeof paid)[number]) => (x.of === n.view?.me.id ? `your ${KIND_NAME[x.kind]}'s purse` : `${leaderShortName(n, x)}'s purse`);
+  const parts = paid.map((x) => `${x.gold} to ${whose(x)}`);
+  const after = parts.length ? `, after ${parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0]}` : "";
+  const gold = paid.length ? purses!.goldAfter : e.goldAfter;
+  return {
+    text: `Income +${e.income}${e.famine ? `, famine −${e.famine}` : ""}${e.upkeep ? `, upkeep −${e.upkeep}` : ""}: you now have ${gold} gold${after}.${e.fromPurses ? ` Your leaders' purses paid ${e.fromPurses} of the upkeep.` : ""}${e.deserted ? ` ${e.deserted} troops deserted (unpaid upkeep).` : ""}`,
+    tone: e.deserted ? "bad" : "info",
+  };
+}
+
 export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | null {
   const { who, place, isMe } = n;
   const verb = (id: string | null, you: string, they: string) => (isMe(id) ? you : they);
@@ -265,10 +282,7 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
     case "missionFailed":
       return { text: `Mission ${e.why === "lost" ? "failed (you lost the land)" : "lapsed"}: ${missionLine(ctx, e.mission, n)}.`, tone: "info" };
     case "income":
-      return {
-        text: `Income +${e.income}${e.famine ? `, famine −${e.famine}` : ""}, upkeep −${e.upkeep}: you now have ${e.goldAfter} gold.${e.fromPurses ? ` Your leaders' purses paid ${e.fromPurses} of it.` : ""}${e.deserted ? ` ${e.deserted} troops deserted (unpaid upkeep).` : ""}`,
-        tone: e.deserted ? "bad" : "info",
-      };
+      return incomeLine(e, null, n);
     case "gameOver":
       return { text: e.winner === "draw" ? "The game ends in a draw." : `${who(e.winner)} ${verb(e.winner, "win", "wins")} the game!`, tone: isMe(e.winner) ? "good" : "info" };
     // Diplomacy (session 14): the engine's own wording.
@@ -314,6 +328,10 @@ export function narrateTurn(ctx: GameContext, events: readonly ReplayEvent[], n:
   type Win = Extract<ReplayEvent, { type: "battle" }>;
   const wins = new Map<string, Win[]>();
   for (const e of events) if (e.type === "battle" && e.captured && e.general && n.isMe(e.player)) wins.set(e.general, [...(wins.get(e.general) ?? []), e]);
+  const mine = {
+    income: events.some((e) => e.type === "income" && n.isMe(e.player)),
+    purses: events.find((e): e is Extract<ReplayEvent, { type: "purses" }> => e.type === "purses" && n.isMe(e.player) && e.paid.some((x) => x.gold > 0)) ?? null,
+  };
   // The first turn's report: your capital's head start, if it had one (session 23).
   const bonus = n.view && events.some((e) => e.type === "turnStart" && e.turn === 1) ? startBonusLine(n.view, n.place) : null;
   if (bonus) lines.push({ text: bonus, tone: "info" });
@@ -332,7 +350,9 @@ export function narrateTurn(ctx: GameContext, events: readonly ReplayEvent[], n:
       }
       continue;
     }
-    const line = narrate(ctx, e, n);
+    // Your purses' payments go on your income line (so its gold matches the header), not on a line of their own.
+    if (e.type === "purses" && n.isMe(e.player) && mine.income && mine.purses) continue;
+    const line = e.type === "income" && n.isMe(e.player) && mine.purses ? incomeLine(e, mine.purses, n) : narrate(ctx, e, n);
     if (line) lines.push(line);
   }
   const prov = (id: string) => ctx.map.provinces.find((p) => p.id === id)?.name ?? id;

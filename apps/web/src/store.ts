@@ -895,6 +895,8 @@ export async function enterGame(begin: (host: GameHost) => Promise<HostStart>, r
     const u = await begin(host);
     // Continue: the orders you'd queued on this turn come back, with your instruction changes and generals let go.
     const kept = u.queued ? restoredQueue(u.queued.orders) : null;
+    // Online, back after missed turns: your own leaders' commands and budgets, as changes of yours this turn.
+    const back = u.leadersBack ? restoredQueue(u.leadersBack) : null;
     // Online, coming back: the last turn's replay (it plays if you missed it; otherwise it's there for Watch again).
     const missed = u.replay ?? null;
     set({
@@ -910,8 +912,8 @@ export async function enterGame(begin: (host: GameHost) => Promise<HostStart>, r
       seats: u.seats ?? null,
       chronicle: u.chronicle ?? [],
       queue: kept ? kept.queue : openingQueue({ map: u.map, rules: u.rules }, u),
-      instructions: kept?.instructions ?? {},
-      budgets: kept?.budgets ?? {},
+      instructions: { ...back?.instructions, ...kept?.instructions },
+      budgets: { ...back?.budgets, ...kept?.budgets },
       paused: u.queued?.paused ?? [],
       picking: null,
       releases: kept?.releases ?? [],
@@ -1063,8 +1065,9 @@ function applyTurn(u: HostUpdate, auto: boolean) {
     // A new turn: your generals have already written their orders, and every army is theirs again.
     queue: openingQueue(useGame.getState().ctx, u),
     leaderNotes: u.leaderNotes ?? {},
-    instructions: {},
-    budgets: {},
+    // Online, back after a missed turn: your own commands and budgets come back as changes of yours.
+    instructions: u.leadersBack ? restoredQueue(u.leadersBack).instructions : {},
+    budgets: u.leadersBack ? restoredQueue(u.leadersBack).budgets : {},
     paused: [],
     spyPick: null,
     pathPick: null,
