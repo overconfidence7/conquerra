@@ -408,6 +408,9 @@ export class RoomCore {
     const map = await this.loadMap(read.save.mapId);
     this.meta = meta;
     this.game = LocalGame.restore(map, read.save, this.now, this.autosave);
+    // The clock again (session 27): if the alarm was lost (a restart between a turn and its alarm), a deadline that has
+    // passed fires at once and the turn resolves as it would have.
+    this.io.wakeAt(this.game.over ? null : this.game.nextDeadline);
     return this.game;
   }
 

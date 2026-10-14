@@ -504,7 +504,9 @@ export class LocalGame {
     const running = this.turnMs !== null && !this.state.winner && (this.online || !this.isOut(HUMAN_ID));
     this.opensAt = running ? this.now() + replayMs + (replayMs ? grace : 0) : null;
     this.deadline = this.opensAt !== null ? this.opensAt + (nobody ? 0 : this.turnMs!) : null;
-    if (autosave && !this.state.winner) this.autosave?.(this.snapshot());
+    // (Single player's autosave goes when the game ends; an online room keeps its game to the end, session 27: a room
+    // that wakes after a deploy must find the game over, not the turn before it.)
+    if (autosave && (!this.state.winner || this.online)) this.autosave?.(this.snapshot());
   }
 
   /** The current turn's clock, for the page's countdown (with the time left while paused). */

@@ -250,3 +250,29 @@ describe("a finished game's turns, watched again (session 27, Part 4)", () => {
     expect(await t.ask("p1", { type: "turnReplay", turn: 999 })).toMatchObject({ ok: false });
   }, 120_000);
 });
+
+describe("a room that wakes (session 27, found on the preview)", () => {
+  it("a game that ended wakes over (its last turn is saved), and a lost alarm is set again so a passed deadline still resolves", async () => {
+    const store = memoryRoomStore();
+    const t = testRoom(store);
+    await t.room.create({ gameId: "wake", settings: { ...settings, bots: 2, botLevel: "captain" }, people: [{ id: "p1", name: "Nate", house: 0, leadersRun: false }], seed: "wake-seed" });
+    // The clock runs out on turn 1 while the room is asleep, and its alarm was lost: the next wake sets it again.
+    const deadline = t.room.table!.nextDeadline!;
+    const woke = testRoom(store, deadline + 60_000);
+    await woke.hello("p1");
+    expect(woke.alarm()).toBe(deadline);
+    await woke.tick();
+    expect(woke.room.table!.turn).toBe(2);
+    // Play it out (Nate resigns: the bots finish it), then wake a fresh room: the game is over in its storage too.
+    await woke.room.resignUser("nobody", "p1");
+    for (let i = 0; i < 400 && !woke.room.table!.over; i++) {
+      woke.advance(Math.max(0, woke.alarm()! - woke.now()));
+      await woke.tick();
+    }
+    expect(woke.room.table!.over).toBe(true);
+    const after = testRoom(store, woke.now() + 1000);
+    const s = await after.hello("p1");
+    expect(s.view.winner).not.toBeNull();
+    expect(after.alarm()).toBeNull();
+  }, 120_000);
+});
