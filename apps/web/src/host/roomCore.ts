@@ -197,6 +197,7 @@ export class RoomCore {
       mapId: map.id,
       mapVersion: map.generator?.version ?? null,
       fair: this.fair(),
+      people: g.peopleIds,
       ...(queued ? { queued } : {}),
       ...(g.lockedIn(seat) && !g.over ? { lockedIn: true } : {}),
       ...(last ? { replay: { before: last.before, report: last.report, play: unseen || (opens !== null && this.now() < opens) } } : {}),
@@ -275,9 +276,12 @@ export class RoomCore {
     const t0 = this.timer();
     const turn = this.g.turn;
     const out = work();
-    if (this.g.turn !== turn) {
+    if (this.g.turn !== turn || this.g.over) {
       this.lastTurnMs = this.timer() - t0;
-      this.io.log(`game ${this.meta!.gameId}: turn ${turn} resolved and turn ${this.g.turn} planned in ${this.lastTurnMs.toFixed(1)} ms (${this.g.peopleIds.length} people)`);
+      // (On Cloudflare the clock stands still while code runs: there, the request's own CPU time in `wrangler tail`
+      // or the dashboard is the measure, and this says nothing.)
+      const took = this.lastTurnMs > 0 ? ` in ${this.lastTurnMs.toFixed(1)} ms` : "";
+      this.io.log(`game ${this.meta!.gameId}: turn ${turn} resolved${this.g.over ? "" : ` and turn ${this.g.turn} planned`}${took} (${this.g.peopleIds.length} people)`);
     }
     return out;
   }
@@ -300,7 +304,7 @@ export class RoomCore {
   }
 
   private withFair(u: HostUpdate): HostUpdate {
-    return { ...u, fair: this.fair() };
+    return { ...u, fair: this.fair(), people: this.g.peopleIds };
   }
 
   /** This seat's page was sent this turn's report (one that wasn't connected replays it when it says hello). */

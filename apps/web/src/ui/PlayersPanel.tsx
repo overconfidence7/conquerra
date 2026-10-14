@@ -33,8 +33,10 @@ function Marks({ view, marks }: { view: PlayerView; marks: DealMark[] }) {
 }
 
 function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: string; seat: number; open: boolean; onToggle(): void }) {
-  const { pageDeals, openPropose, seats } = useGame();
+  const { pageDeals, openPropose, seats, people } = useGame();
   const persona = id !== view.me.id ? seats?.[id] : undefined;
+  // Online (session 26): a person at the table, not a bot (no counts, as always).
+  const person = id !== view.me.id && !!people?.includes(id);
   const p = view.players.find((x) => x.id === id)!;
   const house = houseOf(view, id);
   const shield = useShield(house);
@@ -49,6 +51,7 @@ function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: s
       {portrait ? <img className="portrait" src={portrait} alt="" /> : <span />}
       <span className="who">
         <span className="pname">{id === view.me.id ? "You" : p.name}</span>
+        {person && <span className="persona">A person</span>}
         {persona && <span className="persona">{personaLine(persona)}</span>}
         <span className="house">
           House {house.name}

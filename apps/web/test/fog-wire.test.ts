@@ -26,7 +26,7 @@ const kit: PersonSeat = { id: "p2", name: "Kit", house: 3, leaderName: "Lady Sor
 const SEATS = ["p1", "p2"] as const;
 /** The fields a room message and its update may carry; anything else is a leak waiting to happen. */
 const ENVELOPE = new Set(["id", "ok", "now", "start", "update", "pushed", "error", "orders", "plan", "answer"]);
-const UPDATE = new Set(["playerId", "view", "report", "fastForwarded", "clock", "generalOrders", "leaderNotes", "offers", "seats", "fair", "before", "autoLocked", "queued"]);
+const UPDATE = new Set(["playerId", "view", "report", "fastForwarded", "clock", "generalOrders", "leaderNotes", "offers", "seats", "fair", "before", "autoLocked", "queued", "people"]);
 const START = new Set([...UPDATE, "rules", "chronicle", "replay", "lockedIn", "gameId", "mapId", "mapVersion"]);
 /** Diplomacy's own ids are public to its two sides (an offer to you names itself). */
 const DIPLOMACY = /^(propose|answer|agreed|break)-|-t\d+-(o\d+|c-)/;

@@ -211,3 +211,44 @@ describe("the game room (session 26)", () => {
     expect(t.alarm()).toBeNull();
   }, 60_000);
 });
+
+describe("long turns (session 26, Part 4): 1, 8 and 24 hours, through the room's sleep", () => {
+  it("a 24-hour game: nobody connected, the alarm resolves each day's turn; back two days later, you land in the replay you missed", async () => {
+    const store = memoryRoomStore();
+    const t = testRoom(store);
+    await t.room.create({ gameId: "long1", settings: { ...settings, turnSeconds: 24 * 3600 }, people: [nate], seed: "long-game" });
+    const first = await t.hello("p1");
+    expect(first.clock!.endsAt - t.now()).toBe(24 * 3600 * 1000);
+    const recruit: Order = { id: "o1", kind: "recruit", territory: first.view.me.capital, count: 2 };
+    await t.ask("p1", { type: "saveOrders", orders: [recruit], turn: 1, now: true });
+    // The page goes away. Each wake-up is a fresh room on the same storage (the Durable Object slept in between).
+    let now = t.now();
+    for (let day = 1; day <= 2; day++) {
+      const room = testRoom(store, now);
+      room.offline.add("p1");
+      // An hour before the deadline nothing happens.
+      const due = (await room.room.ensureLoaded()).nextDeadline!;
+      room.advance(due - 3600_000 - room.now());
+      await room.room.alarm();
+      expect(room.room.table!.turn).toBe(day);
+      room.advance(3600_000);
+      await room.room.alarm();
+      await room.room.flush();
+      expect(room.room.table!.turn).toBe(day + 1);
+      now = room.now();
+    }
+    // Two days later, back on the laptop: turn 3, the last turn's replay plays (you weren't there for it), and the
+    // first day's queue went in as you left it.
+    const back = testRoom(store, now + 60_000);
+    const s = await back.hello("p1");
+    expect(s.view.turn).toBe(3);
+    expect(s.replay!.play).toBe(true);
+    expect(s.replay!.report.turn).toBe(2);
+    expect(s.replay!.report.ranByLeaders).toEqual(["p1"]);
+    const saved = JSON.parse(store.data.get("game")!);
+    expect(saved.history.turns[0].p1).toEqual([recruit]);
+    // The clock: a full day from when the window opened.
+    expect(s.clock!.turnMs).toBe(24 * 3600 * 1000);
+    expect(s.clock!.endsAt).toBeGreaterThan(now + 23 * 3600 * 1000);
+  });
+});

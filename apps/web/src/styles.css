@@ -699,3 +699,6 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
   .fold-head { grid-template-columns: auto 1fr; }
   .fold-summary { grid-column: 2; }
 }
+
+/* Online (session 26): the seed and its fingerprint (provably fair). */
+.fair-line code { font-size: 0.9em; overflow-wrap: anywhere; }

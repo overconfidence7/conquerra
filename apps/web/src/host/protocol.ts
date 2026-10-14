@@ -97,6 +97,8 @@ export interface HostUpdate {
   fair?: { seedHash: string; seed?: string };
   /** Online: your view before the turn in `report` (a player coming back after missing turns replays it from there). */
   before?: PlayerView;
+  /** Online: who at the table is a person (the players panel marks them; everyone else is a bot). */
+  people?: PlayerId[];
 }
 
 /**
@@ -161,8 +163,11 @@ export interface GameHost {
   /** Pause / resume the turn timer (single player; M4 wraps it in a pause by vote). The update carries the clock. */
   pause(): Promise<HostUpdate>;
   resume(): Promise<HostUpdate>;
-  /** Something went wrong in the background (an autosave couldn't be written): a sentence for the player. */
-  onNotice(listener: (message: string) => void): void;
+  /**
+   * Something for the player to know: something went wrong in the background (an autosave couldn't be written), or,
+   * `calm`, just news (online: "Reconnected").
+   */
+  onNotice(listener: (message: string, calm?: boolean) => void): void;
   dispose(): void;
 }
 

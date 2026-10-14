@@ -82,8 +82,8 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): GameHost & { gam
   /** The latest queue to keep, if the socket was down when the page sent it. */
   let unsentQueue: Body | null = null;
   const autoLock: ((u: HostUpdate) => void)[] = [];
-  const notices: ((m: string) => void)[] = [];
-  const tell = (m: string) => notices.forEach((f) => f(m));
+  const notices: ((m: string, calm?: boolean) => void)[] = [];
+  const tell = (m: string, calm = false) => notices.forEach((f) => f(m, calm));
 
   const wsUrl = (id: string) => {
     const where = base ? new URL(base) : new URL(location.href);
@@ -132,6 +132,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): GameHost & { gam
           ...(s.offers ? { offers: s.offers } : {}),
           ...(s.seats ? { seats: s.seats } : {}),
           ...(s.fair ? { fair: s.fair } : {}),
+          ...(s.people ? { people: s.people } : {}),
           ...(s.replay ? { before: s.replay.before } : {}),
           autoLocked: !s.lockedIn,
         },
@@ -139,7 +140,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): GameHost & { gam
       );
       autoLock.forEach((f) => f(u));
     }
-    if (reconnect && lost) tell(ONLINE_TEXT.reconnected);
+    if (reconnect && lost) tell(ONLINE_TEXT.reconnected, true);
     lost = false;
     // Whatever was still waiting goes again (a lock-in for a turn that's gone just answers with where we are).
     for (const [id, p] of pending) send({ ...p.body, id } as RoomRequest);
@@ -210,7 +211,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): GameHost & { gam
         opening = null;
         return;
       }
-      if (!lost && !opening) tell(ONLINE_TEXT.reconnecting);
+      if (!lost && !opening) tell(ONLINE_TEXT.reconnecting, true);
       if (!opening) lost = true;
       const wait = backoff[Math.min(attempts, backoff.length - 1)]!;
       attempts++;

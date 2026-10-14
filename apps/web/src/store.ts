@@ -159,6 +159,12 @@ interface GameStore {
   /** Your online games (the lobby's list), null until asked; `onlineProblem` if they couldn't be fetched. */
   onlineGames: OnlineGameInfo[] | null;
   onlineProblem: string | null;
+  /** Online: provably fair (the seed's fingerprint from the start, the seed itself at the end). */
+  fair: { seedHash: string; seed?: string } | null;
+  /** Online: who at the table is a person. */
+  people: PlayerId[] | null;
+  /** The notice is just news (online: "Reconnected"), not a problem: shown quietly, and it goes by itself. */
+  noticeCalm: boolean;
   /** Carry on from a saved game: the autosave (Continue), a slot, or a file's text. */
   load(source: LoadSource): Promise<boolean>;
   /** Read the saved-game list again (the lobby, the Save and Load menus). */
@@ -356,6 +362,9 @@ export const useGame = create<GameStore>((set, get) => ({
   onlineLobby: { turnSeconds: DEFAULT_TIMER, leadersRun: true },
   onlineGames: null,
   onlineProblem: null,
+  fair: null,
+  people: null,
+  noticeCalm: false,
   mission: null,
   diplomacy: [],
   offers: [],
@@ -822,7 +831,7 @@ export const useGame = create<GameStore>((set, get) => ({
       const before = get().view!;
       const u = await host.watchNext(get().fallenOrders);
       const chronicle = get().chronicle;
-      set({ view: u.view, seats: u.seats ?? null, report: u.report, chronicle: u.report && !chronicle.some((r) => r.turn === u.report!.turn) ? [...chronicle, chronicleOf(u.report)] : chronicle, lastBefore: before, replay: u.report ? { before, report: u.report, key: Date.now() } : null, clock: null, fallenOrders: [], aiming: null });
+      set({ view: u.view, seats: u.seats ?? null, report: u.report, chronicle: u.report && !chronicle.some((r) => r.turn === u.report!.turn) ? [...chronicle, chronicleOf(u.report)] : chronicle, lastBefore: before, replay: u.report ? { before, report: u.report, key: Date.now() } : null, clock: null, fallenOrders: [], aiming: null, ...(u.fair ? { fair: u.fair } : {}) });
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
     } finally {
@@ -837,7 +846,7 @@ export const useGame = create<GameStore>((set, get) => ({
     try {
       const u = await host.finish();
       rememberFinished({ mapName: get().ctx?.map.name ?? "Your game", turn: u.view.turn, at: Date.now() });
-      set({ view: u.view, seats: u.seats ?? null, report: u.report ?? get().report, fastForwarded: u.fastForwarded, screen: "over", watching: false });
+      set({ view: u.view, seats: u.seats ?? null, report: u.report ?? get().report, fastForwarded: u.fastForwarded, screen: "over", watching: false, ...(u.fair ? { fair: u.fair } : {}) });
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
     } finally {
@@ -856,7 +865,7 @@ export const useGame = create<GameStore>((set, get) => ({
     get().host?.dispose();
     // Back in the lobby: the game you left is the autosave (Continue).
     void get().refreshSlots();
-    set({ screen: "lobby", host: null, online: null, seats: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, budgets: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null, diplomacy: [], offers: [], answers: {}, deal: null, dealPick: null });
+    set({ screen: "lobby", host: null, online: null, fair: null, people: null, seats: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, budgets: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null, diplomacy: [], offers: [], answers: {}, deal: null, dealPick: null });
   },
 }));
 
@@ -874,8 +883,11 @@ export async function enterGame(begin: (host: GameHost) => Promise<HostStart>, r
     host.onAutoLock((u) => {
       if (get().host === host) applyTurn(u, true);
     });
-    host.onNotice((notice) => {
-      if (get().host === host) set({ notice });
+    host.onNotice((notice, calm) => {
+      if (get().host !== host) return;
+      set({ notice, noticeCalm: !!calm });
+      // News goes by itself after a few seconds.
+      if (calm) setTimeout(() => get().notice === notice && set({ notice: null }), 4000);
     });
   }
   set({ busy: true, error: null });
@@ -888,7 +900,10 @@ export async function enterGame(begin: (host: GameHost) => Promise<HostStart>, r
     set({
       host,
       online: make && "gameId" in host ? (host as { gameId(): string | null }).gameId() : reuse ? get().online : null,
-      screen: "game",
+      fair: u.fair ?? null,
+      people: u.people ?? null,
+      // An online game that's over opens on its result (unless its last replay hasn't been watched).
+      screen: u.view.winner && !missed?.play ? "over" : "game",
       // The map's geometry comes from the host, never from an import here.
       ctx: { map: u.map, rules: u.rules },
       view: u.view,
@@ -1039,6 +1054,8 @@ function applyTurn(u: HostUpdate, auto: boolean) {
     view: u.view,
     seats: u.seats ?? null,
     report: u.report,
+    ...(u.fair ? { fair: u.fair } : {}),
+    ...(u.people ? { people: u.people } : {}),
     // The Chronicle grows by this turn's report (session 16).
     chronicle: u.report && !chronicle.some((r) => r.turn === u.report!.turn) ? [...chronicle, chronicleOf(u.report)] : chronicle,
     fastForwarded: u.fastForwarded,

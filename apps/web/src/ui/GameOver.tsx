@@ -51,7 +51,7 @@ function AwardCard({ view, award }: { view: PlayerView; award: Award }) {
 }
 
 export function GameOver() {
-  const { ctx, view, report, fastForwarded, playAgain, seats } = useGame();
+  const { ctx, view, report, fastForwarded, playAgain, seats, fair } = useGame();
   const emblem = useArtUrl("emblem");
   // Victory or defeat in full (batch 4, session 21), behind the results.
   const keyArt = useArtUrl(view && view.winner === view.me.id ? "art-victory" : "art-defeat");
@@ -90,6 +90,12 @@ export function GameOver() {
         <button className="primary big" onClick={playAgain}>
           Play again
         </button>
+        {/* Online (session 26): provably fair. The seed the dice came from, and the fingerprint shown before turn 1. */}
+        {fair?.seed && (
+          <p className="muted small fair-line">
+            Fair play: the dice came from the seed <code>{fair.seed}</code>. Its SHA-256 fingerprint, <code>{fair.seedHash}</code>, was fixed before turn 1, so nothing was changed along the way.
+          </p>
+        )}
         {/* The end of the game (session 16): the power graph and the awards (everything is revealed now). */}
         <PowerGraph view={view} territories={ctx.map.territories.length} />
         <Awards view={view} />

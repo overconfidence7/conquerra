@@ -119,6 +119,9 @@ function useCovered(active: boolean, phone: boolean, reserveSelPanel: boolean, s
   return covered;
 }
 
+/** Online (session 26): "3f9a2c…e1d0", the start and end of the seed's fingerprint. */
+const shortHash = (h: string) => `${h.slice(0, 8)}…${h.slice(-6)}`;
+
 function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSaves, onLeave, onClose }: { phone: boolean; online: boolean; tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onClose(): void }) {
   const [credits, setCredits] = useState(false);
   if (credits)
@@ -158,12 +161,27 @@ function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSave
       <button className="menu-item" onClick={() => setCredits(true)}>
         Credits <span className="muted">sound and music</span>
       </button>
+      {online && <FairLine />}
       <hr className="rule" />
       <button className="menu-item" onClick={onLeave}>
         Leave this game <span className="muted">{online ? "it goes on on the server: open it again from the lobby's Online block" : "Continue picks it up"}</span>
       </button>
       <VersionLine />
     </Frame>
+  );
+}
+
+/**
+ * Online (session 26): provably fair. The room fixed the game's dice (its seed) before turn 1 and showed its
+ * fingerprint; at the end it shows the seed itself, and anyone can check the two match.
+ */
+function FairLine() {
+  const fair = useGame((s) => s.fair);
+  if (!fair) return null;
+  return (
+    <p className="muted small fair-line">
+      Fair play: this game's dice were fixed before turn 1. Their fingerprint is <code>{shortHash(fair.seedHash)}</code>, and the seed itself is shown when the game ends.
+    </p>
   );
 }
 
@@ -656,7 +674,7 @@ export function GameScreen() {
       )}
       {g.notice && (
         <Frame className="slim notice" style={{ position: "absolute", zIndex: 40, left: 8, right: 8, top: phone ? 60 : 72 }} role="status">
-          <p className="warn small">{g.notice}</p>
+          <p className={g.noticeCalm ? "muted small" : "warn small"}>{g.notice}</p>
           <button className="link" onClick={() => g.dismissNotice()}>
             OK
           </button>

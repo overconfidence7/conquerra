@@ -48,7 +48,24 @@
    Until it's set, the lobby's Online block says "not switched on yet" and single player is unaffected.
    **Done Oct 14:** read from the dashboard (Claude in Chrome, with Nate signed in; nothing changed there) and set in `wrangler.jsonc`. If the Access app is ever made again, its tag changes: repeat these steps.
 
-**2. Friends (session 27):** add their emails to the "Conquerra players" policy (same page as step 1, **Policies** tab).
+**2. Deploys from GitHub (Workers Builds, session 26; about 5 minutes, once).** After this, every push to `main` builds, tests and deploys the preview by itself, the way the main site does. The GitHub authorization is yours, so this one is a dashboard job:
+   1. Open https://dash.cloudflare.com → **Workers & Pages** → **conquerra** → **Settings** → **Build** → **Connect**.
+   2. Choose **GitHub**. If asked, authorize the **Cloudflare Workers and Pages** app for your GitHub account and give it the **overconfidence7/conquerra** repository (only that one is fine).
+   3. Pick the repository **overconfidence7/conquerra**, branch **main**.
+   4. Fill in, exactly:
+      - **Build command:** `pnpm test && pnpm build && node apps/web/scripts/bundle-size.mjs`
+      - **Deploy command:** `npx wrangler deploy --config apps/web/wrangler.jsonc && node apps/web/scripts/check-preview.mjs`
+      - **Root directory:** `/` (leave it as the top of the repo)
+      - **Build variables:** add `NODE_VERSION` = `22`
+      - **Build watch paths:** include `*`, exclude `docs/*` and `*.md` (a push that only changes docs then doesn't deploy at all)
+      - **API token:** let it create a new one (it can deploy Workers; it can't touch the database, see below)
+      - **Builds for non-production branches:** off
+   5. **Save and deploy.** The first build takes about 3 minutes. Its log is under **Deployments → View build**. When it's done, open the preview: the version line at the top of the lobby shows the commit it built (for example "0.1.0 · 14 Oct · 0d539f9").
+   - **What it doesn't do:** apply a database change. A session that adds a migration (a new file in `apps/web/migrations/`) says so and runs `pnpm deploy:preview` once, which applies it, then deploys. Every other push needs nothing.
+   - **The fallback:** `pnpm deploy:preview` from this computer always works, Workers Builds or not.
+   - **If a build fails:** the preview keeps the last good version (nothing half-deployed). The build log says why; paste it to Claude Code.
+
+**3. Friends (session 27):** add their emails to the "Conquerra players" policy (same page as step 1, **Policies** tab).
 
 #### What M4 needed, as planned
 - **Worker** `conquerra`: serves the web app and the API on `conquerra.overconfidenceonline.com`.
