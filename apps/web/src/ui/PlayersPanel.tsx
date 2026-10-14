@@ -43,7 +43,8 @@ function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: s
   const portrait = useArtUrl(portraitOf(seat));
   const out = p.eliminatedTurn !== null;
   const marks = dealMarks(view, pageDeals(), id);
-  const can = canProposeTo(view, id);
+  // (Deals with people come in session 28: for now only the bots take offers.)
+  const can = canProposeTo(view, id) && !person;
   const oath = isOathbreaker(view, id);
   const body = (
     <>

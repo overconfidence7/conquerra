@@ -1,7 +1,10 @@
 import type { MapDef } from "@conquerra/content";
-import { readSave, type Order, type PlayerId, type SaveFile } from "@conquerra/engine";
+import { readSave, type LeaderStyle, type Order, type PlayerId, type SaveFile } from "@conquerra/engine";
+import { HOUSES } from "../map/houses";
 import { LocalGame, type PersonSeat } from "./localGame";
-import type { HostUpdate, LobbySettings, RoomMessage, RoomRequest, RoomStart } from "./protocol";
+import { cleanName } from "./names";
+import { TABLE_TEXT } from "./roomText";
+import type { HostUpdate, LobbySettings, RoomMessage, RoomRequest, RoomStart, TableAct, TableView } from "./protocol";
 
 /**
  * Everything an online game's room does (session 26), in one place and with no Cloudflare in it: the game (the same
@@ -35,6 +38,12 @@ export interface RoomInfo {
 export interface RoomIO {
   /** Send a message to a seat if it's connected (the room never sends one seat's message to another). Was it sent? */
   send(seat: PlayerId, msg: RoomMessage): boolean;
+  /** Session 27: send a message to an account's page (someone at the table screen, seated or not). Was it sent? */
+  sendUser(user: string, msg: RoomMessage): boolean;
+  /** Session 27: the accounts with a page open on this room now. */
+  users(): string[];
+  /** Session 27: the table changed (seats, colours, started, cancelled): the game list's copy in the database. */
+  tableChanged(mirror: TableMirror): void;
   /** Wake the room at this time (its alarm), or never. */
   wakeAt(at: number | null): void;
   /** The game list's line for this game changed. */
@@ -51,6 +60,68 @@ export interface RoomSetup {
   /** The secret seed (the room makes it; only its hash is shown until the game ends). */
   seed: string;
 }
+
+/** Session 27: someone who opened the room (the Worker checked their sign-in): their account, name and usual colour. */
+export interface Who {
+  user: string;
+  name: string;
+  /** Their usual House colour (the default when they sit), if they have one. */
+  colour: number | null;
+  /** A game from before session 27 (no table): their seat, from the database. */
+  seat?: PlayerId | null;
+}
+
+/** Someone sitting at the table: their account and how they'll play (their House's names and choices). */
+export interface Sitter {
+  user: string;
+  name: string;
+  house: number;
+  leadersRun: boolean;
+  leaderName?: string;
+  stewardName?: string;
+  leaderPersonality?: LeaderStyle | null;
+  stewardPersonality?: LeaderStyle | null;
+  /** Their seat in the game, once it starts ("p1", the host, then the others in the order they sat). */
+  seat?: PlayerId;
+}
+
+/** A new table, as the API makes it: the host's settings and seat. */
+export interface TableSetup {
+  gameId: string;
+  /** The invite code (the link). */
+  code: string;
+  settings: LobbySettings;
+  /** The secret seed (only its hash is ever shown, until the game ends). */
+  seed: string;
+  host: Sitter;
+}
+
+/** The table, as the room keeps it (the room is the authority; the database has a copy for the lists). */
+interface TableRecord {
+  gameId: string;
+  code: string;
+  /** The host's account. */
+  host: string;
+  settings: LobbySettings;
+  seed: string;
+  status: "waiting" | "started" | "cancelled";
+  /** How many seats (the host and the opponents the lobby asked for). */
+  size: number;
+  /** The people sitting, in seat order: the host first. */
+  sitters: Sitter[];
+  /** Accounts the host took off this table (they can't sit again). */
+  removed: string[];
+}
+
+/** The database's copy of the table: its state and who sits where (people, and bots once it starts). */
+export interface TableMirror {
+  gameId: string;
+  status: "waiting" | "playing" | "cancelled";
+  size: number;
+  seats: { seat: PlayerId; user: string | null; bot: string | null; colour: number; name: string; leadersRun: boolean; state?: "in" | "resigned" | "taken" }[];
+}
+
+export { TABLE_TEXT } from "./roomText";
 
 interface Meta {
   gameId: string;
@@ -92,6 +163,8 @@ export class RoomCore {
   private pending = new Map<PlayerId, number>();
   /** How long the last turn's resolution and planning took (ms), for the logs. */
   lastTurnMs = 0;
+  /** Session 27: the table (null: not loaded yet; undefined: loaded, and there is none, a game from session 26). */
+  private tableRec: TableRecord | null | undefined = null;
 
   constructor(
     private readonly store: RoomStore,
@@ -114,6 +187,210 @@ export class RoomCore {
     await this.flush();
     this.afterChange();
     return this.info();
+  }
+
+  // ---------- Session 27: the table, before the game starts ----------
+
+  /** Make a table: the host in the first seat, the rest empty until friends sit down or the host starts. */
+  async createTable(setup: TableSetup): Promise<TableView> {
+    if ((await this.store.get("table")) || (await this.store.get("meta"))) throw new Error("This game already exists");
+    const size = Math.max(2, Math.floor(setup.settings.bots) + 1);
+    const table: TableRecord = { gameId: setup.gameId, code: setup.code, host: setup.host.user, settings: setup.settings, seed: setup.seed, status: "waiting", size, sitters: [setup.host], removed: [] };
+    this.tableRec = table;
+    this.saveTable();
+    this.mirror();
+    this.io.log(`table ${setup.gameId}: made on ${setup.settings.mapId} with ${size} seats`);
+    await this.flush();
+    return this.tableView(table, setup.host.user);
+  }
+
+  /** The table, if this game has one (a game from session 26 doesn't). */
+  private async loadTable(): Promise<TableRecord | undefined> {
+    if (this.tableRec === null) this.tableRec = ((await this.store.get("table")) as TableRecord | null) ?? undefined;
+    return this.tableRec;
+  }
+
+  private saveTable() {
+    const t = this.tableRec;
+    if (!t) return;
+    this.writing = this.writing.then(() => this.store.put("table", t)).catch((e) => this.io.log(`table save failed: ${e instanceof Error ? e.message : String(e)}`));
+  }
+
+  /** The table as one person sees it: names, colours, the host, empty seats. Nothing else about anyone. */
+  private tableView(t: TableRecord, user: string): TableView {
+    const s = t.settings;
+    const mine = t.sitters.findIndex((x) => x.user === user);
+    return {
+      gameId: t.gameId,
+      code: t.code,
+      status: t.status,
+      mapId: s.mapId,
+      botLevel: s.botLevel,
+      turnSeconds: s.turnSeconds ?? 300,
+      luck: s.luck,
+      fog: s.fog,
+      mode: s.mode,
+      fate: s.fate !== false,
+      diplomacy: s.diplomacy !== false,
+      seats: Array.from({ length: t.size }, (_, i) => {
+        const x = t.sitters[i];
+        return x ? { name: x.name, house: x.house, host: i === 0, you: x.user === user } : null;
+      }),
+      you: { seat: mine >= 0 ? mine : null, host: t.host === user, ...(t.removed.includes(user) ? { removed: true as const } : {}) },
+    };
+  }
+
+  /** The account sitting in a seat (once the game has started), or null (a bot, or a game from session 26). */
+  userOf(seat: PlayerId): string | null {
+    return (this.tableRec && this.tableRec.sitters.find((x) => x.seat === seat)?.user) ?? null;
+  }
+
+  /** The seat an account sits in (once the game has started), or null. */
+  seatOf(user: string): PlayerId | null {
+    return (this.tableRec && this.tableRec.sitters.find((x) => x.user === user)?.seat) ?? null;
+  }
+
+  /** The database's copy of the table. */
+  private mirror() {
+    const t = this.tableRec;
+    if (!t) return;
+    const people = t.sitters.map((x, i) => ({ seat: x.seat ?? `p${i + 1}`, user: x.user, bot: null, colour: x.house, name: x.name, leadersRun: x.leadersRun }));
+    const bots =
+      t.status === "started" && this.game
+        ? this.game.fullState.players.filter((p) => !t.sitters.some((x) => x.seat === p.id)).map((p) => ({ seat: p.id, user: null, bot: t.settings.botLevel, colour: p.house, name: p.name, leadersRun: false }))
+        : [];
+    this.io.tableChanged({ gameId: t.gameId, status: t.status === "started" ? "playing" : t.status, size: t.size, seats: [...people, ...bots] });
+  }
+
+  /** Everyone at the table screen (but `except`) gets the table as it is now, each their own copy. */
+  private broadcast(t: TableRecord, except?: string) {
+    for (const user of this.io.users()) if (user !== except) this.io.sendUser(user, { id: 0, ok: true, table: this.tableView(t, user), now: this.now() });
+  }
+
+  /**
+   * A message from someone's page. Before the game starts, the table screen's; once it has, a seated person's game
+   * (anyone else is told it has started). A game from before session 27 has no table: its seats are in the database.
+   */
+  async receive(who: Who, req: RoomRequest): Promise<void> {
+    if (!req || typeof req !== "object" || typeof req.id !== "number") return;
+    const table = await this.loadTable();
+    if (!table) {
+      if (who.seat) return this.message(who.seat, req);
+      this.io.sendUser(who.user, { id: req.id, ok: false, error: TABLE_TEXT.noSeat, now: this.now() });
+      return;
+    }
+    if (table.status !== "started" || req.type === "table") return this.tableMessage(who, table, req);
+    const seat = table.sitters.find((x) => x.user === who.user)?.seat;
+    if (seat) return this.message(seat, req);
+    this.io.sendUser(who.user, { id: req.id, ok: false, error: TABLE_TEXT.started, now: this.now() });
+  }
+
+  private async tableMessage(who: Who, t: TableRecord, req: RoomRequest): Promise<void> {
+    const answer = (msg: { ok: true; table: TableView } | { ok: false; error: string }) => this.io.sendUser(who.user, { ...msg, id: req.id, now: this.now() } as RoomMessage);
+    if (req.type === "hello") {
+      answer({ ok: true, table: this.tableView(t, who.user) });
+      return;
+    }
+    if (req.type !== "table" || !req.act || typeof req.act !== "object") {
+      answer({ ok: false, error: t.status === "cancelled" ? TABLE_TEXT.cancelled : t.status === "started" ? TABLE_TEXT.started : TABLE_TEXT.notYet });
+      return;
+    }
+    const error = t.status === "started" ? TABLE_TEXT.started : t.status === "cancelled" ? TABLE_TEXT.cancelled : this.act(who, t, req.act);
+    if (error) {
+      answer({ ok: false, error });
+      return;
+    }
+    if (req.act.do === "start") await this.begin(t);
+    this.saveTable();
+    this.mirror();
+    await this.flush();
+    answer({ ok: true, table: this.tableView(t, who.user) });
+    this.broadcast(t, who.user);
+  }
+
+  /** One change to the table, or the sentence saying why not. (The start itself is `begin`.) */
+  private act(who: Who, t: TableRecord, a: TableAct): string | null {
+    const host = who.user === t.host;
+    const mine = t.sitters.findIndex((x) => x.user === who.user);
+    const free = (h: unknown, except = -1) => Number.isInteger(h) && (h as number) >= 0 && (h as number) < HOUSES.length && !t.sitters.some((x, i) => i !== except && x.house === h);
+    const style = (v: unknown) => (typeof v === "string" ? (v as LeaderStyle) : null);
+    const text = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim().slice(0, 40) : undefined);
+    switch (a.do) {
+      case "sit": {
+        if (t.removed.includes(who.user)) return TABLE_TEXT.removed;
+        if (mine >= 0) return this.act(who, t, { do: "colour", house: a.house });
+        if (t.sitters.length >= t.size) return TABLE_TEXT.full;
+        if (!free(a.house)) return TABLE_TEXT.colourTaken;
+        const leaderName = text(a.leaderName);
+        const stewardName = text(a.stewardName);
+        t.sitters.push({
+          user: who.user,
+          // The name they gave on the table screen (also saved as their name), else their account's.
+          name: cleanName(a.name) ?? who.name,
+          house: a.house,
+          leadersRun: a.leadersRun !== false,
+          ...(leaderName ? { leaderName } : {}),
+          ...(stewardName ? { stewardName } : {}),
+          leaderPersonality: style(a.leaderPersonality),
+          stewardPersonality: style(a.stewardPersonality),
+        });
+        return null;
+      }
+      case "colour":
+        if (mine < 0) return TABLE_TEXT.notSeated;
+        if (!free(a.house, mine)) return TABLE_TEXT.colourTaken;
+        t.sitters[mine]!.house = a.house;
+        return null;
+      case "leave":
+        if (host) return TABLE_TEXT.hostLeaves;
+        if (mine >= 0) t.sitters.splice(mine, 1);
+        return null;
+      case "remove": {
+        if (!host) return TABLE_TEXT.notHost;
+        const gone = t.sitters[a.seat];
+        if (!gone || a.seat === 0) return null;
+        t.sitters.splice(a.seat, 1);
+        t.removed.push(gone.user);
+        return null;
+      }
+      case "start":
+        if (!host) return TABLE_TEXT.notHost;
+        if (t.sitters.length < 2 && !a.withBots) return TABLE_TEXT.noFriend;
+        return null;
+      case "cancel":
+        if (!host) return TABLE_TEXT.notHost;
+        t.status = "cancelled";
+        this.io.log(`table ${t.gameId}: cancelled`);
+        return null;
+      default:
+        return "That can't be done at the table.";
+    }
+  }
+
+  /**
+   * The host pressed Start: the people sit in seat order ("p1" the host, then the others as they sat down), the empty
+   * seats become bots at the table's level, the capitals are dealt with the seat rule (harder spots to bots first), and
+   * everyone seated goes straight into turn 1.
+   */
+  private async begin(t: TableRecord) {
+    t.sitters.forEach((x, i) => (x.seat = `p${i + 1}`));
+    const people: PersonSeat[] = t.sitters.map((x) => ({
+      id: x.seat!,
+      name: x.name,
+      house: x.house,
+      ...(x.leaderName ? { leaderName: x.leaderName } : {}),
+      ...(x.stewardName ? { stewardName: x.stewardName } : {}),
+      leaderPersonality: x.leaderPersonality ?? null,
+      stewardPersonality: x.stewardPersonality ?? null,
+      leadersRun: x.leadersRun,
+    }));
+    const { house: _h, leaderName: _l, stewardName: _s, leaderPersonality: _lp, stewardPersonality: _sp, ...rules } = t.settings;
+    const bots = t.size - people.length;
+    const marshals = rules.botLevel === "mixed" ? { marshals: Math.min(bots, rules.marshals ?? Math.ceil(bots / 2)) } : {};
+    await this.create({ gameId: t.gameId, settings: { ...rules, bots, ...marshals }, people, seed: t.seed });
+    t.status = "started";
+    // Everyone seated goes into turn 1 (a page at the table screen is waiting for exactly this).
+    for (const x of t.sitters) this.reply(x.seat!, { id: 0, ok: true, start: this.hello(x.seat!) });
   }
 
   /** The room woke up (after sleeping between turns): load the game from storage. */

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { openOnline, refreshOnline, setOnlineLobby, startOnline } from "../host/onlineActions";
+import { NameField } from "./NameField";
 import type { OnlineGameInfo } from "../host/protocol";
 import { ONLINE_TIMER_CHOICES, timerLabel } from "../logic/timer";
 import { useGame } from "../store";
@@ -21,8 +22,17 @@ export function timeLeft(deadline: number | null, now: number): string {
   return m < 60 ? `${m} min left` : `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""} left`;
 }
 
+/** Finished: the game is over, or your seat left it (you resigned, or a Marshal took it after missed turns). */
+export const finished = (g: OnlineGameInfo) => g.status === "over" || !!g.left;
+
 /** What a game in the list is waiting on: you, someone else, or nobody (it's over). */
 export function waitingLine(g: OnlineGameInfo, now: number): { text: string; yours: boolean } {
+  if (g.status === "waiting") {
+    const line = `Waiting for players, ${g.seated ?? 1} of ${g.seats ?? g.players.length} seated`;
+    return { text: g.host ? line : `${line}. The host starts it.`, yours: false };
+  }
+  if (g.left === "resigned") return { text: `You left this game on turn ${g.turn}. It goes on without you.`, yours: false };
+  if (g.left === "taken") return { text: "A Marshal took your seat after three missed turns. You can watch.", yours: false };
   if (g.status === "over") return { text: g.winner === "you" ? "Over: you won" : g.winner ? `Over: ${g.winner} won` : "Over", yours: false };
   const left = timeLeft(g.deadline, now);
   if (g.waitingOn.includes("you")) return { text: `Waiting on you${left ? `, ${left}` : ""}`, yours: true };
@@ -36,12 +46,12 @@ function GameRow({ g, now, busy }: { g: OnlineGameInfo; now: number; busy: boole
   return (
     <li className={`online-game ${wait.yours ? "yours" : ""}`}>
       <span className="online-game-text">
-        <b>{g.mapName}</b> <span className="muted">· turn {g.turn}</span>
-        <span className="small block muted">with {others.join(", ")}</span>
+        <b>{g.mapName}</b> {g.status !== "waiting" && <span className="muted">· turn {g.turn}</span>}
+        {others.length > 0 && <span className="small block muted">with {others.join(", ")}</span>}
         <span className={`small block ${wait.yours ? "gold" : ""}`}>{wait.text}</span>
       </span>
-      <button className={wait.yours ? "primary" : ""} disabled={busy} onClick={() => void openOnline(g.id)}>
-        {g.status === "over" ? "See it" : "Continue"}
+      <button className={wait.yours ? "primary" : ""} disabled={busy} onClick={() => void openOnline(g.id, g.code)}>
+        {g.status === "waiting" ? "Open the table" : finished(g) ? "See it" : "Continue"}
       </button>
     </li>
   );
@@ -50,6 +60,7 @@ function GameRow({ g, now, busy }: { g: OnlineGameInfo; now: number; busy: boole
 export default function OnlineBlock() {
   const { onlineLobby, onlineGames, onlineProblem, busy, error } = useGame();
   const [tried, setTried] = useState(false);
+  const [showFinished, setShowFinished] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     void refreshOnline();
@@ -62,8 +73,12 @@ export default function OnlineBlock() {
   return (
     <>
       <div className="online-new">
+        <NameField />
         <span className="field-name">New online game</span>
-        <span className="muted small">The map, opponents, House and rules above, played on the server: close the tab and come back any time, on any device.</span>
+        <span className="muted small">
+          The map, opponents, House and rules above, played on the server: close the tab and come back any time, on any device. You get a link to send your friends, and you start the game once
+          they've sat down. Empty seats are bots.
+        </span>
         <div>
           <label className="online-timer">
             <span className="field-name">Turn timer</span>
@@ -95,7 +110,7 @@ export default function OnlineBlock() {
             void startOnline();
           }}
         >
-          {busy && tried ? "Starting…" : "Start an online game"}
+          {busy && tried ? "Making the table…" : "Make a game link"}
         </button>
         {tried && error && <p className="warn small">{error}</p>}
       </div>
@@ -111,13 +126,27 @@ export default function OnlineBlock() {
             )}
           </p>
         )}
-        {onlineGames?.length === 0 && <p className="muted small">None yet. Start one above.</p>}
-        {!!onlineGames?.length && (
+        {onlineGames?.filter((g) => !finished(g)).length === 0 && <p className="muted small">None going. Make one above.</p>}
+        {!!onlineGames?.filter((g) => !finished(g)).length && (
           <ul className="online-games">
-            {onlineGames.map((g) => (
+            {onlineGames.filter((g) => !finished(g)).map((g) => (
               <GameRow key={g.id} g={g} now={now} busy={busy} />
             ))}
           </ul>
+        )}
+        {!!onlineGames?.filter(finished).length && (
+          <div className="online-finished">
+            <button className="link small" aria-expanded={showFinished} onClick={() => setShowFinished(!showFinished)}>
+              {showFinished ? "▾" : "▸"} Finished ({onlineGames.filter(finished).length}, kept for a week)
+            </button>
+            {showFinished && (
+              <ul className="online-games">
+                {onlineGames.filter(finished).map((g) => (
+                  <GameRow key={g.id} g={g} now={now} busy={busy} />
+                ))}
+              </ul>
+            )}
+          </div>
         )}
       </div>
     </>

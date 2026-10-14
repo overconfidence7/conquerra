@@ -79,10 +79,12 @@ function MapPicture({ id }: { id: string }) {
 }
 
 /** The Online block's line: your online games, and how many are waiting on you. */
-function onlineSummary(games: { waitingOn: string[]; status: string }[] | null, problem: string | null): string {
+function onlineSummary(all: { waitingOn: string[]; status: string; left?: string }[] | null, problem: string | null): string {
   if (problem) return problem.includes("isn't switched on") ? "not switched on yet" : "can't reach the server right now";
-  if (!games) return "play on the server: close the tab, come back any time";
-  if (!games.length) return "no games yet: start one";
+  if (!all) return "play with friends on the server: send a link, come back any time";
+  // (Finished games, and ones you left, are under Finished.)
+  const games = all.filter((g) => g.status !== "over" && !g.left);
+  if (!games.length) return "no games going: make a game link";
   const yours = games.filter((g) => g.status === "playing" && g.waitingOn.includes("you")).length;
   return `${games.length} game${games.length === 1 ? "" : "s"}${yours ? `, ${yours} waiting on you` : ""}`;
 }

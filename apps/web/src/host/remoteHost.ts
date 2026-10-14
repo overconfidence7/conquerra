@@ -1,7 +1,7 @@
 import type { Answer } from "@conquerra/bots";
 import type { MapDef } from "@conquerra/content";
 import type { Order } from "@conquerra/engine";
-import type { GameHost, HostStart, HostUpdate, LeaderOrders, LobbySettings, NewOnlineGame, RoomBody, RoomMessage, RoomRequest, RoomStart } from "./protocol";
+import type { GameHost, HostStart, HostUpdate, LeaderOrders, LobbySettings, NewOnlineGame, RoomBody, RoomMessage, RoomRequest, RoomStart, TableAct, TableView } from "./protocol";
 
 /**
  * The online host (session 26): the same `GameHost` the page uses for single player, but the game runs in its room
@@ -59,7 +59,16 @@ export async function api<T>(path: string, init: RequestInit = {}, fetchImpl: ty
   return body;
 }
 
-export function createRemoteHost(opts: RemoteHostOptions = {}): GameHost & { gameId(): string | null } {
+/** The online host: a `GameHost`, plus the table screen before the game starts (session 27). */
+export interface RemoteHost extends GameHost {
+  gameId(): string | null;
+  /** The table as it changes (seats, colours, started, cancelled), until the game starts. */
+  onTable(listener: (table: TableView) => void): void;
+  /** Sit down, change colour, get up; the host's remove, start and cancel. Answers with the table, or a sentence. */
+  tableAct(act: TableAct): Promise<TableView>;
+}
+
+export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
   const base = opts.base ?? "";
   const WS = opts.WebSocketImpl ?? WebSocket;
   const fetchImpl = opts.fetchImpl ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
@@ -67,6 +76,11 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): GameHost & { gam
   const loadMap = opts.loadMap ?? (async (id: string) => (await import("@conquerra/content/loadMap")).loadMap(id));
 
   let gameId: string | null = null;
+  /** The table's invite code (someone without a seat yet opens the table with it). */
+  let code: string | null = null;
+  /** The hello that opens the game: an error in answer to it (the game has started without you) ends the opening. */
+  let helloId = 0;
+  const tables: ((t: TableView) => void)[] = [];
   let ws: WebSocket | null = null;
   let disposed = false;
   let attempts = 0;
@@ -87,7 +101,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): GameHost & { gam
 
   const wsUrl = (id: string) => {
     const where = base ? new URL(base) : new URL(location.href);
-    return `${where.protocol === "https:" ? "wss" : "ws"}://${where.host}/api/games/${encodeURIComponent(id)}/ws`;
+    return `${where.protocol === "https:" ? "wss" : "ws"}://${where.host}/api/games/${encodeURIComponent(id)}/ws${code ? `?code=${encodeURIComponent(code)}` : ""}`;
   };
 
   /** The room's deadline, on this device's clock. */
@@ -134,6 +148,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): GameHost & { gam
           ...(s.fair ? { fair: s.fair } : {}),
           ...(s.people ? { people: s.people } : {}),
           ...(s.replay ? { before: s.replay.before } : {}),
+          ...(s.leadersBack ? { leadersBack: s.leadersBack } : {}),
           autoLocked: !s.lockedIn,
         },
         roomNow,
@@ -161,6 +176,20 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): GameHost & { gam
       void onHello(m.start, m.now);
       return;
     }
+    // The table screen (session 27): an answer to an act, or the table as it changed (a push, or the hello's answer).
+    if ("table" in m && (m.id === 0 || m.id === helloId || !pending.has(m.id))) {
+      if (lost) tell(ONLINE_TEXT.reconnected, true);
+      lost = false;
+      tables.forEach((f) => f(m.table));
+      return;
+    }
+    // The game started without you (or isn't yours): the hello's answer ends the opening.
+    if (!m.ok && m.id === helloId && opening) {
+      const o = opening;
+      opening = null;
+      o.reject(new Error(m.error));
+      return;
+    }
     if ("pushed" in m) {
       const u = onOurClock(m.pushed, m.now);
       knownTurn = Math.max(knownTurn, u.view.turn);
@@ -182,6 +211,9 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): GameHost & { gam
       const u = onOurClock(m.update, m.now);
       knownTurn = Math.max(knownTurn, u.view.turn);
       p.resolve(u);
+    } else if ("table" in m) {
+      tables.forEach((f) => f(m.table));
+      p.resolve(m.table);
     } else p.resolve("orders" in m ? m.orders : "plan" in m ? m.plan : "answer" in m ? m.answer : "save" in m ? m.save : "slot" in m ? m.slot : null);
   }
 
@@ -191,7 +223,8 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): GameHost & { gam
     ws = sock;
     sock.onopen = () => {
       attempts = 0;
-      sock.send(JSON.stringify({ id: nextId++, type: "hello" } satisfies RoomRequest));
+      helloId = nextId++;
+      sock.send(JSON.stringify({ id: helloId, type: "hello" } satisfies RoomRequest));
     };
     sock.onmessage = onMessage;
     sock.onclose = (e: CloseEvent) => {
@@ -219,8 +252,9 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): GameHost & { gam
     };
   }
 
-  function open(id: string): Promise<HostStart> {
+  function open(id: string, invite: string | null = null): Promise<HostStart> {
     gameId = id;
+    code = invite;
     disposed = false;
     attempts = 0;
     return new Promise<HostStart>((resolve, reject) => {
@@ -240,15 +274,18 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): GameHost & { gam
 
   return {
     gameId: () => gameId,
+    onTable: (f) => void tables.push(f),
+    tableAct: (act) => ask<TableView>({ type: "table", act }),
+    /** Make a table with these settings and open its table screen (the game starts when its host says so). */
     async start(settings: LobbySettings) {
       const { leadersRun, ...rest } = settings;
       const body: NewOnlineGame = { settings: rest, leadersRun: leadersRun !== false };
-      const { id } = await api<{ id: string }>("/api/games", { method: "POST", body: JSON.stringify(body) }, fetchImpl, base);
-      return open(id);
+      const made = await api<{ id: string; code: string }>("/api/games", { method: "POST", body: JSON.stringify(body) }, fetchImpl, base);
+      return open(made.id, made.code);
     },
     load(source) {
       if (!("online" in source)) return notHere();
-      return open(source.online);
+      return open(source.online, source.code ?? null);
     },
     lockIn: (orders, turn) => ask({ type: "lockIn", orders, turn }),
     saveOrders(orders, turn, paused, now) {
@@ -269,6 +306,8 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): GameHost & { gam
     onNotice: (f) => void notices.push(f),
     dispose() {
       disposed = true;
+      opening?.reject(new Error("This game is closed."));
+      opening = null;
       for (const p of pending.values()) p.reject(new Error("This game is closed."));
       pending.clear();
       const sock = ws;

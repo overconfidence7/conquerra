@@ -1,13 +1,14 @@
 import { maps } from "@conquerra/content/maps";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { worker } from "../server/api";
-import { cleanNewGame, nameFromEmail } from "../server/online";
+import { API_TEXT, worker } from "../server/api";
+import { mirrorGame, mirrorTable } from "../server/mirror";
+import { cleanNewGame, nameFromEmail, newInviteCode } from "../server/online";
 import type { Env } from "../server/env";
 import type { OnlineGameInfo } from "../src/host/protocol";
-import { RoomCore, type RoomSetup } from "../src/host/roomCore";
+import { RoomCore, type TableSetup } from "../src/host/roomCore";
 import { accessKeyPair, AUD, goodClaims, TEAM } from "./accessHelpers";
 import { memoryRoomStore, settings } from "./roomHelpers";
 // @ts-expect-error: a plain .mjs script (the generator of server/maps.json)
@@ -19,7 +20,8 @@ const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof
 /** D1's API over Node's SQLite, with the real migration applied (the same SQL the Worker runs). */
 function d1() {
   const db = new DatabaseSync(":memory:");
-  db.exec(readFileSync(join(web, "migrations/0001_online.sql"), "utf8"));
+  // Every migration, in order (session 27 added the tables).
+  for (const f of readdirSync(join(web, "migrations")).filter((f) => f.endsWith(".sql")).sort()) db.exec(readFileSync(join(web, "migrations", f), "utf8"));
   type V = string | number | null;
   const stmt = (sql: string, params: V[] = []) => ({
     bind: (...p: V[]) => stmt(sql, p),
@@ -27,7 +29,8 @@ function d1() {
     all: async <T>() => ({ results: db.prepare(sql).all(...params) as T[] }),
     run: async () => (db.prepare(sql).run(...params), { success: true }),
   });
-  return { db, d1: { prepare: (sql: string) => stmt(sql), batch: async (list: { run(): Promise<unknown> }[]) => Promise.all(list.map((s) => s.run())) } };
+  // (D1 runs a batch in order, as one transaction.)
+  return { db, d1: { prepare: (sql: string) => stmt(sql), batch: async (list: { run(): Promise<unknown> }[]) => { const out = []; for (const s of list) out.push(await s.run()); return out; } } };
 }
 
 describe("the server's files (session 26)", () => {
@@ -65,25 +68,40 @@ describe("the server's files (session 26)", () => {
   });
 });
 
-describe("the API (session 26): sign-in first, then games in the database and rooms", async () => {
+describe("the API (sessions 26 and 27): sign-in first, then tables and games in the database and rooms", async () => {
   const { pub, sign } = await accessKeyPair();
   const { db, d1: DB } = d1();
   const rooms = new Map<string, RoomCore>();
-  const opened: { id: string; seat: string | null }[] = [];
+  const opened: { id: string; seat: string | null; user: string | null; name: string | null }[] = [];
+  /** Each room's pages (by account), as the stand-in room delivers them. */
+  const pages = new Map<string, unknown[]>();
+  const roomFor = (id: string) => {
+    let room = rooms.get(id);
+    if (!room) {
+      const r: RoomCore = new RoomCore(memoryRoomStore(), async (m) => maps[m]!, {
+        send: (seat, msg) => (pages.get(r.userOf(seat) ?? seat) ?? pages.set(r.userOf(seat) ?? seat, []).get(r.userOf(seat) ?? seat)!).push(msg) > 0,
+        sendUser: (user, msg) => (pages.get(user) ?? pages.set(user, []).get(user)!).push(msg) > 0,
+        users: () => [...pages.keys()],
+        // The real copy, on the real database.
+        tableChanged: (m) => void mirrorTable(DB as unknown as D1Database, m),
+        wakeAt: () => {},
+        listed: (info) => void mirrorGame(DB as unknown as D1Database, info),
+        log: () => {},
+      });
+      room = r;
+      rooms.set(id, room);
+    }
+    return room;
+  };
   const env = {
     ACCESS_TEAM: TEAM,
     ACCESS_AUD: AUD,
     DB,
     GAME_ROOM: {
       getByName: (id: string) => ({
-        async create(setup: RoomSetup) {
-          const room = new RoomCore(memoryRoomStore(), async (m) => maps[m]!, { send: () => false, wakeAt: () => {}, listed: () => {}, log: () => {} });
-          rooms.set(id, room);
-          const info = await room.create(setup);
-          return { info, players: room.hello(setup.people[0]!.id).view.players.map((p) => ({ id: p.id, name: p.name, house: p.house })) };
-        },
-        // (Node can't make a 101 response: the stand-in room says which seat the Worker opened.)
-        fetch: async (req: Request) => (opened.push({ id, seat: req.headers.get("X-Seat") }), new Response("room")),
+        createTable: (setup: TableSetup) => roomFor(id).createTable(setup),
+        // (Node can't make a 101 response: the stand-in room says who the Worker opened it for.)
+        fetch: async (req: Request) => (opened.push({ id, seat: req.headers.get("X-Seat"), user: req.headers.get("X-User"), name: req.headers.get("X-Name") }), new Response("room")),
       }),
     },
   } as unknown as Env;
@@ -98,6 +116,12 @@ describe("the API (session 26): sign-in first, then games in the database and ro
     if (email) headers.set("Cf-Access-Jwt-Assertion", await sign({ ...goodClaims(Date.now()), email }));
     return worker.fetch(new Request(`https://conquerra.overconfidenceonline.com${path}`, { ...init, headers }), env);
   };
+  const userId = (email: string) => (db.prepare("SELECT id FROM users WHERE email = ?").get(email) as { id: string }).id;
+  const whoOf = (email: string) => {
+    const u = db.prepare("SELECT id, name, colour FROM users WHERE email = ?").get(email) as { id: string; name: string; colour: number | null };
+    return { user: u.id, name: u.name, colour: u.colour };
+  };
+  const list = async (email = "nate@example.com") => ((await (await call("/api/games", {}, email)).json()) as { games: OnlineGameInfo[] }).games;
 
   it("no Access token: refused; online play off until the AUD tag is set", async () => {
     expect((await call("/api/me", {}, null)).status).toBe(403);
@@ -105,35 +129,101 @@ describe("the API (session 26): sign-in first, then games in the database and ro
     expect(off.status).toBe(503);
   });
 
-  it("the first sign-in makes the account; make a game; it's in your list; you open it in your seat", async () => {
-    expect(await (await call("/api/me")).json()).toEqual({ email: "nate@example.com", name: "Nate" });
-    const made = await call("/api/games", { method: "POST", body: JSON.stringify({ settings, leadersRun: true }) });
+  it("make a table: it waits for players, with its link's code; your list says so; you open it in your seat", async () => {
+    expect(await (await call("/api/me")).json()).toEqual({ email: "nate@example.com", name: "Nate", colour: null });
+    const made = await call("/api/games", { method: "POST", body: JSON.stringify({ settings: { ...settings, house: 2 }, leadersRun: true }) });
     expect(made.status).toBe(200);
-    const { id } = (await made.json()) as { id: string };
+    const { id, code } = (await made.json()) as { id: string; code: string };
     expect(id).toMatch(/^[a-z0-9]{12}$/);
+    expect(code).toMatch(/^[a-z2-9]{10}$/);
     const row = db.prepare("SELECT * FROM games WHERE id = ?").get(id) as Record<string, unknown>;
-    expect(row).toMatchObject({ map: "embervale", status: "playing", turn: 1, seed: null });
-    expect(String(row.seed_hash)).toMatch(/^[0-9a-f]{64}$/);
-    const { games } = (await (await call("/api/games")).json()) as { games: OnlineGameInfo[] };
-    expect(games).toHaveLength(1);
-    expect(games[0]).toMatchObject({ id, mapName: "Embervale", turn: 1, status: "playing", waitingOn: ["you"], leadersRun: true });
-    expect(games[0]!.players).toEqual([
-      { name: "Nate", bot: false, you: true },
-      { name: "Lady Morwen", bot: true, you: false },
-      { name: "Baron Krell", bot: true, you: false },
-      { name: "Queen Isolde", bot: true, you: false },
+    expect(row).toMatchObject({ map: "embervale", status: "waiting", invite: code, size: 4, seed: null });
+    // The colour you made it with is your usual one now.
+    expect(((await (await call("/api/me")).json()) as { colour: number }).colour).toBe(2);
+    const [g] = await list();
+    expect(g).toMatchObject({ id, status: "waiting", seats: 4, seated: 1, host: true, code, players: [{ name: "Nate", bot: false, you: true }] });
+    expect((await call(`/api/games/${id}/ws`, { headers: { Upgrade: "websocket" } })).status).toBe(200);
+    expect(opened.at(-1)).toEqual({ id, seat: "p1", user: userId("nate@example.com"), name: "Nate" });
+  });
+
+  it("a friend's link: the table it's for; they open its screen with the code, sit, the host starts; the database follows; late friends can't join", async () => {
+    const { id, code } = (await (await call("/api/games", { method: "POST", body: JSON.stringify({ settings: { ...settings, bots: 2 }, leadersRun: true }) })).json()) as { id: string; code: string };
+    // Kit (on the guest list) opens the link: the join route finds the table; the screen opens with the code only.
+    expect(await (await call(`/api/join/${code}`, {}, "kit@example.com")).json()).toEqual({ id });
+    expect((await call(`/api/games/${id}/ws`, { headers: { Upgrade: "websocket" } }, "kit@example.com")).status).toBe(404);
+    expect((await call(`/api/games/${id}/ws?code=${code}`, { headers: { Upgrade: "websocket" } }, "kit@example.com")).status).toBe(200);
+    expect(opened.at(-1)).toMatchObject({ id, seat: null, user: userId("kit@example.com"), name: "Kit" });
+    // A wrong code, or a made-up link: no.
+    expect((await call(`/api/games/${id}/ws?code=zzzzzzzzzz`, { headers: { Upgrade: "websocket" } }, "kit@example.com")).status).toBe(404);
+    expect((await call(`/api/join/zzzzzzzzzz`, {}, "kit@example.com")).status).toBe(404);
+    // Kit sits (in the room, the authority), and the database copies it: the seat, and Kit's usual colour.
+    const room = rooms.get(id)!;
+    const kit = whoOf("kit@example.com");
+    await room.receive(kit, { id: 1, type: "table", act: { do: "sit", house: 6, leadersRun: false } });
+    await new Promise((r) => setTimeout(r, 10));
+    expect(db.prepare("SELECT seat, user, colour, leaders_run, state FROM seats WHERE game = ? ORDER BY seat").all(id)).toEqual([
+      { seat: "p1", user: userId("nate@example.com"), colour: 0, leaders_run: 1, state: "in" },
+      { seat: "p2", user: kit.user, colour: 6, leaders_run: 0, state: "in" },
     ]);
-    const ws = await call(`/api/games/${id}/ws`, { headers: { Upgrade: "websocket" } });
-    expect(ws.status).toBe(200);
-    expect(opened.at(-1)).toEqual({ id, seat: "p1" });
-    // Someone else (signed in, but with no seat at that table) can't open it.
-    expect((await call(`/api/games/${id}/ws`, { headers: { Upgrade: "websocket" } }, "stranger@example.com")).status).toBe(404);
-    expect(((await (await call("/api/games", {}, "stranger@example.com")).json()) as { games: unknown[] }).games).toEqual([]);
+    expect(((await (await call("/api/me", {}, "kit@example.com")).json()) as { colour: number }).colour).toBe(6);
+    expect((await list("kit@example.com"))[0]).toMatchObject({ id, status: "waiting", seated: 2, seats: 3, host: false });
+    expect((await list("kit@example.com"))[0]!.code).toBeUndefined();
+    // Kit's next visit opens with the seat (no code needed).
+    await call(`/api/games/${id}/ws`, { headers: { Upgrade: "websocket" } }, "kit@example.com");
+    expect(opened.at(-1)).toMatchObject({ seat: "p2" });
+    // The host starts: the game is under way in the database, with the bot in the empty seat.
+    await room.receive(whoOf("nate@example.com"), { id: 2, type: "table", act: { do: "start" } });
+    await new Promise((r) => setTimeout(r, 10));
+    const row = db.prepare("SELECT status, turn, seed_hash, deadline FROM games WHERE id = ?").get(id) as Record<string, unknown>;
+    expect(row).toMatchObject({ status: "playing", turn: 1 });
+    expect(String(row.seed_hash)).toMatch(/^[0-9a-f]{64}$/);
+    expect(db.prepare("SELECT seat, bot FROM seats WHERE game = ? ORDER BY rowid").all(id)).toEqual([
+      { seat: "p1", bot: null },
+      { seat: "p2", bot: null },
+      { seat: "bot1", bot: "marshal" },
+    ]);
+    const kitsList = await list("kit@example.com");
+    expect(kitsList[0]).toMatchObject({ id, status: "playing", waitingOn: ["Nate", "you"], players: [{ name: "Nate" }, { name: "Kit", you: true }, { name: "Lady Morwen", bot: true }] });
+    // Wren had the link but was late: the join route and the screen both say it started.
+    const late = await call(`/api/join/${code}`, {}, "wren@example.com");
+    expect(late.status).toBe(409);
+    expect(((await late.json()) as { error: string }).error).toBe(API_TEXT.started);
+    expect((await call(`/api/games/${id}/ws?code=${code}`, { headers: { Upgrade: "websocket" } }, "wren@example.com")).status).toBe(409);
+    // Kit, seated, still gets the game from the link.
+    expect(await (await call(`/api/join/${code}`, {}, "kit@example.com")).json()).toEqual({ id });
+  });
+
+  it("a cancelled table leaves the lists; its link says so", async () => {
+    const { id, code } = (await (await call("/api/games", { method: "POST", body: JSON.stringify({ settings, leadersRun: true }) })).json()) as { id: string; code: string };
+    await rooms.get(id)!.receive(whoOf("nate@example.com"), { id: 1, type: "table", act: { do: "cancel" } });
+    await new Promise((r) => setTimeout(r, 10));
+    expect((await list()).some((g) => g.id === id)).toBe(false);
+    expect((await call(`/api/join/${code}`, {}, "kit@example.com")).status).toBe(410);
+  });
+
+  it("your name: Settings changes it (cleaned), the next table uses it", async () => {
+    const bad = await call("/api/me", { method: "PATCH", body: JSON.stringify({ name: "  <> 42 " }) });
+    expect(bad.status).toBe(400);
+    const ok = await call("/api/me", { method: "PATCH", body: JSON.stringify({ name: "  Lord   Nate  " }) });
+    expect(await ok.json()).toMatchObject({ name: "Lord Nate" });
+    const { id } = (await (await call("/api/games", { method: "POST", body: JSON.stringify({ settings, leadersRun: true }) })).json()) as { id: string };
+    expect(db.prepare("SELECT name FROM seats WHERE game = ? AND seat = 'p1'").get(id)).toEqual({ name: "Lord Nate" });
+    // A name travels to the room encoded (a header holds only plain characters).
+    await call("/api/me", { method: "PATCH", body: JSON.stringify({ name: "Æthelflæd" }) });
+    await call(`/api/games/${id}/ws`, { headers: { Upgrade: "websocket" } });
+    expect(decodeURIComponent(opened.at(-1)!.name!)).toBe("Æthelflæd");
+    expect((await call("/api/me", { method: "PATCH", body: JSON.stringify({ colour: 12 }) })).status).toBe(400);
   });
 
   it("a game that can't be made says so, and leaves nothing behind", async () => {
     const bad = await call("/api/games", { method: "POST", body: JSON.stringify({ settings: { ...settings, turnSeconds: null } }) });
     expect(bad.status).toBe(400);
     expect(((await bad.json()) as { error: string }).error).toContain("timer");
+  });
+
+  it("the invite code: ten letters and digits from a random source, a different one each time", () => {
+    const codes = new Set(Array.from({ length: 2000 }, () => newInviteCode()));
+    expect(codes.size).toBe(2000);
+    for (const c of codes) expect(c).toMatch(/^[a-z2-9]{10}$/);
   });
 });

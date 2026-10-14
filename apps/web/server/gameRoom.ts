@@ -1,9 +1,10 @@
 import { DurableObject } from "cloudflare:workers";
 import { MapDef } from "@conquerra/content";
 import type { PlayerId } from "@conquerra/engine";
-import { RoomCore, type RoomInfo, type RoomSetup, type RoomStore } from "../src/host/roomCore";
-import type { RoomMessage, RoomRequest } from "../src/host/protocol";
+import { RoomCore, type RoomInfo, type RoomSetup, type RoomStore, type TableSetup, type Who } from "../src/host/roomCore";
+import type { RoomMessage, RoomRequest, TableView } from "../src/host/protocol";
 import slimMaps from "./maps.json";
+import { mirrorGame, mirrorTable } from "./mirror";
 import type { Env } from "./env";
 
 /**
@@ -53,8 +54,12 @@ function storeOver(storage: DurableObjectStorage): RoomStore {
   };
 }
 
+/** What each connection is: the account (session 27), and for a game from session 26 the seat from the database. */
 interface Attachment {
-  seat: PlayerId;
+  user?: string;
+  name?: string;
+  colour?: number | null;
+  seat?: PlayerId | null;
 }
 
 export class GameRoom extends DurableObject<Env> {
@@ -64,20 +69,29 @@ export class GameRoom extends DurableObject<Env> {
     super(ctx, env);
     this.core = new RoomCore(storeOver(ctx.storage), loadSlimMap, {
       send: (seat, msg) => this.send(seat, msg),
+      sendUser: (user, msg) => this.sendTo((a) => a.user === user, msg),
+      users: () => [...new Set(this.sockets().flatMap(([, a]) => (a.user ? [a.user] : [])))],
+      // The database's copy, for the lobby's lists (./mirror.ts).
+      tableChanged: (m) => ctx.waitUntil(mirrorTable(env.DB, m)),
       wakeAt: (at) => {
         if (at === null) void ctx.storage.deleteAlarm();
         else void ctx.storage.setAlarm(at);
       },
-      listed: (info) => ctx.waitUntil(this.list(info)),
+      listed: (info) => ctx.waitUntil(mirrorGame(env.DB, info)),
       log: (line) => console.log(line),
     });
   }
 
-  /** To a seat's page (if it's connected; never anyone else's). */
-  private send(seat: PlayerId, msg: RoomMessage): boolean {
+  private sockets(): [WebSocket, Attachment][] {
+    return this.ctx.getWebSockets().map((ws) => [ws, (ws.deserializeAttachment() as Attachment | null) ?? {}]);
+  }
+
+  /** To the pages that match (never anyone else's). */
+  private sendTo(match: (a: Attachment) => boolean, msg: RoomMessage): boolean {
     let sent = false;
     const text = JSON.stringify(msg);
-    for (const ws of this.ctx.getWebSockets(seat)) {
+    for (const [ws, a] of this.sockets()) {
+      if (!match(a)) continue;
       try {
         ws.send(text);
         sent = true;
@@ -88,57 +102,70 @@ export class GameRoom extends DurableObject<Env> {
     return sent;
   }
 
-  /** The game list's line in the database (the lobby's "Your online games"). */
-  private async list(info: RoomInfo) {
-    try {
-      await this.env.DB.prepare("UPDATE games SET turn = ?, status = ?, waiting = ?, deadline = ?, updated = ?, seed = ?, winner = ? WHERE id = ?")
-        .bind(info.turn, info.status, JSON.stringify(info.waitingOn), info.deadline, Date.now(), info.seed ?? null, info.winner, info.gameId)
-        .run();
-    } catch (e) {
-      console.log(`game list update failed: ${e instanceof Error ? e.message : String(e)}`);
-    }
+  /** To a seat's page (the account sitting there; a game from session 26: the seat its connection came with). */
+  private send(seat: PlayerId, msg: RoomMessage): boolean {
+    const user = this.core.userOf(seat);
+    return this.sendTo((a) => (user ? a.user === user : a.seat === seat), msg);
   }
 
-  /** Make the game (the Worker calls this once, right after writing the game's row). */
+  /** Make a table (the Worker calls this once, right after writing the game's row). Session 27. */
+  async createTable(setup: TableSetup): Promise<TableView> {
+    return this.core.createTable(setup);
+  }
+
+  /** Session 26: make a game straight away (one person against bots). Kept for the tests' sake; the API makes tables now. */
   async create(setup: RoomSetup): Promise<{ info: RoomInfo; players: { id: string; name: string; house: number }[] }> {
     const info = await this.core.create(setup);
     const start = this.core.hello(setup.people[0]!.id);
     return { info, players: start.view.players.map((p) => ({ id: p.id, name: p.name, house: p.house })) };
   }
 
-  /** A page opens the game (the Worker has checked the sign-in and found the seat: `X-Seat`). */
+  /**
+   * A page opens the game (the Worker has checked the sign-in: `X-User`, `X-Name`, `X-Colour`; and, for a game from
+   * session 26, found the seat: `X-Seat`).
+   */
   async fetch(request: Request): Promise<Response> {
+    const user = request.headers.get("X-User") ?? "";
     const seat = request.headers.get("X-Seat");
-    if (request.headers.get("Upgrade") !== "websocket" || !seat) return new Response("Expected a WebSocket", { status: 426 });
-    // One connection per seat: a second one from the same account (another tab, the phone) replaces the first.
-    for (const old of this.ctx.getWebSockets(seat)) {
+    if (request.headers.get("Upgrade") !== "websocket" || (!user && !seat)) return new Response("Expected a WebSocket", { status: 426 });
+    // One connection per account: a second one (another tab, the phone) replaces the first.
+    for (const [old, a] of this.sockets()) {
+      if (!(user ? a.user === user : a.seat === seat)) continue;
       try {
         old.close(4000, "Opened somewhere else");
       } catch {
         // Already closing.
       }
     }
+    const colour = Number(request.headers.get("X-Colour"));
     const [client, server] = Object.values(new WebSocketPair()) as [WebSocket, WebSocket];
-    this.ctx.acceptWebSocket(server, [seat]);
-    server.serializeAttachment({ seat } satisfies Attachment);
+    this.ctx.acceptWebSocket(server);
+    server.serializeAttachment({ user, name: decodeName(request.headers.get("X-Name")), colour: request.headers.get("X-Colour") && Number.isInteger(colour) ? colour : null, seat } satisfies Attachment);
     return new Response(null, { status: 101, webSocket: client });
   }
 
+  private who(ws: WebSocket): Who | null {
+    const a = (ws.deserializeAttachment() as Attachment | null) ?? {};
+    if (!a.user && !a.seat) return null;
+    return { user: a.user ?? "", name: a.name ?? "Player", colour: a.colour ?? null, seat: a.seat ?? null };
+  }
+
   async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer) {
-    const seat = (ws.deserializeAttachment() as Attachment | null)?.seat;
-    if (!seat || typeof message !== "string" || message.length > MAX_MESSAGE) return;
+    const who = this.who(ws);
+    if (!who || typeof message !== "string" || message.length > MAX_MESSAGE) return;
     let req: RoomRequest;
     try {
       req = JSON.parse(message) as RoomRequest;
     } catch {
       return;
     }
-    await this.core.message(seat, req);
+    await this.core.receive(who, req);
     await this.core.flush();
   }
 
   async webSocketClose(ws: WebSocket) {
-    const seat = (ws.deserializeAttachment() as Attachment | null)?.seat;
+    const who = this.who(ws);
+    const seat = who ? (this.core.seatOf(who.user) ?? who.seat) : null;
     if (seat) this.core.disconnected(seat);
   }
 
@@ -150,5 +177,14 @@ export class GameRoom extends DurableObject<Env> {
   async alarm() {
     await this.core.alarm();
     await this.core.flush();
+  }
+}
+
+/** The account's name, as the Worker sent it (encoded: a header holds only plain characters). */
+function decodeName(raw: string | null): string {
+  try {
+    return raw ? decodeURIComponent(raw) : "Player";
+  } catch {
+    return "Player";
   }
 }

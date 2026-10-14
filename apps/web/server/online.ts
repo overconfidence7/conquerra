@@ -61,3 +61,12 @@ export function newGameId(): string {
   const abc = "abcdefghijkmnpqrstuvwxyz23456789";
   return Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => abc[b % abc.length]).join("");
 }
+
+/** An invite code for a table's link ("/?join=k3f9q2m8w1"): 10 letters and digits from a random source (about 50 bits). */
+export function newInviteCode(): string {
+  const abc = "abcdefghijkmnpqrstuvwxyz23456789";
+  return Array.from(crypto.getRandomValues(new Uint8Array(10)), (b) => abc[b % abc.length]).join("");
+}
+
+/** A display name someone typed (session 27): the same rule as the room uses. */
+export { cleanName } from "../src/host/names";

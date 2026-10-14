@@ -7,7 +7,7 @@ import { findLeader, indexMap, isShare, LEADER_STYLES, STEWARD_STYLES, suggestLe
 import { arrangeQueue, asIfYouOrderFrom, instructOrders, refFromKey, takeControl, withGeneralOrders, type LeaderPlacement } from "./logic/generals";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
-import type { GameHost, HostStart, HostUpdate, LoadSource, LobbySettings, OnlineGameInfo, SeatInfo, TurnReport } from "./host/protocol";
+import type { GameHost, HostStart, HostUpdate, LoadSource, LobbySettings, OnlineGameInfo, TableView, SeatInfo, TurnReport } from "./host/protocol";
 import { listSlots, type SlotId, type SlotInfo } from "./host/saves";
 import { dueTurnIn, withTurnIn } from "./logic/spoils";
 import { namer } from "./logic/text";
@@ -19,7 +19,8 @@ import type { PathKind } from "./logic/paths";
 import { chronicleOf } from "./logic/chronicleKeep";
 import { draftToOrder, isMine, isRecruitSite, type NewOrder, planQueue, queueFor, removeOrder, tapTerritory, troopsOf, type MoveDraft } from "./logic/orders";
 
-export type Screen = "lobby" | "game" | "over";
+/** Session 27: "table", an online game's table screen before it starts (seats, colours, the link, Start). */
+export type Screen = "lobby" | "game" | "over" | "table";
 /** What a tap on the map picks for a leader's command. */
 export type PickKind = "push" | "defend" | "expand" | "front" | "buildUp" | "culture";
 
@@ -163,6 +164,10 @@ interface GameStore {
   fair: { seedHash: string; seed?: string } | null;
   /** Online: who at the table is a person. */
   people: PlayerId[] | null;
+  /** Session 27: the table screen (an online game waiting for its players), as the room last sent it. */
+  table: TableView | null;
+  /** Session 27: you, as the server knows you (your name and usual House colour), once asked. */
+  me: { name: string; colour: number | null } | null;
   /** The notice is just news (online: "Reconnected"), not a problem: shown quietly, and it goes by itself. */
   noticeCalm: boolean;
   /** Carry on from a saved game: the autosave (Continue), a slot, or a file's text. */
@@ -364,6 +369,8 @@ export const useGame = create<GameStore>((set, get) => ({
   onlineProblem: null,
   fair: null,
   people: null,
+  table: null,
+  me: null,
   noticeCalm: false,
   mission: null,
   diplomacy: [],

@@ -53,6 +53,8 @@ const OutPanel = lazy(() => import("./Out").then((m) => ({ default: m.OutPanel }
 const KeepGenerals = lazy(() => import("./KeepGenerals"));
 /** Your cards (Spoils and missions): loaded the first time you open them. */
 const CardsSheet = lazy(() => import("./Cards"));
+/** Settings → Your name (session 27, online only): loaded with it, never in single player. */
+const NameField = lazy(() => import("./NameField").then((m) => ({ default: m.NameField })));
 /** Settings → Credits (session 24): loaded the first time it's opened. */
 const SoundCredits = lazy(() => import("./SoundCredits"));
 /** The Chronicle (session 16): loaded the first time it's opened. */
@@ -161,6 +163,11 @@ function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSave
       <button className="menu-item" onClick={() => setCredits(true)}>
         Credits <span className="muted">sound and music</span>
       </button>
+      {online && (
+        <Suspense fallback={null}>
+          <NameField />
+        </Suspense>
+      )}
       {online && <FairLine />}
       <hr className="rule" />
       <button className="menu-item" onClick={onLeave}>

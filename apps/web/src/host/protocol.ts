@@ -125,7 +125,7 @@ export interface HostStart extends HostUpdate {
 }
 
 /** Where to load a saved game from: a slot on this device ("auto" is Continue), or a save file's text; or an online game (its id). */
-export type LoadSource = { slot: SlotId } | { file: string } | { online: string };
+export type LoadSource = { slot: SlotId } | { file: string } | { online: string; code?: string };
 
 export interface GameHost {
   start(settings: LobbySettings): Promise<HostStart>;
@@ -217,7 +217,45 @@ export type HostResponse =
  * What the page sends a game room. The local worker's requests that make sense online, plus "hello" (where are we?),
  * sent on every (re)connect. Starting a game is the API's job; saves, files and pause are single player only.
  */
-export type RoomRequest = Extract<HostRequest, { type: "lockIn" | "saveOrders" | "watchNext" | "finish" | "suggest" | "planGenerals" | "propose" }> | { id: number; type: "hello" };
+export type RoomRequest = Extract<HostRequest, { type: "lockIn" | "saveOrders" | "watchNext" | "finish" | "suggest" | "planGenerals" | "propose" }> | { id: number; type: "hello" } | { id: number; type: "table"; act: TableAct };
+
+/**
+ * Session 27: what someone at the table screen can do before the game starts. Sit down (with a House colour and their
+ * own House's names and choices), change colour, get up again; the host can take someone off the table (before the
+ * start, never after), start the game (empty seats become bots; `withBots`: start alone, for testing), or cancel it.
+ */
+export type TableAct =
+  | { do: "sit"; house: number; leadersRun: boolean; name?: string; leaderName?: string; stewardName?: string; leaderPersonality?: LeaderStyle | null; stewardPersonality?: LeaderStyle | null }
+  | { do: "colour"; house: number }
+  | { do: "leave" }
+  | { do: "remove"; seat: number }
+  | { do: "start"; withBots?: boolean }
+  | { do: "cancel" };
+
+/**
+ * The table screen (session 27), as the room sends it to everyone there. Only what the players panel shows of anyone
+ * (a name, a House colour, who's the host, a person or an empty seat): never an email, an account or anything of the
+ * game. Each person gets their own copy (`you`, and which seat is theirs).
+ */
+export interface TableView {
+  gameId: string;
+  /** The invite code (the link is `/?join=<code>`). */
+  code: string;
+  status: "waiting" | "started" | "cancelled";
+  mapId: string;
+  /** The game's settings, as the host chose them (the table's size is `seats.length`). */
+  botLevel: BotChoice;
+  turnSeconds: number;
+  luck: number;
+  fog: boolean;
+  mode: GameMode;
+  fate: boolean;
+  diplomacy: boolean;
+  /** The seats in order (the host's first); null: empty (a bot if the game starts so). */
+  seats: ({ name: string; house: number; host: boolean; you: boolean } | null)[];
+  /** You: sitting (your seat's index), the host, or taken off this table by the host. */
+  you: { seat: number | null; host: boolean; removed?: true };
+}
 
 /** A room request without its id (each kind keeps its own fields). */
 export type RoomBody = RoomRequest extends infer R ? (R extends { id: number } ? Omit<R, "id"> : never) : never;
@@ -233,7 +271,7 @@ export interface RoomStart extends Omit<HostStart, "map"> {
 }
 
 /** Everything the room sends: the local host's answers (or the start), each with the room's clock so the page's countdown matches it. */
-export type RoomMessage = { now: number } & (HostResponse | { id: number; ok: true; start: RoomStart });
+export type RoomMessage = { now: number } & (HostResponse | { id: number; ok: true; start: RoomStart } | { id: number; ok: true; table: TableView });
 
 /** The game list (the lobby's "Your online games"), from the database. */
 export interface OnlineGameInfo {
@@ -241,7 +279,16 @@ export interface OnlineGameInfo {
   mapId: string;
   mapName: string;
   turn: number;
-  status: "playing" | "over";
+  /** Session 27: "waiting" for players (a table not started yet). */
+  status: "waiting" | "playing" | "over";
+  /** Session 27: a table waiting to start: how many seats, and how many are taken; you're its host. */
+  seats?: number;
+  seated?: number;
+  host?: boolean;
+  /** The invite code (a waiting table's link), for its host. */
+  code?: string;
+  /** Session 27: your seat left the game (resigned, or a Marshal took it after missed turns). It's under Finished. */
+  left?: "resigned" | "taken";
   /** Who the table is waiting on this turn, by name ("you" for you). */
   waitingOn: string[];
   /** When the turn's clock runs out (ms), or null. */

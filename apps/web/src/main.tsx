@@ -31,6 +31,8 @@ const GameOver = lazy(() => import("./ui/GameOver").then((m) => ({ default: m.Ga
  */
 const loadGameScreen = () => import("./ui/GameScreen");
 const GameScreen = lazy(() => loadGameScreen().then((m) => ({ default: m.GameScreen })));
+/** The table screen (session 27): an online game waiting for its players. Loaded only when one opens. */
+const TableScreen = lazy(() => import("./ui/TableScreen"));
 
 function Screen() {
   const screen = useGame((s) => s.screen);
@@ -42,6 +44,12 @@ function Screen() {
     return (
       <Suspense fallback={null}>
         <GameScreen />
+      </Suspense>
+    );
+  if (screen === "table")
+    return (
+      <Suspense fallback={null}>
+        <TableScreen />
       </Suspense>
     );
   if (screen === "over")
@@ -86,5 +94,8 @@ else {
   );
   // Online (session 26): "?game=<id>" opens that online game (the online code loads only then).
   const game = new URLSearchParams(location.search).get("game");
+  // Session 27: "?join=<code>", a friend's link to a table.
+  const join = new URLSearchParams(location.search).get("join");
   if (game && /^[a-z0-9]{6,24}$/.test(game)) void import("./host/onlineActions").then((m) => m.openOnline(game));
+  else if (join && /^[a-z0-9]{6,24}$/.test(join)) void import("./host/onlineActions").then((m) => m.joinTable(join));
 }
