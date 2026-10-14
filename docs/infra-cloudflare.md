@@ -63,6 +63,8 @@
    5. **Save and deploy.** The first build takes about 3 minutes. Its log is under **Deployments → View build**. When it's done, open the preview: the version line at the top of the lobby shows the commit it built (for example "0.1.0 · 14 Oct · 0d539f9").
    - **What it doesn't do:** apply a database change. A session that adds a migration (a new file in `apps/web/migrations/`) says so and runs `pnpm deploy:preview` once, which applies it, then deploys. Every other push needs nothing.
    - **The fallback:** `pnpm deploy:preview` from this computer always works, Workers Builds or not.
+   - **Session 27:** `pnpm deploy:preview` now stops if anything is uncommitted ("Commit them first"), so the version line at the top of the lobby always names the build that's live. Workers Builds builds from the commit anyway.
+   - **Status Oct 14 (session 27): not connected yet.** No push made a deployment; every deploy in session 27 was `pnpm deploy:preview` (it also applied migration `0002_tables.sql`, the tables and invite codes). When you connect it, check the version line after the next push shows that push's commit.
    - **If a build fails:** the preview keeps the last good version (nothing half-deployed). The build log says why; paste it to Claude Code.
 
 **3. Friends (session 27): add a friend to the guest list (about 2 minutes, once per friend).** Someone whose email isn't on the list can't open the preview at all, link or not. The game link only gives a seat at one table; signing in is always Access.
