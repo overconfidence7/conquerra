@@ -1,7 +1,7 @@
 import type { MapDef } from "@conquerra/content";
 import { readSave, type LeaderStyle, type Order, type PlayerId, type SaveFile } from "@conquerra/engine";
 import { HOUSES } from "../map/houses";
-import { LocalGame, type PersonSeat } from "./localGame";
+import { LocalGame, type PersonSeat, type SeatLeft } from "./localGame";
 import { cleanName } from "./names";
 import { TABLE_TEXT } from "./roomText";
 import type { HostUpdate, LobbySettings, RoomMessage, RoomRequest, RoomStart, TableAct, TableView } from "./protocol";
@@ -254,7 +254,11 @@ export class RoomCore {
   private mirror() {
     const t = this.tableRec;
     if (!t) return;
-    const people = t.sitters.map((x, i) => ({ seat: x.seat ?? `p${i + 1}`, user: x.user, bot: null, colour: x.house, name: x.name, leadersRun: x.leadersRun }));
+    const left = this.game?.leftSeats ?? {};
+    const people = t.sitters.map((x, i) => {
+      const gone = x.seat ? left[x.seat] : undefined;
+      return { seat: x.seat ?? `p${i + 1}`, user: x.user, bot: gone ? "marshal" : null, colour: x.house, name: x.name, leadersRun: x.leadersRun, state: gone ? (gone.why === "taken" ? ("taken" as const) : ("resigned" as const)) : ("in" as const) };
+    });
     const bots =
       t.status === "started" && this.game
         ? this.game.fullState.players.filter((p) => !t.sitters.some((x) => x.seat === p.id)).map((p) => ({ seat: p.id, user: null, bot: t.settings.botLevel, colour: p.house, name: p.name, leadersRun: false }))
@@ -461,20 +465,25 @@ export class RoomCore {
   }
 
   /** "Where are we": this seat's game as it stands (planning with their queue, or the replay they missed). */
-  hello(seat: PlayerId): RoomStart {
+  hello(seat: PlayerId, have = 0): RoomStart {
     const g = this.g;
-    const { map, queued: _restored, ...start } = g.start(seat);
+    const { map, queued: _restored, chronicle, ...start } = g.start(seat);
+    // Session 27: the page keeps its own Chronicle and says which turns it has: only the ones it lacks travel.
+    const after = Number.isInteger(have) && have > 0 ? have : 0;
     const last = g.lastReplay(seat);
     const opens = g.windowOpensAt;
     const unseen = !!last && (this.meta!.seen[seat] ?? 0) < last.report.turn;
     const queued = g.queuedFor(seat);
     return {
       ...start,
+      chronicle: after ? (chronicle ?? []).filter((r) => r.turn > after) : (chronicle ?? []),
+      ...(after ? { chronicleAfter: after } : {}),
       gameId: this.meta!.gameId,
       mapId: map.id,
       mapVersion: map.generator?.version ?? null,
       fair: this.fair(),
-      people: g.peopleIds,
+      people: g.playingIds,
+      ...this.leftInfo(),
       ...(queued ? { queued } : {}),
       ...(g.lockedIn(seat) && !g.over ? { lockedIn: true } : {}),
       ...(last ? { replay: { before: last.before, report: last.report, play: unseen || (opens !== null && this.now() < opens) } } : {}),
@@ -489,7 +498,7 @@ export class RoomCore {
       if (!g.peopleIds.includes(seat)) throw new Error("You don't have a seat in this game");
       switch (req.type) {
         case "hello": {
-          const start = this.hello(seat);
+          const start = this.hello(seat, typeof req.have === "number" ? req.have : 0);
           if (this.reply(seat, { id: req.id, ok: true, start }) && start.replay) this.markSeen(seat, start.replay.report.turn);
           return;
         }
@@ -528,6 +537,9 @@ export class RoomCore {
           return;
         case "planGenerals":
           this.reply(seat, { id: req.id, ok: true, plan: g.leaderOrders(req.instructions ?? {}, req.purses, seat) });
+          return;
+        case "resign":
+          if (!(await this.resign(seat, req.id))) throw new Error("You can't resign from this game now.");
           return;
         case "propose":
           this.reply(seat, { id: req.id, ok: true, answer: g.propose(req.offer, seat) });
@@ -577,11 +589,60 @@ export class RoomCore {
       if (sent && u.report) this.markSeen(seat, u.report.turn);
     }
     if (this.game?.over) this.io.log(`game ${this.meta!.gameId}: over on turn ${this.game.turn}, seed revealed`);
+    this.announceLeft();
     this.afterChange();
   }
 
   private withFair(u: HostUpdate): HostUpdate {
-    return { ...u, fair: this.fair(), people: this.g.peopleIds };
+    return { ...u, fair: this.fair(), people: this.g.playingIds, ...this.leftInfo() };
+  }
+
+  /** The seats people left to a Marshal (session 27; public, as the players panel shows it). */
+  private leftInfo(): { leftSeats?: Record<PlayerId, SeatLeft> } {
+    const left = this.g.leftSeats;
+    return Object.keys(left).length ? { leftSeats: left } : {};
+  }
+
+  /**
+   * Seats that just left their person (a resignation, or a third missed turn): everyone else at the table is told
+   * ("Kit's seat is a Marshal's now."), and the database's copy marks the seat. Session 27.
+   */
+  private announceLeft(except?: PlayerId) {
+    const gone = this.g.takeLeftNow();
+    if (!gone.length) return;
+    for (const { id, why } of gone) {
+      const name = this.g.fullState.players.find((p) => p.id === id)?.name ?? "A player";
+      const notice = why === "resigned" ? `${name} resigned. ${name}'s seat is a Marshal's now.` : `${name} missed three turns in a row. ${name}'s seat is a Marshal's now.`;
+      this.io.log(`game ${this.meta!.gameId}: ${id} ${why === "resigned" ? "resigned" : "taken over after three missed turns"} on turn ${this.g.turn}`);
+      for (const seat of this.g.peopleIds) if (seat !== id && seat !== except) this.reply(seat, { id: 0, ok: true, notice, calm: true });
+    }
+    this.mirror();
+  }
+
+  /**
+   * Someone resigns (in the game, or from the lobby's list). A Marshal plays their seat from now on; if everyone still
+   * playing had locked in, the turn resolves now. Their own page is answered with where the game stands.
+   */
+  async resign(seat: PlayerId, id = 0): Promise<boolean> {
+    const g = await this.ensureLoaded();
+    if (!g.peopleIds.includes(seat) || g.over || g.isOut(seat) || g.leftSeats[seat]) return false;
+    const resolved = this.timed(() => g.resign(seat));
+    this.announceLeft(seat);
+    if (resolved) this.deliver(resolved, id ? new Map([[seat, id]]) : new Map());
+    else {
+      this.saveNow();
+      this.afterChange();
+      if (id) this.reply(seat, { id, ok: true, update: this.withFair(g.update(null, 0, seat)) });
+    }
+    await this.flush();
+    return true;
+  }
+
+  /** The lobby's "Leave this game": the account resigns its seat (session 27). */
+  async resignUser(user: string, legacySeat: PlayerId | null = null): Promise<boolean> {
+    await this.loadTable();
+    const seat = this.seatOf(user) ?? legacySeat;
+    return seat ? this.resign(seat) : false;
   }
 
   /** This seat's page was sent this turn's report (one that wasn't connected replays it when it says hello). */

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { openOnline, refreshOnline, setOnlineLobby, startOnline } from "../host/onlineActions";
+import { openOnline, refreshOnline, resignFromList, setOnlineLobby, startOnline } from "../host/onlineActions";
 import { NameField } from "./NameField";
 import type { OnlineGameInfo } from "../host/protocol";
 import { ONLINE_TIMER_CHOICES, timerLabel } from "../logic/timer";
@@ -42,6 +42,9 @@ export function waitingLine(g: OnlineGameInfo, now: number): { text: string; you
 
 function GameRow({ g, now, busy }: { g: OnlineGameInfo; now: number; busy: boolean }) {
   const wait = waitingLine(g, now);
+  const [leaving, setLeaving] = useState(false);
+  // A game under way that you're still playing: "Leave this game" resigns (a Marshal takes your seat).
+  const canLeave = g.status === "playing" && !g.left;
   const others = g.players.filter((p) => !p.you).map((p) => p.name);
   return (
     <li className={`online-game ${wait.yours ? "yours" : ""}`}>
@@ -49,6 +52,22 @@ function GameRow({ g, now, busy }: { g: OnlineGameInfo; now: number; busy: boole
         <b>{g.mapName}</b> {g.status !== "waiting" && <span className="muted">· turn {g.turn}</span>}
         {others.length > 0 && <span className="small block muted">with {others.join(", ")}</span>}
         <span className={`small block ${wait.yours ? "gold" : ""}`}>{wait.text}</span>
+        {canLeave &&
+          (leaving ? (
+            <span className="small block">
+              A Marshal plays your seat for the rest of the game.{" "}
+              <button className="link small" disabled={busy} onClick={() => void resignFromList(g.id)}>
+                Resign
+              </button>{" "}
+              <button className="link small" onClick={() => setLeaving(false)}>
+                Keep it
+              </button>
+            </span>
+          ) : (
+            <button className="link small" onClick={() => setLeaving(true)}>
+              Leave this game
+            </button>
+          ))}
       </span>
       <button className={wait.yours ? "primary" : ""} disabled={busy} onClick={() => void openOnline(g.id, g.code)}>
         {g.status === "waiting" ? "Open the table" : finished(g) ? "See it" : "Continue"}

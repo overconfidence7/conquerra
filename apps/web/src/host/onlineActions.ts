@@ -1,4 +1,4 @@
-import { enterGame, useGame } from "../store";
+import { applyOnlineUpdate, enterGame, useGame } from "../store";
 import { ONLINE_TIMER_CHOICES, DEFAULT_TIMER } from "../logic/timer";
 import { api, createRemoteHost, type RemoteHost } from "./remoteHost";
 import type { HostStart, OnlineGameInfo, TableAct, TableView } from "./protocol";
@@ -133,6 +133,29 @@ export async function closeTable() {
   await opening?.catch(() => false);
   useGame.setState({ screen: "lobby", table: null, error: null, host: null });
   void refreshOnline();
+}
+
+/**
+ * Resign (session 27): a Marshal plays your seat for the rest of the game. From the game (Settings) it answers with
+ * the seat as it stands, and you watch; from the lobby's list ("Leave this game") the game moves to Finished.
+ */
+export async function resignHere(): Promise<void> {
+  const host = useGame.getState().host as RemoteHost | null;
+  if (!host || !("resign" in host)) return;
+  try {
+    applyOnlineUpdate(await host.resign());
+  } catch (e) {
+    useGame.setState({ error: e instanceof Error ? e.message : String(e) });
+  }
+}
+
+export async function resignFromList(id: string): Promise<void> {
+  try {
+    await api(`/api/games/${encodeURIComponent(id)}/resign`, { method: "POST" });
+  } catch (e) {
+    useGame.setState({ onlineProblem: e instanceof Error ? e.message : String(e) });
+  }
+  await refreshOnline();
 }
 
 /** A table's link, to send to friends. */

@@ -703,3 +703,5 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 
 /* Online (session 26): the seed and its fingerprint (provably fair). */
 .fair-line code { font-size: 0.9em; overflow-wrap: anywhere; }
+.resign-confirm { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 6px 2px; }
+.resign-confirm p { flex-basis: 100%; margin: 0; }

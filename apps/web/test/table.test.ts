@@ -26,7 +26,7 @@ describe("the table (session 27): made, joined, started", () => {
     expect(view.seats).toEqual([{ name: "Nate", house: 0, host: true, you: true }, null, null, null]);
     // No game yet: the room has its table, and the database copy says it's waiting for players.
     expect(t.room.table).toBeNull();
-    expect(t.mirrors.at(-1)).toEqual({ gameId: "tbl1", status: "waiting", size: 4, seats: [{ seat: "p1", user: "u-nate", bot: null, colour: 0, name: "Nate", leadersRun: true }] });
+    expect(t.mirrors.at(-1)).toEqual({ gameId: "tbl1", status: "waiting", size: 4, seats: [{ seat: "p1", user: "u-nate", bot: null, colour: 0, name: "Nate", leadersRun: true, state: "in" }] });
     expect(t.alarm()).toBeNull();
   });
 

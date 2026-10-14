@@ -1,7 +1,8 @@
 import type { Answer } from "@conquerra/bots";
 import type { MapDef } from "@conquerra/content";
 import type { Order } from "@conquerra/engine";
-import type { GameHost, HostStart, HostUpdate, LeaderOrders, LobbySettings, NewOnlineGame, RoomBody, RoomMessage, RoomRequest, RoomStart, TableAct, TableView } from "./protocol";
+import { chronicleOf } from "../logic/chronicleKeep";
+import type { GameHost, HostStart, HostUpdate, LeaderOrders, LobbySettings, NewOnlineGame, RoomBody, RoomMessage, RoomRequest, RoomStart, TableAct, TableView, TurnReport } from "./protocol";
 
 /**
  * The online host (session 26): the same `GameHost` the page uses for single player, but the game runs in its room
@@ -32,6 +33,8 @@ export interface RemoteHostOptions {
   fetchImpl?: typeof fetch;
   /** Waits before each reconnect (ms); the last one repeats. */
   backoff?: readonly number[];
+  /** Where the page keeps each game's Chronicle (session 27; localStorage, if there is one). */
+  storage?: Pick<Storage, "getItem" | "setItem"> | null;
 }
 
 /** The page's sentences for what can go wrong online. */
@@ -66,6 +69,8 @@ export interface RemoteHost extends GameHost {
   onTable(listener: (table: TableView) => void): void;
   /** Sit down, change colour, get up; the host's remove, start and cancel. Answers with the table, or a sentence. */
   tableAct(act: TableAct): Promise<TableView>;
+  /** Leave the game for good: a Marshal plays your seat from now on (you can still watch). */
+  resign(): Promise<HostUpdate>;
 }
 
 export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
@@ -74,6 +79,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
   const fetchImpl = opts.fetchImpl ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
   const backoff = opts.backoff ?? [500, 1000, 2000, 4000, 8000, 15000];
   const loadMap = opts.loadMap ?? (async (id: string) => (await import("@conquerra/content/loadMap")).loadMap(id));
+  const storage = opts.storage !== undefined ? opts.storage : typeof localStorage !== "undefined" ? localStorage : null;
 
   let gameId: string | null = null;
   /** The table's invite code (someone without a seat yet opens the table with it). */
@@ -114,9 +120,49 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
   async function startFrom(s: RoomStart, roomNow: number): Promise<HostStart> {
     if (!map || map.id !== s.mapId) map = await loadMap(s.mapId);
     if ((map.generator?.version ?? null) !== s.mapVersion) throw new Error(ONLINE_TEXT.mapChanged);
-    const { gameId: _id, mapId: _m, mapVersion: _v, ...rest } = s;
-    return onOurClock({ ...rest, map }, roomNow);
+    const { gameId: _id, mapId: _m, mapVersion: _v, chronicleAfter: _a, ...rest } = s;
+    return onOurClock({ ...rest, chronicle: keepChronicle(s), map }, roomNow);
   }
+
+  // ---- The Chronicle (session 27): kept here (and on the device), so "where are we" brings only the turns it lacks ----
+  let chronicle: TurnReport[] = [];
+  const chronicleKey = () => `conquerra.chronicle.${gameId}`;
+  /** The last turn of the Chronicle this page has (0: none, so the room sends all of it). */
+  const haveChronicle = () => {
+    if (!chronicle.length && gameId) {
+      try {
+        const saved = JSON.parse(storage?.getItem(chronicleKey()) ?? "[]") as TurnReport[];
+        // Only a Chronicle with every turn from the first (the room fills in after its last).
+        if (Array.isArray(saved) && saved.every((r, i) => r && r.turn === i + 1)) chronicle = saved;
+      } catch {
+        chronicle = [];
+      }
+    }
+    return chronicle.length ? chronicle[chronicle.length - 1]!.turn : 0;
+  };
+  const saveChronicle = () => {
+    try {
+      storage?.setItem(chronicleKey(), JSON.stringify(chronicle));
+    } catch {
+      // Full or private: the next hello asks for all of it.
+    }
+  };
+  /** The Chronicle with what the room sent (all of it, or the turns after the page's own). */
+  const keepChronicle = (s: RoomStart): TurnReport[] => {
+    const sent = s.chronicle ?? [];
+    const after = s.chronicleAfter ?? 0;
+    chronicle = [...chronicle.filter((r) => r.turn <= after), ...sent.filter((r) => r.turn > after)];
+    saveChronicle();
+    return chronicle;
+  };
+  /** A turn this page was sent: its report joins the Chronicle (as the game screen keeps it). */
+  const addToChronicle = (u: HostUpdate) => {
+    // (Only the next turn: a gap is filled by the next hello instead.)
+    const last = chronicle.length ? chronicle[chronicle.length - 1]!.turn : 0;
+    if (!u.report || u.report.turn !== last + 1) return;
+    chronicle = [...chronicle, chronicleOf(u.report)];
+    saveChronicle();
+  };
 
   async function onHello(s: RoomStart, roomNow: number) {
     const reconnect = !opening;
@@ -131,6 +177,8 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
         o.reject(e instanceof Error ? e : new Error(String(e)));
       }
     } else if (s.view.turn > knownTurn) {
+      // (The turns it missed join the Chronicle: the room sent them, or the reports arrive as updates.)
+      keepChronicle(s);
       // Turns went by while we were away: the last one arrives as if it had just resolved (its replay plays from
       // where you last saw the board).
       knownTurn = s.view.turn;
@@ -149,6 +197,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
           ...(s.people ? { people: s.people } : {}),
           ...(s.replay ? { before: s.replay.before } : {}),
           ...(s.leadersBack ? { leadersBack: s.leadersBack } : {}),
+          ...(s.leftSeats ? { leftSeats: s.leftSeats } : {}),
           autoLocked: !s.lockedIn,
         },
         roomNow,
@@ -192,12 +241,13 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
     }
     if ("pushed" in m) {
       const u = onOurClock(m.pushed, m.now);
+      addToChronicle(u);
       knownTurn = Math.max(knownTurn, u.view.turn);
       autoLock.forEach((f) => f(u));
       return;
     }
     if ("notice" in m) {
-      tell(m.notice);
+      tell(m.notice, !!m.calm);
       return;
     }
     const p = pending.get(m.id);
@@ -209,6 +259,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
     }
     if ("update" in m) {
       const u = onOurClock(m.update, m.now);
+      addToChronicle(u);
       knownTurn = Math.max(knownTurn, u.view.turn);
       p.resolve(u);
     } else if ("table" in m) {
@@ -224,7 +275,8 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
     sock.onopen = () => {
       attempts = 0;
       helloId = nextId++;
-      sock.send(JSON.stringify({ id: helloId, type: "hello" } satisfies RoomRequest));
+      const have = haveChronicle();
+      sock.send(JSON.stringify({ id: helloId, type: "hello", ...(have ? { have } : {}) } satisfies RoomRequest));
     };
     sock.onmessage = onMessage;
     sock.onclose = (e: CloseEvent) => {
@@ -276,6 +328,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
     gameId: () => gameId,
     onTable: (f) => void tables.push(f),
     tableAct: (act) => ask<TableView>({ type: "table", act }),
+    resign: () => ask<HostUpdate>({ type: "resign" }),
     /** Make a table with these settings and open its table screen (the game starts when its host says so). */
     async start(settings: LobbySettings) {
       const { leadersRun, ...rest } = settings;

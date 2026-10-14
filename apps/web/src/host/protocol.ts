@@ -97,8 +97,13 @@ export interface HostUpdate {
   fair?: { seedHash: string; seed?: string };
   /** Online: your view before the turn in `report` (a player coming back after missing turns replays it from there). */
   before?: PlayerView;
-  /** Online: who at the table is a person (the players panel marks them; everyone else is a bot). */
+  /** Online: who at the table is a person playing their seat (the players panel marks them; everyone else is a bot). */
   people?: PlayerId[];
+  /**
+   * Online (session 27): seats a Marshal plays now because their person resigned or missed three turns in a row, with
+   * why and from which turn (the players panel says "(bot)"; your own means you're watching).
+   */
+  leftSeats?: Record<PlayerId, { why: "resigned" | "taken"; turn: number }>;
   /**
    * Online (session 27): back after a turn your leaders ran for you, the orders that put your own commands and budgets
    * back (the page shows them as changes of yours this turn; they apply when your orders go in).
@@ -208,7 +213,7 @@ export type HostResponse =
   | { id: number; ok: true; slot: SlotInfo }
   | { id: number; ok: true; answer: Answer }
   /** Not an answer: something for the player to know (id is 0). */
-  | { id: 0; ok: true; notice: string }
+  | { id: 0; ok: true; notice: string; calm?: boolean }
   | { id: number; ok: false; error: string };
 
 // ---------- Online (session 26): the same contract over a WebSocket to the game's room ----------
@@ -217,7 +222,12 @@ export type HostResponse =
  * What the page sends a game room. The local worker's requests that make sense online, plus "hello" (where are we?),
  * sent on every (re)connect. Starting a game is the API's job; saves, files and pause are single player only.
  */
-export type RoomRequest = Extract<HostRequest, { type: "lockIn" | "saveOrders" | "watchNext" | "finish" | "suggest" | "planGenerals" | "propose" }> | { id: number; type: "hello" } | { id: number; type: "table"; act: TableAct };
+export type RoomRequest =
+  | Extract<HostRequest, { type: "lockIn" | "saveOrders" | "watchNext" | "finish" | "suggest" | "planGenerals" | "propose" }>
+  | { id: number; type: "hello"; have?: number }
+  | { id: number; type: "table"; act: TableAct }
+  /** Session 27: leave the game for good: a Marshal plays the seat from now on (you can still watch). */
+  | { id: number; type: "resign" };
 
 /**
  * Session 27: what someone at the table screen can do before the game starts. Sit down (with a House colour and their
@@ -266,6 +276,11 @@ export type RoomBody = RoomRequest extends infer R ? (R extends { id: number } ?
  */
 export interface RoomStart extends Omit<HostStart, "map"> {
   gameId: string;
+  /**
+   * Session 27: the page said it has the Chronicle up to this turn, so `chronicle` holds only the turns after it
+   * (the whole Chronicle used to travel with every hello: 104 KB by turn 31 on Rootholm).
+   */
+  chronicleAfter?: number;
   mapId: string;
   mapVersion: number | null;
 }

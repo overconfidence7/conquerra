@@ -16,6 +16,7 @@ import { cleanName, cleanNewGame, nameFromEmail, newGameId, newInviteCode } from
  *   GET   /api/games              your online games (the lobby's list)
  *   POST  /api/games              make a table: { settings, leadersRun } → { id, code } (session 27: it starts when its host says so)
  *   GET   /api/join/:code         the table a link is for → { id } (or why you can't join it)
+ *   POST  /api/games/:id/resign   leave a game for good: a Marshal plays your seat (session 27)
  *   GET   /api/games/:id/ws       open a game (a WebSocket to its room): your seat, or with ?code= the table's screen
  *
  * Sign-in is Access and nothing else: someone whose email isn't in the Access policy never reaches any of this. The
@@ -208,6 +209,20 @@ async function openGame(env: Env, user: UserRow, id: string, request: Request): 
   return room.fetch(new Request("https://room/ws", { headers }));
 }
 
+/**
+ * The lobby's "Leave this game" (session 27): you resign. The room decides (a Marshal takes the seat; the game moves
+ * to Finished in your list); the database copies it here too, for games from session 26 that have no table.
+ */
+async function resign(env: Env, user: UserRow, id: string): Promise<Response> {
+  const seat = await env.DB.prepare("SELECT seat, state FROM seats WHERE game = ? AND user = ?").bind(id, user.id).first<{ seat: string; state: string }>();
+  if (!seat) return problem(404, API_TEXT.noSeat);
+  if (seat.state !== "in") return json({ ok: true });
+  const done = await env.GAME_ROOM.getByName(id).resignUser(user.id, seat.seat);
+  if (!done) return problem(409, "You can't resign from that game now (it's over, or you're already out).");
+  await env.DB.prepare("UPDATE seats SET state = 'resigned', bot = 'marshal' WHERE game = ? AND user = ?").bind(id, user.id).run();
+  return json({ ok: true });
+}
+
 /** Change your name or usual colour (Settings, session 27). */
 async function updateMe(env: Env, user: UserRow, body: unknown): Promise<Response> {
   const b = (body && typeof body === "object" ? body : {}) as { name?: unknown; colour?: unknown };
@@ -253,6 +268,8 @@ export const worker = {
     }
     const code = /^\/api\/join\/([a-z0-9]{6,24})$/.exec(path);
     if (code && request.method === "GET") return join(env, user, code[1]!);
+    const quit = /^\/api\/games\/([a-z0-9]{6,24})\/resign$/.exec(path);
+    if (quit && request.method === "POST") return resign(env, user, quit[1]!);
     const ws = /^\/api\/games\/([a-z0-9]{6,24})\/ws$/.exec(path);
     if (ws && request.method === "GET") return openGame(env, user, ws[1]!, request);
     return problem(404, "Not found");

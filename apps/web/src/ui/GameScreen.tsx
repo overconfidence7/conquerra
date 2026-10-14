@@ -124,8 +124,9 @@ function useCovered(active: boolean, phone: boolean, reserveSelPanel: boolean, s
 /** Online (session 26): "3f9a2c…e1d0", the start and end of the seed's fingerprint. */
 const shortHash = (h: string) => `${h.slice(0, 8)}…${h.slice(-6)}`;
 
-function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSaves, onLeave, onClose }: { phone: boolean; online: boolean; tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onClose(): void }) {
+function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSaves, onLeave, onResign, onClose }: { phone: boolean; online: boolean; tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onResign: (() => void) | null; onClose(): void }) {
   const [credits, setCredits] = useState(false);
+  const [resigning, setResigning] = useState(false);
   if (credits)
     return (
       <Suspense fallback={null}>
@@ -173,6 +174,23 @@ function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSave
       <button className="menu-item" onClick={onLeave}>
         Leave this game <span className="muted">{online ? "it goes on on the server: open it again from the lobby's Online block" : "Continue picks it up"}</span>
       </button>
+      {/* Online (session 27): leave for good. */}
+      {onResign &&
+        (resigning ? (
+          <div className="resign-confirm">
+            <p className="small">A Marshal plays your seat for the rest of the game, and you can only watch. This can't be undone.</p>
+            <button className="primary" onClick={onResign}>
+              Resign
+            </button>
+            <button className="link" onClick={() => setResigning(false)}>
+              Keep playing
+            </button>
+          </div>
+        ) : (
+          <button className="menu-item" onClick={() => setResigning(true)}>
+            Resign <span className="muted">a Marshal takes your seat</span>
+          </button>
+        ))}
       <VersionLine />
     </Frame>
   );
@@ -492,6 +510,8 @@ export function GameScreen() {
   const open = useMemo(() => (view ? passageNow(view, g.pageDeals()) : []), [view, diplomacy, answers, offers]); // eslint-disable-line react-hooks/exhaustive-deps
   const waiting = useMemo(() => waitingOffers(offers, diplomacy), [offers, diplomacy]);
   const out = !!view && knockedOut(view);
+  // Online (session 27): a Marshal plays your seat now (you resigned, or missed three turns): you watch.
+  const gone = view ? (g.leftSeats?.[view.me.id] ?? null) : null;
   const replaying = !!replay;
   // Coins when an order that costs gold is added; a very soft page when a panel opens (session 24).
   const queued = useRef(queue.length);
@@ -522,7 +542,7 @@ export function GameScreen() {
       saveTactical(!t);
       return !t;
     });
-  const act = !out && !replaying;
+  const act = !out && !replaying && !gone;
 
   const map = (
     <div className="map-layer">
@@ -623,6 +643,7 @@ export function GameScreen() {
       onReport={report && !replaying ? () => (setSettings(false), g.setShowReport(true)) : null}
       onSaves={(mode) => (setSettings(false), setSaves(mode))}
       onLeave={() => g.playAgain()}
+      onResign={g.online && !out && !gone && !view.winner ? () => (setSettings(false), void import("../host/onlineActions").then((m) => m.resignHere())) : null}
       onClose={() => setSettings(false)}
     />
   );
@@ -633,7 +654,7 @@ export function GameScreen() {
       purses={plan ? [...plan.pursesLeft.values()].reduce((a, x) => a + Math.max(0, x), 0) : pursesTotal(view.me)}
       goldAfter={plan.goldLeft}
       income={income}
-      clock={out ? null : clock}
+      clock={out || gone ? null : clock}
       replaying={replaying}
       phone={phone}
       fallen={out ? { influence: view.me.influence, perTurn: influencePerTurn(ctx, view) } : null}
@@ -677,6 +698,17 @@ export function GameScreen() {
       {error && !saves && (
         <Frame className="slim" style={{ position: "absolute", zIndex: 40, left: 8, top: phone ? 60 : 72 }}>
           <p className="warn">{error}</p>
+        </Frame>
+      )}
+      {gone && !replaying && !view.winner && (
+        <Frame className="slim notice" style={{ position: "absolute", zIndex: 39, left: 8, right: 8, bottom: phone ? 96 : 16 }} role="status">
+          <p className="small">
+            {gone.why === "resigned" ? `You resigned on turn ${gone.turn}.` : `You missed three turns in a row, so a Marshal took your seat on turn ${gone.turn}.`} The Marshal plays it now, and you watch each
+            turn's replay from here.
+          </p>
+          <button className="link" onClick={() => g.playAgain()}>
+            Back to the lobby
+          </button>
         </Frame>
       )}
       {g.notice && (

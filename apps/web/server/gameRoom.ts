@@ -108,6 +108,13 @@ export class GameRoom extends DurableObject<Env> {
     return this.sendTo((a) => (user ? a.user === user : a.seat === seat), msg);
   }
 
+  /** The lobby's "Leave this game" (session 27): this account resigns its seat. */
+  async resignUser(user: string, seat: PlayerId | null): Promise<boolean> {
+    const done = await this.core.resignUser(user, seat);
+    await this.core.flush();
+    return done;
+  }
+
   /** Make a table (the Worker calls this once, right after writing the game's row). Session 27. */
   async createTable(setup: TableSetup): Promise<TableView> {
     return this.core.createTable(setup);

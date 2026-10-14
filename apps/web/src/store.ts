@@ -166,6 +166,8 @@ interface GameStore {
   people: PlayerId[] | null;
   /** Session 27: the table screen (an online game waiting for its players), as the room last sent it. */
   table: TableView | null;
+  /** Session 27: seats a Marshal plays now (their person resigned or missed three turns): yours means you're watching. */
+  leftSeats: Record<PlayerId, { why: "resigned" | "taken"; turn: number }> | null;
   /** Session 27: you, as the server knows you (your name and usual House colour), once asked. */
   me: { name: string; colour: number | null } | null;
   /** The notice is just news (online: "Reconnected"), not a problem: shown quietly, and it goes by itself. */
@@ -370,6 +372,7 @@ export const useGame = create<GameStore>((set, get) => ({
   fair: null,
   people: null,
   table: null,
+  leftSeats: null,
   me: null,
   noticeCalm: false,
   mission: null,
@@ -872,7 +875,7 @@ export const useGame = create<GameStore>((set, get) => ({
     get().host?.dispose();
     // Back in the lobby: the game you left is the autosave (Continue).
     void get().refreshSlots();
-    set({ screen: "lobby", host: null, online: null, fair: null, people: null, seats: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, budgets: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null, diplomacy: [], offers: [], answers: {}, deal: null, dealPick: null });
+    set({ screen: "lobby", host: null, online: null, fair: null, people: null, leftSeats: null, seats: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, budgets: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null, diplomacy: [], offers: [], answers: {}, deal: null, dealPick: null });
   },
 }));
 
@@ -911,6 +914,7 @@ export async function enterGame(begin: (host: GameHost) => Promise<HostStart>, r
       online: make && "gameId" in host ? (host as { gameId(): string | null }).gameId() : reuse ? get().online : null,
       fair: u.fair ?? null,
       people: u.people ?? null,
+      leftSeats: u.leftSeats ?? null,
       // An online game that's over opens on its result (unless its last replay hasn't been watched).
       screen: u.view.winner && !missed?.play ? "over" : "game",
       // The map's geometry comes from the host, never from an import here.
@@ -1051,6 +1055,12 @@ function openingQueue(ctx: GameContext | null, u: HostUpdate): Order[] {
 }
 
 /** A turn resolved (you locked in, or the timer did): play its replay, then the report. */
+/** Online (session 27): an update that isn't a turn (you resigned): the seat as it stands now, or the turn it resolved. */
+export function applyOnlineUpdate(u: HostUpdate) {
+  if (u.report && u.view.turn !== useGame.getState().view?.turn) return applyTurn(u, false);
+  useGame.setState({ view: u.view, clock: u.clock, ...(u.people ? { people: u.people, leftSeats: u.leftSeats ?? null } : {}) });
+}
+
 function applyTurn(u: HostUpdate, auto: boolean) {
   // Online, back after missing turns: the room sends your view from before the last one, so its replay starts there.
   const before = u.before ?? useGame.getState().view;
@@ -1064,7 +1074,7 @@ function applyTurn(u: HostUpdate, auto: boolean) {
     seats: u.seats ?? null,
     report: u.report,
     ...(u.fair ? { fair: u.fair } : {}),
-    ...(u.people ? { people: u.people } : {}),
+    ...(u.people ? { people: u.people, leftSeats: u.leftSeats ?? null } : {}),
     // The Chronicle grows by this turn's report (session 16).
     chronicle: u.report && !chronicle.some((r) => r.turn === u.report!.turn) ? [...chronicle, chronicleOf(u.report)] : chronicle,
     fastForwarded: u.fastForwarded,

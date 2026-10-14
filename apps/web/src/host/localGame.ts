@@ -67,13 +67,23 @@ const PERSONALITY_SET = new Set<string>(PERSONALITY_IDS);
 /** A bot seat: its level, a Marshal's personality, and the bot that plays it. */
 interface BotSeat {
   level: BotLevel;
-  personality?: PersonalityId;
+  personality?: SeatPersonality;
   bot: Bot;
 }
 
+/**
+ * Session 27: a Marshal that takes a person's seat (after three missed turns, or when they resign) plays with the
+ * Neutral style, your own leaders' (`marshalData.leaders.style`), not one of the six personalities.
+ */
+export const NEUTRAL = "neutral";
+type SeatPersonality = PersonalityId | typeof NEUTRAL;
+/** Missed turns in a row before a Marshal takes the seat for the rest of the game (the plan §3). */
+export const TAKEOVER_MISSES = 3;
+
 /** The bot for a seat of this level (a Marshal gets its own, with its personality). */
-function seatBot(level: BotLevel, p?: PersonalityId): BotSeat {
+function seatBot(level: BotLevel, p?: SeatPersonality): BotSeat {
   if (level === "marshal") {
+    if (p === NEUTRAL) return { level, personality: NEUTRAL, bot: makeMarshalBot(marshalData.leaders.style) };
     const id = p ?? "conqueror";
     return { level, personality: id, bot: makeMarshalBot(id) };
   }
@@ -102,6 +112,9 @@ export function seatLevels(choice: BotChoice, marshals: number, seats: readonly 
   return Object.fromEntries(seats.map((s, i) => [s, levels[i] === "marshal" ? { level: "marshal" as const, personality: dealt[s]! } : { level: levels[i]! }]));
 }
 
+/** Session 27: what a person whose seat a Marshal plays now is told if their page tries to give orders. */
+export const SEAT_LEFT_TEXT = "A Marshal plays your seat now. You can watch the game from it.";
+
 /** After the replay, a moment to read the turn report before the countdown starts. */
 export const REPORT_GRACE_MS = 3000;
 /** Online (session 26, the plan §3): the next window opens after the longest replay at the table plus 10 s for everyone. */
@@ -127,6 +140,16 @@ export interface PersonData {
   leadersRun?: boolean;
   /** Their own commands and budgets from before their leaders ran a missed turn (back when they play one themselves). */
   own?: OwnLeaders;
+  /** Session 27: turns in a row they missed (no orders at all). */
+  missed?: number;
+  /** Session 27: their seat left them (they resigned, or a Marshal took it after missed turns), and on which turn. */
+  left?: SeatLeft;
+}
+
+/** A person's seat a Marshal plays now (session 27): why, and from which turn. They can still watch. */
+export interface SeatLeft {
+  why: "resigned" | "taken";
+  turn: number;
 }
 
 /**
@@ -140,7 +163,7 @@ export interface LocalHostData {
   /** The lobby's choice (kept for saves from before session 17, whose seats all played at this level). */
   botLevel: BotChoice;
   /** Each bot seat's level and, for a Marshal, its personality (session 17). */
-  seats?: Record<PlayerId, { level: BotLevel; personality?: PersonalityId }>;
+  seats?: Record<PlayerId, { level: BotLevel; personality?: SeatPersonality }>;
   /** What each Marshal remembers (session 17): so a loaded game plays on exactly as it would have. */
   memories?: Record<PlayerId, MarshalMemory>;
   /** "Show personalities" (session 17): the Marshals' personalities are shown during play, not only at the end. */
@@ -231,9 +254,23 @@ interface Person {
   leadersRun: boolean;
   /** Online: their own commands and budgets, while a missed turn's 80/20 stands in (null: nothing to give back). */
   own: OwnLeaders | null;
+  /** Online: turns in a row they missed. */
+  missed: number;
+  /** Online: a Marshal plays their seat now (they watch). */
+  left: SeatLeft | null;
 }
 
-const newPerson = (id: PlayerId, leadersRun = true): Person => ({ id, saved: [], savedPaused: [], restored: null, leaderMemory: freshMemory(), voiceMemory: {}, leaderNotes: {}, chronicle: [], touched: false, locked: false, last: null, leadersRun, own: null });
+const newPerson = (id: PlayerId, leadersRun = true): Person => ({ id, saved: [], savedPaused: [], restored: null, leaderMemory: freshMemory(), voiceMemory: {}, leaderNotes: {}, chronicle: [], touched: false, locked: false, last: null, leadersRun, own: null, missed: 0, left: null });
+
+/**
+ * Session 27: a Marshal that took a person's seat plans from the treasury, never through the leaders' purses: their
+ * budgets go to nothing and the gold in them comes back (only where there's something to change).
+ */
+export function pursesHome(view: PlayerView): Order[] {
+  return (view.me.leaders ?? [])
+    .filter((l) => l.of === view.me.id && (l.purse > 0 || ("share" in l.budget ? l.budget.share > 0 : l.budget.gold > 0)))
+    .map((l) => ({ id: `${view.me.id}-t${view.turn}-home-${l.kind}`, kind: "budget", general: l.of, ...(l.kind === "steward" ? { role: "steward" as const } : {}), budget: { share: 0 }, ...(l.purse > 0 ? { takeBack: l.purse } : {}) }));
+}
 
 /** A person's Leader's and Steward's commands and budgets as they stand. */
 function ownLeaders(view: PlayerView): OwnLeaders {
@@ -325,7 +362,7 @@ export class LocalGame {
         if (this.people.has(p.id)) continue;
         const saved = host.seats?.[p.id];
         const level = saved && LEVELS.includes(saved.level) ? saved.level : this.botLevel === "mixed" ? "captain" : this.botLevel;
-        const known = saved?.personality && PERSONALITY_SET.has(saved.personality) ? saved.personality : undefined;
+        const known = saved?.personality && (PERSONALITY_SET.has(saved.personality) || saved.personality === NEUTRAL) ? saved.personality : undefined;
         const seat = seatBot(level, known);
         const mem = host.memories?.[p.id];
         if (mem && seat.level === "marshal") (seat.bot as MarshalBot).restore(this.state.gameId, p.id, mem);
@@ -461,9 +498,12 @@ export class LocalGame {
     }
     this.pausedLeft = null;
     const grace = this.online ? ONLINE_GRACE_MS : REPORT_GRACE_MS;
-    const running = this.turnMs !== null && !this.state.winner && (this.online ? this.living.length > 0 : !this.isOut(HUMAN_ID));
+    // Online (session 27): with nobody at the table still playing (all knocked out, resigned or taken over), the bots
+    // play on by themselves, a turn as soon as the last one's replay and the 10 s are over, so the game finishes.
+    const nobody = this.online && this.living.length === 0;
+    const running = this.turnMs !== null && !this.state.winner && (this.online || !this.isOut(HUMAN_ID));
     this.opensAt = running ? this.now() + replayMs + (replayMs ? grace : 0) : null;
-    this.deadline = this.opensAt !== null ? this.opensAt + this.turnMs! : null;
+    this.deadline = this.opensAt !== null ? this.opensAt + (nobody ? 0 : this.turnMs!) : null;
     if (autosave && !this.state.winner) this.autosave?.(this.snapshot());
   }
 
@@ -545,7 +585,7 @@ export class LocalGame {
       generalOrders: this.generalOrders(back ? this.backCommands(id) : {}, undefined, id),
       ...(back ? { leadersBack: back } : {}),
       leaderNotes: p.leaderNotes,
-      offers: this.talk.turn === this.state.turn ? this.talk.toHuman.filter((o) => o.to === id) : [],
+      offers: this.talk.turn === this.state.turn && !p.left ? this.talk.toHuman.filter((o) => o.to === id) : [],
       ...(this.state.winner || this.showPersonalities ? { seats: this.seatInfo() } : {}),
     };
   }
@@ -565,7 +605,7 @@ export class LocalGame {
 
   /** Each bot seat's level and personality ("the Turtle"), for the game-over screen (or "Show personalities"). */
   private seatInfo(): Record<PlayerId, SeatInfo> {
-    return Object.fromEntries([...this.seats].map(([id, s]) => [id, { level: s.level, ...(s.personality ? { personality: personality(s.personality).title } : {}) }]));
+    return Object.fromEntries([...this.seats].map(([id, s]) => [id, { level: s.level, ...(s.personality ? { personality: s.personality === NEUTRAL ? "Neutral" : personality(s.personality).title } : {}) }]));
   }
 
   /** How a seat talks: a Marshal with its own diplomacy, the others by their level. */
@@ -574,9 +614,61 @@ export class LocalGame {
     return s?.bot.diplomat ?? (s?.level === "recruit" ? ("recruit" as const) : ("captain" as const));
   }
 
-  /** The people still in the game. */
+  /** The people still in the game and still playing their seat (not knocked out, not left to a Marshal). */
   private get living(): PlayerId[] {
-    return this.peopleIds.filter((id) => !this.isOut(id));
+    return this.peopleIds.filter((id) => !this.isOut(id) && !this.person(id).left);
+  }
+
+  /** Is this seat played by a person right now (session 27: not one a Marshal took over)? */
+  private playing(id: PlayerId): boolean {
+    const p = this.people.get(id);
+    return !!p && !p.left;
+  }
+
+  /** Online: the people playing their seats (the players panel marks them). */
+  get playingIds(): PlayerId[] {
+    return this.peopleIds.filter((id) => this.playing(id));
+  }
+
+  /** Online (session 27): the seats people left to a Marshal, why and when (public: the players panel says so). */
+  get leftSeats(): Record<PlayerId, SeatLeft> {
+    return Object.fromEntries([...this.people.values()].flatMap((p) => (p.left ? [[p.id, p.left] as const] : [])));
+  }
+
+  /** Online: seats that left their person on the turn just resolved (the room tells the table), taken once. */
+  private leftNow: { id: PlayerId; why: SeatLeft["why"] }[] = [];
+  takeLeftNow(): { id: PlayerId; why: SeatLeft["why"] }[] {
+    const out = this.leftNow;
+    this.leftNow = [];
+    return out;
+  }
+
+  /**
+   * Session 27: a Marshal (Neutral) takes this person's seat for the rest of the game: they resigned, or missed three
+   * turns in a row. They can still open the game and watch it from their seat. Returns false if it already happened.
+   */
+  private handOver(id: PlayerId, why: SeatLeft["why"]): boolean {
+    const p = this.person(id);
+    if (p.left || this.isOut(id) || this.state.winner) return false;
+    p.left = { why, turn: this.state.turn };
+    p.saved = [];
+    p.savedPaused = [];
+    p.touched = false;
+    p.locked = false;
+    p.own = null;
+    this.seats.set(id, seatBot("marshal", NEUTRAL));
+    this.leftNow.push({ id, why });
+    return true;
+  }
+
+  /**
+   * Online: this person resigns. A Marshal plays their seat from this turn on (their orders this turn are dropped).
+   * If everyone still playing has locked in, the turn resolves now: each person's update, else null.
+   */
+  resign(id: PlayerId): Map<PlayerId, HostUpdate> | null {
+    if (!this.handOver(id, "resigned")) return null;
+    if (this.living.length && this.living.every((x) => this.person(x).locked)) return this.resolveTable(false);
+    return null;
   }
 
   /**
@@ -586,7 +678,7 @@ export class LocalGame {
   private botTalks() {
     this.talk = { turn: this.state.turn, orders: {}, toHuman: [] };
     if (!this.state.settings.diplomacy || this.state.winner) return;
-    const bots = this.state.players.filter((p) => !this.people.has(p.id) && p.eliminatedTurn === null).map((p) => ({ id: p.id, level: this.diplomatOf(p.id) }));
+    const bots = this.state.players.filter((p) => !this.playing(p.id) && p.eliminatedTurn === null).map((p) => ({ id: p.id, level: this.diplomatOf(p.id) }));
     const living = this.living;
     // (Single player passes you alone, as it always has.)
     const humans = this.online ? living : living.length ? HUMAN_ID : null;
@@ -610,7 +702,7 @@ export class LocalGame {
    */
   propose(offer: Offer, from: PlayerId = HUMAN_ID): Answer {
     const bot = this.state.players.find((p) => p.id === offer.to);
-    if (offer.from !== from || !this.people.has(from) || !bot || this.people.has(bot.id) || bot.eliminatedTurn !== null || this.state.winner || this.isOut(from) || !this.state.settings.diplomacy)
+    if (offer.from !== from || !this.playing(from) || !bot || this.playing(bot.id) || bot.eliminatedTurn !== null || this.state.winner || this.isOut(from) || !this.state.settings.diplomacy)
       return { accept: false, reason: "That offer can't be made." };
     const view = withAgreed(viewFor(this.ctx, this.state, bot.id), this.agreed());
     const answer = judgeBy(this.ctx, this.diplomatOf(bot.id), view, offer, this.lastTurn.get(bot.id));
@@ -635,7 +727,7 @@ export class LocalGame {
   /** Your leaders' orders, and what each is up to this turn (a line for the Leaders panel). */
   leaderOrders(instructions: Record<string, Instruction | null> = {}, purses?: Record<string, number>, id: PlayerId = HUMAN_ID): { orders: Order[]; notes: Record<string, LeaderNote> } {
     const p = this.person(id);
-    if (this.state.winner || this.isOut(id)) return { orders: [], notes: {} };
+    if (this.state.winner || this.isOut(id) || p.left) return { orders: [], notes: {} };
     // Your leaders plan knowing the deals you've agreed this turn (they start before any move).
     const view = withAgreed(viewFor(this.ctx, this.state, id), this.agreed());
     const last = this.lastTurn.get(id);
@@ -655,9 +747,14 @@ export class LocalGame {
     const now = this.talk.turn === this.state.turn;
     const agreed = now ? this.agreed(people) : [];
     for (const p of this.state.players) {
-      if (this.people.has(p.id)) continue;
+      if (this.playing(p.id)) continue;
       if (p.eliminatedTurn === null)
-        orders[p.id] = [...((now && this.talk.orders[p.id]) || []), ...(this.seats.get(p.id)?.bot ?? captainBot).plan(this.ctx, withAgreed(viewFor(this.ctx, this.state, p.id), agreed), this.lastTurn.get(p.id))];
+        orders[p.id] = [
+          // A seat a Marshal took from a person (session 27): its leaders' purses come home first.
+          ...(this.people.get(p.id)?.left ? pursesHome(viewFor(this.ctx, this.state, p.id)) : []),
+          ...((now && this.talk.orders[p.id]) || []),
+          ...(this.seats.get(p.id)?.bot ?? captainBot).plan(this.ctx, withAgreed(viewFor(this.ctx, this.state, p.id), agreed), this.lastTurn.get(p.id)),
+        ];
       // Knocked-out bots are the Fallen: they play world events against whoever leads.
       else if (this.state.settings.fallen) orders[p.id] = fallenBot.plan(this.ctx, viewFor(this.ctx, this.state, p.id));
     }
@@ -668,11 +765,11 @@ export class LocalGame {
    * Resolve one turn with each person's orders (null: nobody at the table orders anything, as when the bots play on
    * to the end) and return each person's report of it.
    */
-  private play(peopleOrders: Record<PlayerId, Order[]> | null): Map<PlayerId, TurnReport> {
+  private play(peopleOrders: Record<PlayerId, Order[]> | null, beforeNextTurn?: () => void): Map<PlayerId, TurnReport> {
     const before = this.state;
     // Their leaders take this turn in (what they remember for next turn's plans).
     for (const p of this.people.values())
-      if (!this.isOut(p.id)) p.leaderMemory = think(this.ctx, viewFor(this.ctx, before, p.id), marshalData.judgement, p.leaderMemory, this.lastTurn.get(p.id)).memory;
+      if (!this.isOut(p.id) && !p.left) p.leaderMemory = think(this.ctx, viewFor(this.ctx, before, p.id), marshalData.judgement, p.leaderMemory, this.lastTurn.get(p.id)).memory;
     const orders = peopleOrders ? { ...this.botOrders(peopleOrders), ...peopleOrders } : this.botOrders({});
     const result = resolveTurn(this.ctx, before, orders);
     this.history?.turns.push(orders);
@@ -683,7 +780,8 @@ export class LocalGame {
     let longest = 0;
     for (const p of this.people.values()) {
       const events = this.lastTurn.get(p.id) ?? replayFor(this.ctx, before, result, p.id);
-      const out = this.isOut(p.id);
+      // (Knocked out, or watching a Marshal play their seat: their leaders say nothing.)
+      const out = this.isOut(p.id) || !!p.left;
       // What their leaders say about the turn, from their own view and replay only (session 22).
       const said = out ? null : leaderVoices(this.ctx, viewFor(this.ctx, before, p.id), viewFor(this.ctx, this.state, p.id), events, p.voiceMemory);
       if (said) p.voiceMemory = said.memory;
@@ -703,6 +801,7 @@ export class LocalGame {
       longest = Math.max(longest, buildTimeline(report.events).total);
     }
     this.ranNow = [];
+    beforeNextTurn?.();
     this.startClock(longest);
     return reports;
   }
@@ -724,6 +823,7 @@ export class LocalGame {
     const p = this.person(id);
     if (this.state.winner) throw new Error("The game is over");
     if (this.isOut(id)) throw new Error("You've been knocked out");
+    if (p.left) throw new Error(SEAT_LEFT_TEXT);
     if (turn !== this.state.turn) return null;
     p.saved = orders;
     p.touched = true;
@@ -750,8 +850,15 @@ export class LocalGame {
   private resolveTable(auto: boolean): Map<PlayerId, HostUpdate> {
     const orders: Record<PlayerId, Order[]> = {};
     this.ranNow = [];
+    // Missed turns in a row: three, and a Marshal takes the seat once this turn has resolved.
+    const takeOver: PlayerId[] = [];
     for (const p of this.people.values()) {
-      if (this.isOut(p.id)) continue;
+      if (this.isOut(p.id) || p.left) continue;
+      p.missed = p.locked || p.touched ? 0 : p.missed + 1;
+      if (p.missed >= TAKEOVER_MISSES) takeOver.push(p.id);
+    }
+    for (const p of this.people.values()) {
+      if (this.isOut(p.id) || p.left) continue;
       if (p.locked || p.touched) orders[p.id] = p.saved;
       else if (p.leadersRun) {
         const last = this.lastTurn.get(p.id);
@@ -767,13 +874,15 @@ export class LocalGame {
     // Someone who played this turn themselves sent their own commands back with it (or chose new ones).
     for (const p of this.people.values()) if (p.locked || p.touched) p.own = null;
     let reports: Map<PlayerId, TurnReport>;
+    // (The Marshal takes over between this turn's resolution and the next turn's planning.)
+    const handOver = () => takeOver.forEach((id) => this.handOver(id, "taken"));
     try {
-      reports = this.play(orders);
+      reports = this.play(orders, handOver);
     } catch {
       // Orders from a page that the engine couldn't carry out: the turn resolves without the people's orders rather
       // than stopping the game for everyone.
       this.ranNow = [];
-      reports = this.play(Object.fromEntries(Object.keys(orders).map((id) => [id, [] as Order[]])));
+      reports = this.play(Object.fromEntries(Object.keys(orders).map((id) => [id, [] as Order[]])), handOver);
     }
     return new Map(this.peopleIds.map((id) => [id, { ...this.update(reports.get(id)!, 0, id), ...(auto && !locked.has(id) ? { autoLocked: true } : {}) }]));
   }
@@ -784,7 +893,7 @@ export class LocalGame {
    */
   saveOrders(orders: Order[], turn: number, paused: PlayerId[] = [], id: PlayerId = HUMAN_ID): boolean {
     const p = this.person(id);
-    if (turn !== this.state.turn || this.state.winner || this.isOut(id) || p.locked) return false;
+    if (turn !== this.state.turn || this.state.winner || this.isOut(id) || p.locked || p.left) return false;
     p.saved = orders;
     p.savedPaused = paused;
     p.touched = true;
@@ -877,7 +986,7 @@ export class LocalGame {
     if (this.online) {
       const people: Record<PlayerId, PersonData> = {};
       for (const p of this.people.values())
-        people[p.id] = { queued: queuedOf(p), chronicle: p.chronicle, leaderMemory: p.leaderMemory, voiceMemory: p.voiceMemory, touched: p.touched, locked: p.locked, leadersRun: p.leadersRun, ...(p.last ? { last: p.last } : {}), ...(p.own ? { own: p.own } : {}) };
+        people[p.id] = { queued: queuedOf(p), chronicle: p.chronicle, leaderMemory: p.leaderMemory, voiceMemory: p.voiceMemory, touched: p.touched, locked: p.locked, leadersRun: p.leadersRun, ...(p.last ? { last: p.last } : {}), ...(p.own ? { own: p.own } : {}), ...(p.missed ? { missed: p.missed } : {}), ...(p.left ? { left: p.left } : {}) };
       host = { ...base, talk: this.talk, people, online: { deadline: this.deadline, opensAt: this.opensAt } };
     } else {
       const you = this.person(HUMAN_ID);
@@ -917,5 +1026,7 @@ function personFrom(id: PlayerId, d: PersonData): Person {
   if (d.voiceMemory) p.voiceMemory = d.voiceMemory;
   if (d.last) p.last = d.last;
   if (d.own) p.own = d.own;
+  if (typeof d.missed === "number") p.missed = d.missed;
+  if (d.left) p.left = d.left;
   return p;
 }

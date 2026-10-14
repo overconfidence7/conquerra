@@ -100,6 +100,7 @@ describe("the API (sessions 26 and 27): sign-in first, then tables and games in 
     GAME_ROOM: {
       getByName: (id: string) => ({
         createTable: (setup: TableSetup) => roomFor(id).createTable(setup),
+        resignUser: (user: string, seat: string | null) => roomFor(id).resignUser(user, seat),
         // (Node can't make a 101 response: the stand-in room says who the Worker opened it for.)
         fetch: async (req: Request) => (opened.push({ id, seat: req.headers.get("X-Seat"), user: req.headers.get("X-User"), name: req.headers.get("X-Name") }), new Response("room")),
       }),
@@ -191,6 +192,15 @@ describe("the API (sessions 26 and 27): sign-in first, then tables and games in 
     expect((await call(`/api/games/${id}/ws?code=${code}`, { headers: { Upgrade: "websocket" } }, "wren@example.com")).status).toBe(409);
     // Kit, seated, still gets the game from the link.
     expect(await (await call(`/api/join/${code}`, {}, "kit@example.com")).json()).toEqual({ id });
+    // Kit leaves the game from the lobby's list: the room hands the seat to a Marshal; the list moves it to Finished.
+    expect((await call(`/api/games/${id}/resign`, { method: "POST" }, "kit@example.com")).status).toBe(200);
+    await new Promise((r) => setTimeout(r, 10));
+    expect(rooms.get(id)!.table!.leftSeats).toEqual({ p2: { why: "resigned", turn: 1 } });
+    expect(db.prepare("SELECT state, bot FROM seats WHERE game = ? AND seat = 'p2'").get(id)).toEqual({ state: "resigned", bot: "marshal" });
+    expect((await list("kit@example.com"))[0]).toMatchObject({ id, status: "playing", left: "resigned", waitingOn: ["Nate"] });
+    // Twice is fine (nothing more happens); someone without a seat can't.
+    expect((await call(`/api/games/${id}/resign`, { method: "POST" }, "kit@example.com")).status).toBe(200);
+    expect((await call(`/api/games/${id}/resign`, { method: "POST" }, "wren@example.com")).status).toBe(404);
   });
 
   it("a cancelled table leaves the lists; its link says so", async () => {
