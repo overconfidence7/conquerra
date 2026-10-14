@@ -48,7 +48,10 @@ describe("the clock for several people (session 27)", () => {
     const deadline = g.nextDeadline!;
     expect(deadline).toBe(t.now() + 300_000);
     await t.ask("p1", { type: "lockIn", orders: [], turn: 1 });
+    // Kit's page hears that Nate has locked in (a tick in the players panel: who, nothing more).
+    expect(t.inbox(KIT.user).flatMap((m) => ("ready" in m ? [m.ready] : []))).toEqual([["p1"]]);
     await t.ask("p2", { type: "lockIn", orders: [], turn: 1 });
+    expect(t.inbox(NATE.user).flatMap((m) => ("ready" in m ? [m.ready] : [])).at(-1)).toEqual(["p1", "p2"]);
     // Both locked in, Wren hasn't: the turn waits for her (or the clock).
     expect(g.turn).toBe(1);
     expect(t.listed()!.waitingOn).toEqual(["p3"]);
@@ -57,6 +60,7 @@ describe("the clock for several people (session 27)", () => {
     const back = await t.hello("p2");
     expect(back.clock!.endsAt).toBe(deadline);
     expect(back.lockedIn).toBe(true);
+    expect(back.ready).toEqual(["p1", "p2"]);
     // The clock runs out: the turn resolves; Wren's leaders ran her House.
     t.advance(200_000);
     await t.tick();

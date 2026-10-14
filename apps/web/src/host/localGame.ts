@@ -838,6 +838,11 @@ export class LocalGame {
     return this.state.winner ? [] : this.living.filter((id) => !this.person(id).locked);
   }
 
+  /** Online (session 27): the people still playing who have locked in this turn (public: the players panel ticks them). */
+  get readyIds(): PlayerId[] {
+    return this.state.winner ? [] : this.living.filter((id) => this.person(id).locked);
+  }
+
   /** Online: has this person locked in this turn? */
   lockedIn(id: PlayerId): boolean {
     return this.person(id).locked;

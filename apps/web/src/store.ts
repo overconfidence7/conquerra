@@ -166,6 +166,8 @@ interface GameStore {
   people: PlayerId[] | null;
   /** Session 27: the table screen (an online game waiting for its players), as the room last sent it. */
   table: TableView | null;
+  /** Session 27: the people at the table who have locked in this turn (the players panel ticks them). */
+  ready: PlayerId[];
   /** Session 27: seats a Marshal plays now (their person resigned or missed three turns): yours means you're watching. */
   leftSeats: Record<PlayerId, { why: "resigned" | "taken"; turn: number }> | null;
   /** Session 27: you, as the server knows you (your name and usual House colour), once asked. */
@@ -372,6 +374,7 @@ export const useGame = create<GameStore>((set, get) => ({
   fair: null,
   people: null,
   table: null,
+  ready: [],
   leftSeats: null,
   me: null,
   noticeCalm: false,
@@ -895,9 +898,13 @@ export async function enterGame(begin: (host: GameHost) => Promise<HostStart>, r
     });
     host.onNotice((notice, calm) => {
       if (get().host !== host) return;
+      // One notice at a time (session 27: "Reconnected" never stacks): news never covers a problem still showing,
+      // and only the newest news has a clock on it.
+      if (calm && get().notice && !get().noticeCalm) return;
+      const mine = ++noticeSeq;
       set({ notice, noticeCalm: !!calm });
       // News goes by itself after a few seconds.
-      if (calm) setTimeout(() => get().notice === notice && set({ notice: null }), 4000);
+      if (calm) setTimeout(() => noticeSeq === mine && get().notice === notice && set({ notice: null }), 4000);
     });
   }
   set({ busy: true, error: null });
@@ -915,6 +922,7 @@ export async function enterGame(begin: (host: GameHost) => Promise<HostStart>, r
       fair: u.fair ?? null,
       people: u.people ?? null,
       leftSeats: u.leftSeats ?? null,
+      ready: u.ready ?? [],
       // An online game that's over opens on its result (unless its last replay hasn't been watched).
       screen: u.view.winner && !missed?.play ? "over" : "game",
       // The map's geometry comes from the host, never from an import here.
@@ -988,6 +996,8 @@ export function restoredQueue(orders: readonly Order[]): { queue: Order[]; instr
 }
 
 let offerCounter = 0;
+/** The newest notice (only its own timer may clear it). */
+let noticeSeq = 0;
 
 /**
  * Your leaders write their orders again (a command changed, a purse taken back, a deal agreed: they never attack
@@ -1074,7 +1084,7 @@ function applyTurn(u: HostUpdate, auto: boolean) {
     seats: u.seats ?? null,
     report: u.report,
     ...(u.fair ? { fair: u.fair } : {}),
-    ...(u.people ? { people: u.people, leftSeats: u.leftSeats ?? null } : {}),
+    ...(u.people ? { people: u.people, leftSeats: u.leftSeats ?? null, ready: [] } : {}),
     // The Chronicle grows by this turn's report (session 16).
     chronicle: u.report && !chronicle.some((r) => r.turn === u.report!.turn) ? [...chronicle, chronicleOf(u.report)] : chronicle,
     fastForwarded: u.fastForwarded,

@@ -127,6 +127,8 @@ export interface HostStart extends HostUpdate {
   replay?: { before: PlayerView; report: TurnReport; play: boolean };
   /** Online: you've locked in this turn and the table is waiting on someone else. */
   lockedIn?: boolean;
+  /** Online (session 27): who at the table has locked in this turn (the players panel ticks them). */
+  ready?: PlayerId[];
 }
 
 /** Where to load a saved game from: a slot on this device ("auto" is Continue), or a save file's text; or an online game (its id). */
@@ -286,7 +288,13 @@ export interface RoomStart extends Omit<HostStart, "map"> {
 }
 
 /** Everything the room sends: the local host's answers (or the start), each with the room's clock so the page's countdown matches it. */
-export type RoomMessage = { now: number } & (HostResponse | { id: number; ok: true; start: RoomStart } | { id: number; ok: true; table: TableView });
+export type RoomMessage = { now: number } & (
+  | HostResponse
+  | { id: number; ok: true; start: RoomStart }
+  | { id: number; ok: true; table: TableView }
+  /** Not an answer (session 27): who at the table has locked in this turn (id is 0). */
+  | { id: 0; ok: true; ready: PlayerId[] }
+);
 
 /** The game list (the lobby's "Your online games"), from the database. */
 export interface OnlineGameInfo {

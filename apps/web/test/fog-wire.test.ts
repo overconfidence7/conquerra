@@ -30,13 +30,13 @@ const SEATS = ["p1", "p2", "p3"] as const;
 const PAGE: Record<string, string> = { p1: NATE.user, p2: KIT.user, p3: WREN.user };
 const ACCOUNTS = [NATE, KIT, WREN, ROOK].map((w) => w.user);
 /** The fields a room message and its update may carry; anything else is a leak waiting to happen. */
-const ENVELOPE = new Set(["id", "ok", "now", "start", "update", "pushed", "error", "orders", "plan", "answer", "table", "notice", "calm"]);
+const ENVELOPE = new Set(["id", "ok", "now", "start", "update", "pushed", "error", "orders", "plan", "answer", "table", "notice", "calm", "ready"]);
 /** What the table screen may say about anyone: what the players panel shows (session 27). */
 const TABLE = new Set(["gameId", "code", "status", "mapId", "botLevel", "turnSeconds", "luck", "fog", "mode", "fate", "diplomacy", "seats", "you"]);
 const TABLE_SEAT = new Set(["name", "house", "host", "you"]);
 const TABLE_YOU = new Set(["seat", "host", "removed"]);
 const UPDATE = new Set(["playerId", "view", "report", "fastForwarded", "clock", "generalOrders", "leaderNotes", "offers", "seats", "fair", "before", "autoLocked", "queued", "people", "leadersBack", "leftSeats"]);
-const START = new Set([...UPDATE, "rules", "chronicle", "replay", "lockedIn", "gameId", "mapId", "mapVersion", "chronicleAfter"]);
+const START = new Set([...UPDATE, "rules", "chronicle", "replay", "lockedIn", "gameId", "mapId", "mapVersion", "chronicleAfter", "ready"]);
 /** Diplomacy's own ids are public to its two sides (an offer to you names itself). */
 const DIPLOMACY = /^(propose|answer|agreed|break)-|-t\d+-(o\d+|c-)/;
 

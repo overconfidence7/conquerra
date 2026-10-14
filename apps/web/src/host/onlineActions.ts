@@ -73,6 +73,7 @@ let entering: Promise<boolean> | null = null;
 function openWith(begin: (host: RemoteHost) => Promise<HostStart>): Promise<boolean> {
   const host = createRemoteHost();
   tableHost = host;
+  host.onReady((ready) => tableHost === host && useGame.setState({ ready }));
   host.onTable((t) => {
     if (tableHost !== host) return;
     const s = useGame.getState().screen;

@@ -71,6 +71,8 @@ export interface RemoteHost extends GameHost {
   tableAct(act: TableAct): Promise<TableView>;
   /** Leave the game for good: a Marshal plays your seat from now on (you can still watch). */
   resign(): Promise<HostUpdate>;
+  /** Who at the table has locked in this turn, as it changes (session 27). */
+  onReady(listener: (ready: string[]) => void): void;
 }
 
 export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
@@ -87,6 +89,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
   /** The hello that opens the game: an error in answer to it (the game has started without you) ends the opening. */
   let helloId = 0;
   const tables: ((t: TableView) => void)[] = [];
+  const readies: ((ready: string[]) => void)[] = [];
   let ws: WebSocket | null = null;
   let disposed = false;
   let attempts = 0;
@@ -250,6 +253,10 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
       tell(m.notice, !!m.calm);
       return;
     }
+    if ("ready" in m) {
+      readies.forEach((f) => f(m.ready));
+      return;
+    }
     const p = pending.get(m.id);
     if (!p) return;
     pending.delete(m.id);
@@ -327,6 +334,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
   return {
     gameId: () => gameId,
     onTable: (f) => void tables.push(f),
+    onReady: (f) => void readies.push(f),
     tableAct: (act) => ask<TableView>({ type: "table", act }),
     resign: () => ask<HostUpdate>({ type: "resign" }),
     /** Make a table with these settings and open its table screen (the game starts when its host says so). */

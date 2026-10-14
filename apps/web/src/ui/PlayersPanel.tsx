@@ -33,7 +33,7 @@ function Marks({ view, marks }: { view: PlayerView; marks: DealMark[] }) {
 }
 
 function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: string; seat: number; open: boolean; onToggle(): void }) {
-  const { pageDeals, openPropose, seats, people, leftSeats } = useGame();
+  const { pageDeals, openPropose, seats, people, leftSeats, ready } = useGame();
   // Online (session 27): a person's seat a Marshal plays now.
   const gone = leftSeats?.[id];
   const persona = id !== view.me.id ? seats?.[id] : undefined;
@@ -72,7 +72,11 @@ function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: s
         </span>
         <Marks view={view} marks={marks} />
       </span>
-      <span className="state">{out ? `Out (turn ${p.eliminatedTurn})` : "In"}</span>
+      <span className="state">
+        {out ? `Out (turn ${p.eliminatedTurn})` : "In"}
+        {/* Online (session 27): a person who has locked in this turn. */}
+        {!out && people?.includes(id) && ready.includes(id) && <span className="ready-tick" title="Locked in this turn">✓ locked in</span>}
+      </span>
     </>
   );
   return (

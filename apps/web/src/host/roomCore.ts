@@ -484,6 +484,7 @@ export class RoomCore {
       fair: this.fair(),
       people: g.playingIds,
       ...this.leftInfo(),
+      ...(g.readyIds.length ? { ready: g.readyIds } : {}),
       ...(queued ? { queued } : {}),
       ...(g.lockedIn(seat) && !g.over ? { lockedIn: true } : {}),
       ...(last ? { replay: { before: last.before, report: last.report, play: unseen || (opens !== null && this.now() < opens) } } : {}),
@@ -523,6 +524,8 @@ export class RoomCore {
             this.pending.set(seat, req.id);
             this.saveNow();
             this.afterChange();
+            // Everyone at the table sees who has locked in (session 27: a tick in the players panel, nothing more).
+            this.tellReady();
           }
           return;
         }
@@ -595,6 +598,12 @@ export class RoomCore {
 
   private withFair(u: HostUpdate): HostUpdate {
     return { ...u, fair: this.fair(), people: this.g.playingIds, ...this.leftInfo() };
+  }
+
+  /** Who has locked in this turn, to everyone at the table (session 27). */
+  private tellReady() {
+    const ready = this.g.readyIds;
+    for (const seat of this.g.peopleIds) this.reply(seat, { id: 0, ok: true, ready });
   }
 
   /** The seats people left to a Marshal (session 27; public, as the players panel shows it). */
