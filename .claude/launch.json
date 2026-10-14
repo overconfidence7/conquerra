@@ -62,6 +62,21 @@
         "--strictPort"
       ],
       "port": 4174
+    },
+    {
+      "name": "online-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "wrangler",
+        "dev",
+        "--config",
+        "apps/web/wrangler.jsonc",
+        "--port",
+        "8787",
+        "--ip",
+        "127.0.0.1"
+      ],
+      "port": 8787
     }
   ]
 }

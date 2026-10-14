@@ -1,4 +1,7 @@
-import type { SaveFile, SaveSummary } from "@conquerra/engine";
+import type { SaveFile } from "@conquerra/engine";
+import { SLOTS, type SlotId, type SlotInfo } from "./slots";
+
+export { SLOTS, type SlotId, type SlotInfo };
 
 /**
  * Saved games on this device (session 13). They live in the browser's own database (IndexedDB) and never leave the
@@ -9,16 +12,6 @@ import type { SaveFile, SaveSummary } from "@conquerra/engine";
  * message (`SaveError`) instead of breaking the game. The worker writes and reads whole saves; the page only reads
  * the short slot list (map, players, turn, date), never a game's full state.
  */
-
-export const SLOTS = ["slot1", "slot2", "slot3"] as const;
-export type SlotId = "auto" | (typeof SLOTS)[number];
-
-/** What a slot shows: map, players, turn and when it was saved. */
-export interface SlotInfo {
-  slot: SlotId;
-  savedAt: number;
-  summary: SaveSummary;
-}
 
 export interface SaveStore {
   put(slot: SlotId, save: SaveFile): Promise<SlotInfo>;

@@ -1,0 +1,15 @@
+{
+  // The Worker and the game room (session 26): Cloudflare's runtime types instead of the browser's.
+  // Checked by `pnpm typecheck` (tsc -p apps/web/server), bundled by Wrangler.
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "noEmit": true,
+    "emitDeclarationOnly": false,
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types", "node"]
+  },
+  // (and the server's own tests, which run in Node: test/access.test.ts, test/server.test.ts)
+  "include": ["./**/*.ts", "../test/access.test.ts", "../test/accessHelpers.ts", "../test/server.test.ts"]
+}

@@ -7,7 +7,7 @@ import { findLeader, indexMap, isShare, LEADER_STYLES, STEWARD_STYLES, suggestLe
 import { arrangeQueue, asIfYouOrderFrom, instructOrders, refFromKey, takeControl, withGeneralOrders, type LeaderPlacement } from "./logic/generals";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
-import type { GameHost, HostStart, HostUpdate, LoadSource, LobbySettings, SeatInfo, TurnReport } from "./host/protocol";
+import type { GameHost, HostStart, HostUpdate, LoadSource, LobbySettings, OnlineGameInfo, SeatInfo, TurnReport } from "./host/protocol";
 import { listSlots, type SlotId, type SlotInfo } from "./host/saves";
 import { dueTurnIn, withTurnIn } from "./logic/spoils";
 import { namer } from "./logic/text";
@@ -150,6 +150,15 @@ interface GameStore {
 
   setLobby(patch: Partial<LobbySettings>): void;
   start(): Promise<void>;
+
+  // ---------- Online (session 26; the actions are in host/onlineActions.ts, loaded only when something online happens) ----------
+  /** The online game being played (its id), or null in single player. */
+  online: string | null;
+  /** The Online block's own choices: the timer (no "No timer" online) and "my leaders run my House". */
+  onlineLobby: { turnSeconds: number; leadersRun: boolean };
+  /** Your online games (the lobby's list), null until asked; `onlineProblem` if they couldn't be fetched. */
+  onlineGames: OnlineGameInfo[] | null;
+  onlineProblem: string | null;
   /** Carry on from a saved game: the autosave (Continue), a slot, or a file's text. */
   load(source: LoadSource): Promise<boolean>;
   /** Read the saved-game list again (the lobby, the Save and Load menus). */
@@ -343,6 +352,10 @@ export const useGame = create<GameStore>((set, get) => ({
   slots: [],
   slotProblem: null,
   notice: null,
+  online: null,
+  onlineLobby: { turnSeconds: DEFAULT_TIMER, leadersRun: true },
+  onlineGames: null,
+  onlineProblem: null,
   mission: null,
   diplomacy: [],
   offers: [],
@@ -842,7 +855,7 @@ export const useGame = create<GameStore>((set, get) => ({
     get().host?.dispose();
     // Back in the lobby: the game you left is the autosave (Continue).
     void get().refreshSlots();
-    set({ screen: "lobby", host: null, seats: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, budgets: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null, diplomacy: [], offers: [], answers: {}, deal: null, dealPick: null });
+    set({ screen: "lobby", host: null, online: null, seats: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, budgets: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null, diplomacy: [], offers: [], answers: {}, deal: null, dealPick: null });
   },
 }));
 
@@ -850,10 +863,11 @@ export const useGame = create<GameStore>((set, get) => ({
  * Start or load a game on a host (a fresh one unless `reuse` is given) and show it. Returns false (with `error` set
  * in plain words) if it couldn't: a save from an older version, a damaged file, ...
  */
-async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: GameHost | null = null): Promise<boolean> {
+export async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: GameHost | null = null, make?: () => GameHost & { gameId(): string | null }): Promise<boolean> {
   const get = useGame.getState;
   const set = useGame.setState;
-  const host = reuse ?? takeHost();
+  // Online (session 26): a host that talks to the game's room instead of the worker in this browser.
+  const host = reuse ?? (make ? make() : takeHost());
   if (!reuse) {
     get().host?.dispose();
     host.onAutoLock((u) => {
@@ -868,8 +882,11 @@ async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: G
     const u = await begin(host);
     // Continue: the orders you'd queued on this turn come back, with your instruction changes and generals let go.
     const kept = u.queued ? restoredQueue(u.queued.orders) : null;
+    // Online, coming back: the last turn's replay (it plays if you missed it; otherwise it's there for Watch again).
+    const missed = u.replay ?? null;
     set({
       host,
+      online: make && "gameId" in host ? (host as { gameId(): string | null }).gameId() : reuse ? get().online : null,
       screen: "game",
       // The map's geometry comes from the host, never from an import here.
       ctx: { map: u.map, rules: u.rules },
@@ -892,13 +909,13 @@ async function enterGame(begin: (host: GameHost) => Promise<HostStart>, reuse: G
       selected: knockedOut(u.view) ? null : u.view.me.capital,
       draft: null,
       recruit: null,
-      report: null,
+      report: missed?.report ?? null,
       showReport: false,
       fastForwarded: 0,
       watching: false,
       clock: u.clock,
-      replay: null,
-      lastBefore: null,
+      replay: missed?.play ? { before: missed.before, report: missed.report, key: Date.now() } : null,
+      lastBefore: missed?.before ?? null,
       autoLocked: false,
       notice: null,
     });
@@ -1010,7 +1027,8 @@ function openingQueue(ctx: GameContext | null, u: HostUpdate): Order[] {
 
 /** A turn resolved (you locked in, or the timer did): play its replay, then the report. */
 function applyTurn(u: HostUpdate, auto: boolean) {
-  const before = useGame.getState().view;
+  // Online, back after missing turns: the room sends your view from before the last one, so its replay starts there.
+  const before = u.before ?? useGame.getState().view;
   const over = u.view.winner !== null;
   const out = knockedOut(u.view);
   const chronicle = useGame.getState().chronicle;

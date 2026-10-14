@@ -78,9 +78,13 @@ const root = document.getElementById("root")!;
 if (LABS && lab === "maps") void import("./lab/maps/MapLab").then((m) => m.runMapLab(root));
 else if (LABS && (lab === "bench" || lab === "houses")) void import("./lab/bench/Bench").then((m) => m.runBench(root));
 else if (LABS && lab === "sound") void import("./lab/sound/SoundBench").then((m) => m.runSoundBench(root));
-else
+else {
   createRoot(root).render(
     <StrictMode>
       <App />
     </StrictMode>,
   );
+  // Online (session 26): "?game=<id>" opens that online game (the online code loads only then).
+  const game = new URLSearchParams(location.search).get("game");
+  if (game && /^[a-z0-9]{6,24}$/.test(game)) void import("./host/onlineActions").then((m) => m.openOnline(game));
+}

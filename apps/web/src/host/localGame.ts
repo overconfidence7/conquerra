@@ -5,6 +5,7 @@ import {
   dealPersonalities,
   fallenBot,
   judgeBy,
+  leadersRunHouse,
   makeMarshalBot,
   negotiate,
   personality,
@@ -40,6 +41,7 @@ import {
   type PlayerId,
   type Order,
   type OrdersByPlayer,
+  type PlayerView,
   type ReplayEvent,
   type SaveFile,
 } from "@conquerra/engine";
@@ -99,13 +101,30 @@ export function seatLevels(choice: BotChoice, marshals: number, seats: readonly 
   return Object.fromEntries(seats.map((s, i) => [s, levels[i] === "marshal" ? { level: "marshal" as const, personality: dealt[s]! } : { level: levels[i]! }]));
 }
 
-/**
- * A whole single-player game: the full state, the bots and turn resolution.
- * Lives inside the Web Worker, so the UI never holds the full state (it only gets `viewFor` + `replayFor`),
- * exactly as it will when a server runs the game.
- */
 /** After the replay, a moment to read the turn report before the countdown starts. */
 export const REPORT_GRACE_MS = 3000;
+/** Online (session 26, the plan §3): the next window opens after the longest replay at the table plus 10 s for everyone. */
+export const ONLINE_GRACE_MS = 10_000;
+
+/** What the host keeps for one person at an online table (single player keeps yours in `LocalHostData` itself). */
+export interface PersonData {
+  /** The orders they'd queued but not locked in, with the generals whose army they took back. */
+  queued?: { turn: number; orders: Order[]; paused: PlayerId[] };
+  /** Their Chronicle: every turn's report as they saw it, trimmed to what the Chronicle shows. */
+  chronicle?: TurnReport[];
+  /** What their leaders remember (for their plans), as this turn's planning began. */
+  leaderMemory?: MarshalMemory;
+  /** What their leaders remember for what they say. */
+  voiceMemory?: VoiceMemory;
+  /** They sent orders this turn (a missed turn is one where they never did). */
+  touched?: boolean;
+  /** They locked in this turn. */
+  locked?: boolean;
+  /** The last turn's replay as they saw it (their view before it, and their report), for a player coming back. */
+  last?: { before: PlayerView; report: TurnReport };
+  /** Nate, Oct 12: "If I miss a turn with no orders, my leaders run my House". */
+  leadersRun?: boolean;
+}
 
 /** What this host keeps in a save besides the game itself (`SaveFile.host`). */
 export interface LocalHostData {
@@ -134,13 +153,38 @@ export interface LocalHostData {
   leaderMemory?: MarshalMemory;
   /** What your leaders remember for what they say (session 22: grudges, when your Leader last judged a move of yours). */
   voiceMemory?: VoiceMemory;
+  /**
+   * An online game (session 26): each person at the table, by player id in seat order (single player keeps you in
+   * the fields above instead, so its saves are as they were), and the room's clock.
+   */
+  people?: Record<PlayerId, PersonData>;
+  online?: { deadline: number | null; opensAt: number | null };
 }
 
-/** The bots' diplomacy for one turn: their propose/answer orders, and the offers they made you. */
+/** The bots' diplomacy for one turn: their propose/answer orders, and the offers they made to people. */
 interface Talk {
   turn: number;
   orders: OrdersByPlayer;
   toHuman: Offer[];
+}
+
+/** A person at an online table (session 26), as the room seats them. */
+export interface PersonSeat {
+  id: PlayerId;
+  name: string;
+  house: number;
+  leaderName?: string;
+  stewardName?: string;
+  leaderPersonality?: LeaderStyle | null;
+  stewardPersonality?: LeaderStyle | null;
+  /** "If I miss a turn with no orders, my leaders run my House" (on by default). */
+  leadersRun: boolean;
+}
+
+/** An online game (session 26): its id and the people at the table, in seat order (the bots sit after them). */
+export interface TableSetup {
+  gameId: string;
+  people: PersonSeat[];
 }
 
 export interface LocalGameOptions {
@@ -148,22 +192,57 @@ export interface LocalGameOptions {
   restore?: SaveFile;
   /** Called with a fresh save at the start of every turn's planning (the worker writes it to the device). */
   autosave?: (save: SaveFile) => void;
+  /** An online game: who sits where (a new game only; a restored one brings its table). */
+  table?: TableSetup;
 }
 
+/** One person at the table: what the host keeps for them between their requests. */
+interface Person {
+  id: PlayerId;
+  /** Their orders as they build them (the page keeps sending them), locked in when time runs out. */
+  saved: Order[];
+  /** Generals whose army they took back this turn (the page sends them with the orders; kept for Continue). */
+  savedPaused: PlayerId[];
+  /** Their queue as a save brought it back (Continue), sent to the page once with the first update. */
+  restored: { orders: Order[]; paused: PlayerId[] } | null;
+  /** What their leaders remember (session 18), as this turn's planning began. */
+  leaderMemory: MarshalMemory;
+  /** What their leaders remember for what they say (session 22). */
+  voiceMemory: VoiceMemory;
+  /** What each of their leaders said it's up to, the last time they planned (session 20). */
+  leaderNotes: Record<string, LeaderNote>;
+  /** Their Chronicle (session 16): every turn so far, only what they were allowed to see. */
+  chronicle: TurnReport[];
+  /** Online: sent orders this turn. */
+  touched: boolean;
+  /** Online: locked in this turn. */
+  locked: boolean;
+  /** Online: the last turn's replay as they saw it. */
+  last: { before: PlayerView; report: TurnReport } | null;
+  leadersRun: boolean;
+}
+
+const newPerson = (id: PlayerId, leadersRun = true): Person => ({ id, saved: [], savedPaused: [], restored: null, leaderMemory: freshMemory(), voiceMemory: {}, leaderNotes: {}, chronicle: [], touched: false, locked: false, last: null, leadersRun });
+
+/**
+ * A whole game: the full state, the bots and turn resolution, for a table of people (single player: you alone) and
+ * bots. In single player it lives inside the Web Worker; online (session 26) in the game's room on the server. Either
+ * way the page never holds the full state: each person only gets `viewFor` + `replayFor` from their own seat.
+ */
 export class LocalGame {
   readonly ctx: GameContext;
   private state: GameState;
   private turnMs: number | null;
   /** When the current turn's orders lock in automatically (null: no timer, nothing to lock, or paused). */
   private deadline: number | null = null;
+  /** Online: when the planning window opens (after the longest replay at the table and the grace). */
+  private opensAt: number | null = null;
   /** Paused: the time that was left on the clock (null: not paused). */
   private pausedLeft: number | null = null;
-  /** Your orders as you build them (the page keeps sending them), locked in when time runs out. */
-  private saved: Order[] = [];
-  /** Generals whose army you took back this turn (the page sends them with your orders; kept for Continue). */
-  private savedPaused: PlayerId[] = [];
-  /** Your queue as a save brought it back (Continue), sent to the page once with the first update. */
-  private restored: { orders: Order[]; paused: PlayerId[] } | null = null;
+  /** The people at the table, in seat order (single player: you alone). */
+  private people = new Map<PlayerId, Person>();
+  /** An online game: the clock waits for the longest replay plus 10 s, and missed turns follow the plan's rules. */
+  readonly online: boolean;
   /** Each bot seat's level, personality and bot (session 17: tables can mix levels). */
   private seats = new Map<PlayerId, BotSeat>();
   private readonly botLevel: BotChoice;
@@ -171,16 +250,12 @@ export class LocalGame {
   /** How the game was set up, the rules and every turn's orders, so `pnpm sim --replay` can play a save back. */
   private history: { setup: NewGameOptions; rules: typeof defaultRules; turns: OrdersByPlayer[] } | null;
   private readonly autosave?: (save: SaveFile) => void;
-  /** What each seat watched in the last replay (from its own seat): the bots', and yours for your generals. */
+  /** What each seat watched in the last replay (from its own seat): the bots', and the people's for their generals. */
   private lastTurn = new Map<string, ReplayEvent[]>();
-  /** The Chronicle (session 16): your report of every turn so far (only what you were allowed to see). */
-  private chronicle: TurnReport[] = [];
-  /** This turn's diplomacy: the bots' offers and answers (to each other and to you), worked out as planning starts. */
+  /** This turn's diplomacy: the bots' offers and answers (to each other and to people), worked out as planning starts. */
   private talk: Talk = { turn: 0, orders: {}, toHuman: [] };
-  /** What your leaders remember (session 18), as this turn's planning began. */
-  private leaderMemory: MarshalMemory = freshMemory();
-  /** What your leaders remember for what they say (session 22). */
-  private voiceMemory: VoiceMemory = {};
+  /** Online: whose leaders ran their House on the turn being resolved (the card tells the table). */
+  private ranNow: PlayerId[] = [];
 
   constructor(
     /** The map to play on (the worker loads it with `loadMap`; tests pass it straight from `maps`). */
@@ -194,17 +269,25 @@ export class LocalGame {
     this.ctx = { map, rules: defaultRules };
     this.autosave = opts.autosave;
     const restore = opts.restore;
+    const host = (restore?.host ?? {}) as Partial<LocalHostData>;
     if (restore) {
       // Carry on from a save: the game as it stood, under today's rules.
       if (restore.mapId !== map.id || restore.mapVersion !== (map.generator?.version ?? null))
         throw new Error("This save's map has changed since it was saved, so it can't be loaded.");
-      const host = (restore.host ?? {}) as Partial<LocalHostData>;
       this.botLevel = host.botLevel && (LEVELS.includes(host.botLevel as BotLevel) || host.botLevel === "mixed") ? host.botLevel : "captain";
       this.showPersonalities = !!host.showPersonalities;
       this.state = restore.state;
+      this.online = !!host.online;
+      // The people at the table: an online game's from its record; single player's, you.
+      if (host.people) for (const [id, d] of Object.entries(host.people)) this.people.set(id, personFrom(id, d));
+      else
+        this.people.set(
+          HUMAN_ID,
+          personFrom(HUMAN_ID, { ...(Array.isArray(host.chronicle) ? { chronicle: host.chronicle } : {}), ...(host.leaderMemory ? { leaderMemory: host.leaderMemory } : {}), ...(host.voiceMemory ? { voiceMemory: host.voiceMemory } : {}) }),
+        );
       // Each seat as it was saved (a save from before session 17: every bot at the game's one level).
       for (const p of this.state.players) {
-        if (p.id === HUMAN_ID) continue;
+        if (this.people.has(p.id)) continue;
         const saved = host.seats?.[p.id];
         const level = saved && LEVELS.includes(saved.level) ? saved.level : this.botLevel === "mixed" ? "captain" : this.botLevel;
         const known = saved?.personality && PERSONALITY_SET.has(saved.personality) ? saved.personality : undefined;
@@ -216,9 +299,6 @@ export class LocalGame {
       const seconds = host.turnSeconds === undefined ? null : host.turnSeconds;
       this.turnMs = seconds === null ? null : seconds * 1000;
       this.lastTurn = new Map(Object.entries(host.lastTurn ?? {}));
-      this.chronicle = Array.isArray(host.chronicle) ? host.chronicle : [];
-      if (host.leaderMemory) this.leaderMemory = host.leaderMemory;
-      if (host.voiceMemory) this.voiceMemory = host.voiceMemory;
       if (host.talk && host.talk.turn === restore.state.turn) this.talk = host.talk;
       // The history only replays exactly under the rules it was played with; a game carried on under new ones drops it.
       const h = restore.history;
@@ -226,32 +306,47 @@ export class LocalGame {
     } else {
       this.botLevel = LEVELS.includes(settings.botLevel as BotLevel) || settings.botLevel === "mixed" ? settings.botLevel : "captain";
       this.showPersonalities = !!settings.showPersonalities;
-      const bots = Math.max(1, Math.min(map.maxPlayers - 1, BOT_NAMES.length, Math.floor(settings.bots)));
+      const table = opts.table;
+      this.online = !!table;
+      const people = table?.people ?? [];
+      const bots = Math.max(table ? 0 : 1, Math.min(map.maxPlayers - Math.max(1, people.length), BOT_NAMES.length, Math.floor(settings.bots)));
       // Who plays each bot seat (dealt from the seed, before the game exists: a Marshal's leaders carry its personality).
       const botIds = BOT_NAMES.slice(0, bots).map((_, i) => `bot${i + 1}`);
       const levels = seatLevels(this.botLevel, settings.marshals ?? Math.ceil(bots / 2), botIds, seed);
       const style = (p: unknown): LeaderStyle | null => (typeof p === "string" && (LEADER_STYLES as readonly string[]).concat(STEWARD_STYLES).includes(p) ? (p as LeaderStyle) : null);
-      const players = [
+      // A person's seat: the names (and, session 20c, the personalities) they gave their Leader and Steward. Their
+      // Steward starts running the realm (session 18).
+      const personPlayer = (p: Omit<PersonSeat, "leadersRun">) => ({
+        id: p.id,
+        name: p.name,
+        house: p.house,
+        delegate: true,
+        ...(p.leaderName ? { leaderName: p.leaderName } : {}),
+        ...(p.stewardName ? { stewardName: p.stewardName } : {}),
+        ...(style(p.leaderPersonality) ? { leaderPersonality: style(p.leaderPersonality) } : {}),
+        ...(style(p.stewardPersonality) ? { stewardPersonality: style(p.stewardPersonality) } : {}),
+      });
+      const you: Omit<PersonSeat, "leadersRun"> = {
         // You are Gules (red) unless you chose another House; the bots take the rest in order.
-        // Your Leader and Steward carry the names (and, session 20c, the personalities) you gave them; your Steward
-        // starts running the realm (session 18).
-        {
-          id: HUMAN_ID,
-          name: "You",
-          house: settings.house ?? DEFAULT_HOUSE,
-          delegate: true,
-          ...(settings.leaderName ? { leaderName: settings.leaderName } : {}),
-          ...(settings.stewardName ? { stewardName: settings.stewardName } : {}),
-          ...(style(settings.leaderPersonality) ? { leaderPersonality: style(settings.leaderPersonality) } : {}),
-          ...(style(settings.stewardPersonality) ? { stewardPersonality: style(settings.stewardPersonality) } : {}),
-        },
+        id: HUMAN_ID,
+        name: "You",
+        house: settings.house ?? DEFAULT_HOUSE,
+        ...(settings.leaderName ? { leaderName: settings.leaderName } : {}),
+        ...(settings.stewardName ? { stewardName: settings.stewardName } : {}),
+        leaderPersonality: settings.leaderPersonality ?? null,
+        stewardPersonality: settings.stewardPersonality ?? null,
+      };
+      const players = [
+        ...(table ? people : [you]).map(personPlayer),
         ...BOT_NAMES.slice(0, bots).map((name, i) => {
           const p = levels[botIds[i]!]?.level === "marshal" ? style(levels[botIds[i]!]!.personality) : null;
           return { id: botIds[i]!, name, bot: true, ...(p ? { leaderPersonality: p, stewardPersonality: p } : {}) };
         }),
       ];
+      if (table) for (const p of people) this.people.set(p.id, newPerson(p.id, p.leadersRun));
+      else this.people.set(HUMAN_ID, newPerson(HUMAN_ID));
       const setup: NewGameOptions = {
-        gameId: `local-${seed.slice(0, 8)}`,
+        gameId: table?.gameId ?? `local-${seed.slice(0, 8)}`,
         seed,
         players,
         settings: {
@@ -263,8 +358,8 @@ export class LocalGame {
           fate: settings.fate ?? true,
           diplomacy: settings.diplomacy ?? true,
         },
-        // A harder capital spot starts with extra troops (session 23), and goes to a bot before you (session 25; always
-        // since 25b, no lobby row). The setup keeps the rule, so a save replays as it was played.
+        // A harder capital spot starts with extra troops (session 23), and goes to a bot before a person (session 25;
+        // always since 25b, no lobby row). The setup keeps the rule, so a save replays as it was played.
         startBonus: true,
         seatRule: "botsFirst",
       };
@@ -275,12 +370,24 @@ export class LocalGame {
     }
     // A game just loaded doesn't save itself again until its next turn starts.
     this.startClock(0, !restore);
-    // Continue puts back the orders you'd queued on this turn.
-    const queued = (restore?.host as Partial<LocalHostData> | undefined)?.queued;
-    if (queued && queued.turn === this.state.turn && Array.isArray(queued.orders) && !this.state.winner && !this.knockedOut) {
-      this.saved = queued.orders;
-      this.savedPaused = Array.isArray(queued.paused) ? queued.paused : [];
-      this.restored = { orders: queued.orders, paused: this.savedPaused };
+    // Online: the room's clock as it stood (a room that slept between turns carries on with the same deadline).
+    if (restore && this.online && host.online) {
+      this.deadline = host.online.deadline;
+      this.opensAt = host.online.opensAt;
+    }
+    // Continue puts back the orders each person had queued on this turn (and, online, whether they'd locked in).
+    for (const person of this.people.values()) {
+      const d = host.people?.[person.id];
+      const queued = d ? d.queued : person.id === HUMAN_ID ? host.queued : undefined;
+      if (queued && queued.turn === this.state.turn && Array.isArray(queued.orders) && !this.state.winner && !this.isOut(person.id)) {
+        person.saved = queued.orders;
+        person.savedPaused = Array.isArray(queued.paused) ? queued.paused : [];
+        person.restored = { orders: queued.orders, paused: person.savedPaused };
+        if (d) {
+          person.touched = !!d.touched;
+          person.locked = !!d.locked;
+        }
+      }
     }
   }
 
@@ -291,18 +398,37 @@ export class LocalGame {
     return new LocalGame(map, unused, "", now, { restore: save, ...(autosave ? { autosave } : {}) });
   }
 
+  /** The people at the table, in seat order (single player: just you). */
+  get peopleIds(): PlayerId[] {
+    return [...this.people.keys()];
+  }
+
+  private person(id: PlayerId): Person {
+    const p = this.people.get(id);
+    if (!p) throw new Error("You don't have a seat in this game");
+    return p;
+  }
+
   /**
-   * A new turn's planning starts: start the countdown (after `replayMs` of replay plus a moment for the report), and
-   * save the game on the device (Continue in the lobby picks it up).
+   * A new turn's planning starts: start the countdown (after `replayMs` of replay plus a moment for the report; online,
+   * the longest replay at the table plus 10 s), and save the game (Continue, or the room's storage, picks it up).
    */
   private startClock(replayMs: number, autosave = true) {
-    // The bots talk first (offers between them answered at once; offers to you wait for you), then your generals plan.
+    // The bots talk first (offers between them answered at once; offers to people wait for them), then each person's
+    // generals plan.
     if (this.talk.turn !== this.state.turn) this.botTalks();
-    // Your generals' orders go in even if you never touch the turn.
-    this.saved = this.generalOrders();
-    this.savedPaused = [];
+    for (const p of this.people.values()) {
+      // Their generals' orders go in even if they never touch the turn.
+      p.saved = this.generalOrders({}, undefined, p.id);
+      p.savedPaused = [];
+      p.touched = false;
+      p.locked = false;
+    }
     this.pausedLeft = null;
-    this.deadline = this.turnMs !== null && !this.state.winner && !this.knockedOut ? this.now() + replayMs + (replayMs ? REPORT_GRACE_MS : 0) + this.turnMs : null;
+    const grace = this.online ? ONLINE_GRACE_MS : REPORT_GRACE_MS;
+    const running = this.turnMs !== null && !this.state.winner && (this.online ? this.living.length > 0 : !this.isOut(HUMAN_ID));
+    this.opensAt = running ? this.now() + replayMs + (replayMs ? grace : 0) : null;
+    this.deadline = this.opensAt !== null ? this.opensAt + this.turnMs! : null;
     if (autosave && !this.state.winner) this.autosave?.(this.snapshot());
   }
 
@@ -341,23 +467,41 @@ export class LocalGame {
     return this.state.winner !== null;
   }
 
-  /** The first message: the map and rules, plus your opening view. */
-  start(): HostStart {
-    const restored = this.restored;
-    this.restored = null;
-    return { ...this.update(), map: this.ctx.map, rules: this.ctx.rules, chronicle: this.chronicle, ...(restored ? { queued: restored } : {}) };
+  /** The turn being planned. */
+  get turn(): number {
+    return this.state.turn;
   }
 
-  update(report: HostUpdate["report"] = null, fastForwarded = 0): HostUpdate {
+  /** Who won (null while the game goes on). */
+  get winner(): PlayerId | null {
+    return this.state.winner;
+  }
+
+  /** Online: when the planning window opens (ms, the room's clock), or null. */
+  get windowOpensAt(): number | null {
+    return this.opensAt;
+  }
+
+  /** The first message: the map and rules, plus this person's opening view. */
+  start(id: PlayerId = HUMAN_ID): HostStart {
+    const p = this.person(id);
+    const restored = p.restored;
+    p.restored = null;
+    return { ...this.update(null, 0, id), map: this.ctx.map, rules: this.ctx.rules, chronicle: p.chronicle, ...(restored ? { queued: restored } : {}) };
+  }
+
+  /** What this person gets: their own fogged view and report, and nothing from anyone else's seat. */
+  update(report: HostUpdate["report"] = null, fastForwarded = 0, id: PlayerId = HUMAN_ID): HostUpdate {
+    const p = this.person(id);
     return {
-      playerId: HUMAN_ID,
-      view: viewFor(this.ctx, this.state, HUMAN_ID),
+      playerId: id,
+      view: viewFor(this.ctx, this.state, id),
       report,
       fastForwarded,
       clock: this.clock,
-      generalOrders: this.generalOrders(),
-      leaderNotes: this.leaderNotes,
-      offers: this.talk.turn === this.state.turn ? this.talk.toHuman : [],
+      generalOrders: this.generalOrders({}, undefined, id),
+      leaderNotes: p.leaderNotes,
+      offers: this.talk.turn === this.state.turn ? this.talk.toHuman.filter((o) => o.to === id) : [],
       ...(this.state.winner || this.showPersonalities ? { seats: this.seatInfo() } : {}),
     };
   }
@@ -373,35 +517,48 @@ export class LocalGame {
     return s?.bot.diplomat ?? (s?.level === "recruit" ? ("recruit" as const) : ("captain" as const));
   }
 
+  /** The people still in the game. */
+  private get living(): PlayerId[] {
+    return this.peopleIds.filter((id) => !this.isOut(id));
+  }
+
   /**
    * Diplomacy, as planning starts (a host action: in M4 the same offers travel between people). Each bot, in seat
-   * order, proposes; an offer to another bot is answered at once; one to you waits for you.
+   * order, proposes; an offer to another bot is answered at once; one to a person waits for them.
    */
   private botTalks() {
     this.talk = { turn: this.state.turn, orders: {}, toHuman: [] };
     if (!this.state.settings.diplomacy || this.state.winner) return;
-    const bots = this.state.players.filter((p) => p.id !== HUMAN_ID && p.eliminatedTurn === null).map((p) => ({ id: p.id, level: this.diplomatOf(p.id) }));
-    const t = negotiate(this.ctx, bots, (id) => viewFor(this.ctx, this.state, id), (id) => this.lastTurn.get(id), this.knockedOut ? null : HUMAN_ID);
+    const bots = this.state.players.filter((p) => !this.people.has(p.id) && p.eliminatedTurn === null).map((p) => ({ id: p.id, level: this.diplomatOf(p.id) }));
+    const living = this.living;
+    // (Single player passes you alone, as it always has.)
+    const humans = this.online ? living : living.length ? HUMAN_ID : null;
+    const t = negotiate(this.ctx, bots, (id) => viewFor(this.ctx, this.state, id), (id) => this.lastTurn.get(id), humans);
     this.talk = { turn: this.state.turn, orders: t.orders, toHuman: t.toHuman };
   }
 
-  /** Deals both sides have confirmed this planning phase (yours with the bots' answers, and the bots' own). */
-  private agreed(human: readonly Order[] = this.saved): Offer[] {
-    return agreedIn({ ...this.talk.orders, [HUMAN_ID]: [...human] });
+  /** Deals both sides have confirmed this planning phase (the people's with the bots' answers, and the bots' own). */
+  private agreed(people: Record<PlayerId, readonly Order[]> = this.savedOrders()): Offer[] {
+    return agreedIn({ ...this.talk.orders, ...Object.fromEntries(Object.entries(people).map(([id, o]) => [id, [...o]])) });
+  }
+
+  /** Each person's orders as they stand. */
+  private savedOrders(): Record<PlayerId, Order[]> {
+    return Object.fromEntries([...this.people.values()].map((p) => [p.id, p.saved]));
   }
 
   /**
-   * You offer a bot a deal: it answers at once, from its own view, with its reason (and maybe a counteroffer). Its
-   * answer is kept as its order for this turn; your offer goes in with your orders (the page adds it).
+   * A person offers a bot a deal: it answers at once, from its own view, with its reason (and maybe a counteroffer).
+   * Its answer is kept as its order for this turn; the offer goes in with the person's orders (the page adds it).
    */
-  propose(offer: Offer): Answer {
+  propose(offer: Offer, from: PlayerId = HUMAN_ID): Answer {
     const bot = this.state.players.find((p) => p.id === offer.to);
-    if (offer.from !== HUMAN_ID || !bot || bot.id === HUMAN_ID || bot.eliminatedTurn !== null || this.state.winner || this.knockedOut || !this.state.settings.diplomacy)
+    if (offer.from !== from || !this.people.has(from) || !bot || this.people.has(bot.id) || bot.eliminatedTurn !== null || this.state.winner || this.isOut(from) || !this.state.settings.diplomacy)
       return { accept: false, reason: "That offer can't be made." };
     const view = withAgreed(viewFor(this.ctx, this.state, bot.id), this.agreed());
     const answer = judgeBy(this.ctx, this.diplomatOf(bot.id), view, offer, this.lastTurn.get(bot.id));
     // A later answer to the same offer replaces an earlier one.
-    const list = (this.talk.orders[bot.id] ?? []).filter((o) => !(o.kind === "answer" && o.from === HUMAN_ID && o.offer === offer.id) && !(o.kind === "propose" && o.offer.counterTo === offer.id));
+    const list = (this.talk.orders[bot.id] ?? []).filter((o) => !(o.kind === "answer" && o.from === from && o.offer === offer.id) && !(o.kind === "propose" && o.offer.counterTo === offer.id));
     list.push(answerOrder(offer, answer.accept));
     if (answer.counter) list.push({ id: `propose-${answer.counter.id}`, kind: "propose", offer: answer.counter });
     this.talk.orders[bot.id] = list;
@@ -414,34 +571,34 @@ export class LocalGame {
    * The same view, memory and commands always give the same orders, so it doesn't matter whether they're worked out
    * here, on the page, or (M4) on the server.
    */
-  generalOrders(instructions: Record<string, Instruction | null> = {}, purses?: Record<string, number>): Order[] {
-    return this.leaderOrders(instructions, purses).orders;
+  generalOrders(instructions: Record<string, Instruction | null> = {}, purses?: Record<string, number>, id: PlayerId = HUMAN_ID): Order[] {
+    return this.leaderOrders(instructions, purses, id).orders;
   }
 
-  /** What each leader said it's up to, the last time they planned (session 20). */
-  private leaderNotes: Record<string, LeaderNote> = {};
-
   /** Your leaders' orders, and what each is up to this turn (a line for the Leaders panel). */
-  leaderOrders(instructions: Record<string, Instruction | null> = {}, purses?: Record<string, number>): { orders: Order[]; notes: Record<string, LeaderNote> } {
-    if (this.state.winner || this.knockedOut) return { orders: [], notes: {} };
+  leaderOrders(instructions: Record<string, Instruction | null> = {}, purses?: Record<string, number>, id: PlayerId = HUMAN_ID): { orders: Order[]; notes: Record<string, LeaderNote> } {
+    const p = this.person(id);
+    if (this.state.winner || this.isOut(id)) return { orders: [], notes: {} };
     // Your leaders plan knowing the deals you've agreed this turn (they start before any move).
-    const view = withAgreed(viewFor(this.ctx, this.state, HUMAN_ID), this.agreed());
-    const plan = planLeaders({ ctx: this.ctx, view, memory: this.leaderMemory, commands: instructions, ...(purses ? { purses } : {}), ...(this.lastTurn.get(HUMAN_ID) ? { lastTurn: this.lastTurn.get(HUMAN_ID)! } : {}) });
-    this.leaderNotes = plan.notes;
+    const view = withAgreed(viewFor(this.ctx, this.state, id), this.agreed());
+    const last = this.lastTurn.get(id);
+    const plan = planLeaders({ ctx: this.ctx, view, memory: p.leaderMemory, commands: instructions, ...(purses ? { purses } : {}), ...(last ? { lastTurn: last } : {}) });
+    p.leaderNotes = plan.notes;
     return { orders: plan.orders, notes: plan.notes };
   }
 
-  private get knockedOut(): boolean {
-    return this.state.players.find((p) => p.id === HUMAN_ID)!.eliminatedTurn !== null;
+  /** Is this person out of the game while it goes on? */
+  isOut(id: PlayerId): boolean {
+    return this.state.players.find((p) => p.id === id)!.eliminatedTurn !== null;
   }
 
-  private botOrders(human: readonly Order[] = []): OrdersByPlayer {
+  private botOrders(people: Record<PlayerId, readonly Order[]>): OrdersByPlayer {
     const orders: OrdersByPlayer = {};
     // What everyone agreed this planning phase: each bot plans its moves knowing it (the deals start before any move).
     const now = this.talk.turn === this.state.turn;
-    const agreed = now ? this.agreed(human) : [];
+    const agreed = now ? this.agreed(people) : [];
     for (const p of this.state.players) {
-      if (p.id === HUMAN_ID) continue;
+      if (this.people.has(p.id)) continue;
       if (p.eliminatedTurn === null)
         orders[p.id] = [...((now && this.talk.orders[p.id]) || []), ...(this.seats.get(p.id)?.bot ?? captainBot).plan(this.ctx, withAgreed(viewFor(this.ctx, this.state, p.id), agreed), this.lastTurn.get(p.id))];
       // Knocked-out bots are the Fallen: they play world events against whoever leads.
@@ -450,46 +607,125 @@ export class LocalGame {
     return orders;
   }
 
-  /** Resolve one turn and return your report of it. */
-  private play(humanOrders: Order[] | null): HostUpdate["report"] {
+  /**
+   * Resolve one turn with each person's orders (null: nobody at the table orders anything, as when the bots play on
+   * to the end) and return each person's report of it.
+   */
+  private play(peopleOrders: Record<PlayerId, Order[]> | null): Map<PlayerId, TurnReport> {
     const before = this.state;
-    // Your leaders take this turn in (what they remember for next turn's plans).
-    if (!this.knockedOut) this.leaderMemory = think(this.ctx, viewFor(this.ctx, before, HUMAN_ID), marshalData.judgement, this.leaderMemory, this.lastTurn.get(HUMAN_ID)).memory;
-    const orders = humanOrders ? { ...this.botOrders(humanOrders), [HUMAN_ID]: humanOrders } : this.botOrders();
+    // Their leaders take this turn in (what they remember for next turn's plans).
+    for (const p of this.people.values())
+      if (!this.isOut(p.id)) p.leaderMemory = think(this.ctx, viewFor(this.ctx, before, p.id), marshalData.judgement, p.leaderMemory, this.lastTurn.get(p.id)).memory;
+    const orders = peopleOrders ? { ...this.botOrders(peopleOrders), ...peopleOrders } : this.botOrders({});
     const result = resolveTurn(this.ctx, before, orders);
     this.history?.turns.push(orders);
     this.state = result.state;
-    // What each bot watched in this turn's replay (only its own view), for its next plan.
+    // What each seat watched in this turn's replay (only its own view), for its next plan.
     this.lastTurn = new Map(this.state.players.filter((p) => p.eliminatedTurn === null).map((p) => [p.id, replayFor(this.ctx, before, result, p.id)]));
-    const events = this.lastTurn.get(HUMAN_ID) ?? replayFor(this.ctx, before, result, HUMAN_ID);
-    // What your leaders say about the turn, from your own view and replay only (session 22).
-    const said = this.knockedOut ? null : leaderVoices(this.ctx, viewFor(this.ctx, before, HUMAN_ID), viewFor(this.ctx, this.state, HUMAN_ID), events, this.voiceMemory);
-    if (said) this.voiceMemory = said.memory;
-    // Your comeback (session 23), from your own land only.
-    const back = this.knockedOut ? null : comebackStep(this.voiceMemory.comeback, ownLand(viewFor(this.ctx, this.state, HUMAN_ID)), before.turn);
-    if (back) this.voiceMemory = { ...this.voiceMemory, comeback: back.memory };
-    const report: TurnReport = { turn: before.turn, events, ...(said?.lines.length ? { voices: said.lines } : {}), ...(back?.card ? { comeback: true as const } : {}) };
-    this.chronicle.push(chronicleOf(report));
-    this.startClock(buildTimeline(report.events).total);
-    return report;
+    const reports = new Map<PlayerId, TurnReport>();
+    let longest = 0;
+    for (const p of this.people.values()) {
+      const events = this.lastTurn.get(p.id) ?? replayFor(this.ctx, before, result, p.id);
+      const out = this.isOut(p.id);
+      // What their leaders say about the turn, from their own view and replay only (session 22).
+      const said = out ? null : leaderVoices(this.ctx, viewFor(this.ctx, before, p.id), viewFor(this.ctx, this.state, p.id), events, p.voiceMemory);
+      if (said) p.voiceMemory = said.memory;
+      // Their comeback (session 23), from their own land only.
+      const back = out ? null : comebackStep(p.voiceMemory.comeback, ownLand(viewFor(this.ctx, this.state, p.id)), before.turn);
+      if (back) p.voiceMemory = { ...p.voiceMemory, comeback: back.memory };
+      const report: TurnReport = {
+        turn: before.turn,
+        events,
+        ...(said?.lines.length ? { voices: said.lines } : {}),
+        ...(back?.card ? { comeback: true as const } : {}),
+        ...(this.ranNow.length ? { ranByLeaders: [...this.ranNow] } : {}),
+      };
+      p.chronicle.push(chronicleOf(report));
+      if (this.online) p.last = { before: viewFor(this.ctx, before, p.id), report };
+      reports.set(p.id, report);
+      longest = Math.max(longest, buildTimeline(report.events).total);
+    }
+    this.ranNow = [];
+    this.startClock(longest);
+    return reports;
   }
 
   /** Lock in your orders for `turn`. If that turn has already been locked in (the timer beat you to it), nothing changes. */
   lockIn(humanOrders: Order[], turn: number = this.state.turn): HostUpdate {
     if (this.state.winner) throw new Error("The game is over");
-    if (this.knockedOut) throw new Error("You've been knocked out");
+    if (this.isOut(HUMAN_ID)) throw new Error("You've been knocked out");
     if (turn !== this.state.turn) return this.update();
-    return this.update(this.play(humanOrders));
+    return this.update(this.play({ [HUMAN_ID]: humanOrders }).get(HUMAN_ID)!);
+  }
+
+  /**
+   * Online: a person locks in their orders for `turn`. The turn resolves once everyone still in the game has (the plan:
+   * a turn ends early when everyone has locked in). Returns each person's update if it resolved, or null if the table
+   * is still waiting on someone (or the turn has already moved on).
+   */
+  lockInFor(id: PlayerId, orders: Order[], turn: number): Map<PlayerId, HostUpdate> | null {
+    const p = this.person(id);
+    if (this.state.winner) throw new Error("The game is over");
+    if (this.isOut(id)) throw new Error("You've been knocked out");
+    if (turn !== this.state.turn) return null;
+    p.saved = orders;
+    p.touched = true;
+    p.locked = true;
+    if (this.living.some((x) => !this.person(x).locked)) return null;
+    return this.resolveTable(false);
+  }
+
+  /** Online: who the table is still waiting on this turn (people still in the game who haven't locked in). */
+  get waitingOn(): PlayerId[] {
+    return this.state.winner ? [] : this.living.filter((id) => !this.person(id).locked);
+  }
+
+  /** Online: has this person locked in this turn? */
+  lockedIn(id: PlayerId): boolean {
+    return this.person(id).locked;
+  }
+
+  /**
+   * Online: resolve the turn with everyone's orders. Someone who never sent any this turn missed it: with "my leaders
+   * run my House" on, their Leader and Steward play it (Run the military 80%, Run the realm 20%); with it off, their
+   * House holds still. Anyone else's queue goes in as they left it.
+   */
+  private resolveTable(auto: boolean): Map<PlayerId, HostUpdate> {
+    const orders: Record<PlayerId, Order[]> = {};
+    this.ranNow = [];
+    for (const p of this.people.values()) {
+      if (this.isOut(p.id)) continue;
+      if (p.locked || p.touched) orders[p.id] = p.saved;
+      else if (p.leadersRun) {
+        const last = this.lastTurn.get(p.id);
+        const run = leadersRunHouse(this.ctx, withAgreed(viewFor(this.ctx, this.state, p.id), this.agreed()), p.leaderMemory, last);
+        orders[p.id] = run.orders;
+        this.ranNow.push(p.id);
+      } else orders[p.id] = [];
+    }
+    const locked = new Set(this.peopleIds.filter((id) => this.person(id).locked));
+    let reports: Map<PlayerId, TurnReport>;
+    try {
+      reports = this.play(orders);
+    } catch {
+      // Orders from a page that the engine couldn't carry out: the turn resolves without the people's orders rather
+      // than stopping the game for everyone.
+      this.ranNow = [];
+      reports = this.play(Object.fromEntries(Object.keys(orders).map((id) => [id, [] as Order[]])));
+    }
+    return new Map(this.peopleIds.map((id) => [id, { ...this.update(reports.get(id)!, 0, id), ...(auto && !locked.has(id) ? { autoLocked: true } : {}) }]));
   }
 
   /**
    * The page's latest orders for this turn; these lock in if time runs out, and Continue puts them back. Returns
    * whether they were for this turn (so the host knows to save them).
    */
-  saveOrders(orders: Order[], turn: number, paused: PlayerId[] = []): boolean {
-    if (turn !== this.state.turn || this.state.winner || this.knockedOut) return false;
-    this.saved = orders;
-    this.savedPaused = paused;
+  saveOrders(orders: Order[], turn: number, paused: PlayerId[] = [], id: PlayerId = HUMAN_ID): boolean {
+    const p = this.person(id);
+    if (turn !== this.state.turn || this.state.winner || this.isOut(id) || p.locked) return false;
+    p.saved = orders;
+    p.savedPaused = paused;
+    p.touched = true;
     return true;
   }
 
@@ -503,8 +739,46 @@ export class LocalGame {
    * the page. Otherwise null.
    */
   expireIfDue(): HostUpdate | null {
-    if (this.deadline === null || this.now() < this.deadline || this.state.winner || this.knockedOut) return null;
-    return { ...this.update(this.play(this.saved)), autoLocked: true };
+    if (this.online) throw new Error("An online game's clock runs out with expireTable");
+    if (this.deadline === null || this.now() < this.deadline || this.state.winner || this.isOut(HUMAN_ID)) return null;
+    return { ...this.update(this.play({ [HUMAN_ID]: this.person(HUMAN_ID).saved }).get(HUMAN_ID)!), autoLocked: true };
+  }
+
+  /** Online: time's up? Then the turn resolves with everyone's orders as they stand (each person's update), else null. */
+  expireTable(): Map<PlayerId, HostUpdate> | null {
+    if (this.deadline === null || this.now() < this.deadline || this.state.winner) return null;
+    return this.resolveTable(true);
+  }
+
+  /**
+   * Online: nobody at the table is still in the game, so nothing waits on anyone: the bots play `turns` more turns at
+   * once (Infinity: to the end). Each person's update, with the last turn's report.
+   */
+  playOnline(turns: number): Map<PlayerId, HostUpdate> {
+    if (this.living.length) throw new Error("The game goes on while others play: you'll see the result when it ends.");
+    let reports = new Map<PlayerId, TurnReport>();
+    let n = 0;
+    while (!this.state.winner && n < turns) {
+      reports = this.play({});
+      n++;
+    }
+    return new Map(this.peopleIds.map((id) => [id, this.update(reports.get(id) ?? null, turns === Infinity ? n : 0, id)]));
+  }
+
+  /** Online: this person's last replay (their view before it and their report), for someone coming back. */
+  lastReplay(id: PlayerId): { before: PlayerView; report: TurnReport } | null {
+    return this.person(id).last;
+  }
+
+  /** Online: their orders as they left them this turn (for "where are we"), or null if they haven't sent any. */
+  queuedFor(id: PlayerId): { orders: Order[]; paused: PlayerId[] } | null {
+    const p = this.person(id);
+    return p.touched ? { orders: p.saved, paused: p.savedPaused } : null;
+  }
+
+  /** Their Chronicle so far. */
+  chronicleOf(id: PlayerId): TurnReport[] {
+    return this.person(id).chronicle;
   }
 
   /**
@@ -513,14 +787,14 @@ export class LocalGame {
    */
   watchNext(orders: Order[] = []): HostUpdate {
     if (this.state.winner) throw new Error("The game is over");
-    if (!this.knockedOut) throw new Error("You're still in the game");
-    return this.update(this.play(orders.filter((o) => o.kind === "worldEvent")));
+    if (!this.isOut(HUMAN_ID)) throw new Error("You're still in the game");
+    return this.update(this.play({ [HUMAN_ID]: orders.filter((o) => o.kind === "worldEvent") }).get(HUMAN_ID)!);
   }
 
   /**
    * The game as it stands, as a save: the snapshot (it loads under future rules), what this host keeps between turns,
    * and the history so `pnpm sim --replay` can play it back. Single player only (it holds the secret seed and
-   * everyone's orders).
+   * everyone's orders); online, only the room keeps it.
    */
   snapshot(notes?: Record<string, string>): SaveFile {
     const memories: Record<PlayerId, MarshalMemory> = {};
@@ -528,20 +802,26 @@ export class LocalGame {
       const m = s.level === "marshal" ? (s.bot as MarshalBot).memoryOf(this.state.gameId, id) : null;
       if (m) memories[id] = m;
     }
-    const host: LocalHostData = {
+    const queuedOf = (p: Person) => ({ turn: this.state.turn, orders: p.saved, paused: p.savedPaused });
+    const base = {
       botLevel: this.botLevel,
       seats: Object.fromEntries([...this.seats].map(([id, s]) => [id, { level: s.level, ...(s.personality ? { personality: s.personality } : {}) }])),
       memories,
       showPersonalities: this.showPersonalities,
       turnSeconds: this.turnMs === null ? null : this.turnMs / 1000,
       lastTurn: Object.fromEntries(this.lastTurn),
-      queued: { turn: this.state.turn, orders: this.saved, paused: this.savedPaused },
-      talk: this.talk,
-      chronicle: this.chronicle,
-      leaderMemory: this.leaderMemory,
-      voiceMemory: this.voiceMemory,
     };
-    return makeSave(this.ctx, this.state, HUMAN_ID, this.now(), {
+    let host: LocalHostData;
+    if (this.online) {
+      const people: Record<PlayerId, PersonData> = {};
+      for (const p of this.people.values())
+        people[p.id] = { queued: queuedOf(p), chronicle: p.chronicle, leaderMemory: p.leaderMemory, voiceMemory: p.voiceMemory, touched: p.touched, locked: p.locked, leadersRun: p.leadersRun, ...(p.last ? { last: p.last } : {}) };
+      host = { ...base, talk: this.talk, people, online: { deadline: this.deadline, opensAt: this.opensAt } };
+    } else {
+      const you = this.person(HUMAN_ID);
+      host = { ...base, queued: queuedOf(you), talk: this.talk, chronicle: you.chronicle, leaderMemory: you.leaderMemory, voiceMemory: you.voiceMemory };
+    }
+    return makeSave(this.ctx, this.state, this.peopleIds[0]!, this.now(), {
       host: host as unknown as Record<string, unknown>,
       ...(this.history ? { history: this.history } : {}),
       notes: { bots: this.botLevel, ...notes },
@@ -549,20 +829,30 @@ export class LocalGame {
   }
 
   /** A bot's orders for you this turn (the Captain; the Recruit at a Recruit table), planned from your own view only. */
-  suggest(): Order[] {
-    if (this.state.winner || this.knockedOut) return [];
-    return (this.botLevel === "recruit" ? recruitBot : captainBot).plan(this.ctx, viewFor(this.ctx, this.state, HUMAN_ID));
+  suggest(id: PlayerId = HUMAN_ID): Order[] {
+    if (this.state.winner || this.isOut(id)) return [];
+    return (this.botLevel === "recruit" ? recruitBot : captainBot).plan(this.ctx, viewFor(this.ctx, this.state, id));
   }
 
   /** Knocked out: the bots play on to the end (the engine's turn cap guarantees one). */
   finish(): HostUpdate {
-    if (!this.knockedOut && !this.state.winner) throw new Error("You're still in the game");
+    if (!this.isOut(HUMAN_ID) && !this.state.winner) throw new Error("You're still in the game");
     let report: HostUpdate["report"] = null;
     let turns = 0;
     while (!this.state.winner) {
-      report = this.play(null);
+      report = this.play(null).get(HUMAN_ID)!;
       turns++;
     }
     return this.update(report, turns);
   }
+}
+
+/** A person as a save kept them. */
+function personFrom(id: PlayerId, d: PersonData): Person {
+  const p = newPerson(id, d.leadersRun ?? true);
+  if (Array.isArray(d.chronicle)) p.chronicle = d.chronicle;
+  if (d.leaderMemory) p.leaderMemory = d.leaderMemory;
+  if (d.voiceMemory) p.voiceMemory = d.voiceMemory;
+  if (d.last) p.last = d.last;
+  return p;
 }

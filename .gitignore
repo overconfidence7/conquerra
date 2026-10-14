@@ -13,3 +13,6 @@ art/incoming/*
 # Sound packs downloaded for the importer stay on this machine (session 24); the game-ready MP3s in apps/web/public/sound are committed.
 sound/incoming/*
 !sound/incoming/README.md
+
+# Local development secrets for wrangler dev (session 26: DEV_EMAIL).
+.dev.vars

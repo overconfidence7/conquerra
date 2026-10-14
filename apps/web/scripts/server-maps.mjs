@@ -1,0 +1,31 @@
+/**
+ * The maps the game room plays on (session 26): every official map without its drawing data (`geometry`), which the
+ * engine and the bots never read and which is 98% of each file. The page loads the full map from its own cache; the
+ * Worker carries only these, so it stays far under the Free plan's script size.
+ *
+ *   node apps/web/scripts/server-maps.mjs          writes apps/web/server/maps.json
+ *
+ * `apps/web/test/server.test.ts` checks the committed file is exactly what this makes.
+ */
+import { readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
+const dir = join(root, "packages/content/data/maps");
+
+export function slimMaps() {
+  const catalog = JSON.parse(readFileSync(join(dir, "catalog.json"), "utf8"));
+  const out = {};
+  for (const { id } of catalog) {
+    const { geometry: _drawing, ...map } = JSON.parse(readFileSync(join(dir, `${id}.json`), "utf8"));
+    out[id] = map;
+  }
+  return `${JSON.stringify(out)}\n`;
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  const text = slimMaps();
+  writeFileSync(join(root, "apps/web/server/maps.json"), text);
+  console.log(`apps/web/server/maps.json: ${Object.keys(JSON.parse(text)).length} maps, ${(text.length / 1024).toFixed(0)} KB`);
+}

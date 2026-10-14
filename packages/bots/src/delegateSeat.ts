@@ -162,3 +162,18 @@ export function makeLeaderPathSeat(id: string, diplomat?: Diplomat, opts: { home
     },
   };
 }
+
+/**
+ * Online (session 26, Nate's call): a person who misses a turn with no orders, and chose "If I miss a turn with no
+ * orders, my leaders run my House", has their Leader and Steward play it as a delegating player does (the Leader runs
+ * the military on `leaderShare` of the income, the Steward the realm on the rest), with the person's own leaders'
+ * memory. Returns the orders and the memory to keep. The commands and budgets stay set until the person changes them.
+ */
+export function leadersRunHouse(ctx: Parameters<Bot["plan"]>[0], view: PlayerView, memory: MarshalMemory, lastTurn?: Parameters<Bot["plan"]>[2], leaderShare = 0.8): { orders: Order[]; memory: MarshalMemory } {
+  const { orders: setup, commands } = setUp(view, { leader: { command: { kind: "military" }, budget: { share: leaderShare } }, steward: { command: { kind: "realm" }, budget: { share: Math.round((1 - leaderShare) * 100) / 100 } } });
+  const plan = planLeaders({ ctx, view, memory, commands, ...(lastTurn ? { lastTurn } : {}) });
+  // The treasury it holds: troops at its capital, as a person would.
+  const cap = view.territories[view.me.capital];
+  const own: Order[] = view.me.gold >= ctx.rules.troops.cost && cap?.detail === "full" && cap.owner === view.me.id ? [{ id: `${view.me.id}-t${view.turn}-treasury`, kind: "recruit", territory: view.me.capital, count: "all" }] : [];
+  return { orders: [...setup, ...own, ...plan.orders], memory: plan.memory };
+}

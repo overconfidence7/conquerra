@@ -3,7 +3,7 @@ import type { VoiceLine } from "../logic/voices";
 import type { LeaderNote, Answer } from "@conquerra/bots";
 import type { GameMode, Instruction, LeaderStyle, Offer, Order, PlayerId, PlayerView, ReplayEvent, SaveFile } from "@conquerra/engine";
 import type { TurnClock } from "../logic/timer";
-import type { SlotId, SlotInfo } from "./saves";
+import type { SlotId, SlotInfo } from "./slots";
 
 /**
  * The contract between the UI and whatever runs the game.
@@ -49,6 +49,8 @@ export interface LobbySettings {
   /** Session 20c: their personalities (Neutral when left out): war-minded for the Leader, building-minded for the Steward. */
   leaderPersonality?: LeaderStyle | null;
   stewardPersonality?: LeaderStyle | null;
+  /** Online (session 26, Nate's call): "If I miss a turn with no orders, my leaders run my House" (on unless turned off). */
+  leadersRun?: boolean;
 }
 
 export interface TurnReport {
@@ -59,6 +61,8 @@ export interface TurnReport {
   voices?: VoiceLine[];
   /** Your House came back from a quarter of its most land to over half of it (session 23): the comeback card plays. */
   comeback?: true;
+  /** Online (session 26): the people who missed this turn and whose leaders ran their House for it (the card says so). */
+  ranByLeaders?: PlayerId[];
 }
 
 export interface HostUpdate {
@@ -86,6 +90,13 @@ export interface HostUpdate {
   offers?: Offer[];
   /** Each bot seat's level and personality: once the game is over, or all along with "Show personalities" on. */
   seats?: Record<PlayerId, SeatInfo>;
+  /**
+   * Online (session 26): provably fair. The room commits to its secret seed's SHA-256 in the game's first message and
+   * reveals the seed itself when the game is over (anyone can then replay every roll).
+   */
+  fair?: { seedHash: string; seed?: string };
+  /** Online: your view before the turn in `report` (a player coming back after missing turns replays it from there). */
+  before?: PlayerView;
 }
 
 /**
@@ -97,10 +108,17 @@ export interface HostStart extends HostUpdate {
   rules: Rules;
   /** The Chronicle so far (session 16): your report of every turn played (a loaded game brings its own). */
   chronicle?: TurnReport[];
+  /**
+   * Online (session 26): the last turn's replay as you saw it, for a player coming back; `play`: you haven't watched
+   * it yet (or the table's replay is still on), so the game opens in it.
+   */
+  replay?: { before: PlayerView; report: TurnReport; play: boolean };
+  /** Online: you've locked in this turn and the table is waiting on someone else. */
+  lockedIn?: boolean;
 }
 
-/** Where to load a saved game from: a slot on this device ("auto" is Continue), or a save file's text. */
-export type LoadSource = { slot: SlotId } | { file: string };
+/** Where to load a saved game from: a slot on this device ("auto" is Continue), or a save file's text; or an online game (its id). */
+export type LoadSource = { slot: SlotId } | { file: string } | { online: string };
 
 export interface GameHost {
   start(settings: LobbySettings): Promise<HostStart>;
@@ -182,3 +200,52 @@ export type HostResponse =
   /** Not an answer: something for the player to know (id is 0). */
   | { id: 0; ok: true; notice: string }
   | { id: number; ok: false; error: string };
+
+// ---------- Online (session 26): the same contract over a WebSocket to the game's room ----------
+
+/**
+ * What the page sends a game room. The local worker's requests that make sense online, plus "hello" (where are we?),
+ * sent on every (re)connect. Starting a game is the API's job; saves, files and pause are single player only.
+ */
+export type RoomRequest = Extract<HostRequest, { type: "lockIn" | "saveOrders" | "watchNext" | "finish" | "suggest" | "planGenerals" | "propose" }> | { id: number; type: "hello" };
+
+/** A room request without its id (each kind keeps its own fields). */
+export type RoomBody = RoomRequest extends infer R ? (R extends { id: number } ? Omit<R, "id"> : never) : never;
+
+/**
+ * The room's answer to "hello": this person's game as it stands. Like `HostStart`, but the map travels as its id and
+ * version (the page has the map with its drawing data; the room only the slim one it plays on).
+ */
+export interface RoomStart extends Omit<HostStart, "map"> {
+  gameId: string;
+  mapId: string;
+  mapVersion: number | null;
+}
+
+/** Everything the room sends: the local host's answers (or the start), each with the room's clock so the page's countdown matches it. */
+export type RoomMessage = { now: number } & (HostResponse | { id: number; ok: true; start: RoomStart });
+
+/** The game list (the lobby's "Your online games"), from the database. */
+export interface OnlineGameInfo {
+  id: string;
+  mapId: string;
+  mapName: string;
+  turn: number;
+  status: "playing" | "over";
+  /** Who the table is waiting on this turn, by name ("you" for you). */
+  waitingOn: string[];
+  /** When the turn's clock runs out (ms), or null. */
+  deadline: number | null;
+  /** Each person and bot at the table, in seat order. */
+  players: { name: string; bot: boolean; you: boolean }[];
+  created: number;
+  /** Your seat's choice: "If I miss a turn with no orders, my leaders run my House". */
+  leadersRun: boolean;
+  winner?: string | null;
+}
+
+/** Making an online game (the API's body): the lobby's settings and your seat's choice. */
+export interface NewOnlineGame {
+  settings: LobbySettings;
+  leadersRun: boolean;
+}

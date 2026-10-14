@@ -693,7 +693,7 @@ export const answerOrder = (o: Offer, accept: boolean): Order => ({ id: `answer-
 /**
  * As planning starts, the host asks each bot (in seat-list order, so games stay deterministic) what it proposes. An
  * offer to another bot is answered at once (one counteroffer allowed, answered at once too); one to the human waits
- * for the page (at most `offersToYouPerTurn` a turn from all the bots together). The result is each bot's diplomacy
+ * for the page (at most `offersToYouPerTurn` a turn to each person from all the bots together). The result is each bot's diplomacy
  * orders for the turn, the offers to the human, and every exchange (with its reason) for the simulator's report.
  */
 export function negotiate(
@@ -701,7 +701,8 @@ export function negotiate(
   bots: readonly { id: PlayerId; level: DiplomatLevel | Diplomat }[],
   viewOf: (p: PlayerId) => PlayerView,
   lastTurn: (p: PlayerId) => readonly ReplayEvent[] | undefined,
-  human: PlayerId | null,
+  /** The person at the table (single player), or every person at an online table (session 26), or nobody. */
+  human: PlayerId | readonly PlayerId[] | null,
 ): { orders: OrdersByPlayer; toHuman: Offer[]; talks: Talk[] } {
   const orders: OrdersByPlayer = {};
   const toHuman: Offer[] = [];
@@ -711,7 +712,9 @@ export function negotiate(
   /** Pairs and kinds already agreed (or offered) this turn, so nobody makes the same deal twice. */
   const engaged = new Set<string>();
   const key = (a: PlayerId, c: PlayerId, kind: DealKind) => `${a < c ? `${a}|${c}` : `${c}|${a}`}|${kind}`;
-  let humanLeft = ctx.rules.diplomacy.bots.offersToYouPerTurn;
+  // Each person gets at most `offersToYouPerTurn` offers a turn from all the bots together.
+  const people = human === null ? [] : typeof human === "string" ? [human] : human;
+  const humanLeft = new Map(people.map((p) => [p, ctx.rules.diplomacy.bots.offersToYouPerTurn]));
   for (const bot of bots) {
     const view = viewOf(bot.id);
     if (view.players.find((p) => p.id === bot.id)?.eliminatedTurn !== null) continue;
@@ -719,9 +722,10 @@ export function negotiate(
     for (const o of offers) {
       const k = key(o.from, o.to, o.terms.kind);
       if (engaged.has(k)) continue;
-      if (o.to === human) {
-        if (humanLeft <= 0) continue;
-        humanLeft--;
+      const left = humanLeft.get(o.to);
+      if (left !== undefined) {
+        if (left <= 0) continue;
+        humanLeft.set(o.to, left - 1);
         engaged.add(k);
         push(bot.id, proposeOrder(o));
         toHuman.push(o);

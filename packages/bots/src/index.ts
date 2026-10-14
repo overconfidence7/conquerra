@@ -53,4 +53,4 @@ export {
   type LeadersRequest,
   type Steer,
 } from "./marshal";
-export { makeDelegateSeat, makeLeaderPathSeat, makeStewardSeat } from "./delegateSeat";
+export { leadersRunHouse, makeDelegateSeat, makeLeaderPathSeat, makeStewardSeat } from "./delegateSeat";

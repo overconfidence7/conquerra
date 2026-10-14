@@ -72,6 +72,8 @@ export class HostCore {
         throw saveErrorFor(e, true);
       }
       if (raw === null) throw new Error("That save slot is empty.");
+    } else if ("online" in source) {
+      throw new Error("An online game opens from the lobby's Online block.");
     } else {
       try {
         raw = JSON.parse(source.file);
