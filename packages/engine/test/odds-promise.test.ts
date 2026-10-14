@@ -96,7 +96,7 @@ describe("the odds preview keeps its promises", () => {
       ),
       { numRuns: 1000 },
     );
-  });
+  }, 30_000); // (about 5 s alone; a busy machine can double it.)
 
   // Every lobby setting (None, Low, Normal, High) and more. At 100% luck a side's losses can roll all the way down
   // to 0, so the preview says "likely" there, not "guaranteed" (the property test above still covers it).

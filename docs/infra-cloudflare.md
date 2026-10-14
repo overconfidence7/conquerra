@@ -33,7 +33,23 @@
   - **Session 6 (Oct 4):** Wrangler logged in on Nate's computer; the Worker `conquerra` is uploaded (versions `2751944d`, then `095343fd`). Cloudflare confirms: workers.dev address **off**, preview addresses **off**, custom domain `conquerra.overconfidenceonline.com` attached with a certificate. **But the address doesn't answer yet:** the zone's own nameservers have no record for `conquerra` (keel resolves fine), so nobody can open it, which is safe. Next: look in the dashboard (DNS → Records, and Workers → conquerra → Domains & Routes) for why the record is missing, then re-run `pnpm check:preview`.
   - `wrangler deployments list --config apps/web/wrangler.jsonc` works.
 
-### M4 (online with friends): the real backend
+### M4 (online with friends): the real backend (built in session 26)
+- **Built, session 26 (Oct 13):** the Worker `conquerra` now has a script (`apps/web/server/`): static files as before, plus the online API under `/api` (only `/api/*` runs the Worker's code: `run_worker_first`). Bindings: the Durable Object `GameRoom` (SQLite storage, migration tag `v1`), D1 `conquerra_db` (id `eed2c38b-1ca4-4e45-8b0b-b3c808183a6c`, migrations in `apps/web/migrations/`), the variables `ACCESS_TEAM` (`keel-nkurtz.cloudflareaccess.com`) and `ACCESS_AUD` (the Conquerra app's AUD tag, in `apps/web/wrangler.jsonc`). Workers Logs on (observability). No R2 yet.
+- **Deploy:** `pnpm deploy:preview` runs the tests, builds, applies any new D1 migration (`wrangler d1 migrations apply conquerra_db --remote`), deploys (which creates the Durable Object's storage the first time), and runs the lock check (every page, the API and a real WebSocket must be refused without signing in).
+- **Local:** `npx wrangler dev --config apps/web/wrangler.jsonc` (after `pnpm build`), with `DEV_EMAIL=you@example.com` in `apps/web/.dev.vars` (git-ignored, never uploaded) standing in for the sign-in, and `npx wrangler d1 migrations apply conquerra_db --local` once.
+
+#### Nate's steps for M4 (copy-paste simple)
+**1. The AUD tag (once, session 26).** The Worker checks every API call's sign-in against the Conquerra Access app's "audience" tag. It isn't a secret (it's inside every sign-in token).
+   1. Open https://one.dash.cloudflare.com and pick "Nkurtz@gmail.com's Account".
+   2. Left menu: **Access controls → Applications** (on older layouts: **Access → Applications**).
+   3. Find **Conquerra**, click the three dots (or its name), then **Edit** / **Configure**.
+   4. On the **Overview** (or **Basic information**) tab, find **Application Audience (AUD) Tag**, and click the copy button next to it. It's a long string of letters and digits.
+   5. Paste it to Claude Code (it goes into `apps/web/wrangler.jsonc`, `"ACCESS_AUD"`), or put it there yourself and run `pnpm deploy:preview`.
+   Until it's set, the lobby's Online block says "not switched on yet" and single player is unaffected.
+
+**2. Friends (session 27):** add their emails to the "Conquerra players" policy (same page as step 1, **Policies** tab).
+
+#### What M4 needed, as planned
 - **Worker** `conquerra`: serves the web app and the API on `conquerra.overconfidenceonline.com`.
 - **Durable Object** `GameRoom` (SQLite storage): one per game. Its alarms run the 5-minute timers; WebSockets carry the live replay.
 - **D1** `conquerra_db`: users, games, results.
