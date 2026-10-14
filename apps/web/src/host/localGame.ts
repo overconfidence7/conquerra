@@ -667,7 +667,8 @@ export class LocalGame {
    */
   resign(id: PlayerId): Map<PlayerId, HostUpdate> | null {
     if (!this.handOver(id, "resigned")) return null;
-    if (this.living.length && this.living.every((x) => this.person(x).locked)) return this.resolveTable(false);
+    // (Nobody left playing, or everyone still playing has locked in: nothing to wait for.)
+    if (this.living.every((x) => this.person(x).locked)) return this.resolveTable(false);
     return null;
   }
 

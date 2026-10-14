@@ -207,6 +207,8 @@ describe("nobody left playing (session 27)", () => {
     expect(await t.room.resignUser(NATE.user)).toBe(true);
     expect(await t.room.resignUser(KIT.user)).toBe(true);
     const g = t.room.table!;
+    // The last person resigning resolves the turn at once (nobody to wait for).
+    expect(g.turn).toBe(2);
     // No planning window now: the deadline is when the window would open.
     expect(t.alarm()).not.toBeNull();
     for (let i = 0; i < 400 && !g.over; i++) {

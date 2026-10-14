@@ -654,7 +654,7 @@ export function GameScreen() {
       purses={plan ? [...plan.pursesLeft.values()].reduce((a, x) => a + Math.max(0, x), 0) : pursesTotal(view.me)}
       goldAfter={plan.goldLeft}
       income={income}
-      clock={out || gone ? null : clock}
+      clock={out ? null : clock}
       replaying={replaying}
       phone={phone}
       fallen={out ? { influence: view.me.influence, perTurn: influencePerTurn(ctx, view) } : null}
