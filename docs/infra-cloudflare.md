@@ -43,9 +43,10 @@
    1. Open https://one.dash.cloudflare.com and pick "Nkurtz@gmail.com's Account".
    2. Left menu: **Access controls → Applications** (on older layouts: **Access → Applications**).
    3. Find **Conquerra**, click the three dots (or its name), then **Edit** / **Configure**.
-   4. On the **Overview** (or **Basic information**) tab, find **Application Audience (AUD) Tag**, and click the copy button next to it. It's a long string of letters and digits.
+   4. Open the **Additional settings** tab, find **Application Audience (AUD) Tag**, and click the copy button next to it. It's a long string of letters and digits.
    5. Paste it to Claude Code (it goes into `apps/web/wrangler.jsonc`, `"ACCESS_AUD"`), or put it there yourself and run `pnpm deploy:preview`.
    Until it's set, the lobby's Online block says "not switched on yet" and single player is unaffected.
+   **Done Oct 14:** read from the dashboard (Claude in Chrome, with Nate signed in; nothing changed there) and set in `wrangler.jsonc`. If the Access app is ever made again, its tag changes: repeat these steps.
 
 **2. Friends (session 27):** add their emails to the "Conquerra players" policy (same page as step 1, **Policies** tab).
 
