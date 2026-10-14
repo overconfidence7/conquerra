@@ -116,7 +116,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
 - **Later: a top-tier bot above the Marshal** (Nate, Oct 9), built from the leaders' tricks and Nate's own saved games once the sims show they beat the Marshal; the Marshal stays the default hard level.
 - **25b: Nate's play-test fixes** (Oct 13; prompt `docs/prompts/claude-code-session-25b.md`): music to a fifth and sliders that set the level, the replay's sounds simpler and shorter, the "rival takes your land" sound replaced, the lobby redesigned (dropdowns, smaller text, room for Online), no harder-spots row, the Recruit-then-Done glitch, tap your Leader to see where they are. Runs before 26.
 - After sound (24), M3's code is done; 25 was written on Oct 11 with orchestrator defaults (Nate's call: keep Claude Code busy; his play test runs alongside and his notes outrank the defaults). **What comes next is decided after Nate plays** (then M4).
-- Orchestrator prompts: orchestrator-07 was written after session 18; orchestrator-08 after session 20d (with session 21's prompt); orchestrator-09 after session 23 (with session 24's prompt); the next is due after session 26.
+- Orchestrator prompts: orchestrator-07 was written after session 18; orchestrator-08 after session 20d (with session 21's prompt); orchestrator-09 after session 23 (with session 24's prompt); orchestrator-10 after session 26 (with session 27's prompt); the next is due after session 29.
 - Leader-as-general (standing instructions) and captured generals.
 - Spoils and Fate decks (events and missions).
 - Preset-based diplomacy with counteroffers and the re-confirm rule.
