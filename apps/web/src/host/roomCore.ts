@@ -4,6 +4,7 @@ import { HOUSES } from "../map/houses";
 import { LocalGame, PEOPLE_DEAL_TEXT, type PersonSeat, type SeatLeft } from "./localGame";
 import { cleanName } from "./names";
 import { TABLE_TEXT } from "./roomText";
+import { ChatRoom, type ChatSeat } from "./chatRoom";
 import type { HostUpdate, LobbySettings, RoomMessage, RoomRequest, RoomStart, TableAct, TableView } from "./protocol";
 
 /**
@@ -165,6 +166,8 @@ export class RoomCore {
   lastTurnMs = 0;
   /** Session 27: the table (null: not loaded yet; undefined: loaded, and there is none, a game from session 26). */
   private tableRec: TableRecord | null | undefined = null;
+  /** Session 28: the table's chats (its people only; a game from session 26 has none). */
+  readonly chat: ChatRoom;
 
   constructor(
     private readonly store: RoomStore,
@@ -173,7 +176,31 @@ export class RoomCore {
     private readonly now: () => number = () => Date.now(),
     /** A clock for timing the work (Workers only move it on I/O; `wrangler tail` has the real CPU time). */
     private readonly timer: () => number = () => performance.now(),
-  ) {}
+  ) {
+    this.chat = new ChatRoom(store, () => this.chatSeats(), now);
+  }
+
+  /** Session 28: everyone sitting at the table, as chat knows them (who has left reads, but doesn't write). */
+  private chatSeats(): ChatSeat[] {
+    const t = this.tableRec;
+    if (!t) return [];
+    const left = this.game?.leftSeats ?? {};
+    return t.sitters.map((x) => ({ user: x.user, name: x.name, house: x.house, ...(x.seat ? { seat: x.seat } : {}), ...(x.seat && left[x.seat] ? { left: true } : {}) }));
+  }
+
+  /** Session 28: something done in chat. The page that did it gets the answer; everyone else concerned, a push. */
+  private async chatMessage(who: Who, req: Extract<RoomRequest, { type: "chat" }>) {
+    await this.chat.load();
+    const done = this.chat.act(who.user, req.act);
+    if (done && "error" in done) {
+      this.io.sendUser(who.user, { id: req.id, ok: false, error: done.error, now: this.now() });
+      return;
+    }
+    const mine = done?.tell.get(who.user) ?? { chats: [], lines: [], canWrite: true };
+    this.io.sendUser(who.user, { id: req.id, ok: true, chat: mine, now: this.now() });
+    for (const [user, sync] of done?.tell ?? []) if (user !== who.user) this.io.sendUser(user, { id: 0, ok: true, chat: sync, now: this.now() });
+    await this.chat.flush();
+  }
 
   /** Make the game: the people in their seats, bots in the rest, the seed committed to. */
   async create(setup: RoomSetup): Promise<RoomInfo> {
@@ -278,6 +305,8 @@ export class RoomCore {
   async receive(who: Who, req: RoomRequest): Promise<void> {
     if (!req || typeof req !== "object" || typeof req.id !== "number") return;
     const table = await this.loadTable();
+    // Session 28: chat, at the table screen and in the game alike.
+    if (table && req.type === "chat") return this.chatMessage(who, req);
     if (!table) {
       if (who.seat) return this.message(who.seat, req);
       this.io.sendUser(who.user, { id: req.id, ok: false, error: TABLE_TEXT.noSeat, now: this.now() });
@@ -293,6 +322,7 @@ export class RoomCore {
     const answer = (msg: { ok: true; table: TableView } | { ok: false; error: string }) => this.io.sendUser(who.user, { ...msg, id: req.id, now: this.now() } as RoomMessage);
     if (req.type === "hello") {
       answer({ ok: true, table: this.tableView(t, who.user) });
+      await this.sendChat(who.user, req.chatHave);
       return;
     }
     if (req.type !== "table" || !req.act || typeof req.act !== "object") {
@@ -310,6 +340,15 @@ export class RoomCore {
     await this.flush();
     answer({ ok: true, table: this.tableView(t, who.user) });
     this.broadcast(t, who.user);
+    // Session 28: someone who just sat down reads the table chat from its start.
+    if (req.act.do === "sit") await this.sendChat(who.user);
+  }
+
+  /** Session 28: an account's chats and the messages its page lacks (only if it sits at the table). */
+  private async sendChat(user: string, have?: number) {
+    if (!this.tableRec || !this.tableRec.sitters.some((x) => x.user === user)) return;
+    await this.chat.load();
+    this.io.sendUser(user, { id: 0, ok: true, chat: this.chat.sync(user, typeof have === "number" ? have : 0), now: this.now() });
   }
 
   /** One change to the table, or the sentence saying why not. (The start itself is `begin`.) */
@@ -393,6 +432,7 @@ export class RoomCore {
     const marshals = rules.botLevel === "mixed" ? { marshals: Math.min(bots, rules.marshals ?? Math.ceil(bots / 2)) } : {};
     await this.create({ gameId: t.gameId, settings: { ...rules, bots, ...marshals }, people, seed: t.seed });
     t.status = "started";
+    await this.chat.load();
     // Everyone seated goes into turn 1 (a page at the table screen is waiting for exactly this).
     for (const x of t.sitters) this.reply(x.seat!, { id: 0, ok: true, start: this.hello(x.seat!) });
   }
@@ -468,7 +508,7 @@ export class RoomCore {
   }
 
   /** "Where are we": this seat's game as it stands (planning with their queue, or the replay they missed). */
-  hello(seat: PlayerId, have = 0): RoomStart {
+  hello(seat: PlayerId, have = 0, chatHave = 0): RoomStart {
     const g = this.g;
     const { map, queued: _restored, chronicle, ...start } = g.start(seat);
     // Session 27: the page keeps its own Chronicle and says which turns it has: only the ones it lacks travel.
@@ -491,7 +531,20 @@ export class RoomCore {
       ...(queued ? { queued } : {}),
       ...(g.lockedIn(seat) && !g.over ? { lockedIn: true } : {}),
       ...(last ? { replay: { before: last.before, report: last.report, play: unseen || (opens !== null && this.now() < opens) } } : {}),
+      // Session 28: your chats (once chat has loaded: a room wakes it with the first hello).
+      ...(this.chatFor(seat, chatHave) ?? {}),
     };
+  }
+
+  /** Session 28: the chat part of a seat's "where are we". */
+  private chatFor(seat: PlayerId, have: number): { chat: ReturnType<ChatRoom["sync"]> } | null {
+    const user = this.userOf(seat);
+    if (!user) return null;
+    try {
+      return { chat: this.chat.sync(user, have) };
+    } catch {
+      return null;
+    }
   }
 
   /** A message from a seat's page. */
@@ -502,7 +555,9 @@ export class RoomCore {
       if (!g.peopleIds.includes(seat)) throw new Error("You don't have a seat in this game");
       switch (req.type) {
         case "hello": {
-          const start = this.hello(seat, typeof req.have === "number" ? req.have : 0);
+          await this.loadTable();
+          if (this.tableRec) await this.chat.load();
+          const start = this.hello(seat, typeof req.have === "number" ? req.have : 0, typeof req.chatHave === "number" ? req.chatHave : 0);
           if (this.reply(seat, { id: req.id, ok: true, start }) && start.replay) this.markSeen(seat, start.replay.report.turn);
           return;
         }

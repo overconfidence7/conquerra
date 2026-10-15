@@ -64,6 +64,53 @@ export interface PeopleOffer {
   counterState?: "open" | "accepted" | "declined" | "withdrawn" | "lapsed";
 }
 
+// ---------- Session 28: chat for people ----------
+
+/** Someone in a chat, as the others in it see them: a name, a House colour, a seat once the game has started. */
+export interface ChatPerson {
+  name: string;
+  house: number;
+  seat?: PlayerId;
+  you?: true;
+}
+
+/** A chat you're in. The table is everyone sitting there; a one-to-one or a group says who's in it, nothing more. */
+export interface ChatView {
+  id: string;
+  kind: "table" | "pair" | "group";
+  /** A group's name, if a member gave it one (else the page names it after its members). */
+  name?: string;
+  members?: ChatPerson[];
+}
+
+/** One message: plain text, as its writer wrote it. */
+export interface ChatLine {
+  id: number;
+  chat: string;
+  from: ChatPerson;
+  text: string;
+  at: number;
+}
+
+/**
+ * Chat for one person: the chats they're in and messages they lack (after `after`, the last id their page had), or,
+ * as a push, what just changed. `canWrite`: false once they've left the game (they still read).
+ */
+export interface ChatSync {
+  chats: ChatView[];
+  lines: ChatLine[];
+  canWrite: boolean;
+  after?: number;
+}
+
+/** What a page does in chat: write, open a one-to-one, make a group, add people to one, rename one. */
+export type ChatAct =
+  | { do: "send"; chat: string; text: string }
+  | { do: "pair"; with: PlayerId }
+  | { do: "group"; with: PlayerId[]; name?: string }
+  | { do: "add"; chat: string; with: PlayerId[] }
+  | { do: "rename"; chat: string; name: string };
+
 /** Session 28: a person's note with an offer, at most this many characters (their own words: the game never rewrites them). */
 export const NOTE_MAX = 120;
 
@@ -251,7 +298,9 @@ export type HostResponse =
  */
 export type RoomRequest =
   | Extract<HostRequest, { type: "lockIn" | "saveOrders" | "watchNext" | "finish" | "suggest" | "planGenerals" | "propose" }>
-  | { id: number; type: "hello"; have?: number }
+  | { id: number; type: "hello"; have?: number; chatHave?: number }
+  /** Session 28: chat (the table screen's, and the game's). */
+  | { id: number; type: "chat"; act: ChatAct }
   | { id: number; type: "table"; act: TableAct }
   /** Session 27: leave the game for good: a Marshal plays the seat from now on (you can still watch). */
   | { id: number; type: "resign" }
@@ -313,6 +362,8 @@ export interface RoomStart extends Omit<HostStart, "map"> {
    * (the whole Chronicle used to travel with every hello: 104 KB by turn 31 on Rootholm).
    */
   chronicleAfter?: number;
+  /** Session 28: your chats and the messages your page lacks. */
+  chat?: ChatSync;
   mapId: string;
   mapVersion: number | null;
 }
@@ -328,6 +379,8 @@ export type RoomMessage = { now: number } & (
   | { id: number; ok: true; turnReplay: { before: PlayerView; report: TurnReport } }
   /** Session 28: the offers between people you're a side of, as they changed (a push, id 0), or done (an answer). */
   | { id: number; ok: true; talks: PeopleOffer[] }
+  /** Session 28: chat: what changed in your chats (a push, id 0), or the answer to something you did there. */
+  | { id: number; ok: true; chat: ChatSync }
 );
 
 /** The game list (the lobby's "Your online games"), from the database. */

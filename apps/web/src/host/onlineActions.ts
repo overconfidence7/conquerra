@@ -3,6 +3,7 @@ import { ONLINE_TIMER_CHOICES, DEFAULT_TIMER } from "../logic/timer";
 import { api, createRemoteHost, type RemoteHost } from "./remoteHost";
 import type { HostStart, OnlineGameInfo, TableAct, TableView } from "./protocol";
 import { applyTalks } from "../logic/peopleDeals";
+import { applyChat, chatGame, resetChat } from "../ui/chat/chatStore";
 
 /**
  * The page's online actions (session 26): the lobby's Online block and a "?game=" link call these. They live apart
@@ -75,6 +76,13 @@ function openWith(begin: (host: RemoteHost) => Promise<HostStart>): Promise<bool
   const host = createRemoteHost();
   tableHost = host;
   host.onReady((ready) => tableHost === host && useGame.setState({ ready }));
+  // Session 28: this game's chats (only yours), from the table screen into the game.
+  resetChat(null, (a) => host.chatAct(a));
+  host.onChat((sync) => {
+    if (tableHost !== host) return;
+    chatGame(host.gameId());
+    applyChat(sync);
+  });
   // Session 28: offers between people as they change: the deal card and the map follow, and the news is said quietly.
   host.onTalks?.((talks) => {
     if (tableHost === host) for (const line of applyTalks(talks)) host.say(line);

@@ -1,7 +1,7 @@
 import type { MapDef } from "@conquerra/content";
 import type { Order, PlayerView } from "@conquerra/engine";
 import { chronicleOf } from "../logic/chronicleKeep";
-import type { GameHost, HostStart, HostUpdate, LeaderOrders, LobbySettings, NewOnlineGame, PeopleOffer, ProposeAnswer, RoomBody, RoomMessage, RoomRequest, RoomStart, TableAct, TableView, TurnReport } from "./protocol";
+import type { ChatAct, ChatSync, GameHost, HostStart, HostUpdate, LeaderOrders, LobbySettings, NewOnlineGame, PeopleOffer, ProposeAnswer, RoomBody, RoomMessage, RoomRequest, RoomStart, TableAct, TableView, TurnReport } from "./protocol";
 
 /**
  * The online host (session 26): the same `GameHost` the page uses for single player, but the game runs in its room
@@ -76,6 +76,10 @@ export interface RemoteHost extends GameHost {
   turnReplay(turn: number): Promise<{ before: PlayerView; report: TurnReport }>;
   /** Session 28: news for the player, shown as the host's own notices are (`calm`: quietly, and it goes by itself). */
   say(message: string, calm?: boolean): void;
+  /** Session 28: chat: what changed in your chats, as it comes (and your chats on every hello). */
+  onChat(listener: (sync: ChatSync) => void): void;
+  /** Session 28: do something in chat; the answer is what changed. */
+  chatAct(act: ChatAct): Promise<ChatSync>;
 }
 
 export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
@@ -95,6 +99,13 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
   const readies: ((ready: string[]) => void)[] = [];
   /** Session 28: the offers between people this page is a side of, as they change. */
   const talkers: ((talks: PeopleOffer[]) => void)[] = [];
+  /** Session 28: chat, and the last message this page has (the hello asks only for the rest). */
+  const chatters: ((sync: ChatSync) => void)[] = [];
+  let chatLast = 0;
+  const gotChat = (sync: ChatSync) => {
+    for (const l of sync.lines) chatLast = Math.max(chatLast, l.id);
+    chatters.forEach((f) => f(sync));
+  };
   let ws: WebSocket | null = null;
   let disposed = false;
   let attempts = 0;
@@ -174,6 +185,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
 
   async function onHello(s: RoomStart, roomNow: number) {
     const reconnect = !opening;
+    if (s.chat) gotChat(s.chat);
     if (opening) {
       const o = opening;
       opening = null;
@@ -263,6 +275,16 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
       readies.forEach((f) => f(m.ready));
       return;
     }
+    // Session 28: chat (a push, or the answer to something this page did there).
+    if ("chat" in m) {
+      gotChat(m.chat);
+      const w = pending.get(m.id);
+      if (w) {
+        pending.delete(m.id);
+        w.resolve(m.chat);
+      }
+      return;
+    }
     // Session 28: offers between people (a push, or the answer to an answer or a withdrawal).
     if ("talks" in m) {
       talkers.forEach((f) => f(m.talks));
@@ -301,7 +323,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
       attempts = 0;
       helloId = nextId++;
       const have = haveChronicle();
-      sock.send(JSON.stringify({ id: helloId, type: "hello", ...(have ? { have } : {}) } satisfies RoomRequest));
+      sock.send(JSON.stringify({ id: helloId, type: "hello", ...(have ? { have } : {}), ...(chatLast ? { chatHave: chatLast } : {}) } satisfies RoomRequest));
     };
     sock.onmessage = onMessage;
     sock.onclose = (e: CloseEvent) => {
@@ -354,6 +376,8 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
     onTable: (f) => void tables.push(f),
     onReady: (f) => void readies.push(f),
     say: (m, calm = true) => tell(m, calm),
+    onChat: (f) => void chatters.push(f),
+    chatAct: (act) => ask<ChatSync>({ type: "chat", act }),
     tableAct: (act) => ask<TableView>({ type: "table", act }),
     resign: () => ask<HostUpdate>({ type: "resign" }),
     turnReplay: (turn) => ask<{ before: PlayerView; report: TurnReport }>({ type: "turnReplay", turn }),

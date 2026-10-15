@@ -7,6 +7,7 @@ import { useGame } from "../store";
 import { useArtUrl, useShield } from "./art";
 import { colorOf } from "./colors";
 import { myOfferState, PEOPLE_DEAL_SHORT, PEOPLE_DEAL_STATUS, withdrawOffer } from "../logic/peopleDeals";
+import { chatWith, useChat } from "./chat/chatStore";
 import { Frame } from "./Frame";
 
 const portraitOf = (seat: number) => `leader-${String((seat % 10) + 1).padStart(2, "0")}`;
@@ -83,14 +84,21 @@ function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: s
       </span>
     </>
   );
+  // Online (session 28): a chat bubble on each person (one-to-one), while they and you are still playing.
+  const bubble = person && !gone && !leftSeats?.[view.me.id];
   return (
-    <li className={`player ${out ? "out" : ""} ${open ? "open" : ""}`}>
+    <li className={`player ${out ? "out" : ""} ${open ? "open" : ""} ${bubble ? "has-chat" : ""}`}>
       {can ? (
         <button className="player-btn" onClick={onToggle} aria-expanded={open}>
           {body}
         </button>
       ) : (
         <div className="player-btn">{body}</div>
+      )}
+      {bubble && (
+        <button className="chat-bubble" onClick={() => void chatWith(id)} aria-label={`Chat with ${p.name}`} title={`Chat with ${p.name}`}>
+          💬
+        </button>
       )}
       {open && can && (
         <div className="player-more">
@@ -133,6 +141,9 @@ function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: s
  */
 export function PlayersPanel({ view }: { view: PlayerView }) {
   const [open, setOpen] = useState<string | null>(null);
+  const { online, people, leftSeats } = useGame();
+  // Online (session 28): a group chat with any people at the table.
+  const canGroup = !!online && (people ?? []).some((id) => id !== view.me.id && !leftSeats?.[id]) && !leftSeats?.[view.me.id];
   return (
     <Frame title="Houses" className="slim">
       <ul className="players">
@@ -140,6 +151,11 @@ export function PlayersPanel({ view }: { view: PlayerView }) {
           <PlayerRow key={p.id} view={view} id={p.id} seat={i} open={open === p.id} onToggle={() => setOpen((o) => (o === p.id ? null : p.id))} />
         ))}
       </ul>
+      {canGroup && (
+        <button className="link small players-group" onClick={() => useChat.setState({ open: true, grouping: true, selected: null, popup: null })}>
+          Group…
+        </button>
+      )}
     </Frame>
   );
 }

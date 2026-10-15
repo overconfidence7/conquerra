@@ -9,6 +9,7 @@ import { useGame } from "../store";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
 import "./online.css";
+import ChatPanel from "./chat/ChatPanel";
 
 /**
  * The table screen (session 27): an online game waiting for its players. The host sees the link to send (copy, or the
@@ -209,6 +210,13 @@ export default function TableScreen() {
               <div className="field">
                 <span className="field-name">Your House colour</span>
                 <Swatches t={t} chosen={mine} onPick={(h) => void run(() => tableAct({ do: "colour", house: h }))} />
+              </div>
+            )}
+            {/* Session 28: the table chat, so friends can talk while they wait (it carries into the game). */}
+            {seated && (
+              <div className="field table-chat">
+                <span className="field-name">The table chat</span>
+                <ChatPanel mode="table" />
               </div>
             )}
             {t.you.host ? (

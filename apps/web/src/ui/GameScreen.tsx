@@ -29,6 +29,8 @@ import { TerritoryCard, vistaFor } from "./TerritoryCard";
 import { useArtUrl } from "./art";
 import { Toasts, type ShownToast } from "./Toasts";
 import { TopBar } from "./TopBar";
+import { ChatButton, ChatPopup } from "./chat/ChatBits";
+import { closeChat, unreadAll, useChat } from "./chat/chatStore";
 import { useReplay } from "./useReplay";
 import { moreCue } from "./moreCue";
 import { useLayout, useLayoutChoice } from "./useLayout";
@@ -59,6 +61,8 @@ const NameField = lazy(() => import("./NameField").then((m) => ({ default: m.Nam
 const SoundCredits = lazy(() => import("./SoundCredits"));
 /** The Chronicle (session 16): loaded the first time it's opened. */
 const ChronicleSheet = lazy(() => import("./Chronicle"));
+/** Chat (session 28): loaded the first time it's opened, online only. */
+const ChatPanel = lazy(() => import("./chat/ChatPanel"));
 /** The deal card (session 14): loaded the first time you propose a deal or open an offer. */
 const DealSheet = lazy(() => import("./Deals"));
 /** The turn report and its wording (session 14): loaded once the first turn has played (it isn't needed before). */
@@ -377,6 +381,18 @@ export function GameScreen() {
   const [spendOpen, setSpendOpen] = useState(false);
   const [sheet, setSheet] = useState<SheetSize>("closed");
   const [tab, setTab] = useState("army");
+  // Chat (session 28): on a phone it opens in the bottom sheet (its own tab); the sheet closing closes it.
+  const chatOpen = useChat((s) => s.open);
+  const chatUnread = useChat(unreadAll);
+  const wasChat = useRef({ sheet, tab });
+  useEffect(() => {
+    if (phone && chatOpen) (setTab("chat"), setSheet((s) => (s === "closed" ? "half" : s)));
+  }, [chatOpen, phone]);
+  useEffect(() => {
+    const was = wasChat.current;
+    wasChat.current = { sheet, tab };
+    if (phone && chatOpen && was.tab === "chat" && was.sheet !== "closed" && (sheet === "closed" || tab !== "chat")) closeChat();
+  }, [sheet, tab]); // eslint-disable-line react-hooks/exhaustive-deps
   const [playersOn, setPlayersOn] = useState(false);
   const [minimapOn, setMinimapOn] = useState(false);
   const [dockOpen, setDockOpenState] = useState(readDockOpen);
@@ -667,6 +683,7 @@ export function GameScreen() {
       fallen={out ? { influence: view.me.influence, perTurn: influencePerTurn(ctx, view) } : null}
       onPause={out || view.winner || g.online ? null : () => void g.togglePause()}
       onChronicle={() => setChronicleOpen(true)}
+      chat={g.online ? <ChatButton phone={phone} /> : null}
       onSettings={() => setSettings((s) => !s)}
     />
   );
@@ -757,6 +774,12 @@ export function GameScreen() {
           <DealSheet ctx={ctx} view={view} />
         </Suspense>
       )}
+      {g.online && <ChatPopup replaying={replaying} top={phone ? 104 : 80} />}
+      {g.online && chatOpen && !phone && (
+        <Suspense fallback={null}>
+          <ChatPanel mode="desktop" />
+        </Suspense>
+      )}
       {/* Offers to you: a small toast as planning starts; tap it to open (Accept is one tap). */}
       {act && !deal && !showReport && waiting.length > 0 && (
         <div className="offer-toasts" style={{ top: phone ? 104 : 80 }}>
@@ -779,6 +802,8 @@ export function GameScreen() {
       { id: "card", label: "Card" },
       { id: "leaders", label: "Leaders" },
       ...(report ? [{ id: "report", label: "Report" }] : []),
+      // Online (session 28): chat, with what you haven't read.
+      ...(g.online ? [{ id: "chat", label: chatUnread ? `Chat (${chatUnread})` : "Chat" }] : []),
     ];
     const myLeader = view.me.leaders.find((l) => l.kind === "leader" && l.of === view.me.id);
     return (
@@ -843,6 +868,11 @@ export function GameScreen() {
               </Suspense>
             )}
             {tab === "report" && report && <button onClick={() => g.watchAgain()}>Watch again</button>}
+            {tab === "chat" && g.online && (
+              <Suspense fallback={null}>
+                <ChatPanel mode="phone" />
+              </Suspense>
+            )}
           </BottomSheet>
         )}
         {!out && (

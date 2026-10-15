@@ -65,6 +65,8 @@ interface Props {
   onPause?: (() => void) | null;
   /** Open the Chronicle (session 16; on a phone it's with the map buttons instead). */
   onChronicle?: (() => void) | null;
+  /** Online (session 28): the chat button, with its unread count. */
+  chat?: React.ReactNode;
   onSettings(): void;
 }
 
@@ -99,7 +101,7 @@ function CoinsIn({ gold, replaying, target }: { gold: number; replaying: boolean
   );
 }
 
-export function TopBar({ view, gold, goldAfter, purses = 0, income, clock, replaying, phone, fallen, onPause, onChronicle, onSettings }: Props) {
+export function TopBar({ view, gold, goldAfter, purses = 0, income, clock, replaying, phone, fallen, onPause, onChronicle, chat, onSettings }: Props) {
   const emblem = useArtUrl("emblem");
   const coin = useArtUrl("icon-gold");
   const goldRef = useRef<HTMLSpanElement | null>(null);
@@ -144,6 +146,7 @@ export function TopBar({ view, gold, goldAfter, purses = 0, income, clock, repla
           <Icon.scroll /> Chronicle
         </button>
       )}
+      {chat}
       <button className="icon-btn" onClick={onSettings} aria-label="Settings">
         <Icon.gear />
       </button>
