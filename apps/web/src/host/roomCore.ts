@@ -118,7 +118,7 @@ export interface TableMirror {
   gameId: string;
   status: "waiting" | "playing" | "cancelled";
   size: number;
-  seats: { seat: PlayerId; user: string | null; bot: string | null; colour: number; name: string; leadersRun: boolean; state?: "in" | "resigned" | "taken" }[];
+  seats: { seat: PlayerId; user: string | null; bot: string | null; colour: number; name: string; leadersRun: boolean; state?: "in" | "resigned" | "taken"; leftTurn?: number }[];
 }
 
 export { TABLE_TEXT } from "./roomText";
@@ -257,7 +257,7 @@ export class RoomCore {
     const left = this.game?.leftSeats ?? {};
     const people = t.sitters.map((x, i) => {
       const gone = x.seat ? left[x.seat] : undefined;
-      return { seat: x.seat ?? `p${i + 1}`, user: x.user, bot: gone ? "marshal" : null, colour: x.house, name: x.name, leadersRun: x.leadersRun, state: gone ? (gone.why === "taken" ? ("taken" as const) : ("resigned" as const)) : ("in" as const) };
+      return { seat: x.seat ?? `p${i + 1}`, user: x.user, bot: gone ? "marshal" : null, colour: x.house, name: x.name, leadersRun: x.leadersRun, state: gone ? (gone.why === "taken" ? ("taken" as const) : ("resigned" as const)) : ("in" as const), ...(gone ? { leftTurn: gone.turn } : {}) };
     });
     const bots =
       t.status === "started" && this.game

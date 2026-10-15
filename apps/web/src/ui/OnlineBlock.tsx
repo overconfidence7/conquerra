@@ -31,9 +31,12 @@ export function waitingLine(g: OnlineGameInfo, now: number): { text: string; you
     const line = `Waiting for players, ${g.seated ?? 1} of ${g.seats ?? g.players.length} seated`;
     return { text: g.host ? line : `${line}. The host starts it.`, yours: false };
   }
-  if (g.left === "resigned") return { text: `You left this game on turn ${g.turn}. It goes on without you.`, yours: false };
-  if (g.left === "taken") return { text: "A Marshal took your seat after three missed turns. You can watch.", yours: false };
-  if (g.status === "over") return { text: g.winner === "you" ? "Over: you won" : g.winner ? `Over: ${g.winner} won` : "Over", yours: false };
+  const over = g.winner === "you" ? "Over: you won." : g.winner ? `Over: ${g.winner} won.` : "Over.";
+  // Session 28: once the game is over, the result first; and the turn you left on, never the game's turn now.
+  const on = g.leftTurn ? ` on turn ${g.leftTurn}` : "";
+  if (g.left === "resigned") return { text: g.status === "over" ? `${over} You left${on}.` : `You left this game${on}. It goes on without you.`, yours: false };
+  if (g.left === "taken") return { text: g.status === "over" ? `${over} A Marshal took your seat${on}.` : "A Marshal took your seat after three missed turns. You can watch.", yours: false };
+  if (g.status === "over") return { text: over.slice(0, -1), yours: false };
   const left = timeLeft(g.deadline, now);
   if (g.waitingOn.includes("you")) return { text: `Waiting on you${left ? `, ${left}` : ""}`, yours: true };
   if (g.waitingOn.length) return { text: `Waiting on ${g.waitingOn.join(", ")}${left ? `, ${left}` : ""}`, yours: false };

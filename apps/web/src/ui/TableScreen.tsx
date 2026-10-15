@@ -75,7 +75,7 @@ function LinkBlock({ code }: { code: string }) {
         {canShare && <button onClick={() => void navigator.share({ title: "Conquerra", text: "Take a seat at my table.", url: link }).catch(() => undefined)}>Share</button>}
       </div>
       <span className="muted small">
-        The link only opens for people on the game's guest list. Add a friend's email to the guest list first (Cloudflare Access, the "Conquerra players" policy: docs/infra-cloudflare.md).
+        Your friend's Google email has to be on the guest list first. Nate adds it in Cloudflare.
       </span>
     </div>
   );

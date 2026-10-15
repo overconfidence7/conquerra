@@ -12,6 +12,7 @@ import type { Order } from "@conquerra/engine";
 import { chronicleOf } from "../src/logic/chronicleKeep";
 import { narrateTurn } from "../src/logic/narrate";
 import { chronicleLines } from "../src/logic/chronicle";
+import { groupReport } from "../src/logic/report";
 import { fateStrikes } from "../src/logic/cards";
 import { budgetLabel, instructionName, namer } from "../src/logic/text";
 
@@ -72,6 +73,25 @@ describe("leaders in the report (session 18)", () => {
       { ...ev[1]!, paid: [{ kind: "leader", of: "you", gold: 4 }, { kind: "steward", of: "you", gold: 1 }], goldAfter: 18 } as ReplayEvent,
     ];
     expect(narrateTurn(ctx, both, namer(ctx, view)).map((l) => l.text)).toEqual(["Income +12: you now have 18 gold, after 4 to your Leader's purse and 1 to your Steward's purse."]);
+  });
+
+  it("the turn report card and the Chronicle say the same gold as the header (session 28: one path with the replay's log)", () => {
+    const view = game();
+    // 20 gold, 10 recruits (20 gold), income 10, the Steward at 10%: 1 to the purse.
+    const ev: ReplayEvent[] = [
+      { type: "recruited", step: 1, player: "you", orderId: "r1", territory: t(0), count: 10, cost: 20 },
+      { type: "income", step: 2, player: "you", income: 10, upkeep: 0, goldAfter: 10, deserted: 0, deserters: [] },
+      { type: "purses", step: 3, player: "you", upkeep: [], paid: [{ kind: "steward", of: "you", gold: 1 }], goldAfter: 9, purses: [{ kind: "steward", of: "you", purse: 1 }] },
+    ];
+    const gold = "Income +10: you now have 9 gold, after 1 to your Steward's purse.";
+    const card = groupReport(ctx, ev, namer(ctx, view));
+    const all = [...card.yours, ...card.seen, ...card.fog].map((l) => l.text);
+    expect(all).toContain(gold);
+    expect(all.join(" ")).not.toContain("Into purses");
+    expect(all.join(" ")).not.toContain("10 gold");
+    const chron = chronicleLines(ctx, [{ turn: 4, events: ev } as never], namer(ctx, view)).flatMap((c) => c.lines.map((l) => l.text));
+    expect(chron.join(" ")).not.toContain("Into purses");
+    if (chron.some((l) => l.startsWith("Income"))) expect(chron).toContain(gold);
   });
 
   it("several levels or recruits at one place in one turn read as one line (session 24)", () => {

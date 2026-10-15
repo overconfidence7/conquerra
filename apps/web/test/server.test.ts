@@ -50,7 +50,7 @@ describe("the server's files (session 26)", () => {
     const cfg = JSON.parse(raw.replace(/^\s*\/\/.*$/gm, "")) as Record<string, unknown> & { assets: { run_worker_first: string[] }; migrations: { new_sqlite_classes: string[] }[]; vars: Record<string, string> };
     expect(cfg.workers_dev).toBe(false);
     expect(cfg.preview_urls).toBe(false);
-    expect(cfg.assets.run_worker_first).toEqual(["/api/*"]);
+    expect(cfg.assets.run_worker_first).toEqual(["/api/*", "/assets/*"]);
     expect(cfg.migrations[0]!.new_sqlite_classes).toEqual(["GameRoom"]);
     expect(cfg.vars.ACCESS_TEAM).toBe("keel-nkurtz.cloudflareaccess.com");
     expect(raw).not.toContain("DEV_EMAIL");
@@ -65,6 +65,41 @@ describe("the server's files (session 26)", () => {
     expect(cleanNewGame({ settings: { ...settings, turnSeconds: 60 } })).toMatchObject({ error: expect.stringContaining("timer") });
     const ok = cleanNewGame({ settings: { ...settings, turnSeconds: 86_400, house: 99, leaderName: "  Lord Ash  " }, leadersRun: false });
     expect(ok).toMatchObject({ settings: { mapId: "embervale", bots: 3, turnSeconds: 86_400, house: 0, leaderName: "Lord Ash" }, leadersRun: false });
+  });
+
+  it("a missing built file answers 404 that nobody keeps, never the lobby's HTML (session 28)", async () => {
+    const lobby = "<!doctype html><title>Conquerra</title>";
+    // The assets binding as Cloudflare configures it: the single-page fallback answers any path it lacks with the lobby.
+    const files: Record<string, [string, string]> = { "/assets/index-abc.js": ["export {}", "text/javascript"], "/assets/style-abc.css": ["body{}", "text/css"], "/index.html": [lobby, "text/html"] };
+    const asked: string[] = [];
+    const ASSETS = {
+      fetch: async (req: Request) => {
+        const path = new URL(req.url).pathname;
+        asked.push(path);
+        const [body, type] = files[path] ?? [lobby, "text/html"];
+        return new Response(body, { status: 200, headers: { "content-type": type, "cache-control": "public, max-age=31536000, immutable" } });
+      },
+    };
+    const env = { ASSETS, ACCESS_TEAM: TEAM } as unknown as Env;
+    const get = (path: string) => worker.fetch(new Request(`https://conquerra.overconfidenceonline.com${path}`), env);
+    const real = await get("/assets/index-abc.js");
+    expect(real.status).toBe(200);
+    expect(await real.text()).toBe("export {}");
+    expect(real.headers.get("cache-control")).toContain("immutable");
+    expect((await get("/assets/style-abc.css")).status).toBe(200);
+    for (const missing of ["/assets/nothing.js", "/assets/GameScreen-old.js", "/assets/style-old.css", "/assets/cinzel-latin-600.woff2", "/assets/x.webp"]) {
+      const res = await get(missing);
+      expect(res.status, missing).toBe(404);
+      expect(res.headers.get("cache-control")).toBe("no-store");
+      expect(await res.text()).not.toContain("<");
+    }
+    // A plain 404 from the binding too.
+    const notFound = { ...env, ASSETS: { fetch: async () => new Response("gone", { status: 404 }) } } as unknown as Env;
+    const res = await worker.fetch(new Request("https://conquerra.overconfidenceonline.com/assets/a.js"), notFound);
+    expect([res.status, res.headers.get("cache-control")]).toEqual([404, "no-store"]);
+    // Pages still get the lobby (the single-page app's own routes).
+    expect(await (await get("/")).text()).toBe(lobby);
+    expect(await (await get("/?game=abc")).text()).toBe(lobby);
   });
 });
 
@@ -196,8 +231,8 @@ describe("the API (sessions 26 and 27): sign-in first, then tables and games in 
     expect((await call(`/api/games/${id}/resign`, { method: "POST" }, "kit@example.com")).status).toBe(200);
     await new Promise((r) => setTimeout(r, 10));
     expect(rooms.get(id)!.table!.leftSeats).toEqual({ p2: { why: "resigned", turn: 1 } });
-    expect(db.prepare("SELECT state, bot FROM seats WHERE game = ? AND seat = 'p2'").get(id)).toEqual({ state: "resigned", bot: "marshal" });
-    expect((await list("kit@example.com"))[0]).toMatchObject({ id, status: "playing", left: "resigned", waitingOn: ["Nate"] });
+    expect(db.prepare("SELECT state, bot, left_turn FROM seats WHERE game = ? AND seat = 'p2'").get(id)).toEqual({ state: "resigned", bot: "marshal", left_turn: 1 });
+    expect((await list("kit@example.com"))[0]).toMatchObject({ id, status: "playing", left: "resigned", leftTurn: 1, waitingOn: ["Nate"] });
     // Twice is fine (nothing more happens); someone without a seat can't.
     expect((await call(`/api/games/${id}/resign`, { method: "POST" }, "kit@example.com")).status).toBe(200);
     expect((await call(`/api/games/${id}/resign`, { method: "POST" }, "wren@example.com")).status).toBe(404);

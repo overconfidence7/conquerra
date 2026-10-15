@@ -316,6 +316,8 @@ export interface OnlineGameInfo {
   code?: string;
   /** Session 27: your seat left the game (resigned, or a Marshal took it after missed turns). It's under Finished. */
   left?: "resigned" | "taken";
+  /** Session 28: the turn your seat was left on. */
+  leftTurn?: number;
   /** Who the table is waiting on this turn, by name ("you" for you). */
   waitingOn: string[];
   /** When the turn's clock runs out (ms), or null. */

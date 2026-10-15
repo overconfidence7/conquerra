@@ -24,7 +24,7 @@ export async function mirrorTable(db: D1Database, m: TableMirror, now = Date.now
     await db.batch([
       db.prepare("UPDATE games SET status = ?, size = ?, updated = ? WHERE id = ?").bind(m.status, m.size, now, m.gameId),
       db.prepare("DELETE FROM seats WHERE game = ?").bind(m.gameId),
-      ...m.seats.map((s) => db.prepare("INSERT INTO seats (game, seat, user, bot, colour, name, leaders_run, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").bind(m.gameId, s.seat, s.user, s.bot, s.colour, s.name, s.leadersRun ? 1 : 0, s.state ?? "in")),
+      ...m.seats.map((s) => db.prepare("INSERT INTO seats (game, seat, user, bot, colour, name, leaders_run, state, left_turn) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").bind(m.gameId, s.seat, s.user, s.bot, s.colour, s.name, s.leadersRun ? 1 : 0, s.state ?? "in", s.leftTurn ?? null)),
       // The colour each person last picked is their usual one (the default when they next sit down).
       ...m.seats.flatMap((s) => (s.user && m.status === "waiting" ? [db.prepare("UPDATE users SET colour = ? WHERE id = ?").bind(s.colour, s.user)] : [])),
     ]);

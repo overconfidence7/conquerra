@@ -15,6 +15,10 @@ import "./styles.css";
 // Phones allow sound only after a tap: the first tap anywhere wakes the audio (session 24).
 import "./sound/unlock";
 import { artUrl } from "./ui/art";
+import { watchLoadFailures } from "./ui/loadFailure";
+
+// A file from an old build that fails to load reloads the page once (session 28), never a blank page.
+watchLoadFailures();
 
 // Nate's gold filigree corner replaces the drawn corners on every gilded frame once it has loaded.
 void artUrl("frame-corner").then((u) => {

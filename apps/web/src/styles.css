@@ -242,11 +242,12 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .player img.shield { width: 30px; height: 30px; }
 .player img.portrait { width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--gold); object-fit: cover; }
 .player .who { min-width: 0; }
-.player .pname { font: 600 0.95rem var(--font-body); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* (Session 28: a name is never cut short; the badges beside it wrap instead.) */
+.player .pname { font: 600 0.95rem var(--font-body); display: block; overflow-wrap: break-word; }
 .player .house { font: 600 var(--fs-label) var(--font-head); color: var(--muted); display: block; }
 /* A bot's level and personality, once shown (session 17): "Marshal, the Turtle". */
 .player .persona { font: italic 600 var(--fs-label) var(--font-body); color: var(--gold); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.player .state { font: 700 var(--fs-label) var(--font-head); color: var(--good); }
+.player .state { font: 700 var(--fs-label) var(--font-head); color: var(--good); max-width: 6.5em; text-align: right; }
 .player.out { opacity: 0.5; }
 .player.out .state { color: var(--bad); }
 .player.out img.portrait { filter: grayscale(1); }
@@ -705,4 +706,6 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .fair-line code { font-size: 0.9em; overflow-wrap: anywhere; }
 .resign-confirm { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 6px 2px; }
 .resign-confirm p { flex-basis: 100%; margin: 0; }
-.ready-tick { display: block; font-size: 0.72rem; color: var(--gold-hi); white-space: nowrap; }
+/* A part of the game that didn't load, twice (session 28: ui/loadFailure.ts). */
+#load-failed { position: fixed; left: 50%; top: 16px; transform: translateX(-50%); z-index: 9999; padding: 10px 16px; border-radius: 8px; background: #1b2430; color: #f3ead7; font: 600 15px var(--font-body); box-shadow: 0 4px 18px #0008; max-width: calc(100vw - 32px); text-align: center; }
+.ready-tick { display: block; font-size: 0.72rem; color: var(--gold-hi); }

@@ -15,8 +15,9 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    // Only the API runs the Worker's code; every other path is a static file, served as before.
-    "run_worker_first": ["/api/*"]
+    // The API runs the Worker's code, and so do built files (session 28): a missing /assets/ file answers 404, never
+    // the lobby's HTML under a year-long cache. Every other path is a static file, served as before.
+    "run_worker_first": ["/api/*", "/assets/*"]
   },
   "routes": [{ "pattern": "conquerra.overconfidenceonline.com", "custom_domain": true }],
   // One room per online game: SQLite storage, an alarm for the turn clock, hibernating WebSockets.

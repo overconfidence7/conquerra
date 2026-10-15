@@ -86,6 +86,7 @@ interface GameRow {
   seat: string;
   leaders_run: number;
   state: "in" | "resigned" | "taken";
+  left_turn: number | null;
   host_user: string;
   invite: string | null;
   size: number | null;
@@ -101,7 +102,7 @@ interface SeatRow {
 
 async function listGames(env: Env, user: UserRow): Promise<OnlineGameInfo[]> {
   const games = await env.DB.prepare(
-    "SELECT g.id, g.map, g.status, g.turn, g.waiting, g.deadline, g.created, g.updated, g.winner, g.host_user, g.invite, g.size, s.seat, s.leaders_run, s.state FROM games g JOIN seats s ON s.game = g.id WHERE s.user = ? AND g.status != 'cancelled' AND (g.status != 'over' OR g.updated > ?) ORDER BY g.updated DESC LIMIT 30",
+    "SELECT g.id, g.map, g.status, g.turn, g.waiting, g.deadline, g.created, g.updated, g.winner, g.host_user, g.invite, g.size, s.seat, s.leaders_run, s.state, s.left_turn FROM games g JOIN seats s ON s.game = g.id WHERE s.user = ? AND g.status != 'cancelled' AND (g.status != 'over' OR g.updated > ?) ORDER BY g.updated DESC LIMIT 30",
   )
     .bind(user.id, Date.now() - FINISHED_KEPT_MS)
     .all<GameRow>();
@@ -132,7 +133,7 @@ async function listGames(env: Env, user: UserRow): Promise<OnlineGameInfo[]> {
       created: g.created,
       leadersRun: !!g.leaders_run,
       ...(g.status === "waiting" ? { seats: g.size ?? table.length, seated: table.filter((s) => s.user).length, host, ...(host && g.invite ? { code: g.invite } : {}) } : {}),
-      ...(g.state !== "in" ? { left: g.state } : {}),
+      ...(g.state !== "in" ? { left: g.state, ...(g.left_turn ? { leftTurn: g.left_turn } : {}) } : {}),
       ...(g.winner ? { winner: nameOf(g.winner) } : {}),
     };
   });
@@ -219,7 +220,7 @@ async function resign(env: Env, user: UserRow, id: string): Promise<Response> {
   if (seat.state !== "in") return json({ ok: true });
   const done = await env.GAME_ROOM.getByName(id).resignUser(user.id, seat.seat);
   if (!done) return problem(409, "You can't resign from that game now (it's over, or you're already out).");
-  await env.DB.prepare("UPDATE seats SET state = 'resigned', bot = 'marshal' WHERE game = ? AND user = ?").bind(id, user.id).run();
+  await env.DB.prepare("UPDATE seats SET state = 'resigned', bot = 'marshal', left_turn = COALESCE(left_turn, (SELECT turn FROM games WHERE id = ?)) WHERE game = ? AND user = ?").bind(id, id, user.id).run();
   return json({ ok: true });
 }
 
@@ -248,10 +249,27 @@ async function body<T>(request: Request): Promise<T | null> {
   }
 }
 
+/**
+ * A built file under /assets/ (session 28). The single-page fallback answers a path it doesn't have with the lobby's
+ * HTML, and `_headers` gives /assets/* a year's immutable cache: one miss during a deploy was kept as HTML by the edge,
+ * the browser and the service worker, and the page came up blank. So the Worker runs first for /assets/* too, and
+ * anything that isn't the file itself (a 404, or HTML for a .js, .css, .woff2… path) answers 404 that nobody keeps.
+ */
+export async function serveAsset(request: Request, env: Env, path: string): Promise<Response> {
+  const res = await env.ASSETS.fetch(request);
+  const html = (res.headers.get("content-type") ?? "").includes("text/html");
+  if (res.status === 404 || (res.status === 200 && html && !/\.html?$/i.test(path))) {
+    await res.body?.cancel();
+    return new Response("Not found", { status: 404, headers: { "content-type": "text/plain", "cache-control": "no-store" } });
+  }
+  return res;
+}
+
 /** The Worker's handler (index.ts). No Cloudflare-only imports here, so tests run it in Node with a fake room and database. */
 export const worker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    if (url.pathname.startsWith("/assets/")) return serveAsset(request, env, url.pathname);
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
     if (!env.ACCESS_AUD && !env.DEV_EMAIL) return problem(503, "Online play isn't switched on yet.");
     const who = await signedIn(request, env);

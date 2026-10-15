@@ -316,6 +316,19 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
 }
 
 /**
+ * narrate() for one turn's events, with your purses' payments folded into your income line (so its gold matches the
+ * header): the purses' own line goes (null). One path for the replay's log, the turn report card and the Chronicle.
+ */
+export function turnNarrator(ctx: GameContext, events: readonly ReplayEvent[], n: Namer): (e: ReplayEvent) => LogLine | null {
+  const income = events.some((e) => e.type === "income" && n.isMe(e.player));
+  const purses = events.find((e): e is Extract<ReplayEvent, { type: "purses" }> => e.type === "purses" && n.isMe(e.player) && e.paid.some((x) => x.gold > 0)) ?? null;
+  return (e) => {
+    if (e.type === "purses" && n.isMe(e.player) && income && purses) return null;
+    return e.type === "income" && n.isMe(e.player) && purses ? incomeLine(e, purses, n) : narrate(ctx, e, n);
+  };
+}
+
+/**
  * The whole turn as log lines. Fighting in the fog is folded into one line at the end
  * ("Fighting in the fog: The Vale ×2, Saltcoast") so it doesn't drown out your own battles.
  */
@@ -328,10 +341,7 @@ export function narrateTurn(ctx: GameContext, events: readonly ReplayEvent[], n:
   type Win = Extract<ReplayEvent, { type: "battle" }>;
   const wins = new Map<string, Win[]>();
   for (const e of events) if (e.type === "battle" && e.captured && e.general && n.isMe(e.player)) wins.set(e.general, [...(wins.get(e.general) ?? []), e]);
-  const mine = {
-    income: events.some((e) => e.type === "income" && n.isMe(e.player)),
-    purses: events.find((e): e is Extract<ReplayEvent, { type: "purses" }> => e.type === "purses" && n.isMe(e.player) && e.paid.some((x) => x.gold > 0)) ?? null,
-  };
+  const say = turnNarrator(ctx, events, n);
   // The first turn's report: your capital's head start, if it had one (session 23).
   const bonus = n.view && events.some((e) => e.type === "turnStart" && e.turn === 1) ? startBonusLine(n.view, n.place) : null;
   if (bonus) lines.push({ text: bonus, tone: "info" });
@@ -350,9 +360,7 @@ export function narrateTurn(ctx: GameContext, events: readonly ReplayEvent[], n:
       }
       continue;
     }
-    // Your purses' payments go on your income line (so its gold matches the header), not on a line of their own.
-    if (e.type === "purses" && n.isMe(e.player) && mine.income && mine.purses) continue;
-    const line = e.type === "income" && n.isMe(e.player) && mine.purses ? incomeLine(e, mine.purses, n) : narrate(ctx, e, n);
+    const line = say(e);
     if (line) lines.push(line);
   }
   const prov = (id: string) => ctx.map.provinces.find((p) => p.id === id)?.name ?? id;

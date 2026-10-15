@@ -140,6 +140,11 @@ function Fold({ name, title, summary, children }: { name: "house" | "rules" | "o
 export function Lobby() {
   useTitleMusic();
   const { lobby, setLobby, start, load, busy, error, slots, refreshSlots, onlineGames, onlineProblem } = useGame();
+  // Session 28: only this button's own start says "Starting…" (making a game link is busy too, and says so itself).
+  const [starting, setStarting] = useState(false);
+  useEffect(() => {
+    if (!busy) setStarting(false);
+  }, [busy]);
   const [loading, setLoading] = useState(false);
   // Load the game engine, the maps and the map painter while the player picks settings; see what's saved.
   useEffect(() => {
@@ -270,8 +275,8 @@ export function Lobby() {
         {error && !loading && <p className="warn">{error}</p>}
         {/* Start: right under the folded blocks, and stuck to the bottom of the screen while they're open. */}
         <div className="start-bar">
-          <button className={`${auto ? "" : "primary "}wide big`} onClick={start} disabled={busy}>
-            {busy ? "Starting…" : auto ? "Start a new game" : "Start"}
+          <button className={`${auto ? "" : "primary "}wide big`} onClick={() => (setStarting(true), void start())} disabled={busy}>
+            {busy && starting ? "Starting…" : auto ? "Start a new game" : "Start"}
           </button>
         </div>
         {slots.length === 0 && (

@@ -171,9 +171,16 @@ function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSave
       )}
       {online && <FairLine />}
       <hr className="rule" />
-      <button className="menu-item" onClick={onLeave}>
-        Leave this game <span className="muted">{online ? "it goes on on the server: open it again from the lobby's Online block" : "Continue picks it up"}</span>
-      </button>
+      {/* Online (session 28): two short buttons, each with its one-line note under it. */}
+      {online ? (
+        <button className="menu-item stacked" onClick={onLeave}>
+          Leave <span className="muted">The game goes on without you here. Open it again from the lobby.</span>
+        </button>
+      ) : (
+        <button className="menu-item" onClick={onLeave}>
+          Leave this game <span className="muted">Continue picks it up</span>
+        </button>
+      )}
       {/* Online (session 27): leave for good. */}
       {onResign &&
         (resigning ? (
@@ -187,8 +194,8 @@ function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSave
             </button>
           </div>
         ) : (
-          <button className="menu-item" onClick={() => setResigning(true)}>
-            Resign <span className="muted">a Marshal takes your seat</span>
+          <button className="menu-item stacked" onClick={() => setResigning(true)}>
+            Resign <span className="muted">A Marshal takes your seat.</span>
           </button>
         ))}
       <VersionLine />
