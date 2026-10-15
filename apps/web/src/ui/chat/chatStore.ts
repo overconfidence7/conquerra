@@ -107,6 +107,19 @@ export function applyChat(sync: ChatSync) {
   if (sel && showing(useChat.getState(), sel)) markRead(sel);
 }
 
+/** Session 29: you've read your council up to this line (its ids are its own: turn and line). */
+export function markCouncilRead(last: number) {
+  const s = useChat.getState();
+  if ((s.read.council ?? 0) >= last) return;
+  const read = { ...s.read, council: last };
+  useChat.setState({ read });
+  try {
+    if (s.gameId) localStorage.setItem(readKey(s.gameId), JSON.stringify(read));
+  } catch {
+    // Full or private: unread counts reset on the next visit.
+  }
+}
+
 /** You've read a chat up to its last message. */
 export function markRead(chat: string) {
   const s = useChat.getState();

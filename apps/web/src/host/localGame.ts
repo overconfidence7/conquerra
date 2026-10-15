@@ -51,6 +51,7 @@ import { buildTimeline } from "../replay/timeline";
 import { chronicleOf } from "../logic/chronicleKeep";
 import { comebackStep, ownLand } from "../logic/comeback";
 import { leaderVoices, type VoiceMemory } from "../logic/voices";
+import { councilTurn } from "../logic/council";
 import { chatVoiceOf, type ChatBot } from "./botChat";
 import { BOT_NAMES } from "./names";
 import { DEFAULT_HOUSE } from "../map/houses";
@@ -115,6 +116,9 @@ export function seatLevels(choice: BotChoice, marshals: number, seats: readonly 
   const dealt = dealPersonalities(seed, seats.filter((_, i) => levels[i] === "marshal"));
   return Object.fromEntries(seats.map((s, i) => [s, levels[i] === "marshal" ? { level: "marshal" as const, personality: dealt[s]! } : { level: levels[i]! }]));
 }
+
+/** Session 29: a council question says what these lines of its leader would have, so they give way to it. */
+const COVERED: Partial<Record<string, string[]>> = { purse: ["purseEmpty"], capital: ["threatened", "threatenedYours"] };
 
 /** Session 27: what a person whose seat a Marshal plays now is told if their page tries to give orders. */
 export const SEAT_LEFT_TEXT = "A Marshal plays your seat now. You can watch the game from it.";
@@ -274,6 +278,8 @@ export interface LocalGameOptions {
   autosave?: (save: SaveFile) => void;
   /** An online game: who sits where (a new game only; a restored one brings its table). */
   table?: TableSetup;
+  /** Session 29: your council asks questions in single player too. */
+  council?: boolean;
 }
 
 /** One person at the table: what the host keeps for them between their requests. */
@@ -378,6 +384,8 @@ export class LocalGame {
   private ranNow: PlayerId[] = [];
   /** Online (session 28): a pause vote, a pause, and who has used how many. */
   private pauseState: PauseState = { used: {} };
+  /** Session 29: your council asks questions (online; single player once it has the council chat). */
+  council: boolean;
 
   constructor(
     /** The map to play on (the worker loads it with `loadMap`; tests pass it straight from `maps`). */
@@ -490,6 +498,7 @@ export class LocalGame {
       this.history = { setup, rules: defaultRules, turns: [] };
       this.turnMs = settings.turnSeconds === null || settings.turnSeconds === undefined ? null : settings.turnSeconds * 1000;
     }
+    this.council = this.online || !!opts.council;
     // A game just loaded doesn't save itself again until its next turn starts.
     this.startClock(0, !restore);
     // Online: the room's clock as it stood (a room that slept between turns carries on with the same deadline).
@@ -990,13 +999,20 @@ export class LocalGame {
       // What their leaders say about the turn, from their own view and replay only (session 22).
       const said = out ? null : leaderVoices(this.ctx, viewFor(this.ctx, before, p.id), viewFor(this.ctx, this.state, p.id), events, p.voiceMemory);
       if (said) p.voiceMemory = said.memory;
+      // Session 29, your council: a question now and then (and a line when the last one lapsed), from the same view.
+      const council = out || !this.council ? null : councilTurn({ ctx: this.ctx, before: viewFor(this.ctx, before, p.id), after: viewFor(this.ctx, this.state, p.id), events, memory: p.voiceMemory, orders: peopleOrders?.[p.id] ?? [], spoken: said?.lines ?? [] });
+      if (council) p.voiceMemory = council.memory;
+      // (A question covers its leader's own warning that turn: "Purse is empty." then "Purse is empty. A share?")
+      const covered = council?.ask ? COVERED[council.ask.situation] : undefined;
+      const voices = [...(said?.lines ?? []).filter((v) => !(covered?.includes(v.situation) && v.leader === council!.ask!.leader)), ...(council?.lines ?? [])];
       // Their comeback (session 23), from their own land only.
       const back = out ? null : comebackStep(p.voiceMemory.comeback, ownLand(viewFor(this.ctx, this.state, p.id)), before.turn);
       if (back) p.voiceMemory = { ...p.voiceMemory, comeback: back.memory };
       const report: TurnReport = {
         turn: before.turn,
         events,
-        ...(said?.lines.length ? { voices: said.lines } : {}),
+        ...(voices.length ? { voices } : {}),
+        ...(council?.ask ? { ask: council.ask } : {}),
         ...(back?.card ? { comeback: true as const } : {}),
         ...(this.ranNow.length ? { ranByLeaders: [...this.ranNow] } : {}),
       };

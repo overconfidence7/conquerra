@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { HOUSES } from "../../map/houses";
+import { useGame } from "../../store";
 import { closeChat, openChat, unreadAll, useChat } from "./chatStore";
+import { councilItems, councilUnread } from "./councilStore";
 import "./chat.css";
+
+/** Session 29: lines from your council you haven't read. */
+export function useCouncilUnread(): number {
+  const read = useChat((s) => s.read.council ?? 0);
+  const chronicle = useGame((s) => s.chronicle);
+  const view = useGame((s) => s.view);
+  return view ? councilUnread(councilItems(chronicle, view.gameId, view.me.id), read) : 0;
+}
 
 /**
  * Chat's small pieces on the game screen (session 28): the top bar's button with its unread count, and the pop-up for
@@ -21,7 +31,7 @@ function firstChat(phone: boolean): string | null {
 }
 
 export function ChatButton({ phone }: { phone: boolean }) {
-  const unread = useChat(unreadAll);
+  const unread = useChat(unreadAll) + useCouncilUnread();
   const open = useChat((s) => s.open);
   return (
     <button className={`chat-btn ${open ? "on" : ""}`} onClick={() => (open ? closeChat() : openChat(firstChat(phone)))} aria-label={unread ? `Chat, ${unread} unread` : "Chat"} aria-pressed={open} title="Chat with the table">

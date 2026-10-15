@@ -311,7 +311,7 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
  * An offer to you (or a counteroffer): Accept is one tap; Counter opens the same card from your side. Session 29: the
  * same card shows in your one-to-one chat with the bot that made it (`onAnswered`: the bot's line back).
  */
-export function Incoming({ ctx, view, offer, onAnswered }: { ctx: GameContext; view: PlayerView; offer: Offer; onAnswered?: (accept: boolean) => void }) {
+export function Incoming({ ctx, view, offer, onAnswered, compact }: { ctx: GameContext; view: PlayerView; offer: Offer; onAnswered?: (accept: boolean) => void; compact?: boolean }) {
   const { answerOffer, counterOffer, diplomacy, answers, leaderNotes, people } = useGame();
   // Session 28: a person's counteroffer is accepted or declined, never countered again.
   const canCounter = !(offer.counterTo && people?.includes(offer.from));
@@ -323,13 +323,15 @@ export function Incoming({ ctx, view, offer, onAnswered }: { ctx: GameContext; v
   const words = describeTerms(offer.terms, offer.from, offer.to, dealNames(namer(ctx, view)));
   return (
     <>
-      {(reason ?? offer.note) && (
+      {/* (In a chat the bot's note is the line above the card: only a counter's reason shows here.) */}
+      {(compact ? reason : (reason ?? offer.note)) && (
         <p className={`deal-answer ${reason ? "no" : ""}`}>
           <b>{nameOf(view, offer.from)}:</b> “{reason ?? offer.note}”
         </p>
       )}
       <p className="deal-words">{words[0]!.toUpperCase() + words.slice(1)}.</p>
-      <TermRows ctx={ctx} view={view} offer={offer} changed={changed} />
+      {/* (In a chat, the deal in one line: Counter opens the full card.) */}
+      {!compact && <TermRows ctx={ctx} view={view} offer={offer} changed={changed} />}
       {stops && <p className="deal-warning small">{stops}.</p>}
       {answered?.kind === "answer" ? (
         <p className="small">{answered.accept ? "You accepted: it starts as the turn plays, before any move." : "You declined."}</p>
@@ -355,7 +357,7 @@ export function Incoming({ ctx, view, offer, onAnswered }: { ctx: GameContext; v
           </button>
         </div>
       )}
-      <p className="muted small">{canCounter && !people?.includes(offer.from) ? "Not answered by the time the turn plays, it lapses." : "Not answered by the time you lock in, it lapses."}</p>
+      {!compact && <p className="muted small">{canCounter && !people?.includes(offer.from) ? "Not answered by the time the turn plays, it lapses." : "Not answered by the time you lock in, it lapses."}</p>}
     </>
   );
 }

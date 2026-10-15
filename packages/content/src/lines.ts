@@ -285,6 +285,28 @@ export const YOU_SITUATIONS = {
 } as const satisfies Record<string, readonly string[]>;
 export type YouSituation = keyof typeof YOU_SITUATIONS;
 
+/**
+ * Session 29, your council: what your leaders ask you (you answer by multiple choice) and say about it. In your
+ * leaders' voices (the six personalities and the Neutral). A real question is allowed here.
+ */
+export const COUNCIL_SITUATIONS = {
+  /** A rival wiped out its army or took your home province: "Do we go after {rival}?" */
+  askGrudge: ["rival", "place"],
+  /** A rival army near your capital: "Shall I hold {capital}?" */
+  askCapital: ["capital", "rival"],
+  /** The Steward has nothing worth building: "Fortify the border or raise culture?" */
+  askSteward: [],
+  /** An empty purse and no budget: a share? */
+  askPurse: [],
+  /** You didn't answer by lock-in: "I took that as a no." */
+  lapsed: [],
+  /** The grudge, after it asked once and you didn't go after them (every few turns). */
+  needle: ["rival"],
+  /** You answered: it acknowledges. */
+  ack: [],
+} as const satisfies Record<string, readonly string[]>;
+export type CouncilSituation = keyof typeof COUNCIL_SITUATIONS;
+
 export type Vars = Record<string, string | number>;
 
 const Versions = z.array(z.string().min(2)).min(1);
@@ -338,6 +360,12 @@ export const Lines = z.object({
       chatGap: Count,
       captainGap: Count,
       chatFree: Count,
+      /**
+       * Session 29, your council: a question at most once in `councilEvery` turns, and the same kind of question again
+       * at most once in `councilRepeat` (a warning about your capital only when the threat is new).
+       */
+      councilEvery: Count,
+      councilRepeat: Count,
     })
     .strict(),
   /**
@@ -366,6 +394,8 @@ export const Lines = z.object({
       you: checked(YOU_SITUATIONS, true),
     })
     .strict(),
+  /** Session 29: your council's questions and asides, by leader voice. */
+  council: z.object(Object.fromEntries(LEADER_VOICES.map((v) => [v, checked(COUNCIL_SITUATIONS, true)])) as Record<LeaderVoice, ReturnType<typeof checked<CouncilSituation>>>).strict(),
 });
 export type Lines = z.infer<typeof Lines>;
 
@@ -445,6 +475,11 @@ export function screenLine(situation: ScreenSituation, seed: string, vars: Vars 
 export function chatLine(s: { game: string; turn: number; who: string; voice: ChatVoice }, situation: ChatSituation, vars: Vars = {}, extra = ""): string | null {
   const versions = lines.chat[s.voice]?.[situation];
   return versions?.length ? fill(pickVersion(versions, seedOf(s, `chat:${situation}`, extra)), vars) : null;
+}
+
+/** Session 29: a leader's line in your council, in its voice. */
+export function councilLine(s: { game: string; turn: number; who: string; voice: LeaderVoice }, situation: CouncilSituation, vars: Vars = {}, extra = ""): string {
+  return fill(pickVersion(lines.council[s.voice][situation], seedOf(s, `council:${situation}`, extra)), vars);
 }
 
 /** Session 29: `k` different lines of yours for "Say something", picked by the seed (the same turn offers the same three). */

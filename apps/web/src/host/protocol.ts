@@ -1,7 +1,7 @@
 import type { MapDef, Rules } from "@conquerra/content";
 import type { VoiceLine } from "../logic/voices";
 import type { LeaderNote, Answer } from "@conquerra/bots";
-import type { GameMode, Instruction, LeaderStyle, Offer, Order, PlayerId, PlayerView, ReplayEvent, SaveFile } from "@conquerra/engine";
+import type { Budget, GameMode, Instruction, LeaderStyle, Offer, Order, PlayerId, PlayerView, ReplayEvent, SaveFile } from "@conquerra/engine";
 import type { TurnClock } from "../logic/timer";
 import type { SlotId, SlotInfo } from "./slots";
 
@@ -168,6 +168,23 @@ export interface TurnReport {
   comeback?: true;
   /** Online (session 26): the people who missed this turn and whose leaders ran their House for it (the card says so). */
   ranByLeaders?: PlayerId[];
+  /** Session 29: a question from one of your leaders (your council), answered by multiple choice before you lock in. */
+  ask?: CouncilAsk;
+}
+
+/**
+ * Session 29: a question from one of your leaders. Each choice is an ordinary game action: a command (`instruct`, set
+ * through the Leaders panel's own path, null for none), a budget, or neither (it stays as it is).
+ */
+export interface CouncilAsk {
+  /** "<turn>:<leader key>". */
+  id: string;
+  leader: string;
+  name: string;
+  style: LeaderStyle | null;
+  text: string;
+  situation: "grudge" | "capital" | "steward" | "purse";
+  choices: { label: string; instruct?: Instruction | null; budget?: Budget }[];
 }
 
 export interface HostUpdate {

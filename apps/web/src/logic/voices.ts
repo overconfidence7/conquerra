@@ -27,6 +27,8 @@ export interface VoiceLine {
   situation: string;
   /** Where it happened, if anywhere (the Chronicle's "show me"). */
   at?: TerritoryId;
+  /** Session 29: the council question this line is about (a lapse: the page leaves it out if you did answer). */
+  ask?: string;
 }
 
 /** What your leaders remember between turns (in the save, so a reload says the same). */
@@ -48,6 +50,23 @@ export interface VoiceMemory {
   captured?: Record<string, number>;
   /** Your House's comeback (session 23): its most land, whether it fell to a quarter of it, and when the card played. */
   comeback?: ComebackMemory;
+  /** Session 29: your council's questions (the open one, and when each kind was last asked). */
+  council?: CouncilMemory;
+}
+
+/** Session 29: what your council remembers about its questions. */
+export interface CouncilMemory {
+  /** The question asked after the last turn (answered or lapsed during this one): its id, leader and the command then. */
+  ask?: { id: string; leader: string; command: string };
+  /** The grudge asked about (its turn: one question per grudge), and when a leader last needled you about it. */
+  grudgeAsked?: number;
+  needled?: number;
+  capitalAsked?: number;
+  stewardAsked?: number;
+  purseAsked?: number;
+  /** The last question's turn (one at most every few turns), and the last turn a rival army stood near your capital. */
+  asked?: number;
+  threatSeen?: number;
 }
 
 const L = () => lines.limits;

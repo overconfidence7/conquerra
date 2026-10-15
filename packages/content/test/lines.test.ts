@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOT_SITUATIONS, CAPTURED_SITUATIONS, CHAT_SITUATIONS, CHAT_VOICES, chatLine, fill, YOU_SITUATIONS, youLines, SCREEN_SITUATIONS, LEADER_SITUATIONS, LEADER_VOICES, leaderLine, lines, pickVersion, placeholders, REASONS, reasonLine, VOICES, type Speaker } from "../src/lines";
+import { BOT_SITUATIONS, CAPTURED_SITUATIONS, CHAT_SITUATIONS, CHAT_VOICES, chatLine, COUNCIL_SITUATIONS, councilLine, fill, YOU_SITUATIONS, youLines, SCREEN_SITUATIONS, LEADER_SITUATIONS, LEADER_VOICES, leaderLine, lines, pickVersion, placeholders, REASONS, reasonLine, VOICES, type Speaker } from "../src/lines";
 
 /** The line library (session 22): enough versions, every placeholder known and filled, and a deterministic pick. */
 const sample = (keys: readonly string[]) => Object.fromEntries(keys.map((k) => [k, `<${k}>`]));
@@ -78,6 +78,20 @@ describe("the line library", () => {
     expect(youLines("calm", "g|4|p1|bot2", { bot: "Lady Morwen" })).toEqual(three);
     expect(chatLine({ game: "g", turn: 3, who: "bot1", voice: "merchant" }, "brag", { places: "Ashfell" })).toMatch(/Ashfell/);
     expect(chatLine({ game: "g", turn: 3, who: "bot1", voice: "conqueror" }, "breaks", { place: "Ashfell" })).toBeNull();
+  });
+
+  it("session 29, your council: every leader voice has every situation (three to five versions, the Neutral at least one), placeholders known", () => {
+    for (const v of LEADER_VOICES)
+      for (const [k, allowed] of Object.entries(COUNCIL_SITUATIONS)) {
+        const xs = lines.council[v][k as keyof typeof COUNCIL_SITUATIONS];
+        expect(xs.length, `council.${v}.${k}`).toBeGreaterThanOrEqual(v === "neutral" ? 1 : 3);
+        expect(xs.length, `council.${v}.${k}`).toBeLessThanOrEqual(5);
+        for (const line of xs) {
+          for (const p of placeholders(line)) expect(allowed, `council.${v}.${k}: ${line}`).toContain(p);
+          expect(fill(line, sample(allowed))).not.toMatch(/[{}]/);
+        }
+      }
+    expect(councilLine({ game: "g", turn: 4, who: "leader:p1", voice: "turtle" }, "askCapital", { capital: "Rookhome", rival: "Lady Morwen" })).toMatch(/Rookhome/);
   });
 
   it("a captured leader has three to five versions of each line", () => {

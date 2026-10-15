@@ -17,7 +17,9 @@
     "chatPerTurn": 2,
     "chatGap": 3,
     "captainGap": 6,
-    "chatFree": 2
+    "chatFree": 2,
+    "councilEvery": 3,
+    "councilRepeat": 10
   },
   "picked": [
     "screens.overWon",
@@ -2473,6 +2475,253 @@
         "Still friends, {bot}? The {deal} says yes.",
         "{bot}, the {deal} is the best thing we've done together.",
         "Just admiring our {deal}, {bot}."
+      ]
+    }
+  },
+  "council": {
+    "conqueror": {
+      "askGrudge": [
+        "{rival} took {place} from us. Do we go after them?",
+        "{rival} still holds {place}. Say the word and I'll take it back.",
+        "We owe {rival} for {place}. Shall I collect?"
+      ],
+      "askCapital": [
+        "{rival} is massing near {capital}. Shall I hold it?",
+        "{capital} is in {rival}'s sights. Do I hold it?",
+        "Shall I hold {capital}? {rival} is close."
+      ],
+      "askSteward": [
+        "Nothing to build. Fortify the border or raise culture?",
+        "The realm is done. Forts on the border, or culture?",
+        "Pick one: fortify the border or raise culture."
+      ],
+      "askPurse": [
+        "My purse is empty. A share of the income would help.",
+        "Empty purse. Give me a share and I'll use it.",
+        "No gold, no war. A share?"
+      ],
+      "lapsed": [
+        "No answer. I took that as a no.",
+        "You didn't say. I kept to the plan.",
+        "Silence. I'll take it as a no."
+      ],
+      "needle": [
+        "Still not going after {rival}? Fine.",
+        "{rival} still owes us. Just saying.",
+        "One plan would fix {rival}. Just saying."
+      ],
+      "ack": [
+        "On it.",
+        "Good. It's the plan now.",
+        "Done. That's the order."
+      ]
+    },
+    "blitzer": {
+      "askGrudge": [
+        "{rival} took {place}. Go after them? Now?",
+        "{place}. {rival}. I'm ready. Are we going?",
+        "Want {place} back from {rival}? I can be there fast."
+      ],
+      "askCapital": [
+        "{rival}'s near {capital}. Hold it? Quick answer.",
+        "Hold {capital}? Say so and I'm there.",
+        "{capital}. {rival}. Hold it?"
+      ],
+      "askSteward": [
+        "Nothing to build. Fortify or culture? Pick fast.",
+        "Built out. Forts or culture?",
+        "Fortify the border or raise culture? Go."
+      ],
+      "askPurse": [
+        "Purse empty. Share? Quick.",
+        "Out of gold. Send some.",
+        "Empty. Give me a cut?"
+      ],
+      "lapsed": [
+        "No answer. Took it as a no. Moved on.",
+        "Didn't hear back. Moving anyway.",
+        "That's a no, then. Fine."
+      ],
+      "needle": [
+        "Still not going after {rival}? Fine. Waiting. Badly.",
+        "{rival}. Still there. Still annoying.",
+        "We could hit {rival}. Just saying."
+      ],
+      "ack": [
+        "Going.",
+        "On it. Already moving.",
+        "Done."
+      ]
+    },
+    "turtle": {
+      "askGrudge": [
+        "{rival} took {place}. Do we go after them, or build first?",
+        "{place} was ours. Shall we take it back from {rival}, carefully?",
+        "{rival} has {place} now. Do we answer that, or wall up?"
+      ],
+      "askCapital": [
+        "Shall I hold {capital}? {rival} is close, and the walls could use me.",
+        "{rival} is near {capital}. Do I stay home and hold it?",
+        "Hold {capital}? I'd feel better behind the wall with {rival} that close."
+      ],
+      "askSteward": [
+        "Nothing left worth building. Fortify the border or raise culture?",
+        "The realm is built out. Walls on the border, or culture?",
+        "Fortify the border or raise culture? I have opinions, but it's your call."
+      ],
+      "askPurse": [
+        "My purse is empty. A share for the walls?",
+        "No gold left. Could you spare a share?",
+        "Empty purse. Walls don't build themselves."
+      ],
+      "lapsed": [
+        "No answer, so I stayed put. Carefully.",
+        "I took that as a no. The walls approve.",
+        "You didn't say, so nothing changed."
+      ],
+      "needle": [
+        "Still not going after {rival}? Fine. I'll build.",
+        "{rival} is still there. I'm still building.",
+        "No move on {rival}. The walls are patient. I'm less so."
+      ],
+      "ack": [
+        "Understood. Carefully.",
+        "On it, slowly and properly.",
+        "Agreed. I'll see to it."
+      ]
+    },
+    "schemer": {
+      "askGrudge": [
+        "{rival} took {place}, friend. Shall we return the favour?",
+        "Do we go after {rival} for {place}? Quietly, of course.",
+        "{rival} thinks we've forgotten {place}. Shall we remind them?"
+      ],
+      "askCapital": [
+        "{rival} is getting close to {capital}, friend. Shall I hold it?",
+        "Shall I hold {capital}? {rival} is being very friendly with our border.",
+        "Do I hold {capital}, friend? {rival} is near."
+      ],
+      "askSteward": [
+        "Nothing worth building, friend. Fortify the border or raise culture?",
+        "Forts or culture, friend? I'll do either beautifully.",
+        "Fortify the border or raise culture? I'll make it look like the other one."
+      ],
+      "askPurse": [
+        "My purse is empty, friend. A small share, perhaps?",
+        "Friend, the purse is empty. A share would go a long way.",
+        "Empty purse. I'll make a share look like twice as much."
+      ],
+      "lapsed": [
+        "No answer, friend. I took that as a no. I'll remember.",
+        "Silence, friend. A no, I assume.",
+        "I took that as a no. Diplomatic of you."
+      ],
+      "needle": [
+        "Still not going after {rival}, friend? Fine. I can wait.",
+        "{rival} is doing very well. Too well, friend.",
+        "I've been very nice to {rival}. For now."
+      ],
+      "ack": [
+        "Of course, friend.",
+        "Consider it done, friend.",
+        "Lovely. I'll see to it."
+      ]
+    },
+    "opportunist": {
+      "askGrudge": [
+        "{rival} took {place}. Do we hit back while they're stretched?",
+        "{rival} is busy holding {place}. Want me to make them regret it?",
+        "Shall we go after {rival}? {place} won't stay theirs if we move now."
+      ],
+      "askCapital": [
+        "{rival} is near {capital}. Shall I hold it, or gamble?",
+        "Hold {capital}? {rival} smells weakness.",
+        "Shall I hold {capital}? Losing it would be a bad trade."
+      ],
+      "askSteward": [
+        "Nothing worth building here. Fortify the border or raise culture?",
+        "Forts where they'll come from, or culture? Your call.",
+        "Fortify or culture? Someone will hit the border soon."
+      ],
+      "askPurse": [
+        "Purse is empty. A share now and I'll make it count.",
+        "No gold, and there's an opening. A share?",
+        "Empty purse. A share would pay for itself."
+      ],
+      "lapsed": [
+        "No answer. I took that as a no.",
+        "Didn't hear back. We'll see what that costs.",
+        "A no, then. The opening may not wait."
+      ],
+      "needle": [
+        "Still not going after {rival}? Fine. They'll slip.",
+        "{rival} will have a bad turn eventually. I'm watching.",
+        "Just saying, {rival} looks stretched."
+      ],
+      "ack": [
+        "Good call.",
+        "On it.",
+        "Sensible. Done."
+      ]
+    },
+    "merchant": {
+      "askGrudge": [
+        "{rival} took {place}. Do we go after them? I can price it out.",
+        "{place} was a good asset. Shall we recover it from {rival}?",
+        "Walk me through it: do we go after {rival} for {place}?"
+      ],
+      "askCapital": [
+        "Shall I hold {capital}? {rival} is close, and it's our best asset.",
+        "{rival} is near {capital}. Do I protect the investment?",
+        "Hold {capital}? The numbers say {rival} is close."
+      ],
+      "askSteward": [
+        "Nothing here pays any more. Fortify the border or raise culture?",
+        "The market's saturated. Border forts, or culture?",
+        "Walk me through it: fortify or culture?"
+      ],
+      "askPurse": [
+        "Purse is empty. A share of income is a good investment.",
+        "Walk me through it: no budget, no returns. A share?",
+        "Empty purse. A small share would do a lot."
+      ],
+      "lapsed": [
+        "No answer. I took that as a no.",
+        "Didn't hear back. I'll file that under no.",
+        "No reply. The offer's withdrawn."
+      ],
+      "needle": [
+        "Still not going after {rival}? Fine. The debt is on the books.",
+        "{rival} still owes us. I keep a ledger.",
+        "We're carrying {rival} as a loss. Just noting it."
+      ],
+      "ack": [
+        "Thanks. Done.",
+        "Good decision. On it.",
+        "Agreed. I'll make it pay."
+      ]
+    },
+    "neutral": {
+      "askGrudge": [
+        "{rival} took {place}. Do we go after them?"
+      ],
+      "askCapital": [
+        "{rival} is near {capital}. Shall I hold it?"
+      ],
+      "askSteward": [
+        "Nothing left to build. Fortify the border or raise culture?"
+      ],
+      "askPurse": [
+        "Purse is empty. A share of income?"
+      ],
+      "lapsed": [
+        "No answer. I took that as a no."
+      ],
+      "needle": [
+        "Still not going after {rival}. Noted."
+      ],
+      "ack": [
+        "Done."
       ]
     }
   }

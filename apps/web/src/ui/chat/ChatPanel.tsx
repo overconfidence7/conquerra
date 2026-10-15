@@ -5,6 +5,9 @@ import { useGame } from "../../store";
 import { Incoming } from "../Deals";
 import { Frame } from "../Frame";
 import { applyChat, botsIn, CHAT_UI, chatDo, chatName, closeChat, markRead, openChat, ordered, unreadIn, useChat } from "./chatStore";
+import { COUNCIL_CHAT, CouncilChat } from "./Council";
+import { useCouncilUnread } from "./ChatBits";
+import { COUNCIL_ID } from "./councilStore";
 import "./chat.css";
 
 /** Session 29: what the chat with bots says itself (the voice guide applies). */
@@ -140,7 +143,7 @@ function BotChoices({ chat }: { chat: ChatView }) {
       {theirs.map((o) => (
         <div key={o.id} className="chat-offer frame slim">
           <b className="small">{BOT_UI.offer(bot.name)}</b>
-          <Incoming ctx={ctx} view={view} offer={o} onAnswered={(accept) => void chatDo({ do: "answered", chat: chat.id, offer: o.id, accept })} />
+          <Incoming compact ctx={ctx} view={view} offer={o} onAnswered={(accept) => void chatDo({ do: "answered", chat: chat.id, offer: o.id, accept })} />
         </div>
       ))}
       {problem && <p className="warn small">{problem}</p>}
@@ -281,8 +284,14 @@ function GroupTools({ chat }: { chat: ChatView }) {
 function ChatList({ onPick }: { onPick(id: string): void }) {
   const { chats, lines, read, selected } = useChat();
   const online = useGame((s) => !!s.online && !!s.view);
+  const council = useCouncilUnread();
   return (
     <nav className="chat-list" aria-label="Your chats">
+      {/* Session 29: your council first (only you have it). */}
+      <button className={`chat-item ${council ? "unread" : ""} ${selected === COUNCIL_ID ? "on" : ""}`} onClick={() => onPick(COUNCIL_ID)} aria-label={council ? `${COUNCIL_CHAT.name}, ${council} unread` : COUNCIL_CHAT.name}>
+        <span className="chat-item-name">{COUNCIL_CHAT.name}</span>
+        {council > 0 && <span className="chat-badge">{council}</span>}
+      </button>
       {ordered(chats).map((c) => {
         const n = unreadIn({ lines, read }, c.id);
         return (
@@ -307,6 +316,20 @@ function Selected({ id, onBack }: { id: string; onBack?: () => void }) {
   useEffect(() => {
     markRead(id);
   });
+  if (id === COUNCIL_ID)
+    return (
+      <section className="chat-main">
+        <header className="chat-head">
+          {onBack && (
+            <button className="link chat-back" onClick={onBack} aria-label="Back to your chats">
+              ‹
+            </button>
+          )}
+          <b>{COUNCIL_CHAT.name}</b>
+        </header>
+        <CouncilChat />
+      </section>
+    );
   if (!chat) return null;
   return (
     <section className="chat-main">

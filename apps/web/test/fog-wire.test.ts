@@ -135,8 +135,9 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
     let turnsChecked = 0;
     let ranByLeaders = 0;
     let rivalsSeen = 0;
-    /** Session 29: lines the bots said in the chat, checked for fairness. */
+    /** Session 29: lines the bots said in the chat, checked for fairness, and questions from each seat's council. */
     let botLines = 0;
+    let councilAsks = 0;
 
     /** One turn's truth, for checking what each seat was sent. */
     let last: { before: GameState; result: TurnResult } | null = null;
@@ -162,6 +163,15 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
         expect(report.events).toEqual(clone(replayFor(ctx, last!.before, last!.result, seat)));
         rivalsSeen += report.events.filter((e) => "player" in e && e.player !== seat).length;
         if (report.ranByLeaders?.length) ranByLeaders++;
+        // Session 29: a council question is this seat's own leader's, and names only what this seat knows.
+        if (report.ask) {
+          councilAsks++;
+          expect(report.ask.leader.endsWith(`:${seat}`), `${seat} was asked by ${report.ask.leader}`).toBe(true);
+          const known = new Set<string>();
+          for (const v of [viewFor(ctx, last!.before, seat), viewFor(ctx, game().fullState, seat)]) for (const [id, x] of Object.entries(v.territories)) if (x.detail === "full") known.add(id);
+          for (const t of ctx.map.territories) if (new RegExp(`\\b${t.name}\\b`).test(report.ask.text)) expect(known.has(t.id), `${seat} was asked about ${t.name}`).toBe(true);
+          expect(/\d/.test(report.ask.text)).toBe(false);
+        }
       }
       const before = u.before ?? ("replay" in u ? u.replay?.before : undefined);
       if (before) expect(before).toEqual(clone(viewFor(ctx, last!.before, seat)));
@@ -280,6 +290,7 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
     expect(ranByLeaders).toBeGreaterThan(0);
     // Session 29: the bots spoke in the table chat, and every line was fair to its reader.
     expect(botLines).toBeGreaterThan(0);
+    expect(councilAsks).toBeGreaterThan(0);
     // Wren was never sent anything once she left, and her seat played on (her leaders, then a Marshal).
     expect(t.inbox(WREN.user)).toEqual([]);
     expect(given.get("p3")?.size).toBeGreaterThan(0);
