@@ -37,6 +37,8 @@
 - **Built, session 26 (Oct 13):** the Worker `conquerra` now has a script (`apps/web/server/`): static files as before, plus the online API under `/api` (only `/api/*` runs the Worker's code: `run_worker_first`). Bindings: the Durable Object `GameRoom` (SQLite storage, migration tag `v1`), D1 `conquerra_db` (id `eed2c38b-1ca4-4e45-8b0b-b3c808183a6c`, migrations in `apps/web/migrations/`), the variables `ACCESS_TEAM` (`keel-nkurtz.cloudflareaccess.com`) and `ACCESS_AUD` (the Conquerra app's AUD tag, in `apps/web/wrangler.jsonc`). Workers Logs on (observability). No R2 yet.
 - **Deploy:** `pnpm deploy:preview` runs the tests, builds, applies any new D1 migration (`wrangler d1 migrations apply conquerra_db --remote`), deploys (which creates the Durable Object's storage the first time), and runs the lock check (every page, the API and a real WebSocket must be refused without signing in).
 - **Local:** `npx wrangler dev --config apps/web/wrangler.jsonc` (after `pnpm build`), with `DEV_EMAIL=you@example.com` in `apps/web/.dev.vars` (git-ignored, never uploaded) standing in for the sign-in, and `npx wrangler d1 migrations apply conquerra_db --local` once.
+- **"Your turn" pushes (session 29):** the room signs each push with its VAPID key. The public half is the variable `VAPID_PUBLIC` in `apps/web/wrangler.jsonc`. The private half is the secret `VAPID_PRIVATE`, set with `wrangler secret put` straight from `node apps/web/scripts/vapid-keys.mjs` (it's never printed or written to a file, and isn't in `.dev.vars`, so a local `wrangler dev` sends no pushes). Making a new pair means every browser turns the setting on again, so only if the private key is lost or leaked. Subscriptions live in D1 (`push_subs`, migration `0004_push.sql`). `npx tsx apps/web/scripts/push-check.ts` sends a test push through Google's real push service to a throwaway Chrome profile (a Chrome window opens for a few seconds) with a throwaway key.
+- **Email for long turns (session 29):** the binding `send_email` (`EMAIL`), sending plain text from `conquerra@overconfidenceonline.com` through Email Routing. On the Free plan it delivers only to **destination addresses verified in Nate's account** (Email Routing). Anyone else's fails quietly (logged once). Workers Paid with Email Sending (M5) opens it to anyone; this account's Email Sending answered "Unauthorized" on Oct 15.
 
 #### Nate's steps for M4 (copy-paste simple)
 **1. The AUD tag (once, session 26).** The Worker checks every API call's sign-in against the Conquerra Access app's "audience" tag. It isn't a secret (it's inside every sign-in token).
@@ -77,6 +79,14 @@
    - The first time they open the link, Access's sign-in page asks them to sign in (with the same email you added).
    - Free up to 50 people in all (shared with Keel). To remove someone, delete their email from the same rule.
 
+**4. Email for long turns (session 29): a verified address (about 2 minutes, once per address).** On the Free plan Cloudflare only delivers the game's emails to addresses verified in your account.
+   1. Open https://dash.cloudflare.com and pick "Nkurtz@gmail.com's Account".
+   2. Left menu: **Compute → Email Service → Email Routing** (on older layouts: pick the site **overconfidenceonline.com**, then **Email → Email Routing**).
+   3. Open **Destination addresses** and click **Add destination address**.
+   4. Type the address (for you: `nkurtz@gmail.com`) and **Save**.
+   5. Open the email Cloudflare sends to that address and click its verify link.
+   - **Already done for `nkurtz@gmail.com`** (verified Aug 20, from the routing rule): the session's test email reached your inbox on Oct 15. Repeat these steps for a friend's address when they want turn emails.
+
 #### What M4 needed, as planned
 - **Worker** `conquerra`: serves the web app and the API on `conquerra.overconfidenceonline.com`.
 - **Durable Object** `GameRoom` (SQLite storage): one per game. Its alarms run the 5-minute timers; WebSockets carry the live replay.
@@ -100,5 +110,5 @@
 ## Steps only Nate can do (when the time comes)
 1. M2 or M4: approve creating the Worker, custom domain and Access app. Claude Code can do this with Wrangler once Nate logs in (`npx wrangler login` opens a browser).
 2. M4: nothing to pay (see above). M5: switch to Workers Paid ($5/month) under Workers plans → Upgrade.
-3. M4: add friends' emails to the Conquerra Access policy.
+3. M4: add friends' emails to the Conquerra Access policy (and, for turn emails, verify their address: step 4 above).
 4. M5: Stripe account for payments.

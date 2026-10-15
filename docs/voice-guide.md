@@ -132,3 +132,9 @@ It never undercuts the facts (what it took, what it lost), and it can needle its
 - **Ranges** read "4 to 6", never "4–6", everywhere a player reads them, the rules reference included.
 - **The voice test** (`packages/content/test/voice.test.ts`) reads about 6,200 strings with the TypeScript parser and fails on the hard rules; `ALLOWED` in `voiceScan.ts` names the few non-prose exceptions (the gold counter's arrow). `npx tsx packages/content/test/voice-report.ts` lists failures by file.
 - **Comma splices** crept in when semicolons were turned into commas inside parentheses: Nate's style fixes them, so use "and" or a full stop.
+
+## What session 29 added (the bots in the chat, your council)
+- **Two new sections of `lines.json`:** `chat` (the bots at the table, by voice: the six personalities, the Neutral of a seat a Marshal took, and the Captain's plain one, plus `you`, your own lines for "Say something") and `council` (your leaders' questions and asides). The Recruit has no chat lines: it never chats.
+- **A real question is allowed there** (a bot asking "Join us against Wren? Make it a deal." or a leader asking "Shall I hold Rookhome?"). The voice test still forbids a question mark in every older section.
+- **Receipts still rule:** a bot's chat line names a place only from its reader's own replay, and carries no number but "and 2 more" (a count of the reader's own land it names). Your council's lines come from your own views, like your leaders' report lines.
+
