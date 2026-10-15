@@ -12,7 +12,7 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 3. note exactly where you stopped in `PROGRESS.md`
 4. write the summary
 
-**The parts are in priority order; Parts 1 to 3 each end with a deploy,** so the session is complete at any of those boundaries. Whatever isn't reached becomes session 28b; say what's left. Nate and his friends may be playing the preview while you work, so every deploy must be a working build, and **a game already running on the server must survive a deploy** (the room's save keeps its shape; a new storage key is fine, a changed one needs a migration you describe).
+**The parts are in priority order; Parts 1 to 3 each end with a deploy,** so the session is complete at any of those boundaries. Whatever isn't reached becomes session 28b; say what's left. Nate may be playing the preview while you work, so every deploy must be a working build, and **a game already running on the server must survive a deploy** (the room's save keeps its shape; a new storage key is fine, a changed one needs a migration you describe).
 
 ## Read first, in this order
 1. `CLAUDE.md`
@@ -32,7 +32,7 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 5. **The Finished list:** a row for a game that has since ended says "You left this game on turn 17. It goes on without you." while its result screen shows the winner. The row says the result once the game is over ("Over: Lady Morwen won. You left on turn 2.") and the turn you left on, not the current turn.
 6. **The Houses panel** truncates names ("Baron K…", "Queen I…") once the OUT badges and the Oathbreaker tag crowd it: let the badges wrap under the name, never the name.
 7. **Small:** the single-player Start button reads "Starting…" while a table is being made (only "Make a game link" should go busy); the table screen's guest-list note shows a file path to players: make it the host's plain words ("Your friend's Google email has to be on the guest list first. Nate adds it in Cloudflare.") and keep the path in the infra doc only.
-8. **If Nate's notes from his friend game are in `PROGRESS.md`**, do the small ones here; list the rest for the orchestrator.
+8. **If Nate's play-test notes after 27 are in `PROGRESS.md`**, do the small ones here; list the rest for the orchestrator. (Nate is testing alone for now: friends come later, so nothing in this session waits on one.)
 9. **Commit, deploy, push.** (Run the full `pnpm test` before this and every push.)
 
 ## Guardrails (all parts)
@@ -49,7 +49,7 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 3. **Withdrawing:** the proposer removing the `propose` order before lock-in withdraws it; the other page is told ("Nate withdrew the offer."). An offer to someone who has already locked in can't be answered: the Propose list says so next to the name ("locked in") and the offer isn't sent.
 4. **Public as designed:** the turn report, the Chronicle and the players panel show deals between people as they show bots' deals today (trade terms private). Your leaders never answer for you (an away person's leaders decline nothing and accept nothing: the offer lapses).
 5. **Bots and people together:** a bot's offers to each person, and each person's to a bot, as 26 built them; a person's offer to a person never goes through a bot's `negotiate`.
-6. **Tests:** offer, accept, counter, decline, withdraw, lapse at lock-in, both orders make the deal, the fog test (an offer reaches its two parties only; the deal's news reaches the table). **Deploy. Commit and push.** Nate and a friend make a truce and a trade.
+6. **Tests:** offer, accept, counter, decline, withdraw, lapse at lock-in, both orders make the deal, the fog test (an offer reaches its two parties only; the deal's news reaches the table). **Deploy. Commit and push.** Then check it yourself with two accounts against `wrangler dev` (as 27 did): a truce and a trade between two people, a counter, a decline, a withdrawal.
 
 ## Part 2: chat for people (the second deploy)
 1. **Three kinds of chat**, all online only, all kept with the game in the room: **the table** (everyone, people and later bots), **one-to-one** (any two people), and **a group** any player makes by picking people at the table (the Houses panel or the chat's "New group"). A group is **private to its members: the others never see it, aren't told it exists, and can't join unless a member adds them;** members can add more people; anyone can start any number. A group's name is its members' names ("Nate, Kit") unless a member renames it (24 characters). A player who resigned or was taken over keeps reading the chats they're in but can't write ("You've left the game.").
@@ -57,21 +57,21 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 3. **Messages:** plain text, 300 characters, no formatting, no links made clickable; at most one message every 2 seconds a person (the room refuses faster ones quietly). The room keeps up to **2,000 messages a game** under a `chat` key (the oldest dropped) and sends each seat only the chats it's in; on hello the page says the last message id it has (as `have` does for the Chronicle) and gets only the rest. A seat is told who's in a group it belongs to (names and colours), nothing else about anyone.
 4. **The look (§13):** a chat button in the top bar with an unread count; on desktop a panel with **a sidebar listing your chats** (bold when unread, the table first, then groups, then one-to-one) and **the selected chat filling the rest**; on a phone **two screens** in the bottom sheet (the list, then the chat, with a back arrow). **A small pop-up** (the existing toasts, quiet style) when a message arrives while the panel is closed: who and the first words, tap to open, gone on its own in 6 s; never more than one on screen (the latest replaces it); none during the replay (they queue and show after). No sound this session.
 5. **The Houses panel:** a chat bubble on each person (one-to-one) and "Group…" at the bottom (pick members with tick boxes).
-6. **Tests:** the room stores and relays (table, one-to-one, group), membership (add, rename, the others never hear of it), the cap and the rate, the hello's `have`, a resigned seat reads only, the fog test (a group's text and existence reach its members only). **Deploy. Commit and push.** Screenshots: the chat on desktop (sidebar and a group), the two phone screens, the pop-up.
+6. **Tests:** the room stores and relays (table, one-to-one, group), membership (add, rename, the others never hear of it), the cap and the rate, the hello's `have`, a resigned seat reads only, the fog test (a group's text and existence reach its members only). **Deploy. Commit and push.** Check it yourself with two accounts against `wrangler dev`: a group chat the third seat never hears of, the pop-up, the phone's two screens. Screenshots: the chat on desktop (sidebar and a group), the two phone screens, the pop-up.
 
 ## Part 3: pause by vote (the third deploy)
 1. **Asking:** online only, in the planning window only (not during a replay), from Settings ("Ask for a pause") and from a tap on the header's clock. **Everyone else at the table gets a card** ("Kit asks for a pause, 15 minutes at most. Agree?" with Agree and No); bots agree at once; a person's leaders never answer. **The pause starts only if everyone still playing agrees within 60 seconds;** one No, or the 60 s passing, and the asker is told ("Not everyone agreed." or "Wren didn't answer in time."). Only a pause that starts counts against the asker's three (a default; Nate can change it).
 2. **Paused:** the room's clock stops (the deadline moves by the paused time, the alarm is set to the pause's end), **15 minutes at most, three a player a game, and it ends early when every person presses Ready** (the card stays up with "Ready", and shows who's ready). The header shows "Paused by Kit, 12:40 left" for everyone; orders can still be set and saved during a pause, but not locked in (lock-in presses Ready instead). A person who reconnects during a pause sees it.
 3. **Deploys and restarts:** a paused game that wakes after a deploy is still paused with the right time left (the fake-clock tests cover it).
-4. **Tests:** all agree, one declines, the 60 s pass, the clock shift, three a player, ends early on Ready, the alarm across the pause, a room that wakes paused, the fog test (a vote reaches the table, nothing else). **Deploy. Commit and push.** Nate and a friend pause once.
+4. **Tests:** all agree, one declines, the 60 s pass, the clock shift, three a player, ends early on Ready, the alarm across the pause, a room that wakes paused, the fog test (a vote reaches the table, nothing else). **Deploy. Commit and push.** Check it yourself with two accounts against `wrangler dev`: a pause that starts, one that fails on a No, one that ends early on Ready.
 
-## Part 4 (can slip to 28b): the online polish from Nate's friend games, and the harness
-1. If Nate's notes from games with friends are in `PROGRESS.md`, do the online ones here (the ones that fit in a part).
+## Part 4 (can slip to 28b): the online polish, and the harness
+1. If Nate's play-test notes are in `PROGRESS.md`, do the online ones here (the ones that fit in a part). Otherwise the polish a two-account game shows you: whatever reads badly, lands late or needs an extra tap.
 2. `scripts/table-harness.mjs` learns to make an offer, write in a chat and ask for a pause, so 29 can test bots' chat against it. **Commit and push.**
 
 ## Last: the write-up, the test list
 - `docs/10-online-plan.md`: a BUILT block for 28 (deals between people as built, chat as built with its caps, pause as built, what changed from the plan). `docs/rules-reference.md` ("Online": deals with people, chat, pause, in plain words; the voice test reads it). `docs/decisions.md`: one line per decision.
-- **"Things to test after session 28"** in `PROGRESS.md`, most important first (a truce and a trade with a friend; a counter; a group chat two friends make against you; the pop-up on the phone; a pause with three people; a blank page never again after a deploy). Carry over what Nate hasn't tried from "after session 27" and before.
+- **"Things to test after session 28"** in `PROGRESS.md`, most important first (what Nate can try alone: an offer to a bot and its counter, the table chat on the phone, a pause the bots agree to, a blank page never again after a deploy; then, marked "with a friend": a truce and a trade between people, a group chat two friends make against you, a pause with three people). Carry over what Nate hasn't tried from "after session 27" and before.
 - `PROGRESS.md` (sessions completed: 28), `docs/decisions.md`.
 - **Commit and push.**
 
@@ -82,7 +82,7 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 ## Exit criteria
 - `pnpm test`, `pnpm typecheck` and the web build pass; everything is committed and pushed to `main`. **Run the full `pnpm test` before every push and twice before your last push**, and ask Nate to check the repo's Actions page for your last commit.
 - The fog-on-the-wire test passes with three people, an offer, a group chat and a pause vote; a missing asset answers 404; the start-up bundle within 2 KB of 495.8 KB; the lock check passes on every deploy.
-- Nate and a friend have made a deal and written in a chat on the preview, or the test list says exactly what to try.
+- A deal, a group chat and a pause have each worked between two accounts against `wrangler dev`, and on the preview as far as one account can go (an offer to a bot, the table chat, a pause asked and answered by bots); the test list says exactly what Nate tries alone and what waits for a friend.
 - Every deploy a working build with running games surviving it; the docs and the test list above.
 
 ## End with this summary, for Nate to paste to the orchestrator
@@ -92,5 +92,5 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 - deals between people in one paragraph (offer, answer, counter, withdraw, lapse), and chat in one (the three kinds, the caps, what a seat is told)
 - pause by vote as built, and anything built differently from the plan, and why
 - CPU per turn in the room, the size of a chat message on the wire and of the hello with chat, the start-up bundle
-- whether Nate's friend game happened and what it found
+- what the two-account checks found
 - the deployed version
