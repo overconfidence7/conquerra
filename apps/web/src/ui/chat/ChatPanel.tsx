@@ -19,6 +19,7 @@ export const BOT_UI = {
   pickRival: "Against whom?",
   groupNothingMore: "The bots here have nothing more to say this turn.",
   offer: (bot: string) => `${bot}'s offer`,
+  out: (bot: string) => `${bot} is out of the game.`,
 } as const;
 
 /** A bot's line comes with a deal ready to send: open the Deals panel on it (the asker only). */
@@ -127,6 +128,8 @@ function BotChoices({ chat }: { chat: ChatView }) {
   const [problem, setProblem] = useState<string | null>(null);
   const bot = botsIn(chat)[0];
   if (!bot?.seat || !ctx || !view) return null;
+  // (A bot knocked out keeps its chat, to read: it says nothing more.)
+  if (view.players.find((p) => p.id === bot.seat)?.eliminatedTurn != null) return <p className="muted small">{BOT_UI.out(bot.name)}</p>;
   const theirs = offers.filter((o) => o.from === bot.seat);
   const say = async (pick: number) => {
     setSaying(false);

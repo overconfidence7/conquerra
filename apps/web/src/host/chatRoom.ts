@@ -95,6 +95,8 @@ export interface ChatBotSeat {
   seat: PlayerId;
   name: string;
   house: number;
+  /** Knocked out: its chats keep its name, but it can't be added to one. */
+  out?: boolean;
 }
 
 /** Plain text, one line breaks allowed, no control characters, at most 300 characters. */
@@ -231,7 +233,7 @@ export class ChatRoom {
       for (const seat of list) {
         const s = this.seats().find((x) => x.seat === seat && x.seat !== undefined);
         if (!s) {
-          const b = this.bots().find((x) => x.seat === seat);
+          const b = this.bots().find((x) => x.seat === seat && !x.out);
           if (!b) return null;
           if (!botsPicked.includes(b.seat)) botsPicked.push(b.seat);
           continue;

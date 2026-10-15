@@ -184,6 +184,17 @@ describe("talking to a bot (session 29)", () => {
     expect(made.chats[0]!.members!.some((p) => p.bot && p.seat === bot.id)).toBe(true);
   });
 
+  it("a bot knocked out keeps its name in your chats with it, but can't be added to a new one", async () => {
+    const t = await table();
+    const g = t.room.table!;
+    const bot = g.chatBots()[0]!;
+    const pair = answerOf(await t.askAs(NATE, { type: "chat", act: { do: "pair", with: bot.id } })).chats[0]!;
+    g.fullState.players.find((p) => p.id === bot.id)!.eliminatedTurn = 1;
+    const again = (await t.hello("p1")).chat!.chats.find((c) => c.id === pair.id)!;
+    expect(again.members!.find((p) => p.bot)).toMatchObject({ name: bot.name, seat: bot.id });
+    expect(await t.askAs(NATE, { type: "chat", act: { do: "group", with: [bot.id] } })).toMatchObject({ ok: false, error: CHAT_TEXT.notPerson });
+  });
+
   it("the Recruit doesn't chat: deals only", async () => {
     const t = await table("recruit");
     const bot = t.room.table!.chatBots()[0]!;

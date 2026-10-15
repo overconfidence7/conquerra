@@ -200,10 +200,14 @@ export class RoomCore {
     );
   }
 
-  /** Session 29: the bots at the table, as chat knows them (still in the game; a table's game only). */
+  /**
+   * Session 29: the bots at the table, as chat knows them (a table's game only). One knocked out keeps its name in
+   * its chats (found on the preview: a one-to-one with a finished bot read "A chat"), but can't be added to one.
+   */
   private chatBotSeats(): ChatBotSeat[] {
-    if (!this.game || !this.tableRec) return [];
-    return this.game.chatBots().map((b) => ({ seat: b.id, name: b.name, house: b.house }));
+    const g = this.game;
+    if (!g || !this.tableRec) return [];
+    return g.fullState.players.filter((p) => !g.peopleIds.includes(p.id)).map((p) => ({ seat: p.id, name: p.name, house: p.house, ...(p.eliminatedTurn !== null ? { out: true } : {}) }));
   }
 
   /** Session 29: what a chat with bots adds for one person: three lines for "Say something", and messages left. */
