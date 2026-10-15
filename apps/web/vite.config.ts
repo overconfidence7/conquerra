@@ -95,6 +95,9 @@ export default defineConfig({
         // "Sign in again" and Cloudflare Access's own pages must reach the server, or the sign-in never happens.
         navigateFallbackDenylist: NETWORK_ONLY_NAVIGATIONS,
         cleanupOutdatedCaches: true,
+        // Session 29: "your turn" pushes (public/push-sw.js), loaded into this same service worker: its caching and
+        // updates stay exactly as generated, and the push code is a few plain lines beside them.
+        importScripts: ["push-sw.js"],
       },
     }),
   ],

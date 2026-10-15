@@ -14,4 +14,9 @@ export interface Env {
   ACCESS_AUD?: string;
   /** Local development only (`wrangler dev`, from .dev.vars): the email to sign in as on localhost. */
   DEV_EMAIL?: string;
+  /** Session 29: the room's VAPID key for "your turn" pushes: the public half (a variable) and the private one (a secret). */
+  VAPID_PUBLIC?: string;
+  VAPID_PRIVATE?: string;
+  /** Session 29: email for long turns, from conquerra@overconfidenceonline.com (Email Routing: verified addresses only). */
+  EMAIL?: SendEmail;
 }

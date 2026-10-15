@@ -12,7 +12,8 @@ import { clearInsets, landFrame, type Insets, type Rect } from "../map/camera";
 import type { Beat } from "../replay/timeline";
 import { toastFor } from "../replay/toasts";
 import type { MapRenderer } from "../render/types";
-import { knockedOut, useGame } from "../store";
+import { holdNotices, knockedOut, showNotice, useGame, WINDOW_OPEN } from "../store";
+import { opensInMs } from "../logic/timer";
 import { ActionBar, LockSeal } from "./ActionBar";
 import { BottomSheet, type SheetSize } from "./BottomSheet";
 import { Frame } from "./Frame";
@@ -58,6 +59,8 @@ const KeepGenerals = lazy(() => import("./KeepGenerals"));
 const CardsSheet = lazy(() => import("./Cards"));
 /** Settings → Your name (session 27, online only): loaded with it, never in single player. */
 const NameField = lazy(() => import("./NameField").then((m) => ({ default: m.NameField })));
+/** Settings → "Tell me when it's my turn" (session 29, online only). */
+const TurnAlerts = lazy(() => import("./TurnAlerts").then((m) => ({ default: m.TurnAlerts })));
 /** Settings → Credits (session 24): loaded the first time it's opened. */
 const SoundCredits = lazy(() => import("./SoundCredits"));
 /** The Chronicle (session 16): loaded the first time it's opened. */
@@ -172,6 +175,7 @@ function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSave
       {online && (
         <Suspense fallback={null}>
           <NameField />
+          <TurnAlerts />
         </Suspense>
       )}
       {/* Online (session 28): pause by vote. */}
@@ -543,8 +547,20 @@ export function GameScreen() {
   // Online (session 27): a Marshal plays your seat now (you resigned, or missed three turns): you watch.
   const gone = view ? (g.leftSeats?.[view.me.id] ?? null) : null;
   const replaying = !!replay;
-  // Session 29: a bot's line about the turn waits until its replay has played.
-  useEffect(() => holdBotLines(replaying), [replaying]);
+  // Session 29: a bot's line about the turn waits until its replay has played, and so does quiet news.
+  useEffect(() => {
+    holdBotLines(replaying);
+    holdNotices(replaying);
+  }, [replaying]);
+  // Session 29: online, a quiet line when the planning window opens (after the table's longest replay and its 10 s).
+  const windowClock = g.online && !view?.winner ? clock : null;
+  useEffect(() => {
+    if (!windowClock) return;
+    const wait = opensInMs(windowClock, Date.now());
+    if (wait <= 0) return;
+    const t = setTimeout(() => showNotice(WINDOW_OPEN(view?.turn ?? 0), true), wait);
+    return () => clearTimeout(t);
+  }, [windowClock, view?.turn]);
   // Coins when an order that costs gold is added; a very soft page when a panel opens (session 24).
   const queued = useRef(queue.length);
   useEffect(() => {

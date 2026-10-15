@@ -34,3 +34,8 @@
 .online-finished { margin-top: 4px; }
 .online-name { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .online-name input { max-width: 14em; }
+
+/* Session 29: "your turn" in Settings online. */
+.turn-alerts { display: flex; flex-direction: column; gap: 6px; padding: 6px 0; }
+.turn-alert { align-items: flex-start; }
+.turn-alert input { margin-top: 3px; }

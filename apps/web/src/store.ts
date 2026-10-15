@@ -173,7 +173,8 @@ interface GameStore {
   /** Session 27: seats a Marshal plays now (their person resigned or missed three turns): yours means you're watching. */
   leftSeats: Record<PlayerId, { why: "resigned" | "taken"; turn: number }> | null;
   /** Session 27: you, as the server knows you (your name and usual House colour), once asked. */
-  me: { name: string; colour: number | null } | null;
+  /** Online: you (session 29: your email, the room's push key, and whether you get turn emails). */
+  me: { name: string; colour: number | null; email?: string; push?: string; turnEmail?: boolean } | null;
   /** The notice is just news (online: "Reconnected"), not a problem: shown quietly, and it goes by itself. */
   noticeCalm: boolean;
   /** Carry on from a saved game: the autosave (Continue), a slot, or a file's text. */
@@ -1017,7 +1018,8 @@ export const CALM_MS = 4000;
  */
 export function showNotice(notice: string, calm: boolean) {
   const st = useGame.getState();
-  if (calm && st.notice) {
+  // (Session 29: news waits while the replay plays, as the chat's pop-up does.)
+  if (calm && (st.notice || noticeHold)) {
     if (st.notice !== notice && !calmQueue.includes(notice)) calmQueue.push(notice);
     // (A long line of news is old news: the newest few are kept.)
     if (calmQueue.length > 5) calmQueue.shift();
@@ -1035,14 +1037,27 @@ export function showNotice(notice: string, calm: boolean) {
 
 /** The notice on screen went: the next quiet one waiting, if any. */
 export function nextNotice() {
+  if (noticeHold) return;
   const next = calmQueue.shift();
   if (next !== undefined && !useGame.getState().notice) showNotice(next, true);
 }
+
+/** Session 29: the replay is playing: quiet notices wait for it (a warning still shows at once). */
+let noticeHold = false;
+export function holdNotices(hold: boolean) {
+  if (noticeHold === hold) return;
+  noticeHold = hold;
+  if (!hold) nextNotice();
+}
+
+/** Session 29: the quiet line when an online turn's planning window opens. */
+export const WINDOW_OPEN = (turn: number) => `Turn ${turn} is open for orders.`;
 
 /** A new game: nothing waiting from the last one. */
 function clearNotices() {
   calmQueue.length = 0;
   noticeSeq++;
+  noticeHold = false;
 }
 
 /**

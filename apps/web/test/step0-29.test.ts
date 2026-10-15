@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlayerView } from "@conquerra/engine";
 import { canProposeTo } from "../src/logic/deals";
-import { CALM_MS, showNotice, useGame } from "../src/store";
+import { CALM_MS, holdNotices, showNotice, useGame, WINDOW_OPEN } from "../src/store";
 
 /** Session 29, Step 0: quiet notices wait their turn behind a warning; a seat a Marshal plays can't deal. */
 describe("session 29, Step 0", () => {
@@ -38,6 +38,19 @@ describe("session 29, Step 0", () => {
     showNotice("Reconnected", true);
     showNotice("The game is paused.", false);
     expect(useGame.getState()).toMatchObject({ notice: "The game is paused.", noticeCalm: false });
+  });
+
+  it("session 29, Part 3: quiet news waits while the replay plays, then shows (a warning never waits)", () => {
+    holdNotices(true);
+    showNotice(WINDOW_OPEN(12), true);
+    expect(useGame.getState().notice).toBeNull();
+    showNotice("Something went wrong.", false);
+    expect(useGame.getState().notice).toBe("Something went wrong.");
+    useGame.getState().dismissNotice();
+    expect(useGame.getState().notice).toBeNull();
+    holdNotices(false);
+    expect(useGame.getState().notice).toBe("Turn 12 is open for orders.");
+    vi.advanceTimersByTime(CALM_MS);
   });
 
   it("a seat a Marshal plays now (you resigned or were taken over) can't propose a deal", () => {

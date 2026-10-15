@@ -47,11 +47,14 @@ export async function refreshOnline() {
   }
 }
 
+/** You, as the server sends it (session 29: and what "your turn" needs). */
+type Me = { name: string; colour: number | null; email?: string; push?: string; turnEmail?: boolean };
+const meFrom = (me: Me) => ({ name: me.name, colour: me.colour, ...(me.email ? { email: me.email } : {}), ...(me.push ? { push: me.push } : {}), turnEmail: !!me.turnEmail });
+
 /** You, as the server knows you (your name and usual colour). */
 export async function refreshMe() {
   try {
-    const me = await api<{ name: string; colour: number | null }>("/api/me");
-    useGame.setState({ me: { name: me.name, colour: me.colour } });
+    useGame.setState({ me: meFrom(await api<Me>("/api/me")) });
   } catch {
     // The lobby's list says what's wrong.
   }
@@ -59,9 +62,57 @@ export async function refreshMe() {
 
 /** Change your display name (Settings, the table screen). Throws a plain sentence if it can't. */
 export async function setMyName(name: string) {
-  const me = await api<{ name: string; colour: number | null }>("/api/me", { method: "PATCH", body: JSON.stringify({ name }) });
-  useGame.setState({ me: { name: me.name, colour: me.colour } });
+  const me = await api<Me>("/api/me", { method: "PATCH", body: JSON.stringify({ name }) });
+  useGame.setState({ me: meFrom(me) });
   return me.name;
+}
+
+/** Session 29: an email when it's your turn in a long game, or not. */
+export async function setTurnEmail(on: boolean) {
+  useGame.setState({ me: meFrom(await api<Me>("/api/me", { method: "PATCH", body: JSON.stringify({ turnEmail: on }) })) });
+}
+
+/** Session 29: "your turn" pushes on this device: on, off, blocked by the browser, or not possible here (install the app). */
+export type PushState = "checking" | "on" | "off" | "blocked" | "unsupported";
+
+const pushable = () => typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+
+/** The room's public key, as `pushManager.subscribe` takes it. */
+function keyBytes(b64u: string): Uint8Array<ArrayBuffer> {
+  const bin = atob(b64u.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((b64u.length + 3) % 4));
+  return Uint8Array.from(bin, (c) => c.charCodeAt(0));
+}
+
+export async function pushState(): Promise<PushState> {
+  if (!pushable()) return "unsupported";
+  if (Notification.permission === "denied") return "blocked";
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (!reg) return "unsupported";
+  return (await reg.pushManager.getSubscription()) && Notification.permission === "granted" ? "on" : "off";
+}
+
+/** Ask the browser, subscribe this device with the room's key, and tell the server where to send. */
+export async function pushOn(key: string): Promise<PushState> {
+  if (!pushable() || !key) return "unsupported";
+  if ((await Notification.requestPermission()) !== "granted") return Notification.permission === "denied" ? "blocked" : "off";
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  // (One made with another key, from an older room key, is replaced.)
+  const made = sub?.options.applicationServerKey ? new Uint8Array(sub.options.applicationServerKey) : null;
+  if (sub && made && made.join() !== keyBytes(key).join()) (await sub.unsubscribe(), (sub = null));
+  sub ??= await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(key) });
+  await api("/api/push", { method: "POST", body: JSON.stringify(sub.toJSON()) });
+  return "on";
+}
+
+export async function pushOff(): Promise<PushState> {
+  const reg = pushable() ? await navigator.serviceWorker.getRegistration() : undefined;
+  const sub = await reg?.pushManager.getSubscription();
+  if (sub) {
+    await api("/api/push", { method: "DELETE", body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => undefined);
+    await sub.unsubscribe();
+  }
+  return "off";
 }
 
 /** The table screen's host (the game's own host once it starts), and the opening it's waiting on. */

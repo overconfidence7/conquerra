@@ -630,6 +630,11 @@ export class LocalGame {
     return this.opensAt;
   }
 
+  /** The turn's length (s), or null with No timer. */
+  get turnSeconds(): number | null {
+    return this.turnMs === null ? null : this.turnMs / 1000;
+  }
+
   /** The first message: the map and rules, plus this person's opening view. */
   start(id: PlayerId = HUMAN_ID): HostStart {
     const p = this.person(id);

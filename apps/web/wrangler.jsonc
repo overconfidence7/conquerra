@@ -38,8 +38,14 @@
     // Sign-in is Cloudflare Access: the Worker checks the token Access signs, for this team and this app.
     "ACCESS_TEAM": "keel-nkurtz.cloudflareaccess.com",
     // The Conquerra Access app's AUD tag (docs/infra-cloudflare.md, "Nate's steps"). Empty: online play is off.
-    "ACCESS_AUD": "f625771a53a90b97316ff44af7f1df284c2f4af0bd85da1464725aa2bb9c23bb"
+    "ACCESS_AUD": "f625771a53a90b97316ff44af7f1df284c2f4af0bd85da1464725aa2bb9c23bb",
+    // Session 29: the public half of the room's VAPID key ("your turn" pushes). The private half is the secret
+    // VAPID_PRIVATE (`wrangler secret put`), kept nowhere else.
+    "VAPID_PUBLIC": "BPvNJUF0JxV-YD9dguNZWkeaHEjhvc0tRytL-45umwSBRYnLCEhJjXV74RwnF1u6eApQJGqs7DsPviS82745d7I"
   },
+  // Session 29: email for long turns, from conquerra@overconfidenceonline.com (Email Routing delivers only to addresses
+  // verified in Nate's account on the Free plan).
+  "send_email": [{ "name": "EMAIL" }],
   // Logs (and each request's CPU time) in the dashboard and `wrangler tail`.
   "observability": { "enabled": true }
 }

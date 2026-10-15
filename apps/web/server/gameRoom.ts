@@ -3,8 +3,10 @@ import { MapDef } from "@conquerra/content";
 import type { PlayerId } from "@conquerra/engine";
 import { RoomCore, type RoomInfo, type RoomSetup, type RoomStore, type TableSetup, type Who } from "../src/host/roomCore";
 import type { RoomMessage, RoomRequest, TableView } from "../src/host/protocol";
+import { EmailMessage } from "cloudflare:email";
 import slimMaps from "./maps.json";
 import { mirrorGame, mirrorTable } from "./mirror";
+import { FROM, notifyTurn } from "./notify";
 import type { Env } from "./env";
 
 /**
@@ -79,7 +81,29 @@ export class GameRoom extends DurableObject<Env> {
       },
       listed: (info) => ctx.waitUntil(mirrorGame(env.DB, info)),
       log: (line) => console.log(line),
+      // Session 29: "your turn", in the background (./notify.ts).
+      notify: (n) => this.later(notifyTurn(n, {
+        db: env.DB,
+        vapid: env.VAPID_PUBLIC && env.VAPID_PRIVATE ? { publicKey: env.VAPID_PUBLIC, privateKey: env.VAPID_PRIVATE, subject: `mailto:${FROM}` } : null,
+        fetch: (req) => fetch(req),
+        mail: env.EMAIL ? async (to, _subject, raw) => void (await env.EMAIL!.send(new EmailMessage(FROM, to, raw))) : null,
+        now: Date.now(),
+        log: (line) => console.log(line),
+      }).then((r) => console.log(`"your turn": ${r.pushed} pushed, ${r.removed} gone, ${r.emailed} emailed`))),
     });
+  }
+
+  /** Work that finishes after the answer (a push): kept alive, and waited for before the room sleeps. */
+  private outbox: Promise<unknown>[] = [];
+  private later(p: Promise<unknown>) {
+    const kept = p.catch((e) => console.log(`notify failed: ${e instanceof Error ? e.message : String(e)}`));
+    this.outbox.push(kept);
+    this.ctx.waitUntil(kept);
+  }
+  private async drain() {
+    const out = this.outbox;
+    this.outbox = [];
+    await Promise.allSettled(out);
   }
 
   private sockets(): [WebSocket, Attachment][] {
@@ -168,6 +192,7 @@ export class GameRoom extends DurableObject<Env> {
     }
     await this.core.receive(who, req);
     await this.core.flush();
+    await this.drain();
   }
 
   async webSocketClose(ws: WebSocket) {
@@ -184,6 +209,7 @@ export class GameRoom extends DurableObject<Env> {
   async alarm() {
     await this.core.alarm();
     await this.core.flush();
+    await this.drain();
   }
 }
 

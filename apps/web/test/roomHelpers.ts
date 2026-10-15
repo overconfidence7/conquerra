@@ -29,8 +29,10 @@ export const hostSeat = (who: Who, house = 0): Sitter => ({ user: who.user, name
  * (session 27) that records every message it gets (one in `offline` gets nothing, as when its tab is closed). As in the
  * real room, a message to a seat goes to the page of the account sitting there.
  */
-export function testRoom(store = memoryRoomStore(), start = 1_000_000) {
+export function testRoom(store = memoryRoomStore(), start = 1_000_000, opts: { notify?: boolean } = {}) {
   let now = start;
+  /** Session 29: "your turn" notices the room asked its shell to send (only with `notify`). */
+  const notices: { gameId: string; turn: number; map: string; users: string[]; turnSeconds: number }[] = [];
   const inbox = new Map<string, RoomMessage[]>();
   const offline = new Set<string>();
   /** Accounts with a page open (they've sent the room something and aren't offline). */
@@ -56,6 +58,7 @@ export function testRoom(store = memoryRoomStore(), start = 1_000_000) {
       wakeAt: (at) => void (alarm = at),
       listed: (info) => void (listed = info),
       log: (line) => void logs.push(line),
+      ...(opts.notify ? { notify: (n) => void notices.push(JSON.parse(JSON.stringify(n)) as (typeof notices)[number]) } : {}),
     },
     () => now,
   );
@@ -87,6 +90,7 @@ export function testRoom(store = memoryRoomStore(), start = 1_000_000) {
     /** Close an account's page (it gets nothing more until it asks again). */
     leave: (who: Who) => void open.delete(who.user),
     logs,
+    notices,
     mirrors,
     alarm: () => alarm,
     listed: () => listed,

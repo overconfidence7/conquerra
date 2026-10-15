@@ -2,6 +2,7 @@ import { mapCatalog } from "@conquerra/content";
 import type { NewOnlineGame, OnlineGameInfo } from "../src/host/protocol";
 import { newSeed } from "../src/host/roomCore";
 import { AccessCache, accessKeys, verifyAccess, type SignedIn } from "./access";
+import { cleanSub } from "./webPush";
 import type { Env } from "./env";
 import { cleanName, cleanNewGame, nameFromEmail, newGameId, newInviteCode } from "./online";
 
@@ -64,15 +65,17 @@ interface UserRow {
   email: string;
   name: string;
   colour: number | null;
+  /** Session 29: an email when it's their turn in a long game. */
+  turn_email?: number;
 }
 
 /** The account for this email, made the first time it signs in. */
 async function userFor(env: Env, who: SignedIn): Promise<UserRow> {
-  const found = await env.DB.prepare("SELECT id, email, name, colour FROM users WHERE email = ?").bind(who.email).first<UserRow>();
+  const found = await env.DB.prepare("SELECT id, email, name, colour, turn_email FROM users WHERE email = ?").bind(who.email).first<UserRow>();
   if (found) return found;
   const row = { id: crypto.randomUUID(), email: who.email, name: nameFromEmail(who.email) };
   await env.DB.prepare("INSERT INTO users (id, email, name, created) VALUES (?, ?, ?, ?) ON CONFLICT(email) DO NOTHING").bind(row.id, row.email, row.name, Date.now()).run();
-  return (await env.DB.prepare("SELECT id, email, name, colour FROM users WHERE email = ?").bind(who.email).first<UserRow>())!;
+  return (await env.DB.prepare("SELECT id, email, name, colour, turn_email FROM users WHERE email = ?").bind(who.email).first<UserRow>())!;
 }
 
 interface GameRow {
@@ -226,9 +229,34 @@ async function resign(env: Env, user: UserRow, id: string): Promise<Response> {
   return json({ ok: true });
 }
 
-/** Change your name or usual colour (Settings, session 27). */
+/** Who you are, for the page: your name and usual colour, and (session 29) what "your turn" needs. */
+const meOf = (env: Env, user: UserRow) => ({ email: user.email, name: user.name, colour: user.colour, turnEmail: !!user.turn_email, ...(env.VAPID_PUBLIC ? { push: env.VAPID_PUBLIC } : {}) });
+
+/**
+ * Session 29: this browser's push subscription ("Tell me when it's my turn"), checked (a real push service, keys of the
+ * right size), or taken away. One row per browser: subscribing again replaces it.
+ */
+async function pushSub(env: Env, user: UserRow, request: Request): Promise<Response> {
+  const b = await body<{ endpoint?: unknown; keys?: unknown }>(request);
+  if (request.method === "DELETE") {
+    if (typeof b?.endpoint === "string") await env.DB.prepare("DELETE FROM push_subs WHERE endpoint = ? AND user = ?").bind(b.endpoint, user.id).run();
+    return json({ ok: true });
+  }
+  const sub = cleanSub(b);
+  if (!sub) return problem(400, "That browser's subscription couldn't be read.");
+  await env.DB.prepare("INSERT INTO push_subs (endpoint, user, p256dh, auth, made) VALUES (?, ?, ?, ?, ?) ON CONFLICT(endpoint) DO UPDATE SET user = excluded.user, p256dh = excluded.p256dh, auth = excluded.auth, made = excluded.made")
+    .bind(sub.endpoint, user.id, sub.p256dh, sub.auth, Date.now())
+    .run();
+  return json({ ok: true });
+}
+
+/** Change your name or usual colour (Settings, session 27), or (session 29) whether you get turn emails. */
 async function updateMe(env: Env, user: UserRow, body: unknown): Promise<Response> {
-  const b = (body && typeof body === "object" ? body : {}) as { name?: unknown; colour?: unknown };
+  const b = (body && typeof body === "object" ? body : {}) as { name?: unknown; colour?: unknown; turnEmail?: unknown };
+  if (typeof b.turnEmail === "boolean") {
+    await env.DB.prepare("UPDATE users SET turn_email = ? WHERE id = ?").bind(b.turnEmail ? 1 : 0, user.id).run();
+    user = { ...user, turn_email: b.turnEmail ? 1 : 0 };
+  }
   if (b.name !== undefined) {
     const name = cleanName(b.name);
     if (!name) return problem(400, "A name needs at least one letter (24 characters at most).");
@@ -240,7 +268,7 @@ async function updateMe(env: Env, user: UserRow, body: unknown): Promise<Respons
     await env.DB.prepare("UPDATE users SET colour = ? WHERE id = ?").bind(b.colour, user.id).run();
     user = { ...user, colour: b.colour as number };
   }
-  return json({ email: user.email, name: user.name, colour: user.colour });
+  return json(meOf(env, user));
 }
 
 async function body<T>(request: Request): Promise<T | null> {
@@ -278,7 +306,8 @@ export const worker = {
     if (!who) return problem(403, "Sign in to play online.");
     const user = await userFor(env, who);
     const path = url.pathname.replace(/\/+$/, "");
-    if (path === "/api/me" && request.method === "GET") return json({ email: user.email, name: user.name, colour: user.colour });
+    if (path === "/api/me" && request.method === "GET") return json(meOf(env, user));
+    if (path === "/api/push" && (request.method === "POST" || request.method === "DELETE")) return pushSub(env, user, request);
     if (path === "/api/me" && request.method === "PATCH") return updateMe(env, user, await body(request));
     if (path === "/api/games" && request.method === "GET") return json({ games: await listGames(env, user) });
     if (path === "/api/games" && request.method === "POST") {

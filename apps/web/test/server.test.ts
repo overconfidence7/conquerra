@@ -54,6 +54,10 @@ describe("the server's files (session 26)", () => {
     expect(cfg.migrations[0]!.new_sqlite_classes).toEqual(["GameRoom"]);
     expect(cfg.vars.ACCESS_TEAM).toBe("keel-nkurtz.cloudflareaccess.com");
     expect(raw).not.toContain("DEV_EMAIL");
+    // Session 29: the push key's public half is in the config (65 bytes, base64url); the private half never is.
+    expect(cfg.vars.VAPID_PUBLIC).toMatch(/^B[\w-]{86}$/);
+    expect(cfg.vars.VAPID_PRIVATE).toBeUndefined();
+    expect((cfg as unknown as { send_email: { name: string }[] }).send_email).toEqual([{ name: "EMAIL" }]);
   });
 
   it("a name for a new account from its email, and a new game's settings checked", () => {
@@ -166,7 +170,7 @@ describe("the API (sessions 26 and 27): sign-in first, then tables and games in 
   });
 
   it("make a table: it waits for players, with its link's code; your list says so; you open it in your seat", async () => {
-    expect(await (await call("/api/me")).json()).toEqual({ email: "nate@example.com", name: "Nate", colour: null });
+    expect(await (await call("/api/me")).json()).toEqual({ email: "nate@example.com", name: "Nate", colour: null, turnEmail: false });
     const made = await call("/api/games", { method: "POST", body: JSON.stringify({ settings: { ...settings, house: 2 }, leadersRun: true }) });
     expect(made.status).toBe(200);
     const { id, code } = (await made.json()) as { id: string; code: string };

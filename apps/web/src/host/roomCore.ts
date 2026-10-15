@@ -53,6 +53,11 @@ export interface RoomIO {
   listed(info: RoomInfo): void;
   /** A line for the logs (`wrangler tail`). */
   log(line: string): void;
+  /**
+   * Session 29: "your turn" for these accounts (their page isn't open as the window opens): a push, and in a long game
+   * an email if they asked. The room's shell sends it in the background (never holding up a turn).
+   */
+  notify?(n: { gameId: string; turn: number; map: string; users: string[]; turnSeconds: number }): void;
 }
 
 /** A new online game, as the API makes it. */
@@ -132,6 +137,8 @@ interface Meta {
   seedHash: string;
   /** The last turn each seat was sent the report of (so someone coming back replays only what they missed). */
   seen: Record<PlayerId, number>;
+  /** Session 29: the last turn each seat was told "your turn" (once a turn). */
+  notified?: Record<PlayerId, number>;
 }
 
 /** Session 29: what the bots in the chat answer when they can't (the voice guide applies). */
@@ -675,8 +682,43 @@ export class RoomCore {
 
   /** After anything that changes the turn or the clock: set the alarm and update the game list. */
   private afterChange() {
-    this.io.wakeAt(this.game?.over ? null : (this.game?.alarmAt ?? null));
+    this.notifyDue();
+    this.io.wakeAt(this.game?.over ? null : this.wakeTime());
     if (this.game) this.io.listed(this.info());
+  }
+
+  /** The room's next alarm: the turn's (deadline, vote, pause), or sooner the window opening, if someone may need telling. */
+  private wakeTime(): number | null {
+    const g = this.game;
+    if (!g) return null;
+    const opens = g.windowOpensAt;
+    const due = this.io.notify && opens !== null && opens > this.now() && g.playingIds.some((s) => (this.meta?.notified?.[s] ?? 0) < g.turn);
+    const at = g.alarmAt;
+    return due ? (at === null ? opens : Math.min(at, opens)) : at;
+  }
+
+  /**
+   * Session 29: the window is open: everyone still playing whose page isn't open, and who hasn't been told this turn
+   * and hasn't locked in, gets a "your turn" (once a turn, for every timer).
+   */
+  private notifyDue() {
+    const g = this.game;
+    const meta = this.meta;
+    if (!g || !meta || g.over || !this.io.notify || !this.tableRec) return;
+    const opens = g.windowOpensAt;
+    if (opens !== null && this.now() < opens) return;
+    const open = new Set(this.io.users());
+    const users: string[] = [];
+    for (const seat of g.playingIds) {
+      const user = this.userOf(seat);
+      if (!user || g.isOut(seat) || g.lockedIn(seat) || open.has(user) || (meta.notified?.[seat] ?? 0) >= g.turn) continue;
+      (meta.notified ??= {})[seat] = g.turn;
+      users.push(user);
+    }
+    if (!users.length) return;
+    this.writing = this.writing.then(() => this.store.put("meta", meta)).catch(() => undefined);
+    this.io.log(`game ${meta.gameId}: "your turn" (turn ${g.turn}) for ${users.length} ${users.length === 1 ? "person" : "people"}`);
+    this.io.notify({ gameId: meta.gameId, turn: g.turn, map: g.ctx.map.name, users, turnSeconds: g.turnSeconds ?? 0 });
   }
 
   /** The seed's hash, and the seed itself once the game is over. */
@@ -854,6 +896,7 @@ export class RoomCore {
     }
     const resolved = this.timed(() => g.expireTable());
     if (resolved) this.deliver(resolved, new Map());
+    // (Session 29: or the window opened: "your turn" for anyone not here, then the alarm for the deadline.)
     else this.afterChange();
   }
 
