@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LOAD_FAILED, onLoadFailure } from "../src/ui/loadFailure";
+import { failedFile, LOAD_FAILED, onLoadFailure } from "../src/ui/loadFailure";
 import { waitingLine } from "../src/ui/OnlineBlock";
 import type { OnlineGameInfo } from "../src/host/protocol";
 
@@ -18,6 +18,17 @@ describe("session 28, Step 0", () => {
     const broken = { getItem: () => { throw new Error("blocked"); }, setItem: () => undefined };
     expect(onLoadFailure(5, broken)).toBe("tell");
     expect(LOAD_FAILED).toBe("Something didn't load. Reload the page.");
+    // Each file is mended once: a second broken file right after the first still gets its reload.
+    const per = new Map<string, string>();
+    const s2 = { getItem: (k: string) => per.get(k) ?? null, setItem: (k: string, v: string) => void per.set(k, v) };
+    expect(onLoadFailure(5_000_000, s2, "a.js")).toBe("reload");
+    expect(onLoadFailure(5_000_010, s2, "b.js")).toBe("reload");
+    expect(onLoadFailure(5_000_020, s2, "a.js")).toBe("tell");
+    // The file a failed import names, only our own built files.
+    const o = "https://conquerra.overconfidenceonline.com";
+    expect(failedFile(`Failed to fetch dynamically imported module: ${o}/assets/TableScreen-Da07M1Zt.js`, o)).toBe(`${o}/assets/TableScreen-Da07M1Zt.js`);
+    expect(failedFile("Failed to fetch dynamically imported module: https://evil.example/assets/x.js", o)).toBeNull();
+    expect(failedFile("Unable to preload CSS for /assets/x.css", o)).toBeNull();
   });
 
   it("a game you left that has since ended says the result and the turn you left on", () => {
