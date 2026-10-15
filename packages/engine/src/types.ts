@@ -899,7 +899,11 @@ export type GameEvent =
   /** An offer that was accepted but couldn't start (now invalid, a side couldn't pay, ...). Only the two sides see it. */
   | { type: "dealFailed"; offer: Offer; why: DealProblem }
   /** An offer nobody confirmed lapses as the turn resolves; one between two players who fought this turn is voided. Only the two sides see it. */
-  | { type: "offerLapsed"; offer: Offer; why: "unanswered" | "declined" | "voided" }
+  /**
+   * An offer that didn't start a deal. Session 29: "countered" when the other side declined it with a counteroffer
+   * (`counter`, which then stands or lapses on its own).
+   */
+  | { type: "offerLapsed"; offer: Offer; why: "unanswered" | "declined" | "countered" | "voided"; counter?: Offer }
   /** A deal ran its course (or its goal was met: the joint war's target is out), or ended because a side was knocked out. Public. */
   | { type: "dealEnded"; deal: string; kind: DealKind; a: PlayerId; b: PlayerId; why: "expired" | "goal" | "knockedOut"; idle?: PlayerId[] }
   /**

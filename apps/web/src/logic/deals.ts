@@ -43,8 +43,11 @@ const living = (view: PlayerView) => view.players.filter((p) => p.eliminatedTurn
 
 /** Can you make deals right now (diplomacy on, still in, game going)? */
 export const canDeal = (view: PlayerView) => view.settings.diplomacy !== false && view.winner === null && view.players.find((p) => p.id === view.me.id)?.eliminatedTurn === null;
-/** Can you propose a deal to `p`? (A living rival: the Fallen don't make deals.) */
-export const canProposeTo = (view: PlayerView, p: PlayerId) => canDeal(view) && p !== view.me.id && living(view).some((x) => x.id === p);
+/**
+ * Can you propose a deal to `p`? (A living rival: the Fallen don't make deals.) Never from a seat a Marshal plays now
+ * (`watching`, session 29: you watch, you don't deal).
+ */
+export const canProposeTo = (view: PlayerView, p: PlayerId, watching = false) => !watching && canDeal(view) && p !== view.me.id && living(view).some((x) => x.id === p);
 
 /** A fresh offer to `to`, with the deal card's defaults filled in (a plain truce by default). */
 export function newOffer(ctx: GameContext, view: PlayerView, to: PlayerId, kind: DealKind = "truce", n = 1): Offer {

@@ -244,7 +244,8 @@ export function judgeOffer(ctx: GameContext, view: PlayerView, offer: Offer, lev
   const counterOf = (terms: DealTerms, bond = offer.bond, why: string): Answer => ({
     accept: false,
     reason: why,
-    counter: { id: `${me}-t${view.turn}-c-${offer.id}`, from: me, to: p, terms, bond, counterTo: offer.id },
+    // (Its reason rides with the counter as its note, so the turn report says it in the bot's own voice: session 29.)
+    counter: { id: `${me}-t${view.turn}-c-${offer.id}`, from: me, to: p, terms, bond, counterTo: offer.id, note: why },
   });
 
   // Trust: a handshake from someone it can't trust is a no; if the deal is good, it asks for a binding pact instead.

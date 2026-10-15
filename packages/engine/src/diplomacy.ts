@@ -213,7 +213,7 @@ export interface DiplomacyHost {
   /** Pairs of players who attacked each other this turn (`pairKey`): it voids their open offers. */
   readonly fought: Set<string>;
   /** This turn's offers that didn't start a deal, and whether they were declined. */
-  readonly offers: { offer: Offer; declined: boolean }[];
+  readonly offers: { offer: Offer; declined: boolean; counter?: Offer }[];
 }
 
 const living = (s: GameState, p: PlayerId) => s.players.some((x) => x.id === p && x.eliminatedTurn === null);
@@ -296,7 +296,12 @@ export function diplomacyStart(h: DiplomacyHost, seats: readonly PlayerId[], ord
       answered.set(key, o.accept);
       if (o.accept) startDeal(h, offer);
     }
-  for (const [key, offer] of offers) if (!answered.get(key)) h.offers.push({ offer, declined: answered.get(key) === false });
+  for (const [key, offer] of offers) {
+    if (answered.get(key)) continue;
+    // (Declined with a counteroffer: the report says it was countered, and how. Words only.)
+    const counter = answered.get(key) === false ? [...offers.values()].find((c) => c.counterTo === offer.id && c.from === offer.to && c.to === offer.from) : undefined;
+    h.offers.push({ offer, declined: answered.get(key) === false, ...(counter ? { counter } : {}) });
+  }
 }
 
 function startDeal(h: DiplomacyHost, offer: Offer) {
@@ -494,8 +499,10 @@ export function diplomacyEndOfTurn(h: DiplomacyHost) {
     record(s, d, why === "knockedOut" ? "ended" : "kept", idle.length ? { idle } : {});
     h.emit({ type: "dealEnded", deal: d.id, kind: d.terms.kind, a: d.a, b: d.b, why, ...(idle.length ? { idle } : {}) });
   }
-  for (const { offer, declined } of h.offers)
-    h.emit({ type: "offerLapsed", offer, why: h.fought.has(pairKey(offer.from, offer.to)) ? "voided" : declined ? "declined" : "unanswered" });
+  for (const { offer, declined, counter } of h.offers) {
+    const voided = h.fought.has(pairKey(offer.from, offer.to));
+    h.emit({ type: "offerLapsed", offer, why: voided ? "voided" : counter ? "countered" : declined ? "declined" : "unanswered", ...(counter && !voided ? { counter } : {}) });
+  }
 }
 
 /**

@@ -521,7 +521,10 @@ export const useGame = create<GameStore>((set, get) => ({
     }
   },
 
-  dismissNotice: () => set({ notice: null }),
+  dismissNotice: () => {
+    set({ notice: null });
+    nextNotice();
+  },
 
   showMission: (id) => set({ mission: id }),
 
@@ -906,13 +909,7 @@ export async function enterGame(begin: (host: GameHost) => Promise<HostStart>, r
     });
     host.onNotice((notice, calm) => {
       if (get().host !== host) return;
-      // One notice at a time (session 27: "Reconnected" never stacks): news never covers a problem still showing,
-      // and only the newest news has a clock on it.
-      if (calm && get().notice && !get().noticeCalm) return;
-      const mine = ++noticeSeq;
-      set({ notice, noticeCalm: !!calm });
-      // News goes by itself after a few seconds.
-      if (calm) setTimeout(() => noticeSeq === mine && get().notice === notice && set({ notice: null }), 4000);
+      showNotice(notice, !!calm);
     });
   }
   set({ busy: true, error: null });
@@ -965,6 +962,7 @@ export async function enterGame(begin: (host: GameHost) => Promise<HostStart>, r
       autoLocked: false,
       notice: null,
     });
+    clearNotices();
     return true;
   } catch (e) {
     // A host we started just for this goes; one already running a game keeps it.
@@ -1007,6 +1005,45 @@ export function restoredQueue(orders: readonly Order[]): { queue: Order[]; instr
 let offerCounter = 0;
 /** The newest notice (only its own timer may clear it). */
 let noticeSeq = 0;
+/** Session 29: quiet notices waiting their turn behind the one on screen (never more than one shows). */
+const calmQueue: string[] = [];
+/** How long a quiet notice stays (ms). */
+export const CALM_MS = 4000;
+
+/**
+ * A notice for the page. One at a time (session 27: "Reconnected" never stacks). A warning shows at once; news (calm)
+ * never covers anything still showing: it waits in line (session 29: a deal's answer behind a warning was lost) and
+ * shows when the notice before it goes, then goes by itself after a few seconds.
+ */
+export function showNotice(notice: string, calm: boolean) {
+  const st = useGame.getState();
+  if (calm && st.notice) {
+    if (st.notice !== notice && !calmQueue.includes(notice)) calmQueue.push(notice);
+    // (A long line of news is old news: the newest few are kept.)
+    if (calmQueue.length > 5) calmQueue.shift();
+    return;
+  }
+  const mine = ++noticeSeq;
+  useGame.setState({ notice, noticeCalm: calm });
+  if (calm)
+    setTimeout(() => {
+      if (noticeSeq !== mine || useGame.getState().notice !== notice) return;
+      useGame.setState({ notice: null });
+      nextNotice();
+    }, CALM_MS);
+}
+
+/** The notice on screen went: the next quiet one waiting, if any. */
+export function nextNotice() {
+  const next = calmQueue.shift();
+  if (next !== undefined && !useGame.getState().notice) showNotice(next, true);
+}
+
+/** A new game: nothing waiting from the last one. */
+function clearNotices() {
+  calmQueue.length = 0;
+  noticeSeq++;
+}
 
 /**
  * Your leaders write their orders again (a command changed, a purse taken back, a deal agreed: they never attack

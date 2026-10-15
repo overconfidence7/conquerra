@@ -522,4 +522,18 @@ describe("diplomacy: report lines in plain words", () => {
     expect(dealLine(trade, names("p1"))).toBe("You and Lady Morwen agreed a trade: you give 10 gold, and Lady Morwen gives A3 (a handshake deal).");
     expect(dealLine(trade, names("p3"))).toBe("You-know-who and Lady Morwen made a trade.");
   });
+
+  it("session 29: a counter isn't a decline (the report says how it was countered, with the counter's note)", () => {
+    const s = game();
+    const o = offer("p1", "p2", truce(4));
+    const c = { ...offer("p2", "p1", truce(2)), id: "c1", counterTo: o.id, note: "Two turns. I like to see how it goes." };
+    const r = resolveTurn(ctx, s, { p1: [propose(o)], p2: [accept(o, false), propose(c)] });
+    const lapsed = of(r.events, "offerLapsed").find((e) => e.offer.id === o.id)!;
+    expect(lapsed).toMatchObject({ why: "countered", counter: { id: "c1" } });
+    expect(dealLine(lapsed, names("p1"))).toBe('Lady Morwen countered your truce: a truce everywhere for 2 turns. "Two turns. I like to see how it goes."');
+    expect(dealLine(lapsed, names("p2"))).toBe(`You countered You-know-who's truce: a truce everywhere for 2 turns. "Two turns. I like to see how it goes."`);
+    // The counter itself, left unanswered, lapses on its own as before; a plain no is still "declined".
+    expect(of(r.events, "offerLapsed").find((e) => e.offer.id === "c1")!.why).toBe("unanswered");
+    expect(of(resolveTurn(ctx, s, { p1: [propose(o)], p2: [accept(o, false)] }).events, "offerLapsed")[0]!.why).toBe("declined");
+  });
 });

@@ -48,8 +48,9 @@ function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: s
   const portrait = useArtUrl(portraitOf(seat));
   const out = p.eliminatedTurn !== null;
   const marks = dealMarks(view, pageDeals(), id);
-  // Session 28: people take offers too (the room relays them).
-  const can = canProposeTo(view, id);
+  // Session 28: people take offers too (the room relays them). Session 29: never from a seat a Marshal plays now (you
+  // watch; you can't deal).
+  const can = canProposeTo(view, id, !!leftSeats?.[view.me.id]);
   // Your offers to this person this turn, and where each stands (a person who has locked in takes no more).
   const mine = person ? diplomacy.flatMap((o) => (o.kind === "propose" && o.offer.to === id ? [o.offer] : [])) : [];
   const lockedIn = person && ready.includes(id);

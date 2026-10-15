@@ -57,9 +57,14 @@ const LEEWAY_S = 60;
  * Check an Access token. `keys(refresh)` gives the team's current signing keys (`refresh`: the token names a key we
  * don't have, so fetch them again: Access rotates them).
  */
-export async function verifyAccess(token: string | null, cfg: AccessConfig, keys: (refresh: boolean) => Promise<AccessKey[]>, nowMs: number): Promise<AccessResult> {
+export async function verifyAccess(token: string | null, cfg: AccessConfig, keys: (refresh: boolean) => Promise<AccessKey[]>, nowMs: number, cache?: AccessCache): Promise<AccessResult> {
   if (!token) return { ok: false, why: "missing" };
   if (!cfg.aud) return { ok: false, why: "no audience set" };
+  // Session 29: a token already checked in this isolate is the same person until it expires (RS256 on every call cost
+  // the Worker most of its 10 ms).
+  const tag = cache ? await sha256(`${cfg.team}|${cfg.aud}|${token}`) : "";
+  const known = cache?.identity(tag, nowMs);
+  if (known) return { ok: true, user: known };
   const parts = token.split(".");
   if (parts.length !== 3) return { ok: false, why: "malformed" };
   const [h, p, sig] = parts as [string, string, string];
@@ -76,7 +81,7 @@ export async function verifyAccess(token: string | null, cfg: AccessConfig, keys
   if (!jwk) return { ok: false, why: "unknown key" };
   let good = false;
   try {
-    const key = await crypto.subtle.importKey("jwk", { kty: jwk.kty, n: jwk.n, e: jwk.e, alg: "RS256", ext: true }, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
+    const key = (await cache?.key(jwk)) ?? (await importRsa(jwk));
     good = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, base64url(sig), new TextEncoder().encode(`${h}.${p}`));
   } catch {
     good = false;
@@ -89,7 +94,64 @@ export async function verifyAccess(token: string | null, cfg: AccessConfig, keys
   if (typeof claims.exp !== "number" || claims.exp + LEEWAY_S < now) return { ok: false, why: "expired" };
   if (typeof claims.nbf === "number" && claims.nbf - LEEWAY_S > now) return { ok: false, why: "not yet valid" };
   if (typeof claims.email !== "string" || !claims.email.includes("@")) return { ok: false, why: "no email" };
-  return { ok: true, user: { email: claims.email.toLowerCase(), sub: typeof claims.sub === "string" ? claims.sub : "" } };
+  const user = { email: claims.email.toLowerCase(), sub: typeof claims.sub === "string" ? claims.sub : "" };
+  // (Only a token that passed every check is kept, and only until it expires.)
+  cache?.remember(tag, user, claims.exp * 1000);
+  return { ok: true, user };
+}
+
+const importRsa = (jwk: AccessKey) => crypto.subtle.importKey("jwk", { kty: jwk.kty, n: jwk.n, e: jwk.e, alg: "RS256", ext: true }, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
+
+async function sha256(text: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** At most this many checked tokens are remembered (the oldest go first). */
+export const ACCESS_CACHE_MAX = 500;
+
+/**
+ * Session 29: what one Worker isolate remembers between requests, in memory only: each token that passed the check
+ * (by its SHA-256, never the token itself) with the person in it, until the token's own expiry, and the team's public
+ * keys once imported. A failed check is never remembered, so a bad token is checked in full every time.
+ */
+export class AccessCache {
+  private ids = new Map<string, { user: SignedIn; until: number }>();
+  private keys = new Map<string, Promise<CryptoKey>>();
+
+  identity(tag: string, nowMs: number): SignedIn | null {
+    const hit = this.ids.get(tag);
+    if (!hit) return null;
+    if (nowMs >= hit.until) {
+      this.ids.delete(tag);
+      return null;
+    }
+    return hit.user;
+  }
+
+  remember(tag: string, user: SignedIn, until: number) {
+    this.ids.delete(tag);
+    while (this.ids.size >= ACCESS_CACHE_MAX) this.ids.delete(this.ids.keys().next().value!);
+    this.ids.set(tag, { user, until });
+  }
+
+  /** The key, imported once (by its id and modulus: a rotated key with the same id is a new key). */
+  key(jwk: AccessKey): Promise<CryptoKey> {
+    const id = `${jwk.kid ?? ""}|${jwk.n ?? ""}`;
+    let k = this.keys.get(id);
+    if (!k) {
+      k = importRsa(jwk);
+      // (A key that fails to import isn't kept.)
+      k.catch(() => this.keys.delete(id));
+      if (this.keys.size >= 20) this.keys.clear();
+      this.keys.set(id, k);
+    }
+    return k;
+  }
+
+  get size(): number {
+    return this.ids.size;
+  }
 }
 
 /** The team's keys from Access, kept for an hour (and fetched again when a token names a new one). */

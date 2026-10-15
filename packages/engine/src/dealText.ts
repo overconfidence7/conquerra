@@ -109,6 +109,13 @@ export function dealLine(e: DealEvent, n: DealNames): string | null {
       const kind = DEAL_NAME[o.terms.kind];
       const whose = o.from === n.you ? `Your offer of a ${kind} to ${n.player(o.to)}` : `${n.player(o.from)}'s offer of a ${kind}`;
       if (e.why === "voided") return `${whose} is void: you fought each other this turn.`;
+      // Session 29: a counter isn't a decline. "Kit countered your truce: a truce everywhere for 2 turns."
+      if (e.why === "countered" && e.counter) {
+        const c = e.counter;
+        const head = o.from === n.you ? `${n.player(o.to)} countered your ${kind}` : o.to === n.you ? `You countered ${n.player(o.from)}'s ${kind}` : `${n.player(o.to)} countered ${n.player(o.from)}'s ${kind}`;
+        const note = c.note ? ` "${c.note}"` : "";
+        return `${head}: ${describeTerms(c.terms, c.from, c.to, n)}.${note}`;
+      }
       if (e.why === "declined") return `${whose} was declined.`;
       return `${whose} lapsed: nobody accepted it this turn.`;
     }

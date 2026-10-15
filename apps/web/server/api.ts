@@ -1,7 +1,7 @@
 import { mapCatalog } from "@conquerra/content";
 import type { NewOnlineGame, OnlineGameInfo } from "../src/host/protocol";
 import { newSeed } from "../src/host/roomCore";
-import { accessKeys, verifyAccess, type SignedIn } from "./access";
+import { AccessCache, accessKeys, verifyAccess, type SignedIn } from "./access";
 import type { Env } from "./env";
 import { cleanName, cleanNewGame, nameFromEmail, newGameId, newInviteCode } from "./online";
 
@@ -24,6 +24,8 @@ import { cleanName, cleanNewGame, nameFromEmail, newGameId, newInviteCode } from
  */
 
 let keys: ReturnType<typeof accessKeys> | null = null;
+/** Session 29: checked tokens and imported keys, for this isolate's life (in memory only). */
+const accessCache = new AccessCache();
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 const problem = (status: number, error: string) => json({ error }, status);
@@ -52,7 +54,7 @@ async function signedIn(request: Request, env: Env): Promise<SignedIn | null> {
     return { email: (request.headers.get("X-Dev-Email") || (cookie ? decodeURIComponent(cookie) : "") || env.DEV_EMAIL).toLowerCase(), sub: "dev" };
   }
   keys ??= accessKeys(env.ACCESS_TEAM);
-  const result = await verifyAccess(request.headers.get("Cf-Access-Jwt-Assertion"), { team: env.ACCESS_TEAM, aud: env.ACCESS_AUD ?? "" }, keys, Date.now());
+  const result = await verifyAccess(request.headers.get("Cf-Access-Jwt-Assertion"), { team: env.ACCESS_TEAM, aud: env.ACCESS_AUD ?? "" }, keys, Date.now(), accessCache);
   if (!result.ok) console.log(`sign-in refused: ${result.why}`);
   return result.ok ? result.user : null;
 }
