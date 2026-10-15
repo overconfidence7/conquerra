@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { HOUSES } from "../../map/houses";
 import { useGame } from "../../store";
 import { closeChat, openChat, unreadAll, useChat } from "./chatStore";
-import { councilItems, councilUnread } from "./councilStore";
+import { COUNCIL_ID, councilItems, councilUnread } from "./councilStore";
 import "./chat.css";
 
 /** Session 29: lines from your council you haven't read. */
@@ -22,19 +22,23 @@ export function useCouncilUnread(): number {
 /** How long the pop-up stays (ms). */
 export const POPUP_MS = 6000;
 
-/** Which chat the button opens: on a phone the list; on a desktop the chat with the newest unread message (or the last one). */
-function firstChat(phone: boolean): string | null {
+/**
+ * Which chat the button opens: on a phone the list; on a desktop the chat with the newest unread message, else your
+ * council if it has news (session 29), else the last one.
+ */
+function firstChat(phone: boolean, council: number): string | null {
   if (phone) return null;
   const s = useChat.getState();
   const unread = s.lines.filter((l) => !l.from.you && l.id > (s.read[l.chat] ?? 0)).at(-1);
-  return unread?.chat ?? s.selected ?? "table";
+  return unread?.chat ?? (council ? COUNCIL_ID : (s.selected ?? "table"));
 }
 
 export function ChatButton({ phone }: { phone: boolean }) {
-  const unread = useChat(unreadAll) + useCouncilUnread();
+  const council = useCouncilUnread();
+  const unread = useChat(unreadAll) + council;
   const open = useChat((s) => s.open);
   return (
-    <button className={`chat-btn ${open ? "on" : ""}`} onClick={() => (open ? closeChat() : openChat(firstChat(phone)))} aria-label={unread ? `Chat, ${unread} unread` : "Chat"} aria-pressed={open} title="Chat with the table">
+    <button className={`chat-btn ${open ? "on" : ""}`} onClick={() => (open ? closeChat() : openChat(firstChat(phone, council)))} aria-label={unread ? `Chat, ${unread} unread` : "Chat"} aria-pressed={open} title="Chat with the table">
       <span aria-hidden>💬</span>
       {unread > 0 && <span className="chat-badge">{unread > 99 ? "99+" : unread}</span>}
     </button>
