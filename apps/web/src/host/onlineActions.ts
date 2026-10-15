@@ -2,6 +2,7 @@ import { applyOnlineUpdate, enterGame, useGame } from "../store";
 import { ONLINE_TIMER_CHOICES, DEFAULT_TIMER } from "../logic/timer";
 import { api, createRemoteHost, type RemoteHost } from "./remoteHost";
 import type { HostStart, OnlineGameInfo, TableAct, TableView } from "./protocol";
+import { applyTalks } from "../logic/peopleDeals";
 
 /**
  * The page's online actions (session 26): the lobby's Online block and a "?game=" link call these. They live apart
@@ -74,6 +75,10 @@ function openWith(begin: (host: RemoteHost) => Promise<HostStart>): Promise<bool
   const host = createRemoteHost();
   tableHost = host;
   host.onReady((ready) => tableHost === host && useGame.setState({ ready }));
+  // Session 28: offers between people as they change: the deal card and the map follow, and the news is said quietly.
+  host.onTalks?.((talks) => {
+    if (tableHost === host) for (const line of applyTalks(talks)) host.say(line);
+  });
   host.onTable((t) => {
     if (tableHost !== host) return;
     const s = useGame.getState().screen;
@@ -81,6 +86,8 @@ function openWith(begin: (host: RemoteHost) => Promise<HostStart>): Promise<bool
   });
   const run = enterGame((h) => begin(h as RemoteHost), null, () => host).then((ok) => {
     if (ok && tableHost === host) useGame.setState({ table: null });
+    // (Back mid-turn: your offers a person had already accepted count as agreed again.)
+    if (ok && tableHost === host) applyTalks(useGame.getState().talks);
     return ok;
   });
   entering = run;

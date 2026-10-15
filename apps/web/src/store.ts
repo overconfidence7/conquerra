@@ -7,7 +7,7 @@ import { findLeader, indexMap, isShare, LEADER_STYLES, STEWARD_STYLES, suggestLe
 import { arrangeQueue, asIfYouOrderFrom, instructOrders, refFromKey, takeControl, withGeneralOrders, type LeaderPlacement } from "./logic/generals";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
-import type { GameHost, HostStart, HostUpdate, LoadSource, LobbySettings, OnlineGameInfo, TableView, SeatInfo, TurnReport } from "./host/protocol";
+import type { GameHost, HostStart, HostUpdate, LoadSource, LobbySettings, OnlineGameInfo, PeopleOffer, TableView, SeatInfo, TurnReport } from "./host/protocol";
 import { listSlots, type SlotId, type SlotInfo } from "./host/saves";
 import { dueTurnIn, withTurnIn } from "./logic/spoils";
 import { namer } from "./logic/text";
@@ -128,6 +128,8 @@ interface GameStore {
   offers: Offer[];
   /** The bots' answers to your offers, by your offer's id (each with its one-line reason). */
   answers: Record<string, Answer>;
+  /** Online (session 28): the offers between people you're a side of this turn, as the room relayed them. */
+  talks: PeopleOffer[];
   /** The deal card being shown: proposing to someone (your draft), or an offer to you. */
   deal: { mode: "propose"; offer: Offer } | { mode: "offer"; offer: Offer } | null;
   /** Picking on the map for the deal card: borders for a truce, or land for a trade (yours to give, or theirs). */
@@ -382,6 +384,7 @@ export const useGame = create<GameStore>((set, get) => ({
   diplomacy: [],
   offers: [],
   answers: {},
+  talks: [],
   deal: null,
   dealPick: null,
 
@@ -406,6 +409,8 @@ export const useGame = create<GameStore>((set, get) => ({
       if (get().view?.turn !== view.turn) return null;
       // Your offer goes in with your orders (the deal starts as the turn plays, if the bot said yes).
       const proposed: Order = { id: `propose-${offer.id}`, kind: "propose", offer };
+      // Online (session 28), to a person: relayed to them; their answer comes when they give it.
+      if (answer.waiting) return set({ diplomacy: [...get().diplomacy, proposed] }), answer;
       set({
         diplomacy: [...get().diplomacy.filter((o) => !(o.kind === "propose" && o.offer.id === offer.id)), proposed],
         answers: { ...get().answers, [offer.id]: answer },
@@ -422,6 +427,8 @@ export const useGame = create<GameStore>((set, get) => ({
 
   answerOffer(offer, accept) {
     const answer: Order = { id: `answer-${offer.from}-${offer.id}`, kind: "answer", from: offer.from, offer: offer.id, accept };
+    // Online (session 28): a person's offer is answered through the room, which tells them at once.
+    if (get().people?.includes(offer.from)) void get().host?.answerPerson?.(offer.from, offer.id, accept).catch((e: Error) => set({ error: e.message }));
     set({ diplomacy: [...get().diplomacy.filter((o) => !(o.kind === "answer" && o.from === offer.from && o.offer === offer.id)), answer], deal: null, dealPick: null });
     if (accept) void replanGenerals();
   },
@@ -429,7 +436,8 @@ export const useGame = create<GameStore>((set, get) => ({
   counterOffer(offer) {
     const { view } = get();
     if (!view) return;
-    get().answerOffer(offer, false);
+    // (A person's offer stays open until the counter goes: the room marks it countered then.)
+    if (!get().people?.includes(offer.from)) get().answerOffer(offer, false);
     set({ deal: { mode: "propose", offer: counterFrom(view, offer, ++offerCounter) } });
   },
 
@@ -878,7 +886,7 @@ export const useGame = create<GameStore>((set, get) => ({
     get().host?.dispose();
     // Back in the lobby: the game you left is the autosave (Continue).
     void get().refreshSlots();
-    set({ screen: "lobby", host: null, online: null, fair: null, people: null, leftSeats: null, seats: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, budgets: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null, diplomacy: [], offers: [], answers: {}, deal: null, dealPick: null });
+    set({ screen: "lobby", host: null, online: null, fair: null, people: null, leftSeats: null, seats: null, view: null, ctx: null, queue: [], selected: null, draft: null, recruit: null, report: null, showReport: false, watching: false, replay: null, lastBefore: null, clock: null, instructions: {}, budgets: {}, paused: [], picking: null, releases: [], fallenOrders: [], aiming: null, diplomacy: [], offers: [], answers: {}, talks: [], deal: null, dealPick: null });
   },
 }));
 
@@ -939,6 +947,7 @@ export async function enterGame(begin: (host: GameHost) => Promise<HostStart>, r
       diplomacy: kept?.diplomacy ?? [],
       offers: u.offers ?? [],
       answers: {},
+      talks: u.talks ?? [],
       deal: null,
       dealPick: null,
       fallenOrders: [],
@@ -1103,6 +1112,7 @@ function applyTurn(u: HostUpdate, auto: boolean) {
     diplomacy: [],
     offers: u.offers ?? [],
     answers: {},
+    talks: u.talks ?? [],
     deal: null,
     dealPick: null,
     picking: null,

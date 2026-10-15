@@ -1,7 +1,8 @@
 import { replayFor, resolveTurn, viewFor, type GameState, type Order, type OrdersByPlayer, type PlayerId, type PlayerView, type TurnResult } from "@conquerra/engine";
 import { recruitBot } from "@conquerra/bots";
 import { describe, expect, it } from "vitest";
-import type { HostUpdate, RoomMessage, RoomStart, TableView, TurnReport } from "../src/host/protocol";
+import type { HostUpdate, PeopleOffer, RoomMessage, RoomStart, TableView, TurnReport } from "../src/host/protocol";
+import { newOffer } from "../src/logic/deals";
 import { chronicleOf } from "../src/logic/chronicleKeep";
 import { hostSeat, KIT, NATE, ROOK, settings, testRoom, WREN } from "./roomHelpers";
 
@@ -30,17 +31,25 @@ const SEATS = ["p1", "p2", "p3"] as const;
 const PAGE: Record<string, string> = { p1: NATE.user, p2: KIT.user, p3: WREN.user };
 const ACCOUNTS = [NATE, KIT, WREN, ROOK].map((w) => w.user);
 /** The fields a room message and its update may carry; anything else is a leak waiting to happen. */
-const ENVELOPE = new Set(["id", "ok", "now", "start", "update", "pushed", "error", "orders", "plan", "answer", "table", "notice", "calm", "ready"]);
+const ENVELOPE = new Set(["id", "ok", "now", "start", "update", "pushed", "error", "orders", "plan", "answer", "table", "notice", "calm", "ready", "talks"]);
 /** What the table screen may say about anyone: what the players panel shows (session 27). */
 const TABLE = new Set(["gameId", "code", "status", "mapId", "botLevel", "turnSeconds", "luck", "fog", "mode", "fate", "diplomacy", "seats", "you"]);
 const TABLE_SEAT = new Set(["name", "house", "host", "you"]);
 const TABLE_YOU = new Set(["seat", "host", "removed"]);
-const UPDATE = new Set(["playerId", "view", "report", "fastForwarded", "clock", "generalOrders", "leaderNotes", "offers", "seats", "fair", "before", "autoLocked", "queued", "people", "leadersBack", "leftSeats"]);
+const UPDATE = new Set(["playerId", "view", "report", "fastForwarded", "clock", "generalOrders", "leaderNotes", "offers", "seats", "fair", "before", "autoLocked", "queued", "people", "leadersBack", "leftSeats", "talks"]);
+/** Session 28: an offer between people, as its two sides are sent it. */
+const TALK = new Set(["offer", "state", "counter", "counterState"]);
 const START = new Set([...UPDATE, "rules", "chronicle", "replay", "lockedIn", "gameId", "mapId", "mapVersion", "chronicleAfter", "ready"]);
 /** Diplomacy's own ids are public to its two sides (an offer to you names itself). */
 const DIPLOMACY = /^(propose|answer|agreed|break)-|-t\d+-(o\d+|c-)/;
 
 const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
+
+const checkTalk = (seat: PlayerId, r: PeopleOffer) => {
+  for (const k of Object.keys(r)) expect(TALK.has(k), `unexpected talk field ${k}`).toBe(true);
+  expect([r.offer.from, r.offer.to]).toContain(seat);
+  if (r.counter) expect([r.counter.from, r.counter.to].sort()).toEqual([r.offer.from, r.offer.to].sort());
+};
 
 const checkTable = (v: TableView) => {
   for (const k of Object.keys(v)) expect(TABLE.has(k), `unexpected table field ${k}`).toBe(true);
@@ -125,6 +134,8 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
       const myLeaders = new Set(view.me.leaders.map((l) => `${l.kind}:${l.of}`));
       for (const key of Object.keys(u.leaderNotes ?? {})) expect(myLeaders.has(key), `notes from ${key}`).toBe(true);
       for (const o of u.offers ?? []) expect(o.to).toBe(seat);
+      // Session 28: offers between people, only the ones this seat is a side of.
+      for (const r of u.talks ?? []) checkTalk(seat, r);
       // Your own commands and budgets coming back (session 27): orders for your own Leader and Steward only.
       for (const o of u.leadersBack ?? []) expect((o.kind === "instruct" || o.kind === "budget") && o.general === seat, `leadersBack ${o.id}`).toBe(true);
       if (u.queued) for (const o of u.queued.orders) expect(given.get(seat)?.has(o.id) || DIPLOMACY.test(o.id) || u.generalOrders.some((g) => g.id === o.id), `queued ${o.id}`).toBe(true);
@@ -148,6 +159,7 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
         if ("update" in m) checkPayload(seat, m.update, UPDATE);
         if ("pushed" in m) checkPayload(seat, m.pushed, UPDATE);
         if ("plan" in m) for (const key of Object.keys(m.plan.notes)) expect(m.plan.notes[key]).toBeDefined();
+        if ("talks" in m) for (const r of m.talks) checkTalk(seat, r);
         checked++;
       }
       // What it was sent this turn goes into its Chronicle (as the page keeps it).
@@ -215,4 +227,66 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
     // Kit's secret orders were really given (so "never sent to Nate" means something).
     expect([...given.get("p2")!].filter((id) => id.startsWith("kit-secret")).length).toBeGreaterThan(5);
   }, 120_000);
+
+  it("session 28: three people all online and a watcher who never sat: an offer and its counter reach their two sides only; the deal's news reaches the table", async () => {
+    const t = testRoom();
+    await t.room.createTable({ gameId: "fogtalk", code: "f0gt4lkcde", settings: { ...settings, bots: 3 }, seed: "fog-on-the-wire-28", host: hostSeat(NATE, 0) });
+    await t.table(ROOK);
+    await t.act(KIT, { do: "sit", house: 3, leadersRun: true });
+    await t.act(WREN, { do: "sit", house: 5, leadersRun: true });
+    await t.act(NATE, { do: "start" });
+    const g = t.room.table!;
+    const ctx = g.ctx;
+    for (const s of SEATS) await t.hello(s);
+    t.clear();
+    // Nate offers Kit a truce with a note; Kit counters with a trade of her own (gold her way) and a note.
+    const truce = { ...newOffer(ctx, viewFor(ctx, g.fullState, "p1"), "p2", "truce", 7), note: "SECRET-NATE: hold the east" };
+    await t.ask("p1", { type: "propose", offer: truce });
+    const trade = { ...newOffer(ctx, viewFor(ctx, g.fullState, "p2"), "p1", "trade", 8), counterTo: truce.id, note: "SECRET-KIT: pay me", terms: { kind: "trade" as const, give: {}, get: { gold: 7, perTurn: 3 }, turns: 2 } };
+    await t.ask("p2", { type: "propose", offer: trade });
+    await t.ask("p1", { type: "answer", from: "p2", offer: trade.id, accept: true });
+    // Wren offers Nate a truce he never answers (Kit must never hear of it).
+    const wrens = { ...newOffer(ctx, viewFor(ctx, g.fullState, "p3"), "p1", "truce", 9), note: "SECRET-WREN: just us" };
+    await t.ask("p3", { type: "propose", offer: wrens });
+    for (const s of SEATS) await t.hello(s);
+    const secretsOf = (seat: PlayerId) => [
+      ...(seat === "p1" || seat === "p2" ? [] : ["SECRET-NATE", "SECRET-KIT", JSON.stringify(truce.id), JSON.stringify(trade.id), '"perTurn":3']),
+      ...(seat === "p1" || seat === "p3" ? [] : ["SECRET-WREN", JSON.stringify(wrens.id)]),
+    ];
+    const check = (seat: PlayerId) => {
+      const inbox = t.inbox(PAGE[seat]!);
+      const text = JSON.stringify(inbox);
+      for (const s of secretsOf(seat)) expect(text.includes(s), `${seat} was sent ${s}`).toBe(false);
+      for (const m of inbox) {
+        for (const k of Object.keys(m)) expect(ENVELOPE.has(k), `unexpected envelope field ${k}`).toBe(true);
+        const u = "start" in m ? m.start : "update" in m ? m.update : "pushed" in m ? m.pushed : null;
+        if (u) {
+          for (const k of Object.keys(u)) expect(("start" in m ? START : UPDATE).has(k), `unexpected field ${k}`).toBe(true);
+          for (const r of u.talks ?? []) checkTalk(seat, r);
+          for (const o of u.offers ?? []) expect(o.to).toBe(seat);
+        }
+        if ("talks" in m) for (const r of m.talks) checkTalk(seat, r);
+      }
+      return text;
+    };
+    // Each side was told; the third person and the watcher heard nothing of the pair's offers.
+    expect(check("p1")).toContain("SECRET-KIT");
+    expect(check("p2")).toContain("SECRET-NATE");
+    expect(check("p2")).not.toContain("SECRET-WREN");
+    expect(check("p3")).toContain("SECRET-WREN");
+    expect(JSON.stringify(t.inbox(ROOK.user))).not.toContain("SECRET");
+    // The turn plays: the deal starts (Kit's trade), and the table hears that it did, without its terms.
+    t.clear();
+    for (const s of SEATS) await t.ask(s, { type: "lockIn", orders: g.generalOrders({}, undefined, s), turn: 1 });
+    expect(g.turn).toBe(2);
+    for (const s of SEATS) check(s);
+    const started = (seat: PlayerId) => {
+      const u = t.inbox(PAGE[seat]!).flatMap((m) => ("update" in m ? [m.update] : "pushed" in m ? [m.pushed] : []))[0]!;
+      return u.report!.events.filter((e) => e.type === "dealStarted");
+    };
+    expect(started("p3")).toHaveLength(1);
+    expect(started("p3")[0]).toMatchObject({ deal: { a: "p2", b: "p1", terms: { kind: "trade", give: {}, get: {} } } });
+    expect(started("p1")[0]).toMatchObject({ deal: { terms: { get: { gold: 7, perTurn: 3 } } } });
+    expect(JSON.stringify(t.inbox(ROOK.user))).toBe("[]");
+  }, 60_000);
 });

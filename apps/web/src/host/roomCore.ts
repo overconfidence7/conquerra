@@ -1,7 +1,7 @@
 import type { MapDef } from "@conquerra/content";
 import { readSave, type LeaderStyle, type Order, type PlayerId, type SaveFile } from "@conquerra/engine";
 import { HOUSES } from "../map/houses";
-import { LocalGame, type PersonSeat, type SeatLeft } from "./localGame";
+import { LocalGame, PEOPLE_DEAL_TEXT, type PersonSeat, type SeatLeft } from "./localGame";
 import { cleanName } from "./names";
 import { TABLE_TEXT } from "./roomText";
 import type { HostUpdate, LobbySettings, RoomMessage, RoomRequest, RoomStart, TableAct, TableView } from "./protocol";
@@ -529,6 +529,8 @@ export class RoomCore {
             this.afterChange();
             // Everyone at the table sees who has locked in (session 27: a tick in the players panel, nothing more).
             this.tellReady();
+            // Session 28: offers that waited on their answer lapse, and their proposers are told.
+            this.tellTalks();
           }
           return;
         }
@@ -555,9 +557,33 @@ export class RoomCore {
         case "resign":
           if (!(await this.resign(seat, req.id))) throw new Error("You can't resign from this game now.");
           return;
-        case "propose":
+        case "propose": {
+          // Session 28: to a person, the room relays it (they answer in their own time); to a bot, it answers at once.
+          const to = req.offer && typeof req.offer === "object" ? req.offer.to : undefined;
+          if (to && g.peopleIds.includes(to)) {
+            const why = g.offerToPerson(req.offer, seat);
+            if (why) throw new Error(why);
+            this.reply(seat, { id: req.id, ok: true, answer: { accept: false, reason: "", waiting: true } });
+            this.tellTalks();
+            return;
+          }
           this.reply(seat, { id: req.id, ok: true, answer: g.propose(req.offer, seat) });
           return;
+        }
+        case "answer": {
+          const why = typeof req.offer === "string" && typeof req.from === "string" ? g.answerPerson(req.from, req.offer, req.accept === true, seat) : PEOPLE_DEAL_TEXT.notOpen;
+          if (why) throw new Error(why);
+          this.reply(seat, { id: req.id, ok: true, talks: g.peopleOffersFor(seat) });
+          this.tellTalks(seat);
+          return;
+        }
+        case "withdraw": {
+          const why = typeof req.offer === "string" ? g.withdrawOffer(req.offer, seat) : PEOPLE_DEAL_TEXT.notOpen;
+          if (why) throw new Error(why);
+          this.reply(seat, { id: req.id, ok: true, talks: g.peopleOffersFor(seat) });
+          this.tellTalks(seat);
+          return;
+        }
         default:
           throw new Error("An online game can't do that.");
       }
@@ -596,6 +622,8 @@ export class RoomCore {
   private deliver(updates: Map<PlayerId, HostUpdate>, answering: Map<PlayerId, number>) {
     for (const [seat, id] of this.pending) if (!answering.has(seat)) answering.set(seat, id);
     this.pending.clear();
+    // (Last turn's offers between people went with it: each update carries this turn's, if any.)
+    this.g.takeTalkChanges();
     for (const [seat, update] of updates) {
       const u = this.withFair(update);
       const id = answering.get(seat);
@@ -609,6 +637,14 @@ export class RoomCore {
 
   private withFair(u: HostUpdate): HostUpdate {
     return { ...u, fair: this.fair(), people: this.g.playingIds, ...this.leftInfo() };
+  }
+
+  /**
+   * Session 28: each seat whose offers between people changed gets them again (only the offers it's a side of). The
+   * seat that asked (`answered`) has its own copy in the answer.
+   */
+  private tellTalks(answered?: PlayerId) {
+    for (const seat of this.g.takeTalkChanges()) if (seat !== answered) this.reply(seat, { id: 0, ok: true, talks: this.g.peopleOffersFor(seat) });
   }
 
   /** Who has locked in this turn, to everyone at the table (session 27). */
@@ -648,6 +684,7 @@ export class RoomCore {
     if (!g.peopleIds.includes(seat) || g.over || g.isOut(seat) || g.leftSeats[seat]) return false;
     const resolved = this.timed(() => g.resign(seat));
     this.announceLeft(seat);
+    if (!resolved) this.tellTalks(seat);
     if (resolved) this.deliver(resolved, id ? new Map([[seat, id]]) : new Map());
     else {
       this.saveNow();

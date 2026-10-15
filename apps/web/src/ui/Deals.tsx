@@ -2,8 +2,11 @@ import { DEAL_KINDS, describeTerms, indexMap, type DealKind, type DealTerms, typ
 import { useEffect, useRef, type ReactNode } from "react";
 import { bindingPrice, breakPrice, changedTerms, finishWarning, newOffer, ownerFrom } from "../logic/deals";
 import { dealNames, namer } from "../logic/text";
+import { myOfferState, PEOPLE_DEAL_STATUS, withdrawOffer } from "../logic/peopleDeals";
+import { NOTE_MAX } from "../host/protocol";
 import { useGame } from "../store";
 import { Frame } from "./Frame";
+import "./people.css";
 
 /** "1 turn", "5 turns". */
 const turnWord = (n: number) => `${n} turn${n === 1 ? "" : "s"}`;
@@ -87,7 +90,13 @@ function TermRows({ ctx, view, offer, changed }: { ctx: GameContext; view: Playe
 
 /** Propose: pick a card (its defaults filled in), change the terms if you like, pick the promise, Send. */
 function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; offer: Offer }) {
-  const { editDeal, sendOffer, answers, setDealPick, closeDeal, busy, leaderNotes } = useGame();
+  const { editDeal, sendOffer, answers, setDealPick, closeDeal, busy, leaderNotes, people, ready, diplomacy, talks, offers, openOffer } = useGame();
+  // Online (session 28): an offer to a person goes through the room; they answer in their own time.
+  const toPerson = !!people?.includes(offer.to);
+  const sent = toPerson && diplomacy.some((o) => o.kind === "propose" && o.offer.id === offer.id);
+  const where = sent ? (myOfferState(talks, offer.id, view.me.id) ?? "open") : null;
+  const counter = where === "countered" ? talks.find((r) => r.offer.id === offer.id && r.offer.from === view.me.id)?.counter : undefined;
+  const theirName = nameOf(view, offer.to);
   const stops = finishWarning(view, offer, leaderNotes);
   const d = ctx.rules.diplomacy;
   const them = offer.to;
@@ -258,7 +267,28 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
         You offer {nameOf(view, them)} {words}.
       </p>
       {stops && <p className="deal-warning small">{stops}.</p>}
-      {answer ? (
+      {toPerson && !sent && (
+        <label className="deal-note">
+          <span className="muted small">A note for {theirName} (optional)</span>
+          <input type="text" maxLength={NOTE_MAX} value={offer.note ?? ""} onChange={(e) => editDeal({ ...offer, ...(e.target.value ? { note: e.target.value } : { note: undefined }) })} />
+        </label>
+      )}
+      {sent && where ? (
+        <div ref={said} className={`deal-answer ${where === "accepted" ? "yes" : where === "open" ? "" : "no"}`} role="status">
+          <p className="small">{PEOPLE_DEAL_STATUS[where](theirName)}</p>
+          <div className="dialog-actions">
+            {counter && offers.some((o) => o.id === counter.id && o.from === counter.from) && (
+              <button className="primary" onClick={() => openOffer(counter)}>
+                See the counteroffer
+              </button>
+            )}
+            {(where === "open" || where === "accepted") && !ready.includes(view.me.id) && <button onClick={() => void withdrawOffer(offer).then(closeDeal)}>Withdraw</button>}
+            <button onClick={closeDeal}>Close</button>
+          </div>
+        </div>
+      ) : toPerson && ready.includes(offer.to) ? (
+        <p className="deal-warning small">{PEOPLE_DEAL_STATUS.lockedIn(theirName)}</p>
+      ) : answer ? (
         <div ref={said} className={`deal-answer ${answer.accept ? "yes" : "no"}`} role="status">
           <p>
             <b>{nameOf(view, them)}:</b> “{answer.reason}”
@@ -279,7 +309,9 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
 
 /** An offer to you (or a counteroffer): Accept is one tap; Counter opens the same card from your side. */
 function Incoming({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; offer: Offer }) {
-  const { answerOffer, counterOffer, diplomacy, answers, leaderNotes } = useGame();
+  const { answerOffer, counterOffer, diplomacy, answers, leaderNotes, people } = useGame();
+  // Session 28: a person's counteroffer is accepted or declined, never countered again.
+  const canCounter = !(offer.counterTo && people?.includes(offer.from));
   const stops = finishWarning(view, offer, leaderNotes);
   const original = offer.counterTo ? diplomacy.find((o) => o.kind === "propose" && o.offer.id === offer.counterTo) : undefined;
   const changed = original?.kind === "propose" ? changedTerms(original.offer, offer) : undefined;
@@ -303,11 +335,11 @@ function Incoming({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; of
           <button className="primary" onClick={() => answerOffer(offer, true)}>
             Accept
           </button>
-          <button onClick={() => counterOffer(offer)}>Counter</button>
+          {canCounter && <button onClick={() => counterOffer(offer)}>Counter</button>}
           <button onClick={() => answerOffer(offer, false)}>Decline</button>
         </div>
       )}
-      <p className="muted small">Not answered by the time the turn plays, it lapses.</p>
+      <p className="muted small">{canCounter && !people?.includes(offer.from) ? "Not answered by the time the turn plays, it lapses." : "Not answered by the time you lock in, it lapses."}</p>
     </>
   );
 }
@@ -333,7 +365,7 @@ export default function DealSheet({ ctx, view }: { ctx: GameContext; view: Playe
     );
   }
   const other = deal.mode === "propose" ? deal.offer.to : deal.offer.from;
-  const title = deal.mode === "propose" ? `A deal with ${nameOf(view, other)}` : deal.offer.counterTo ? `${nameOf(view, other)} counters` : `${nameOf(view, other)} offers a deal`;
+  const title = deal.mode === "propose" ? (deal.offer.counterTo ? `Your counteroffer to ${nameOf(view, other)}` : `A deal with ${nameOf(view, other)}`) : deal.offer.counterTo ? `${nameOf(view, other)} counters` : `${nameOf(view, other)} offers a deal`;
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && closeDeal()}>
       <Frame className="dialog deal-sheet" role="dialog" label={title} title={title} extra={<button className="link" onClick={closeDeal}>Close</button>}>

@@ -1,8 +1,7 @@
-import type { Answer } from "@conquerra/bots";
 import type { MapDef } from "@conquerra/content";
 import type { Order, PlayerView } from "@conquerra/engine";
 import { chronicleOf } from "../logic/chronicleKeep";
-import type { GameHost, HostStart, HostUpdate, LeaderOrders, LobbySettings, NewOnlineGame, RoomBody, RoomMessage, RoomRequest, RoomStart, TableAct, TableView, TurnReport } from "./protocol";
+import type { GameHost, HostStart, HostUpdate, LeaderOrders, LobbySettings, NewOnlineGame, PeopleOffer, ProposeAnswer, RoomBody, RoomMessage, RoomRequest, RoomStart, TableAct, TableView, TurnReport } from "./protocol";
 
 /**
  * The online host (session 26): the same `GameHost` the page uses for single player, but the game runs in its room
@@ -75,6 +74,8 @@ export interface RemoteHost extends GameHost {
   onReady(listener: (ready: string[]) => void): void;
   /** A finished game's turn, as you saw it (session 27). */
   turnReplay(turn: number): Promise<{ before: PlayerView; report: TurnReport }>;
+  /** Session 28: news for the player, shown as the host's own notices are (`calm`: quietly, and it goes by itself). */
+  say(message: string, calm?: boolean): void;
 }
 
 export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
@@ -92,6 +93,8 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
   let helloId = 0;
   const tables: ((t: TableView) => void)[] = [];
   const readies: ((ready: string[]) => void)[] = [];
+  /** Session 28: the offers between people this page is a side of, as they change. */
+  const talkers: ((talks: PeopleOffer[]) => void)[] = [];
   let ws: WebSocket | null = null;
   let disposed = false;
   let attempts = 0;
@@ -203,6 +206,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
           ...(s.replay ? { before: s.replay.before } : {}),
           ...(s.leadersBack ? { leadersBack: s.leadersBack } : {}),
           ...(s.leftSeats ? { leftSeats: s.leftSeats } : {}),
+          ...(s.talks ? { talks: s.talks } : {}),
           autoLocked: !s.lockedIn,
         },
         roomNow,
@@ -257,6 +261,16 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
     }
     if ("ready" in m) {
       readies.forEach((f) => f(m.ready));
+      return;
+    }
+    // Session 28: offers between people (a push, or the answer to an answer or a withdrawal).
+    if ("talks" in m) {
+      talkers.forEach((f) => f(m.talks));
+      const w = pending.get(m.id);
+      if (w) {
+        pending.delete(m.id);
+        w.resolve(undefined);
+      }
       return;
     }
     const p = pending.get(m.id);
@@ -339,6 +353,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
     gameId: () => gameId,
     onTable: (f) => void tables.push(f),
     onReady: (f) => void readies.push(f),
+    say: (m, calm = true) => tell(m, calm),
     tableAct: (act) => ask<TableView>({ type: "table", act }),
     resign: () => ask<HostUpdate>({ type: "resign" }),
     turnReplay: (turn) => ask<{ before: PlayerView; report: TurnReport }>({ type: "turnReplay", turn }),
@@ -363,7 +378,10 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
     watchNext: (orders?: Order[]) => ask({ type: "watchNext", ...(orders ? { orders } : {}) }),
     finish: () => ask({ type: "finish" }),
     suggest: () => ask<Order[]>({ type: "suggest" }),
-    propose: (offer) => ask<Answer>({ type: "propose", offer }),
+    propose: (offer) => ask<ProposeAnswer>({ type: "propose", offer }),
+    answerPerson: (from, offer, accept) => ask<void>({ type: "answer", from, offer, accept }),
+    withdrawOffer: (offer) => ask<void>({ type: "withdraw", offer }),
+    onTalks: (f) => void talkers.push(f),
     planGenerals: (instructions, purses) => ask<LeaderOrders>({ type: "planGenerals", instructions, ...(purses ? { purses } : {}) }),
     saveTo: notHere,
     exportSave: notHere,

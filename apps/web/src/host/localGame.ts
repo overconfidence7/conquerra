@@ -30,6 +30,7 @@ import {
   Rng,
   seedRng,
   makeSave,
+  termsProblem,
   replayFor,
   resolveTurn,
   viewFor,
@@ -52,7 +53,9 @@ import { comebackStep, ownLand } from "../logic/comeback";
 import { leaderVoices, type VoiceMemory } from "../logic/voices";
 import { BOT_NAMES } from "./names";
 import { DEFAULT_HOUSE } from "../map/houses";
-import type { BotChoice, BotLevel, HostStart, HostUpdate, LobbySettings, SeatInfo, TurnReport } from "./protocol";
+import { NOTE_MAX, type BotChoice, type BotLevel, type HostStart, type HostUpdate, type LobbySettings, type PeopleOffer, type SeatInfo, type TurnReport } from "./protocol";
+
+export { NOTE_MAX };
 import type { TurnClock } from "../logic/timer";
 
 export { BOT_NAMES };
@@ -198,7 +201,23 @@ interface Talk {
   turn: number;
   orders: OrdersByPlayer;
   toHuman: Offer[];
+  /** Session 28: offers between people this turn, as the room relayed them (only their two sides ever hear of them). */
+  between?: PeopleOffer[];
 }
+
+/** Session 28: at most this many offers from one person to another in one turn (counters aside). */
+export const OFFERS_PER_PERSON = 3;
+
+/** Session 28: why an offer, answer or counter between people can't be made (the voice guide applies). */
+export const PEOPLE_DEAL_TEXT = {
+  cant: "That offer can't be made.",
+  youLocked: "You've locked in, so new offers wait for next turn.",
+  lockedIn: (name: string) => `${name} has locked in, so offers to them wait for next turn.`,
+  tooMany: (name: string) => `That's ${OFFERS_PER_PERSON} offers to ${name} this turn. The next one waits for next turn.`,
+  notOpen: "That offer isn't open any more.",
+  noSecondCounter: "A counteroffer can be accepted or declined, not countered again.",
+  counterLocked: (name: string) => `${name} has locked in, so a counter can't be answered. Accept or decline instead.`,
+} as const;
 
 /** A person at an online table (session 26), as the room seats them. */
 export interface PersonSeat {
@@ -587,9 +606,15 @@ export class LocalGame {
       generalOrders: this.generalOrders(back ? this.backCommands(id) : {}, undefined, id),
       ...(back ? { leadersBack: back } : {}),
       leaderNotes: p.leaderNotes,
-      offers: this.talk.turn === this.state.turn && !p.left ? this.talk.toHuman.filter((o) => o.to === id) : [],
+      offers: this.talk.turn === this.state.turn && !p.left ? [...this.talk.toHuman.filter((o) => o.to === id), ...this.openTo(id)] : [],
+      ...(this.online && this.peopleOffersFor(id).length ? { talks: this.peopleOffersFor(id) } : {}),
       ...(this.state.winner || this.showPersonalities ? { seats: this.seatInfo() } : {}),
     };
+  }
+
+  /** Session 28: offers (and counters) from other people still waiting on this person's answer. */
+  private openTo(id: PlayerId): Offer[] {
+    return this.between.flatMap((r) => [...(r.offer.to === id && r.state === "open" ? [r.offer] : []), ...(r.counter && r.counter.to === id && r.counterState === "open" ? [r.counter] : [])]);
   }
 
   /** Online: the orders that give this person their own commands and budgets back, if a missed turn changed them. */
@@ -653,6 +678,7 @@ export class LocalGame {
     const p = this.person(id);
     if (p.left || this.isOut(id) || this.state.winner) return false;
     p.left = { why, turn: this.state.turn };
+    this.lapseFor(id);
     p.saved = [];
     p.savedPaused = [];
     p.touched = false;
@@ -691,7 +717,145 @@ export class LocalGame {
 
   /** Deals both sides have confirmed this planning phase (the people's with the bots' answers, and the bots' own). */
   private agreed(people: Record<PlayerId, readonly Order[]> = this.savedOrders()): Offer[] {
-    return agreedIn({ ...this.talk.orders, ...Object.fromEntries(Object.entries(people).map(([id, o]) => [id, [...o]])) });
+    return agreedIn({ ...this.talk.orders, ...this.withPeopleDeals(people) });
+  }
+
+  // ---------- Session 28: deals between people ----------
+
+  /** This turn's offers between people (empty on a new turn: they lapse with it). */
+  private get between(): PeopleOffer[] {
+    if (this.talk.turn !== this.state.turn) return [];
+    return (this.talk.between ??= []);
+  }
+
+  /** Seats whose offers changed (the room tells them), taken once. */
+  private talkChanged = new Set<PlayerId>();
+  takeTalkChanges(): PlayerId[] {
+    const out = [...this.talkChanged];
+    this.talkChanged.clear();
+    return out;
+  }
+
+  /** The offers between people this seat is a side of (never anyone else's). */
+  peopleOffersFor(id: PlayerId): PeopleOffer[] {
+    return this.between.filter((r) => r.offer.from === id || r.offer.to === id);
+  }
+
+  private nameOf(id: PlayerId): string {
+    return this.state.players.find((p) => p.id === id)?.name ?? id;
+  }
+
+  /** Can this person take part in a deal between people right now (playing, still in, the game going on)? */
+  private dealing(id: PlayerId): boolean {
+    return this.online && this.playing(id) && !this.isOut(id) && !this.state.winner && this.state.settings.diplomacy !== false;
+  }
+
+  /**
+   * A person's offer (or counteroffer) to another person: the room keeps it and relays it to the other side at once.
+   * Null if it went, else the sentence saying why not. Nothing is answered for anyone: the other person answers in
+   * their own planning window, or the offer lapses when they lock in.
+   */
+  offerToPerson(raw: Offer, from: PlayerId): string | null {
+    const to = raw?.to;
+    if (!raw || typeof raw !== "object" || raw.from !== from || to === from || !this.dealing(from) || !this.people.has(to) || !this.dealing(to) || typeof raw.id !== "string" || !raw.terms || typeof raw.terms !== "object") return PEOPLE_DEAL_TEXT.cant;
+    if (raw.bond !== "handshake" && raw.bond !== "binding") return PEOPLE_DEAL_TEXT.cant;
+    if (termsProblem(this.ctx.rules, raw.terms)) return PEOPLE_DEAL_TEXT.cant;
+    if (this.person(from).locked) return PEOPLE_DEAL_TEXT.youLocked;
+    const note = typeof raw.note === "string" && raw.note.trim() ? raw.note.trim().slice(0, NOTE_MAX) : undefined;
+    const offer: Offer = { id: raw.id.slice(0, 60), from, to, terms: raw.terms, bond: raw.bond, ...(raw.counterTo ? { counterTo: String(raw.counterTo) } : {}), ...(note ? { note } : {}) };
+    const all = this.between;
+    if (all.some((r) => (r.offer.from === from && r.offer.id === offer.id) || (r.counter?.from === from && r.counter.id === offer.id))) return PEOPLE_DEAL_TEXT.cant;
+    if (offer.counterTo) {
+      const r = all.find((x) => x.offer.id === offer.counterTo && x.offer.from === to && x.offer.to === from);
+      if (!r) {
+        // A counter to a counter: it's answered, never countered again.
+        return all.some((x) => x.counter?.id === offer.counterTo && x.counter?.from === to) ? PEOPLE_DEAL_TEXT.noSecondCounter : PEOPLE_DEAL_TEXT.notOpen;
+      }
+      if (r.state !== "open" || r.counter) return PEOPLE_DEAL_TEXT.notOpen;
+      if (this.person(to).locked) return PEOPLE_DEAL_TEXT.counterLocked(this.nameOf(to));
+      r.state = "countered";
+      r.counter = offer;
+      r.counterState = "open";
+    } else {
+      if (this.person(to).locked) return PEOPLE_DEAL_TEXT.lockedIn(this.nameOf(to));
+      if (all.filter((x) => x.offer.from === from && x.offer.to === to).length >= OFFERS_PER_PERSON) return PEOPLE_DEAL_TEXT.tooMany(this.nameOf(to));
+      all.push({ offer, state: "open" });
+    }
+    this.talkChanged.add(from).add(to);
+    return null;
+  }
+
+  /** A person answers another person's offer (or their counter to it): yes or no. Null if taken, else why not. */
+  answerPerson(proposer: PlayerId, offerId: string, accept: boolean, by: PlayerId): string | null {
+    if (!this.dealing(by)) return PEOPLE_DEAL_TEXT.cant;
+    if (this.person(by).locked) return PEOPLE_DEAL_TEXT.youLocked;
+    for (const r of this.between) {
+      if (r.offer.from === proposer && r.offer.id === offerId && r.offer.to === by) {
+        if (r.state !== "open") return PEOPLE_DEAL_TEXT.notOpen;
+        r.state = accept ? "accepted" : "declined";
+      } else if (r.counter && r.counter.from === proposer && r.counter.id === offerId && r.counter.to === by) {
+        if (r.counterState !== "open") return PEOPLE_DEAL_TEXT.notOpen;
+        r.counterState = accept ? "accepted" : "declined";
+      } else continue;
+      this.talkChanged.add(proposer).add(by);
+      return null;
+    }
+    return PEOPLE_DEAL_TEXT.notOpen;
+  }
+
+  /** The proposer takes their offer (or counter) back before locking in. Null if done, else why not. */
+  withdrawOffer(offerId: string, by: PlayerId): string | null {
+    if (!this.dealing(by) || this.person(by).locked) return PEOPLE_DEAL_TEXT.notOpen;
+    for (const r of this.between) {
+      if (r.offer.from === by && r.offer.id === offerId && (r.state === "open" || r.state === "accepted")) {
+        r.state = "withdrawn";
+        this.talkChanged.add(by).add(r.offer.to);
+        return null;
+      }
+      if (r.counter && r.counter.from === by && r.counter.id === offerId && (r.counterState === "open" || r.counterState === "accepted")) {
+        r.counterState = "withdrawn";
+        this.talkChanged.add(by).add(r.counter.to);
+        return null;
+      }
+    }
+    return PEOPLE_DEAL_TEXT.notOpen;
+  }
+
+  /** Someone locked in (or left): what still waited on their answer lapses now, and its proposer is told. */
+  private lapseFor(id: PlayerId) {
+    for (const r of this.between) {
+      if (r.offer.to === id && r.state === "open") {
+        r.state = "lapsed";
+        this.talkChanged.add(id).add(r.offer.from);
+      }
+      if (r.counter && r.counter.to === id && r.counterState === "open") {
+        r.counterState = "lapsed";
+        this.talkChanged.add(id).add(r.counter.from);
+      }
+    }
+  }
+
+  /**
+   * The people's diplomacy as the room holds it, as orders: each offer it relayed (and not withdrawn) as its
+   * proposer's `propose`, each answer it took as the answerer's `answer`. A page's own propose and answer orders between
+   * people are replaced by these: a deal between people starts only from what the room relayed and both sides said.
+   */
+  private withPeopleDeals(orders: Record<PlayerId, readonly Order[]>): Record<PlayerId, Order[]> {
+    const out: Record<PlayerId, Order[]> = Object.fromEntries(Object.entries(orders).map(([id, o]) => [id, [...o]]));
+    if (!this.online) return out;
+    const people = new Set(this.peopleIds);
+    for (const id of Object.keys(out)) out[id] = out[id]!.filter((o) => !(o.kind === "propose" && people.has(o.offer.to)) && !(o.kind === "answer" && people.has(o.from)));
+    const add = (p: PlayerId, o: Order) => void out[p]?.push(o);
+    for (const r of this.between) {
+      const { offer, counter } = r;
+      if (r.state !== "withdrawn") add(offer.from, { id: `propose-${offer.id}`, kind: "propose", offer });
+      if (r.state === "accepted" || r.state === "declined" || r.state === "countered") add(offer.to, answerOrder(offer, r.state === "accepted"));
+      if (counter && r.counterState !== "withdrawn") {
+        add(counter.from, { id: `propose-${counter.id}`, kind: "propose", offer: counter });
+        if (r.counterState === "accepted" || r.counterState === "declined") add(counter.to, answerOrder(counter, r.counterState === "accepted"));
+      }
+    }
+    return out;
   }
 
   /** Each person's orders as they stand. */
@@ -831,6 +995,8 @@ export class LocalGame {
     p.saved = orders;
     p.touched = true;
     p.locked = true;
+    // (Offers still waiting on their answer lapse now: they can't answer once locked in.)
+    this.lapseFor(id);
     if (this.living.some((x) => !this.person(x).locked)) return null;
     return this.resolveTable(false);
   }
@@ -885,7 +1051,7 @@ export class LocalGame {
     // (The Marshal takes over between this turn's resolution and the next turn's planning.)
     const handOver = () => takeOver.forEach((id) => this.handOver(id, "taken"));
     try {
-      reports = this.play(orders, handOver);
+      reports = this.play(this.withPeopleDeals(orders), handOver);
     } catch {
       // Orders from a page that the engine couldn't carry out: the turn resolves without the people's orders rather
       // than stopping the game for everyone.

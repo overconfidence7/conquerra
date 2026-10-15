@@ -53,6 +53,23 @@ export interface LobbySettings {
   leadersRun?: boolean;
 }
 
+/**
+ * Session 28: an offer between two people this turn, as the room relayed it. Only its two sides are ever sent it (a
+ * deal both sides agreed is public once the turn plays, as a bot's is). `counter`: the one counteroffer it may get.
+ */
+export interface PeopleOffer {
+  offer: Offer;
+  state: "open" | "accepted" | "declined" | "countered" | "withdrawn" | "lapsed";
+  counter?: Offer;
+  counterState?: "open" | "accepted" | "declined" | "withdrawn" | "lapsed";
+}
+
+/** Session 28: a person's note with an offer, at most this many characters (their own words: the game never rewrites them). */
+export const NOTE_MAX = 120;
+
+/** Session 28: a bot's answer to an offer (at once), or, offered to a person, `waiting`: the room relayed it to them. */
+export type ProposeAnswer = Answer & { waiting?: true };
+
 export interface TurnReport {
   /** The turn these events happened on. */
   turn: number;
@@ -109,6 +126,8 @@ export interface HostUpdate {
    * back (the page shows them as changes of yours this turn; they apply when your orders go in).
    */
   leadersBack?: Order[];
+  /** Online (session 28): the offers between people this turn that you're a side of (and their answers so far). */
+  talks?: PeopleOffer[];
 }
 
 /**
@@ -165,7 +184,13 @@ export interface GameHost {
    * Offer a bot a deal (session 14). It answers at once, from its own view, with one plain reason (and maybe a
    * counteroffer). Add the `propose` order to your orders so the deal starts if it said yes.
    */
-  propose(offer: Offer): Promise<Answer>;
+  propose(offer: Offer): Promise<ProposeAnswer>;
+  /** Online (session 28): answer another person's offer (or their counter): the room tells them at once. */
+  answerPerson?(from: PlayerId, offer: string, accept: boolean): Promise<void>;
+  /** Online (session 28): take back an offer you made a person (before you lock in): the room tells them. */
+  withdrawOffer?(offer: string): Promise<void>;
+  /** Online (session 28): the offers between people you're a side of, as they change. */
+  onTalks?(listener: (talks: PeopleOffer[]) => void): void;
   /** What a bot of this game's level would order for you this turn (for testing; maybe an "auto-orders" button later). */
   suggest(): Promise<Order[]>;
   /** Save the game as it stands into one of your slots on this device. */
@@ -213,7 +238,7 @@ export type HostResponse =
   | { id: number; ok: true; plan: LeaderOrders }
   | { id: number; ok: true; save: SaveFile }
   | { id: number; ok: true; slot: SlotInfo }
-  | { id: number; ok: true; answer: Answer }
+  | { id: number; ok: true; answer: ProposeAnswer }
   /** Not an answer: something for the player to know (id is 0). */
   | { id: 0; ok: true; notice: string; calm?: boolean }
   | { id: number; ok: false; error: string };
@@ -231,7 +256,10 @@ export type RoomRequest =
   /** Session 27: leave the game for good: a Marshal plays the seat from now on (you can still watch). */
   | { id: number; type: "resign" }
   /** Session 27: a finished game's turn, to watch again (your own view of it). */
-  | { id: number; type: "turnReplay"; turn: number };
+  | { id: number; type: "turnReplay"; turn: number }
+  /** Session 28: answer another person's offer (or counter), and take back one of your own. */
+  | { id: number; type: "answer"; from: PlayerId; offer: string; accept: boolean }
+  | { id: number; type: "withdraw"; offer: string };
 
 /**
  * Session 27: what someone at the table screen can do before the game starts. Sit down (with a House colour and their
@@ -298,6 +326,8 @@ export type RoomMessage = { now: number } & (
   | { id: 0; ok: true; ready: PlayerId[] }
   /** Session 27: a finished game's turn as you saw it (your view before it, and its events from your seat). */
   | { id: number; ok: true; turnReplay: { before: PlayerView; report: TurnReport } }
+  /** Session 28: the offers between people you're a side of, as they changed (a push, id 0), or done (an answer). */
+  | { id: number; ok: true; talks: PeopleOffer[] }
 );
 
 /** The game list (the lobby's "Your online games"), from the database. */

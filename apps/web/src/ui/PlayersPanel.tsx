@@ -6,6 +6,7 @@ import { HOUSES, houseOf } from "../map/houses";
 import { useGame } from "../store";
 import { useArtUrl, useShield } from "./art";
 import { colorOf } from "./colors";
+import { myOfferState, PEOPLE_DEAL_SHORT, PEOPLE_DEAL_STATUS, withdrawOffer } from "../logic/peopleDeals";
 import { Frame } from "./Frame";
 
 const portraitOf = (seat: number) => `leader-${String((seat % 10) + 1).padStart(2, "0")}`;
@@ -33,7 +34,7 @@ function Marks({ view, marks }: { view: PlayerView; marks: DealMark[] }) {
 }
 
 function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: string; seat: number; open: boolean; onToggle(): void }) {
-  const { pageDeals, openPropose, seats, people, leftSeats, ready } = useGame();
+  const { pageDeals, openPropose, seats, people, leftSeats, ready, diplomacy, talks } = useGame();
   // Online (session 27): a person's seat a Marshal plays now.
   const gone = leftSeats?.[id];
   const persona = id !== view.me.id ? seats?.[id] : undefined;
@@ -46,8 +47,11 @@ function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: s
   const portrait = useArtUrl(portraitOf(seat));
   const out = p.eliminatedTurn !== null;
   const marks = dealMarks(view, pageDeals(), id);
-  // (Deals with people come in session 28: for now only the bots take offers.)
-  const can = canProposeTo(view, id) && !person;
+  // Session 28: people take offers too (the room relays them).
+  const can = canProposeTo(view, id);
+  // Your offers to this person this turn, and where each stands (a person who has locked in takes no more).
+  const mine = person ? diplomacy.flatMap((o) => (o.kind === "propose" && o.offer.to === id ? [o.offer] : [])) : [];
+  const lockedIn = person && ready.includes(id);
   const oath = isOathbreaker(view, id);
   const body = (
     <>
@@ -96,9 +100,26 @@ function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: s
               {m.bond === "binding" ? " (binding)" : ""}
             </p>
           ))}
-          <button className="primary" onClick={() => openPropose(id)}>
-            Propose a deal
-          </button>
+          {mine.map((o) => {
+            const where = myOfferState(talks, o.id, view.me.id) ?? "open";
+            return (
+              <p key={o.id} className="small">
+                Your {o.terms.kind === "war" ? "joint war" : o.terms.kind}: {PEOPLE_DEAL_SHORT[where](p.name)}{" "}
+                {(where === "open" || where === "accepted") && !ready.includes(view.me.id) && (
+                  <button className="link small" onClick={() => void withdrawOffer(o)}>
+                    Withdraw
+                  </button>
+                )}
+              </p>
+            );
+          })}
+          {lockedIn ? (
+            <p className="small muted">{PEOPLE_DEAL_STATUS.lockedIn(p.name)}</p>
+          ) : (
+            <button className="primary" onClick={() => openPropose(id)}>
+              Propose a deal
+            </button>
+          )}
         </div>
       )}
     </li>

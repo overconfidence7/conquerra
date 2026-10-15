@@ -1,0 +1,4 @@
+/* Session 28: deals between people (and, later, chat): loaded with the deal card, never at start-up. */
+.deal-note { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+.deal-note input { width: 100%; }
+.deal-answer .dialog-actions { margin-top: 6px; }
