@@ -6,8 +6,9 @@
 
 A stranger can find the game, sign in, play against the bots for free, and buy it once to play online with friends and on every map. Nothing in the game is ever for sale except the game itself (Nate's rule: never sell power).
 
-- **Free:** single player against the bots on three maps (Embervale, The Shattered Isles, Wyrmland), every bot level, the tutorials, your council. Enough to know whether you like it.
-- **Bought (one time):** every map, random maps, online tables (hosting and joining), long turns, notifications. A friend without the purchase can still **join** a bought player's table for the free trial period of a game or two (default: their first three online games), then they're asked to buy.
+- **Nate's call (Oct 15): everything is free until a launch date.** The purchase code is built (session 35) behind a date switch, so nothing is gated before the day Nate picks; the lines below describe what the switch turns on.
+- **Free after the date:** single player against the bots on three maps (Embervale, The Shattered Isles, Wyrmland), every bot level, the tutorials, your council. Enough to know whether you like it.
+- **Bought (one time, $9.99, Nate's call):** every map, random maps, online tables (hosting and joining), long turns, notifications. A friend without the purchase can still **join** a bought player's table for their first three online games, then they're asked to buy.
 - **Not in 1.0:** ratings and matchmaking, spectators, replays by link, native apps, the player map builder (M6), 50-player tables (a stretch, §8).
 
 ## 2. The order (sessions 30 to 36, one usage window each)
@@ -16,29 +17,29 @@ A stranger can find the game, sign in, play against the bots for free, and buy i
 |---|---|---|
 | **30** | M4's close-out (Nate's solo notes), **random maps**, the **blackout fog** option | Playable things first while Nate tests alone; no launch decision needed |
 | **31** | **Tutorials** (seven short saved games with goals and hints) and the first-game experience (a guided first turn) | Needed before any stranger plays; solo-friendly |
-| **32** | **Workers Paid, public sign-in** (Google in the Worker, email magic links), accounts in D1, Access retired, the guest list becomes an invite-free sign-up | The launch's foundation; needs Nate's Google OAuth client (his step) |
-| **33** | **The purchase** (Stripe Checkout, the webhook, what's free and what's bought enforced by the room and the API), the public site's front page, terms and privacy pages | Needs Nate's Stripe account (his step) |
-| **34** | **Bigger tables** (up to 10 people and 20 seats on the 200-territory maps), the sim's numbers for them, the map lab switched off in production, abuse limits (rate limits, a report button, a block list) | Scale and safety before strangers |
-| **35** | **Launch polish**: the install flow on Android and iPhone (the installed app), the open-graph preview, the lobby for a newcomer, a last voice pass, a load test of 20 tables at once | The week before |
+| **32** | **Bigger tables** (up to 10 people and 20 seats on the 200-territory maps), the sim's numbers for them, the map lab switched off in production, abuse limits (rate limits, a report button, a block list) | Scale and safety before strangers |
+| **33** | **Launch polish**: the install flow on Android and iPhone (the installed app), the open-graph preview, the lobby for a newcomer, a last voice pass, a load test of 20 tables at once | Everything a stranger meets, before the doors open |
+| **34** | **Workers Paid, public sign-in** (Google in the Worker, email magic links), accounts in D1, Access retired, the guest list becomes an invite-free sign-up | The launch's foundation; needs Nate's Google OAuth client (his step). Nate's order (Oct 15): sign-in and the purchase last, so the game stays private longer |
+| **35** | **The purchase** (Stripe Checkout, the webhook, the launch date switch), the public site's front page, terms and privacy pages | Needs Nate's Stripe account (his step) |
 | **36** (stretch) | **50-player battle royale** on a 400-territory map if the sim and the room's CPU allow it; otherwise it waits for M6 | Only with numbers |
 
 Nate's play test with friends can land anywhere in this: a session of his notes before the next milestone session worked well in M3 and M4 (25b), so plan on one.
 
-## 3. Sign-in (session 32)
+## 3. Sign-in (session 34; Nate's call: built in our Worker)
 
 **The problem:** Cloudflare Access is a guest list, and its free plan stops at 50 users. A public game needs sign-up with no list.
 
-**Default: sign-in in our own Worker, two ways, accounts in D1.**
+**Nate's call (Oct 15): sign-in in our own Worker, two ways, accounts in D1.**
 - **Google** ("Continue with Google"): OAuth 2.0 with PKCE in the Worker, no library (about 200 lines: the redirect, the code exchange, the id token's signature against Google's keys, the same WebCrypto check as Access's token today). Nate makes the OAuth client in Google Cloud (his step: a project, "OAuth consent screen" external, a web client with the redirect `https://conquerra.overconfidenceonline.com/api/auth/google/callback`, the client id in the config and the secret as a Wrangler secret).
 - **Email magic link** (for anyone without Google): a signed, single-use link that expires in 15 minutes, sent through Email Sending (Workers Paid; the domain onboarded, Nate's step). Rate limited (three a day an address).
 - **The session:** a signed cookie (HMAC, a secret), 30 days, refreshed on use; sign out everywhere from Settings. `users` keeps the email, the name, the colour, the purchase, the sign-in method; emails are never shown to other players (as now).
 - **Access retired** for the game's address; it can stay on the map lab's address (or the lab goes off in production, §8).
 - **Alternatives considered:** a third-party sign-in service (Clerk, Auth0: free tiers of 10,000 users, a dependency and a brand on the sign-in page); Cloudflare Access's own one-time-PIN login with "everyone" allowed (zero code, but 50 users on the free plan and $7 a user a month after). The Worker's own is the cheapest and the plainest.
 
-## 4. Money (sessions 32 and 33)
+## 4. Money (sessions 34 and 35)
 
-- **Workers Paid, $5 a month** (session 32): the Worker's handlers get 30 s of CPU like the room, Email Sending to anyone, higher daily limits. The only running cost until R2 (replays by link, after 1.0).
-- **The purchase:** Stripe Checkout (hosted page, no card data ever touches the Worker), a one-time price, the webhook (`checkout.session.completed`, the signature checked) marks `users.bought`; a receipt from Stripe. **Default price $9.99** (Nate's call; the price lives in Stripe, not in the code). Refunds by Nate in Stripe's dashboard; the webhook for a refund clears the flag.
+- **Workers Paid, $5 a month** (session 34): the Worker's handlers get 30 s of CPU like the room, Email Sending to anyone, higher daily limits. The only running cost until R2 (replays by link, after 1.0).
+- **The purchase:** Stripe Checkout (hosted page, no card data ever touches the Worker), a one-time price, the webhook (`checkout.session.completed`, the signature checked) marks `users.bought`; a receipt from Stripe. **$9.99 (Nate's call, Oct 15; the price lives in Stripe, not in the code).** Refunds by Nate in Stripe's dashboard; the webhook for a refund clears the flag.
 - **What the purchase gates** (enforced in the API and the room, never only in the page): hosting a table, joining beyond the trial, maps beyond the free three, random maps, long turns, notifications. Everything else free.
 - **Taxes:** Stripe Tax on, Nate's business details in Stripe (his step). Nate's accountant's call on the rest.
 
@@ -60,7 +61,7 @@ Nate's play test with friends can land anywhere in this: a session of his notes 
 - **The first game:** a guided first turn in any new player's first single-player game (three prompts: tap your capital, recruit, lock in), skippable, never shown again.
 - **Scenarios** (set pieces) on the same saved-game format: after 1.0.
 
-## 8. Scale and safety (sessions 34 and 36)
+## 8. Scale and safety (sessions 32 and 36)
 
 - **Bigger tables:** today a table is the lobby's opponent count plus one, up to the map's suggested size. 1.0: up to 10 people and 20 seats on the 200-territory maps; the room's CPU per turn with 20 Marshals on Rootholm measured before the limit moves (M4's number: 22 to 38 ms a turn at a table of 4; the room has 30 s). Lock-in early keeps big tables moving.
 - **50-player battle royale** (the design's `02-game-design-outline.md`): a 400-territory map, 50 seats, the Fallen's events scaled; only if the sim shows games ending in 40 turns and the room's turn stays under 5 s of CPU. A stretch for 36, else M6.
@@ -78,9 +79,9 @@ Nate's play test with friends can land anywhere in this: a session of his notes 
 
 Workers Paid $5 a month; Stripe's fee per purchase (about 3% plus 30 cents); the domain as now. R2 (replays by link) and Email Sending's volume come after 1.0. No other running cost until the game is popular, and then it's the good kind of problem (the Free plan's caps are far above a few hundred players a day).
 
-## Nate's calls
+## Nate's calls (asked and answered Oct 15)
 
-1. **The free part:** three maps and single player free, the purchase for online and everything else (the default), or everything free until a date, or single player free and online $X (as the default) but with no trial for joiners?
-2. **The price** (the default $9.99 one time) and whether friends of a buyer get a trial (the default: three online games).
-3. **Sign-in:** the Worker's own Google and magic link (the default), or a sign-in service (less code, a logo on the page, a free tier that ends)?
-4. **The order:** 30 random maps and blackout fog, 31 tutorials, 32 sign-in, 33 the purchase, 34 scale and safety, 35 polish, 36 battle royale if the numbers allow. Reorder as you like; a session of your play-test notes can go anywhere.
+1. **The free part:** **everything free until a launch date** (his pick). The gating lines in §1 describe what the purchase turns on after that date; the code is built behind a date switch.
+2. **The price:** **$9.99 one time, and a buyer's friends get three free online games** (the default, confirmed).
+3. **Sign-in:** **built in our Worker, Google plus email magic links** (the default, confirmed). His step when 34 comes: the Google OAuth client.
+4. **The order:** **30 random maps and blackout, 31 tutorials, 32 scale and safety, 33 launch polish, then 34 sign-in and 35 the purchase last, 36 battle royale if the numbers allow** (his pick: keep it private longer, launch when everything else is done).
