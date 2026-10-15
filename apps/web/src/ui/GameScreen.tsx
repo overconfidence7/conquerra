@@ -30,7 +30,7 @@ import { useArtUrl } from "./art";
 import { Toasts, type ShownToast } from "./Toasts";
 import { TopBar } from "./TopBar";
 import { ChatButton, ChatPopup } from "./chat/ChatBits";
-import { closeChat, unreadAll, useChat } from "./chat/chatStore";
+import { closeChat, holdBotLines, unreadAll, useChat } from "./chat/chatStore";
 import { PauseCard, PausedLabel, usePause } from "./pause/pause";
 import { useReplay } from "./useReplay";
 import { moreCue } from "./moreCue";
@@ -543,6 +543,8 @@ export function GameScreen() {
   // Online (session 27): a Marshal plays your seat now (you resigned, or missed three turns): you watch.
   const gone = view ? (g.leftSeats?.[view.me.id] ?? null) : null;
   const replaying = !!replay;
+  // Session 29: a bot's line about the turn waits until its replay has played.
+  useEffect(() => holdBotLines(replaying), [replaying]);
   // Coins when an order that costs gold is added; a very soft page when a panel opens (session 24).
   const queued = useRef(queue.length);
   useEffect(() => {

@@ -93,7 +93,7 @@ describe("chat for people (session 28)", () => {
     expect(JSON.stringify(t.inbox(WREN.user))).not.toContain(pair.id);
     // A group needs someone else in it, and only people.
     expect(await t.askAs(NATE, { type: "chat", act: { do: "group", with: [] } })).toMatchObject({ ok: false, error: CHAT_TEXT.noOne });
-    expect(await t.askAs(NATE, { type: "chat", act: { do: "group", with: ["bot1"] } })).toMatchObject({ ok: false, error: CHAT_TEXT.notPerson });
+    expect(await t.askAs(NATE, { type: "chat", act: { do: "group", with: ["p9"] } })).toMatchObject({ ok: false, error: CHAT_TEXT.notPerson });
   });
 
   it("plain text, 300 characters; one message every 2 s a person (faster ones dropped quietly)", async () => {

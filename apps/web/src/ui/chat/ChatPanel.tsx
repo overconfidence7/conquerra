@@ -1,10 +1,34 @@
 import { useEffect, useRef, useState } from "react";
-import type { ChatLine, ChatView } from "../../host/protocol";
+import type { ChatLine, ChatPropose, ChatView } from "../../host/protocol";
 import { HOUSES } from "../../map/houses";
 import { useGame } from "../../store";
+import { Incoming } from "../Deals";
 import { Frame } from "../Frame";
-import { applyChat, CHAT_UI, chatDo, chatName, closeChat, markRead, openChat, ordered, unreadIn, useChat } from "./chatStore";
+import { applyChat, botsIn, CHAT_UI, chatDo, chatName, closeChat, markRead, openChat, ordered, unreadIn, useChat } from "./chatStore";
 import "./chat.css";
+
+/** Session 29: what the chat with bots says itself (the voice guide applies). */
+export const BOT_UI = {
+  say: "Say something",
+  propose: "Propose a deal",
+  send: "Send this deal",
+  nothingMore: (bot: string) => `${bot} has nothing more to say this turn.`,
+  quiet: (bot: string) => `${bot} doesn't chat. Deals only.`,
+  joinUs: "Join us against…",
+  peace: "Peace among us?",
+  pickRival: "Against whom?",
+  groupNothingMore: "The bots here have nothing more to say this turn.",
+  offer: (bot: string) => `${bot}'s offer`,
+} as const;
+
+/** A bot's line comes with a deal ready to send: open the Deals panel on it (the asker only). */
+function openDeal(p: ChatPropose) {
+  const g = useGame.getState();
+  g.openPropose(p.to, p.kind);
+  const d = useGame.getState().deal;
+  if (p.kind === "war" && p.target && d?.mode === "propose" && d.offer.terms.kind === "war") g.editDeal({ ...d.offer, terms: { ...d.offer.terms, target: p.target } });
+  closeChat();
+}
 
 /**
  * Chat (session 28, design §13): a sidebar of your chats (bold when unread: the table first, then groups, then
@@ -21,6 +45,7 @@ const time = (at: number) => new Date(at).toLocaleTimeString([], { hour: "numeri
 
 function Lines({ chat }: { chat: string }) {
   const lines = useChat((s) => s.lines);
+  const me = useGame((s) => s.view?.me.id);
   const mine = lines.filter((l) => l.chat === chat);
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -39,6 +64,11 @@ function Lines({ chat }: { chat: string }) {
               </div>
             )}
             <div className="chat-text">{l.text}</div>
+            {l.propose && l.propose.for === me && (
+              <button className="link small chat-deal" onClick={() => openDeal(l.propose!)}>
+                {BOT_UI.send}
+              </button>
+            )}
           </div>
         );
       })}
@@ -87,14 +117,102 @@ function Composer({ chat }: { chat: string }) {
   );
 }
 
-/** Pick people at the table (tick boxes): a new group, or more people for one. */
+/**
+ * Session 29: a one-to-one with a bot is multiple choice. Its offers to you (the same card as the Deals panel, one
+ * answer in either place), "Say something" (three lines of yours; it answers two a turn), and Propose a deal.
+ */
+function BotChoices({ chat }: { chat: ChatView }) {
+  const { ctx, view, offers, openPropose } = useGame();
+  const [saying, setSaying] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const bot = botsIn(chat)[0];
+  if (!bot?.seat || !ctx || !view) return null;
+  const theirs = offers.filter((o) => o.from === bot.seat);
+  const say = async (pick: number) => {
+    setSaying(false);
+    setProblem(await chatDo({ do: "say", chat: chat.id, pick }));
+  };
+  return (
+    <div className="chat-bot">
+      {theirs.map((o) => (
+        <div key={o.id} className="chat-offer frame slim">
+          <b className="small">{BOT_UI.offer(bot.name)}</b>
+          <Incoming ctx={ctx} view={view} offer={o} onAnswered={(accept) => void chatDo({ do: "answered", chat: chat.id, offer: o.id, accept })} />
+        </div>
+      ))}
+      {problem && <p className="warn small">{problem}</p>}
+      {chat.quiet ? (
+        <p className="muted small">{BOT_UI.quiet(bot.name)}</p>
+      ) : chat.free === 0 ? (
+        <p className="muted small">{BOT_UI.nothingMore(bot.name)}</p>
+      ) : saying ? (
+        <div className="chat-choices" role="group" aria-label={BOT_UI.say}>
+          {(chat.say ?? []).map((line, i) => (
+            <button key={i} className="chat-choice" onClick={() => void say(i)}>
+              {line}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      <div className="chat-choice-row">
+        {!chat.quiet && chat.free !== 0 && !saying && <button onClick={() => setSaying(true)}>{BOT_UI.say}</button>}
+        <button
+          onClick={() => {
+            openPropose(bot.seat!);
+            closeChat();
+          }}
+        >
+          {BOT_UI.propose}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Session 29: a group with bots in it: two prompts the bots answer (people read and write as before). */
+function GroupAsk({ chat }: { chat: ChatView }) {
+  const view = useGame((s) => s.view);
+  const [picking, setPicking] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  if (!view) return null;
+  const inChat = new Set((chat.members ?? []).flatMap((p) => (p.seat ? [p.seat] : [])));
+  const rivals = view.players.filter((p) => p.eliminatedTurn === null && p.id !== view.me.id && !inChat.has(p.id));
+  const ask = async (a: { ask: "war" | "peace"; target?: string }) => {
+    setPicking(false);
+    setProblem(await chatDo({ do: "ask", chat: chat.id, ...a }));
+  };
+  if (chat.free === 0) return <p className="muted small">{BOT_UI.groupNothingMore}</p>;
+  return (
+    <div className="chat-bot">
+      {problem && <p className="warn small">{problem}</p>}
+      {picking ? (
+        <div className="chat-choices" role="group" aria-label={BOT_UI.pickRival}>
+          {rivals.map((p) => (
+            <button key={p.id} className="chat-choice" onClick={() => void ask({ ask: "war", target: p.id })}>
+              <span style={{ color: colour(p.house) }}>{p.name}</span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="chat-choice-row">
+          {rivals.length > 0 && <button onClick={() => setPicking(true)}>{BOT_UI.joinUs}</button>}
+          <button onClick={() => void ask({ ask: "peace" })}>{BOT_UI.peace}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Pick people (and, session 29, bots) at the table (tick boxes): a new group, or more for one. */
 function PickPeople({ exclude, done, label }: { exclude: readonly string[]; done(seats: string[], name?: string): Promise<string | null>; label: string }) {
   const { view, people, leftSeats } = useGame();
   const [picked, setPicked] = useState<string[]>([]);
   const [name, setName] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
   if (!view) return null;
-  const others = (people ?? []).filter((id) => id !== view.me.id && !exclude.includes(id) && !leftSeats?.[id]);
+  // (Bots too, session 29: they answer a group's prompts in their own voices.)
+  const bots = view.players.filter((p) => p.eliminatedTurn === null && !people?.includes(p.id) && p.id !== view.me.id).map((p) => p.id);
+  const others = [...(people ?? []), ...bots].filter((id) => id !== view.me.id && !exclude.includes(id) && !leftSeats?.[id]);
   const nameOf = (id: string) => view.players.find((p) => p.id === id)?.name ?? id;
   return (
     <div className="chat-pick">
@@ -199,7 +317,8 @@ function Selected({ id, onBack }: { id: string; onBack?: () => void }) {
       </header>
       {chat.kind === "group" && <GroupTools chat={chat} />}
       <Lines chat={id} />
-      <Composer chat={id} />
+      {chat.kind === "pair" && botsIn(chat).length ? <BotChoices chat={chat} /> : <Composer chat={id} />}
+      {chat.kind === "group" && botsIn(chat).length > 0 && <GroupAsk chat={chat} />}
     </section>
   );
 }

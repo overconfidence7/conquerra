@@ -34,9 +34,12 @@ interface ChatState {
   popup: ChatLine | null;
   /** Something to do in chat (the online host's). */
   act: ((a: ChatAct) => Promise<ChatSync>) | null;
+  /** Session 29: the replay is playing: a bot's line about a turn waits until you've watched it (no spoilers). */
+  hold: boolean;
+  held: ChatLine[];
 }
 
-export const useChat = create<ChatState>(() => ({ gameId: null, chats: [], lines: [], canWrite: true, read: {}, open: false, selected: null, grouping: false, popup: null, act: null }));
+export const useChat = create<ChatState>(() => ({ gameId: null, chats: [], lines: [], canWrite: true, read: {}, open: false, selected: null, grouping: false, popup: null, act: null, hold: false, held: [] }));
 
 const readKey = (gameId: string) => `conquerra.chatRead.${gameId}`;
 
@@ -48,7 +51,20 @@ export function resetChat(gameId: string | null, act: ChatState["act"]) {
   } catch {
     read = {};
   }
-  useChat.setState({ gameId, chats: [], lines: [], canWrite: true, read, open: false, selected: null, grouping: false, popup: null, act });
+  useChat.setState({ gameId, chats: [], lines: [], canWrite: true, read, open: false, selected: null, grouping: false, popup: null, act, hold: false, held: [] });
+}
+
+/**
+ * Session 29: while the replay plays, a bot's line about a turn waits (it would give the turn away); when the replay
+ * is over, what waited comes in as if it had just arrived.
+ */
+export function holdBotLines(hold: boolean) {
+  const s = useChat.getState();
+  if (s.hold === hold) return;
+  if (hold) return useChat.setState({ hold: true });
+  const held = s.held;
+  useChat.setState({ hold: false, held: [] });
+  if (held.length) applyChat({ chats: [], lines: held, canWrite: s.canWrite });
 }
 
 /** The game is known now (the link's or the lobby's): what you'd read in it before comes back from this device. */
@@ -68,6 +84,12 @@ const showing = (s: ChatState, chat: string) => s.open && s.selected === chat;
 
 /** What the room sent: chats replaced by id, messages added in order; a message for a chat not on screen pops up. */
 export function applyChat(sync: ChatSync) {
+  // (A bot's line about a turn waits while the replay plays.)
+  const now = useChat.getState();
+  if (now.hold && sync.lines.some((l) => l.from.bot && l.turn !== undefined)) {
+    useChat.setState({ held: [...now.held, ...sync.lines.filter((l) => l.from.bot && l.turn !== undefined)] });
+    sync = { ...sync, lines: sync.lines.filter((l) => !(l.from.bot && l.turn !== undefined)) };
+  }
   const s = useChat.getState();
   const chats = [...s.chats];
   for (const c of sync.chats) {
@@ -125,6 +147,9 @@ export function openChat(chat: string | null) {
 }
 
 export const closeChat = () => useChat.setState({ open: false, grouping: false });
+
+/** Session 29: the bots in a chat (a one-to-one with a bot, or a group a member added bots to). */
+export const botsIn = (c: ChatView | undefined) => (c?.members ?? []).filter((p) => p.bot);
 
 /** Do something in chat; a sentence if it couldn't be done. */
 export async function chatDo(a: ChatAct): Promise<string | null> {

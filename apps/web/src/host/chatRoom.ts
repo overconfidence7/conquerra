@@ -1,5 +1,5 @@
 import type { PlayerId } from "@conquerra/engine";
-import type { ChatAct, ChatLine, ChatPerson, ChatSync, ChatView } from "./protocol";
+import type { ChatAct, ChatLine, ChatPerson, ChatPropose, ChatSync, ChatView } from "./protocol";
 import type { RoomStore } from "./roomCore";
 
 /**
@@ -26,7 +26,9 @@ export const CHAT_TEXT = {
   left: "You've left the game.",
   notMember: "That chat isn't one of yours.",
   noOne: "Pick at least one other person at the table.",
-  notPerson: "Chats are with people at the table (bots join chat in a later version).",
+  notPerson: "Chats are with the players at the table.",
+  /** Session 29. */
+  botsDontRead: "Bots don't read free text. Pick one of the lines instead.",
 } as const;
 
 /** One chat, as the room keeps it. */
@@ -36,6 +38,8 @@ interface ChatRecord {
   kind: "table" | "pair" | "group";
   /** Accounts in it (a pair or group; the table is everyone sitting there). */
   members: string[];
+  /** Session 29: bots in it (a one-to-one with a bot, or a group a member added a bot to). */
+  bots?: PlayerId[];
   /** A group's name, if a member gave it one. */
   name?: string;
 }
@@ -48,6 +52,12 @@ interface StoredLine {
   from: Omit<ChatPerson, "you">;
   text: string;
   at: number;
+  /** Session 29: written for these accounts only (a bot's table line is written for each reader). */
+  to?: string[];
+  /** Session 29: a deal to send, ready made (a bot's "make it a deal" in a group, for the member who asked). */
+  propose?: ChatPropose;
+  /** Session 29: the turn a bot's line is about (the page holds it until that turn's replay has played). */
+  turn?: number;
 }
 
 interface ChatMeta {
@@ -61,6 +71,10 @@ interface ChatMeta {
   chats: ChatRecord[];
   /** The first block still kept. */
   first: number;
+  /** Session 29: when each bot last spoke to each reader in the table chat ("account|bot": the turn). */
+  botLast?: Record<string, number>;
+  /** Session 29: the messages each bot has answered for each person this turn ("account|bot"). */
+  free?: { turn: number; used: Record<string, number> };
 }
 
 /** A chat's id: random letters, so the ids of your own chats say nothing about anyone else's. */
@@ -74,6 +88,13 @@ export interface ChatSeat {
   seat?: PlayerId;
   /** They resigned or a Marshal took their seat: they read, but can't write. */
   left?: boolean;
+}
+
+/** Session 29: a bot at the table, as chat knows it (its seat, name and House colour). */
+export interface ChatBotSeat {
+  seat: PlayerId;
+  name: string;
+  house: number;
 }
 
 /** Plain text, one line breaks allowed, no control characters, at most 300 characters. */
@@ -99,6 +120,10 @@ export class ChatRoom {
     /** Everyone who sits at the table (people only), in seat order. */
     private readonly seats: () => ChatSeat[],
     private readonly now: () => number,
+    /** Session 29: the bots at the table (still in the game). */
+    private readonly bots: () => ChatBotSeat[] = () => [],
+    /** Session 29: what a chat with bots in it adds for one person (their lines to pick from, messages left). */
+    private readonly extra: (c: { id: string; kind: string; bots: PlayerId[] }, user: string) => Partial<ChatView> = () => ({}),
   ) {}
 
   /** Load what's stored (the first time the room needs chat after waking). */
@@ -134,6 +159,11 @@ export class ChatRoom {
     return this.m.chats.filter((c) => this.isMember(c, user));
   }
 
+  private botPerson(seat: PlayerId): ChatPerson | null {
+    const b = this.bots().find((x) => x.seat === seat);
+    return b ? { name: b.name, house: b.house, seat: b.seat, bot: true } : null;
+  }
+
   private person(user: string, viewer: string): ChatPerson | null {
     const s = this.seatOf(user);
     if (!s) return null;
@@ -143,11 +173,26 @@ export class ChatRoom {
   /** A chat as one of its members sees it: who's in it (names and colours), nothing more. */
   private view(c: ChatRecord, viewer: string): ChatView {
     if (c.kind === "table") return { id: c.id, kind: "table" };
-    return { id: c.id, kind: c.kind, ...(c.name ? { name: c.name } : {}), members: c.members.flatMap((u) => this.person(u, viewer) ?? []) };
+    const bots = c.bots ?? [];
+    return {
+      id: c.id,
+      kind: c.kind,
+      ...(c.name ? { name: c.name } : {}),
+      members: [...c.members.flatMap((u) => this.person(u, viewer) ?? []), ...bots.flatMap((b) => this.botPerson(b) ?? [])],
+      ...(bots.length ? this.extra({ id: c.id, kind: c.kind, bots }, viewer) : {}),
+    };
   }
 
   private line(l: StoredLine, viewer: string): ChatLine {
-    return { id: l.id, chat: l.chat, from: { ...l.from, ...(l.by === viewer ? { you: true as const } : {}) }, text: l.text, at: l.at };
+    return {
+      id: l.id,
+      chat: l.chat,
+      from: { ...l.from, ...(l.by === viewer ? { you: true as const } : {}) },
+      text: l.text,
+      at: l.at,
+      ...(l.propose ? { propose: l.propose } : {}),
+      ...(l.turn !== undefined ? { turn: l.turn } : {}),
+    };
   }
 
   private allLines(): StoredLine[] {
@@ -161,7 +206,7 @@ export class ChatRoom {
     const after = Number.isInteger(have) && have > 0 ? have : 0;
     return {
       chats: mine.map((c) => this.view(c, user)),
-      lines: this.allLines().filter((l) => l.id > after && ids.has(l.chat)).map((l) => this.line(l, user)),
+      lines: this.allLines().filter((l) => l.id > after && ids.has(l.chat) && this.mayRead(l, user)).map((l) => this.line(l, user)),
       canWrite: !!this.seatOf(user) && !this.seatOf(user)!.left,
       ...(after ? { after } : {}),
     };
@@ -177,12 +222,20 @@ export class ChatRoom {
     if (!me) return { error: CHAT_TEXT.notMember };
     if (me.left) return { error: CHAT_TEXT.left };
     const byChat = (id: unknown) => this.m.chats.find((c) => c.id === id && this.isMember(c, user));
+    // (Session 29: a bot's seat may be picked too: it goes in the chat's bots, never its accounts.)
+    const botsPicked: PlayerId[] = [];
     const people = (list: unknown): string[] | null => {
       if (!Array.isArray(list)) return null;
       const out: string[] = [];
+      botsPicked.length = 0;
       for (const seat of list) {
         const s = this.seats().find((x) => x.seat === seat && x.seat !== undefined);
-        if (!s) return null;
+        if (!s) {
+          const b = this.bots().find((x) => x.seat === seat);
+          if (!b) return null;
+          if (!botsPicked.includes(b.seat)) botsPicked.push(b.seat);
+          continue;
+        }
         if (s.user !== user && !out.includes(s.user)) out.push(s.user);
       }
       return out;
@@ -191,6 +244,8 @@ export class ChatRoom {
       case "send": {
         const c = byChat(a.chat);
         if (!c) return { error: CHAT_TEXT.notMember };
+        // (A one-to-one with a bot is multiple choice: the bot never reads free text.)
+        if (c.kind === "pair" && c.bots?.length) return { error: CHAT_TEXT.botsDontRead };
         const text = cleanText(a.text);
         if (!text) return { error: "A message needs some words." };
         const t = this.now();
@@ -203,10 +258,13 @@ export class ChatRoom {
       }
       case "pair": {
         const [other] = people([a.with]) ?? [];
-        if (!other) return { error: CHAT_TEXT.notPerson };
-        let c = this.m.chats.find((x) => x.kind === "pair" && x.members.includes(user) && x.members.includes(other));
+        const bot = botsPicked[0];
+        if (!other && !bot) return { error: CHAT_TEXT.notPerson };
+        let c = other
+          ? this.m.chats.find((x) => x.kind === "pair" && !x.bots?.length && x.members.includes(user) && x.members.includes(other))
+          : this.m.chats.find((x) => x.kind === "pair" && x.members.length === 1 && x.members[0] === user && x.bots?.[0] === bot);
         if (!c) {
-          c = { id: newChatId(), kind: "pair", members: [user, other] };
+          c = other ? { id: newChatId(), kind: "pair", members: [user, other] } : { id: newChatId(), kind: "pair", members: [user], bots: [bot!] };
           this.m.chats.push(c);
           this.saveMeta();
         }
@@ -216,9 +274,9 @@ export class ChatRoom {
       case "group": {
         const others = people(a.with);
         if (!others) return { error: CHAT_TEXT.notPerson };
-        if (!others.length) return { error: CHAT_TEXT.noOne };
+        if (!others.length && !botsPicked.length) return { error: CHAT_TEXT.noOne };
         const name = typeof a.name === "string" && a.name.trim() ? a.name.trim().slice(0, CHAT_NAME_MAX) : undefined;
-        const c: ChatRecord = { id: newChatId(), kind: "group", members: [user, ...others], ...(name ? { name } : {}) };
+        const c: ChatRecord = { id: newChatId(), kind: "group", members: [user, ...others], ...(botsPicked.length ? { bots: [...botsPicked] } : {}), ...(name ? { name } : {}) };
         this.m.chats.push(c);
         this.saveMeta();
         return { tell: this.tellMembers(c, (u) => ({ chats: [this.view(c, u)], lines: [], canWrite: true })) };
@@ -229,8 +287,10 @@ export class ChatRoom {
         const others = people(a.with);
         if (!others) return { error: CHAT_TEXT.notPerson };
         const fresh = others.filter((u) => !c.members.includes(u));
-        if (!fresh.length) return { error: CHAT_TEXT.noOne };
+        const freshBots = botsPicked.filter((b) => !(c.bots ?? []).includes(b));
+        if (!fresh.length && !freshBots.length) return { error: CHAT_TEXT.noOne };
         c.members.push(...fresh);
+        if (freshBots.length) c.bots = [...(c.bots ?? []), ...freshBots];
         this.saveMeta();
         // Someone added reads what the group wrote before them too (it's one conversation).
         return { tell: this.tellMembers(c, (u) => (fresh.includes(u) ? this.syncChat(c, u) : { chats: [this.view(c, u)], lines: [], canWrite: true })) };
@@ -251,7 +311,85 @@ export class ChatRoom {
 
   /** One chat's whole history, for someone just added to it. */
   private syncChat(c: ChatRecord, user: string): ChatSync {
-    return { chats: [this.view(c, user)], lines: this.allLines().filter((l) => l.chat === c.id).map((l) => this.line(l, user)), canWrite: true };
+    return { chats: [this.view(c, user)], lines: this.allLines().filter((l) => l.chat === c.id && this.mayRead(l, user)).map((l) => this.line(l, user)), canWrite: true };
+  }
+
+  /** May this account read this line? (A line written for some readers only reaches them.) */
+  private mayRead(l: StoredLine, user: string): boolean {
+    return !l.to || l.to.includes(user);
+  }
+
+  // ---------- Session 29: the bots in the chat ----------
+
+  /** A chat this account is in (else undefined): the room's own checks before a bot answers in it. */
+  find(user: string, chat: unknown): { id: string; kind: "table" | "pair" | "group"; bots: PlayerId[] } | undefined {
+    const c = this.m.chats.find((x) => x.id === chat && this.isMember(x, user));
+    return c ? { id: c.id, kind: c.kind, bots: [...(c.bots ?? [])] } : undefined;
+  }
+
+  /** A bot at the table, as chat knows it (still in the game). */
+  bot(seat: PlayerId): ChatBotSeat | undefined {
+    return this.bots().find((b) => b.seat === seat);
+  }
+
+  /**
+   * A line in a chat from a bot, or (`user`) a person's own multiple-choice line. `to`: only these accounts read it (a
+   * bot's table line, written for one reader). Returns who to tell, each their own copy.
+   */
+  write(chat: string, from: { bot: ChatBotSeat } | { user: string }, text: string, opts: { to?: string[]; propose?: ChatPropose; turn?: number } = {}): Map<string, ChatSync> {
+    const c = this.m.chats.find((x) => x.id === chat);
+    if (!c) return new Map();
+    const t = this.now();
+    this.m.last = Math.max(this.m.last + 1, t);
+    let by: string;
+    let who: Omit<ChatPerson, "you">;
+    if ("bot" in from) {
+      by = `bot:${from.bot.seat}`;
+      who = { name: from.bot.name, house: from.bot.house, seat: from.bot.seat, bot: true };
+    } else {
+      const me = this.seatOf(from.user)!;
+      by = from.user;
+      who = { name: me.name, house: me.house, ...(me.seat ? { seat: me.seat } : {}) };
+    }
+    const l: StoredLine = { id: this.m.last, chat, by, from: who, text: text.slice(0, CHAT_TEXT_MAX), at: t, ...(opts.to ? { to: opts.to } : {}), ...(opts.propose ? { propose: opts.propose } : {}), ...(opts.turn !== undefined ? { turn: opts.turn } : {}) };
+    this.append(l);
+    const users = (c.kind === "table" ? this.seats().map((s) => s.user) : c.members).filter((u) => this.mayRead(l, u));
+    return new Map(users.map((u) => [u, { chats: [], lines: [this.line(l, u)], canWrite: !!this.seatOf(u) && !this.seatOf(u)!.left }]));
+  }
+
+  /** The chats with bots in them, as this account sees them now (their lines to pick from change each turn). */
+  botChats(user: string): ChatView[] {
+    return this.chatsOf(user)
+      .filter((c) => c.bots?.length)
+      .map((c) => this.view(c, user));
+  }
+
+  /** When each bot last spoke to this reader in the table chat (by bot, the turn). */
+  botLast(user: string): Record<PlayerId, number> {
+    const out: Record<PlayerId, number> = {};
+    for (const [k, turn] of Object.entries(this.m.botLast ?? {})) {
+      const [u, bot] = k.split("|") as [string, string];
+      if (u === user) out[bot] = turn;
+    }
+    return out;
+  }
+
+  spoke(user: string, bot: PlayerId, turn: number) {
+    (this.m.botLast ??= {})[`${user}|${bot}`] = turn;
+    this.saveMeta();
+  }
+
+  /** How many more of this person's messages this bot answers this turn. */
+  freeLeft(user: string, bot: PlayerId, turn: number, max: number): number {
+    const f = this.m.free;
+    return Math.max(0, max - (f && f.turn === turn ? (f.used[`${user}|${bot}`] ?? 0) : 0));
+  }
+
+  useFree(user: string, bot: PlayerId, turn: number) {
+    if (!this.m.free || this.m.free.turn !== turn) this.m.free = { turn, used: {} };
+    const k = `${user}|${bot}`;
+    this.m.free.used[k] = (this.m.free.used[k] ?? 0) + 1;
+    this.saveMeta();
   }
 
   private tellMembers(c: ChatRecord, copy: (user: string) => ChatSync): Map<string, ChatSync> {

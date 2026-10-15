@@ -51,6 +51,7 @@ import { buildTimeline } from "../replay/timeline";
 import { chronicleOf } from "../logic/chronicleKeep";
 import { comebackStep, ownLand } from "../logic/comeback";
 import { leaderVoices, type VoiceMemory } from "../logic/voices";
+import { chatVoiceOf, type ChatBot } from "./botChat";
 import { BOT_NAMES } from "./names";
 import { DEFAULT_HOUSE } from "../map/houses";
 import { NOTE_MAX, type BotChoice, type BotLevel, type HostStart, type HostUpdate, type LobbySettings, type PeopleOffer, type SeatInfo, type TurnReport } from "./protocol";
@@ -1266,6 +1267,26 @@ export class LocalGame {
       s = r.state;
     }
     return null;
+  }
+
+  /** Session 29: this person's own view as the game stands (what chat may build a line from). */
+  viewOf(id: PlayerId): PlayerView {
+    return viewFor(this.ctx, this.state, id);
+  }
+
+  /** Session 29: the bots at the table, as chat knows them: still in the game, and the voice each talks in. */
+  chatBots(): ChatBot[] {
+    return this.state.players
+      .filter((p) => !this.people.has(p.id) && p.eliminatedTurn === null)
+      .map((p) => {
+        const s = this.seats.get(p.id);
+        return { id: p.id, name: p.name, house: p.house, voice: chatVoiceOf(s?.level ?? "captain", s?.personality) };
+      });
+  }
+
+  /** Session 29: the bots' offers to this person this turn (the same ones their Deals panel shows). */
+  botOffersTo(id: PlayerId): Offer[] {
+    return this.talk.turn === this.state.turn && !this.person(id).left ? this.talk.toHuman.filter((o) => o.to === id) : [];
   }
 
   /** Online: this person's last replay (their view before it and their report), for someone coming back. */

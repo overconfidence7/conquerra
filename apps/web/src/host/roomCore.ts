@@ -4,8 +4,10 @@ import { HOUSES } from "../map/houses";
 import { LocalGame, PAUSES_EACH, PEOPLE_DEAL_TEXT, type PauseNews, type PersonSeat, type SeatLeft } from "./localGame";
 import { cleanName } from "./names";
 import { TABLE_TEXT } from "./roomText";
-import { ChatRoom, type ChatSeat } from "./chatRoom";
-import type { HostUpdate, LobbySettings, PauseView, RoomMessage, RoomRequest, RoomStart, TableAct, TableView } from "./protocol";
+import { CHAT_TEXT, ChatRoom, type ChatBotSeat, type ChatSeat } from "./chatRoom";
+import { ASK_TEXT, botReply, groupAnswer, offerAnswered, sayOptions, tableTalk, youAndBot } from "./botChat";
+import { lines } from "@conquerra/content/lines";
+import type { ChatAct, ChatSync, ChatView, HostUpdate, LobbySettings, PauseView, RoomMessage, RoomRequest, RoomStart, TableAct, TableView } from "./protocol";
 
 /**
  * Everything an online game's room does (session 26), in one place and with no Cloudflare in it: the game (the same
@@ -132,6 +134,15 @@ interface Meta {
   seen: Record<PlayerId, number>;
 }
 
+/** Session 29: what the bots in the chat answer when they can't (the voice guide applies). */
+export const BOT_CHAT_TEXT = {
+  nothingMore: (bot: string) => `${bot} has nothing more to say this turn.`,
+  quiet: (bot: string) => `${bot} doesn't chat. Deals only.`,
+  gone: "That bot is out of the game.",
+  notNow: "Bots chat while the game is on.",
+  noTarget: "Pick a rival who's still in the game and not in this chat.",
+} as const;
+
 /** Session 28: what a lock-in during a pause is told. */
 export const PAUSED_LOCK = "The game is paused. Your orders are kept: press Ready to go on.";
 
@@ -180,7 +191,164 @@ export class RoomCore {
     /** A clock for timing the work (Workers only move it on I/O; `wrangler tail` has the real CPU time). */
     private readonly timer: () => number = () => performance.now(),
   ) {
-    this.chat = new ChatRoom(store, () => this.chatSeats(), now);
+    this.chat = new ChatRoom(
+      store,
+      () => this.chatSeats(),
+      now,
+      () => this.chatBotSeats(),
+      (c, user) => this.botChatExtra(c, user),
+    );
+  }
+
+  /** Session 29: the bots at the table, as chat knows them (still in the game; a table's game only). */
+  private chatBotSeats(): ChatBotSeat[] {
+    if (!this.game || !this.tableRec) return [];
+    return this.game.chatBots().map((b) => ({ seat: b.id, name: b.name, house: b.house }));
+  }
+
+  /** Session 29: what a chat with bots adds for one person: three lines for "Say something", and messages left. */
+  private botChatExtra(c: { kind: string; bots: PlayerId[] }, user: string): Partial<ChatView> {
+    const g = this.game;
+    const seat = this.seatOf(user);
+    if (!g || !seat || g.over) return {};
+    const bots = g.chatBots().filter((b) => c.bots.includes(b.id));
+    if (!bots.length) return {};
+    const max = lines.limits.chatFree;
+    const free = Math.max(...bots.map((b) => this.chat.freeLeft(user, b.id, g.turn, max)));
+    if (c.kind !== "pair") return { free };
+    const b = bots[0]!;
+    if (!b.voice) return { quiet: true };
+    return { say: sayOptions(this.meta!.gameId, g.turn, seat, b, this.between(seat, b.id)), free };
+  }
+
+  /** Session 29: what's between a person and a bot (from their own last replay and the deals they can see). */
+  private between(seat: PlayerId, bot: PlayerId) {
+    const g = this.g;
+    return youAndBot(seat, bot, g.viewOf(seat), g.lastReplay(seat)?.report.events ?? [], g.ctx);
+  }
+
+  /**
+   * Session 29: a multiple-choice line to a bot ("Say something", a group's prompt, an answer to its offer). The bot
+   * answers in character, at most `chatFree` times a turn for each person, and commits to nothing: a deal is the only
+   * way it ever agrees to anything.
+   */
+  private botAct(user: string, a: Extract<ChatAct, { do: "say" | "ask" | "answered" }>): { tell: Map<string, ChatSync> } | { error: string } {
+    const g = this.game;
+    const seat = this.seatOf(user);
+    if (!g || !seat || g.over) return { error: BOT_CHAT_TEXT.notNow };
+    if (this.chatSeats().find((s) => s.user === user)?.left) return { error: CHAT_TEXT.left };
+    const c = this.chat.find(user, a.chat);
+    if (!c || !c.bots.length) return { error: CHAT_TEXT.notMember };
+    const bots = g.chatBots().filter((b) => c.bots.includes(b.id));
+    const turn = g.turn;
+    const max = lines.limits.chatFree;
+    const gameId = this.meta!.gameId;
+    const tell = new Map<string, ChatSync>();
+    const merge = (m: Map<string, ChatSync>) => {
+      for (const [u, s] of m) {
+        const t = tell.get(u);
+        if (t) (t.lines.push(...s.lines), t.chats.push(...s.chats));
+        else tell.set(u, { ...s, lines: [...s.lines], chats: [...s.chats] });
+      }
+    };
+    const seatOfBot = (id: PlayerId) => this.chat.bot(id)!;
+    switch (a.do) {
+      case "say": {
+        const b = bots[0];
+        if (c.kind !== "pair") return { error: CHAT_TEXT.notMember };
+        if (!b) return { error: BOT_CHAT_TEXT.gone };
+        if (!b.voice) return { error: BOT_CHAT_TEXT.quiet(b.name) };
+        if (this.chat.freeLeft(user, b.id, turn, max) <= 0) return { error: BOT_CHAT_TEXT.nothingMore(b.name) };
+        const between = this.between(seat, b.id);
+        const options = sayOptions(gameId, turn, seat, b, between);
+        const pick = Number.isInteger(a.pick) && a.pick >= 0 && a.pick < options.length ? a.pick : 0;
+        merge(this.chat.write(c.id, { user }, options[pick]!));
+        this.chat.useFree(user, b.id, turn);
+        const reply = botReply(gameId, turn, seat, b, between, pick);
+        if (reply) merge(this.chat.write(c.id, { bot: seatOfBot(b.id) }, reply));
+        break;
+      }
+      case "ask": {
+        if (c.kind !== "group") return { error: CHAT_TEXT.notMember };
+        let rival: string | null = null;
+        if (a.ask === "war") {
+          const inChat = new Set([...c.bots, ...(this.chat.sync(user).chats.find((x) => x.id === c.id)?.members ?? []).flatMap((p) => (p.seat ? [p.seat] : []))]);
+          const target = g.fullState.players.find((p) => p.id === a.target && p.eliminatedTurn === null && !inChat.has(p.id));
+          if (!target) return { error: BOT_CHAT_TEXT.noTarget };
+          rival = target.name;
+        }
+        merge(this.chat.write(c.id, { user }, a.ask === "war" ? ASK_TEXT.war(rival!) : ASK_TEXT.peace));
+        for (const b of bots) {
+          if (!b.voice || this.chat.freeLeft(user, b.id, turn, max) <= 0) continue;
+          this.chat.useFree(user, b.id, turn);
+          const line = groupAnswer(gameId, turn, b, a.ask === "war" ? "war" : "peace", rival, `${seat}|${a.ask}|${a.target ?? ""}`);
+          // (Its words never bind it: the deal comes ready to send, for the member who asked.)
+          if (line) merge(this.chat.write(c.id, { bot: seatOfBot(b.id) }, line, { propose: { to: b.id, kind: a.ask === "war" ? "war" : "truce", ...(a.ask === "war" ? { target: a.target! } : {}), for: seat } }));
+        }
+        break;
+      }
+      case "answered": {
+        const b = bots[0];
+        if (c.kind !== "pair" || !b) return { error: CHAT_TEXT.notMember };
+        const offer = g.botOffersTo(seat).find((o) => o.id === a.offer && o.from === b.id);
+        const key = `${user}|${a.offer}`;
+        if (!offer || this.answered.has(key)) return { tell };
+        this.answered.add(key);
+        const line = offerAnswered(gameId, turn, seat, b, offer.terms.kind, a.accept === true);
+        if (line) merge(this.chat.write(c.id, { bot: seatOfBot(b.id) }, line));
+        break;
+      }
+    }
+    // (Your messages left with the bot changed: the chat comes again, as you see it now.)
+    merge(new Map([[user, { chats: this.chat.botChats(user).filter((v) => v.id === c.id), lines: [], canWrite: true }]]));
+    return { tell };
+  }
+
+  /** Session 29: the bots' offers already answered in chat (one line from the bot each). */
+  private answered = new Set<string>();
+
+  /**
+   * Session 29: after a turn, the bots speak in the table chat, each line written for one reader from that reader's
+   * own replay and view (`tableTalk`), and each bot's offers to a person show in their one-to-one with it. Everyone's
+   * chats with bots come again (their lines for "Say something" change each turn).
+   */
+  private async botsTalk() {
+    const g = this.game;
+    if (!g || !this.tableRec || !this.meta) return;
+    await this.chat.load();
+    const bots = g.chatBots();
+    for (const seat of g.peopleIds) {
+      const user = this.userOf(seat);
+      if (!user) continue;
+      const out: ChatSync = { chats: [], lines: [], canWrite: true };
+      const add = (m: Map<string, ChatSync>) => {
+        const s = m.get(user);
+        if (s) (out.lines.push(...s.lines), out.chats.push(...s.chats));
+      };
+      const playing = !g.isOut(seat) && !g.leftSeats[seat] && !g.over;
+      const last = g.lastReplay(seat);
+      if (playing && last) {
+        const said = tableTalk({ ctx: g.ctx, game: this.meta.gameId, reader: seat, before: last.before, after: g.viewOf(seat), events: last.report.events, bots, last: this.chat.botLast(user) });
+        for (const s of said) {
+          const b = this.chat.bot(s.bot);
+          if (!b) continue;
+          this.chat.spoke(user, s.bot, last.report.turn);
+          add(this.chat.write("table", { bot: b }, s.text, { to: [user], turn: last.report.turn }));
+        }
+      }
+      // A bot's offer to you shows in your one-to-one with it too (made if need be), with its own words.
+      if (playing)
+        for (const o of g.botOffersTo(seat)) {
+          const made = this.chat.act(user, { do: "pair", with: o.from });
+          const chat = made && "tell" in made ? made.tell.get(user)?.chats[0] : undefined;
+          const b = this.chat.bot(o.from);
+          if (chat && b) add(this.chat.write(chat.id, { bot: b }, o.note ?? "", { to: [user], ...(last ? { turn: last.report.turn } : {}) }));
+        }
+      out.chats.push(...this.chat.botChats(user));
+      out.canWrite = !this.chatSeats().find((s) => s.user === user)?.left;
+      if (out.lines.length || out.chats.length) this.io.sendUser(user, { id: 0, ok: true, chat: out, now: this.now() });
+    }
+    await this.chat.flush();
   }
 
   /** Session 28: everyone sitting at the table, as chat knows them (who has left reads, but doesn't write). */
@@ -194,7 +362,10 @@ export class RoomCore {
   /** Session 28: something done in chat. The page that did it gets the answer; everyone else concerned, a push. */
   private async chatMessage(who: Who, req: Extract<RoomRequest, { type: "chat" }>) {
     await this.chat.load();
-    const done = this.chat.act(who.user, req.act);
+    // Session 29: once the game has started, chat knows its bots (a room that woke from hibernation loads it first).
+    const a = req.act;
+    if (this.tableRec?.status === "started") await this.ensureLoaded();
+    const done = a && typeof a === "object" && (a.do === "say" || a.do === "ask" || a.do === "answered") ? this.botAct(who.user, a) : this.chat.act(who.user, req.act);
     if (done && "error" in done) {
       this.io.sendUser(who.user, { id: req.id, ok: false, error: done.error, now: this.now() });
       return;
@@ -436,6 +607,8 @@ export class RoomCore {
     await this.create({ gameId: t.gameId, settings: { ...rules, bots, ...marshals }, people, seed: t.seed });
     t.status = "started";
     await this.chat.load();
+    // Session 29: the bots' first offers show in each person's one-to-one with them.
+    await this.botsTalk();
     // Everyone seated goes into turn 1 (a page at the table screen is waiting for exactly this).
     for (const x of t.sitters) this.reply(x.seat!, { id: 0, ok: true, start: this.hello(x.seat!) });
   }
@@ -474,9 +647,10 @@ export class RoomCore {
     if (this.game && !this.game.over) this.autosave(this.game.snapshot());
   }
 
-  /** Wait for the save being written (tests; the Durable Object also waits before answering). */
-  flush(): Promise<void> {
-    return this.writing;
+  /** Wait for the save being written (tests; the Durable Object also waits before answering), and chat's. */
+  async flush(): Promise<void> {
+    await this.writing;
+    await this.chat.flush();
   }
 
   /** The game list's line. */
@@ -712,6 +886,8 @@ export class RoomCore {
     if (this.game?.over) this.io.log(`game ${this.meta!.gameId}: over on turn ${this.game.turn}, seed revealed`);
     this.announceLeft();
     this.afterChange();
+    // Session 29: the bots have their say about the turn (each reader their own lines), once it's sent.
+    this.writing = this.writing.then(() => this.botsTalk()).catch((e) => this.io.log(`bots' chat failed: ${e instanceof Error ? e.message : String(e)}`));
   }
 
   private withFair(u: HostUpdate): HostUpdate {

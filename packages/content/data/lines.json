@@ -12,7 +12,12 @@
     "goldIdle": 20,
     "grudgeAfter": 3,
     "grudgeEvery": 6,
-    "needleEvery": 6
+    "needleEvery": 6,
+    "chatPerBot": 1,
+    "chatPerTurn": 2,
+    "chatGap": 3,
+    "captainGap": 6,
+    "chatFree": 2
   },
   "picked": [
     "screens.overWon",
@@ -1870,5 +1875,605 @@
       "The others are finishing the game. Some faster than others.",
       "The others are playing on. It won't be long."
     ]
+  },
+  "chat": {
+    "conqueror": {
+      "brag": [
+        "Took {places}. You'll want to move your border back.",
+        "{places} is mine now. It was on the plan.",
+        "Took {places}. One plan, and you were on it."
+      ],
+      "bragCapital": [
+        "{capital} is mine. I'll keep the throne warm.",
+        "Took {capital}. That was always the plan.",
+        "{capital} flies my banner now. Nothing personal, it was in the way."
+      ],
+      "capitalTaken": [
+        "{capital} is mine. {rival} should have built a bigger wall.",
+        "Took {capital} from {rival}. One plan, working as planned.",
+        "{rival}'s capital is mine. Next."
+      ],
+      "needle": [
+        "You took {place}. Enjoy it while you can.",
+        "{place} is yours for now. I'll be back for it.",
+        "Good move at {place}. It won't happen twice."
+      ],
+      "dealMade": [
+        "Our {deal} stands. My war is somewhere else.",
+        "A {deal} it is. I keep my word while it suits the plan.",
+        "Agreed. A {deal} with you leaves me one front."
+      ],
+      "finished": [
+        "{rival} is done. Next.",
+        "{rival} is out. That's how a plan works.",
+        "Finished {rival}. I don't leave a job half done."
+      ],
+      "comeback": [
+        "{place} is mine again. Did anyone think I was done?",
+        "Took back {place}. I was never out of it.",
+        "{place} is home again. Write that down."
+      ],
+      "replyCalm": [
+        "Noted. I have a war to run.",
+        "Talk is cheap. Armies aren't.",
+        "If you want something, send a deal."
+      ],
+      "replyTheyTook": [
+        "{place} was on the plan. Nothing personal.",
+        "You want {place} back? Come and get it.",
+        "{place} is mine now. Take it up with my army."
+      ],
+      "replyYouTook": [
+        "Enjoy {place}. I'm coming back for it.",
+        "You got lucky at {place}. It won't last.",
+        "{place} is on my list now. Near the top."
+      ],
+      "replyAllies": [
+        "Our {deal} holds. Don't make me regret it.",
+        "The {deal} stands. Keep your armies where I can see them.",
+        "We have a {deal}. That's all the friendship I do."
+      ],
+      "offerTaken": [
+        "Good. The {deal} starts this turn.",
+        "Agreed. One less front.",
+        "Done. Keep your end of the {deal}."
+      ],
+      "offerRefused": [
+        "Your loss. My armies go where I send them anyway.",
+        "No {deal}, then. Noted.",
+        "Fine. I'll remember who said no."
+      ],
+      "groupWar": [
+        "{rival}? Make it a deal and I'm in.",
+        "I'll march on {rival}. Put it in a deal first.",
+        "Words don't move armies. Send me a joint war on {rival}."
+      ],
+      "groupPeace": [
+        "Peace suits me if it's on paper. Send a truce.",
+        "Make it a truce and I'll sign it.",
+        "I sign deals, not speeches. Send the truce."
+      ]
+    },
+    "blitzer": {
+      "brag": [
+        "Took {places}. Already moving.",
+        "{places}. Mine. Gotta go.",
+        "Took {places}. Didn't even slow down."
+      ],
+      "bragCapital": [
+        "Took {capital}. Fast, right?",
+        "{capital} is mine. Already moving.",
+        "{capital}. Done. Next."
+      ],
+      "capitalTaken": [
+        "Took {capital} from {rival}. Took about a turn.",
+        "{rival}'s capital. Mine. Moving on.",
+        "{capital}, gone. {rival} blinked."
+      ],
+      "needle": [
+        "You took {place}. I was busy.",
+        "{place}? Fine. I'll be back before you unpack.",
+        "Took {place} while I wasn't looking. Cheeky."
+      ],
+      "dealMade": [
+        "{deal}, done. Back to running.",
+        "Fine, a {deal}. Keep up.",
+        "A {deal}. Quick. I like it."
+      ],
+      "finished": [
+        "{rival}, out. Faster than I thought.",
+        "{rival} is done. Next.",
+        "Finished {rival}. Already moving."
+      ],
+      "comeback": [
+        "{place} is mine again. Told you I'm quick.",
+        "Back in {place}. Barely stopped.",
+        "Took back {place}. Missed me?"
+      ],
+      "replyCalm": [
+        "Busy. Talk while you march.",
+        "Can't stop. Say it faster.",
+        "Sure. Moving."
+      ],
+      "replyTheyTook": [
+        "{place}? Already behind me.",
+        "Sorry about {place}. Not really. Gotta go.",
+        "{place} was open. I was passing."
+      ],
+      "replyYouTook": [
+        "{place}. Annoying. Coming back for it.",
+        "Keep {place} warm for me.",
+        "You got {place}. I got three others. Probably."
+      ],
+      "replyAllies": [
+        "The {deal} holds. Don't slow me down.",
+        "We're good. Keep up.",
+        "The {deal} stands. Run faster."
+      ],
+      "offerTaken": [
+        "Great. Moving.",
+        "Done. Quick, that.",
+        "{deal} on. Back to it."
+      ],
+      "offerRefused": [
+        "No? Fine. No time anyway.",
+        "Your call. Already moving.",
+        "Okay. Next."
+      ],
+      "groupWar": [
+        "{rival}? Now? Send the joint war and I'm there.",
+        "In. Put {rival} in a deal. Quick.",
+        "Make it a deal against {rival}. I'll get there first."
+      ],
+      "groupPeace": [
+        "Truce? Fine. Send it. Fast.",
+        "Send a truce. I'll sign it on the way past.",
+        "Paper first. Then peace. Quick."
+      ]
+    },
+    "turtle": {
+      "brag": [
+        "Took {places}. Carefully. The walls go up next.",
+        "{places} is mine now. I checked twice before I did it.",
+        "Took {places}. Slowly, and it'll stay taken."
+      ],
+      "bragCapital": [
+        "{capital} is mine. I'm already measuring it for a wall.",
+        "Took {capital}. Slowly, then all at once.",
+        "{capital} is mine now. Lovely stonework, by the way."
+      ],
+      "capitalTaken": [
+        "Took {capital} from {rival}. Their walls were thin.",
+        "{rival}'s capital is mine. I waited a long time for that.",
+        "{capital} is mine. {rival} should have built more walls. I did."
+      ],
+      "needle": [
+        "You took {place}. My wall wasn't finished there.",
+        "{place} is yours for now. I'm building something about it.",
+        "Well done at {place}. The wall there was next on my list."
+      ],
+      "dealMade": [
+        "A {deal}. Good. More time for the walls.",
+        "Our {deal} stands. My masons thank you.",
+        "Agreed, a {deal}. I'd rather build than fight."
+      ],
+      "finished": [
+        "{rival} is done. Carefully done.",
+        "{rival} is out. We checked the fog twice. Then once more.",
+        "Finished {rival}. Slowly, and it stuck."
+      ],
+      "comeback": [
+        "{place} is mine again. The walls never forgot me.",
+        "Took back {place}. Slow and steady, as promised.",
+        "Back in {place}. The old masons would be proud."
+      ],
+      "replyCalm": [
+        "Noted. I'll be behind my walls.",
+        "Quiet suits me. Walls take time.",
+        "Thank you. Now if you'll excuse me, the mortar is setting."
+      ],
+      "replyTheyTook": [
+        "{place} needed a better owner. And a wall.",
+        "Sorry about {place}. It's in good hands. Walled ones, soon.",
+        "{place} is safe with me. Safer than it was."
+      ],
+      "replyYouTook": [
+        "Look after {place}. The wall there was half done.",
+        "{place} is yours until my walls are finished.",
+        "You took {place}. I'm writing it down, carefully."
+      ],
+      "replyAllies": [
+        "Our {deal} holds. My walls are grateful.",
+        "The {deal} stands. I sleep better for it.",
+        "We have a {deal}. Good. Fewer surprises."
+      ],
+      "offerTaken": [
+        "Good. The {deal} gives me time to build.",
+        "Thank you. Carefully, of course.",
+        "Agreed. The masons will be pleased."
+      ],
+      "offerRefused": [
+        "No {deal}, then. The walls will do.",
+        "Fine. I trust stone more than signatures anyway.",
+        "Understood. I'll build a little faster."
+      ],
+      "groupWar": [
+        "Against {rival}? Send a joint war. I'll bring the big army, slowly.",
+        "Put {rival} in a deal and I'll consider it. Carefully.",
+        "I don't march on promises. A joint war on {rival}, on paper, and I'm in."
+      ],
+      "groupPeace": [
+        "Peace suits me. Send a truce and I'll sign it.",
+        "A truce, on paper, please. My walls like paper.",
+        "Send the truce. I'd rather build than fight."
+      ]
+    },
+    "schemer": {
+      "brag": [
+        "Took {places}, friend. Nothing personal. Well, a little.",
+        "{places} is mine now, friend. I'll take good care of it.",
+        "Sorry about {places}, friend. It looked lonely."
+      ],
+      "bragCapital": [
+        "{capital} is mine now, friend. I always admired it.",
+        "Took {capital}. Don't worry, friend, I'll keep your chair.",
+        "{capital} looks better in my colours, friend. You'll see."
+      ],
+      "capitalTaken": [
+        "Took {capital} from {rival}. They trusted the wrong neighbour.",
+        "{rival}'s capital is mine. I sent flowers first.",
+        "{capital} is mine now. {rival} never saw it coming, poor thing."
+      ],
+      "needle": [
+        "You took {place}, friend. I'll remember the favour.",
+        "{place}, friend. Bold of you. I like bold.",
+        "Well played at {place}, friend. Truly. I'm taking notes."
+      ],
+      "dealMade": [
+        "A {deal}, friend. I'm so glad.",
+        "Our {deal} is signed, friend. For now, which is all anyone can promise.",
+        "Lovely. A {deal} between friends."
+      ],
+      "finished": [
+        "{rival} is gone. Such a shame. Lovely.",
+        "Finished {rival}. They were good company.",
+        "{rival} is out, friend. Don't look at me like that."
+      ],
+      "comeback": [
+        "{place} is mine again, friend. Did you miss me?",
+        "Took back {place}. Everyone forgets about me. Everyone.",
+        "Back in {place}, friend. Surprised?"
+      ],
+      "replyCalm": [
+        "Always lovely to hear from you, friend.",
+        "Of course, friend. My door is always open. Mostly.",
+        "Friend. We should talk more. I learn so much."
+      ],
+      "replyTheyTook": [
+        "{place}? Friend, it was nothing personal. Mostly.",
+        "I'll look after {place} for you, friend. Promise.",
+        "Sorry about {place}, friend. I'll send flowers."
+      ],
+      "replyYouTook": [
+        "Keep {place}, friend. For now.",
+        "{place} suits you, friend. I'll remember that.",
+        "No hard feelings about {place}, friend. None at all."
+      ],
+      "replyAllies": [
+        "Our {deal} holds, friend. I'd never dream otherwise.",
+        "We have a {deal}, friend. I read the terms very carefully.",
+        "Of course our {deal} stands, friend. Why wouldn't it?"
+      ],
+      "offerTaken": [
+        "Wonderful, friend. The {deal} starts this turn.",
+        "I knew I could count on you, friend.",
+        "Lovely. I'll remember this, friend."
+      ],
+      "offerRefused": [
+        "No {deal}? Pity, friend. I'll remember.",
+        "Of course, friend. Another time.",
+        "Not now, friend? I understand. I'm writing it down."
+      ],
+      "groupWar": [
+        "Against {rival}? Make it a deal, friend, and I'm right behind you.",
+        "Send me a joint war on {rival}, friend. Words are lovely, but paper lasts.",
+        "Oh, I'm in, friend. On paper, please. A joint war on {rival}."
+      ],
+      "groupPeace": [
+        "Peace among friends. Send the truce and I'll sign it.",
+        "Of course, friend. Put it in a truce.",
+        "A truce, friend. In writing. For everyone's sake."
+      ]
+    },
+    "opportunist": {
+      "brag": [
+        "You left {places} wide open. I'd have been a fool not to.",
+        "Took {places}. It came cheap.",
+        "{places} was just sitting there. Now it isn't."
+      ],
+      "bragCapital": [
+        "{capital} was wide open. I'd have been a fool not to.",
+        "Took {capital}. Your bad turn, my good one.",
+        "{capital} came cheap. Sorry. Not very."
+      ],
+      "capitalTaken": [
+        "{rival} was bleeding. {capital} came cheap.",
+        "Took {capital}. {rival} had a bad turn, and I was nearby.",
+        "{rival}'s capital was wide open. I'd have been a fool not to."
+      ],
+      "needle": [
+        "You took {place}. Fair. I'd have done the same.",
+        "{place}, while I wasn't looking. I respect it.",
+        "Good timing at {place}. I'll be watching for yours."
+      ],
+      "dealMade": [
+        "A {deal}. Sensible. There's softer land elsewhere.",
+        "Fine, a {deal}. Someone else is bleeding anyway.",
+        "A {deal} with you leaves my hands free. Good."
+      ],
+      "finished": [
+        "{rival} is out. They were bleeding anyway.",
+        "Finished {rival}. Somebody had to.",
+        "{rival} is done. Their land is up for grabs."
+      ],
+      "comeback": [
+        "{place} is mine again. Everyone was busy.",
+        "Took back {place}. Never count out a patient House.",
+        "Back in {place}. Funny how things open up."
+      ],
+      "replyCalm": [
+        "Noted. I'm watching for whoever slips first.",
+        "Sure. Let me know if anyone looks weak.",
+        "Quiet, for now. Somebody will trip soon."
+      ],
+      "replyTheyTook": [
+        "{place} was open. I'd have been a fool not to.",
+        "Close your doors next time. {place} was wide open.",
+        "{place} was there, and so was I."
+      ],
+      "replyYouTook": [
+        "{place}? Fair. I'd have done the same.",
+        "Enjoy {place}. I'll be watching for your bad turn.",
+        "You saw an opening at {place}. I respect it."
+      ],
+      "replyAllies": [
+        "Our {deal} holds while it suits us both.",
+        "The {deal} stands. Someone else is weaker anyway.",
+        "We have a {deal}. I'm looking elsewhere."
+      ],
+      "offerTaken": [
+        "Good. The {deal} frees my hands.",
+        "Easy call. Done.",
+        "Sensible. The {deal} starts this turn."
+      ],
+      "offerRefused": [
+        "No {deal}. Your call. I'll be watching.",
+        "Fine. I keep my hands free.",
+        "Suit yourself. There's always someone else."
+      ],
+      "groupWar": [
+        "{rival}? If they're bleeding, I'm in. Send a joint war.",
+        "Make it a deal against {rival}. I'd be a fool not to look.",
+        "A joint war on {rival}, on paper, and I'll see what's open."
+      ],
+      "groupPeace": [
+        "Peace leaves my hands free. Send a truce.",
+        "Fine by me. Put it in a truce.",
+        "Send the truce. Somebody else is weaker anyway."
+      ]
+    },
+    "merchant": {
+      "brag": [
+        "Took {places}. Nothing personal, it's just the math.",
+        "{places} was a good investment. Thanks.",
+        "I ran the numbers on {places}. You lost."
+      ],
+      "bragCapital": [
+        "{capital} is mine. Nothing personal, it's just the math.",
+        "Took {capital}. Best return I've had all game.",
+        "{capital} is under new management. Mine."
+      ],
+      "capitalTaken": [
+        "Took {capital} from {rival}. The numbers were good.",
+        "{rival}'s capital. A fine bargain.",
+        "{capital} is mine now. {rival} underpriced it."
+      ],
+      "needle": [
+        "You took {place}. I'll want it back at a discount.",
+        "{place} was worth more to you than to me. Today.",
+        "Good deal at {place}. I'll send you the invoice."
+      ],
+      "dealMade": [
+        "A {deal}. Good doing business with you.",
+        "Our {deal} is signed. The numbers work.",
+        "A {deal}. Thanks for bringing it to me."
+      ],
+      "finished": [
+        "{rival} is closed for business.",
+        "Finished {rival}. Their accounts are settled.",
+        "{rival} is out. I'll handle the estate."
+      ],
+      "comeback": [
+        "{place} is mine again. Never sell low.",
+        "Took back {place}. The market always comes back.",
+        "{place}, back on the books."
+      ],
+      "replyCalm": [
+        "Thanks for the message. Got anything to trade?",
+        "Always happy to talk. Even happier to trade.",
+        "Noted. My door's open for business."
+      ],
+      "replyTheyTook": [
+        "{place} was a good investment. Nothing personal.",
+        "I ran the numbers on {place}. It worked out for one of us.",
+        "Sorry about {place}. Walk me through how you'd have priced it."
+      ],
+      "replyYouTook": [
+        "{place} is yours. I'll want it back at a discount.",
+        "You got {place} cheap. I'm impressed, and a bit annoyed.",
+        "Enjoy {place}. I've marked it down as a loss for now."
+      ],
+      "replyAllies": [
+        "Our {deal} holds. Good doing business with you.",
+        "The {deal} is working out. For both of us, I'd say.",
+        "We have a {deal}. The numbers still work."
+      ],
+      "offerTaken": [
+        "Thanks. Good doing business with you.",
+        "Done. The {deal} starts this turn.",
+        "A fine bargain. Thank you."
+      ],
+      "offerRefused": [
+        "No {deal}. Walk me through it next time.",
+        "Thanks for considering it. The offer was fair.",
+        "Fair enough. The math isn't mathing for you, I get it."
+      ],
+      "groupWar": [
+        "A war on {rival} can pay. Send me the joint war and I'll run the numbers.",
+        "Put {rival} in a deal and we'll talk terms.",
+        "{rival} is bad for business. Make it a joint war and I'm in."
+      ],
+      "groupPeace": [
+        "Peace is good for business. Send a truce.",
+        "Put it in a truce. Cheaper for all of us.",
+        "A truce on paper and I'm in."
+      ]
+    },
+    "neutral": {
+      "brag": [
+        "Took {places}.",
+        "{places} is mine now."
+      ],
+      "bragCapital": [
+        "Took {capital}.",
+        "{capital} is mine."
+      ],
+      "capitalTaken": [
+        "Took {capital} from {rival}."
+      ],
+      "needle": [
+        "You took {place}. Noted."
+      ],
+      "dealMade": [
+        "The {deal} is in force."
+      ],
+      "breaks": [
+        "Our deal is over. {place} was worth more."
+      ],
+      "finished": [
+        "{rival} is out."
+      ],
+      "comeback": [
+        "{place} is mine again."
+      ],
+      "replyCalm": [
+        "Noted.",
+        "Message received."
+      ],
+      "replyTheyTook": [
+        "{place} was open.",
+        "{place} is mine now. Noted."
+      ],
+      "replyYouTook": [
+        "{place} is yours for now."
+      ],
+      "replyAllies": [
+        "The {deal} holds."
+      ],
+      "offerTaken": [
+        "Agreed."
+      ],
+      "offerRefused": [
+        "Understood."
+      ],
+      "groupWar": [
+        "A war on {rival} needs a deal. Send one."
+      ],
+      "groupPeace": [
+        "Send a truce and I'll read it."
+      ]
+    },
+    "plain": {
+      "brag": [
+        "I took {places}.",
+        "{places} is mine now."
+      ],
+      "bragCapital": [
+        "I took {capital}."
+      ],
+      "capitalTaken": [
+        "I took {capital} from {rival}."
+      ],
+      "needle": [
+        "You took {place}."
+      ],
+      "dealMade": [
+        "Our {deal} is agreed."
+      ],
+      "breaks": [
+        "I broke our deal at {place}."
+      ],
+      "finished": [
+        "{rival} is out of the game."
+      ],
+      "comeback": [
+        "I took back {place}."
+      ],
+      "replyCalm": [
+        "Message received.",
+        "I hear you."
+      ],
+      "replyTheyTook": [
+        "I took {place}. That's the game."
+      ],
+      "replyYouTook": [
+        "You took {place}. I'll answer it."
+      ],
+      "replyAllies": [
+        "Our {deal} stands."
+      ],
+      "offerTaken": [
+        "Agreed. The {deal} starts this turn."
+      ],
+      "offerRefused": [
+        "Understood."
+      ],
+      "groupWar": [
+        "Send me a joint war on {rival} and I'll look at it."
+      ],
+      "groupPeace": [
+        "Send me a truce and I'll look at it."
+      ]
+    },
+    "you": {
+      "calm": [
+        "Lovely weather for a war, {bot}.",
+        "Just checking in, {bot}. No reason. None at all.",
+        "{bot}, your border looks very relaxed today.",
+        "Thinking of you, {bot}. Mostly your land.",
+        "Hello, {bot}. My army says hi."
+      ],
+      "theyTook": [
+        "You took {place}, {bot}. I'd like it back, please.",
+        "{place} misses me, {bot}. You can tell.",
+        "Enjoy {place} while it lasts, {bot}.",
+        "I left {place} for you as a gift, {bot}. You're welcome.",
+        "{bot}, about {place}. We'll talk."
+      ],
+      "youTook": [
+        "Thanks for {place}, {bot}. It's lovely this time of year.",
+        "{place} is in good hands, {bot}. Mine.",
+        "Sorry about {place}, {bot}. Not very.",
+        "{bot}, I'm redecorating {place}. Any notes?",
+        "{place} says it's happier now, {bot}."
+      ],
+      "allies": [
+        "Our {deal} is going well, {bot}. Let's keep it that way.",
+        "Good {deal}, {bot}. I'm a fan.",
+        "Still friends, {bot}? The {deal} says yes.",
+        "{bot}, the {deal} is the best thing we've done together.",
+        "Just admiring our {deal}, {bot}."
+      ]
+    }
   }
 }

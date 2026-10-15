@@ -307,8 +307,11 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
   );
 }
 
-/** An offer to you (or a counteroffer): Accept is one tap; Counter opens the same card from your side. */
-function Incoming({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; offer: Offer }) {
+/**
+ * An offer to you (or a counteroffer): Accept is one tap; Counter opens the same card from your side. Session 29: the
+ * same card shows in your one-to-one chat with the bot that made it (`onAnswered`: the bot's line back).
+ */
+export function Incoming({ ctx, view, offer, onAnswered }: { ctx: GameContext; view: PlayerView; offer: Offer; onAnswered?: (accept: boolean) => void }) {
   const { answerOffer, counterOffer, diplomacy, answers, leaderNotes, people } = useGame();
   // Session 28: a person's counteroffer is accepted or declined, never countered again.
   const canCounter = !(offer.counterTo && people?.includes(offer.from));
@@ -332,11 +335,24 @@ function Incoming({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; of
         <p className="small">{answered.accept ? "You accepted: it starts as the turn plays, before any move." : "You declined."}</p>
       ) : (
         <div className="dialog-actions">
-          <button className="primary" onClick={() => answerOffer(offer, true)}>
+          <button
+            className="primary"
+            onClick={() => {
+              answerOffer(offer, true);
+              onAnswered?.(true);
+            }}
+          >
             Accept
           </button>
           {canCounter && <button onClick={() => counterOffer(offer)}>Counter</button>}
-          <button onClick={() => answerOffer(offer, false)}>Decline</button>
+          <button
+            onClick={() => {
+              answerOffer(offer, false);
+              onAnswered?.(false);
+            }}
+          >
+            Decline
+          </button>
         </div>
       )}
       <p className="muted small">{canCounter && !people?.includes(offer.from) ? "Not answered by the time the turn plays, it lapses." : "Not answered by the time you lock in, it lapses."}</p>

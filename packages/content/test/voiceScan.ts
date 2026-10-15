@@ -119,7 +119,9 @@ export function collect(): Found[] {
   const lines = join(ROOT, "packages/content/data/lines.json");
   try {
     statSync(lines);
-    scanJson(lines, (p) => p[0] !== "limits", () => true, out);
+    // (Session 29: a bot in the chat and a leader in your council may ask a real question, so those two sections
+    // aren't held to the no-question rule. Every older section still is.)
+    scanJson(lines, (p) => p[0] !== "limits", (p) => p[0] !== "chat" && p[0] !== "council", out);
   } catch {
     // (Before the line library exists.)
   }

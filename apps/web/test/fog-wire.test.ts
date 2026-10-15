@@ -49,9 +49,10 @@ const checkPause = (p: PauseView) => {
 };
 /** Session 28: chat, as a member is sent it. */
 const CHAT_SYNC = new Set(["chats", "lines", "canWrite", "after"]);
-const CHAT_VIEW = new Set(["id", "kind", "name", "members"]);
-const CHAT_PERSON = new Set(["name", "house", "seat", "you"]);
-const CHAT_LINE = new Set(["id", "chat", "from", "text", "at"]);
+const CHAT_VIEW = new Set(["id", "kind", "name", "members", "say", "free", "quiet"]);
+const CHAT_PERSON = new Set(["name", "house", "seat", "you", "bot"]);
+const CHAT_LINE = new Set(["id", "chat", "from", "text", "at", "propose", "turn"]);
+const CHAT_PROPOSE = new Set(["to", "kind", "target", "for"]);
 const checkChat = (c: ChatSync) => {
   for (const k of Object.keys(c)) expect(CHAT_SYNC.has(k), `unexpected chat field ${k}`).toBe(true);
   for (const v of c.chats) {
@@ -63,8 +64,27 @@ const checkChat = (c: ChatSync) => {
   for (const l of c.lines) {
     for (const k of Object.keys(l)) expect(CHAT_LINE.has(k), `unexpected chat line field ${k}`).toBe(true);
     for (const k of Object.keys(l.from)) expect(CHAT_PERSON.has(k), `unexpected chat person field ${k}`).toBe(true);
+    for (const k of Object.keys(l.propose ?? {})) expect(CHAT_PROPOSE.has(k), `unexpected propose field ${k}`).toBe(true);
   }
 };
+
+/**
+ * Session 29: a bot's line is fair to its reader. It carries no number at all (no troop count, no gold), and every
+ * territory it names is one the reader knows: on their own view (before or after the turn) in full, or in their own
+ * replay of the turn. Offers a bot made (their notes, which the Deals panel shows as well) are the bot's deal answers,
+ * checked by the bots' own tests, so only lines without an offer's words are held to it here.
+ */
+function checkBotLines(ctx: { map: { territories: readonly { id: string; name: string }[] } }, seat: PlayerId, c: ChatSync, known: Set<string>, offerNotes: Set<string>): number {
+  let n = 0;
+  for (const l of c.lines) {
+    if (!l.from.bot || offerNotes.has(l.text)) continue;
+    n++;
+    expect(/\d/.test(l.text), `${seat} was told a number by ${l.from.name}: ${l.text}`).toBe(false);
+    for (const t of ctx.map.territories)
+      if (new RegExp(`\\b${t.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(l.text)) expect(known.has(t.id), `${seat} was told of ${t.name} (fogged) by ${l.from.name}: ${l.text}`).toBe(true);
+  }
+  return n;
+}
 /** Diplomacy's own ids are public to its two sides (an offer to you names itself). */
 const DIPLOMACY = /^(propose|answer|agreed|break)-|-t\d+-(o\d+|c-)/;
 
@@ -115,6 +135,8 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
     let turnsChecked = 0;
     let ranByLeaders = 0;
     let rivalsSeen = 0;
+    /** Session 29: lines the bots said in the chat, checked for fairness. */
+    let botLines = 0;
 
     /** One turn's truth, for checking what each seat was sent. */
     let last: { before: GameState; result: TurnResult } | null = null;
@@ -187,6 +209,14 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
         if ("talks" in m) for (const r of m.talks) checkTalk(seat, r);
         if ("chat" in m) checkChat(m.chat);
         if ("start" in m && m.start.chat) checkChat(m.start.chat);
+        // Session 29: what a bot says to this seat names only what this seat could know.
+        if ("chat" in m && last) {
+          const known = new Set<string>();
+          for (const v of [viewFor(ctx, last.before, seat), viewFor(ctx, game().fullState, seat)]) for (const [id, x] of Object.entries(v.territories)) if (x.detail === "full") known.add(id);
+          for (const e of replayFor(ctx, last.before, last.result, seat)) for (const k of ["to", "from", "territory", "at"] as const) if (k in e && typeof (e as Record<string, unknown>)[k] === "string") known.add((e as unknown as Record<string, string>)[k]!);
+          const notes = new Set(game().botOffersTo(seat).flatMap((o) => (o.note ? [o.note] : [])));
+          botLines += checkBotLines(ctx, seat, m.chat, known, notes);
+        }
         checked++;
       }
       // What it was sent this turn goes into its Chronicle (as the page keeps it).
@@ -248,6 +278,8 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
     // The test saw what it means to: rivals' events in the replays (with their order ids blanked), and missed turns.
     expect(rivalsSeen).toBeGreaterThan(0);
     expect(ranByLeaders).toBeGreaterThan(0);
+    // Session 29: the bots spoke in the table chat, and every line was fair to its reader.
+    expect(botLines).toBeGreaterThan(0);
     // Wren was never sent anything once she left, and her seat played on (her leaders, then a Marshal).
     expect(t.inbox(WREN.user)).toEqual([]);
     expect(given.get("p3")?.size).toBeGreaterThan(0);

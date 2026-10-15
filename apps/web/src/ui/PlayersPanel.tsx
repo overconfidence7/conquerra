@@ -85,8 +85,10 @@ function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: s
       </span>
     </>
   );
-  // Online (session 28): a chat bubble on each person (one-to-one), while they and you are still playing.
-  const bubble = person && !gone && !leftSeats?.[view.me.id];
+  // Online (session 28): a chat bubble on each person (one-to-one), while they and you are still playing. Session 29:
+  // on each bot too (its offers, "Say something", a deal), while it's in the game.
+  const bot = !!people && id !== view.me.id && !people.includes(id) && !gone && !out;
+  const bubble = (person || bot) && !gone && !leftSeats?.[view.me.id];
   return (
     <li className={`player ${out ? "out" : ""} ${open ? "open" : ""} ${bubble ? "has-chat" : ""}`}>
       {can ? (

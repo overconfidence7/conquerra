@@ -72,6 +72,19 @@ export interface ChatPerson {
   house: number;
   seat?: PlayerId;
   you?: true;
+  /** Session 29: a bot at the table. */
+  bot?: true;
+}
+
+/**
+ * Session 29: a deal a bot's line comes with, ready to send (a bot in a group joins a scheme only through a deal): to
+ * the bot, of this kind (a joint war on `target`), for the member who asked (`for`; only they see the button).
+ */
+export interface ChatPropose {
+  to: PlayerId;
+  kind: "war" | "truce";
+  target?: PlayerId;
+  for: PlayerId;
 }
 
 /** A chat you're in. The table is everyone sitting there; a one-to-one or a group says who's in it, nothing more. */
@@ -81,6 +94,12 @@ export interface ChatView {
   /** A group's name, if a member gave it one (else the page names it after its members). */
   name?: string;
   members?: ChatPerson[];
+  /** Session 29, a one-to-one with a bot: your three lines for "Say something" this turn. */
+  say?: string[];
+  /** Session 29: how many more of your messages the bot (each bot, in a group) answers this turn. */
+  free?: number;
+  /** Session 29: the bot doesn't chat at all (the Recruit): deals only. */
+  quiet?: true;
 }
 
 /** One message: plain text, as its writer wrote it. */
@@ -90,6 +109,10 @@ export interface ChatLine {
   from: ChatPerson;
   text: string;
   at: number;
+  /** Session 29: a deal to send, ready made (only `propose.for` sees the button). */
+  propose?: ChatPropose;
+  /** Session 29: the turn a bot's line is about (the page holds it until that turn's replay has played). */
+  turn?: number;
 }
 
 /**
@@ -109,7 +132,13 @@ export type ChatAct =
   | { do: "pair"; with: PlayerId }
   | { do: "group"; with: PlayerId[]; name?: string }
   | { do: "add"; chat: string; with: PlayerId[] }
-  | { do: "rename"; chat: string; name: string };
+  | { do: "rename"; chat: string; name: string }
+  /** Session 29, a one-to-one with a bot: say the line you picked (0 to 2 of the chat's `say`); the bot answers. */
+  | { do: "say"; chat: string; pick: number }
+  /** Session 29, a group with bots: "Join us against {rival}?" or "Peace among us?"; each bot answers. */
+  | { do: "ask"; chat: string; ask: "war" | "peace"; target?: PlayerId }
+  /** Session 29: you accepted or declined a bot's offer in your chat with it; it answers in a line. */
+  | { do: "answered"; chat: string; offer: string; accept: boolean };
 
 /**
  * Session 28: pause by vote, as everyone at the table is told it: who asked, who has agreed (or is ready), when the vote

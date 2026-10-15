@@ -34,6 +34,14 @@
 .chat-tick { display: flex; align-items: center; gap: 8px; min-height: 36px; }
 .chat-name-field { display: flex; flex-direction: column; gap: 4px; }
 .chat-phone { height: 100%; }
+/* Session 29: the bots in the chat: multiple choice, an offer's card, a deal ready to send. */
+.chat-bot { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid rgba(201, 164, 92, 0.2); padding-top: 6px; }
+.chat-choices { display: flex; flex-direction: column; gap: 4px; }
+.chat-choice { text-align: left; min-height: 40px; padding: 6px 10px; font: 400 0.92rem var(--font-body); white-space: normal; }
+.chat-choice-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chat-offer { padding: 8px; }
+.chat-offer .deal-terms { font-size: 0.85rem; }
+.chat-deal { align-self: flex-start; }
 .chat-table { max-height: 320px; }
 .chat-table .chat-lines { min-height: 80px; }
 

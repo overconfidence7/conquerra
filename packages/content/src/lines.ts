@@ -233,6 +233,58 @@ export const SCREEN_SITUATIONS = {
 } as const satisfies Record<string, readonly string[]>;
 export type ScreenSituation = keyof typeof SCREEN_SITUATIONS;
 
+/**
+ * Session 29, chat: the bots at the table, in their own voices (the six personalities, the dry Neutral of a seat a
+ * Marshal took, and the Captain's plain voice; the Recruit never chats). Table lines are said to one reader about what
+ * that reader saw; replies answer your multiple-choice lines. A bot may ask a real question here (the voice test
+ * allows a question mark in this section and `council`, never in the older ones).
+ */
+export const CHAT_VOICES = [...VOICES, "neutral", "plain"] as const;
+export type ChatVoice = (typeof CHAT_VOICES)[number];
+export const CHAT_SITUATIONS = {
+  /** It took land from you this turn (`{places}`: up to three names). */
+  brag: ["places"],
+  /** It took your capital. */
+  bragCapital: ["capital"],
+  /** It took another House's capital, in a fight you saw. */
+  capitalTaken: ["capital", "rival"],
+  /** You took its land (`{place}`): never nasty. */
+  needle: ["place"],
+  /** A deal between you started (`{deal}`: "truce", "trade", "joint war", "right of passage"). */
+  dealMade: ["deal"],
+  /** It broke a deal with you (a personality says its own `bots.breaks` line instead). */
+  breaks: ["place"],
+  /** It finished a rival off (public). */
+  finished: ["rival"],
+  /** It took back its own capital, in a fight you saw (back from the brink). */
+  comeback: ["place"],
+  /** Its answer to your "Say something": nothing much going on between you. */
+  replyCalm: [],
+  /** The same, after it took your land (`{place}`). */
+  replyTheyTook: ["place"],
+  /** The same, after you took its land. */
+  replyYouTook: ["place"],
+  /** The same, while you have a deal (`{deal}`). */
+  replyAllies: ["deal"],
+  /** You accepted its offer, or declined it, in your chat with it. */
+  offerTaken: ["deal"],
+  offerRefused: ["deal"],
+  /** In a group: "Join us against {rival}?" It joins by making the deal, never by its word. */
+  groupWar: ["rival"],
+  /** In a group: "Peace among us?" */
+  groupPeace: [],
+} as const satisfies Record<string, readonly string[]>;
+export type ChatSituation = keyof typeof CHAT_SITUATIONS;
+
+/** Session 29: your own lines for "Say something" to a bot (three are offered each turn), by what's between you. */
+export const YOU_SITUATIONS = {
+  calm: ["bot"],
+  theyTook: ["bot", "place"],
+  youTook: ["bot", "place"],
+  allies: ["bot", "deal"],
+} as const satisfies Record<string, readonly string[]>;
+export type YouSituation = keyof typeof YOU_SITUATIONS;
+
 export type Vars = Record<string, string | number>;
 
 const Versions = z.array(z.string().min(2)).min(1);
@@ -276,6 +328,16 @@ export const Lines = z.object({
       grudgeEvery: Count,
       /** A captured leader needles its old House at most once in this many turns. */
       needleEvery: Count,
+      /**
+       * Session 29, bots in the chat: at most `chatPerBot` lines from one bot to you a turn and `chatPerTurn` from all
+       * of them; a bot's lines to you at least `chatGap` turns apart (`captainGap` for the Captain, who also speaks only
+       * of big things) unless a deal between you was made or broken; it answers `chatFree` of your messages a turn.
+       */
+      chatPerBot: Count,
+      chatPerTurn: Count,
+      chatGap: Count,
+      captainGap: Count,
+      chatFree: Count,
     })
     .strict(),
   /**
@@ -297,6 +359,13 @@ export const Lines = z.object({
   /** A captured leader's lines (whatever its personality: the loyalty is the voice). */
   captured: checked(CAPTURED_SITUATIONS, true),
   screens: checked(SCREEN_SITUATIONS, true),
+  /** Session 29: the bots in the chat, by voice, and your own lines to them (`you`). */
+  chat: z
+    .object({
+      ...(Object.fromEntries(CHAT_VOICES.map((v) => [v, checked(CHAT_SITUATIONS, false)])) as Record<ChatVoice, ReturnType<typeof checked<ChatSituation>>>),
+      you: checked(YOU_SITUATIONS, true),
+    })
+    .strict(),
 });
 export type Lines = z.infer<typeof Lines>;
 
@@ -370,6 +439,24 @@ export function leaderLine(s: { game: string; turn: number; who: string; voice: 
 /** A screen's line (a title card's subline, game over, an award's remark), picked by `seed` (the game's public id and what it's about). */
 export function screenLine(situation: ScreenSituation, seed: string, vars: Vars = {}): string {
   return fill(pickVersion(lines.screens[situation], `${seed}|${situation}`), vars);
+}
+
+/** Session 29: a bot's chat line in its voice, or null if that voice has nothing for the situation. */
+export function chatLine(s: { game: string; turn: number; who: string; voice: ChatVoice }, situation: ChatSituation, vars: Vars = {}, extra = ""): string | null {
+  const versions = lines.chat[s.voice]?.[situation];
+  return versions?.length ? fill(pickVersion(versions, seedOf(s, `chat:${situation}`, extra)), vars) : null;
+}
+
+/** Session 29: `k` different lines of yours for "Say something", picked by the seed (the same turn offers the same three). */
+export function youLines(situation: YouSituation, seed: string, vars: Vars = {}, k = 3): string[] {
+  const all = [...lines.chat.you[situation]];
+  const out: string[] = [];
+  let h = hashLine(`${seed}|you:${situation}`);
+  while (out.length < k && all.length) {
+    out.push(fill(all.splice(h % all.length, 1)[0]!, vars));
+    h = hashLine(`${h}`);
+  }
+  return out;
 }
 
 /** A captured leader's line. */
