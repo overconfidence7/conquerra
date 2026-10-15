@@ -67,6 +67,18 @@ describe("your turn, from the room (session 29)", () => {
     expect(t.notices).toHaveLength(2);
   });
 
+  it("a room the alarm wakes (no page open since) still tells them (found on the preview: it hadn't loaded its table)", async () => {
+    const t = await table(3600);
+    for (const s of ["p1", "p2", "p3"]) await t.ask(s, { type: "lockIn", orders: [], turn: 1 });
+    const opens = t.room.table!.windowOpensAt!;
+    await t.room.flush();
+    // The same storage, a fresh room (the Durable Object slept), nobody connected: its alarm.
+    const woke = testRoom(t.store, t.now(), { notify: true });
+    woke.advance(opens - woke.now());
+    await woke.room.alarm();
+    expect(woke.notices).toEqual([{ gameId: "notify", turn: 2, map: "Embervale", users: [NATE.user, KIT.user, WREN.user], turnSeconds: 3600 }]);
+  });
+
   it("someone who locked in, resigned or is out isn't told; with every timer (the 3-minute one too)", async () => {
     const t = await table(180);
     t.notices.length = 0;

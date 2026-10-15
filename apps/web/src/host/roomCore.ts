@@ -888,6 +888,8 @@ export class RoomCore {
   /** The alarm: if the clock has run out, the turn resolves with everyone's orders as they stand. */
   async alarm(): Promise<void> {
     const g = await this.ensureLoaded();
+    // (Session 29: a room the alarm woke knows who sits where before it tells anyone it's their turn.)
+    await this.loadTable();
     // Session 28: a vote's 60 s, or a pause's 15 minutes, may be what woke the room.
     const news = g.tickPause();
     if (news) {
