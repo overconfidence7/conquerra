@@ -170,6 +170,8 @@ export interface TurnReport {
   ranByLeaders?: PlayerId[];
   /** Session 29: a question from one of your leaders (your council), answered by multiple choice before you lock in. */
   ask?: CouncilAsk;
+  /** Session 29, single player: what the bots said to you about this turn (the table chat; online it comes as chat). */
+  table?: { bot: PlayerId; name: string; house: number; text: string }[];
 }
 
 /**

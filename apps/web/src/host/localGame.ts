@@ -52,7 +52,7 @@ import { chronicleOf } from "../logic/chronicleKeep";
 import { comebackStep, ownLand } from "../logic/comeback";
 import { leaderVoices, type VoiceMemory } from "../logic/voices";
 import { councilTurn } from "../logic/council";
-import { chatVoiceOf, type ChatBot } from "./botChat";
+import { chatVoiceOf, tableTalk, type ChatBot } from "./botChat";
 import { BOT_NAMES } from "./names";
 import { DEFAULT_HOUSE } from "../map/houses";
 import { NOTE_MAX, type BotChoice, type BotLevel, type HostStart, type HostUpdate, type LobbySettings, type PeopleOffer, type SeatInfo, type TurnReport } from "./protocol";
@@ -278,7 +278,7 @@ export interface LocalGameOptions {
   autosave?: (save: SaveFile) => void;
   /** An online game: who sits where (a new game only; a restored one brings its table). */
   table?: TableSetup;
-  /** Session 29: your council asks questions in single player too. */
+  /** Session 29: your council asks questions (on unless this says false). */
   council?: boolean;
 }
 
@@ -498,7 +498,8 @@ export class LocalGame {
       this.history = { setup, rules: defaultRules, turns: [] };
       this.turnMs = settings.turnSeconds === null || settings.turnSeconds === undefined ? null : settings.turnSeconds * 1000;
     }
-    this.council = this.online || !!opts.council;
+    // (Session 29, Part 4: single player has your council too. `council: false` turns it off, for a test's sake.)
+    this.council = opts.council ?? true;
     // A game just loaded doesn't save itself again until its next turn starts.
     this.startClock(0, !restore);
     // Online: the room's clock as it stood (a room that slept between turns carries on with the same deadline).
@@ -1013,11 +1014,26 @@ export class LocalGame {
       // Their comeback (session 23), from their own land only.
       const back = out ? null : comebackStep(p.voiceMemory.comeback, ownLand(viewFor(this.ctx, this.state, p.id)), before.turn);
       if (back) p.voiceMemory = { ...p.voiceMemory, comeback: back.memory };
+      // Session 29, Part 4: single player's table chat: what the bots say to you about the turn, from your own replay
+      // (online, the room says it through chat instead). Words only.
+      let table: TurnReport["table"];
+      if (!this.online && !out && this.council) {
+        const bots = this.chatBots();
+        const said = tableTalk({ ctx: this.ctx, game: this.state.gameId, reader: p.id, before: viewFor(this.ctx, before, p.id), after: viewFor(this.ctx, this.state, p.id), events, bots, last: p.voiceMemory.botLast ?? {} });
+        if (said.length) {
+          p.voiceMemory = { ...p.voiceMemory, botLast: { ...(p.voiceMemory.botLast ?? {}), ...Object.fromEntries(said.map((s) => [s.bot, before.turn])) } };
+          table = said.map((s) => {
+            const b = bots.find((x) => x.id === s.bot)!;
+            return { bot: s.bot, name: b.name, house: b.house, text: s.text };
+          });
+        }
+      }
       const report: TurnReport = {
         turn: before.turn,
         events,
         ...(voices.length ? { voices } : {}),
         ...(council?.ask ? { ask: council.ask } : {}),
+        ...(table ? { table } : {}),
         ...(back?.card ? { comeback: true as const } : {}),
         ...(this.ranNow.length ? { ranByLeaders: [...this.ranNow] } : {}),
       };

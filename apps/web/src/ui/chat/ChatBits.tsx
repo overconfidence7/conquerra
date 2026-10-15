@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { HOUSES } from "../../map/houses";
+import { mixer } from "../../sound/mixer";
 import { useGame } from "../../store";
 import { closeChat, openChat, unreadAll, useChat } from "./chatStore";
 import { COUNCIL_ID, councilItems, councilUnread } from "./councilStore";
@@ -53,6 +54,8 @@ export function ChatPopup({ replaying, top }: { replaying: boolean; top: number 
   useEffect(() => {
     if (!popup || replaying || open) return;
     setShown(popup.id);
+    // Session 29: a soft tick, the game's own quiet notice sound (never during the replay: the pop-up waits for it).
+    mixer.play("notice");
     const t = setTimeout(() => useChat.getState().popup?.id === popup.id && useChat.setState({ popup: null }), POPUP_MS);
     return () => clearTimeout(t);
   }, [popup, replaying, open]);

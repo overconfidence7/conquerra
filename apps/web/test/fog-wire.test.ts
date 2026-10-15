@@ -79,7 +79,8 @@ function checkBotLines(ctx: { map: { territories: readonly { id: string; name: s
   for (const l of c.lines) {
     if (!l.from.bot || offerNotes.has(l.text)) continue;
     n++;
-    expect(/\d/.test(l.text), `${seat} was told a number by ${l.from.name}: ${l.text}`).toBe(false);
+    // (No number at all, but "and 2 more": a count of the reader's own land, which the line names.)
+    expect(/\d/.test(l.text.replace(/ and \d+ more/, "")), `${seat} was told a number by ${l.from.name}: ${l.text}`).toBe(false);
     for (const t of ctx.map.territories)
       if (new RegExp(`\\b${t.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(l.text)) expect(known.has(t.id), `${seat} was told of ${t.name} (fogged) by ${l.from.name}: ${l.text}`).toBe(true);
   }

@@ -15,6 +15,8 @@ export const CHAT_UI = {
   newGroup: "New group",
   groupHelp: "Pick who's in it. Only they will see it, or know it exists.",
   noChats: "No chats yet.",
+  /** Session 29: single player's table chat. */
+  local: "Only bots sit at this table, and they don't read free text. Online, you can talk to them by picking a line.",
 } as const;
 
 interface ChatState {

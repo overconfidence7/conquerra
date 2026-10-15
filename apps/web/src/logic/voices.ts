@@ -52,6 +52,8 @@ export interface VoiceMemory {
   comeback?: ComebackMemory;
   /** Session 29: your council's questions (the open one, and when each kind was last asked). */
   council?: CouncilMemory;
+  /** Session 29, single player: when each bot last spoke to you in the table chat. */
+  botLast?: Record<string, number>;
 }
 
 /** Session 29: what your council remembers about its questions. */

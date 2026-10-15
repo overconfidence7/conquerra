@@ -30,7 +30,8 @@ import { TerritoryCard, vistaFor } from "./TerritoryCard";
 import { useArtUrl } from "./art";
 import { Toasts, type ShownToast } from "./Toasts";
 import { TopBar } from "./TopBar";
-import { ChatButton, ChatPopup } from "./chat/ChatBits";
+import { ChatButton, ChatPopup, useCouncilUnread } from "./chat/ChatBits";
+import { useLocalChat } from "./chat/localChat";
 import { closeChat, holdBotLines, unreadAll, useChat } from "./chat/chatStore";
 import { PauseCard, PausedLabel, usePause } from "./pause/pause";
 import { useReplay } from "./useReplay";
@@ -394,7 +395,9 @@ export function GameScreen() {
   const [tab, setTab] = useState("army");
   // Chat (session 28): on a phone it opens in the bottom sheet (its own tab); the sheet closing closes it.
   const chatOpen = useChat((s) => s.open);
-  const chatUnread = useChat(unreadAll);
+  const chatUnread = useChat(unreadAll) + useCouncilUnread();
+  // Session 29, Part 4: single player's chat is your council and the bots' lines to you, from your own Chronicle.
+  useLocalChat(!g.online, g.view?.gameId ?? null, g.chronicle);
   const wasChat = useRef({ sheet, tab });
   useEffect(() => {
     if (phone && chatOpen) (setTab("chat"), setSheet((s) => (s === "closed" ? "half" : s)));
@@ -712,7 +715,7 @@ export function GameScreen() {
       fallen={out ? { influence: view.me.influence, perTurn: influencePerTurn(ctx, view) } : null}
       onPause={out || view.winner || g.online ? null : () => void g.togglePause()}
       onChronicle={() => setChronicleOpen(true)}
-      chat={g.online ? <ChatButton phone={phone} /> : null}
+      chat={<ChatButton phone={phone} />}
       pausedLabel={pausedOnline ? <PausedLabel /> : null}
       onClockTap={canAskPause ? () => usePause.setState({ asking: true }) : null}
       onSettings={() => setSettings((s) => !s)}
@@ -805,9 +808,9 @@ export function GameScreen() {
           <DealSheet ctx={ctx} view={view} />
         </Suspense>
       )}
-      {g.online && <ChatPopup replaying={replaying} top={phone ? 104 : 80} />}
+      <ChatPopup replaying={replaying} top={phone ? 104 : 80} />
       {g.online && !replaying && <PauseCard top={phone ? 60 : 72} />}
-      {g.online && chatOpen && !phone && (
+      {chatOpen && !phone && (
         <Suspense fallback={null}>
           <ChatPanel mode="desktop" />
         </Suspense>
@@ -835,7 +838,8 @@ export function GameScreen() {
       { id: "leaders", label: "Leaders" },
       ...(report ? [{ id: "report", label: "Report" }] : []),
       // Online (session 28): chat, with what you haven't read.
-      ...(g.online ? [{ id: "chat", label: chatUnread ? `Chat (${chatUnread})` : "Chat" }] : []),
+      // (Session 29: single player too: your council, and the bots at the table.)
+      { id: "chat", label: chatUnread ? `Chat (${chatUnread})` : "Chat" },
     ];
     const myLeader = view.me.leaders.find((l) => l.kind === "leader" && l.of === view.me.id);
     return (
@@ -900,7 +904,7 @@ export function GameScreen() {
               </Suspense>
             )}
             {tab === "report" && report && <button onClick={() => g.watchAgain()}>Watch again</button>}
-            {tab === "chat" && g.online && (
+            {tab === "chat" && (
               <Suspense fallback={null}>
                 <ChatPanel mode="phone" />
               </Suspense>

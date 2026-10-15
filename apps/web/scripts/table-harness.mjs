@@ -8,6 +8,11 @@
  * hears of the offers or the group (and that the deal's news reaches her once the turn plays). With PAUSE=1, Wren
  * then asks for a pause: the harness answers it and prints what happened (session 28, Part 3).
  *
+ * Session 29: Nate talks to a bot one-to-one (picks one of his three lines, the bot answers), makes a group with Kit
+ * and a bot and asks it to join them against Wren (the bot answers with the deal ready for Nate; Wren never hears),
+ * gives his Leader a command with no budget on turn 1, and answers his council's first question with the order its
+ * choice sends (the next report has no "I took that as a no." for it).
+ *
  * It needs `wrangler dev` (the sign-in stand-in, DEV_EMAIL in apps/web/.dev.vars, exists only there: the deployed
  * Worker checks Cloudflare Access and never has it). Two people come from the X-Dev-Email header.
  *
@@ -136,6 +141,19 @@ const wrenText = JSON.stringify(wren.pushes);
 for (const secret of ["HARNESS-NOTE", "HARNESS-COUNTER", "HARNESS-GROUP", "HARNESS-SCHEME", groupId, truce.id, counter.id]) check(!wrenText.includes(secret), `Wren's page never heard "${secret}"`);
 const back = await wren.ask({ type: "hello" });
 check(back.start.chat.chats.map((x) => x.id).join() === "table" && !JSON.stringify(back).includes("HARNESS"), "Wren's own \"where are we\" has only the table chat");
+// Session 29: a bot one-to-one (multiple choice), and a bot in a group (it joins a scheme only through a deal).
+const botSeat = a.view.players.find((p) => ![a.playerId, b.playerId, c.playerId].includes(p.id))?.id;
+const pair = await nate.ask({ type: "chat", act: { do: "pair", with: botSeat } });
+check(pair.ok && pair.chat.chats[0]?.say?.length === 3, "Nate's one-to-one with a bot offers him three lines to say");
+const spoke = await nate.ask({ type: "chat", act: { do: "say", chat: pair.chat.chats[0].id, pick: 0 } });
+check(spoke.ok && spoke.chat.lines.length === 2 && spoke.chat.lines[1].from.bot, `the bot answers in character: "${spoke.chat.lines[1]?.text}"`);
+const scheme = await nate.ask({ type: "chat", act: { do: "group", with: [b.playerId, botSeat], name: "HARNESS-BOTS" } });
+await sleep(2100);
+const asked = await nate.ask({ type: "chat", act: { do: "ask", chat: scheme.chat.chats[0].id, ask: "war", target: c.playerId } });
+const botSays = asked.chat?.lines?.find((l) => l.from.bot);
+check(asked.ok && botSays?.propose?.kind === "war" && botSays.propose.target === c.playerId && botSays.propose.for === a.playerId, `the bot in the group: "${botSays?.text}" (a joint war on Wren, ready for Nate to send)`);
+await sleep(300);
+check(!JSON.stringify(wren.pushes).includes("HARNESS-BOTS") && !JSON.stringify(wren.pushes).includes(scheme.chat.chats[0].id), "Wren never hears of the group with the bot");
 // Session 28, Part 3: pause by vote (PAUSE=1).
 if (process.env.PAUSE) {
   const asked = await wren.ask({ type: "pause", act: "ask" });
@@ -154,11 +172,26 @@ if (process.env.PAUSE) {
   check(end.ok && end.pause.news?.kind === "ended" && end.pause.news.early && end.clock.pausedLeft === undefined, "everyone ready: it ends early and the clock runs again");
 }
 console.log(`chat message on the wire: ${JSON.stringify(nate.pushes.find((m) => m.chat?.lines?.length)).length} bytes; a hello with chat: ${(JSON.stringify(back).length / 1024).toFixed(1)} KB`);
+/** Session 29: Nate's council question waiting for an answer, and the one he answered (for the next report). */
+let question = null;
+let answered = null;
 for (let i = 0; i < TURNS && !a.view.winner; i++) {
   const t0 = Date.now();
   const turn = a.view.turn;
   const before = nate.bytes() + kit.bytes();
-  const lockA = nate.ask({ type: "lockIn", orders: a.generalOrders, turn });
+  // Turn 1: Nate's Leader runs the military with no budget (it will have something to ask). Later: his answer.
+  const extra = [];
+  if (turn === 1) extra.push({ id: `instruct-leader-${a.playerId}`, kind: "instruct", general: a.playerId, instruction: { kind: "military" } });
+  if (question) {
+    const choice = question.choices.find((x) => x.instruct !== undefined || x.budget);
+    const [kind, of] = question.leader.split(":");
+    const role = kind === "steward" ? { role: "steward" } : {};
+    extra.push(choice.instruct !== undefined ? { id: `instruct-${kind}-${of}`, kind: "instruct", general: of, ...role, instruction: choice.instruct } : { id: `budget-${kind}-${of}`, kind: "budget", general: of, ...role, budget: choice.budget });
+    console.log(`  Nate answers his council ("${question.text}"): ${choice.label}`);
+    answered = question;
+    question = null;
+  }
+  const lockA = nate.ask({ type: "lockIn", orders: [...extra, ...a.generalOrders], turn });
   const lockB = kit.ask({ type: "lockIn", orders: b.generalOrders, turn });
   const lockC = wren.ask({ type: "lockIn", orders: c.generalOrders, turn });
   const [ua, ub, uc] = await Promise.all([lockA, lockB, lockC]);
@@ -170,6 +203,11 @@ for (let i = 0; i < TURNS && !a.view.winner; i++) {
     const started = (u) => (u.report?.events ?? []).filter((e) => e.type === "dealStarted");
     check(started(a).length === 1 && started(c).length === 1, "the deal between Nate and Kit started, and Wren's report tells of it (public)");
   }
+  if (answered) {
+    check(!(a.report?.voices ?? []).some((v) => v.ask === answered.id), "the answered question didn't lapse");
+    answered = null;
+  }
+  if (a.report?.ask && !question) question = a.report.ask;
   console.log(`turn ${turn}: resolved in ${Date.now() - t0} ms (wall, both lock-ins), ${((nate.bytes() + kit.bytes() - before) / 1024).toFixed(1)} KB to the two pages, now turn ${a.view.turn}`);
 }
 const hello = await nate.ask({ type: "hello", have: a.view.turn - 1 });

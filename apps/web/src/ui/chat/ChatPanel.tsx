@@ -83,9 +83,12 @@ function Lines({ chat }: { chat: string }) {
 
 function Composer({ chat }: { chat: string }) {
   const canWrite = useChat((s) => s.canWrite);
+  const local = useChat((s) => !s.act);
   const [text, setText] = useState("");
   const [wait, setWait] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  // (Session 29: single player's table is only bots, and they never read free text.)
+  if (local) return <p className="muted small chat-left">{CHAT_UI.local}</p>;
   if (!canWrite) return <p className="muted small chat-left">{CHAT_UI.left}</p>;
   const send = async () => {
     const t = text.trim();

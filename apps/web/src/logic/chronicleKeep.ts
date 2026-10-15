@@ -46,5 +46,5 @@ export function keepForChronicle(e: ReplayEvent): boolean {
 }
 
 /** A turn's report, trimmed to what the Chronicle keeps. */
-export const chronicleOf = (r: TurnReport): TurnReport => ({ turn: r.turn, events: r.events.filter(keepForChronicle), ...(r.voices?.length ? { voices: r.voices } : {}), ...(r.ask ? { ask: r.ask } : {}) });
+export const chronicleOf = (r: TurnReport): TurnReport => ({ turn: r.turn, events: r.events.filter(keepForChronicle), ...(r.voices?.length ? { voices: r.voices } : {}), ...(r.ask ? { ask: r.ask } : {}), ...(r.table?.length ? { table: r.table } : {}) });
 

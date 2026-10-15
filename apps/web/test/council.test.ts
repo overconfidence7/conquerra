@@ -6,6 +6,7 @@ import { LocalGame } from "../src/host/localGame";
 import type { CouncilAsk, LobbySettings, TurnReport } from "../src/host/protocol";
 import { COUNCIL_UI, councilTurn } from "../src/logic/council";
 import { councilItems } from "../src/ui/chat/councilStore";
+import { localLines } from "../src/ui/chat/localChat";
 
 /**
  * Session 29, Part 2: your council. A leader asks at most one question a turn (none in the first two), when a situation
@@ -131,5 +132,19 @@ describe("your council (session 29)", () => {
       off.lockIn([...first, ...off.generalOrders(), ...off.suggest()]);
     }
     expect(off.fullState).toEqual(games[0]!.g.fullState);
+  });
+
+  it("single player (Part 4): the bots' lines to you ride with the report (the table chat), fair and few", () => {
+    const all = games.flatMap((x) => x.reports.flatMap((r) => (r.table ?? []).map((t) => ({ turn: r.turn, ...t }))));
+    expect(all.length).toBeGreaterThan(0);
+    for (const x of games)
+      for (const r of x.reports) {
+        expect((r.table ?? []).length).toBeLessThanOrEqual(lines.limits.chatPerTurn);
+        // (No number but "and 2 more", the count of your own land it names.)
+        for (const t of r.table ?? []) expect(t.text.replace(/ and \d+ more/, "")).not.toMatch(/\d/);
+      }
+    // As the chat shows them: in order, each from a bot.
+    const shown = games[0]!.reports.flatMap(localLines);
+    for (const l of shown) expect(l.from.bot).toBe(true);
   });
 });
