@@ -226,7 +226,8 @@ describe("the game room (session 26)", () => {
     const junk = await t.ask("p1", { type: "lockIn", orders: [{ nope: 1 }] as unknown as Order[], turn: 1 });
     expect(junk).toMatchObject({ ok: false });
     const pause = await t.ask("p1", { type: "pause" } as unknown as RoomBody);
-    expect(pause).toMatchObject({ ok: false, error: "An online game can't do that." });
+    // (Session 28: "pause" is the vote now; single player's plain pause, with no act, is still refused.)
+    expect(pause).toMatchObject({ ok: false, error: "That can't be done with a pause." });
     expect((await t.hello("p1")).view.turn).toBe(1);
   });
 

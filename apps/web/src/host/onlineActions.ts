@@ -4,6 +4,7 @@ import { api, createRemoteHost, type RemoteHost } from "./remoteHost";
 import type { HostStart, OnlineGameInfo, TableAct, TableView } from "./protocol";
 import { applyTalks } from "../logic/peopleDeals";
 import { applyChat, chatGame, resetChat } from "../ui/chat/chatStore";
+import { pauseLine, usePause } from "../ui/pause/pause";
 
 /**
  * The page's online actions (session 26): the lobby's Online block and a "?game=" link call these. They live apart
@@ -82,6 +83,15 @@ function openWith(begin: (host: RemoteHost) => Promise<HostStart>): Promise<bool
     if (tableHost !== host) return;
     chatGame(host.gameId());
     applyChat(sync);
+  });
+  // Session 28: pause by vote: the cards and the header follow the room; the clock stops and starts with it.
+  usePause.setState({ view: null, asking: false, act: (a) => host.pauseAct(a).catch((e: Error) => host.say(e.message, false)) });
+  host.onPause((p, clock) => {
+    if (tableHost !== host) return;
+    const line = pauseLine(p, useGame.getState().view);
+    usePause.setState({ view: p });
+    if (clock !== undefined) useGame.setState({ clock });
+    if (line) host.say(line);
   });
   // Session 28: offers between people as they change: the deal card and the map follow, and the news is said quietly.
   host.onTalks?.((talks) => {

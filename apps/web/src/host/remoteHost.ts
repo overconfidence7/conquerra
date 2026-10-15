@@ -1,7 +1,7 @@
 import type { MapDef } from "@conquerra/content";
 import type { Order, PlayerView } from "@conquerra/engine";
 import { chronicleOf } from "../logic/chronicleKeep";
-import type { ChatAct, ChatSync, GameHost, HostStart, HostUpdate, LeaderOrders, LobbySettings, NewOnlineGame, PeopleOffer, ProposeAnswer, RoomBody, RoomMessage, RoomRequest, RoomStart, TableAct, TableView, TurnReport } from "./protocol";
+import type { ChatAct, ChatSync, PauseView, GameHost, HostStart, HostUpdate, LeaderOrders, LobbySettings, NewOnlineGame, PeopleOffer, ProposeAnswer, RoomBody, RoomMessage, RoomRequest, RoomStart, TableAct, TableView, TurnReport } from "./protocol";
 
 /**
  * The online host (session 26): the same `GameHost` the page uses for single player, but the game runs in its room
@@ -80,6 +80,10 @@ export interface RemoteHost extends GameHost {
   onChat(listener: (sync: ChatSync) => void): void;
   /** Session 28: do something in chat; the answer is what changed. */
   chatAct(act: ChatAct): Promise<ChatSync>;
+  /** Session 28: pause by vote as it changes (times on this device's clock), with your clock. */
+  onPause(listener: (pause: PauseView, clock: HostUpdate["clock"] | undefined) => void): void;
+  /** Session 28: ask for a pause, answer the vote, or say you're ready. */
+  pauseAct(act: "ask" | "yes" | "no" | "ready"): Promise<void>;
 }
 
 export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
@@ -101,6 +105,14 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
   const talkers: ((talks: PeopleOffer[]) => void)[] = [];
   /** Session 28: chat, and the last message this page has (the hello asks only for the rest). */
   const chatters: ((sync: ChatSync) => void)[] = [];
+  /** Session 28: pause by vote, its times moved onto this device's clock. */
+  const pausers: ((pause: PauseView, clock: HostUpdate["clock"] | undefined) => void)[] = [];
+  const gotPause = (p: PauseView, clock: HostUpdate["clock"] | undefined, roomNow: number) => {
+    const shift = Date.now() - roomNow;
+    const local: PauseView = { ...p, ...(p.vote ? { vote: { ...p.vote, endsAt: p.vote.endsAt + shift } } : {}), ...(p.paused ? { paused: { ...p.paused, endsAt: p.paused.endsAt + shift } } : {}) };
+    const c = clock === undefined ? undefined : clock && { ...clock, endsAt: clock.endsAt + shift };
+    pausers.forEach((f) => f(local, c));
+  };
   let chatLast = 0;
   const gotChat = (sync: ChatSync) => {
     for (const l of sync.lines) chatLast = Math.max(chatLast, l.id);
@@ -186,6 +198,8 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
   async function onHello(s: RoomStart, roomNow: number) {
     const reconnect = !opening;
     if (s.chat) gotChat(s.chat);
+    // (No pause going on: the page's pause card goes, if it had one.)
+    gotPause(s.pause ?? { left: 3 }, undefined, roomNow);
     if (opening) {
       const o = opening;
       opening = null;
@@ -273,6 +287,16 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
     }
     if ("ready" in m) {
       readies.forEach((f) => f(m.ready));
+      return;
+    }
+    // Session 28: pause by vote (a push, or the answer to asking).
+    if ("pause" in m) {
+      gotPause(m.pause, m.clock, m.now);
+      const w = pending.get(m.id);
+      if (w) {
+        pending.delete(m.id);
+        w.resolve(undefined);
+      }
       return;
     }
     // Session 28: chat (a push, or the answer to something this page did there).
@@ -378,6 +402,8 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
     say: (m, calm = true) => tell(m, calm),
     onChat: (f) => void chatters.push(f),
     chatAct: (act) => ask<ChatSync>({ type: "chat", act }),
+    onPause: (f) => void pausers.push(f),
+    pauseAct: (act) => ask<void>({ type: "pause", act }),
     tableAct: (act) => ask<TableView>({ type: "table", act }),
     resign: () => ask<HostUpdate>({ type: "resign" }),
     turnReplay: (turn) => ask<{ before: PlayerView; report: TurnReport }>({ type: "turnReplay", turn }),

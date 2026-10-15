@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { SLOTS, type SlotId } from "../host/saves";
 import { emptyAutosaveLine, lastFinished, savedWhen, slotLine } from "./saveText";
 import { useGame } from "../store";
-import { BUILD } from "./Diagnostics";
+import { BUILD } from "./VersionLine";
 import { Frame } from "./Frame";
 
 const slotName = (slot: SlotId) => (slot === "auto" ? "Autosave" : `Slot ${SLOTS.indexOf(slot) + 1}`);

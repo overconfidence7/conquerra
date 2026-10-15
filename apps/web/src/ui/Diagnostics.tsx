@@ -1,38 +1,11 @@
-import { useRef, useState } from "react";
-import { create } from "zustand";
+import { useState } from "react";
 import { Frame } from "./Frame";
+import { BUILD, useDiagnostics } from "./VersionLine";
 import { checkForUpdate, useUpdates } from "./UpdatePrompt";
 import { useLayout } from "./useLayout";
 import { desktopSiteZoom } from "../logic/layout";
 
-export const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
-
-/** The hidden diagnostics view: open with ?debug=layout, or by tapping the version line 5 times. */
-export const useDiagnostics = create<{ open: boolean; setOpen(open: boolean): void }>((set) => ({
-  open: new URLSearchParams(location.search).get("debug") === "layout",
-  setOpen: (open) => set({ open }),
-}));
-
-/** "Version 0.1.0 · 4 Oct · 8b6d540". Five quick taps open the diagnostics view. */
-export function VersionLine() {
-  const taps = useRef<number[]>([]);
-  const open = useDiagnostics((s) => s.setOpen);
-  return (
-    <button
-      className="link small muted version-line"
-      onClick={() => {
-        const now = Date.now();
-        taps.current = [...taps.current.filter((t) => now - t < 3000), now];
-        if (taps.current.length >= 5) {
-          taps.current = [];
-          open(true);
-        }
-      }}
-    >
-      Version {BUILD}
-    </button>
-  );
-}
+export { BUILD, VersionLine, useDiagnostics } from "./VersionLine";
 
 const ago = (t: number | null) => (t === null ? "not yet" : `${Math.max(0, Math.round((Date.now() - t) / 1000))} s ago`);
 

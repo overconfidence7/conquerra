@@ -1,7 +1,7 @@
 import { replayFor, resolveTurn, viewFor, type GameState, type Order, type OrdersByPlayer, type PlayerId, type PlayerView, type TurnResult } from "@conquerra/engine";
 import { recruitBot } from "@conquerra/bots";
 import { describe, expect, it } from "vitest";
-import type { ChatSync, HostUpdate, PeopleOffer, RoomMessage, RoomStart, TableView, TurnReport } from "../src/host/protocol";
+import type { ChatSync, HostUpdate, PauseView, PeopleOffer, RoomMessage, RoomStart, TableView, TurnReport } from "../src/host/protocol";
 import { newOffer } from "../src/logic/deals";
 import { chronicleOf } from "../src/logic/chronicleKeep";
 import { hostSeat, KIT, NATE, ROOK, settings, testRoom, WREN } from "./roomHelpers";
@@ -31,7 +31,7 @@ const SEATS = ["p1", "p2", "p3"] as const;
 const PAGE: Record<string, string> = { p1: NATE.user, p2: KIT.user, p3: WREN.user };
 const ACCOUNTS = [NATE, KIT, WREN, ROOK].map((w) => w.user);
 /** The fields a room message and its update may carry; anything else is a leak waiting to happen. */
-const ENVELOPE = new Set(["id", "ok", "now", "start", "update", "pushed", "error", "orders", "plan", "answer", "table", "notice", "calm", "ready", "talks", "chat"]);
+const ENVELOPE = new Set(["id", "ok", "now", "start", "update", "pushed", "error", "orders", "plan", "answer", "table", "notice", "calm", "ready", "talks", "chat", "pause", "clock"]);
 /** What the table screen may say about anyone: what the players panel shows (session 27). */
 const TABLE = new Set(["gameId", "code", "status", "mapId", "botLevel", "turnSeconds", "luck", "fog", "mode", "fate", "diplomacy", "seats", "you"]);
 const TABLE_SEAT = new Set(["name", "house", "host", "you"]);
@@ -39,7 +39,14 @@ const TABLE_YOU = new Set(["seat", "host", "removed"]);
 const UPDATE = new Set(["playerId", "view", "report", "fastForwarded", "clock", "generalOrders", "leaderNotes", "offers", "seats", "fair", "before", "autoLocked", "queued", "people", "leadersBack", "leftSeats", "talks"]);
 /** Session 28: an offer between people, as its two sides are sent it. */
 const TALK = new Set(["offer", "state", "counter", "counterState"]);
-const START = new Set([...UPDATE, "rules", "chronicle", "replay", "lockedIn", "gameId", "mapId", "mapVersion", "chronicleAfter", "ready", "chat"]);
+const START = new Set([...UPDATE, "rules", "chronicle", "replay", "lockedIn", "gameId", "mapId", "mapVersion", "chronicleAfter", "ready", "chat", "pause"]);
+/** Session 28: a pause vote, as the whole table is told it. */
+const PAUSE = new Set(["vote", "paused", "left", "news"]);
+const PAUSE_PART = new Set(["by", "endsAt", "yes", "waiting", "ready"]);
+const checkPause = (p: PauseView) => {
+  for (const k of Object.keys(p)) expect(PAUSE.has(k), `unexpected pause field ${k}`).toBe(true);
+  for (const part of [p.vote, p.paused]) for (const k of Object.keys(part ?? {})) expect(PAUSE_PART.has(k), `unexpected pause part field ${k}`).toBe(true);
+};
 /** Session 28: chat, as a member is sent it. */
 const CHAT_SYNC = new Set(["chats", "lines", "canWrite", "after"]);
 const CHAT_VIEW = new Set(["id", "kind", "name", "members"]);
@@ -248,7 +255,7 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
     expect([...given.get("p2")!].filter((id) => id.startsWith("kit-secret")).length).toBeGreaterThan(5);
   }, 120_000);
 
-  it("session 28: three people all online and a watcher who never sat: an offer and its counter, a group chat, reach their members only; the deal's news reaches the table", async () => {
+  it("session 28: three people all online and a watcher who never sat: an offer and its counter, a group chat, reach their members only; a pause vote and the deal's news reach the table", async () => {
     const t = testRoom();
     await t.room.createTable({ gameId: "fogtalk", code: "f0gt4lkcde", settings: { ...settings, bots: 3 }, seed: "fog-on-the-wire-28", host: hostSeat(NATE, 0) });
     await t.table(ROOK);
@@ -276,6 +283,10 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
     t.advance(2000);
     await t.askAs(NATE, { type: "chat", act: { do: "pair", with: "p2" } });
     await t.askAs(WREN, { type: "chat", act: { do: "send", chat: "table", text: "Good luck, everyone." } });
+    // Wren asks for a pause: the whole table gets the vote (who asked, who has answered), and nothing else.
+    await t.ask("p3", { type: "pause", act: "ask" });
+    await t.ask("p1", { type: "pause", act: "yes" });
+    await t.ask("p2", { type: "pause", act: "no" });
     for (const s of SEATS) await t.hello(s);
     const secretsOf = (seat: PlayerId) => [
       ...(seat === "p1" || seat === "p2" ? [] : ["SECRET-NATE", "SECRET-KIT", JSON.stringify(truce.id), JSON.stringify(trade.id), '"perTurn":3']),
@@ -297,6 +308,8 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
         if ("talks" in m) for (const r of m.talks) checkTalk(seat, r);
         if ("chat" in m) checkChat(m.chat);
         if ("start" in m && m.start.chat) checkChat(m.start.chat);
+        if ("pause" in m) checkPause(m.pause);
+        if ("start" in m && m.start.pause) checkPause(m.start.pause);
       }
       return text;
     };
@@ -311,6 +324,12 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
     expect(check("p1")).toContain("Good luck, everyone.");
     expect(JSON.stringify(t.inbox(ROOK.user))).not.toContain("SECRET");
     expect(JSON.stringify(t.inbox(ROOK.user))).not.toContain("Good luck");
+    for (const s of SEATS) {
+      const votes = t.inbox(PAGE[s]!).flatMap((m) => ("pause" in m ? [m.pause] : []));
+      expect(votes.some((p) => p.vote?.by === "p3"), `${s} saw the vote`).toBe(true);
+      expect(votes.at(-1)!.news).toEqual({ kind: "failed", why: "no", who: ["p2"] });
+    }
+    expect(JSON.stringify(t.inbox(ROOK.user))).not.toContain("pause");
     // The turn plays: the deal starts (Kit's trade), and the table hears that it did, without its terms.
     t.clear();
     for (const s of SEATS) await t.ask(s, { type: "lockIn", orders: g.generalOrders({}, undefined, s), turn: 1 });

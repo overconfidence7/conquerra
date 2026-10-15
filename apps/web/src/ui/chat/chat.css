@@ -47,3 +47,8 @@
 @media (max-width: 767px) {
   .chat-grid { grid-template-columns: 1fr; }
 }
+
+/* Pause by vote (session 28): the header's clock asks for a pause when tapped, and says who paused it. */
+.clock-tap { background: none; border: 0; padding: 0; min-height: 0; cursor: pointer; color: inherit; font: inherit; }
+.pause-online { white-space: nowrap; }
+.pause-card .dialog-actions { align-items: center; }

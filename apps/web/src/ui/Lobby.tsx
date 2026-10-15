@@ -11,7 +11,7 @@ import { decodeRuns, THUMB_COLOURS, type MapThumb } from "../logic/mapThumb";
 import { houseSummary, LUCK, rulesSummary } from "../logic/lobbyText";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
-import { VersionLine } from "./Diagnostics";
+import { VersionLine } from "./VersionLine";
 import { savedWhen, slotLine } from "./saveText";
 import { DEFAULT_HOUSE, HOUSE_PLAIN, HOUSES } from "../map/houses";
 import { unlockedAudio } from "../sound/unlock";

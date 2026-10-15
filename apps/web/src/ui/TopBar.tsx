@@ -67,6 +67,10 @@ interface Props {
   onChronicle?: (() => void) | null;
   /** Online (session 28): the chat button, with its unread count. */
   chat?: React.ReactNode;
+  /** Online (session 28): shown instead of the countdown while the table is paused ("Paused by Kit, 12:40 left"). */
+  pausedLabel?: React.ReactNode;
+  /** Online (session 28): a tap on the countdown asks the table for a pause. */
+  onClockTap?: (() => void) | null;
   onSettings(): void;
 }
 
@@ -101,7 +105,7 @@ function CoinsIn({ gold, replaying, target }: { gold: number; replaying: boolean
   );
 }
 
-export function TopBar({ view, gold, goldAfter, purses = 0, income, clock, replaying, phone, fallen, onPause, onChronicle, chat, onSettings }: Props) {
+export function TopBar({ view, gold, goldAfter, purses = 0, income, clock, replaying, phone, fallen, onPause, onChronicle, chat, pausedLabel, onClockTap, onSettings }: Props) {
   const emblem = useArtUrl("emblem");
   const coin = useArtUrl("icon-gold");
   const goldRef = useRef<HTMLSpanElement | null>(null);
@@ -133,7 +137,15 @@ export function TopBar({ view, gold, goldAfter, purses = 0, income, clock, repla
       <span className="turn">
         {replaying ? "Replay" : `Turn ${view.turn}`}
         {view.settings.turnLimit ? <span className="muted">/{view.settings.turnLimit}</span> : null}
-        <TimerPill clock={clock} paused={replaying} />
+        {pausedLabel ? (
+          pausedLabel
+        ) : onClockTap && !replaying && clock ? (
+          <button className="clock-tap" onClick={onClockTap} title="Ask the table for a pause" aria-label="Ask the table for a pause">
+            <TimerPill clock={clock} paused={replaying} />
+          </button>
+        ) : (
+          <TimerPill clock={clock} paused={replaying} />
+        )}
         {onPause && clock && (
           <button className={`icon-btn pause-btn ${isPaused ? "on" : ""}`} onClick={onPause} aria-label={isPaused ? "Resume the timer" : "Pause the timer"} aria-pressed={isPaused} title={isPaused ? "Resume" : "Pause"}>
             {isPaused ? <Icon.play /> : <Icon.pause />}

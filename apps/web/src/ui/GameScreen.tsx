@@ -31,10 +31,11 @@ import { Toasts, type ShownToast } from "./Toasts";
 import { TopBar } from "./TopBar";
 import { ChatButton, ChatPopup } from "./chat/ChatBits";
 import { closeChat, unreadAll, useChat } from "./chat/chatStore";
+import { PauseCard, PausedLabel, usePause } from "./pause/pause";
 import { useReplay } from "./useReplay";
 import { moreCue } from "./moreCue";
 import { useLayout, useLayoutChoice } from "./useLayout";
-import { VersionLine } from "./Diagnostics";
+import { VersionLine } from "./VersionLine";
 import type { LayoutChoice } from "../logic/layout";
 import { FX_LEVELS, useFx } from "../replay/fx/settings";
 import { useSound } from "../sound/settings";
@@ -128,7 +129,7 @@ function useCovered(active: boolean, phone: boolean, reserveSelPanel: boolean, s
 /** Online (session 26): "3f9a2c…e1d0", the start and end of the seed's fingerprint. */
 const shortHash = (h: string) => `${h.slice(0, 8)}…${h.slice(-6)}`;
 
-function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSaves, onLeave, onResign, onClose }: { phone: boolean; online: boolean; tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onResign: (() => void) | null; onClose(): void }) {
+function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSaves, onLeave, onResign, onAskPause, onClose }: { phone: boolean; online: boolean; tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onResign: (() => void) | null; onAskPause: (() => void) | null; onClose(): void }) {
   const [credits, setCredits] = useState(false);
   const [resigning, setResigning] = useState(false);
   if (credits)
@@ -172,6 +173,12 @@ function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSave
         <Suspense fallback={null}>
           <NameField />
         </Suspense>
+      )}
+      {/* Online (session 28): pause by vote. */}
+      {onAskPause && (
+        <button className="menu-item" onClick={onAskPause}>
+          Ask for a pause <span className="muted">the table votes</span>
+        </button>
       )}
       {online && <FairLine />}
       <hr className="rule" />
@@ -609,7 +616,10 @@ export function GameScreen() {
   );
 
   const army = <Panel ctx={ctx} view={view} plan={plan} queue={queue} selected={selected} draft={draft} spendOpen={spendOpen} />;
-  const seal = <LockSeal count={queue.length} busy={busy} disabled={!act} onLock={() => (mixer.play("seal"), void g.lockIn())} />;
+  // Online (session 28): while the table is paused, Lock in says you're ready instead (orders stay as they are).
+  const pausedOnline = usePause((s) => !!s.view?.paused);
+  const seal = <LockSeal count={queue.length} busy={busy} disabled={!act} onLock={() => (mixer.play("seal"), pausedOnline ? void usePause.getState().act?.("ready") : void g.lockIn())} />;
+  const canAskPause = !!g.online && !!act && !replaying && !!clock && !view.winner;
   const actions = (
     <ActionBar
       ctx={ctx}
@@ -667,6 +677,7 @@ export function GameScreen() {
       onSaves={(mode) => (setSettings(false), setSaves(mode))}
       onLeave={() => g.playAgain()}
       onResign={g.online && !out && !gone && !view.winner ? () => (setSettings(false), void import("../host/onlineActions").then((m) => m.resignHere())) : null}
+      onAskPause={canAskPause ? () => (setSettings(false), usePause.setState({ asking: true })) : null}
       onClose={() => setSettings(false)}
     />
   );
@@ -684,6 +695,8 @@ export function GameScreen() {
       onPause={out || view.winner || g.online ? null : () => void g.togglePause()}
       onChronicle={() => setChronicleOpen(true)}
       chat={g.online ? <ChatButton phone={phone} /> : null}
+      pausedLabel={pausedOnline ? <PausedLabel /> : null}
+      onClockTap={canAskPause ? () => usePause.setState({ asking: true }) : null}
       onSettings={() => setSettings((s) => !s)}
     />
   );
@@ -775,6 +788,7 @@ export function GameScreen() {
         </Suspense>
       )}
       {g.online && <ChatPopup replaying={replaying} top={phone ? 104 : 80} />}
+      {g.online && !replaying && <PauseCard top={phone ? 60 : 72} />}
       {g.online && chatOpen && !phone && (
         <Suspense fallback={null}>
           <ChatPanel mode="desktop" />

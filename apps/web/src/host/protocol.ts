@@ -111,6 +111,18 @@ export type ChatAct =
   | { do: "add"; chat: string; with: PlayerId[] }
   | { do: "rename"; chat: string; name: string };
 
+/**
+ * Session 28: pause by vote, as everyone at the table is told it: who asked, who has agreed (or is ready), when the vote
+ * or pause ends (the room's clock), and how many pauses you have left. `news`: what just happened.
+ */
+export interface PauseView {
+  vote?: { by: PlayerId; endsAt: number; yes: PlayerId[]; waiting: PlayerId[] };
+  paused?: { by: PlayerId; endsAt: number; ready: PlayerId[]; waiting: PlayerId[] };
+  /** Pauses you may still ask for this game. */
+  left: number;
+  news?: { kind: "asked" | "started" | "ready" } | { kind: "failed"; why: "no" | "time"; who: PlayerId[] } | { kind: "ended"; early: boolean };
+}
+
 /** Session 28: a person's note with an offer, at most this many characters (their own words: the game never rewrites them). */
 export const NOTE_MAX = 120;
 
@@ -301,6 +313,8 @@ export type RoomRequest =
   | { id: number; type: "hello"; have?: number; chatHave?: number }
   /** Session 28: chat (the table screen's, and the game's). */
   | { id: number; type: "chat"; act: ChatAct }
+  /** Session 28: pause by vote: ask, agree or not, and say you're ready to go on. */
+  | { id: number; type: "pause"; act: "ask" | "yes" | "no" | "ready" }
   | { id: number; type: "table"; act: TableAct }
   /** Session 27: leave the game for good: a Marshal plays the seat from now on (you can still watch). */
   | { id: number; type: "resign" }
@@ -364,6 +378,8 @@ export interface RoomStart extends Omit<HostStart, "map"> {
   chronicleAfter?: number;
   /** Session 28: your chats and the messages your page lacks. */
   chat?: ChatSync;
+  /** Session 28: a pause vote or a pause going on (and your pauses left). */
+  pause?: PauseView;
   mapId: string;
   mapVersion: number | null;
 }
@@ -381,6 +397,8 @@ export type RoomMessage = { now: number } & (
   | { id: number; ok: true; talks: PeopleOffer[] }
   /** Session 28: chat: what changed in your chats (a push, id 0), or the answer to something you did there. */
   | { id: number; ok: true; chat: ChatSync }
+  /** Session 28: a pause vote or pause changed (a push, or the answer to asking): the table's view of it, and your clock. */
+  | { id: number; ok: true; pause: PauseView; clock: TurnClock | null }
 );
 
 /** The game list (the lobby's "Your online games"), from the database. */

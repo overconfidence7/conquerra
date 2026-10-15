@@ -1,11 +1,11 @@
 import type { MapDef } from "@conquerra/content";
 import { readSave, type LeaderStyle, type Order, type PlayerId, type SaveFile } from "@conquerra/engine";
 import { HOUSES } from "../map/houses";
-import { LocalGame, PEOPLE_DEAL_TEXT, type PersonSeat, type SeatLeft } from "./localGame";
+import { LocalGame, PAUSES_EACH, PEOPLE_DEAL_TEXT, type PauseNews, type PersonSeat, type SeatLeft } from "./localGame";
 import { cleanName } from "./names";
 import { TABLE_TEXT } from "./roomText";
 import { ChatRoom, type ChatSeat } from "./chatRoom";
-import type { HostUpdate, LobbySettings, RoomMessage, RoomRequest, RoomStart, TableAct, TableView } from "./protocol";
+import type { HostUpdate, LobbySettings, PauseView, RoomMessage, RoomRequest, RoomStart, TableAct, TableView } from "./protocol";
 
 /**
  * Everything an online game's room does (session 26), in one place and with no Cloudflare in it: the game (the same
@@ -131,6 +131,9 @@ interface Meta {
   /** The last turn each seat was sent the report of (so someone coming back replays only what they missed). */
   seen: Record<PlayerId, number>;
 }
+
+/** Session 28: what a lock-in during a pause is told. */
+export const PAUSED_LOCK = "The game is paused. Your orders are kept: press Ready to go on.";
 
 /** The orders a page may send: at most this many, each an object with an id and a kind. */
 const MAX_ORDERS = 400;
@@ -450,7 +453,7 @@ export class RoomCore {
     this.game = LocalGame.restore(map, read.save, this.now, this.autosave);
     // The clock again (session 27): if the alarm was lost (a restart between a turn and its alarm), a deadline that has
     // passed fires at once and the turn resolves as it would have.
-    this.io.wakeAt(this.game.over ? null : this.game.nextDeadline);
+    this.io.wakeAt(this.game.over ? null : this.game.alarmAt);
     return this.game;
   }
 
@@ -494,7 +497,7 @@ export class RoomCore {
 
   /** After anything that changes the turn or the clock: set the alarm and update the game list. */
   private afterChange() {
-    this.io.wakeAt(this.game?.over ? null : (this.game?.nextDeadline ?? null));
+    this.io.wakeAt(this.game?.over ? null : (this.game?.alarmAt ?? null));
     if (this.game) this.io.listed(this.info());
   }
 
@@ -533,6 +536,8 @@ export class RoomCore {
       ...(last ? { replay: { before: last.before, report: last.report, play: unseen || (opens !== null && this.now() < opens) } } : {}),
       // Session 28: your chats (once chat has loaded: a room wakes it with the first hello).
       ...(this.chatFor(seat, chatHave) ?? {}),
+      // Session 28: a pause vote or a pause going on, and your pauses left.
+      ...(g.pauseInfo.vote || g.pauseInfo.paused || g.pauseInfo.used[seat] ? { pause: this.pauseView(seat) } : {}),
     };
   }
 
@@ -571,6 +576,11 @@ export class RoomCore {
           return;
         case "lockIn": {
           if (!ordersOk(req.orders) || typeof req.turn !== "number") throw new Error("Those orders couldn't be read.");
+          // Session 28: paused, orders are kept but not locked in (the page presses Ready instead).
+          if (g.isPausedOnline) {
+            g.saveOrders(req.orders, req.turn, [], seat);
+            throw new Error(PAUSED_LOCK);
+          }
           if (req.turn !== g.turn) {
             this.reply(seat, { id: req.id, ok: true, update: this.withFair(g.update(null, 0, seat)) });
             return;
@@ -612,6 +622,14 @@ export class RoomCore {
         case "resign":
           if (!(await this.resign(seat, req.id))) throw new Error("You can't resign from this game now.");
           return;
+        case "pause": {
+          const done = req.act === "ask" ? g.askPause(seat) : req.act === "ready" ? g.readyPause(seat) : req.act === "yes" || req.act === "no" ? g.answerPause(seat, req.act === "yes") : { error: "That can't be done with a pause." };
+          if ("error" in done) throw new Error(done.error);
+          this.saveNow();
+          this.reply(seat, { id: req.id, ok: true, pause: this.pauseView(seat, done.news), clock: g.update(null, 0, seat).clock });
+          this.tellPause(done.news, seat);
+          return;
+        }
         case "propose": {
           // Session 28: to a person, the room relays it (they answer in their own time); to a bot, it answers at once.
           const to = req.offer && typeof req.offer === "object" ? req.offer.to : undefined;
@@ -650,6 +668,12 @@ export class RoomCore {
   /** The alarm: if the clock has run out, the turn resolves with everyone's orders as they stand. */
   async alarm(): Promise<void> {
     const g = await this.ensureLoaded();
+    // Session 28: a vote's 60 s, or a pause's 15 minutes, may be what woke the room.
+    const news = g.tickPause();
+    if (news) {
+      this.saveNow();
+      this.tellPause(news);
+    }
     const resolved = this.timed(() => g.expireTable());
     if (resolved) this.deliver(resolved, new Map());
     else this.afterChange();
@@ -702,6 +726,25 @@ export class RoomCore {
     for (const seat of this.g.takeTalkChanges()) if (seat !== answered) this.reply(seat, { id: 0, ok: true, talks: this.g.peopleOffersFor(seat) });
   }
 
+  /** Session 28: the pause as one seat is told it (the same for everyone, but for their own pauses left). */
+  private pauseView(seat: PlayerId, news?: PauseNews | null): PauseView {
+    const s = this.g.pauseInfo;
+    const playing = this.g.playingIds.filter((id) => !this.g.isOut(id));
+    return {
+      ...(s.vote ? { vote: { by: s.vote.by, endsAt: s.vote.endsAt, yes: [...s.vote.yes], waiting: playing.filter((id) => !s.vote!.yes.includes(id)) } } : {}),
+      ...(s.paused ? { paused: { by: s.paused.by, endsAt: s.paused.endsAt, ready: [...s.paused.ready], waiting: playing.filter((id) => !s.paused!.ready.includes(id)) } } : {}),
+      left: Math.max(0, PAUSES_EACH - (s.used[seat] ?? 0)),
+      ...(news ? { news } : {}),
+    };
+  }
+
+  /** Session 28: everyone at the table (but `except`, who got an answer) hears what happened to the pause, with their clock. */
+  private tellPause(news: PauseNews | null, except?: PlayerId) {
+    if (news) this.io.log(`game ${this.meta!.gameId}: pause ${news.kind}${"why" in news ? ` (${news.why})` : ""}`);
+    for (const seat of this.g.peopleIds) if (seat !== except) this.reply(seat, { id: 0, ok: true, pause: this.pauseView(seat, news), clock: this.g.update(null, 0, seat).clock });
+    this.afterChange();
+  }
+
   /** Who has locked in this turn, to everyone at the table (session 27). */
   private tellReady() {
     const ready = this.g.readyIds;
@@ -740,6 +783,9 @@ export class RoomCore {
     const resolved = this.timed(() => g.resign(seat));
     this.announceLeft(seat);
     if (!resolved) this.tellTalks(seat);
+    // Session 28: a vote or a pause that waited on them moves on.
+    const settled = resolved ? null : g.tickPause();
+    if (settled) this.tellPause(settled);
     if (resolved) this.deliver(resolved, id ? new Map([[seat, id]]) : new Map());
     else {
       this.saveNow();

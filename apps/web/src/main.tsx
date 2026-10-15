@@ -2,7 +2,7 @@ import { lazy, StrictMode, Suspense, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { useGame } from "./store";
 import { Lobby } from "./ui/Lobby";
-import { Diagnostics } from "./ui/Diagnostics";
+import { useDiagnostics } from "./ui/VersionLine";
 import { UpdatePrompt } from "./ui/UpdatePrompt";
 import { DesktopSiteTip } from "./ui/DesktopSiteTip";
 import "@fontsource/manrope/800.css";
@@ -35,6 +35,16 @@ const GameOver = lazy(() => import("./ui/GameOver").then((m) => ({ default: m.Ga
  */
 const loadGameScreen = () => import("./ui/GameScreen");
 const GameScreen = lazy(() => loadGameScreen().then((m) => ({ default: m.GameScreen })));
+/** The diagnostics view (five taps on the version line): loaded only when opened (session 28). */
+const DiagnosticsPanel = lazy(() => import("./ui/Diagnostics").then((m) => ({ default: m.Diagnostics })));
+function Diagnostics() {
+  const open = useDiagnostics((s) => s.open);
+  return open ? (
+    <Suspense fallback={null}>
+      <DiagnosticsPanel />
+    </Suspense>
+  ) : null;
+}
 /** The table screen (session 27): an online game waiting for its players. Loaded only when one opens. */
 const TableScreen = lazy(() => import("./ui/TableScreen"));
 

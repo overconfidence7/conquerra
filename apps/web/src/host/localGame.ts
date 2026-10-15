@@ -193,7 +193,7 @@ export interface LocalHostData {
    * the fields above instead, so its saves are as they were), and the room's clock.
    */
   people?: Record<PlayerId, PersonData>;
-  online?: { deadline: number | null; opensAt: number | null };
+  online?: { deadline: number | null; opensAt: number | null; pause?: PauseState };
 }
 
 /** The bots' diplomacy for one turn: their propose/answer orders, and the offers they made to people. */
@@ -204,6 +204,34 @@ interface Talk {
   /** Session 28: offers between people this turn, as the room relayed them (only their two sides ever hear of them). */
   between?: PeopleOffer[];
 }
+
+/** Session 28, pause by vote (Nate, Oct 12): 60 s to agree, 15 minutes at most, three a player a game. */
+export const PAUSE_VOTE_MS = 60_000;
+export const PAUSE_MAX_MS = 15 * 60_000;
+export const PAUSES_EACH = 3;
+
+/**
+ * Session 28: pause by vote, as the room keeps it (in the save, so a deploy can't lose it). A vote is open for 60 s;
+ * a pause holds the clock until it runs out or everyone still playing says they're ready; `used` counts the pauses
+ * that started, by who asked.
+ */
+export interface PauseState {
+  vote?: { by: PlayerId; endsAt: number; yes: PlayerId[] };
+  paused?: { by: PlayerId; startedAt: number; endsAt: number; ready: PlayerId[] };
+  used: Record<PlayerId, number>;
+}
+
+/** What happened to a vote or a pause (the room tells the table). */
+export type PauseNews = { kind: "asked" | "started" | "ready" } | { kind: "failed"; why: "no" | "time"; who: PlayerId[] } | { kind: "ended"; early: boolean };
+
+/** Session 28: why a pause can't be asked for or answered (the voice guide applies). */
+export const PAUSE_TEXT = {
+  notNow: "A pause can be asked for during the planning window only.",
+  busy: "A pause is already being asked for, or is on.",
+  used: `You've used your ${PAUSES_EACH} pauses this game.`,
+  noVote: "There's no pause to answer.",
+  notPaused: "The game isn't paused.",
+} as const;
 
 /** Session 28: at most this many offers from one person to another in one turn (counters aside). */
 export const OFFERS_PER_PERSON = 3;
@@ -347,6 +375,8 @@ export class LocalGame {
   private talk: Talk = { turn: 0, orders: {}, toHuman: [] };
   /** Online: whose leaders ran their House on the turn being resolved (the card tells the table). */
   private ranNow: PlayerId[] = [];
+  /** Online (session 28): a pause vote, a pause, and who has used how many. */
+  private pauseState: PauseState = { used: {} };
 
   constructor(
     /** The map to play on (the worker loads it with `loadMap`; tests pass it straight from `maps`). */
@@ -465,6 +495,7 @@ export class LocalGame {
     if (restore && this.online && host.online) {
       this.deadline = host.online.deadline;
       this.opensAt = host.online.opensAt;
+      if (host.online.pause) this.pauseState = host.online.pause;
     }
     // Continue puts back the orders each person had queued on this turn (and, online, whether they'd locked in).
     for (const person of this.people.values()) {
@@ -531,6 +562,12 @@ export class LocalGame {
   /** The current turn's clock, for the page's countdown (with the time left while paused). */
   get clock(): TurnClock | null {
     if (this.turnMs === null) return null;
+    // Online, paused (session 28): the time left stands still until the pause ends.
+    const p = this.pauseState.paused;
+    if (p && this.deadline !== null) {
+      const left = Math.max(0, this.deadline - p.startedAt);
+      return { endsAt: this.now() + left, turnMs: this.turnMs, pausedLeft: left };
+    }
     if (this.pausedLeft !== null) return { endsAt: this.now() + this.pausedLeft, turnMs: this.turnMs, pausedLeft: this.pausedLeft };
     return this.deadline === null ? null : { endsAt: this.deadline, turnMs: this.turnMs };
   }
@@ -968,6 +1005,8 @@ export class LocalGame {
       longest = Math.max(longest, buildTimeline(report.events).total);
     }
     this.ranNow = [];
+    // (A vote or pause belongs to the planning window that just ended.)
+    this.pauseState = { used: this.pauseState.used };
     beforeNextTurn?.();
     this.startClock(longest);
     return reports;
@@ -1079,6 +1118,106 @@ export class LocalGame {
     return this.deadline;
   }
 
+  // ---------- Session 28: pause by vote ----------
+
+  /** When the room must wake next: the deadline, or sooner a vote's 60 s or a pause's end. */
+  get alarmAt(): number | null {
+    if (this.state.winner) return null;
+    if (this.pauseState.paused) return this.pauseState.paused.endsAt;
+    const v = this.pauseState.vote?.endsAt ?? null;
+    if (v !== null && this.deadline !== null) return Math.min(v, this.deadline);
+    return v ?? this.deadline;
+  }
+
+  get pauseInfo(): Readonly<PauseState> {
+    return this.pauseState;
+  }
+
+  get isPausedOnline(): boolean {
+    return !!this.pauseState.paused;
+  }
+
+  /** Is the planning window open (the countdown running, not the replay or its 10 s)? */
+  private planning(): boolean {
+    return this.online && !this.state.winner && this.deadline !== null && (this.opensAt === null || this.now() >= this.opensAt) && this.now() < this.deadline;
+  }
+
+  /** Someone asks for a pause. Null if the vote is open (or the pause started at once), else why not. */
+  askPause(by: PlayerId): { error: string } | { news: PauseNews } {
+    if (!this.living.includes(by)) return { error: PAUSE_TEXT.notNow };
+    if (!this.planning()) return { error: PAUSE_TEXT.notNow };
+    if (this.pauseState.vote || this.pauseState.paused) return { error: PAUSE_TEXT.busy };
+    if ((this.pauseState.used[by] ?? 0) >= PAUSES_EACH) return { error: PAUSE_TEXT.used };
+    this.pauseState.vote = { by, endsAt: this.now() + PAUSE_VOTE_MS, yes: [by] };
+    // Bots agree at once; with nobody else to ask, it starts now.
+    return { news: this.settleVote() ?? { kind: "asked" } };
+  }
+
+  /** A person answers the vote. One No and it fails; everyone yes and the pause starts. */
+  answerPause(by: PlayerId, yes: boolean): { error: string } | { news: PauseNews | null } {
+    const v = this.pauseState.vote;
+    if (!v || !this.living.includes(by)) return { error: PAUSE_TEXT.noVote };
+    if (!yes) {
+      delete this.pauseState.vote;
+      return { news: { kind: "failed", why: "no", who: [by] } };
+    }
+    if (!v.yes.includes(by)) v.yes.push(by);
+    return { news: this.settleVote() };
+  }
+
+  /** Everyone still playing has agreed: the pause starts (and counts against whoever asked). */
+  private settleVote(): PauseNews | null {
+    const v = this.pauseState.vote;
+    if (!v) return null;
+    if (!this.living.every((id) => v.yes.includes(id))) return null;
+    delete this.pauseState.vote;
+    const now = this.now();
+    this.pauseState.paused = { by: v.by, startedAt: now, endsAt: now + PAUSE_MAX_MS, ready: [] };
+    this.pauseState.used[v.by] = (this.pauseState.used[v.by] ?? 0) + 1;
+    return { kind: "started" };
+  }
+
+  /** Someone says they're ready to go on (or pressed Lock in while paused). Everyone ready ends it early. */
+  readyPause(by: PlayerId): { error: string } | { news: PauseNews } {
+    const p = this.pauseState.paused;
+    if (!p || !this.living.includes(by)) return { error: PAUSE_TEXT.notPaused };
+    if (!p.ready.includes(by)) p.ready.push(by);
+    if (this.living.every((id) => p.ready.includes(id))) return { news: this.endPause(true) };
+    return { news: { kind: "ready" } };
+  }
+
+  /** The pause ends: the deadline moves on by the time it lasted. */
+  private endPause(early: boolean): PauseNews {
+    const p = this.pauseState.paused!;
+    const lasted = Math.max(0, Math.min(this.now(), p.endsAt) - p.startedAt);
+    if (this.deadline !== null) this.deadline += lasted;
+    delete this.pauseState.paused;
+    return { kind: "ended", early };
+  }
+
+  /**
+   * The room woke: a vote whose 60 s are up fails, a pause whose 15 minutes are up ends, someone who left the table
+   * no longer holds things up. What happened, or null.
+   */
+  tickPause(): PauseNews | null {
+    const now = this.now();
+    const v = this.pauseState.vote;
+    if (v) {
+      const settled = this.settleVote();
+      if (settled) return settled;
+      if (now >= v.endsAt) {
+        delete this.pauseState.vote;
+        return { kind: "failed", why: "time", who: this.living.filter((id) => !v.yes.includes(id)) };
+      }
+    }
+    const p = this.pauseState.paused;
+    if (p) {
+      if (now >= p.endsAt) return this.endPause(false);
+      if (this.living.every((id) => p.ready.includes(id))) return this.endPause(true);
+    }
+    return null;
+  }
+
   /**
    * Time's up? Then lock in your saved orders, exactly as if you had pressed Lock in, and return the result for
    * the page. Otherwise null.
@@ -1091,6 +1230,7 @@ export class LocalGame {
 
   /** Online: time's up? Then the turn resolves with everyone's orders as they stand (each person's update), else null. */
   expireTable(): Map<PlayerId, HostUpdate> | null {
+    if (this.pauseState.paused) return null;
     if (this.deadline === null || this.now() < this.deadline || this.state.winner) return null;
     return this.resolveTable(true);
   }
@@ -1179,7 +1319,7 @@ export class LocalGame {
       const people: Record<PlayerId, PersonData> = {};
       for (const p of this.people.values())
         people[p.id] = { queued: queuedOf(p), chronicle: p.chronicle, leaderMemory: p.leaderMemory, voiceMemory: p.voiceMemory, touched: p.touched, locked: p.locked, leadersRun: p.leadersRun, ...(p.last ? { last: p.last } : {}), ...(p.own ? { own: p.own } : {}), ...(p.missed ? { missed: p.missed } : {}), ...(p.left ? { left: p.left } : {}) };
-      host = { ...base, talk: this.talk, people, online: { deadline: this.deadline, opensAt: this.opensAt } };
+      host = { ...base, talk: this.talk, people, online: { deadline: this.deadline, opensAt: this.opensAt, ...(this.pauseState.vote || this.pauseState.paused || Object.keys(this.pauseState.used).length ? { pause: this.pauseState } : {}) } };
     } else {
       const you = this.person(HUMAN_ID);
       host = { ...base, queued: queuedOf(you), talk: this.talk, chronicle: you.chronicle, leaderMemory: you.leaderMemory, voiceMemory: you.voiceMemory };

@@ -136,6 +136,23 @@ const wrenText = JSON.stringify(wren.pushes);
 for (const secret of ["HARNESS-NOTE", "HARNESS-COUNTER", "HARNESS-GROUP", "HARNESS-SCHEME", groupId, truce.id, counter.id]) check(!wrenText.includes(secret), `Wren's page never heard "${secret}"`);
 const back = await wren.ask({ type: "hello" });
 check(back.start.chat.chats.map((x) => x.id).join() === "table" && !JSON.stringify(back).includes("HARNESS"), "Wren's own \"where are we\" has only the table chat");
+// Session 28, Part 3: pause by vote (PAUSE=1).
+if (process.env.PAUSE) {
+  const asked = await wren.ask({ type: "pause", act: "ask" });
+  check(asked.ok && asked.pause.vote?.waiting.length === 2, "Wren asks for a pause: the vote waits on Nate and Kit");
+  await kit.ask({ type: "pause", act: "no" });
+  await sleep(300);
+  check(wren.pushes.some((m) => m.pause?.news?.kind === "failed" && m.pause.news.why === "no"), "Kit says no: Wren is told");
+  await wren.ask({ type: "pause", act: "ask" });
+  await nate.ask({ type: "pause", act: "yes" });
+  const on = await kit.ask({ type: "pause", act: "yes" });
+  check(on.ok && on.pause.paused?.by === c.playerId && on.clock?.pausedLeft > 0, "everyone agrees: paused, the clock stands still");
+  const locked = await nate.ask({ type: "lockIn", orders: a.generalOrders, turn: a.view.turn });
+  check(!locked.ok, "a lock-in while paused is refused (the page presses Ready)");
+  for (const p of [nate, kit]) await p.ask({ type: "pause", act: "ready" });
+  const end = await wren.ask({ type: "pause", act: "ready" });
+  check(end.ok && end.pause.news?.kind === "ended" && end.pause.news.early && end.clock.pausedLeft === undefined, "everyone ready: it ends early and the clock runs again");
+}
 console.log(`chat message on the wire: ${JSON.stringify(nate.pushes.find((m) => m.chat?.lines?.length)).length} bytes; a hello with chat: ${(JSON.stringify(back).length / 1024).toFixed(1)} KB`);
 for (let i = 0; i < TURNS && !a.view.winner; i++) {
   const t0 = Date.now();
