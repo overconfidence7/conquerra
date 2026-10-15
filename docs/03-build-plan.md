@@ -140,6 +140,7 @@ Research, outline v0.1, v0.2 additions, and decisions.
 - Bot takeover for quitters; notifications.
 
 ### M5: Public 1.0
+*Planned in detail on Oct 15: `docs/11-launch-plan.md` (what 1.0 is, sessions 30 to 36, sign-in, the purchase, random maps, blackout fog, tutorials, scale, the site). The lines below are the original sketch.*
 - Public Google sign-in, matchmaking and ratings.
 - 50-player battle royale, asymmetric factions, secret objectives, team games.
 - Random maps generated on the spot, and the "blackout" fog option (`04-design-additions.md` §9). First split the map maker into stages with their own random streams and pins (`docs/07-map-tooling.md`), so the map builder can reuse it.

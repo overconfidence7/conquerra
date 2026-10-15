@@ -131,7 +131,7 @@
 
 ## 11. Out of scope for M4 (where it goes)
 
-- Public sign-up, payments, 50-player games, random maps, blackout fog, tutorials: **M5**.
+- Public sign-up, payments, 50-player games, random maps, blackout fog, tutorials: **M5**. Planned: `docs/11-launch-plan.md` (Oct 15).
 - Spectators, rankings, friends lists, replays shared by link: **after M5** (needs R2 and a public site).
 - Native apps: **M6**.
 
