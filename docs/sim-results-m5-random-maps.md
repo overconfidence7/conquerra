@@ -52,4 +52,8 @@ By shape the inland sea and the island run longest (120: 37.6 and 37.8 turns; 20
 
 ## The twelve official maps, before and after
 
-The stage split leaves the twelve exactly as they were: the same committed files (a test pins each map's fingerprint), and the same games. `npx tsx apps/sim/scripts/s30-sims.ts --digest 4 20 --seed s30d` (20 all-Marshal games on each official map, 4 players) gives the same digest before session 30's Part 2 and after Part 4: **`dc8962d4f8ba3bc6`**; `pnpm sim --bots marshal --players 4 --games 60 --seed s29` gives the same games, seats and deals as session 29's (23.8 turns, seats 20/20/35/25%).
+The stage split leaves the twelve exactly as they were: the same committed files (a test pins each map's fingerprint), and the same games. `npx tsx apps/sim/scripts/s30-sims.ts --digest 4 20 --seed s30d` (20 all-Marshal games on each official map, 4 players) gives the same digest before session 30's Part 2, after Part 3 and after Part 4: **`dc8962d4f8ba3bc6`**; `pnpm sim --bots marshal --players 4 --games 60 --seed s29` and `--bots captain --players 6` give the same games, seats and deals as session 29's (Marshal 23.8 turns, seats 20/20/35/25%).
+
+## Blackout fog against standard fog
+
+300 all-Marshal games each (`--fog blackout` and `--fog on`, seed `s30b`): **Embervale 4: 23.1 turns, 96% within 40, seats 21.3 / 22.3 / 24.7 / 31.7%** (furthest from fair 6.7); **Wyrmland 6: 39.9 turns, 62% within 40, 11% at the 60-turn cap, seats 17.7 / 16.3 / 13.0 / 21.0 / 17.3 / 14.7%** (4.3 off). Blackout and standard fog give **the same games, game for game**: blackout changes only what a view shows, the bots read the map's shape from the map as they always have, and fogged land with no memory looks the same to them either way. So the bots don't stall; they also don't explore. Whether they should is a design call (a person under blackout knows less than a bot does).
