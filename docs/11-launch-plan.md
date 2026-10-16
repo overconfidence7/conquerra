@@ -15,17 +15,18 @@ A stranger can find the game, sign in, play against the bots for free, and buy i
 
 | Session | What | Why this order |
 |---|---|---|
-| **30** | M4's close-out (Nate's solo notes), **random maps**, the **blackout fog** option | Playable things first while Nate tests alone; no launch decision needed |
-| **31** | **Tutorials** (seven short saved games with goals and hints) and the first-game experience (a guided first turn) | Needed before any stranger plays; solo-friendly |
-| **32** | **Bigger tables** (up to 10 people and 20 seats on the 200-territory maps), the sim's numbers for them, the map lab switched off in production, abuse limits (rate limits, a report button, a block list) | Scale and safety before strangers |
-| **33** | **Launch polish**: the install flow on Android and iPhone (the installed app), the open-graph preview, the lobby for a newcomer, a last voice pass, a load test of 20 tables at once | Everything a stranger meets, before the doors open |
-| **34** | **Workers Paid, public sign-in** (Google in the Worker, email magic links), accounts in D1, Access retired, the guest list becomes an invite-free sign-up | The launch's foundation; needs Nate's Google OAuth client (his step). Nate's order (Oct 15): sign-in and the purchase last, so the game stays private longer |
-| **35** | **The purchase** (Stripe Checkout, the webhook, the launch date switch), the public site's front page, terms and privacy pages | Needs Nate's Stripe account (his step) |
-| **36** (stretch) | **50-player battle royale** on a 400-territory map if the sim and the room's CPU allow it; otherwise it waits for M6 | Only with numbers |
+| **30** (done Oct 15) | M4's close-out, **random maps**, the **blackout fog** option | Playable things first while Nate tests alone; no launch decision needed |
+| **31** | **Tutorials** (seven short saved games with goals and hints) and the first-game experience (a guided first turn); Step 0: random maps' start bonus and band, the bundle trim | Needed before any stranger plays; solo-friendly |
+| **32** | **Bots that explore under blackout** (Nate, Oct 16: "bots never cheat" comes before scale): pathing over known land only, a scout's drive, the sims against standard fog; the blackout label comes off | A balance session with numbers, pulled forward by Nate |
+| **33** | **Bigger tables** (up to 10 people and 20 seats on the 200-territory maps), the sim's numbers for them, the map lab switched off in production, abuse limits (rate limits, a report button, a block list) | Scale and safety before strangers |
+| **34** | **Launch polish**: the install flow on Android and iPhone (the installed app), the open-graph preview, the lobby for a newcomer, a last voice pass, a load test of 20 tables at once | Everything a stranger meets, before the doors open |
+| **35** | **Workers Paid, public sign-in** (Google in the Worker, email magic links), accounts in D1, Access retired, the guest list becomes an invite-free sign-up | The launch's foundation; needs Nate's Google OAuth client (his step). Nate's order (Oct 15): sign-in and the purchase last, so the game stays private longer |
+| **36** | **The purchase** (Stripe Checkout, the webhook, the launch date switch), the public site's front page, terms and privacy pages | Needs Nate's Stripe account (his step) |
+| **37** (stretch) | **50-player battle royale** on a 400-territory map if the sim and the room's CPU allow it; otherwise it waits for M6 | Only with numbers |
 
 Nate's play test with friends can land anywhere in this: a session of his notes before the next milestone session worked well in M3 and M4 (25b), so plan on one.
 
-## 3. Sign-in (session 34; Nate's call: built in our Worker)
+## 3. Sign-in (session 35; Nate's call: built in our Worker)
 
 **The problem:** Cloudflare Access is a guest list, and its free plan stops at 50 users. A public game needs sign-up with no list.
 
@@ -36,9 +37,9 @@ Nate's play test with friends can land anywhere in this: a session of his notes 
 - **Access retired** for the game's address; it can stay on the map lab's address (or the lab goes off in production, §8).
 - **Alternatives considered:** a third-party sign-in service (Clerk, Auth0: free tiers of 10,000 users, a dependency and a brand on the sign-in page); Cloudflare Access's own one-time-PIN login with "everyone" allowed (zero code, but 50 users on the free plan and $7 a user a month after). The Worker's own is the cheapest and the plainest.
 
-## 4. Money (sessions 34 and 35)
+## 4. Money (sessions 35 and 36)
 
-- **Workers Paid, $5 a month** (session 34): the Worker's handlers get 30 s of CPU like the room, Email Sending to anyone, higher daily limits. The only running cost until R2 (replays by link, after 1.0).
+- **Workers Paid, $5 a month** (session 35): the Worker's handlers get 30 s of CPU like the room, Email Sending to anyone, higher daily limits. The only running cost until R2 (replays by link, after 1.0).
 - **The purchase:** Stripe Checkout (hosted page, no card data ever touches the Worker), a one-time price, the webhook (`checkout.session.completed`, the signature checked) marks `users.bought`; a receipt from Stripe. **$9.99 (Nate's call, Oct 15; the price lives in Stripe, not in the code).** Refunds by Nate in Stripe's dashboard; the webhook for a refund clears the flag.
 - **What the purchase gates** (enforced in the API and the room, never only in the page): hosting a table, joining beyond the trial, maps beyond the free three, random maps, long turns, notifications. Everything else free.
 - **Taxes:** Stripe Tax on, Nate's business details in Stripe (his step). Nate's accountant's call on the rest.
@@ -54,7 +55,7 @@ Nate's play test with friends can land anywhere in this: a session of his notes 
 ## 6. Blackout fog (session 30)
 
 - **A rules option** beside the fog switch: "Blackout: the map is hidden until you explore it." Anything not next to your land is hidden, geography included, until seen once; then it stays as "last seen" with standard fog's look. Scouts and watchtowers matter more; spies reveal as now.
-- **How:** the engine's `viewFor` already has `fogged` and `last seen`; blackout adds "unknown" (no terrain, no name, no borders drawn), with the painting showing thick painted clouds (`docs/06-art-direction.md`). The bots play with it the same way they play fog (their own view only); the sim checks that games still end in 30 to 40 turns.
+- **How:** the engine's `viewFor` already has `fogged` and `last seen`; blackout adds "unknown" (no terrain, no name, no borders drawn), with the painting showing thick painted clouds (`docs/06-art-direction.md`). The bots play with it the same way they play fog (their own view only); the sim checks that games still end in 30 to 40 turns. **As built (30):** the bots still read the map's shape under blackout (identical games with it on or off), which brushes "bots never cheat"; **session 32 makes them explore** (Nate, Oct 16), and until then the Rules fold says so.
 - **BUILT (session 30):** `settings.fog: "blackout"` (Rules: Fog of war, Blackout). Never-seen land is fog marked `unknown` with nothing else in the view; the replay drops fog news from it. Thick painted clouds (over the sea around unknown land too) in the display shader, no borders, gates or names over them, the minimap clouded, unknown land can't be tapped. The game itself is identical with blackout on or off, and so are the bots' games (300 all-Marshal games each on Embervale 4 and Wyrmland 6, game for game the same as standard fog: 23.1 and 39.9 turns), because the bots read the map's shape from the map as always. A question for the orchestrator: should the bots explore too (they know geography a person can't see)?
 
 ## 7. Tutorials and the first game (session 31)
@@ -63,7 +64,7 @@ Nate's play test with friends can land anywhere in this: a session of his notes 
 - **The first game:** a guided first turn in any new player's first single-player game (three prompts: tap your capital, recruit, lock in), skippable, never shown again.
 - **Scenarios** (set pieces) on the same saved-game format: after 1.0.
 
-## 8. Scale and safety (sessions 32 and 36)
+## 8. Scale and safety (sessions 33 and 37)
 
 - **Bigger tables:** today a table is the lobby's opponent count plus one, up to the map's suggested size. 1.0: up to 10 people and 20 seats on the 200-territory maps; the room's CPU per turn with 20 Marshals on Rootholm measured before the limit moves (M4's number: 22 to 38 ms a turn at a table of 4; the room has 30 s). Lock-in early keeps big tables moving.
 - **50-player battle royale** (the design's `02-game-design-outline.md`): a 400-territory map, 50 seats, the Fallen's events scaled; only if the sim shows games ending in 40 turns and the room's turn stays under 5 s of CPU. A stretch for 36, else M6.
@@ -87,3 +88,4 @@ Workers Paid $5 a month; Stripe's fee per purchase (about 3% plus 30 cents); the
 2. **The price:** **$9.99 one time, and a buyer's friends get three free online games** (the default, confirmed).
 3. **Sign-in:** **built in our Worker, Google plus email magic links** (the default, confirmed). His step when 34 comes: the Google OAuth client.
 4. **The order:** **30 random maps and blackout, 31 tutorials, 32 scale and safety, 33 launch polish, then 34 sign-in and 35 the purchase last, 36 battle royale if the numbers allow** (his pick: keep it private longer, launch when everything else is done).
+5. **Blackout and the bots (Oct 16):** **the bots learn to explore in session 32, ahead of scale and safety** ("bots never cheat"); until then blackout is labelled "the bots still know the lay of the land". **Random maps' harder spots:** a +4 start bonus and the tighter band, then the sim again (31's Step 0; confirmed).

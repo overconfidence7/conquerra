@@ -27,7 +27,7 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 1. Run `git --no-optional-locks status`, then `git pull` and `pnpm install`. Work on `main` and push to `main`.
 2. **Room in the start-up bundle:** it sits at its allowance (499.1 KB). Find at least **15 KB** before adding anything: the Random map panel, the Rules fold's insides and the saves dialog load after the lobby's first paint (as the Online block's insides already do); say what moved and the new number. **This session's allowance: within 2 KB of the number after your trim.**
 3. **Random maps' harder spots get a start bonus** (the orchestrator's call from the sim; Nate can overrule): the spots a random layout marks as harder get **+4 troops** at the start (the official maps' middle, session 23), and the exposure band at generation tightens from 5.5 to **4.0**. Then **re-run the 100-maps-a-size sim** in the background (the `s30-sims.ts` way, by exposure rank) and put the new table in `docs/sim-results-m5-random-maps.md`. If a size is still outside ±5 by exposure, say so and try the band at 3.0 for that size only (the sim's numbers, not a feeling).
-4. **Blackout's label:** the Rules fold's Blackout line says "Blackout: the map is hidden until you explore it (the bots still know the lay of the land)" until the bots learn to explore (a later session). Tactical view stops drawing rivers through cloud.
+4. **Blackout's label:** the Rules fold's Blackout line says "Blackout: the map is hidden until you explore it (the bots still know the lay of the land)" until the bots learn to explore (session 32, Nate's call). Tactical view stops drawing rivers through cloud.
 5. **Small:** the "Update ready" toast stays up after Update now with the newest build already running (hide it once the running build is the newest); the lobby forgets "Random map" across a reload (remember it with the other settings, with a fresh seed each time); a 200 map on a phone takes up to 30 s: a "Making the map…" line with progress, and the build off the main thread as online already does; crescent seeds fail about half the time (tune the crescent's knobs until at least 7 of 8 pass, as the other shapes do); a person's withdrawn offer says who withdrew.
 6. **Nate's solo notes after 30** in `PROGRESS.md`: do the small ones here; list the rest for the orchestrator.
 7. **Commit, deploy, push.** (Run the full `pnpm test` before this and every push.)
@@ -72,7 +72,7 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 - **Commit and push.**
 
 ## Out of scope (sessions 32 and after)
-- Bigger tables, the map lab off in production, abuse limits (32); launch polish (33); sign-in and Workers Paid (34); the purchase and the site (35); bots that explore under blackout (later, with sims); more scenarios (after 1.0).
+- Bots that explore under blackout (32, with sims); bigger tables, the map lab off in production, abuse limits (33); launch polish (34); sign-in and Workers Paid (35); the purchase and the site (36); more scenarios (after 1.0).
 
 ## Exit criteria
 - `pnpm test`, `pnpm typecheck` and the web build pass; everything is committed and pushed to `main`. **Run the full `pnpm test` before every push and twice before your last push**, and ask Nate to check the repo's Actions page for your last commit.
