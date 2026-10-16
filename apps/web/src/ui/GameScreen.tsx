@@ -49,6 +49,7 @@ import { houseOf } from "../map/houses";
 import { namer, startBonusLine } from "../logic/text";
 import { useLesson } from "../tutorials/run";
 import { GoalBody, GoalCard, LESSON_UI, LessonEnd } from "./Lesson";
+import { Guide } from "./Guide";
 import "./replay.css";
 
 /** Save game / Load game: loaded the first time it's opened (it isn't needed to play a turn). */
@@ -753,6 +754,7 @@ export function GameScreen() {
     <>
       {pickBanner}
       <LessonEnd />
+      <Guide />
       {showReport && report && !replaying && (
         <Suspense fallback={null}>
           <TurnReportDialog ctx={ctx} view={view} report={report} autoLocked={autoLocked} onClose={() => g.setShowReport(false)} onWatchAgain={() => g.watchAgain()} />

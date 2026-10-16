@@ -14,3 +14,8 @@
 .goal-hint { border-left: 2px solid rgba(201, 164, 92, 0.7); padding-left: 8px; }
 .lesson-end { max-width: 420px; }
 .lesson-report.done { color: var(--gold-hi); }
+/* The guided first game: a small card above what it points at, never over the map's middle. */
+.guide-card { position: absolute; z-index: 41; width: 260px; padding: 8px 12px; pointer-events: none; }
+.guide-card button { pointer-events: auto; }
+.guide-card p { margin: 0 0 4px; font-size: var(--fs-small); }
+.guide-arrow { position: absolute; left: 50%; bottom: -9px; width: 16px; height: 16px; margin-left: -8px; transform: rotate(45deg); background: inherit; border-right: 1px solid rgba(201, 164, 92, 0.7); border-bottom: 1px solid rgba(201, 164, 92, 0.7); }

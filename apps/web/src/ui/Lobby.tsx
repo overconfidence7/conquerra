@@ -22,7 +22,7 @@ import { VersionLine } from "./VersionLine";
 import { savedWhen, slotLine } from "./saveText";
 import { DEFAULT_HOUSE, HOUSE_PLAIN, HOUSES } from "../map/houses";
 import { unlockedAudio } from "../sound/unlock";
-import { learned, learnSummary } from "../tutorials/learned";
+import { armGuide, learned, learnSummary, shouldGuide } from "../tutorials/learned";
 
 /** Load game: loaded the first time it's opened. */
 const SavesDialog = lazy(() => import("./Saves"));
@@ -332,7 +332,7 @@ export function Lobby() {
         {error && !loading && <p className="warn">{error}</p>}
         {/* Start: right under the folded blocks, and stuck to the bottom of the screen while they're open. */}
         <div className="start-bar">
-          <button className={`${auto ? "" : "primary "}wide big`} onClick={() => (setStarting(true), void start())} disabled={busy}>
+          <button className={`${auto ? "" : "primary "}wide big`} onClick={() => (setStarting(true), shouldGuide(slots.length) && armGuide(), void start())} disabled={busy}>
             {busy && starting ? "Starting…" : auto ? "Start a new game" : "Start"}
           </button>
         </div>

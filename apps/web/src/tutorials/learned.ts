@@ -27,3 +27,35 @@ export function markLearned(id: string) {
 
 /** The Learn fold's line: how many lessons are done. */
 export const learnSummary = (done: number) => (done === 0 ? `${LESSON_COUNT} short lessons, about 5 minutes each` : done >= LESSON_COUNT ? `all ${LESSON_COUNT} lessons done` : `${done} of ${LESSON_COUNT} lessons done`);
+
+/**
+ * The guided first game (session 31): a new player's first single-player game (no saved games on this device, no
+ * lesson done, the guide never shown) gets three prompts on turn 1. Once it starts, the device remembers it, and it
+ * never shows again (Learn can start it on purpose).
+ */
+const GUIDED_KEY = "conquerra.guided";
+export function guideSeen(): boolean {
+  try {
+    return !!localStorage.getItem(GUIDED_KEY);
+  } catch {
+    return true;
+  }
+}
+export function markGuideSeen() {
+  try {
+    localStorage.setItem(GUIDED_KEY, "1");
+  } catch {
+    // A private window: it won't come back this visit anyway.
+  }
+}
+/** A brand-new player here: no saved games, no lesson done, the guide never shown. */
+export const shouldGuide = (savedGames: number) => savedGames === 0 && learned().length === 0 && !guideSeen();
+
+/** The next game that starts gets the guide (the lobby's Start for a new player, or Learn's line). */
+let armed = false;
+export const armGuide = () => void (armed = true);
+export function takeArmedGuide(): boolean {
+  const was = armed;
+  armed = false;
+  return was;
+}

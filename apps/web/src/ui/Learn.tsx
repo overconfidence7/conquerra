@@ -1,6 +1,6 @@
 import { nextTutorial, TUTORIALS, type TutorialDef } from "@conquerra/content/tutorials";
 import { useState } from "react";
-import { learned } from "../tutorials/learned";
+import { armGuide, guideSeen, learned } from "../tutorials/learned";
 import { startLesson } from "../tutorials/run";
 import { useGame } from "../store";
 import "./learn.css";
@@ -14,7 +14,33 @@ export const LEARN_UI = {
   minutes: (n: number) => `about ${n} minutes`,
   done: "Done",
   starting: "Starting…",
+  guided: "The guided first game",
+  guidedLine: "A game against the bots, with three pointers on turn 1.",
 } as const;
+
+/** Learn's last line (session 31): the guided first game, on purpose (it starts the lobby's game with the guide). */
+function GuidedGame() {
+  const busy = useGame((s) => s.busy);
+  const seen = guideSeen();
+  return (
+    <button
+      className={`lesson ${seen ? "done" : ""}`}
+      disabled={busy}
+      onClick={() => {
+        armGuide();
+        void useGame.getState().start();
+      }}
+    >
+      <span className="lesson-tick" aria-label={seen ? LEARN_UI.done : undefined}>
+        {seen ? "✓" : "★"}
+      </span>
+      <span className="lesson-words">
+        <b>{LEARN_UI.guided}</b>
+        <span className="small muted block">{LEARN_UI.guidedLine}</span>
+      </span>
+    </button>
+  );
+}
 
 export function LessonList({ list }: { list: readonly TutorialDef[] }) {
   const busy = useGame((s) => s.busy);
@@ -49,5 +75,10 @@ export function LessonList({ list }: { list: readonly TutorialDef[] }) {
 }
 
 export default function LearnBlock() {
-  return <LessonList list={TUTORIALS.filter((t) => t.kind === "tutorial")} />;
+  return (
+    <>
+      <LessonList list={TUTORIALS.filter((t) => t.kind === "tutorial")} />
+      <GuidedGame />
+    </>
+  );
 }
