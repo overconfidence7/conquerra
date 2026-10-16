@@ -71,7 +71,8 @@ describe("the Marshal's words (session 22)", () => {
 describe("the Marshal: fair play", () => {
   it("is deterministic: the same seed gives the same game, deals and all", () => {
     expect(play("m-det", fourOf()).transcript).toBe(play("m-det", fourOf()).transcript);
-  });
+    // (Session 32: headroom; two whole games, about 1.3 s alone, beside the suite's heavier tests.)
+  }, 30_000);
 
   it("no pooled sight: one Marshal bot playing every seat plans exactly as a separate bot for each seat", () => {
     const one = makeMarshalBot("schemer");
