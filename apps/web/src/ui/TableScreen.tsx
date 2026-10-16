@@ -1,4 +1,4 @@
-import { mapNameOf } from "../logic/mapListing";
+import { mapNameOf } from "../logic/mapName";
 import { useEffect, useState } from "react";
 import { closeTable, refreshMe, setMyName, setOnlineLobby, tableAct, tableLink } from "../host/onlineActions";
 import { TABLE_TEXT } from "../host/roomText";

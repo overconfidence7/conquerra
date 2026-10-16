@@ -16,11 +16,14 @@ export type RandomShape = "island" | "archipelago" | "twins" | "crescent" | "inl
  * Fewer than the official maps' ten at 120: each count is one more layout that must pass.
  */
 export const RANDOM_PLAYERS: Record<RandomSize, { min: number; max: number; recommended: { min: number; max: number } }> = {
-  40: { min: 2, max: 6, recommended: { min: 3, max: 5 } },
-  80: { min: 2, max: 8, recommended: { min: 4, max: 6 } },
-  120: { min: 2, max: 8, recommended: { min: 5, max: 8 } },
-  200: { min: 2, max: 10, recommended: { min: 7, max: 10 } },
+  40: players(6, 3, 5),
+  80: players(8, 4, 6),
+  120: players(8, 5, 8),
+  200: players(10, 7, 10),
 };
+function players(max: number, low: number, high: number) {
+  return { min: 2, max, recommended: { min: low, max: high } };
+}
 
 /** What each shape is called in a sentence ("80 territories, a crescent"). */
 export const RANDOM_SHAPE_A: Record<RandomShape, string> = { island: "one island", archipelago: "an archipelago", twins: "twin continents", crescent: "a crescent", inland: "an inland sea" };
@@ -28,7 +31,7 @@ export const RANDOM_SHAPE_A: Record<RandomShape, string> = { island: "one island
 /** The players a random map suits, by size and shape (a small archipelago has room for five Houses at most). */
 export function randomPlayers(size: RandomSize, shape: RandomShape): (typeof RANDOM_PLAYERS)[RandomSize] {
   const p = RANDOM_PLAYERS[size];
-  return size === 40 && shape === "archipelago" ? { min: 2, max: 5, recommended: { min: 3, max: 5 } } : p;
+  return size === 40 && shape === "archipelago" ? players(5, 3, 5) : p;
 }
 
 

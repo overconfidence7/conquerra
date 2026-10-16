@@ -5,7 +5,8 @@ import { HostCore } from "../src/host/hostCore";
 import { loadGameMap } from "../src/host/gameMaps";
 import type { LobbySettings } from "../src/host/protocol";
 import { memorySaveStore } from "../src/host/saves";
-import { listingOf, mapNameOf, randomLine } from "../src/logic/mapListing";
+import { listingOf, randomLine } from "../src/logic/mapListing";
+import { mapNameOf } from "../src/logic/mapName";
 
 /**
  * Session 30, Part 2: random maps in single player. The game stores the map's id and the map maker's version; Continue

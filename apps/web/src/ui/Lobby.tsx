@@ -239,7 +239,7 @@ export function Lobby() {
                 </option>
               ))}
               {random && <option value={lobby.mapId}>Random map · {randomLine(random)}</option>}
-              <option value={RANDOM_CHOICE}>{random ? "Another random map" : "Random map"}</option>
+              <option value={RANDOM_CHOICE}>Random map</option>
             </select>
           </label>
           {MAP_SUITS[map.id] && <span className="muted small">{MAP_SUITS[map.id]}</span>}
