@@ -7,7 +7,7 @@
     "name": "Your leaders",
     "blurb": "Commands and budgets: your Leader and Steward play turns for you.",
     "opening": "You don't have to order every army yourself. Your Leader takes commands, your Steward builds, and each spends from a purse you fill with a budget. Fairmark lies empty next door.",
-    "goal": "Give your Leader a command and a budget, then let your leaders take all of Fairmark by turn 5.",
+    "goal": "Give your Leader a command and a budget, then let your leaders take all of Fairmark by turn 6.",
     "met": "Your leaders took Fairmark",
     "hints": [
       "Open the Leaders panel, tap Command, pick Expand our empire in this direction, and tap Nettlemoor. It plans its own attacks.",
@@ -41,7 +41,10 @@
           "troops": 10
         }
       }
-    }
+    },
+    "turns": [
+      []
+    ]
   },
   "goal": {
     "turns": 4,
