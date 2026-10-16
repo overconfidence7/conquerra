@@ -1,0 +1,164 @@
+{
+  "id": "siege-of-highmouth",
+  "kind": "scenario",
+  "order": 8,
+  "minutes": 15,
+  "words": {
+    "name": "The Siege of Highmouth",
+    "blurb": "Lady Morwen holds Rush March behind Highmouth's fort. You have 10 turns to take it.",
+    "opening": "Highmouth guards the road into Rush March, and Lady Morwen has put a fort and her best troops there. You have the army for it, and 10 turns. No hints this time.",
+    "goal": "Take Highmouth and all of Rush March by turn 11.",
+    "met": "Highmouth and Rush March are yours",
+    "hints": [],
+    "closing": "Highmouth is yours. Lady Morwen will want it back, but that's another game."
+  },
+  "recipe": {
+    "map": "embervale",
+    "seed": "scenario-siege-of-highmouth",
+    "bots": 1,
+    "botLevel": "captain",
+    "rules": {
+      "fog": true,
+      "fate": false,
+      "diplomacy": false
+    },
+    "place": {
+      "territories": {
+        "t22": {
+          "owner": "you",
+          "troops": 24
+        },
+        "t16": {
+          "owner": "you",
+          "troops": 4
+        },
+        "t11": {
+          "owner": "you",
+          "troops": 4
+        },
+        "t29": {
+          "owner": "bot1",
+          "troops": 10,
+          "culture": 2,
+          "building": "fort"
+        },
+        "t28": {
+          "owner": "bot1",
+          "troops": 4
+        },
+        "t31": {
+          "owner": "bot1",
+          "troops": 3
+        },
+        "t34": {
+          "owner": "bot1",
+          "troops": 4
+        }
+      },
+      "you": {
+        "gold": 40
+      }
+    }
+  },
+  "goal": {
+    "turns": 10,
+    "all": [
+      {
+        "kind": "hold",
+        "territories": [
+          "t29"
+        ]
+      },
+      {
+        "kind": "province",
+        "province": "p6"
+      }
+    ]
+  },
+  "solution": [
+    [
+      {
+        "kind": "recruit",
+        "territory": "t22",
+        "count": "all"
+      },
+      {
+        "kind": "move",
+        "from": "t22",
+        "to": "t29",
+        "troops": "all"
+      },
+      {
+        "kind": "move",
+        "from": "t23",
+        "to": "t22",
+        "troops": "all"
+      }
+    ],
+    [
+      {
+        "kind": "recruit",
+        "territory": "t22",
+        "count": "all"
+      },
+      {
+        "kind": "move",
+        "from": "t29",
+        "to": "t34",
+        "troops": {
+          "share": 0.75
+        }
+      },
+      {
+        "kind": "move",
+        "from": "t34",
+        "to": "t31",
+        "troops": "all"
+      },
+      {
+        "kind": "move",
+        "from": "t22",
+        "to": "t29",
+        "troops": "all"
+      }
+    ],
+    [
+      {
+        "kind": "recruit",
+        "territory": "t22",
+        "count": "all"
+      },
+      {
+        "kind": "move",
+        "from": "t29",
+        "to": "t28",
+        "troops": "all"
+      },
+      {
+        "kind": "move",
+        "from": "t22",
+        "to": "t29",
+        "troops": "all"
+      }
+    ],
+    [
+      {
+        "kind": "recruit",
+        "territory": "t22",
+        "count": "all"
+      },
+      {
+        "kind": "move",
+        "from": "t22",
+        "to": "t29",
+        "troops": "all"
+      }
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+  ]
+}

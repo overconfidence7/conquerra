@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { SLOTS, type SlotId } from "../host/saves";
 import { emptyAutosaveLine, lastFinished, savedWhen, slotLine } from "./saveText";
 import { useGame } from "../store";
+import { lessonFromFile, startLesson } from "../tutorials/run";
 import { BUILD } from "./VersionLine";
 import { Frame } from "./Frame";
 
@@ -81,7 +82,7 @@ export default function SavesDialog({ mode, inGame, onClose }: { mode: "save" | 
         ) : (
           <>
             <button className="menu-item stacked" onClick={() => file.current?.click()} disabled={busy}>
-              Load a file <span className="muted">a game you saved to a file</span>
+              Load a file <span className="muted">a game you saved to a file, or a scenario</span>
             </button>
             <input
               ref={file}
@@ -91,7 +92,15 @@ export default function SavesDialog({ mode, inGame, onClose }: { mode: "save" | 
               onChange={async (e) => {
                 const f = e.target.files?.[0];
                 e.target.value = "";
-                if (f) afterLoad(await load({ file: await f.text() }));
+                if (!f) return;
+                // (Session 31, Part 4: a scenario file loads as a lesson; anything else as a saved game.)
+                const text = await f.text();
+                try {
+                  const lesson = await lessonFromFile(text);
+                  afterLoad(lesson ? await startLesson(lesson, null, true) : await load({ file: text }));
+                } catch (err) {
+                  useGame.setState({ error: err instanceof Error ? err.message : String(err) });
+                }
               }}
             />
             {inGame && <p className="muted small">Loading leaves this game. Save it to a slot first if you want to come back to it.</p>}

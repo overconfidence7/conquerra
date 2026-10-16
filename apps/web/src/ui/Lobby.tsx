@@ -336,6 +336,12 @@ export function Lobby() {
             {busy && starting ? "Starting…" : auto ? "Start a new game" : "Start"}
           </button>
         </div>
+        {/* Session 31: someone who has never played gets one line: Learn is open below, or jump straight in. */}
+        {shouldGuide(slots.length) && (
+          <p className="muted small jump-in">
+            Or jump in: a {players}-player game on {random ? "a random map" : map.name}
+          </p>
+        )}
         {/* Learn (session 31): the lessons, under Start. */}
         <Fold name="learn" title="Learn" summary={learnSummary(learned().length)}>
           <Suspense fallback={null}>

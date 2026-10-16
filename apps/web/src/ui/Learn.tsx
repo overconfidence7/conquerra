@@ -1,6 +1,6 @@
 import { nextTutorial, TUTORIALS, type TutorialDef } from "@conquerra/content/tutorials";
 import { useState } from "react";
-import { armGuide, guideSeen, learned } from "../tutorials/learned";
+import { armGuide, guideSeen, learned, scenariosDone } from "../tutorials/learned";
 import { startLesson } from "../tutorials/run";
 import { useGame } from "../store";
 import "./learn.css";
@@ -15,6 +15,8 @@ export const LEARN_UI = {
   done: "Done",
   starting: "Starting…",
   guided: "The guided first game",
+  scenarios: "Scenarios",
+  scenarioLine: "A set piece with a goal and no hints. Load a file takes a scenario file too.",
   guidedLine: "A game against the bots, with three pointers on turn 1.",
 } as const;
 
@@ -45,7 +47,7 @@ function GuidedGame() {
 export function LessonList({ list }: { list: readonly TutorialDef[] }) {
   const busy = useGame((s) => s.busy);
   const [starting, setStarting] = useState<string | null>(null);
-  const done = new Set(learned());
+  const done = new Set([...learned(), ...scenariosDone()]);
   return (
     <ol className="lessons">
       {list.map((t) => (
@@ -59,7 +61,7 @@ export function LessonList({ list }: { list: readonly TutorialDef[] }) {
             }}
           >
             <span className="lesson-tick" aria-label={done.has(t.id) ? LEARN_UI.done : undefined}>
-              {done.has(t.id) ? "✓" : t.order}
+              {done.has(t.id) ? "✓" : t.kind === "scenario" ? "⚑" : t.order}
             </span>
             <span className="lesson-words">
               <b>{t.words.name}</b>
@@ -79,6 +81,10 @@ export default function LearnBlock() {
     <>
       <LessonList list={TUTORIALS.filter((t) => t.kind === "tutorial")} />
       <GuidedGame />
+      {/* Part 4: scenarios, the same format without hints. */}
+      <span className="field-name lessons-head">{LEARN_UI.scenarios}</span>
+      <span className="muted small">{LEARN_UI.scenarioLine}</span>
+      <LessonList list={TUTORIALS.filter((t) => t.kind === "scenario")} />
     </>
   );
 }

@@ -3,23 +3,28 @@
  * start-up bundle (the Learn fold's line counts them); the lessons themselves load only when Learn is opened.
  */
 const KEY = "conquerra.learned";
+/** Scenarios done (Part 4) are kept apart, so the lessons' count stays the lessons'. */
+const SCENARIO_KEY = "conquerra.scenarios";
 /** How many tutorials there are (the fold's line says "3 of 7 done" without loading them; a test keeps it true). */
 export const LESSON_COUNT = 7;
 
-export function learned(): string[] {
+export function learned(key: string = KEY): string[] {
   try {
-    const v = JSON.parse(localStorage.getItem(KEY) ?? "[]") as unknown;
+    const v = JSON.parse(localStorage.getItem(key) ?? "[]") as unknown;
     return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
   } catch {
     return [];
   }
 }
 
-export function markLearned(id: string) {
-  const all = learned();
+export const scenariosDone = () => learned(SCENARIO_KEY);
+
+export function markLearned(id: string, kind: "tutorial" | "scenario" = "tutorial") {
+  const key = kind === "scenario" ? SCENARIO_KEY : KEY;
+  const all = learned(key);
   if (all.includes(id)) return;
   try {
-    localStorage.setItem(KEY, JSON.stringify([...all, id]));
+    localStorage.setItem(key, JSON.stringify([...all, id]));
   } catch {
     // A private window: remembered for this visit only (the tick shows until the page closes).
   }

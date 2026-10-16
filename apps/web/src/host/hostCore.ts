@@ -4,6 +4,7 @@ import { readSave, type Instruction, type Offer, type Order, type PlayerId, type
 import { LocalGame } from "./localGame";
 import type { HostStart, HostUpdate, LeaderOrders, LobbySettings, LoadSource } from "./protocol";
 import { saveErrorFor, type SaveStore, type SlotId, type SlotInfo } from "./saves";
+import { SCENARIO_FILE_PROBLEM } from "../tutorials/goal";
 
 /** How long your queue must be still before the autosave keeps it (ms). */
 export const QUEUE_SAVE_MS = 1500;
@@ -109,9 +110,12 @@ export class HostCore {
    * Session 31: a tutorial, its saved game made from its recipe here (the tutorials load only now). It plays as any
    * single-player game, except that it never touches the autosave: Continue still picks up your own game.
    */
-  private async startTutorial(source: { tutorial: string; house?: number; leaderName?: string }): Promise<HostStart> {
-    const [{ tutorialById }, { buildTutorial }] = await Promise.all([import("@conquerra/content/tutorials"), import("../tutorials/build")]);
-    const def = tutorialById(source.tutorial);
+  private async startTutorial(source: { tutorial: string; house?: number; leaderName?: string; def?: unknown }): Promise<HostStart> {
+    const [{ tutorialById, TutorialDef }, { buildTutorial }] = await Promise.all([import("@conquerra/content/tutorials"), import("../tutorials/build")]);
+    // (Part 4: a scenario from a file comes with its own file, checked here as the game's own are.)
+    const parsed = source.def === undefined ? null : TutorialDef.safeParse(source.def);
+    if (parsed && !parsed.success) throw new Error(SCENARIO_FILE_PROBLEM);
+    const def = parsed?.data ?? tutorialById(source.tutorial);
     if (!def) throw new Error("That lesson isn't in this version of the game.");
     const map = await this.loadMap(def.recipe.map);
     const save = buildTutorial(def, map, { ...(source.house !== undefined ? { house: source.house } : {}), ...(source.leaderName ? { leaderName: source.leaderName } : {}) }, this.now);

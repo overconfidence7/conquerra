@@ -273,7 +273,7 @@ export type LoadSource =
   | { file: string }
   | { online: string; code?: string }
   /** Session 31: a tutorial by its id, its saved game made from its recipe (with your colour and Leader's name). */
-  | { tutorial: string; house?: number; leaderName?: string };
+  | { tutorial: string; house?: number; leaderName?: string; def?: unknown };
 
 export interface GameHost {
   start(settings: LobbySettings): Promise<HostStart>;

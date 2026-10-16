@@ -67,6 +67,9 @@ export function goalState(def: Pick<TutorialDef, "goal">, map: MapDef, view: Pla
 /** The turn the goal is due by ("by turn 3"). */
 export const dueTurn = (def: Pick<TutorialDef, "goal">, startTurn: number) => startTurn + def.goal.turns;
 
+/** Session 31: a scenario file that doesn't read as one. */
+export const SCENARIO_FILE_PROBLEM = "This scenario file can't be read: something in it is missing or out of range.";
+
 export const GOAL_TEXT = {
   done: (met: string) => `Goal: ${met}. Done.`,
   open: (left: number) => (left === 1 ? "Goal: not yet, this is the last turn" : `Goal: not yet, ${left} turns left`),

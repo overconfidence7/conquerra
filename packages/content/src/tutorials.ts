@@ -6,6 +6,7 @@ import holdTheWall from "../data/tutorials/04-hold-the-wall.json";
 import fateAndSpoils from "../data/tutorials/05-fate-and-spoils.json";
 import makeADeal from "../data/tutorials/06-make-a-deal.json";
 import yourLeaders from "../data/tutorials/07-your-leaders.json";
+import siegeOfHighmouth from "../data/tutorials/08-siege-of-highmouth.json";
 
 /**
  * Tutorials (session 31): each one is a short saved game that teaches one thing, as data. A file in
@@ -130,13 +131,13 @@ export const TutorialDef = z
     /** Your orders, turn by turn, that reach the goal (the test plays them). */
     solution: z.array(z.array(OrderSpec)).min(1),
   })
-  .refine((t) => t.kind === "scenario" || t.words.hints.length >= 1, "a tutorial has at least one hint")
+  .refine((t) => (t.kind === "scenario" ? t.words.hints.length === 0 : t.words.hints.length >= 1), "a tutorial has at least one hint, a scenario none")
   .refine((t) => t.solution.length <= t.goal.turns, "the solution fits in the goal's turns");
 export type TutorialDef = z.infer<typeof TutorialDef>;
 export type OrderSpec = z.infer<typeof OrderSpec>;
 
 /** Every tutorial and scenario, in the order Learn lists them. */
-export const TUTORIALS: TutorialDef[] = [takeTheField, raiseAnArmy, buildAndGrow, holdTheWall, fateAndSpoils, makeADeal, yourLeaders].map((t) => TutorialDef.parse(t)).sort((a, b) => a.order - b.order);
+export const TUTORIALS: TutorialDef[] = [takeTheField, raiseAnArmy, buildAndGrow, holdTheWall, fateAndSpoils, makeADeal, yourLeaders, siegeOfHighmouth].map((t) => TutorialDef.parse(t)).sort((a, b) => a.order - b.order);
 
 export const tutorialById = (id: string): TutorialDef | undefined => TUTORIALS.find((t) => t.id === id);
 

@@ -6,7 +6,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { memorySaveStore } from "../src/host/saves";
 import { setHostFactory, useGame } from "../src/store";
 import { LESSON_COUNT, learned, learnSummary, markLearned } from "../src/tutorials/learned";
-import { hintFor, startLesson, useLesson } from "../src/tutorials/run";
+import { hintFor, lessonFromFile, startLesson, useLesson } from "../src/tutorials/run";
+import { SCENARIO_FILE_PROBLEM } from "../src/tutorials/goal";
+import { scenariosDone } from "../src/tutorials/learned";
 import { inProcessHost } from "./inProcessHost";
 import { ordersOf } from "../src/tutorials/build";
 
@@ -79,6 +81,43 @@ describe("Learn (session 31)", () => {
     useGame.getState().playAgain();
     expect(useLesson.getState().run).toBeNull();
   }, 60_000);
+
+  it("Part 4: a scenario is a lesson without hints, listed apart; done is kept apart from the lessons' count", () => {
+    const scenarios = TUTORIALS.filter((t) => t.kind === "scenario");
+    expect(scenarios.map((s) => s.words.name)).toEqual(["The Siege of Highmouth"]);
+    expect(scenarios[0]!.words.hints).toEqual([]);
+    expect(scenarios[0]!.goal.turns).toBe(10);
+    expect(src("ui/Learn.tsx")).toContain('scenarios: "Scenarios"');
+    markLearned("siege-of-highmouth", "scenario");
+    expect(learned()).not.toContain("siege-of-highmouth");
+    expect(scenariosDone()).toEqual(["siege-of-highmouth"]);
+  });
+
+  it("Part 4: Load a file takes a scenario file (the same format), and says plainly when one doesn't check", async () => {
+    const file = readFileSync(join(here, "../../../packages/content/data/tutorials/08-siege-of-highmouth.json"), "utf8");
+    expect((await lessonFromFile(file))?.id).toBe("siege-of-highmouth");
+    expect(await lessonFromFile(JSON.stringify({ format: "conquerra-save", version: 2 }))).toBeNull();
+    expect(await lessonFromFile("not json")).toBeNull();
+    const broken = { ...JSON.parse(file), recipe: { ...JSON.parse(file).recipe, map: "rootholm" } };
+    await expect(lessonFromFile(JSON.stringify(broken))).rejects.toThrow(SCENARIO_FILE_PROBLEM);
+    // The host builds a file's own scenario, and never touches the autosave for it.
+    const store = memorySaveStore();
+    const host = inProcessHost("unused", store);
+    const start = await host.load({ tutorial: "my-own", def: JSON.parse(file) });
+    expect(start.view.territories.t29).toMatchObject({ owner: "bot1" });
+    host.core.saveQueued();
+    await host.core.flush();
+    expect(await store.get("auto")).toBeNull();
+    await expect(host.load({ tutorial: "x", def: broken })).rejects.toThrow(SCENARIO_FILE_PROBLEM);
+    expect(src("ui/Saves.tsx")).toContain("lessonFromFile(text)");
+  });
+
+  it("Part 4: the lobby for someone who has never played: Learn open on a first visit, and one line under Start", () => {
+    const lobby = src("ui/Lobby.tsx");
+    expect(lobby).toMatch(/Or jump in: a \{players\}-player game on \{random \? "a random map" : map\.name\}/);
+    expect(lobby).toMatch(/\{shouldGuide\(slots\.length\) && \(\s*<p className="muted small jump-in">/);
+    expect(lobby.indexOf("jump-in")).toBeLessThan(lobby.indexOf('name="learn"'));
+  });
 
   it("the game screen: the goal card on a desktop, the Goal tab first on a phone, the Done card, the report's first line", () => {
     const gs = src("ui/GameScreen.tsx");

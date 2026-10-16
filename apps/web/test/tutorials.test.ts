@@ -84,7 +84,8 @@ describe("the tutorials (session 31)", () => {
     for (const def of TUTORIALS) {
       const map = maps[def.recipe.map]!;
       expect(def.words.hints.length).toBeLessThanOrEqual(4);
-      expect(def.words.hints.length).toBeGreaterThanOrEqual(1);
+      // (A scenario has no hints: Part 4.)
+      expect(def.words.hints.length >= 1).toBe(def.kind === "tutorial");
       for (const h of def.words.hints) expect(words(h), h).toBeLessThan(25);
       expect(words(def.words.goal)).toBeLessThan(40);
       for (const c of def.goal.all) {
