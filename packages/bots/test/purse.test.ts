@@ -1,4 +1,5 @@
-import { defaultRules, MapDef } from "@conquerra/content";
+import { defaultRules } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import { createGame, findLeader, leaderKey, resolveTurn, viewFor, type GameContext, type Order } from "@conquerra/engine";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";

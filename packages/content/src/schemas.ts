@@ -1,9 +1,9 @@
 import { z } from "zod";
+export { BIOME_CODES, SPECIALIST_TYPES } from "./plain";
 
 /** Specialists: one-off attachments an army can carry (max 2 per army). */
 export const SpecialistType = z.enum(["cavalry", "siege", "scouts", "engineers", "healers", "rangers", "standardBearer"]);
 export type SpecialistType = z.infer<typeof SpecialistType>;
-export const SPECIALIST_TYPES: readonly SpecialistType[] = ["cavalry", "siege", "scouts", "engineers", "healers", "rangers", "standardBearer"] as const;
 
 export const BuildingType = z.enum(["fort", "market", "barracks", "watchtower"]);
 export type BuildingType = z.infer<typeof BuildingType>;
@@ -36,19 +36,6 @@ const Point = z.object({ x: z.number(), y: z.number() });
 /** Ground types for painting. The info layer never reads these. */
 export const Biome = z.enum(["grass", "farmland", "forest", "hills", "rock", "snow", "swamp", "sand", "shallow", "deep"]);
 export type Biome = z.infer<typeof Biome>;
-/** One character per biome in the biome grid. */
-export const BIOME_CODES: Record<Biome, string> = {
-  grass: "g",
-  farmland: "a",
-  forest: "f",
-  hills: "h",
-  rock: "r",
-  snow: "s",
-  swamp: "w",
-  sand: "d",
-  shallow: "o",
-  deep: "O",
-};
 
 export const DecorationKind = z.enum(["tree-conifer", "tree-broadleaf", "peak", "hill", "village", "town"]);
 export type DecorationKind = z.infer<typeof DecorationKind>;

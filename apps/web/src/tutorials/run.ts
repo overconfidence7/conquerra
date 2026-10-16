@@ -28,12 +28,18 @@ export interface LessonRun {
   gameId: string;
 }
 
-export const useLesson = create<{ run: LessonRun | null }>(() => ({ run: null }));
+/**
+ * `goalInView` (session 32): the goal card is open on screen (a desktop's card unfolded, or a phone's Goal tab with the
+ * sheet open). Its "This turn" line already says the hint then, so the quiet notice doesn't repeat it. A lesson starts
+ * with it open on both.
+ */
+export const useLesson = create<{ run: LessonRun | null; goalInView: boolean }>(() => ({ run: null, goalInView: true }));
+export const setGoalInView = (v: boolean) => useLesson.getState().goalInView !== v && useLesson.setState({ goalInView: v });
 
 /** Start a lesson (or start it again): its saved game is made from its recipe by the host. */
 export async function startLesson(def: TutorialDef, next: TutorialDef | null, inline = false): Promise<boolean> {
   const { lobby } = useGame.getState();
-  useLesson.setState({ run: null });
+  useLesson.setState({ run: null, goalInView: true });
   const ok = await enterGame((host) => host.load({ tutorial: def.id, ...(inline ? { def } : {}), ...(lobby.house !== undefined ? { house: lobby.house } : {}), ...(lobby.leaderName ? { leaderName: lobby.leaderName } : {}) }));
   const { view, ctx, host } = useGame.getState();
   if (!ok || !view || !ctx || !host) return false;
@@ -60,7 +66,7 @@ export async function lessonFromFile(text: string): Promise<TutorialDef | null> 
   return parsed.data;
 }
 
-export const foldGoal = (folded: boolean) => useLesson.setState((s) => (s.run ? { run: { ...s.run, folded } } : s));
+export const foldGoal = (folded: boolean) => useLesson.setState((s) => (s.run ? { run: { ...s.run, folded }, goalInView: !folded } : s));
 export const closeLessonCard = () => useLesson.setState((s) => (s.run ? { run: { ...s.run, closed: true } } : s));
 
 /** The hint for this turn of the lesson (one a turn, from the file), or null. */
@@ -89,7 +95,7 @@ function watch() {
     if (!g.replay && next.state.kind === "open" && next.hinted < g.view.turn) {
       next = { ...next, hinted: g.view.turn };
       const hint = hintFor(next, g.view.turn);
-      if (hint) showNotice(hint, true);
+      if (hint && !useLesson.getState().goalInView) showNotice(hint, true);
     }
     if (next !== run) useLesson.setState({ run: next });
   };

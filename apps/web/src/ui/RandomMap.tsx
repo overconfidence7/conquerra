@@ -29,9 +29,29 @@ export function progressLine(done: number): string {
   return attempt > 1 ? `${pct}%, try ${attempt} of ${RANDOM_TRIES}` : `${pct}%`;
 }
 
-/** A random map's id with a fresh seed (the page's dice; the map maker never draws one). */
-export function freshRandomId(size: RandomSize = 80, shape: RandomShape = "island"): string {
-  return `${RANDOM_PREFIX}${randomMapId(size, shape, newSeedWords(Math.random))}`;
+/** Session 32: a rolled seed that doesn't make a fair map rolls again by itself, up to this many seeds in all. */
+export const ROLL_SEEDS = 12;
+/** Ids the page rolled (Reroll, the lobby's fresh seed), with the seeds still to try after each. A typed seed isn't here. */
+const rolled = new Map<string, number>();
+
+/** A random map's id with a fresh seed (the page's dice; the map maker never draws one). It rolls on if it fails. */
+export function freshRandomId(size: RandomSize = 80, shape: RandomShape = "island", left = ROLL_SEEDS - 1): string {
+  const id = `${RANDOM_PREFIX}${randomMapId(size, shape, newSeedWords(Math.random))}`;
+  rolled.set(id, left);
+  if (rolled.size > 64) rolled.delete(rolled.keys().next().value!);
+  return id;
+}
+
+/**
+ * A map that failed: if the page rolled its seed and has seeds left, the next roll's id (the player never sees "That
+ * seed didn't make a fair map" from a roll, and the words shown are the ones that worked); else null (a typed seed
+ * had its six tries, or twelve rolled seeds all failed: the plain line shows).
+ */
+export function rollOn(mapId: string): string | null {
+  const left = rolled.get(mapId);
+  const r = parseRandomId(mapId);
+  if (!r || !left || left < 1) return null;
+  return freshRandomId(r.size, r.shape, left - 1);
 }
 
 export default function RandomMapPanel() {
@@ -52,16 +72,24 @@ export default function RandomMapPanel() {
         if (useGame.getState().lobby.mapId === mapId) useGame.setState({ randomPreview: { mapId, preview: p, problem: null } });
       },
       (e: unknown) => {
-        if (useGame.getState().lobby.mapId === mapId) useGame.setState({ randomPreview: { mapId, preview: null, problem: e instanceof Error ? e.message : RANDOM_TEXT.failed } });
+        if (useGame.getState().lobby.mapId !== mapId) return;
+        const next = rollOn(mapId);
+        if (next) return useGame.getState().setLobby({ mapId: next });
+        useGame.setState({ randomPreview: { mapId, preview: null, problem: e instanceof Error ? e.message : RANDOM_TEXT.failed } });
       },
     );
   }, [mapId]);
   if (!r) return null;
-  const go = (size: RandomSize, shape: RandomShape, seed: string) => setLobby({ mapId: `${RANDOM_PREFIX}${randomMapId(size, shape, seed)}` });
+  const go = (size: RandomSize, shape: RandomShape, seed: string, typedSeed = false) => {
+    const id = `${RANDOM_PREFIX}${randomMapId(size, shape, seed)}`;
+    // A rolled seed at another size or shape still rolls on if it fails; a typed one is the player's own.
+    if (!typedSeed && rolled.has(mapId)) rolled.set(id, ROLL_SEEDS - 1);
+    setLobby({ mapId: id });
+  };
   const useTyped = () => {
     const s = cleanSeed(typed);
     setTypo(!s);
-    if (s) (go(r.size, r.shape, s), setTyped(""));
+    if (s) (go(r.size, r.shape, s, true), setTyped(""));
   };
   return (
     <div className="random-map">
@@ -90,7 +118,7 @@ export default function RandomMapPanel() {
       </div>
       <div className="random-seed">
         <span className="field-name">{RANDOM_UI.seed}</span> <b className="seed-words">{r.seed}</b>{" "}
-        <button className="small" onClick={() => go(r.size, r.shape, newSeedWords(Math.random))}>
+        <button className="small" onClick={() => setLobby({ mapId: freshRandomId(r.size, r.shape) })}>
           {RANDOM_UI.reroll}
         </button>
       </div>

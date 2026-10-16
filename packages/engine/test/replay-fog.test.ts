@@ -1,4 +1,5 @@
-import { MapDef, SPECIALIST_TYPES } from "@conquerra/content";
+import { SPECIALIST_TYPES } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {

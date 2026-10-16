@@ -369,7 +369,7 @@
       "culturePays": 0.3,
       "walls": { "near": 18, "each": 1 },
       "styles": { "turtle": { "fortThreat": 3, "culture": 2, "walls": 39 }, "merchant": { "culturePays": 0.3, "walls": 18 } },
-      "plan": { "threat": 4, "chokeForts": true, "runaway": "near" },
+      "plan": { "threat": 4, "chokeForts": true, "runaway": "near", "steady": "all", "rush": "all" },
       "handBackTurns": 2,
       "handBackMin": 5,
       "lesson": { "lengths": [[40, 22], [120, 36], [200, 44]], "spare": 1 }

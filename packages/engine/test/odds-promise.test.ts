@@ -1,6 +1,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { Terrain, type SpecialistType } from "@conquerra/content";
+import { type SpecialistType } from "@conquerra/content";
+import { Terrain } from "@conquerra/content/schemas";
 import { previewAttack, resolveTurn, viewFor } from "../src";
 import { board, ctxWith, find, lineGame, lineMap, mv } from "./helpers";
 

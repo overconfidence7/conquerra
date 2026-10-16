@@ -1,4 +1,5 @@
-import { MapDef, type BorderType, type Rules, type Terrain } from "@conquerra/content";
+import { type BorderType, type Rules, type Terrain } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import { Rng, seedRng } from "@conquerra/engine";
 import { applyBarriers, pairKey, pairOf, planBarriers, touching } from "./barriers";
 import { findLayout } from "./capitals";

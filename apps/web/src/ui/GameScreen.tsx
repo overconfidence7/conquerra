@@ -47,7 +47,7 @@ import { ambience, closenessOf, waterInView } from "../sound/ambience";
 import { typicalTerritorySize } from "../map/zoom";
 import { houseOf } from "../map/houses";
 import { namer, startBonusLine } from "../logic/text";
-import { useLesson } from "../tutorials/run";
+import { setGoalInView, useLesson } from "../tutorials/run";
 import { GoalBody, GoalCard, LESSON_UI, LessonEnd } from "./Lesson";
 import { Guide } from "./Guide";
 import "./replay.css";
@@ -408,6 +408,10 @@ export function GameScreen() {
   useEffect(() => {
     if (phone && lessonKey) (setTab("goal"), setSheet("half"));
   }, [lessonKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Session 32: the hint isn't repeated as the notice while the Goal tab is open (the desktop's card says it in Lesson.tsx).
+  useEffect(() => {
+    if (phone && lessonKey) setGoalInView(tab === "goal" && sheet !== "closed");
+  }, [phone, lessonKey, tab, sheet]);
   // Chat (session 28): on a phone it opens in the bottom sheet (its own tab); the sheet closing closes it.
   const chatOpen = useChat((s) => s.open);
   const chatUnread = useChat(unreadAll) + useCouncilUnread();

@@ -36,8 +36,9 @@ for (const f of seen) {
   for (const marker of ["Map lab", "Art test bench", "Sound bench", "generateMap", "Sim this map"]) if (text.includes(marker)) leaked.push(`${f} contains "${marker}"`);
 }
 console.log(`Start-up bundle (what loads before the lobby):\n${rows.join("\n")}\n  total ${(raw / 1024).toFixed(1)} KB, gzip ${(gz / 1024).toFixed(1)} KB`);
-// Session 31: the allowance is Step 0's size (468.1 KB, after the trim and its small fixes) plus 2 KB. A deploy stops above it.
-const ALLOWANCE_KB = 470.1;
+// Session 32: the allowance is Step 0's size (396.2 KB, once Zod left the start-up code: the content data is used as it
+// stands, checked by a test) plus 2 KB. (Session 31: 468.1 plus 2.) A deploy stops above it.
+const ALLOWANCE_KB = 398.2;
 if (raw / 1024 > ALLOWANCE_KB) {
   console.log(`
 The start-up bundle is over its allowance of ${ALLOWANCE_KB} KB. Move something out of the lobby's first paint.`);

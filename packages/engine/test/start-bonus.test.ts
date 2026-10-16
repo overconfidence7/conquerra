@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { defaultRules, MapDef } from "@conquerra/content";
+import { defaultRules } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import { maps } from "@conquerra/content/maps";
 import { createGame, makeSave, readSave, stateFingerprint, STATE_VERSION, viewFor, type GameContext } from "../src";
 

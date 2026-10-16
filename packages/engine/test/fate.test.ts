@@ -1,4 +1,5 @@
-import { defaultRules, MapDef, type FateEvent, type Rules } from "@conquerra/content";
+import { defaultRules, type FateEvent, type Rules } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import { describe, expect, it } from "vitest";
 import { createGame, replayFor, resolveTurn, seedRng, stateFingerprint, viewFor, type GameContext, type GameState, type Mission, type OrdersByPlayer, type StepEvent } from "../src";
 import { embervaleCtx, find, mv, player } from "./helpers";

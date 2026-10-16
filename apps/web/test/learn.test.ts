@@ -63,8 +63,10 @@ describe("Learn (session 31)", () => {
     expect(run.state).toEqual({ kind: "open", turnsLeft: def.goal.turns });
     expect(useGame.getState().view!.turn).toBe(run.startTurn);
     expect(useGame.getState().clock).toBeNull();
-    // This turn's hint is the quiet notice.
-    expect(useGame.getState().notice).toBe(hintFor(run, run.startTurn));
+    // Session 32: the goal card is open as a lesson starts, and its "This turn" line says the hint, so no notice repeats it.
+    expect(useLesson.getState().goalInView).toBe(true);
+    expect(useGame.getState().notice).toBeNull();
+    expect(hintFor(run, run.startTurn)).toBeTruthy();
     // Play the solution.
     for (const [i, turn] of def.solution.entries()) {
       useGame.setState({ queue: ordersOf(turn, i + 1) });

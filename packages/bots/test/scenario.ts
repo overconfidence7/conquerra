@@ -1,4 +1,5 @@
-import { defaultRules, MapDef, type BorderType, type Terrain } from "@conquerra/content";
+import { defaultRules, type BorderType, type Terrain } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import { createGame, viewFor, type GameContext } from "@conquerra/engine";
 import { captainBot, type Bot } from "../src";
 

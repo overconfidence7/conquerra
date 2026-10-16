@@ -53,3 +53,20 @@ describe("random maps in single player (session 30)", () => {
     await expect(new HostCore(memorySaveStore(), loadGameMap).load({ file: JSON.stringify(file) })).rejects.toThrow(RANDOM_TEXT.oldVersion(1));
   }, 60_000);
 });
+
+describe("a rolled seed that fails rolls on by itself (session 32, Nate's call)", () => {
+  it("Reroll's seed rolls on up to twelve seeds at the same size and shape; a typed seed never does", async () => {
+    const { freshRandomId, rollOn, ROLL_SEEDS } = await import("../src/ui/RandomMap");
+    let id = freshRandomId(120, "crescent");
+    const seen = [id];
+    for (;;) {
+      const next = rollOn(id);
+      if (!next) break;
+      expect(listingOf(next)!.random).toMatchObject({ size: 120, shape: "crescent" });
+      seen.push((id = next));
+    }
+    expect(seen.length).toBe(ROLL_SEEDS);
+    // A seed someone typed is theirs: its six tries, then the line.
+    expect(rollOn("random:120-crescent-quiet-heron")).toBeNull();
+  });
+});

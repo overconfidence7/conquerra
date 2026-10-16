@@ -1,4 +1,5 @@
-import { defaultRules, MapDef } from "@conquerra/content";
+import { defaultRules } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import embervaleJson from "@conquerra/content/data/maps/embervale.json";
 import { indexMap } from "@conquerra/engine";
 import { StrictMode, useEffect, useMemo, useRef, useState } from "react";

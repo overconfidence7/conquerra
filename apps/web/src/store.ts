@@ -228,6 +228,11 @@ interface GameStore {
   closeRecruit(): void;
   /** Recruit at `t`: moves the recruit being edited there, or adds a new one (All). */
   recruitAt(t: TerritoryId): void;
+  /**
+   * The territory panel's Recruit here (session 32): adds a recruit (All) at `t` and stays on the territory panel, so
+   * the next tap on the map selects as usual (the round Recruit button keeps the "Recruit at…" panel and its retargeting).
+   */
+  recruitHere(t: TerritoryId): void;
   /** Change a queued recruit's amount. */
   setRecruitAmount(id: string, count: RecruitAmount): void;
   /** "Recruit somewhere else too": an All recruit becomes 1/2, and the next site you tap gets the rest. */
@@ -759,6 +764,10 @@ export const useGame = create<GameStore>((set, get) => ({
     }
     const id = nextOrderId();
     set({ queue: [...queue, { id, kind: "recruit", territory: t, count: "all" }], recruit: { order: id }, selected: t, draft: null });
+  },
+
+  recruitHere(t) {
+    set({ queue: [...get().queue, { id: nextOrderId(), kind: "recruit", territory: t, count: "all" }], recruit: null, selected: t, draft: null });
   },
 
   setRecruitAmount(id, count) {

@@ -1,4 +1,5 @@
-import { defaultRules, marshalData, MapDef } from "@conquerra/content";
+import { defaultRules, marshalData } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import { createGame, viewFor, type GameContext } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { freshMemory, marshalBoard, think } from "../src";

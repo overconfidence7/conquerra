@@ -1,6 +1,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { defaultRules, MapDef, type Rules, type SpecialistType } from "@conquerra/content";
+import { defaultRules, type Rules, type SpecialistType } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import { createGame, expectBattle, previewAttack, resolveTurn, viewFor, wallDefense, type GameContext, type GameState, type StepEvent } from "../src";
 import { mv } from "./helpers";
 

@@ -233,6 +233,7 @@
         "id": "harvest",
         "weight": 12,
         "tone": "good",
+        "strong": false,
         "effect": "gold",
         "amount": 4
       },
@@ -240,6 +241,7 @@
         "id": "wanderers",
         "weight": 10,
         "tone": "good",
+        "strong": false,
         "effect": "troops",
         "amount": 3,
         "neutral": true
@@ -248,6 +250,7 @@
         "id": "pilgrims",
         "weight": 8,
         "tone": "good",
+        "strong": false,
         "effect": "culture",
         "amount": 1
       },
@@ -255,6 +258,7 @@
         "id": "masons",
         "weight": 6,
         "tone": "good",
+        "strong": false,
         "effect": "finishBuilding"
       },
       {
@@ -271,12 +275,14 @@
         "tone": "good",
         "strong": true,
         "effect": "troops",
-        "amount": 6
+        "amount": 6,
+        "neutral": false
       },
       {
         "id": "ford",
         "weight": 8,
         "tone": "bad",
+        "strong": false,
         "effect": "closeBorder",
         "border": "river"
       },
@@ -284,6 +290,7 @@
         "id": "rockslide",
         "weight": 4,
         "tone": "bad",
+        "strong": false,
         "effect": "closeBorder",
         "border": "pass"
       },
@@ -291,6 +298,7 @@
         "id": "squall",
         "weight": 3,
         "tone": "bad",
+        "strong": false,
         "effect": "closeBorder",
         "border": "sea"
       },
@@ -298,12 +306,14 @@
         "id": "fire",
         "weight": 5,
         "tone": "bad",
+        "strong": false,
         "effect": "burnBuilding"
       },
       {
         "id": "fever",
         "weight": 9,
         "tone": "bad",
+        "strong": false,
         "effect": "sickness",
         "share": 0.25,
         "minTroops": 4
@@ -312,6 +322,7 @@
         "id": "blight",
         "weight": 8,
         "tone": "bad",
+        "strong": false,
         "effect": "gold",
         "amount": -4
       },

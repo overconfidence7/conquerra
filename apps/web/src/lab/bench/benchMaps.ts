@@ -1,4 +1,5 @@
-import { BIOME_CODES, MapDef, type Biome, type BuildingType, type Rules, type SpecialistType, type Terrain } from "@conquerra/content";
+import { BIOME_CODES, type Biome, type BuildingType, type Rules, type SpecialistType, type Terrain } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import { createGame, viewFor, type GameContext, type PlayerView, type TerritoryDetail } from "@conquerra/engine";
 
 /**

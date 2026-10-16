@@ -86,6 +86,6 @@ describe("small fixes (session 31)", () => {
     const art = src("ui/art.ts");
     expect(art).not.toMatch(/^import \{ ArtBook \}/m);
     expect(art).toContain('import("../art/book")');
-    expect(readFileSync(join(here, "../scripts/bundle-size.mjs"), "utf8")).toContain("ALLOWANCE_KB = 470.1");
+    expect(readFileSync(join(here, "../scripts/bundle-size.mjs"), "utf8")).toMatch(/ALLOWANCE_KB = \d+\.\d/);
   });
 });

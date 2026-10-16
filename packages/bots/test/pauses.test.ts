@@ -1,4 +1,5 @@
-import { defaultRules, MapDef, marshalData } from "@conquerra/content";
+import { defaultRules, marshalData } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import { createGame, viewFor, type GameContext, type GameState, type Order } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { chainOn, readBoard } from "../src/board";

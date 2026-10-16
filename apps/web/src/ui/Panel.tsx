@@ -402,7 +402,7 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
 }
 
 function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { selected: TerritoryId }) {
-  const { add, recruitAt, startPath } = useGame();
+  const { add, recruitHere, startPath } = useGame();
   const idx = indexMap(ctx.map);
   const n = namer(ctx, view);
   const def = idx.byId.get(selected)!;
@@ -536,7 +536,7 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
       {site && (
         <div className="action">
           <div className="row">
-            <button disabled={affordable < 1} onClick={() => recruitAt(selected)}>
+            <button disabled={affordable < 1} onClick={() => recruitHere(selected)}>
               Recruit here ({affordable})
             </button>
             <span className="muted small">{ctx.rules.troops.cost} gold each</span>

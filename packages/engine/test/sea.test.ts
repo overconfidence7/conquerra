@@ -1,4 +1,5 @@
-import { defaultRules, MapDef } from "@conquerra/content";
+import { defaultRules } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import { describe, expect, it } from "vitest";
 import { createGame, expectBattle, previewAttack, resolveTurn, viewFor } from "../src";
 import { board, ctxWith, find, lineGame, lineMap, mv } from "./helpers";

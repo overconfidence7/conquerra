@@ -1,4 +1,4 @@
-import { MapDef } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import type { RoomStore } from "../src/host/roomCore";
 import { roomMapsWith } from "../src/host/roomMaps";
 import slimMaps from "./maps.json";

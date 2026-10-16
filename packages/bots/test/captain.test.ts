@@ -1,4 +1,4 @@
-import { defaultRules, MapDef, type BorderType, type Terrain } from "@conquerra/content";
+import { defaultRules, type MapDef, type BorderType, type Terrain } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { createGame, indexMap, isRecruitSiteIn, replayFor, resolveTurn, viewFor, type GameContext, type GameState, type Order, type ReplayEvent } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";

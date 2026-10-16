@@ -10,6 +10,8 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./schemas": "./src/schemas.ts",
+    "./personalities": "./src/personalities.ts",
     "./maps": "./src/maps.ts",
     "./loadMap": "./src/loadMap.ts",
     "./lines": "./src/lines.ts",

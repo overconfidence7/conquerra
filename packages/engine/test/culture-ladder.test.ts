@@ -1,4 +1,5 @@
-import { MapDef, type SpecialistType, type Terrain } from "@conquerra/content";
+import { type SpecialistType, type Terrain } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import { describe, expect, it } from "vitest";
 import { expectBattle, previewAttack, resolveTurn, viewFor, type GameContext, type Order } from "../src";
 import { board, ctxWith, find, lineGame, lineMap, mv, player } from "./helpers";

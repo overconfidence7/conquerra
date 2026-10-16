@@ -1,8 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { defaultRules, mapCatalog, marshalData, suggestedMode } from "../src";
 import { maps } from "../src/maps";
+import rulesJson from "../data/rules.json";
+import personalitiesJson from "../data/personalities.json";
+import leaderNamesJson from "../data/leader-names.json";
+import { LeaderNames, Rules } from "../src/schemas";
+import { MarshalData } from "../src/personalities";
 
 describe("content", () => {
+  // Session 32: the start-up code uses the data files as they are (no Zod in the lobby), so each must already be
+  // exactly what its schema makes: valid, nothing left to a default, nothing the schema would drop. A balance edit that
+  // breaks a schema, or leaves out a field, fails here.
+  it("every data file the game loads is exactly what its schema makes of it", () => {
+    expect(Rules.parse(rulesJson)).toStrictEqual(rulesJson);
+    expect(MarshalData.parse(personalitiesJson)).toStrictEqual(personalitiesJson);
+    expect(LeaderNames.parse(leaderNamesJson)).toStrictEqual(leaderNamesJson);
+    expect(defaultRules).toBe(rulesJson);
+  });
   it("rules parse", () => {
     expect(defaultRules.combat.luck).toBe(0.3);
   });

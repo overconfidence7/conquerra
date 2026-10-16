@@ -1,4 +1,5 @@
-import { defaultRules, MapDef, type Rules } from "@conquerra/content";
+import { defaultRules, type Rules } from "@conquerra/content";
+import { MapDef } from "@conquerra/content/schemas";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
