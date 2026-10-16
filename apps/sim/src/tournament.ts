@@ -5,7 +5,7 @@
  * Seats are listed like `pnpm sim --mix` and rotated each game so nobody keeps a lucky seat. Kinds: captain, recruit,
  * marshal (personalities dealt from the game's seed), marshal-<personality>, expander (session 16's stand-in for a
  * person), and `sighted:<kind>` (that seat plans with fog off: a sharp person piecing everything together).
- * Options: --fog on|off, --diplomacy on|off, --seed prefix, --workers N (default: cores - 1), --out file (JSON lines),
+ * Options: --fog on|off|blackout, --diplomacy on|off, --seed prefix, --workers N (default: cores - 1), --out file (JSON lines),
  * --quiet (no summary).
  */
 import { spawn } from "node:child_process";
@@ -31,7 +31,8 @@ export interface TournamentSpec {
   seats: string[];
   games: number;
   seed: string;
-  fog: boolean;
+  /** Session 32: "blackout" too (land never seen is hidden; the bots play from the land they know). */
+  fog: boolean | "blackout";
   diplomacy: boolean;
   /** Trying a change (Part 2's A/B tests): merged into the shared judgement and into named personalities. */
   tweak?: { judgement?: Record<string, unknown>; personalities?: Record<string, Record<string, unknown>> };
@@ -242,7 +243,7 @@ if (isMain && args.includes("--worker")) {
     seats: arg("seats", "captain").split(","),
     games: Number(arg("games", "100")),
     seed: arg("seed", "t17"),
-    fog: arg("fog", "on") !== "off",
+    fog: arg("fog", "on") === "blackout" ? "blackout" : arg("fog", "on") !== "off",
     diplomacy: arg("diplomacy", "on") !== "off",
     ...(arg("tweak", "") ? { tweak: JSON.parse(arg("tweak", "")) } : {}),
   };
@@ -257,7 +258,7 @@ export function summary(spec: TournamentSpec, results: readonly (TableResult & {
   const lines: string[] = [];
   const pct = (k: number, of: number) => `${((100 * k) / Math.max(1, of)).toFixed(1)}%`;
   const games = results.length;
-  lines.push(`=== ${maps[spec.map]!.name}, ${spec.players} players, seats ${spec.seats.join(",")}, fog ${spec.fog ? "on" : "off"}: ${games} games in ${(ms / 1000).toFixed(0)}s ===`);
+  lines.push(`=== ${maps[spec.map]!.name}, ${spec.players} players, seats ${spec.seats.join(",")}, fog ${spec.fog === "blackout" ? "blackout" : spec.fog ? "on" : "off"}: ${games} games in ${(ms / 1000).toFixed(0)}s ===`);
   const base = (k: string) => k.replace(/^sighted:/, "");
   const kinds = [...new Set(results.flatMap((r) => r.kinds))].sort();
   const wins = (k: string) => results.filter((r) => r.seats.some((s, i) => r.kinds[i] === k && s.won)).length;

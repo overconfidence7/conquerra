@@ -16,6 +16,7 @@ import {
   type TerritoryId,
 } from "@conquerra/engine";
 import { respectDeals, type Diplomat } from "./diplomacy";
+import { knownCtx, provinceOpen } from "./known";
 
 export interface Bot {
   id: string;
@@ -59,11 +60,13 @@ export const makeRecruitBot = (opts: RecruitOptions = { chainMargin: 2 }): Bot =
 export const recruitBot: Bot = makeRecruitBot();
 
 function plan(ctx: GameContext, view: PlayerView, opts: RecruitOptions): Order[] {
+  ctx = knownCtx(ctx, view);
   // It honours every deal (session 14): no attack across a truce of its own.
   return respectDeals(ctx, view, planMoves(ctx, view, opts));
 }
 
 function planMoves(ctx: GameContext, view: PlayerView, opts: RecruitOptions): Order[] {
+  ctx = knownCtx(ctx, view);
   const { rules } = ctx;
   const idx = indexMap(ctx.map);
   const me = view.me;
@@ -172,7 +175,7 @@ function planMoves(ctx: GameContext, view: PlayerView, opts: RecruitOptions): Or
     // Culture is lost when land changes hands (session 16): taking it only denies the rival what it invested.
     let val = 1 + rules.terrain[def.terrain].income + (v.owner && v.owner !== me.id ? v.culture * 0.25 : 0);
     const prov = ctx.map.provinces.find((p) => p.id === def.province)!;
-    const missing = (idx.provinceMembers.get(prov.id) ?? []).filter((m) => !owned(m)).length;
+    const missing = (idx.provinceMembers.get(prov.id) ?? []).filter((m) => !owned(m)).length + (provinceOpen(ctx.map, prov.id) ? 1 : 0);
     if (missing === 1) val += prov.bonus * 2;
     else if (missing === 2) val += prov.bonus;
     if (v.owner && v.owner !== me.id) {
@@ -317,5 +320,6 @@ function smallestWinningArmy(
   avail: number,
   specialists: SpecialistType[],
 ): number | null {
+  ctx = knownCtx(ctx, view);
   return fewestToTake((troops) => previewAttack(ctx, view, { from, to, troops, specialists })?.captureLikely ?? false, avail);
 }

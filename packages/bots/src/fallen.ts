@@ -1,6 +1,7 @@
 import { indexMap, type GameContext, type Order, type PlayerId, type PlayerView, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
 import { landEstimates, runawayLeader } from "./board";
 import type { Bot } from "./recruit";
+import { knownCtx, mapSize } from "./known";
 
 /**
  * A Fallen bot (session 12): a knocked-out seat that spends its Influence on world events aimed at whoever looks to
@@ -17,6 +18,7 @@ import type { Bot } from "./recruit";
  *  - Storm on its longest border with another living player (a breather for whoever it's pressing)
  */
 export function planFallen(ctx: GameContext, view: PlayerView): Order[] {
+  ctx = knownCtx(ctx, view);
   const me = view.me;
   if (me.eliminatedTurn === null || view.winner) return [];
   const idx = indexMap(ctx.map);
@@ -34,7 +36,7 @@ export function planFallen(ctx: GameContext, view: PlayerView): Order[] {
   // The runaway leader if there is one; with fewer players left, whoever leads by a clear margin; and on its very first
   // turn out (session 19: the Fallen act from their first turn), whoever holds the most land.
   const firstTurn = view.turn === me.eliminatedTurn + 1;
-  const leader = runawayLeader(est, 0, idx.ids.length, living.length) ?? (est[0] && (firstTurn || est[0][1] >= CLEAR_LEAD * (est[1]?.[1] ?? 0)) ? est[0][0] : null);
+  const leader = runawayLeader(est, 0, mapSize(ctx.map), living.length) ?? (est[0] && (firstTurn || est[0][1] >= CLEAR_LEAD * (est[1]?.[1] ?? 0)) ? est[0][0] : null);
   if (!leader) return [];
   const theirs = idx.ids.filter((t) => owner(t) === leader);
   const capital = (t: TerritoryId) => isKnownCapital(view, t);

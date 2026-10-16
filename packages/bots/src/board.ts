@@ -14,6 +14,7 @@ import {
   type TerritoryDetail,
   type TerritoryId,
 } from "@conquerra/engine";
+import { knownCtx, mapSize, provinceOpen } from "./known";
 
 export type Seen = TerritoryDetail & { detail: "full" };
 /** What a territory probably holds (what we see, or our best guess for land in the fog). */
@@ -83,8 +84,11 @@ export interface BoardOverrides {
  * from their owner's view. Null if the seat holds no land.
  */
 export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn?: readonly ReplayEvent[], overrides: BoardOverrides = {}) {
+  ctx = knownCtx(ctx, view);
   const { rules } = ctx;
   const idx = indexMap(ctx.map);
+  /** How many territories the whole map has (public: the lobby says so). Under blackout `idx` holds only the land we know. */
+  const size = mapSize(ctx.map);
   const me = view.me;
   const garrison = rules.setup.minGarrison;
   const on = (f: CaptainFeature) => !opts.off?.includes(f);
@@ -138,7 +142,7 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
   // it looks to hold RUNAWAY_SHARE of the land, or far more than anyone else (us included). Only with at least two
   // rivals left (head to head, the other player is always the target anyway). The same rule for every seat.
   const estimates = landEstimates(knownLand, alive.map((p) => p.id));
-  const runaway = "runaway" in overrides ? (overrides.runaway ?? null) : on("runaway") ? runawayLeader(estimates, mine.length, idx.ids.length, alive.length, opts) : null;
+  const runaway = "runaway" in overrides ? (overrides.runaway ?? null) : on("runaway") ? runawayLeader(estimates, mine.length, size, alive.length, opts) : null;
   /** Rivals whose land touches the runaway's: they're holding it off, so weakening them only helps it. */
   const shieldsLeader = new Set<PlayerId>();
   if (runaway)
@@ -294,7 +298,8 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
     // Culture is lost when land changes hands (session 16): taking it only denies the rival what it invested.
     let val = 1 + rules.terrain[def.terrain].income + (v.owner && v.owner !== me.id ? v.culture * 0.25 : 0);
     const prov = ctx.map.provinces.find((p) => p.id === def.province)!;
-    const missing = (idx.provinceMembers.get(prov.id) ?? []).filter((m) => !owned(m)).length;
+    // (Under blackout a province reaching into the cloud has at least one more member to take: session 32.)
+    const missing = (idx.provinceMembers.get(prov.id) ?? []).filter((m) => !owned(m)).length + (provinceOpen(ctx.map, prov.id) ? 1 : 0);
     if (missing === 1) val += prov.bonus * 2;
     else if (missing === 2) val += prov.bonus;
     if (v.building) val += 2;
@@ -353,7 +358,7 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
   const blocked = (from: TerritoryId, to: TerritoryId) => ours.length > 0 && ours.some((d) => covers(idx, d as Parameters<typeof covers>[1], from, to, look0));
 
   return {
-    ctx, view, rules, idx, me, garrison, on, blocked,
+    ctx, view, rules, idx, size, me, garrison, on, blocked,
     seen, owned, rivalAt, troopsAt, specsAt, mine, border, crossing, isFrontier, frontier, enemyPressure, biggestEnemyNear,
     alive, look0, knownLand, facing, endgame, runaway, shieldsLeader, raider, facesRival, facesRaider, wantsFront,
     focus, toFocusCapital, spearhead, holdNeed, chokeHolder, capital, capThreatened, look, expectAt, valueOf, needFor, exposed, wallDefend, wallSize,

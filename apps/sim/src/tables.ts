@@ -16,6 +16,8 @@ export interface TableOpts {
   seed: string;
   tweak?: TournamentSpec["tweak"];
   rules?: TournamentSpec["rules"];
+  /** Session 32: blackout fog (standard fog by default). */
+  fog?: TournamentSpec["fog"];
   /** Extra spec fields (session 25: `seatRule`). */
   extra?: Partial<TournamentSpec>;
 }
@@ -26,7 +28,7 @@ const specOf = (o: TableOpts, seats: string[]): TournamentSpec => ({
   seats,
   games: o.games,
   seed: o.seed,
-  fog: true,
+  fog: o.fog ?? true,
   diplomacy: true,
   ...(o.tweak ? { tweak: o.tweak } : {}),
   ...(o.rules ? { rules: o.rules } : {}),

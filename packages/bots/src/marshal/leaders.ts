@@ -27,6 +27,7 @@ import { freshMemory, type MarshalMemory } from "./memory";
 import { carryLeader, marshalBoard, planMarshal, type Steer } from "./plan";
 import { planSteward } from "./steward";
 import type { Goes } from "./sweep";
+import { knownCtx } from "../known";
 
 /**
  * Your leaders plan (session 18, design additions §4 "REDESIGN"). Every leader with a command writes its orders each
@@ -235,7 +236,8 @@ function cleanUpSplit(b: Board, view: PlayerView, military: { l: LeaderRecord; c
  * leader's purse), tagged with the leader that wrote it (its purse pays), and honouring every deal of yours.
  */
 export function planLeaders(req: LeadersRequest): LeadersPlan {
-  const { ctx, view, lastTurn } = req;
+  const { view, lastTurn } = req;
+  const ctx = knownCtx(req.ctx, view);
   const J = req.judgement ?? marshalData.judgement;
   const thought = think(ctx, view, J, req.memory ?? freshMemory(), lastTurn);
   const written: Record<string, number> = {};
@@ -394,6 +396,7 @@ function planMilitary(
   lastTurn?: readonly ReplayEvent[],
   juniors: readonly LeaderRecord[] = [],
 ): { orders: Order[]; note: LeaderNote | null; forts: TerritoryId[] } {
+  ctx = knownCtx(ctx, view);
   const key = leaderKey(l);
   const at = leaderAt(view.me, l);
   const isOwn = l.of === view.me.id;
@@ -508,6 +511,7 @@ function withTroops(view: PlayerView, t: TerritoryId, count: number): PlayerView
 
 /** Our recruit site nearest `at` through our own land. */
 function nearestSite(ctx: GameContext, view: PlayerView, b: Board, at: TerritoryId): TerritoryId | null {
+  ctx = knownCtx(ctx, view);
   const d = ownDistances(b, at);
   return [...d.keys()].filter((t) => isRecruitSiteIn(ctx, view, t)).sort((x, y) => d.get(x)! - d.get(y)! || (x < y ? -1 : 1))[0] ?? null;
 }

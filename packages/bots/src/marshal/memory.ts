@@ -1,5 +1,6 @@
 import type { MarshalJudgement } from "@conquerra/content";
 import { indexMap, type GameContext, type PlayerId, type PlayerView, type ReplayEvent, type TerritoryId } from "@conquerra/engine";
+import { knownCtx, knownExtras, mapSize } from "../known";
 
 /**
  * What a Marshal remembers between turns (session 17). Only what a person in its seat could know: its own view each
@@ -33,6 +34,7 @@ const KEEP_TURNS = 8;
  *    how much of the land it can see is held by anyone at all (early on most of the map is still neutral).
  */
 export function estimateLand(ctx: GameContext, view: PlayerView, judgement: MarshalJudgement): { est: Map<PlayerId, number>; known: Map<PlayerId, number>; mine: number } {
+  ctx = knownCtx(ctx, view);
   const idx = indexMap(ctx.map);
   const me = view.me.id;
   const players = new Map(view.players.map((p) => [p.id, p]));
@@ -100,6 +102,27 @@ export function estimateLand(ctx: GameContext, view: PlayerView, judgement: Mars
     if (o === null || o === me) continue;
     est.set(o, (est.get(o) ?? 0) + held * (1 - spread));
     for (const r of rivals) est.set(r, (est.get(r) ?? 0) + (held * spread) / rivals.length);
+  }
+  // Session 32, blackout: land it has never seen isn't on its map at all. It knows how much there is (the map's size is
+  // public) and where its known land meets the cloud, so that land goes the same way, shared out by the borders each
+  // holder's nearest land has into the cloud. (Nothing with standard fog: nothing is unknown.)
+  const dark = mapSize(ctx.map) - idx.ids.length;
+  const { cloud } = knownExtras(ctx.map);
+  if (dark > 0 && cloud.size) {
+    const by = new Map<PlayerId | null, number>();
+    let edges = 0;
+    for (const [t, kinds] of cloud) {
+      const o = near.get(t);
+      if (o === undefined) continue;
+      by.set(o, (by.get(o) ?? 0) + kinds.length);
+      edges += kinds.length;
+    }
+    for (const [o, k] of by) {
+      if (o === null || o === me) continue;
+      const share = (dark * k) / edges;
+      est.set(o, (est.get(o) ?? 0) + held * share * (1 - spread));
+      for (const r of rivals) est.set(r, (est.get(r) ?? 0) + (held * share * spread) / rivals.length);
+    }
   }
   for (const [p] of est) if (!alive(p) || p === me) est.delete(p);
   return { est, known, mine };

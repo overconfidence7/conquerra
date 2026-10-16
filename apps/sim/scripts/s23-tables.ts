@@ -14,13 +14,17 @@
  */
 import { marshalTable, seatTable } from "../src/tables";
 
-const [mode = "marshals", gamesArg = "300", tablesArg = "embervale:4", seed = "s23", tweakArg = ""] = process.argv.slice(2);
+// Session 32: `--fog blackout` anywhere on the line plays blackout fog.
+const argv = process.argv.slice(2);
+const fogAt = argv.indexOf("--fog");
+const fog = fogAt >= 0 ? (argv.splice(fogAt, 2)[1] === "blackout" ? ("blackout" as const) : true) : true;
+const [mode = "marshals", gamesArg = "300", tablesArg = "embervale:4", seed = "s23", tweakArg = ""] = argv;
 const tweak = tweakArg ? { tweak: { judgement: JSON.parse(tweakArg) as Record<string, unknown> } } : {};
 const games = Number(gamesArg);
 
 for (const t of tablesArg.split(",")) {
   const [map, n] = t.split(":") as [string, string];
-  const o = { map, players: Number(n), games, seed, ...tweak };
+  const o = { map, players: Number(n), games, seed, fog, ...tweak };
   const { lines } = mode === "delegate" || mode === "recruit" ? await seatTable(mode, o) : await marshalTable(o);
   for (const l of lines) console.log(l);
 }

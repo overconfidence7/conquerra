@@ -1,6 +1,7 @@
 import type { MarshalJudgement } from "@conquerra/content";
 import { indexMap, type GameContext, type PlayerId, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 import { estimateLand, observe, pace, type MarshalMemory } from "./memory";
+import { knownCtx, mapSize } from "../known";
 
 /** Why a Marshal named a runaway leader: it looks too big, it's growing fastest, or it named it lately and nothing changed. */
 export type RunawayWhy = "size" | "pace" | "still";
@@ -65,11 +66,12 @@ export function readRunaway(
  * and the memory to keep (with this turn taken in). Calling it again on the same turn gives the same answer.
  */
 export function think(ctx: GameContext, view: PlayerView, j: MarshalJudgement, memory: MarshalMemory, lastTurn?: readonly ReplayEvent[]): { insight: Insight; memory: MarshalMemory } {
+  ctx = knownCtx(ctx, view);
   const { est, known, mine } = estimateLand(ctx, view, j);
   let mem = observe(memory, view, est, lastTurn);
   const gains = pace(mem, view.turn, j.runaway.paceTurns);
   const living = view.players.filter((p) => p.eliminatedTurn === null).length;
-  const total = indexMap(ctx.map).ids.length;
+  const total = mapSize(ctx.map);
   const { runaway, why } = readRunaway(j.runaway, est, mine, total, view.players.length, living, gains, mem, view.turn);
   if (runaway) mem = { ...mem, runaway: { player: runaway, since: mem.runaway?.player === runaway ? mem.runaway.since : view.turn, last: why === "still" ? (mem.runaway?.last ?? view.turn) : view.turn, named: view.turn } };
   const fought = new Set<PlayerId>();

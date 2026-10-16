@@ -1,6 +1,7 @@
 import { distancesFrom, leaderAt, type GameContext, type Instruction, type Order, type PlayerId, type PlayerView, type ReplayEvent, type TerritoryId } from "@conquerra/engine";
 import { BREAKTHROUGH_MARGIN, CAPTAIN_CHAIN_MARGIN, chainOn, readBoard, type Board, type CaptainOptions } from "./board";
 import { respectDeals } from "./diplomacy";
+import { knownCtx } from "./known";
 
 /**
  * Generals (session 12): a general leads one army, the troops in the territory where it stands, and goes with them
@@ -52,6 +53,7 @@ export function planGeneral(
   /** The board to judge from (session 18's leaders pass the Marshal's reading); the Captain's by default. */
   board?: Board | null,
 ): Order[] {
+  ctx = knownCtx(ctx, view);
   if (!instruction) return [];
   const b = board ?? readBoard(ctx, view, opts, lastTurn);
   const home = generalAt(view, general);

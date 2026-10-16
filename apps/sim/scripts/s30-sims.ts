@@ -50,6 +50,11 @@ interface Job {
   seed: string;
   /** Session 31: a random map's exposure band, if not its version's. */
   band?: number;
+  /**
+   * Session 32: the fog, carried with each job. (Before, each worker read `--fog` from its own command line, which only
+   * says `--worker`, so every run played standard fog: session 30's "blackout, game for game the same" was that.)
+   */
+  fog: string;
 }
 interface Result {
   map: string;
@@ -59,6 +64,10 @@ interface Result {
   turns: number;
   endReason: GameSummary["endReason"];
   ms: number;
+  /** Session 32: a comeback (the winner wasn't the land leader after turn 10; null: over by then, or a draw). */
+  comeback?: boolean | null;
+  /** Session 32, the explore pace: each seat's turn it had seen half the map, and all of it (null: never). */
+  explore?: GameSummary["explore"];
   /** For a random map: how many tries the map maker took, or why it gave up. */
   error?: string;
   /**
@@ -72,7 +81,7 @@ interface Result {
 }
 
 const fogArg = opt("fog", "on");
-const settingsOf = (): Partial<GameSettings> => ({ luck: defaultRules.combat.luck, mode: "classic", fog: fogArg === "blackout" ? "blackout" : fogArg !== "off", fallen: true, spoils: true, fate: true, diplomacy: true, spies: true }) as Partial<GameSettings>;
+const settingsOf = (fog: string): Partial<GameSettings> => ({ luck: defaultRules.combat.luck, mode: "classic", fog: fog === "blackout" ? "blackout" : fog !== "off", fallen: true, spoils: true, fate: true, diplomacy: true, spies: true }) as Partial<GameSettings>;
 
 async function play(job: Job): Promise<Result> {
   const t0 = Date.now();
@@ -82,9 +91,9 @@ async function play(job: Job): Promise<Result> {
     const dealt = dealPersonalities(job.seed, seats);
     const bots = seats.map((s) => makeMarshalBot(dealt[s]!));
     const ctx = { map, rules: defaultRules };
-    const g = runGame(ctx, job.seed, job.players, settingsOf(), false, bots);
+    const g = runGame(ctx, job.seed, job.players, settingsOf(job.fog), false, bots);
     // Where each seat started (the same deal runGame made), and the winner's spot by exposure.
-    const start = createGame(ctx, { gameId: `sim-${job.seed}`, seed: job.seed, players: seats.map((_, i) => ({ id: `p${i + 1}`, name: `Bot ${i + 1}` })), settings: settingsOf(), startBonus: true });
+    const start = createGame(ctx, { gameId: `sim-${job.seed}`, seed: job.seed, players: seats.map((_, i) => ({ id: `p${i + 1}`, name: `Bot ${i + 1}` })), settings: settingsOf(job.fog), startBonus: true });
     const layout = map.capitalLayouts?.find((l) => l.players === job.players);
     let spot: Pick<Result, "spotRank" | "harder" | "harderSpots"> = {};
     if (layout && g.winnerSeat !== null) {
@@ -94,7 +103,8 @@ async function play(job: Job): Promise<Result> {
       const marked = new Set([...(layout.harder ?? []), ...Object.keys(layout.bonus ?? {})]);
       spot = { spotRank: order.findIndex((o) => o.s === cap), harder: marked.has(cap), harderSpots: marked.size };
     }
-    return { map: job.map, players: job.players, seed: job.seed, winnerSeat: g.winnerSeat, turns: g.turns, endReason: g.endReason, ms: Date.now() - t0, ...spot };
+    const comeback = g.winner !== "draw" && g.leaderTurn10 !== null ? g.leaderTurn10 !== g.winner : null;
+    return { map: job.map, players: job.players, seed: job.seed, winnerSeat: g.winnerSeat, turns: g.turns, endReason: g.endReason, ms: Date.now() - t0, comeback, explore: g.explore, ...spot };
   } catch (e) {
     return { map: job.map, players: job.players, seed: job.seed, winnerSeat: null, turns: 0, endReason: null, ms: Date.now() - t0, error: e instanceof Error ? e.message.split("\n")[0]! : String(e) };
   }
@@ -152,6 +162,14 @@ function report(title: string, players: number, rs: Result[]) {
   console.log(`Win rate by seat (fair ${fair.toFixed(1)}%): ${wins.map((w) => `${pct(w).toFixed(1)}%`).join(" / ")}; furthest from fair ${worst.toFixed(1)} points`);
   console.log(`Turns: avg ${avg.toFixed(1)}, median ${turns[Math.floor(turns.length / 2)] ?? 0}, min ${turns[0] ?? 0}, max ${turns.at(-1) ?? 0}; within 40: ${pct(ok.filter((r) => r.turns <= 40).length).toFixed(0)}%; ended: ${[...new Set(ok.map((r) => r.endReason))].map((e) => `${e} ${pct(ok.filter((r) => r.endReason === e).length).toFixed(0)}%`).join(", ")}`);
   console.log(`Time: ${(ok.reduce((a, r) => a + r.ms, 0) / 1000 / Math.max(1, ok.length)).toFixed(1)} s a game`);
+  // Session 32: comebacks, and how fast the seats explore (a seat counts once it's seen that much, before it's out).
+  const long = ok.filter((r) => r.comeback !== null && r.comeback !== undefined);
+  const paced = ok.flatMap((r) => (r.explore ? r.explore.half.map((h, i) => ({ half: h, all: r.explore!.all[i]! })) : []));
+  const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
+  const halves = paced.flatMap((x) => (x.half === null ? [] : [x.half])), alls = paced.flatMap((x) => (x.all === null ? [] : [x.all]));
+  if (long.length) console.log(`Comebacks (the winner wasn't the leader after turn 10): ${pct(long.filter((r) => r.comeback).length * (ok.length / long.length)).toFixed(0)}% of games that went past turn 10`);
+  if (paced.length)
+    console.log(`Explore pace: a seat had seen half the map by turn ${mean(halves).toFixed(1)} on average (${((100 * halves.length) / paced.length).toFixed(0)}% of seats ever), all of it by turn ${mean(alls).toFixed(1)} (${((100 * alls.length) / paced.length).toFixed(0)}% of seats ever)`);
   // The winner's spot by exposure rank (0 the safest): each rank's fair share is one in `players`.
   const ranked = ok.filter((r) => r.spotRank !== undefined);
   if (ranked.length) {
@@ -175,7 +193,7 @@ if (args[0] === "--digest") {
   const jobs: Job[] = [];
   for (const [id, m] of Object.entries(maps)) {
     const p = players <= m.maxPlayers && players >= m.minPlayers ? players : m.recommendedPlayers.min;
-    for (let i = 0; i < games; i++) jobs.push({ map: id, players: p, game: i, seed: `${seedPrefix}-${id}-${p}p-${i}` });
+    for (let i = 0; i < games; i++) jobs.push({ map: id, players: p, game: i, seed: `${seedPrefix}-${id}-${p}p-${i}`, fog: fogArg });
   }
   const rs = await runAll(jobs);
   const lines = rs.map((r) => `${r.map} ${r.seed} ${r.winnerSeat} ${r.turns} ${r.endReason}`);
@@ -193,7 +211,7 @@ if (args[0] === "--digest") {
   // "all": the five shapes in turn.
   const shapeOf = (i: number) => (shape === "all" ? RANDOM_SHAPE_IDS[i % RANDOM_SHAPE_IDS.length]! : shape);
   const band = opt("band", "");
-  const jobs: Job[] = Array.from({ length: Number(n) }, (_, i) => ({ map: `random:${size}-${shapeOf(i)}-${seedWords(start + i)}`, players, game: i, seed: `${seedPrefix}-${size}-${shape}-${i}`, ...(band ? { band: Number(band) } : {}) }));
+  const jobs: Job[] = Array.from({ length: Number(n) }, (_, i) => ({ map: `random:${size}-${shapeOf(i)}-${seedWords(start + i)}`, players, game: i, seed: `${seedPrefix}-${size}-${shape}-${i}`, fog: fogArg, ...(band ? { band: Number(band) } : {}) }));
   const rs = await runAll(jobs);
   const r = report(`${n} random maps, ${size} territories, ${shape}`, players, rs);
   if (shape === "all")
@@ -206,7 +224,7 @@ if (args[0] === "--digest") {
   const [map, p] = args[0]!.split(":") as [string, string];
   const players = Number(p);
   const games = Number(args[1] ?? 100);
-  const jobs: Job[] = Array.from({ length: games }, (_, i) => ({ map, players, game: i, seed: `${seedPrefix}-${map}-${players}p-${i}` }));
+  const jobs: Job[] = Array.from({ length: games }, (_, i) => ({ map, players, game: i, seed: `${seedPrefix}-${map}-${players}p-${i}`, fog: fogArg }));
   const rs = await runAll(jobs);
   const r = report(map, players, rs);
   if (json) writeFileSync(json, JSON.stringify({ summary: r, games: rs }, null, 1));

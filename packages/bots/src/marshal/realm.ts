@@ -1,6 +1,7 @@
 import type { MapDef } from "@conquerra/content";
 import { indexMap, type PlayerId, type TerritoryId } from "@conquerra/engine";
 import type { Board } from "../board";
+import { knownExtras } from "../known";
 
 /**
  * The shape of the realm (session 20d, Nate's third note): where a Steward with a plan builds what.
@@ -35,6 +36,8 @@ export function chokeTerritories(map: MapDef): ReadonlySet<TerritoryId> {
   if (hit) return hit;
   const out = new Set<TerritoryId>();
   const land = new Map<TerritoryId, TerritoryId[]>(map.territories.map((t) => [t.id, []]));
+  // Session 32, blackout: a pass or sea lane from known land into the cloud shows on the map, so its known end counts.
+  for (const [t, kinds] of knownExtras(map).cloud) if (kinds.includes("pass") || kinds.includes("sea")) out.add(t);
   for (const b of map.borders) {
     if (b.type === "pass" || b.type === "sea") (out.add(b.a), out.add(b.b));
     if (b.type !== "sea") (land.get(b.a)!.push(b.b), land.get(b.b)!.push(b.a));

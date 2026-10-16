@@ -137,7 +137,7 @@ export function planSteward(
   const marketsPay = view.turn <= maxTurns - cfg.marketsStopBefore;
   // The Merchant's lesson (session 23): a market pays when it pays for itself before the game is likely to end.
   const L = extra.lesson === false ? undefined : cfg.lesson;
-  const turnsLeft = L ? likelyLength(L.lengths, idx.ids.length) - view.turn : 0;
+  const turnsLeft = L ? likelyLength(L.lengths, b.size) - view.turn : 0;
   const marketPays = (t: TerritoryId) =>
     L ? rules.buildings.market.buildTurns + market / (rules.buildings.market.income * (quiet(t) ? 1 : cfg.exposedWorth)) + L.spare <= turnsLeft : marketsPay;
   const economy = (land: readonly TerritoryId[]): Wish[] => {

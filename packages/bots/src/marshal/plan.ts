@@ -13,6 +13,7 @@ import { likelyLength, planSteward } from "./steward";
 import { think, type Insight } from "./judge";
 import type { MarshalMemory } from "./memory";
 import { marshalBreaks } from "./talk";
+import { knownCtx, provinceOpen } from "../known";
 
 /**
  * What the Marshal's planner is asked to plan (session 17; session 18's leaders call it with a scope and a purse):
@@ -110,7 +111,8 @@ const OFF_FRONT = 0.45;
  * personality plays by the same rules and gold. It only ever reads its own view, its memory and what it watched.
  */
 export function planMarshal(req: MarshalRequest): MarshalPlan {
-  const { ctx, personality: P, judgement, lastTurn } = req;
+  const { personality: P, judgement, lastTurn } = req;
+  const ctx = knownCtx(req.ctx, req.view);
   const { insight, memory } = req.insight ?? think(ctx, req.view, judgement, req.memory, lastTurn);
   const scope = req.scope ?? { kind: "realm" };
   // Deals: it keeps its word unless breaking a handshake deal clearly pays, by its own measure (the Schemer's is lower).
@@ -181,6 +183,7 @@ function inScope(scope: MarshalScope, src: Source | undefined, view: PlayerView,
  * that estimate is only for spotting a runaway leader.
  */
 export function marshalBoard(ctx: GameContext, view: PlayerView, insight: Insight, lastTurn?: readonly ReplayEvent[]): Board | null {
+  ctx = knownCtx(ctx, view);
   return readBoard(ctx, view, BASE, lastTurn, { knownLand: insight.known, runaway: insight.runaway });
 }
 
@@ -199,15 +202,16 @@ function planMoves(
   fortsWanted: TerritoryId[] = [],
   placed: { v: boolean } = { v: false },
 ): Order[] {
+  ctx = knownCtx(ctx, view);
   const b = marshalBoard(ctx, view, insight, lastTurn);
   if (!b) return [];
   const { rules, idx, me, garrison, seen, owned, rivalAt, troopsAt, specsAt, mine, crossing, isFrontier, frontier, enemyPressure, biggestEnemyNear } = b;
   const { endgame, raider, runaway, shieldsLeader, facesRival, facesRaider, holdNeed, chokeHolder, capital, capThreatened, needFor } = b;
   const D = { ...P.defend, frontGarrison: P.defend.frontGarrison * (J.garrisonScale ?? 1) }, B = P.build;
-  const crowdedTable = idx.ids.length / Math.max(1, view.players.length) <= (rules.leaders.crowdedTerritories ?? 12);
+  const crowdedTable = b.size / Math.max(1, view.players.length) <= (rules.leaders.crowdedTerritories ?? 12);
   // Reading the border (hold what matters, session 20): on roomy tables, unless it says crowded ones too; and not
   // while it cleans up (75% of the map: finishing the game comes first).
-  const cleaningUp = !!steer?.cleanUp || mine.length >= rules.leaders.cleanUpShare * idx.ids.length;
+  const cleaningUp = !!steer?.cleanUp || mine.length >= rules.leaders.cleanUpShare * b.size;
   if (J.anticipate && ((crowdedTable && !J.anticipate.crowded) || cleaningUp)) J = { ...J, anticipate: undefined };
   const lean = !!J.crowdedLean && crowdedTable && !steer;
   // The opening: every Marshal expands at least this hard for the first few turns (what the sims found wins).
@@ -244,7 +248,7 @@ function planMoves(
   const spearhead = main && (A.oneFront || endgame) && !calm ? (frontier.filter(facesMain).sort((x, y) => opposition(x) - opposition(y) || (x < y ? -1 : 1))[0] ?? null) : null;
   // Whole provinces (Nate): what each province is missing, and the land of the ones it holds whole.
   const provinceOf = (t: TerritoryId) => idx.byId.get(t)!.province;
-  const missing = (prov: string) => (idx.provinceMembers.get(prov) ?? []).filter((m) => !owned(m)).length;
+  const missing = (prov: string) => (idx.provinceMembers.get(prov) ?? []).filter((m) => !owned(m)).length + (provinceOpen(ctx.map, prov) ? 1 : 0);
   const whole = (t: TerritoryId) => owned(t) && missing(provinceOf(t)) === 0;
   const bonusOf = new Map(ctx.map.provinces.map((p) => [p.id, p.bonus]));
   const value = (t: TerritoryId) => {
@@ -267,7 +271,7 @@ function planMoves(
 
   // ---------- The best region (session 20, a one-change test) ----------
   let region: Set<string> | null = null;
-  if (J.region && !steer && mine.length >= J.region.from * idx.ids.length) {
+  if (J.region && !steer && mine.length >= J.region.from * b.size) {
     const near = new Map<string, Set<string>>();
     for (const bd of ctx.map.borders) {
       const pa = provinceOf(bd.a), pb = provinceOf(bd.b);
@@ -322,7 +326,7 @@ function planMoves(
 
   // ---------- Whom it finishes off (session 20) ----------
   // A rival down to a handful of territories (or, cleaning up, every rival): it goes and ends them.
-  const cleanUp = !!steer?.cleanUp || mine.length >= rules.leaders.cleanUpShare * idx.ids.length;
+  const cleanUp = !!steer?.cleanUp || mine.length >= rules.leaders.cleanUpShare * b.size;
   // (Not in the opening, unless it's cleaning up: early on every rival is small, and the opening plays as before.
   // Cleaning up, session 20d: every rival is one to finish, even one that borders whoever it reads as running away;
   // holding 75% of the map, nobody is shielding anyone from us.)
@@ -356,7 +360,7 @@ function planMoves(
   // Building like the Steward (session 20): a share of the treasury goes to what "Run the realm" would buy, in its own
   // style (the Turtle and the Merchant more, the Blitzer least), in place of its own markets and culture.
   // (Not while it cleans up: buildings would pay back after the game's over.)
-  const realmShare = !steer && J.realm && B.realm && (J.realmCrowded || !crowdedTable) && !cleaningUp ? Math.min(1, B.realm * startingStewardShare(rules, idx.ids.length, view.players.length)) : 0;
+  const realmShare = !steer && J.realm && B.realm && (J.realmCrowded || !crowdedTable) && !cleaningUp ? Math.min(1, B.realm * startingStewardShare(rules, b.size, view.players.length)) : 0;
   if (realmShare > 0) {
     const asked = new Set([...predicted.keys()].filter((t) => holdNeed(t) > troopsAt(t)));
     if (region) for (const t of frontier) if (inRegion(t) && idx.neighbors.get(t)!.some((x) => !inRegion(x) && rivalAt(x))) asked.add(t);
@@ -435,7 +439,7 @@ function planMoves(
   const markets = mine.filter((t) => seen(t)!.building === "market" || seen(t)!.construction?.building === "market").length;
   // (With the lesson, session 23: only a market that pays for itself before the game is likely to end.)
   const L = J.lesson ? marshalData.leaders.steward.lesson : undefined;
-  const pays = !L || rules.buildings.market.buildTurns + rules.buildings.market.cost / rules.buildings.market.income + L.spare <= likelyLength(L.lengths, idx.ids.length) - view.turn;
+  const pays = !L || rules.buildings.market.buildTurns + rules.buildings.market.cost / rules.buildings.market.income + L.spare <= likelyLength(L.lengths, b.size) - view.turn;
   if (!steer && !realmShare && view.turn >= B.marketsFrom && longRun && markets < B.markets && !capThreatened && pays) {
     const spot = mine.filter((t) => !building(t) && quiet(t)).sort((a, c) => Number(isFrontier(a)) - Number(isFrontier(c)) || (a < c ? -1 : 1))[0];
     if (spot && gold >= rules.buildings.market.cost + troopCost * B.marketReserve) {
@@ -569,7 +573,7 @@ function planMoves(
       }
     }
     capGuard = Math.ceil(reach * G.reach);
-    const crowded = G.crowded === undefined || ctx.map.territories.length / view.players.length <= G.crowded;
+    const crowded = G.crowded === undefined || b.size / view.players.length <= G.crowded;
     if (crowded && view.turn <= G.turns) capGuard = Math.max(capGuard, Math.ceil((troopsAt(capital) + (recruitedAt.get(capital) ?? 0)) * G.opening));
   }
   // A real garrison inside our walls (session 20d, Nate: the wall lends spare troops, so a garrisoned wall is the point):

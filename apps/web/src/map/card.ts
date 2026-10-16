@@ -1,5 +1,6 @@
 import { cultureProtection, investCost, wallDefense, wallRules, type GameContext, type PlayerView, type TerritoryId, type WallView } from "@conquerra/engine";
 import { BUILDING_NAME, SPECIALIST_NAME } from "../logic/text";
+import { provinceSize } from "./status";
 import { houseOf } from "./houses";
 
 /**
@@ -209,14 +210,15 @@ export function placeFacts(ctx: GameContext, view: PlayerView, id: TerritoryId):
       const v = view.territories[t.id];
       return v?.detail === "full" && v.owner === view.me.id;
     }).length;
-    facts.push({ key: "province", icon: "icon-crown", text: provinceLine(province.name, province.bonus, held, members.length) });
+    facts.push({ key: "province", icon: "icon-crown", text: provinceLine(province.name, province.bonus, held, provinceSize(ctx.map, view, province.id)) });
   }
   return facts;
 }
 
-/** "The Oak Downs +3: you hold 2 of 5" ("you hold all 5"; "none of 5 yours yet"). */
-export function provinceLine(name: string, bonus: number, held: number, of: number): string {
-  return `${name} +${bonus}: ${held === of ? `you hold all ${of}` : held ? `you hold ${held} of ${of}` : `you hold none of ${of}`}`;
+/** "The Oak Downs +3: you hold 2 of 5" ("you hold all 5"; "none of 5 yours yet"; under blackout "2 of ?", session 32). */
+export function provinceLine(name: string, bonus: number, held: number, of: number | null): string {
+  const n = of ?? "?";
+  return `${name} +${bonus}: ${held === of ? `you hold all ${of}` : held ? `you hold ${held} of ${n}` : `you hold none of ${n}`}`;
 }
 
 const wallRow = (ctx: GameContext, view: PlayerView, id: TerritoryId): CardLine[] => {
@@ -238,7 +240,7 @@ export function territoryCard(ctx: GameContext, view: PlayerView, id: TerritoryI
     const x = view.territories[m];
     return x?.detail === "full" && x.owner === view.me.id;
   }).length;
-  const worth: CardLine = { label: "Gold", icon: "icon-gold", value: `+${gold} gold a turn${province ? ` · ${provinceLine(province.name, province.bonus, heldHere, memberIds.length)}` : ""}` };
+  const worth: CardLine = { label: "Gold", icon: "icon-gold", value: `+${gold} gold a turn${province ? ` · ${provinceLine(province.name, province.bonus, heldHere, provinceSize(ctx.map, view, province.id))}` : ""}` };
   const troops = (n: number) => `${n} ${n === 1 ? "troop" : "troops"}`;
 
   if (v.detail === "full") {

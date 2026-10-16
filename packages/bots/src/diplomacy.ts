@@ -28,6 +28,7 @@ import {
 } from "@conquerra/engine";
 import { CAPTAIN_CHAIN_MARGIN, readBoard, type Board } from "./board";
 import { say, speakerOf, type Speaker } from "./say";
+import { knownCtx, provinceOpen } from "./known";
 
 /**
  * The bots' diplomacy (session 14, design additions §2). Nate's requirement: strong, explainable logic behind every
@@ -83,6 +84,7 @@ const AFFORD = 1.5;
 // ---------- Names and directions, for the reason lines ----------
 
 export function namesFor(ctx: GameContext, view: PlayerView) {
+  ctx = knownCtx(ctx, view);
   const idx = indexMap(ctx.map);
   return {
     name: (p: PlayerId) => (p === view.me.id ? "me" : (view.players.find((x) => x.id === p)?.name ?? p)),
@@ -117,6 +119,7 @@ export function direction(ctx: GameContext, mine: readonly TerritoryId[], land: 
  * The record is part of the game state, so trust is part of the saved game.
  */
 export function trustIn(ctx: GameContext, view: PlayerView, p: PlayerId, sp: Speaker = speakerOf(view)): { score: number; why: string | null } {
+  ctx = knownCtx(ctx, view);
   const r = ctx.rules.diplomacy.bots;
   const me = view.me.id;
   const n = namesFor(ctx, view);
@@ -186,7 +189,7 @@ export function leads(b: Board, p: PlayerId): boolean {
   if (b.alive.length < 3 || est[0]?.[0] !== p) return false;
   const land = est[0][1];
   const next = Math.max(b.mine.length, est[1]?.[1] ?? 0);
-  return land >= LEAD_OVER * next && land >= LEAD_SHARE * b.idx.ids.length;
+  return land >= LEAD_OVER * next && land >= LEAD_SHARE * b.size;
 }
 const LEAD_OVER = 1.35;
 const LEAD_SHARE = 0.2;
@@ -205,6 +208,7 @@ export function helpsProposer(t: DealTerms): boolean {
  * in last turn's replay (it judges fronts as the Captain does).
  */
 export function judgeOffer(ctx: GameContext, view: PlayerView, offer: Offer, level: DiplomatLevel, lastTurn?: readonly ReplayEvent[]): Answer {
+  ctx = knownCtx(ctx, view);
   const me = view.me.id;
   const p = offer.from;
   const t = offer.terms;
@@ -263,6 +267,7 @@ export function judgeOffer(ctx: GameContext, view: PlayerView, offer: Offer, lev
 
 /** What the Captain weighs for each kind of deal (the Marshal weighs the same, plus its personality). */
 export function captainWeighs(ctx: GameContext, view: PlayerView, b: Board, offer: Offer, cost: number, sp: Speaker = speakerOf(view)): { factors: Factor[]; counter?: { terms: DealTerms; why: string } } {
+  ctx = knownCtx(ctx, view);
   const p = offer.from;
   const t = offer.terms;
   const n = namesFor(ctx, view);
@@ -432,6 +437,7 @@ function passageToward(b: Board, target: PlayerId): PlayerId | null {
 
 /** What a trade is worth to this bot, in gold: what it gets, what it gives, in words, and anything that rules it out. */
 function tradeValue(ctx: GameContext, view: PlayerView, b: Board, t: Extract<DealTerms, { kind: "trade" }>, why: (key: "noCapital" | "guardsCapital", vars?: { place: string }) => string) {
+  ctx = knownCtx(ctx, view);
   const n = namesFor(ctx, view);
   const turns = dealTurns(t);
   const each = t.give.perTurn || t.get.perTurn ? turns : 0;
@@ -499,6 +505,7 @@ function askedLastTurn(lastTurn: readonly ReplayEvent[] | undefined, me: PlayerI
  *  - the Recruit: only a truce with a stronger neighbour (it never proposes trades)
  */
 export function proposeOffers(ctx: GameContext, view: PlayerView, level: DiplomatLevel, lastTurn?: readonly ReplayEvent[], read?: Board, voice: string | null = null): Offer[] {
+  ctx = knownCtx(ctx, view);
   const rules = ctx.rules;
   const cap = rules.diplomacy.bots.offersPerTurn;
   if (!cap || !view.settings.diplomacy || view.winner || view.turn < 2) return [];
@@ -572,7 +579,7 @@ export function proposeOffers(ctx: GameContext, view: PlayerView, level: Diploma
     if (!v || !v.owner || v.owner === me || v.owner === R || !ok(v.owner, "trade")) continue;
     const prov = b.idx.byId.get(t)!.province;
     const missing = (b.idx.provinceMembers.get(prov) ?? []).filter((x) => !b.owned(x));
-    if (missing.length !== 1 || landProblem(b.idx, rules, board, v.owner, me, [t])) continue;
+    if (missing.length !== 1 || provinceOpen(b.ctx.map, prov) || landProblem(b.idx, rules, board, v.owner, me, [t])) continue;
     const price = Math.min(Math.round(3 * b.valueOf(t)) + 6, view.me.gold - reserve);
     if (price < 4) continue;
     add(v.owner, { kind: "trade", give: { gold: price }, get: { land: [t] } }, note("offerBuyLand", { place: n.place(t), province: n.province(prov), n: price }));
@@ -601,6 +608,7 @@ const WIN_GAIN = 1000;
  * desert, and the trust it loses). Returns the `break` orders, each with the line it says.
  */
 export function captainBreaks(ctx: GameContext, view: PlayerView, lastTurn?: readonly ReplayEvent[]): Order[] {
+  ctx = knownCtx(ctx, view);
   const handshakes = view.deals.filter((d) => d.bond === "handshake" && d.terms && (d.kind === "truce" || d.kind === "war"));
   if (!handshakes.length) return [];
   const b = readBoard(ctx, view, OPTS, lastTurn);
@@ -641,6 +649,7 @@ export const withoutDeals = (view: PlayerView, ids: readonly string[]): PlayerVi
  * (a chain into the fog). With no deals, the orders are untouched.
  */
 export function respectDeals(ctx: GameContext, view: PlayerView, orders: readonly Order[]): Order[] {
+  ctx = knownCtx(ctx, view);
   const me = view.me.id;
   const mine = view.deals.filter((d) => d.terms && isParty(d, me) && (d.kind === "truce" || d.kind === "war"));
   if (!mine.length) return [...orders];

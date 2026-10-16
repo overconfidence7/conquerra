@@ -72,6 +72,19 @@ export function markerPriority(view: PlayerView, s: TerritoryStatus): number {
   return 1;
 }
 
+/**
+ * Session 32, blackout fog: how many territories a province has, as this player can tell: null ("of ?") when one of
+ * the province's land they know borders the cloud (it may reach on into it; provinces are joined up, so one with land
+ * they haven't seen always does). The bots count it the same way.
+ */
+export function provinceSize(map: MapDef, view: PlayerView, province: string): number | null {
+  const members = map.territories.filter((t) => t.province === province);
+  if (view.settings.fog !== "blackout") return members.length;
+  const unknown = (t: TerritoryId) => isUnknown(view, t);
+  const ids = new Set(members.filter((t) => !unknown(t.id)).map((t) => t.id));
+  return map.borders.some((b) => (ids.has(b.a) && unknown(b.b)) || (ids.has(b.b) && unknown(b.a))) ? null : members.length;
+}
+
 /** Session 30, blackout fog: land this player has never seen (the map hides it under cloud, name and all). */
 export function isUnknown(view: PlayerView, id: TerritoryId): boolean {
   const v = view.territories[id];

@@ -5,6 +5,7 @@ import { freshMemory, type MarshalMemory } from "./marshal/memory";
 import { planLeaders } from "./marshal/leaders";
 import type { Diplomat } from "./diplomacy";
 import type { Bot } from "./recruit";
+import { mapSize } from "./known";
 
 /**
  * For the simulator (session 18): seats played the way a person who delegates would.
@@ -95,7 +96,7 @@ export function makeDelegateSeat(leaderShare = 0.8, opts: DelegateOptions = {}):
     name: `Delegates everything (Leader ${Math.round(leaderShare * 100)}%, Steward ${Math.round((1 - leaderShare) * 100)}%)`,
     plan(ctx, view, lastTurn) {
       const held = Object.values(view.territories).filter((t) => t.detail === "full" && t.owner === view.me.id).length;
-      const cleaning = !!opts.cleanUp && held >= ctx.rules.leaders.cleanUpShare * ctx.map.territories.length;
+      const cleaning = !!opts.cleanUp && held >= ctx.rules.leaders.cleanUpShare * mapSize(ctx.map);
       const { orders: setup, commands } = setUp(view, { leader: { command: cleaning ? { kind: "cleanup" } : { kind: "military" }, budget: { share: leaderShare } }, steward: { command: { kind: "realm" }, budget: { share: opts.stewardShare ?? Math.round((1 - leaderShare) * 100) / 100 } } });
       // Its captured leaders: on Clean up too, or reporting to its own.
       for (const l of view.me.leaders) {

@@ -5,6 +5,7 @@ import type { Bot } from "./recruit";
 import { captainSpoils, missionPull, missionSpend, spoilsOrder } from "./cards";
 import { captainBreaks, respectDeals, withoutDeals } from "./diplomacy";
 import { captainSpies } from "./spies";
+import { knownCtx } from "./known";
 
 export { CAPTAIN_CHAIN_MARGIN, type CaptainFeature, type CaptainOptions } from "./board";
 
@@ -52,6 +53,7 @@ const LOYAL_FIGHTS = 4;
 const RAID_RADIUS = 2;
 
 function plan(ctx: GameContext, dealt: PlayerView, opts: CaptainOptions, lastTurn?: readonly ReplayEvent[]): Order[] {
+  ctx = knownCtx(ctx, dealt);
   // Deals (session 14): it keeps its word, unless breaking a handshake deal clearly pays (and it says why); then it
   // plans as if that deal were gone, and every order honours the rest.
   const breaks = captainBreaks(ctx, dealt, lastTurn);
@@ -62,6 +64,7 @@ function plan(ctx: GameContext, dealt: PlayerView, opts: CaptainOptions, lastTur
 }
 
 function planMoves(ctx: GameContext, view: PlayerView, opts: CaptainOptions, lastTurn?: readonly ReplayEvent[]): Order[] {
+  ctx = knownCtx(ctx, view);
   const b = readBoard(ctx, view, opts, lastTurn);
   if (!b) return [];
   const { rules, idx, me, garrison, on, seen, owned, rivalAt, troopsAt, specsAt, mine, crossing, isFrontier, frontier, enemyPressure, biggestEnemyNear } = b;

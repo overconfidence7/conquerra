@@ -23,6 +23,7 @@ import { attackingPartner, captainWeighs, dealBoard, frontWith, helpsProposer, l
 import { say, sayOwn, speakerOf } from "../say";
 import type { Insight } from "./judge";
 import { marshalBoard } from "./plan";
+import { knownCtx } from "../known";
 
 /**
  * The Marshal's diplomacy (session 17). It weighs an offer exactly as the Captain does (its fronts, who's ahead, what
@@ -47,6 +48,7 @@ const VOICE: Record<DealKind, [Line, Line]> = {
 };
 
 export function marshalJudge(ctx: GameContext, view: PlayerView, offer: Offer, P: Personality, insight: Insight, lastTurn?: readonly ReplayEvent[]): Answer {
+  ctx = knownCtx(ctx, view);
   const me = view.me.id;
   const p = offer.from;
   const t = offer.terms;
@@ -104,6 +106,7 @@ export function marshalJudge(ctx: GameContext, view: PlayerView, offer: Offer, P
  * a joint war against its target, or a truce with a neighbour it isn't fighting. At most the rules' offers a turn.
  */
 export function marshalPropose(ctx: GameContext, view: PlayerView, P: Personality, insight: Insight, lastTurn?: readonly ReplayEvent[]): Offer[] {
+  ctx = knownCtx(ctx, view);
   const rules = ctx.rules;
   const cap = rules.diplomacy.bots.offersPerTurn;
   if (!cap || !view.settings.diplomacy || view.winner || view.turn < 2) return [];
@@ -162,6 +165,7 @@ export function marshalPropose(ctx: GameContext, view: PlayerView, P: Personalit
  * runaway leader it means to stop. It says why, in its own voice.
  */
 export function marshalBreaks(ctx: GameContext, view: PlayerView, P: Personality, insight: Insight, lastTurn?: readonly ReplayEvent[]): Order[] {
+  ctx = knownCtx(ctx, view);
   const handshakes = view.deals.filter((d) => d.bond === "handshake" && d.terms && (d.kind === "truce" || d.kind === "war"));
   if (!handshakes.length) return [];
   const b = marshalBoard(ctx, view, insight, lastTurn);

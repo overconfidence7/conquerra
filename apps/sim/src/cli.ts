@@ -28,7 +28,7 @@ import { runGame, type GameSummary } from "./runGame";
  *          --spies on|off (spies; on by default), --walls on|off (walls, session 20b; on by default),
  *          --reasons N (print N of the bots' reason lines from the games),
  *          --map embervale|greatmarch (default: Embervale up to 6 players, Greatmarch above),
- *          --luck 0.3, --mode classic|conquest, --turn-limit N, --fog on|off, --seed prefix,
+ *          --luck 0.3, --mode classic|conquest, --turn-limit N, --fog on|off|blackout, --seed prefix,
  *          --chain-margin N (bots chain on when the arriving army is this many times what the next target needs;
  *          default 2 for Recruit, 1.25 for Captain; 1 = chain whenever the hop is likely to win)
  */
@@ -44,7 +44,9 @@ const games = Number(arg("games", "500"));
 const luck = Number(arg("luck", String(defaultRules.combat.luck)));
 const mode = arg("mode", "classic") as GameMode;
 const turnLimit = arg("turn-limit", "") ? Number(arg("turn-limit", "")) : null;
-const fog = arg("fog", "on") !== "off";
+/** Fog: on, off, or blackout (session 32: land never seen is hidden, and the bots play from the land they know). */
+const fogArg = arg("fog", "on");
+const fog: boolean | "blackout" = fogArg === "blackout" ? "blackout" : fogArg !== "off";
 /** The Fallen (session 12): knocked-out seats play world events (on by default; --fallen off to compare). */
 const fallen = arg("fallen", "on") !== "off";
 /** The card decks (session 13): Spoils and Fate (both on by default; --spoils off / --fate off to compare). */
@@ -184,7 +186,7 @@ for (const players of playerCounts) {
   const plan = stats(results.flatMap((g) => g.planMs));
   const total = stats(results.flatMap((g) => g.resolveMs.map((r, i) => r + g.planMs[i]!)));
 
-  console.log(`\n=== ${players} players — ${ctx.map.name}, ${label}, luck ${luck}, ${mode}${turnLimit ? ` (${turnLimit} turns)` : ""}, fog ${fog ? "on" : "off"}, the Fallen ${fallen ? "on" : "off"}, Spoils ${spoils ? "on" : "off"}, Fate ${fate ? "on" : "off"}, diplomacy ${diplomacy ? "on" : "off"}, spies ${spies ? "on" : "off"}${tuned} ===`);
+  console.log(`\n=== ${players} players — ${ctx.map.name}, ${label}, luck ${luck}, ${mode}${turnLimit ? ` (${turnLimit} turns)` : ""}, fog ${fog === "blackout" ? "blackout" : fog ? "on" : "off"}, the Fallen ${fallen ? "on" : "off"}, Spoils ${spoils ? "on" : "off"}, Fate ${fate ? "on" : "off"}, diplomacy ${diplomacy ? "on" : "off"}, spies ${spies ? "on" : "off"}${tuned} ===`);
   console.log(`Games: ${results.length} finished, ${errors.length} crashed, in ${(wall / 1000).toFixed(1)}s`);
   console.log(`Win rate by seat (fair ≈ ${(100 / players).toFixed(1)}% each): ${wins.map((w) => pct(w)).join(" / ")}   draws ${pct(draws)}`);
   if (mix) {

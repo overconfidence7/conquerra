@@ -1,5 +1,6 @@
 import { fewestToTake, type Order, type PlayerId, type TerritoryId } from "@conquerra/engine";
 import { BREAKTHROUGH_MARGIN, chainOn, type Board } from "../board";
+import { cloudBorders } from "../known";
 
 /**
  * Finishing a rival (session 20, Nate's play test: with 95% of the map his Leader let a 2-territory rival win back a
@@ -100,6 +101,10 @@ export function plausibleLand(b: Board, rival: PlayerId, fog: number): number {
   }
   let n = 0;
   for (const t of d.keys()) if (b.look0(t) !== rival) n++;
+  // Session 32, blackout: land never seen isn't on our map at all. If what they could hold reaches the cloud, all of it
+  // could be theirs, as never-seen land joins up at no cost above (we can't tell how it joins). Nothing with standard fog.
+  const dark = b.size - idx.ids.length;
+  if (dark > 0 && [...d.keys()].some((t) => cloudBorders(b.ctx.map, t) > 0)) n += dark;
   return n;
 }
 

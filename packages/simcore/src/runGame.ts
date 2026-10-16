@@ -121,6 +121,11 @@ export interface GameSummary {
   spyKilled: number;
   spyGold: number;
   reasons: string[];
+  /**
+   * Session 32, the explore pace: for each seat, the first turn it had seen at least half the map, and all of it (land
+   * it sees or remembers, as its view shows; null: never, or knocked out first).
+   */
+  explore: { half: (number | null)[]; all: (number | null)[] };
   log?: StepEvent[][];
 }
 
@@ -137,6 +142,7 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
     spoilsSets: 0, spoilsAuto: 0, winnerLeadOnSet: null, winnerSetTurnShare: null,
     fateEvents: 0, fateGood: 0, fateBad: 0, fateStrong: 0, missionsDrawn: 0, missionsDone: 0, fateNet: {}, winnerGoodShare: null, winnerLandShare: null, winnerLuck: null, winnerLuckiest: null, winnerMissions: 0, othersMissions: 0,
     offers: 0, accepted: 0, countered: 0, dealsMade: 0, dealsBinding: 0, dealsByKind: {}, dealsBroken: 0, warsVsLeader: 0, marchesThrough: 0, spiesHired: 0, spyIn: 0, spyFooled: 0, spyBlocked: 0, spyKilled: 0, spyGold: 0, reasons: [],
+    explore: { half: players.map(() => null), all: players.map(() => null) },
   };
   const level = (b: Bot) => b.diplomat ?? (b.id === "recruit" ? ("recruit" as const) : ("captain" as const));
   const name = (id: string) => players.find((p) => p.id === id)?.name ?? id;
@@ -155,6 +161,13 @@ export function runGame(ctx: GameContext, seed: string, playerCount: number, set
     const p0 = performance.now();
     // Diplomacy: the bots negotiate as planning starts (in seat order), then plan their moves knowing what they agreed.
     const views = new Map(s.players.filter((p) => p.eliminatedTurn === null).map((p) => [p.id, viewFor(ctx, s, p.id)]));
+    for (const [seat, p] of s.players.entries()) {
+      const v = views.get(p.id);
+      if (!v || sum.explore.all[seat] !== null) continue;
+      const seen = Object.values(v.territories).filter((t) => t.detail === "full" || !!t.lastSeen).length;
+      if (sum.explore.half[seat] === null && 2 * seen >= idx.ids.length) sum.explore.half[seat] = s.turn;
+      if (seen >= idx.ids.length) sum.explore.all[seat] = s.turn;
+    }
     const talk = s.settings.diplomacy
       ? negotiate(ctx, s.players.flatMap((p, seat) => (p.eliminatedTurn === null ? [{ id: p.id, level: level(seatBot(seat)) }] : [])), (id) => views.get(id)!, (id) => lastTurn.get(id), null)
       : null;

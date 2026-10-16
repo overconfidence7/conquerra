@@ -5,7 +5,7 @@ import { toScreen, type Camera } from "../../map/camera";
 import { labelCurve, quadPoint } from "../../map/shapes";
 import { hexNum, houseOf } from "../../map/houses";
 import { CULTURE_PIP_DROP, layoutMarkers, markerMetrics, type MarkerBox, pillHeight, type MarkerContent, type MarkerMetrics } from "../../map/layout";
-import { isUnknown, markerContent, markerPriority, territoryStatus, type TerritoryStatus } from "../../map/status";
+import { isUnknown, markerContent, provinceSize, markerPriority, territoryStatus, type TerritoryStatus } from "../../map/status";
 import type { DetailMix, ZoomDetail } from "../../map/zoom";
 import type { MapScene } from "../types";
 import type { TextureBank } from "./bank";
@@ -189,7 +189,7 @@ export class MarkerLayer {
       const parts = [
         new Text({ text: `${prov.name} `, style: { fontFamily: "Cinzel, serif", fontWeight: "700", fontSize: 11, fill: PARCH }, resolution: this.resolution }),
         new Text({ text: `+${prov.bonus}`, style: style(GOLD_HI), resolution: this.resolution }),
-        ...(held ? [new Text({ text: ` · you hold ${held} of ${members.length}`, style: style(PARCH), resolution: this.resolution })] : []),
+        ...(held ? [new Text({ text: ` · you hold ${held} of ${provinceSize(this.map, view, prov.id) ?? "?"}`, style: style(PARCH), resolution: this.resolution })] : []),
       ];
       const textW = parts.reduce((a, t) => a + t.width, 0);
       const all = held === members.length;

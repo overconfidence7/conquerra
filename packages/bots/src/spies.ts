@@ -1,5 +1,6 @@
 import { spiesOn, type Order, type PlayerId, type TerritoryId } from "@conquerra/engine";
 import type { Board } from "./board";
+import { provinceOpen } from "./known";
 
 /**
  * The Captain's spies (session 15, design additions §8). It hires one or two when it has gold to spare, and judges only
@@ -17,9 +18,11 @@ export function captainSpies(b: Board, newId: () => string, gold: number, limits
   const lim = limits ?? r?.bots;
   const out: Order[] = [];
   if (!spiesOn(view) || !r || !b.on("spies")) return { orders: out, spent: 0 };
-  const province = (t: TerritoryId) => idx.byId.get(t)!.province;
+  // (Under blackout a spy always stands on land it can see; `?? ""` only keeps a stray id from throwing.)
+  const province = (t: TerritoryId) => idx.byId.get(t)?.province ?? "";
   const members = (p: string) => idx.provinceMembers.get(p) ?? [];
-  const holds = (who: PlayerId, p: string) => members(p).length > 0 && members(p).every((t) => look0(t) === who);
+  // (Session 32: a province reaching into the cloud can't be known to be held whole.)
+  const holds = (who: PlayerId, p: string) => members(p).length > 0 && members(p).every((t) => look0(t) === who) && !provinceOpen(b.ctx.map, p);
 
   // Whose secrets it wants: its main target, else the strongest rival next to it.
   const strongest = [...b.facing].sort((x, y) => y[1] - x[1] || (x[0] < y[0] ? -1 : 1))[0]?.[0] ?? null;
