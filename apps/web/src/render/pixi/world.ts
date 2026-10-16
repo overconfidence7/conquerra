@@ -33,6 +33,8 @@ const REPEAT_UNITS = 170;
 const DECOR_SIZE: Record<string, number> = { "tree-conifer": 17, "tree-broadleaf": 17, peak: 30, hill: 19, village: 22, town: 30 };
 const DECOR_ART: Record<string, string> = { "tree-conifer": "tree-conifer", "tree-broadleaf": "tree-broadleaf", peak: "mountain", hill: "hill", village: "village", town: "town" };
 const CASTLE_SIZE = 46;
+/** Session 30, blackout fog: how much sea shows around land you've seen (map units, both sides of the coast). */
+const BLACKOUT_SHORE = 60;
 /** How strong the House wash is at a realm's edge (it fades to nothing about 15 map units in). */
 const OWNER_WASH = 0.5;
 
@@ -700,7 +702,7 @@ export class WorldLayer {
    * Mark which land is in the fog (1) and which isn't (0). With `fadeMs`, the fog eases from how it was to the new
    * mask (the fog lifting off land your army just took, during the replay); the first fog is drawn straight away.
    */
-  setFog(fogged: readonly { rings: readonly (readonly number[])[] }[], fadeMs = 0) {
+  setFog(fogged: readonly { rings: readonly (readonly number[])[] }[], fadeMs = 0, blackout: { known: readonly { rings: readonly (readonly number[])[] }[] } | null = null) {
     const c = this.fogCanvas;
     const ctx = c.getContext("2d")!;
     if (fadeMs > 0 && this.fogDrawn) {
@@ -739,6 +741,32 @@ export class WorldLayer {
       }
     ctx.fill(p, "evenodd");
     ctx.filter = "none";
+    // Session 30, blackout fog (G): thick clouds over everything but the land you've seen and a little sea around it,
+    // so an unknown coast doesn't give its shape away.
+    if (blackout) {
+      const [k] = canvas(c.width, c.height);
+      const kx = k.getContext("2d")!;
+      kx.fillStyle = "#0f0";
+      kx.fillRect(0, 0, k.width, k.height);
+      kx.scale(c.width / this.g.width, c.height / this.g.height);
+      kx.globalCompositeOperation = "destination-out";
+      if ("filter" in kx) kx.filter = "blur(4px)";
+      const seen = new Path2D();
+      for (const t of blackout.known)
+        for (const r of t.rings) {
+          seen.moveTo(r[0]!, r[1]!);
+          for (let i = 2; i < r.length; i += 2) seen.lineTo(r[i]!, r[i + 1]!);
+          seen.closePath();
+        }
+      kx.fill(seen, "nonzero");
+      kx.lineWidth = BLACKOUT_SHORE;
+      kx.lineJoin = "round";
+      kx.stroke(seen);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalCompositeOperation = "lighter";
+      ctx.drawImage(k, 0, 0);
+      ctx.globalCompositeOperation = "source-over";
+    }
     this.fogTex.source.update();
   }
 

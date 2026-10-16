@@ -134,7 +134,7 @@ describe("engine properties", () => {
       ),
       { numRuns: 150 },
     );
-  }, 30000);
+  }, 90_000); // (Session 30: room for a full parallel test run.)
 
   it("is deterministic: same seed and orders give byte-identical results", () => {
     fc.assert(

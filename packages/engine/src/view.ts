@@ -11,8 +11,10 @@ export type { TerritoryDetail };
  * A fogged territory carries nothing current: its outline, terrain, province and holding bonuses are all public
  * map data (MapDef + Rules), which every client already has. Owner, troops and culture stay hidden.
  * `lastSeen` is the player's own memory of it (owner, troops, building and when), if they ever saw it.
+ * `unknown` (session 30, blackout fog): the player has never seen it, so the page hides it outright, its geography and
+ * name too. It's fogged land with no memory, so a bot reads it as it reads any fog.
  */
-export type TerritoryView = ({ detail: "full"; seenBy: VisionSource[] } & TerritoryDetail) | { detail: "fogged"; lastSeen?: LastSeen };
+export type TerritoryView = ({ detail: "full"; seenBy: VisionSource[] } & TerritoryDetail) | { detail: "fogged"; lastSeen?: LastSeen; unknown?: true };
 
 /**
  * A deal as one player sees it (session 14). Everyone knows who has which deal with whom, for how long, and a joint
@@ -198,6 +200,8 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
   // What your spies report (session 15): land they lift the fog from, as they saw it as the last turn ended. Never land
   // you see yourself (that always shows as it truly is).
   const spied = (!political && state.spyIntel?.[player]) || {};
+  // Session 30: blackout fog. Land never seen (no memory of it, not in sight, no spy's report) is unknown.
+  const blackout = state.settings.fog === "blackout";
   for (const id of idx.ids) {
     if (political) {
       territories[id] = { detail: "fogged", lastSeen: politicalOf(state, id) };
@@ -212,7 +216,9 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
         ? { detail: "full", seenBy: ["spy"], ...copyDetail(report) }
         : last
         ? { detail: "fogged", lastSeen: { ...last } }
-        : { detail: "fogged" };
+        : blackout
+          ? { detail: "fogged", unknown: true }
+          : { detail: "fogged" };
   }
   return {
     gameId: state.gameId,

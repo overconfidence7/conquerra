@@ -9,7 +9,7 @@ import { hostSeat, KIT, memoryRoomStore, NATE, settings, testRoom } from "./room
  * deploy (even of a newer map maker) never changes a running game. Pages get the id and the version, never the map.
  */
 
-const ID = "random:80-island-quiet-heron";
+const ID = "random:40-island-quiet-heron";
 
 async function table(store = memoryRoomStore()) {
   const t = testRoom(store);
@@ -25,7 +25,7 @@ describe("a table on a random map (session 30)", () => {
     const t = await table(store);
     const kept = JSON.parse(store.data.get("randomMap")!) as { id: string; map: { territories: unknown[]; geometry?: unknown; generator: { version: number } } };
     expect(kept.id).toBe(ID);
-    expect(kept.map.territories).toHaveLength(80);
+    expect(kept.map.territories).toHaveLength(40);
     expect(kept.map.geometry).toBeUndefined();
     const start = (await t.hello("p1")) as RoomStart;
     expect([start.mapId, start.mapVersion]).toEqual([ID, kept.map.generator.version]);

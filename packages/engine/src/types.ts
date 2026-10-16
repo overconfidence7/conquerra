@@ -357,7 +357,12 @@ export interface GameSettings {
   turnLimit: number | null;
   /** 0..1 share of combat that is random. Default from rules (0.3). */
   luck: number;
-  fog: boolean;
+  /**
+   * Fog of war: on (true), off (false), or (session 30) "blackout": as on, and land you have never seen is hidden
+   * outright, geography included, until you first see it (`viewFor` marks it `unknown`). Blackout changes only what a
+   * view shows, never the game itself.
+   */
+  fog: boolean | "blackout";
   /** Order-phase length. Stored for the server; the engine never reads a clock. */
   turnTimerSeconds: number;
   /** Knocked-out players become the Fallen: they earn Influence and spend it on world events (on by default). */

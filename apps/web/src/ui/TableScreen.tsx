@@ -23,7 +23,7 @@ const LEVEL: Record<BotChoice, string> = { marshal: "Marshals", captain: "Captai
 /** The table's rules in one line: "Marshals, 5 min turns, normal luck, fog on, Fate on, diplomacy on, classic". */
 export function tableRules(t: TableView): string {
   const luck = t.luck <= 0.15 ? "low luck" : t.luck >= 0.45 ? "high luck" : "normal luck";
-  return `${LEVEL[t.botLevel]} in the empty seats, ${timerLabel(t.turnSeconds)} turns, ${luck}, fog ${t.fog ? "on" : "off"}, Fate ${t.fate ? "on" : "off"}, diplomacy ${t.diplomacy ? "on" : "off"}, ${t.mode}`;
+  return `${LEVEL[t.botLevel]} in the empty seats, ${timerLabel(t.turnSeconds)} turns, ${luck}, ${t.fog === "blackout" ? "blackout fog" : `fog ${t.fog ? "on" : "off"}`}, Fate ${t.fate ? "on" : "off"}, diplomacy ${t.diplomacy ? "on" : "off"}, ${t.mode}`;
 }
 
 /** The House colour someone sits down with: their usual one if it's free, else their lobby's, else the first free. */

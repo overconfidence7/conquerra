@@ -69,7 +69,8 @@ export function cleanNewGame(body: unknown): { settings: LobbySettings; leadersR
     ...(level === "mixed" ? { marshals: Math.max(0, Math.min(bots, Math.floor(Number(s.marshals) || Math.ceil(bots / 2)))) } : {}),
     showPersonalities: !!s.showPersonalities,
     luck,
-    fog: s.fog !== false,
+    // (Session 30: or "blackout", the map hidden until you explore it.)
+    fog: s.fog === "blackout" ? "blackout" : s.fog !== false,
     mode: s.mode === "conquest" ? "conquest" : "classic",
     turnSeconds: s.turnSeconds as number,
     fate: s.fate !== false,

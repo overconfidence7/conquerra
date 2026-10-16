@@ -5,13 +5,16 @@ import { FIGURE_SPRITES } from "@conquerra/art";
 import { solid } from "./solid";
 import { hexNum, houseOf, NEUTRAL_HOUSE } from "../../map/houses";
 import { groupOutlines, quadPoint } from "../../map/shapes";
-import { territoryStatus, type TerritoryStatus } from "../../map/status";
+import { isUnknown, territoryStatus, type TerritoryStatus } from "../../map/status";
 import { wallFootprints } from "../../map/walls";
 import type { DetailMix } from "../../map/zoom";
 import type { MapScene } from "../types";
 import type { TextureBank } from "./bank";
 import { buildLabels, type MapLabels } from "./labels";
 import { RealmLayer } from "./realms";
+
+/** Session 30, blackout fog: a sea's or a range's name shows within this distance of land you've seen (map units). */
+const BLACKOUT_NAMES_NEAR = 110;
 
 /**
  * The info layer in map space: House borders (the House tint itself is painted by the world layer's shader), the selection glow, reachable-target highlights, order
@@ -174,6 +177,11 @@ export class InfoLayer {
     this.isTactical = tactical;
     const { view } = scene;
     this.status = new Map(this.map.territories.map((t) => [t.id, territoryStatus(view, t.id)]));
+    // Session 30, blackout fog: a sea's or a range's name shows only near land you've seen.
+    if (view.settings.fog === "blackout") {
+      const known = this.map.territories.filter((t) => !isUnknown(view, t.id)).map((t) => this.labelOf.get(t.id)!);
+      this.labels.only((x, y) => known.some((p) => Math.hypot(p.x - x, p.y - y) < BLACKOUT_NAMES_NEAR));
+    } else this.labels.only(null);
     const ownerOf = (id: string) => {
       const s = this.status.get(id)!;
       return s.kind === "seen" && s.owner ? s.owner : null;
@@ -324,6 +332,8 @@ export class InfoLayer {
         for (const r of m.rings) ring(t, r).stroke({ width: 1.2, color: 0x2d2a26, alpha: 0.8 });
       }
       for (const [id, s] of this.status) {
+        // (Session 30, blackout fog: land never seen stays the sea's colour.)
+        if (isUnknown(view, id)) continue;
         const rings = this.rings.get(id)!;
         const color =
           s.kind === "seen" ? (s.owner ? houseOf(view, s.owner).color : "#d4c9aa") : s.kind === "remembered" && s.owner ? mixHex(houseOf(view, s.owner).color, "#7d8087", 0.65) : "#7d8087";
@@ -331,8 +341,8 @@ export class InfoLayer {
         for (const hole of rings.slice(1)) ring(t, hole).cut();
       }
       for (const r of g.rivers) t.poly(r.path as number[], false).stroke({ width: 2.4, color: 0x4f9bd0, cap: "round", join: "round" });
-      for (const l of g.seaLanes) t.poly(l.path as number[], false).stroke({ width: 2, color: 0xf2f2f2, alpha: 0.8 });
-      for (const p of g.passes) t.circle(p.x, p.y, 6).fill(0xe8d39a).stroke({ width: 1.5, color: INK });
+      for (const l of g.seaLanes) if (!isUnknown(view, l.a) || !isUnknown(view, l.b)) t.poly(l.path as number[], false).stroke({ width: 2, color: 0xf2f2f2, alpha: 0.8 });
+      for (const p of g.passes) if (!isUnknown(view, p.a) || !isUnknown(view, p.b)) t.circle(p.x, p.y, 6).fill(0xe8d39a).stroke({ width: 1.5, color: INK });
       t.visible = true;
       return;
     }
@@ -484,6 +494,8 @@ export class InfoLayer {
     // and between neutral lands too (Tactical: a plain dark line). Province borders: a gilded double line (gold,
     // a dark rule, gold), distinct from both territory edges and the House bands.
     for (const b of g.borderLines) {
+      // (Session 30, blackout fog: no border between two lands you've never seen.)
+      if (isUnknown(view, b.a) && isUnknown(view, b.b)) continue;
       const prov = province.get(b.a) !== province.get(b.b);
       for (const l of b.lines) {
         const st = (width: number, color: number, alpha: number) => ring(L, l, false).stroke({ width: width * px, color, alpha, join: "round", cap: "round" });
@@ -501,6 +513,7 @@ export class InfoLayer {
     // Passes: a small stone gate across the road, sized to read at Mid zoom.
     this.gates.clear();
     for (const p of g.passes) {
+      if (isUnknown(this.scene!.view, p.a) && isUnknown(this.scene!.view, p.b)) continue;
       const a = this.labelOf.get(p.a)!, b = this.labelOf.get(p.b)!;
       drawGate(this.gates, p.x, p.y, Math.atan2(b.y - a.y, b.x - a.x), Math.min(Math.max(16, 24 * px), 32 * px), px);
     }

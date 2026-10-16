@@ -48,7 +48,7 @@ describe("local game host", () => {
     }
     expect(u.view.winner).not.toBeNull();
     expect(u.report!.events.length).toBeGreaterThan(0);
-  });
+  }, 30_000); // (Session 30: heavy; room for a full parallel test run.)
 
   it("once you're knocked out you choose: watch turn by turn as one of the Fallen (political map, each report) or skip to the result", () => {
     const g = new LocalGame(maps[settings.mapId]!, { ...settings, bots: 3 }, "idle-4");

@@ -109,7 +109,7 @@ describe("random maps (session 30)", () => {
     // Pinned: if this changes, the map maker's output changed, and MAPGEN_VERSION must go up (games pin it).
     expect(mapFingerprint(a.map)).toBe(PINNED_40);
     // A different seed, a different map.
-    expect(mapFingerprint(randomMap("40-island-mellow-tide", defaultRules).map)).not.toBe(mapFingerprint(a.map));
+    expect(mapFingerprint(randomMap("40-inland-jolly-lake", defaultRules).map)).not.toBe(mapFingerprint(a.map));
   }, 60_000);
 
   it("rerolls stop at five: a seed whose six tries all fail says the plain line", () => {

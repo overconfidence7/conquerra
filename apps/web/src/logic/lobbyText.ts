@@ -14,7 +14,7 @@ export const LUCK = [
 /** The Rules block's one line ("normal luck, fog on, Fate on, diplomacy on, classic, 5 min"). */
 export function rulesSummary(l: LobbySettings): string {
   const luck = LUCK.find((x) => x.value === l.luck)?.word ?? `luck ${l.luck}`;
-  return [luck, `fog ${l.fog ? "on" : "off"}`, `Fate ${l.fate === false ? "off" : "on"}`, `diplomacy ${l.diplomacy === false ? "off" : "on"}`, l.mode, timerLabel(l.turnSeconds).replace("No timer", "no timer")].join(", ");
+  return [luck, l.fog === "blackout" ? "blackout fog" : `fog ${l.fog ? "on" : "off"}`, `Fate ${l.fate === false ? "off" : "on"}`, `diplomacy ${l.diplomacy === false ? "off" : "on"}`, l.mode, timerLabel(l.turnSeconds).replace("No timer", "no timer")].join(", ");
 }
 
 /** The Your House block's one line ("Gules (red), Leader Osric (Neutral), Steward Fulk (Turtle)"). */

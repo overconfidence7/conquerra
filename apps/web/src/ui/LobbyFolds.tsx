@@ -34,6 +34,9 @@ const ON_OFF = [
   { value: 0, label: "Off" },
 ];
 
+/** Session 30: fog on, off, or blackout (the map hidden until you explore it). */
+const FOG = [...ON_OFF, { value: 2, label: "Blackout" }];
+
 const styles = (list: readonly LeaderStyle[]) => [null, ...list].map((p) => ({ value: p, label: styleLabel(p) }));
 
 export function HouseBlock({ stewardSuggestion }: { stewardSuggestion: string }) {
@@ -112,7 +115,7 @@ export function RulesBlock() {
     <>
       <div className="picks">
         <Pick label="Luck in battle" value={lobby.luck} options={LUCK.map((l) => ({ value: l.value, label: l.label }))} onChange={(v) => setLobby({ luck: v })} />
-        <Pick label="Fog of war" value={lobby.fog ? 1 : 0} options={ON_OFF} onChange={(v) => setLobby({ fog: v === 1 })} />
+        <Pick label="Fog of war" value={lobby.fog === "blackout" ? 2 : lobby.fog ? 1 : 0} options={FOG} onChange={(v) => setLobby({ fog: v === 2 ? "blackout" : v === 1 })} />
         <Pick label="Fate deck" value={lobby.fate === false ? 0 : 1} options={ON_OFF} onChange={(v) => setLobby({ fate: v === 1 })} />
         <Pick label="Diplomacy" value={lobby.diplomacy === false ? 0 : 1} options={ON_OFF} onChange={(v) => setLobby({ diplomacy: v === 1 })} />
         <Pick
@@ -134,6 +137,7 @@ export function RulesBlock() {
         {lobby.fate === false ? "No Fate cards: less luck." : "Fate: each turn everyone draws a card, an event somewhere or a mission for you."}{" "}
         {lobby.diplomacy === false ? "No deals: every House fights alone." : "Diplomacy: truces, trades, joint wars and right of passage."}{" "}
         {lobby.turnSeconds === null ? "Take as long as you like." : "When time runs out, your orders lock in as they are."}
+        {lobby.fog === "blackout" ? " Blackout: the map is hidden until you explore it." : ""}
       </p>
     </>
   );

@@ -5,7 +5,7 @@ import { toScreen, type Camera } from "../../map/camera";
 import { labelCurve, quadPoint } from "../../map/shapes";
 import { hexNum, houseOf } from "../../map/houses";
 import { CULTURE_PIP_DROP, layoutMarkers, markerMetrics, type MarkerBox, pillHeight, type MarkerContent, type MarkerMetrics } from "../../map/layout";
-import { markerContent, markerPriority, territoryStatus, type TerritoryStatus } from "../../map/status";
+import { isUnknown, markerContent, markerPriority, territoryStatus, type TerritoryStatus } from "../../map/status";
 import type { DetailMix, ZoomDetail } from "../../map/zoom";
 import type { MapScene } from "../types";
 import type { TextureBank } from "./bank";
@@ -168,7 +168,7 @@ export class MarkerLayer {
   private buildPlaques(scene: MapScene) {
     // Only when how much of a province you hold changes.
     const view0 = scene.view;
-    const plaqueKey = this.map.territories.map((t) => (view0.territories[t.id]?.detail === "full" && (view0.territories[t.id] as { owner?: string | null }).owner === view0.me.id ? 1 : 0)).join("");
+    const plaqueKey = this.map.territories.map((t) => (isUnknown(view0, t.id) ? 2 : view0.territories[t.id]?.detail === "full" && (view0.territories[t.id] as { owner?: string | null }).owner === view0.me.id ? 1 : 0)).join("");
     if (plaqueKey === this.plaqueKey) return;
     this.plaqueKey = plaqueKey;
     for (const pl of this.plaques.values()) (pl.root.destroy({ children: true }), pl.name.root.destroy({ children: true }));
@@ -178,6 +178,8 @@ export class MarkerLayer {
       const prov = this.map.provinces.find((p) => p.id === label.id);
       if (!prov) continue;
       const members = this.map.territories.filter((t) => t.province === prov.id);
+      // (Session 30, blackout fog: a province you've seen none of has no name on the map.)
+      if (members.every((t) => isUnknown(view, t.id))) continue;
       const held = members.filter((t) => {
         const v = view.territories[t.id];
         return v?.detail === "full" && v.owner === view.me.id;

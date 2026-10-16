@@ -34,7 +34,8 @@ export interface LobbySettings {
   showPersonalities?: boolean;
   /** 0..1 share of combat that is luck. */
   luck: number;
-  fog: boolean;
+  /** Fog of war: on, off, or (session 30) "blackout": the map is hidden until you explore it. */
+  fog: boolean | "blackout";
   mode: GameMode;
   /** Turn timer in seconds (1, 3, 5 or 10 minutes), or null for No timer. */
   turnSeconds: number | null;
@@ -420,7 +421,8 @@ export interface TableView {
   botLevel: BotChoice;
   turnSeconds: number;
   luck: number;
-  fog: boolean;
+  /** Fog of war: on, off, or (session 30) "blackout": the map is hidden until you explore it. */
+  fog: boolean | "blackout";
   mode: GameMode;
   fate: boolean;
   diplomacy: boolean;

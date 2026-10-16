@@ -106,10 +106,10 @@ const checkTable = (v: TableView) => {
 
 describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room", () => {
   /** The whole check, on a map (session 30: an official one, or a random one built from its id). */
-  const fogOnTheWire = (mapId: string) => async () => {
+  const fogOnTheWire = (mapId: string, fog: true | "blackout" = true) => async () => {
     const t = testRoom();
     // The table: Nate makes it, Kit and Wren sit down, Rook opens the link and never sits.
-    await t.room.createTable({ gameId: "fogwire", code: "f0gw1recde", settings: { ...settings, mapId, bots: 4 }, seed: "fog-on-the-wire", host: hostSeat(NATE, 0) });
+    await t.room.createTable({ gameId: "fogwire", code: "f0gw1recde", settings: { ...settings, mapId, fog, bots: 4 }, seed: "fog-on-the-wire", host: hostSeat(NATE, 0) });
     await t.table(NATE);
     await t.table(ROOK);
     await t.act(KIT, { do: "sit", house: 3, leadersRun: true, leaderName: "Lady Sorrel" });
@@ -140,6 +140,7 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
     let rivalsSeen = 0;
     /** Session 29: lines the bots said in the chat, checked for fairness, and questions from each seat's council. */
     let botLines = 0;
+    let unknownSeen = 0;
     let councilAsks = 0;
 
     /** One turn's truth, for checking what each seat was sent. */
@@ -157,6 +158,9 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
       expect(u.playerId).toBe(seat);
       // The view: exactly the engine's fogged view for this seat.
       expect(u.view).toEqual(clone(viewFor(ctx, game().fullState, seat)));
+      // (Session 30: with blackout, land never seen reaches the seat as unknown and nothing more.)
+      for (const t of Object.values(u.view.territories))
+        if (t.detail === "fogged" && t.unknown) (unknownSeen++, expect(Object.keys(t).sort()).toEqual(["detail", "unknown"]));
       // The replay: exactly the engine's fog-trimmed replay, worked out again from the turn's recorded orders.
       const report = u.report ?? ("replay" in u ? u.replay?.report : undefined) ?? null;
       if (report) {
@@ -291,6 +295,7 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
 
     expect(turnsChecked).toBeGreaterThanOrEqual(8);
     expect(checked).toBeGreaterThan(50);
+    expect(unknownSeen > 0).toBe(fog === "blackout");
     // The test saw what it means to: rivals' events in the replays (with their order ids blanked), and missed turns.
     expect(rivalsSeen).toBeGreaterThan(0);
     expect(ranByLeaders).toBeGreaterThan(0);
@@ -304,7 +309,8 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
     expect([...given.get("p2")!].filter((id) => id.startsWith("kit-secret")).length).toBeGreaterThan(5);
   };
   it("three people, a friend who never sat, two Marshals, a dozen turns: every message to a seat is that seat's view and replay, and nothing of anyone else's", fogOnTheWire("embervale"), 120_000);
-  it("session 30: the same on a random map: the start carries only its id and version, never its drawing", fogOnTheWire("random:80-island-quiet-heron"), 180_000);
+  it("session 30: the same on a random map: the start carries only its id and version, never its drawing", fogOnTheWire("random:40-island-quiet-heron"), 180_000);
+  it("session 30: the same with blackout fog: land a seat has never seen reaches it as unknown, and nothing else", fogOnTheWire("embervale", "blackout"), 120_000);
 
   it("session 28: three people all online and a watcher who never sat: an offer and its counter, a group chat, reach their members only; a pause vote and the deal's news reach the table", async () => {
     const t = testRoom();

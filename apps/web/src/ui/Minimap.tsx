@@ -1,7 +1,7 @@
 import type { GameContext, PlayerView } from "@conquerra/engine";
 import { useEffect, useRef } from "react";
 import { houseOf } from "../map/houses";
-import { territoryStatus } from "../map/status";
+import { isUnknown, territoryStatus } from "../map/status";
 
 export interface ViewRect {
   x: number;
@@ -61,7 +61,29 @@ export function Minimap({ ctx, view, rect, onJump }: { ctx: GameContext; view: P
     }
     x.strokeStyle = "rgba(27,18,6,0.6)";
     x.lineWidth = 1 / s;
-    for (const t of g.territories) x.stroke(path(t.rings));
+    for (const t of g.territories) if (!isUnknown(view, t.id)) x.stroke(path(t.rings));
+    // Session 30, blackout fog: cloud over everything but the land you've seen and the sea just around it.
+    if (view.settings.fog === "blackout") {
+      const k = document.createElement("canvas");
+      [k.width, k.height] = [x.canvas.width, x.canvas.height];
+      const kx = k.getContext("2d")!;
+      kx.fillStyle = "#8c96a4";
+      kx.fillRect(0, 0, k.width, k.height);
+      kx.setTransform(x.getTransform());
+      kx.globalCompositeOperation = "destination-out";
+      kx.lineWidth = 60;
+      kx.lineJoin = "round";
+      for (const t of g.territories)
+        if (!isUnknown(view, t.id)) {
+          const p = path(t.rings);
+          kx.fill(p, "evenodd");
+          kx.stroke(p);
+        }
+      x.save();
+      x.setTransform(1, 0, 0, 1, 0, 0);
+      x.drawImage(k, 0, 0);
+      x.restore();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, ctx.map]);
 

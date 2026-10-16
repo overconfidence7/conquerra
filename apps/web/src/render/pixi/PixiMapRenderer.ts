@@ -16,6 +16,7 @@ import type { PlayerView, ReplayEvent, TerritoryId } from "@conquerra/engine";
 import { reducedMotion, useFx } from "../../replay/fx/settings";
 import { sceneryFor } from "./scenery";
 import { WorldLayer } from "./world";
+import { isUnknown } from "../../map/status";
 
 /** How long the fog takes to lift off newly seen land (or settle on land you lost sight of). */
 export const FOG_FADE_MS = 300;
@@ -336,9 +337,12 @@ class PixiMapRenderer implements MapRenderer {
       const v = scene.view.territories[t.id];
       return v?.detail !== "full" && !(v?.detail === "fogged" && v.lastSeen?.political);
     });
-    const fogKey = fogged.map((t) => t.id).join("|");
+    // Session 30, blackout fog: land never seen is under thick cloud (and the sea around it).
+    const blackout = scene.view.settings.fog === "blackout";
+    const known = blackout ? this.opts.ctx.map.geometry!.territories.filter((t) => !isUnknown(scene.view, t.id)) : [];
+    const fogKey = `${fogged.map((t) => t.id).join("|")}#${blackout ? known.map((t) => t.id).join("|") : ""}`;
     if (fogKey !== this.fogKey) {
-      this.world.setFog(fogged, this.fogKey === null ? 0 : FOG_FADE_MS);
+      this.world.setFog(fogged, this.fogKey === null ? 0 : FOG_FADE_MS, blackout ? { known } : null);
       this.fogKey = fogKey;
     }
     this.info.setScene(scene, this.tactical);

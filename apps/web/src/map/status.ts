@@ -71,3 +71,9 @@ export function markerPriority(view: PlayerView, s: TerritoryStatus): number {
   if (s.owner) return 2;
   return 1;
 }
+
+/** Session 30, blackout fog: land this player has never seen (the map hides it under cloud, name and all). */
+export function isUnknown(view: PlayerView, id: TerritoryId): boolean {
+  const v = view.territories[id];
+  return v?.detail === "fogged" && !!v.unknown;
+}

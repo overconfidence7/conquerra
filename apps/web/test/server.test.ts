@@ -73,6 +73,9 @@ describe("the server's files (session 26)", () => {
     for (const bad of ["random:81-island-quiet-heron", "random:80-dragon-quiet-heron", "random:80-island-quiet"]) expect(cleanNewGame({ settings: { ...settings, mapId: bad } })).toEqual({ error: "That map isn't one of the game's maps." });
     expect(mapNameOf("random:80-crescent-quiet-heron")).toBe("Random, 80 territories (quiet-heron)");
     expect(mapNameOf("embervale")).toBe("Embervale");
+    // Session 30: blackout fog travels as itself; anything else is on or off.
+    expect(cleanNewGame({ settings: { ...settings, fog: "blackout" } })).toMatchObject({ settings: { fog: "blackout" } });
+    expect(cleanNewGame({ settings: { ...settings, fog: "thick" } })).toMatchObject({ settings: { fog: true } });
     const ok = cleanNewGame({ settings: { ...settings, turnSeconds: 86_400, house: 99, leaderName: "  Lord Ash  " }, leadersRun: false });
     expect(ok).toMatchObject({ settings: { mapId: "embervale", bots: 3, turnSeconds: 86_400, house: 0, leaderName: "Lord Ash" }, leadersRun: false });
   });

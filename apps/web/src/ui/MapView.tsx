@@ -1,3 +1,4 @@
+import { isUnknown } from "../map/status";
 import type { GameContext, Order, PlayerId, PlayerView, TerritoryId } from "@conquerra/engine";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isAttack, moveTargets, oddsAreEstimate, oddsFor, passageOpen, planQueue, type MoveDraft } from "../logic/orders";
@@ -135,12 +136,14 @@ export function MapView({ ctx, view, queue, selected, draft, showTargets, glow =
       focus: view.me.capital,
       ...(live.current.insets ? { insets: live.current.insets } : {}),
       events: {
-        tap: (t: TerritoryId | null) => {
+        tap: (t0: TerritoryId | null) => {
           setCard(null);
+          // (Session 30, blackout fog: land you've never seen can't be picked or looked at; it's cloud.)
+          const t = t0 && !isUnknown(live.current.scene.view, t0) ? t0 : null;
           if (t) live.current.onTap(t);
           else live.current.onBackground?.();
         },
-        inspect: (t: TerritoryId | null, at: { x: number; y: number }, how: "hover" | "hold") => setCard(t ? { id: t, x: at.x, y: at.y, how } : null),
+        inspect: (t: TerritoryId | null, at: { x: number; y: number }, how: "hover" | "hold") => setCard(t && !isUnknown(live.current.scene.view, t) ? { id: t, x: at.x, y: at.y, how } : null),
         viewMoved: (r: { x: number; y: number; width: number; height: number }) => live.current.onViewMoved?.(r),
       },
     };

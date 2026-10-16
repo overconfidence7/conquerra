@@ -214,7 +214,7 @@ void main() {
   // Foam along the coasts breathes in and out (session 21: the living map).
   float coast = smoothstep(0.3, 0.45, land) * (1.0 - smoothstep(0.45, 0.58, land));
   if (coast > 0.01) c += coast * (0.5 + 0.5 * sin(t * 1.1 + vnoise(vPos * 0.05) * 6.28)) * 0.06;
-  // Fog: R = standard fog. G is kept free for blackout fog (thick clouds hiding the land), not built yet.
+  // Fog: R = standard fog, G = blackout fog (session 30: thick painted clouds hiding land never seen, and its sea).
   // A soft, pale haze: the painted land shows faintly through it (mostly grey, only lightly darkened), with
   // drifting mist on top. Pale against the bright, coloured land you can see, so it's obvious at a glance.
   // During the replay the fog eases from the old mask to the new one as land comes into view (uFogMix 0 -> 1).
@@ -230,6 +230,20 @@ void main() {
   }
   // Far-zoom dimming, lighter on fogged land so the two don't stack into a dark blanket.
   c *= 1.0 - uDim * (1.0 - 0.75 * fogged);
+  // Blackout (art direction: "thick painted clouds"): over the open sea's colour, banks of cloud in two scales that
+  // drift slowly, lit from the upper left. Nothing of the land under them shows.
+  float dark = fg.g;
+  if (dark > 0.01) {
+    vec2 q = vPos * 0.0045 + vec2(t * 0.004, t * 0.0016);
+    float big = fbm(q);
+    float small = fbm(vPos * 0.017 - vec2(t * 0.007, 0.0));
+    float bank = smoothstep(0.32, 0.72, big * 0.72 + small * 0.28);
+    float lit = smoothstep(0.0, 0.18, fbm(q - vec2(0.012, 0.012)) - big + 0.06);
+    vec3 sea = vec3(0.09, 0.19, 0.27);
+    vec3 cloud = mix(vec3(0.55, 0.6, 0.68), vec3(0.93, 0.93, 0.95), lit);
+    vec3 sky = mix(sea, cloud, bank * 0.92);
+    c = mix(c, sky, smoothstep(0.0, 1.0, dark));
+  }
   // House tint (after the dimming, so owned land stands out at Far): flat at Far, a wash along realm edges closer in.
   vec4 own = texture(uOwner, mu);
   if (own.a > 0.004) {

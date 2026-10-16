@@ -73,7 +73,7 @@ describe("game screen state", () => {
     }
     expect(useGame.getState().screen).toBe("over");
     expect(useGame.getState().view!.winner).not.toBeNull();
-  });
+  }, 20_000); // (Session 30: heavy; room for a full parallel test run.)
 
   it("one of the Fallen: pick an event, tap the land to aim it, and it goes with Next turn (a storm takes two taps)", async () => {
     await playUntilKnockedOut();

@@ -68,6 +68,11 @@ function replayOf(ctx: GameContext, before: GameState, result: TurnResult, playe
   if (seesPolitically(before, player) && !result.state.winner) return fallenReplay(ctx, result, player);
   const idx = indexMap(ctx.map);
   const tv = new TurnVision(ctx, before, result.events, [player]);
+  // Session 30, blackout fog: news from land you have never seen (nor see this turn) doesn't reach you, since its
+  // province's name would say where unknown land lies.
+  const blackout = before.settings.fog === "blackout";
+  const memory = before.intel?.[player] ?? {};
+  const unknownTo = (t: TerritoryId) => blackout && !memory[t] && !tv.sees(player, t) && !before.spyIntel?.[player]?.[t];
   const surface = (e: StepEvent, what: SurfaceEvent["what"], t: TerritoryId): SurfaceEvent => ({
     type: "surface",
     step: e.step,
@@ -98,14 +103,15 @@ function replayOf(ctx: GameContext, before: GameState, result: TurnResult, playe
         break;
       case "battle":
         if (mine || e.defender === player || where.some(sees)) out.push(e);
-        else out.push(surface(e, "battle", e.to));
+        else if (!unknownTo(e.to)) out.push(surface(e, "battle", e.to));
         break;
       // A march through a partner's land shows to anyone who could see any of the way (the partner always can).
       case "moved":
         if (mine || where.some(sees)) out.push(e);
         break;
       case "leaderKilled":
-        out.push(mine || sees(e.territory) ? e : surface(e, "leaderFell", e.territory));
+        if (mine || sees(e.territory)) out.push(e);
+        else if (!unknownTo(e.territory)) out.push(surface(e, "leaderFell", e.territory));
         break;
       case "recruited":
       case "hired":
@@ -147,7 +153,7 @@ function replayOf(ctx: GameContext, before: GameState, result: TurnResult, playe
       // a surface detail ("something stirs in Northreach"), even for whoever drew it.
       case "fate":
         if (e.holder === player || placesSeen(e).some(sees)) out.push(e);
-        else out.push({ ...surface(e, "fate", e.at), ...(e.drawer === player ? { yours: true } : {}) });
+        else if (!unknownTo(e.at)) out.push({ ...surface(e, "fate", e.at), ...(e.drawer === player ? { yours: true } : {}) });
         break;
       // A governing general's purchases: its owner, and anyone who could see the land it changed. Its gold going home: its owner.
       case "governed":
