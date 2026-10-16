@@ -1,6 +1,6 @@
 import { spiesOn, type Order, type PlayerId, type TerritoryId } from "@conquerra/engine";
 import type { Board } from "./board";
-import { provinceOpen } from "./known";
+import { cloudBorders, provinceOpen } from "./known";
 
 /**
  * The Captain's spies (session 15, design additions §8). It hires one or two when it has gold to spare, and judges only
@@ -47,8 +47,12 @@ export function captainSpies(b: Board, newId: () => string, gold: number, limits
 
   const spies = [...view.spies].sort((x, y) => x.id.length - y.id.length || (x.id < y.id ? -1 : 1));
   const jobs = [attack, guard].filter((x): x is string => !!x);
+  // Session 32, blackout: a spy with no rival to watch heads for the cloud (the known province with the most borders
+  // into it; its report lifts the cloud as it goes, as a person's does). Never with standard fog (no cloud).
+  const cloudAt = (p: string) => members(p).reduce((a, t) => a + cloudBorders(b.ctx.map, t), 0);
+  const cloud = ctxProvinces(b).filter((p) => cloudAt(p) > 0 && !holds(me.id, p)).sort((x, y) => cloudAt(y) - cloudAt(x) || (x < y ? -1 : 1))[0] ?? null;
   spies.forEach((spy, i) => {
-    const job = jobs[i] ?? attack;
+    const job = jobs[i] ?? attack ?? cloud;
     if (!job) return;
     const there = province(spy.at) === job;
     if (spy.target === job || (there && !spy.target)) return;

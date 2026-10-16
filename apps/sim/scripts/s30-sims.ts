@@ -17,7 +17,7 @@ import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { fileURLToPath } from "node:url";
-import { defaultRules, type MapDef } from "@conquerra/content";
+import { defaultRules, marshalData, type MapDef } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { runGame, type GameSummary } from "@conquerra/simcore";
 import { dealPersonalities, makeMarshalBot } from "@conquerra/bots";
@@ -55,6 +55,8 @@ interface Job {
    * says `--worker`, so every run played standard fog: session 30's "blackout, game for game the same" was that.)
    */
   fog: string;
+  /** Session 32: try other explore settings (`--explore '{"weight":2}'`), merged into the content's for this run. */
+  explore?: Record<string, number>;
 }
 interface Result {
   map: string;
@@ -81,11 +83,13 @@ interface Result {
 }
 
 const fogArg = opt("fog", "on");
+const exploreArg = opt("explore", "") ? { explore: JSON.parse(opt("explore", "")) as Record<string, number> } : {};
 const settingsOf = (fog: string): Partial<GameSettings> => ({ luck: defaultRules.combat.luck, mode: "classic", fog: fog === "blackout" ? "blackout" : fog !== "off", fallen: true, spoils: true, fate: true, diplomacy: true, spies: true }) as Partial<GameSettings>;
 
 async function play(job: Job): Promise<Result> {
   const t0 = Date.now();
   try {
+    if (job.explore) Object.assign(marshalData.explore, job.explore);
     const map = await mapOf(job.map, job.band);
     const seats = Array.from({ length: job.players }, (_, i) => `s${i}`);
     const dealt = dealPersonalities(job.seed, seats);
@@ -193,7 +197,7 @@ if (args[0] === "--digest") {
   const jobs: Job[] = [];
   for (const [id, m] of Object.entries(maps)) {
     const p = players <= m.maxPlayers && players >= m.minPlayers ? players : m.recommendedPlayers.min;
-    for (let i = 0; i < games; i++) jobs.push({ map: id, players: p, game: i, seed: `${seedPrefix}-${id}-${p}p-${i}`, fog: fogArg });
+    for (let i = 0; i < games; i++) jobs.push({ map: id, players: p, game: i, seed: `${seedPrefix}-${id}-${p}p-${i}`, fog: fogArg, ...exploreArg });
   }
   const rs = await runAll(jobs);
   const lines = rs.map((r) => `${r.map} ${r.seed} ${r.winnerSeat} ${r.turns} ${r.endReason}`);
@@ -211,7 +215,7 @@ if (args[0] === "--digest") {
   // "all": the five shapes in turn.
   const shapeOf = (i: number) => (shape === "all" ? RANDOM_SHAPE_IDS[i % RANDOM_SHAPE_IDS.length]! : shape);
   const band = opt("band", "");
-  const jobs: Job[] = Array.from({ length: Number(n) }, (_, i) => ({ map: `random:${size}-${shapeOf(i)}-${seedWords(start + i)}`, players, game: i, seed: `${seedPrefix}-${size}-${shape}-${i}`, fog: fogArg, ...(band ? { band: Number(band) } : {}) }));
+  const jobs: Job[] = Array.from({ length: Number(n) }, (_, i) => ({ map: `random:${size}-${shapeOf(i)}-${seedWords(start + i)}`, players, game: i, seed: `${seedPrefix}-${size}-${shape}-${i}`, fog: fogArg, ...exploreArg, ...(band ? { band: Number(band) } : {}) }));
   const rs = await runAll(jobs);
   const r = report(`${n} random maps, ${size} territories, ${shape}`, players, rs);
   if (shape === "all")
@@ -224,7 +228,7 @@ if (args[0] === "--digest") {
   const [map, p] = args[0]!.split(":") as [string, string];
   const players = Number(p);
   const games = Number(args[1] ?? 100);
-  const jobs: Job[] = Array.from({ length: games }, (_, i) => ({ map, players, game: i, seed: `${seedPrefix}-${map}-${players}p-${i}`, fog: fogArg }));
+  const jobs: Job[] = Array.from({ length: games }, (_, i) => ({ map, players, game: i, seed: `${seedPrefix}-${map}-${players}p-${i}`, fog: fogArg, ...exploreArg }));
   const rs = await runAll(jobs);
   const r = report(map, players, rs);
   if (json) writeFileSync(json, JSON.stringify({ summary: r, games: rs }, null, 1));

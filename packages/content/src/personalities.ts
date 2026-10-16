@@ -364,8 +364,19 @@ export const LeaderPlanning = z.object({
 });
 export type LeaderPlanning = z.infer<typeof LeaderPlanning>;
 
+/**
+ * Session 32, the scout's drive (blackout fog only; with standard fog nothing is unknown, so none of it does anything):
+ *  - `weight`: what each border into the cloud a territory opens adds to taking it (the Captain's land value, and so the
+ *    Marshal's and its leaders'), times the share of the map still in cloud, so the drive fades as the cloud lifts.
+ *  - `scoutTurn`: up to this turn, while at least `scoutCloud` of the map is cloud, the Marshal hires Scouts (vision +1)
+ *    with the army it recruits into, before any other specialist.
+ * Idle spies (no rival to watch) head for the cloud too.
+ */
+export const Explore = z.object({ weight: z.number().min(0), scoutTurn: z.number().int().min(0), scoutCloud: z.number().min(0).max(1) });
+export type Explore = z.infer<typeof Explore>;
+
 export const MarshalData = z
-  .object({ judgement: MarshalJudgement, personalities: z.array(Personality).min(1), leaders: LeaderPlanning })
+  .object({ judgement: MarshalJudgement, personalities: z.array(Personality).min(1), leaders: LeaderPlanning, explore: Explore })
   .superRefine((d, ctx) => {
     if (new Set(d.personalities.map((p) => p.id)).size !== d.personalities.length) ctx.addIssue({ code: "custom", message: "personality ids must be unique" });
     if (d.personalities.some((p) => p.id === "delegate")) ctx.addIssue({ code: "custom", message: "the delegate style is your leaders', never a bot's" });

@@ -14,7 +14,8 @@ import {
   type TerritoryDetail,
   type TerritoryId,
 } from "@conquerra/engine";
-import { knownCtx, mapSize, provinceOpen } from "./known";
+import { cloudBorders, knownCtx, mapSize, provinceOpen } from "./known";
+import { marshalData } from "@conquerra/content";
 
 export type Seen = TerritoryDetail & { detail: "full" };
 /** What a territory probably holds (what we see, or our best guess for land in the fog). */
@@ -89,6 +90,8 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
   const idx = indexMap(ctx.map);
   /** How many territories the whole map has (public: the lobby says so). Under blackout `idx` holds only the land we know. */
   const size = mapSize(ctx.map);
+  /** Session 32: how much of the map this seat has never seen (0 with standard fog). */
+  const cloudShare = (size - idx.ids.length) / size;
   const me = view.me;
   const garrison = rules.setup.minGarrison;
   const on = (f: CaptainFeature) => !opts.off?.includes(f);
@@ -317,6 +320,9 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
     }
     // On the way to the focused rival's capital.
     if (toFocusCapital && (toFocusCapital.get(t) ?? 99) <= 2) val += 4;
+    // Session 32, blackout: land whose borders lead into the cloud shows what's beyond once it's ours (the scout's
+    // drive), fading as the cloud lifts. Zero with standard fog (nothing is unknown) and for land we hold.
+    if (cloudShare > 0 && !owned(t)) val += marshalData.explore.weight * cloudBorders(ctx.map, t) * cloudShare;
     return val;
   };
   /**
@@ -358,7 +364,7 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
   const blocked = (from: TerritoryId, to: TerritoryId) => ours.length > 0 && ours.some((d) => covers(idx, d as Parameters<typeof covers>[1], from, to, look0));
 
   return {
-    ctx, view, rules, idx, size, me, garrison, on, blocked,
+    ctx, view, rules, idx, size, cloudShare, me, garrison, on, blocked,
     seen, owned, rivalAt, troopsAt, specsAt, mine, border, crossing, isFrontier, frontier, enemyPressure, biggestEnemyNear,
     alive, look0, knownLand, facing, endgame, runaway, shieldsLeader, raider, facesRival, facesRaider, wantsFront,
     focus, toFocusCapital, spearhead, holdNeed, chokeHolder, capital, capThreatened, look, expectAt, valueOf, needFor, exposed, wallDefend, wallSize,

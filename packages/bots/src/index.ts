@@ -22,7 +22,7 @@ export {
 } from "./diplomacy";
 export { captainSpoils, missionPull, missionSpend, MISSION_PULL, recruitSpoils, spoilsOrder, type SpoilsChoice } from "./cards";
 export { captainSpies } from "./spies";
-export { landEstimates, runawayLeader } from "./board";
+export { landEstimates, readBoard, runawayLeader, type Board } from "./board";
 export { cloudBorders, knownCtx, knownExtras, knownMap, mapSize, provinceOpen, type KnownExtras } from "./known";
 export {
   dealPersonalities,

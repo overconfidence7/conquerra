@@ -463,7 +463,12 @@ function planMoves(
     const rough = rules.specialists.rangers.terrains;
     const roughFront = idx.neighbors.get(hireAt)!.some((x) => !!rivalAt(x) && rough.includes(idx.byId.get(x)!.terrain) && troopsAt(x) >= 3);
     let want: SpecialistType | null = null;
-    if (fortAhead && !has("siege") && unlocked("siege")) want = "siege";
+    // Session 32, blackout: early on, with most of the map still cloud, Scouts first (vision +1: the army sees further,
+    // so its chains can go further), unless an army of ours has them already. Never with standard fog.
+    const X = marshalData.explore;
+    const scouting = b.cloudShare >= X.scoutCloud && view.turn <= X.scoutTurn && unlocked("scouts") && !mine.some((t) => seen(t)!.specialists.some((s) => s.type === "scouts"));
+    if (scouting) want = "scouts";
+    else if (fortAhead && !has("siege") && unlocked("siege")) want = "siege";
     else if (roughFront && !has("rangers") && unlocked("rangers") && here.troops >= 8) want = "rangers";
     else if (!has("standardBearer") && unlocked("standardBearer") && here.troops >= 20) want = "standardBearer";
     else if (unlocked("healers") && !has("healers") && here.troops >= 15) want = "healers";

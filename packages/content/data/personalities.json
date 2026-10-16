@@ -1,4 +1,5 @@
 {
+  "explore": { "weight": 2, "scoutTurn": 4, "scoutCloud": 0.5 },
   "judgement": {
     "runaway": {
       "share": 0.4,

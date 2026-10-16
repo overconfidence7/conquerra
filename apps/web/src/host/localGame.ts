@@ -947,7 +947,8 @@ export class LocalGame {
   /** Your leaders' orders, and what each is up to this turn (a line for the Leaders panel). */
   leaderOrders(instructions: Record<string, Instruction | null> = {}, purses?: Record<string, number>, id: PlayerId = HUMAN_ID): { orders: Order[]; notes: Record<string, LeaderNote> } {
     const p = this.person(id);
-    if (this.state.winner || this.isOut(id) || p.left) return { orders: [], notes: {} };
+    // (Session 32: no leaders planning, no notes either: a knocked-out person was sent last turn's notes.)
+    if (this.state.winner || this.isOut(id) || p.left) return { orders: [], notes: (p.leaderNotes = {}) };
     // Your leaders plan knowing the deals you've agreed this turn (they start before any move).
     const view = withAgreed(viewFor(this.ctx, this.state, id), this.agreed());
     const last = this.lastTurn.get(id);

@@ -1,4 +1,4 @@
-import { defaultRules, type MapDef } from "@conquerra/content";
+import { defaultRules, marshalData, type MapDef } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { createGame, leaderKey, replayFor, resolveTurn, viewFor, type GameContext, type GameState, type Instruction, type Offer, type OrdersByPlayer, type PlayerId, type PlayerView, type ReplayEvent, type TerritoryId } from "@conquerra/engine";
 import {
@@ -17,7 +17,9 @@ import {
   planLeaders,
   proposeOffers,
   recruitBot,
+  cloudBorders,
   knownMap,
+  readBoard,
   type Bot,
 } from "@conquerra/bots";
 import { randomMap } from "@conquerra/mapgen";
@@ -226,6 +228,75 @@ describe("bots never cheat under blackout (session 32)", () => {
         }
       expect(checked).toBeGreaterThan(0);
     }, 120_000);
+
+  it("a blackout seat's orders, offers and answers never name land it has never seen, or a province it hasn't seen any of", () => {
+    let orders = 0;
+    for (const [map, players, seed] of [[randomMap("80-island-quiet-heron", defaultRules).map, 5, "n1"], [maps.wyrmland!, 6, "n2"], [maps.embervale!, 4, "n3"]] as const)
+      for (const snap of playAndKeep(map, seed, players, [1, 3, 6, 10])) {
+        const dark = new Set(Object.entries(snap.view.territories).flatMap(([t, v]) => (v.detail === "fogged" && v.unknown ? [t] : [])));
+        if (!dark.size) continue;
+        const seenProvinces = new Set(map.territories.filter((t) => !dark.has(t.id)).map((t) => t.province));
+        const all = everything(snap) as Record<string, unknown>;
+        const walk = (x: unknown, path: string): void => {
+          if (typeof x === "string") expect(dark.has(x), `${snap.view.me.id} turn ${snap.view.turn}: ${path} names ${x}, land it has never seen`).toBe(false);
+          else if (Array.isArray(x)) x.forEach((y, i) => walk(y, `${path}[${i}]`));
+          else if (x && typeof x === "object") {
+            const o = x as Record<string, unknown>;
+            if (o.kind === "spy" && typeof o.to === "string") expect(seenProvinces.has(o.to), `${path}: a spy sent to a province it has never seen`).toBe(true);
+            for (const [k, y] of Object.entries(o)) walk(y, `${path}.${k}`);
+          }
+        };
+        walk(all, "");
+        orders += Object.values(all).filter(Array.isArray).reduce((a, xs) => a + (xs as unknown[]).length, 0);
+      }
+    expect(orders).toBeGreaterThan(500);
+  }, 180_000);
+
+  it("the scout's drive: under blackout the Marshals hire Scouts early and take land that opens into the cloud; never with standard fog", () => {
+    const hires = (fog: true | "blackout") => {
+      const ctx: GameContext = { map: maps.embervale!, rules: defaultRules };
+      const ids = ["p1", "p2", "p3", "p4"];
+      const deal = dealPersonalities("scout", ids);
+      const bots = new Map(ids.map((p) => [p, makeMarshalBot(deal[p]!)]));
+      let s = createGame(ctx, { gameId: "scout", seed: "scout", players: ids.map((id) => ({ id, name: id })), settings: { fog, luck: 0.3 }, startBonus: true });
+      let scouts = 0;
+      while (!s.winner && s.turn <= 5) {
+        const orders: OrdersByPlayer = {};
+        for (const p of s.players.filter((x) => x.eliminatedTurn === null)) orders[p.id] = bots.get(p.id)!.plan(ctx, viewFor(ctx, s, p.id));
+        const r = resolveTurn(ctx, s, orders);
+        scouts += r.events.filter((e) => e.type === "hired" && e.specialist === "scouts").length;
+        s = r.state;
+      }
+      return scouts;
+    };
+    expect(hires("blackout")).toBeGreaterThan(0);
+    expect(hires(true)).toBe(0);
+  });
+
+  it("the explore term: land opening into the cloud is worth weight x its cloud borders x the cloud's share; nothing with standard fog", () => {
+    const ctx: GameContext = { map: maps.wyrmland!, rules: defaultRules };
+    const game = (fog: true | "blackout") => createGame(ctx, { gameId: "x", seed: "x", players: ["p1", "p2", "p3", "p4", "p5", "p6"].map((id) => ({ id, name: id })), settings: { fog }, startBonus: true });
+    const value = (fog: true | "blackout", weight: number) => {
+      const keep = marshalData.explore.weight;
+      marshalData.explore.weight = weight;
+      try {
+        const view = viewFor(ctx, game(fog), "p1");
+        const b = readBoard(ctx, view, { chainMargin: 1.25 })!;
+        const values = new Map(b.idx.ids.map((t) => [t, b.valueOf(t)]));
+        return { b, at: (t: string) => values.get(t)! };
+      } finally {
+        marshalData.explore.weight = keep;
+      }
+    };
+    const dark = value("blackout", 0), lit = value("blackout", 2);
+    const edge = dark.b.idx.ids.filter((t) => !dark.b.owned(t) && cloudBorders(dark.b.ctx.map, t) > 0);
+    expect(edge.length).toBeGreaterThan(0);
+    expect(dark.b.cloudShare).toBeGreaterThan(0.5);
+    for (const t of edge) expect(lit.at(t) - dark.at(t)).toBeCloseTo(2 * cloudBorders(dark.b.ctx.map, t) * dark.b.cloudShare, 9);
+    const std0 = value(true, 0), std2 = value(true, 2);
+    expect(std0.b.cloudShare).toBe(0);
+    for (const t of std0.b.idx.ids) expect(std2.at(t)).toBe(std0.at(t));
+  });
 
   it("with standard fog nothing is unknown, so the known map is the map itself (the very same object)", () => {
     for (const m of Object.values(maps)) {
