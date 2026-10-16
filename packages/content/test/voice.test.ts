@@ -19,7 +19,7 @@ describe("the voice guide's hard rules", () => {
 
   it("reaches the game's words", () => {
     expect(found.length).toBeGreaterThan(3000);
-    for (const where of ["apps/web/src/ui/", "apps/web/src/logic/", "packages/bots/src/", "packages/engine/src/", "packages/content/data/lines.json", "docs/rules-reference.md"])
+    for (const where of ["apps/web/src/ui/", "apps/web/src/logic/", "packages/bots/src/", "packages/engine/src/", "packages/content/data/lines.json", "packages/content/data/tutorials/", "docs/rules-reference.md"])
       expect(found.some((f) => f.file.startsWith(where)), where).toBe(true);
   });
 

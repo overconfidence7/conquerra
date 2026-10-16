@@ -268,7 +268,12 @@ export interface HostStart extends HostUpdate {
 }
 
 /** Where to load a saved game from: a slot on this device ("auto" is Continue), or a save file's text; or an online game (its id). */
-export type LoadSource = { slot: SlotId } | { file: string } | { online: string; code?: string };
+export type LoadSource =
+  | { slot: SlotId }
+  | { file: string }
+  | { online: string; code?: string }
+  /** Session 31: a tutorial by its id, its saved game made from its recipe (with your colour and Leader's name). */
+  | { tutorial: string; house?: number; leaderName?: string };
 
 export interface GameHost {
   start(settings: LobbySettings): Promise<HostStart>;

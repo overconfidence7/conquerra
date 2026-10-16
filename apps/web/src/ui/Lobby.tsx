@@ -22,6 +22,7 @@ import { VersionLine } from "./VersionLine";
 import { savedWhen, slotLine } from "./saveText";
 import { DEFAULT_HOUSE, HOUSE_PLAIN, HOUSES } from "../map/houses";
 import { unlockedAudio } from "../sound/unlock";
+import { learned, learnSummary } from "../tutorials/learned";
 
 /** Load game: loaded the first time it's opened. */
 const SavesDialog = lazy(() => import("./Saves"));
@@ -35,6 +36,8 @@ const online = () => import("./OnlineBlock");
 const randomPanel = () => import("./RandomMap");
 const RandomMapPanel = lazy(randomPanel);
 const OnlineBlock = lazy(online);
+/** Session 31: the lessons, loaded only when Learn is open. */
+const LearnBlock = lazy(() => import("./Learn"));
 
 const BOT_LEVELS: { value: BotChoice; label: string; note: string }[] = [
   { value: "marshal", label: "Marshal (hard)", note: "Attacks hard, each with its own personality (you learn which by how it plays), and spots a runaway early." },
@@ -105,10 +108,25 @@ function onlineSummary(all: { waitingOn: string[]; status: string; left?: string
 
 /** Which folded blocks are open, remembered on this device (all closed at first). */
 const FOLD_KEY = "conquerra.lobby.open";
-function useFold(name: "house" | "rules" | "online"): [boolean, () => void] {
+/** Session 31: Learn is open on your first visit to the lobby (and folded on later ones, unless you open it). */
+const VISITED_KEY = "conquerra.lobby.visited";
+let firstVisit: boolean | null = null;
+function isFirstVisit(): boolean {
+  if (firstVisit !== null) return firstVisit;
+  try {
+    firstVisit = !localStorage.getItem(VISITED_KEY);
+    localStorage.setItem(VISITED_KEY, "1");
+  } catch {
+    firstVisit = false;
+  }
+  return firstVisit;
+}
+type FoldName = "house" | "rules" | "online" | "learn";
+function useFold(name: FoldName): [boolean, () => void] {
   const read = () => {
     try {
-      return !!(JSON.parse(localStorage.getItem(FOLD_KEY) ?? "{}") as Record<string, boolean>)[name];
+      const v = (JSON.parse(localStorage.getItem(FOLD_KEY) ?? "{}") as Record<string, boolean>)[name];
+      return v === undefined && name === "learn" ? isFirstVisit() : !!v;
     } catch {
       return false;
     }
@@ -127,7 +145,7 @@ function useFold(name: "house" | "rules" | "online"): [boolean, () => void] {
 }
 
 /** A folded block: its name and its choices in one line, so nothing is hidden; tap to open it. */
-function Fold({ name, title, summary, children }: { name: "house" | "rules" | "online"; title: string; summary: string; children: ReactNode }) {
+function Fold({ name, title, summary, children }: { name: FoldName; title: string; summary: string; children: ReactNode }) {
   const [open, toggle] = useFold(name);
   return (
     <section className={`fold ${open ? "open" : ""}`}>
@@ -318,6 +336,12 @@ export function Lobby() {
             {busy && starting ? "Starting…" : auto ? "Start a new game" : "Start"}
           </button>
         </div>
+        {/* Learn (session 31): the lessons, under Start. */}
+        <Fold name="learn" title="Learn" summary={learnSummary(learned().length)}>
+          <Suspense fallback={null}>
+            <LearnBlock />
+          </Suspense>
+        </Fold>
         {slots.length === 0 && (
           <button className="link" onClick={() => setLoading(true)}>
             Load a saved game

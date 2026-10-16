@@ -15,6 +15,7 @@
     "./lines": "./src/lines.ts",
     "./seedWords": "./src/seedWords.ts",
     "./data/maps/*": "./data/maps/*",
-    "./data/rules.json": "./data/rules.json"
+    "./data/rules.json": "./data/rules.json",
+    "./tutorials": "./src/tutorials.ts"
   }
 }

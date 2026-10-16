@@ -14,6 +14,8 @@ export const QUEUE_SAVE_MS = 1500;
  */
 export class HostCore {
   game: LocalGame | null = null;
+  /** Session 31: a tutorial's game never writes the autosave (Continue keeps your own game) and never clears it. */
+  private lesson = false;
   /** The autosave being written (tests wait for it). */
   private writing: Promise<void> = Promise.resolve();
   /** Your queue changed: the autosave is written again once it's been still for a moment (Continue keeps it). */
@@ -35,6 +37,7 @@ export class HostCore {
 
   /** The game saves itself at the start of every turn's planning; one that's over is no longer offered to Continue. */
   private autosave = (save: SaveFile) => {
+    if (this.lesson) return;
     this.writing = this.writing.then(() =>
       this.store.put("auto", save).then(
         () => undefined,
@@ -48,7 +51,7 @@ export class HostCore {
     // The new turn's autosave is already on its way; a queue saved for the old turn would be stale.
     if (this.queuedTimer) clearTimeout(this.queuedTimer);
     this.queuedTimer = null;
-    if (this.game?.over) this.writing = this.writing.then(() => this.store.remove("auto").catch(() => undefined));
+    if (this.game?.over && !this.lesson) this.writing = this.writing.then(() => this.store.remove("auto").catch(() => undefined));
     return u;
   }
 
@@ -59,6 +62,7 @@ export class HostCore {
 
   async start(settings: LobbySettings, seed: string): Promise<HostStart> {
     // Only this map's data is fetched, when the game starts.
+    this.lesson = false;
     this.game = new LocalGame(await this.loadMap(settings.mapId), settings, seed, this.now, { autosave: this.autosave });
     return this.game.start();
   }
@@ -75,6 +79,8 @@ export class HostCore {
       if (raw === null) throw new Error("That save slot is empty.");
     } else if ("online" in source) {
       throw new Error("An online game opens from the lobby's Online block.");
+    } else if ("tutorial" in source) {
+      return this.startTutorial(source);
     } else {
       try {
         raw = JSON.parse(source.file);
@@ -93,9 +99,25 @@ export class HostCore {
       map = undefined;
     }
     if (!map) throw new Error("This save's map isn't in this version of the game, so it can't be loaded.");
+    this.lesson = false;
     const game = LocalGame.restore(map, read.save, this.now, this.autosave);
     this.game = game;
     return game.start();
+  }
+
+  /**
+   * Session 31: a tutorial, its saved game made from its recipe here (the tutorials load only now). It plays as any
+   * single-player game, except that it never touches the autosave: Continue still picks up your own game.
+   */
+  private async startTutorial(source: { tutorial: string; house?: number; leaderName?: string }): Promise<HostStart> {
+    const [{ tutorialById }, { buildTutorial }] = await Promise.all([import("@conquerra/content/tutorials"), import("../tutorials/build")]);
+    const def = tutorialById(source.tutorial);
+    if (!def) throw new Error("That lesson isn't in this version of the game.");
+    const map = await this.loadMap(def.recipe.map);
+    const save = buildTutorial(def, map, { ...(source.house !== undefined ? { house: source.house } : {}), ...(source.leaderName ? { leaderName: source.leaderName } : {}) }, this.now);
+    this.lesson = true;
+    this.game = LocalGame.restore(map, save, this.now);
+    return this.game.start();
   }
 
   /** Save the game as it stands into one of your slots. */

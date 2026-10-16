@@ -5,6 +5,7 @@ import type { LogLine } from "../logic/text";
 import { namer, voiceText } from "../logic/text";
 import { useGame } from "../store";
 import { Frame } from "./Frame";
+import { LessonReportLine } from "./Lesson";
 
 function Lines({ lines }: { lines: LogLine[] }) {
   return (
@@ -25,6 +26,8 @@ export function ReportBody({ ctx, view, report }: { ctx: GameContext; view: Play
   const g = groupReport(ctx, report.events, namer(ctx, view, before?.turn === report.turn ? before : null));
   return (
     <>
+      {/* Session 31: in a lesson, the goal's state comes first. */}
+      <LessonReportLine />
       <section className="report-group">
         <h3>Your gains and losses</h3>
         {g.yours.length ? <Lines lines={g.yours} /> : <p className="muted small">Nothing happened to you this turn.</p>}

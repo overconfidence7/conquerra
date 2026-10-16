@@ -1,0 +1,35 @@
+{
+  "id": "take-the-field",
+  "kind": "tutorial",
+  "order": 1,
+  "minutes": 5,
+  "words": {
+    "name": "Take the field",
+    "blurb": "Chain attacks: one army takes four places in a single turn.",
+    "opening": "Welcome to Conquerra. You hold Mistbury with 12 troops, and the land around it is empty but for a troop or three on each. An army that takes a place can attack again from there in your next order, so one turn can go a long way.",
+    "goal": "Take Moonmoor, Larkfell, Westermore and Thornton by turn 3.",
+    "met": "Moonmoor, Larkfell, Westermore and Thornton are yours",
+    "hints": [
+      "Tap Mistbury, then Moonmoor, and attack with All. Then tap Moonmoor and attack Larkfell: the survivors march on from there.",
+      "Before you attack, the panel shows the odds: guaranteed, likely, possible or impossible. Thornton is forest and holds 3 troops."
+    ],
+    "closing": "That's a chain. Every hop leaves 1 troop behind, so a long one thins out. The next lesson refills it."
+  },
+  "recipe": {
+    "map": "embervale",
+    "seed": "lesson-take-the-field",
+    "bots": 1,
+    "botLevel": "recruit",
+    "rules": { "fog": true, "fate": false, "diplomacy": false },
+    "place": { "territories": { "t12": { "troops": 3 } } }
+  },
+  "goal": { "turns": 2, "all": [{ "kind": "hold", "territories": ["t22", "t16", "t11", "t12"] }] },
+  "solution": [
+    [
+      { "kind": "move", "from": "t23", "to": "t22", "troops": "all" },
+      { "kind": "move", "from": "t22", "to": "t16", "troops": "all" },
+      { "kind": "move", "from": "t16", "to": "t11", "troops": "all" },
+      { "kind": "move", "from": "t11", "to": "t12", "troops": "all" }
+    ]
+  ]
+}

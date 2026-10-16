@@ -1,0 +1,35 @@
+{
+  "id": "raise-an-army",
+  "kind": "tutorial",
+  "order": 2,
+  "minutes": 5,
+  "words": {
+    "name": "Raise an army",
+    "blurb": "Recruit troops, where you can recruit them, and what upkeep costs.",
+    "opening": "Armies run out, so this lesson refills one. You hold all of The Deep Wilds, and Westermore sits on its border with 1 troop. Mistbury's 12 can march there too: moves chain like attacks.",
+    "goal": "Have 25 troops at Westermore by turn 3.",
+    "met": "Westermore has 25 troops",
+    "hints": [
+      "Recruit costs 2 gold a troop. You hold The Deep Wilds whole, so you can recruit at Westermore itself, not only at Mistbury.",
+      "Upkeep: your first 10 territories are free. Past 10, each turn's upkeep climbs faster than your land does."
+    ],
+    "closing": "Gold comes in at the end of every turn, and troops cost 2 each wherever you can recruit. Next: making that gold grow."
+  },
+  "recipe": {
+    "map": "embervale",
+    "seed": "lesson-raise-an-army-1",
+    "bots": 1,
+    "botLevel": "recruit",
+    "rules": { "fog": true, "fate": false, "diplomacy": false },
+    "place": { "territories": { "t22": { "owner": "you", "troops": 2 }, "t16": { "owner": "you", "troops": 2 }, "t11": { "owner": "you", "troops": 1 } } }
+  },
+  "goal": { "turns": 2, "all": [{ "kind": "troops", "territory": "t11", "atLeast": 25 }] },
+  "solution": [
+    [
+      { "kind": "recruit", "territory": "t11", "count": "all" },
+      { "kind": "move", "from": "t23", "to": "t16", "troops": "all" },
+      { "kind": "move", "from": "t16", "to": "t11", "troops": "all" }
+    ],
+    [{ "kind": "recruit", "territory": "t11", "count": "all" }]
+  ]
+}

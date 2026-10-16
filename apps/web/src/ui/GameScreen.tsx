@@ -47,6 +47,8 @@ import { ambience, closenessOf, waterInView } from "../sound/ambience";
 import { typicalTerritorySize } from "../map/zoom";
 import { houseOf } from "../map/houses";
 import { namer, startBonusLine } from "../logic/text";
+import { useLesson } from "../tutorials/run";
+import { GoalBody, GoalCard, LESSON_UI, LessonEnd } from "./Lesson";
 import "./replay.css";
 
 /** Save game / Load game: loaded the first time it's opened (it isn't needed to play a turn). */
@@ -94,7 +96,7 @@ const readDockOpen = () => {
 const PHONE_INSETS: Insets = { top: 56, right: 0, bottom: 84, left: 0 };
 
 /** The menus that sit over the map, by layout (measured on screen, session 16). */
-const COVERS_DESKTOP = ".game .topbar, .game > .map-tools, .game .rightcol, .game .dock";
+const COVERS_DESKTOP = ".game .topbar, .game > .map-tools, .game .rightcol, .game .dock, .game .goal-card";
 // (On a phone the two small map buttons float over the sea at the top left; counting them would shrink the whole map.)
 const COVERS_PHONE = ".game .topbar, .game .phonebar";
 
@@ -135,6 +137,8 @@ const shortHash = (h: string) => `${h.slice(0, 8)}…${h.slice(-6)}`;
 
 function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSaves, onLeave, onResign, onAskPause, onClose }: { phone: boolean; online: boolean; tactical: boolean; onTactical(): void; onFit(): void; onReport: (() => void) | null; onSaves(mode: "save" | "load"): void; onLeave(): void; onResign: (() => void) | null; onAskPause: (() => void) | null; onClose(): void }) {
   const [credits, setCredits] = useState(false);
+  // Session 31: in a lesson, leaving doesn't touch Continue (your own game).
+  const lesson = useLesson((s) => !!s.run);
   const [resigning, setResigning] = useState(false);
   if (credits)
     return (
@@ -191,6 +195,10 @@ function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSave
       {online ? (
         <button className="menu-item stacked" onClick={onLeave}>
           Leave <span className="muted">The game goes on without you here. Open it again from the lobby.</span>
+        </button>
+      ) : lesson ? (
+        <button className="menu-item" onClick={onLeave}>
+          {LESSON_UI.leave} <span className="muted">{LESSON_UI.leaveNote}</span>
         </button>
       ) : (
         <button className="menu-item" onClick={onLeave}>
@@ -393,6 +401,12 @@ export function GameScreen() {
   const [spendOpen, setSpendOpen] = useState(false);
   const [sheet, setSheet] = useState<SheetSize>("closed");
   const [tab, setTab] = useState("army");
+  // Session 31: a lesson's goal card (on a phone, the sheet's first tab, open as the lesson starts).
+  const lesson = useLesson((s) => s.run);
+  const lessonKey = lesson ? `${lesson.def.id}|${lesson.startTurn}|${lesson.host === g.host}` : null;
+  useEffect(() => {
+    if (phone && lessonKey) (setTab("goal"), setSheet("half"));
+  }, [lessonKey]); // eslint-disable-line react-hooks/exhaustive-deps
   // Chat (session 28): on a phone it opens in the bottom sheet (its own tab); the sheet closing closes it.
   const chatOpen = useChat((s) => s.open);
   const chatUnread = useChat(unreadAll) + useCouncilUnread();
@@ -738,6 +752,7 @@ export function GameScreen() {
   const overlays = (
     <>
       {pickBanner}
+      <LessonEnd />
       {showReport && report && !replaying && (
         <Suspense fallback={null}>
           <TurnReportDialog ctx={ctx} view={view} report={report} autoLocked={autoLocked} onClose={() => g.setShowReport(false)} onWatchAgain={() => g.watchAgain()} />
@@ -832,6 +847,7 @@ export function GameScreen() {
 
   if (phone) {
     const tabs = [
+      ...(lesson ? [{ id: "goal", label: LESSON_UI.goal }] : []),
       { id: "army", label: "Army" },
       { id: "orders", label: `Orders (${queue.length})` },
       { id: "card", label: "Card" },
@@ -894,6 +910,7 @@ export function GameScreen() {
         )}
         {!out && (
           <BottomSheet size={replaying ? "closed" : sheet} onSize={setSheet} bottom={76} tabs={tabs} tab={tab} onTab={setTab}>
+            {tab === "goal" && lesson && <GoalBody />}
             {tab === "army" && army}
             {tab === "orders" && <OrderQueue ctx={ctx} view={view} plan={plan} queue={shownQueue} bare />}
             {tab === "leaders" && <LeadersPanel ctx={ctx} view={view} queue={queue} pursesLeft={plan?.pursesLeft} onShow={(t) => (g.select(t), g.showPlace(t))} onCards={() => setCardsOpen(true)} />}
@@ -942,6 +959,7 @@ export function GameScreen() {
           ⤢
         </button>
       </div>
+      {lesson && !replaying && <GoalCard />}
       <aside className="rightcol" ref={moreCue}>
         <PlayersPanel view={view} />
         {!out && <LeadersPanel ctx={ctx} view={view} queue={queue} pursesLeft={plan?.pursesLeft} onShow={(t) => (g.select(t), g.showPlace(t))} onCards={() => setCardsOpen(true)} />}

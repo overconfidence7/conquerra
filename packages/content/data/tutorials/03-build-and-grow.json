@@ -1,0 +1,43 @@
+{
+  "id": "build-and-grow",
+  "kind": "tutorial",
+  "order": 3,
+  "minutes": 5,
+  "words": {
+    "name": "Build and grow",
+    "blurb": "Markets, culture, and the Steward who builds for you.",
+    "opening": "Land pays, and land you've built on pays more. You hold half of The Deep Wilds. Take the rest, then make it worth keeping.",
+    "goal": "Hold all of The Deep Wilds, with a market finished and culture 1 on any of it, by turn 4.",
+    "met": "The Deep Wilds is yours, with a market and culture 1",
+    "hints": [
+      "Tap Mistbury, then Spend: a market costs 6 gold and pays 2 a turn. It's ready at the end of this turn.",
+      "Culture 1 costs 3 gold under Spend. Each level defends 6% better and pays 1 gold, but it's lost if the land is taken.",
+      "Your Steward runs the realm with a share of your income, building and raising culture for you. The Leaders panel sets its share."
+    ],
+    "closing": "Gold comes in every turn now, a little more than before. That's the whole economy, more or less."
+  },
+  "recipe": {
+    "map": "embervale",
+    "seed": "lesson-build-and-grow",
+    "bots": 1,
+    "botLevel": "recruit",
+    "rules": { "fog": true, "fate": false, "diplomacy": false },
+    "place": { "territories": { "t22": { "owner": "you", "troops": 3 } } }
+  },
+  "goal": {
+    "turns": 3,
+    "all": [
+      { "kind": "province", "province": "p3" },
+      { "kind": "building", "building": "market", "province": "p3" },
+      { "kind": "culture", "province": "p3", "atLeast": 1 }
+    ]
+  },
+  "solution": [
+    [
+      { "kind": "move", "from": "t23", "to": "t16", "troops": "all" },
+      { "kind": "move", "from": "t16", "to": "t11", "troops": "all" },
+      { "kind": "build", "territory": "t23", "building": "market" },
+      { "kind": "invest", "territory": "t23" }
+    ]
+  ]
+}

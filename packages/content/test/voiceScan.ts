@@ -126,6 +126,9 @@ export function collect(): Found[] {
     // (Before the line library exists.)
   }
   scanJson(join(ROOT, "packages/content/data/personalities.json"), (p) => ["title", "summary"].includes(p.at(-1)!) || p.includes("voice"), (p) => p.includes("voice"), out);
+  // Session 31: the tutorials' words (names, blurbs, openings, goals, hints, closings).
+  const lessons = join(ROOT, "packages/content/data/tutorials");
+  for (const f of readdirSync(lessons)) if (f.endsWith(".json")) scanJson(join(lessons, f), (p) => p[0] === "words", () => false, out);
   scanMarkdown(join(ROOT, "docs/rules-reference.md"), out);
   return out;
 }
