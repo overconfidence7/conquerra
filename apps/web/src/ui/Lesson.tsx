@@ -83,14 +83,12 @@ export function LessonEnd() {
         <div className="dialog-actions">
           {done ? (
             <>
-              <button onClick={lobby}>{LESSON_UI.lobby}</button>
-              {run.next ? (
+              <button className={run.next ? "" : "primary"} autoFocus={!run.next} onClick={lobby}>
+                {LESSON_UI.lobby}
+              </button>
+              {run.next && (
                 <button className="primary" disabled={busy} autoFocus onClick={() => void startLesson(run.next!, null).then(() => attachNext(run.next!.id))}>
                   {LESSON_UI.next}
-                </button>
-              ) : (
-                <button className="primary" autoFocus onClick={lobby}>
-                  {LESSON_UI.lobby}
                 </button>
               )}
             </>

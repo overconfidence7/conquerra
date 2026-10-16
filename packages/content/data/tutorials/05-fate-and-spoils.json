@@ -1,0 +1,80 @@
+{
+  "id": "fate-and-spoils",
+  "kind": "tutorial",
+  "order": 5,
+  "minutes": 5,
+  "words": {
+    "name": "Fate and Spoils",
+    "blurb": "Spoils cards for land you take, and a Fate mission with a reward.",
+    "opening": "You hold two Spoils cards, a Sword and a Tower, and a Fate mission: take 3 territories, 1 taken so far. Both reward you for taking land.",
+    "goal": "Finish the mission by taking 2 more territories, and hold three Spoils cards, by turn 4.",
+    "met": "The mission is done and you hold three Spoils cards",
+    "hints": [
+      "Any turn you take land, you earn one Spoils card. Your mission is on your Leader card: tap it to light up its target.",
+      "Three cards make a set: three alike, or one of each (the best). Tap your card stack, then a set, to turn it in.",
+      "From turn 4's planning, everyone draws a Fate card each turn: mostly an event somewhere on the map, sometimes a mission."
+    ],
+    "closing": "Missions and Spoils both pay you for taking land, so a good attack can pay twice."
+  },
+  "recipe": {
+    "map": "embervale",
+    "seed": "lesson-fate-and-spoils-6",
+    "bots": 1,
+    "botLevel": "recruit",
+    "rules": {
+      "fog": true,
+      "fate": true,
+      "diplomacy": false
+    },
+    "place": {
+      "you": {
+        "spoils": [
+          "sword",
+          "tower"
+        ],
+        "missions": [
+          {
+            "id": "m1",
+            "card": "spree",
+            "kind": "spree",
+            "deadline": 9,
+            "need": 3,
+            "progress": 1,
+            "reward": {
+              "gold": 10
+            }
+          }
+        ]
+      }
+    }
+  },
+  "goal": {
+    "turns": 3,
+    "all": [
+      {
+        "kind": "missionDone",
+        "mission": "m1"
+      },
+      {
+        "kind": "spoils",
+        "atLeast": 3
+      }
+    ]
+  },
+  "solution": [
+    [
+      {
+        "kind": "move",
+        "from": "t23",
+        "to": "t22",
+        "troops": "all"
+      },
+      {
+        "kind": "move",
+        "from": "t22",
+        "to": "t16",
+        "troops": "all"
+      }
+    ]
+  ]
+}

@@ -8,7 +8,7 @@
     "blurb": "Recruit troops, where you can recruit them, and what upkeep costs.",
     "opening": "Armies run out, so this lesson refills one. You hold all of The Deep Wilds, and Westermore sits on its border with 1 troop. Mistbury's 12 can march there too: moves chain like attacks.",
     "goal": "Have 25 troops at Westermore by turn 3.",
-    "met": "Westermore has 25 troops",
+    "met": "Westermore has 25 troops or more",
     "hints": [
       "Recruit costs 2 gold a troop. You hold The Deep Wilds whole, so you can recruit at Westermore itself, not only at Mistbury.",
       "Upkeep: your first 10 territories are free. Past 10, each turn's upkeep climbs faster than your land does."

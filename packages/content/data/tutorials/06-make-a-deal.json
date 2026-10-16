@@ -1,0 +1,118 @@
+{
+  "id": "make-a-deal",
+  "kind": "tutorial",
+  "order": 6,
+  "minutes": 5,
+  "words": {
+    "name": "Make a deal",
+    "blurb": "Truces and trades with a bot, and what breaking one costs.",
+    "opening": "Lady Morwen, a Captain, holds Fairmark right on your border, and neither of you needs a war there yet. Deals are preset cards: you pick one, and a bot answers at once.",
+    "goal": "Agree a truce with Lady Morwen and keep it for two turns, and make a trade with her, by turn 5.",
+    "met": "Your truce with Lady Morwen has held two turns, and you've traded",
+    "hints": [
+      "Tap Lady Morwen in the Houses panel, then Propose a deal. A plain truce is ready to send, and she answers at once.",
+      "Now a trade: the Trade card swaps gold or land. Offer Lady Morwen a little gold and see what she says.",
+      "Handshake deals are free but can be broken, for the Oathbreaker mark, a fine and unrest. Binding ones cost gold up front."
+    ],
+    "closing": "Deals keep one front quiet while you fight on another. Break one, and everyone sees the mark."
+  },
+  "recipe": {
+    "map": "embervale",
+    "seed": "lesson-make-a-deal-3",
+    "bots": 1,
+    "botLevel": "captain",
+    "rules": {
+      "fog": true,
+      "fate": false,
+      "diplomacy": true
+    },
+    "place": {
+      "territories": {
+        "t22": {
+          "owner": "you",
+          "troops": 8
+        },
+        "t16": {
+          "owner": "you",
+          "troops": 12
+        },
+        "t11": {
+          "owner": "you",
+          "troops": 12
+        },
+        "t12": {
+          "owner": "bot1",
+          "troops": 4
+        },
+        "t04": {
+          "owner": "bot1",
+          "troops": 3
+        },
+        "t05": {
+          "owner": "bot1",
+          "troops": 3
+        },
+        "t01": {
+          "owner": "bot1",
+          "troops": 3
+        }
+      }
+    }
+  },
+  "goal": {
+    "turns": 4,
+    "all": [
+      {
+        "kind": "deal",
+        "with": "bot1",
+        "deal": "truce",
+        "kept": 2
+      },
+      {
+        "kind": "deal",
+        "with": "bot1",
+        "deal": "trade",
+        "kept": 0
+      }
+    ]
+  },
+  "solution": [
+    [
+      {
+        "kind": "propose",
+        "offer": {
+          "id": "o1",
+          "from": "you",
+          "to": "bot1",
+          "terms": {
+            "kind": "truce",
+            "scope": {
+              "kind": "all"
+            },
+            "turns": 3
+          },
+          "bond": "handshake"
+        }
+      }
+    ],
+    [
+      {
+        "kind": "propose",
+        "offer": {
+          "id": "o2",
+          "from": "you",
+          "to": "bot1",
+          "terms": {
+            "kind": "trade",
+            "give": {
+              "gold": 6
+            },
+            "get": {}
+          },
+          "bond": "handshake"
+        }
+      }
+    ],
+    []
+  ]
+}

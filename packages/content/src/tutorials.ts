@@ -2,6 +2,10 @@ import { z } from "zod";
 import takeTheField from "../data/tutorials/01-take-the-field.json";
 import raiseAnArmy from "../data/tutorials/02-raise-an-army.json";
 import buildAndGrow from "../data/tutorials/03-build-and-grow.json";
+import holdTheWall from "../data/tutorials/04-hold-the-wall.json";
+import fateAndSpoils from "../data/tutorials/05-fate-and-spoils.json";
+import makeADeal from "../data/tutorials/06-make-a-deal.json";
+import yourLeaders from "../data/tutorials/07-your-leaders.json";
 
 /**
  * Tutorials (session 31): each one is a short saved game that teaches one thing, as data. A file in
@@ -34,11 +38,13 @@ const Place = z.object({
       }),
     )
     .optional(),
-  /** Your treasury, Spoils hand (card marks) and anything else of yours the lesson sets. */
+  /** Your treasury, Spoils hand (card marks), open Fate missions (as the engine keeps them), and your leaders' budgets. */
   you: z
     .object({
       gold: z.number().int().min(0).optional(),
-      spoils: z.array(z.string()).optional(),
+      spoils: z.array(z.enum(["sword", "tower", "laurel"])).max(4).optional(),
+      missions: z.array(z.object({ id: z.string(), card: z.string(), kind: z.string(), deadline: z.number().int() }).passthrough()).max(2).optional(),
+      budgets: z.object({ leader: z.number().min(0).max(1).optional(), steward: z.number().min(0).max(1).optional() }).optional(),
     })
     .optional(),
 });
@@ -63,6 +69,19 @@ export const GoalCondition = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("building"), building: Building, territory: z.string().optional(), province: z.string().optional() }),
   /** At least this much gold in your treasury. */
   z.object({ kind: z.literal("gold"), atLeast: z.number().int().min(0) }),
+  /** These territories are yours and walled (culture 5 and a fort). */
+  z.object({ kind: z.literal("walled"), territories: z.array(z.string()).min(1) }),
+  /** At least this many Spoils cards in your hand. */
+  z.object({ kind: z.literal("spoils"), atLeast: z.number().int().min(1).max(5) }),
+  /** A mission the recipe placed is no longer open (its deadline is after the goal's, so it can only have been done). */
+  z.object({ kind: z.literal("missionDone"), mission: z.string() }),
+  /**
+   * A deal of this kind with this player: in force for at least `kept` turns (0: just made), or one that ran its
+   * course (a trade paid at once is done the turn it's made).
+   */
+  z.object({ kind: z.literal("deal"), with: z.string(), deal: z.enum(["truce", "trade", "war", "passage"]), kept: z.number().int().min(0).max(8).default(0) }),
+  /** Your Leader (or Steward) has a command, and (`budget`) a share of income or gold each turn. */
+  z.object({ kind: z.literal("leader"), leader: z.enum(["leader", "steward"]), command: z.boolean().default(false), budget: z.boolean().default(false) }),
 ]);
 export type GoalCondition = z.infer<typeof GoalCondition>;
 
@@ -104,6 +123,8 @@ export const TutorialDef = z
     goal: z.object({
       /** How many turns you get: the goal is checked after each, up to the start of turn (start + turns). */
       turns: z.number().int().min(1).max(10),
+      /** Hold to the end: met only if the conditions hold at the start of turn (start + turns), not before. */
+      hold: z.boolean().default(false),
       all: z.array(GoalCondition).min(1),
     }),
     /** Your orders, turn by turn, that reach the goal (the test plays them). */
@@ -115,7 +136,7 @@ export type TutorialDef = z.infer<typeof TutorialDef>;
 export type OrderSpec = z.infer<typeof OrderSpec>;
 
 /** Every tutorial and scenario, in the order Learn lists them. */
-export const TUTORIALS: TutorialDef[] = [takeTheField, raiseAnArmy, buildAndGrow].map((t) => TutorialDef.parse(t)).sort((a, b) => a.order - b.order);
+export const TUTORIALS: TutorialDef[] = [takeTheField, raiseAnArmy, buildAndGrow, holdTheWall, fateAndSpoils, makeADeal, yourLeaders].map((t) => TutorialDef.parse(t)).sort((a, b) => a.order - b.order);
 
 export const tutorialById = (id: string): TutorialDef | undefined => TUTORIALS.find((t) => t.id === id);
 

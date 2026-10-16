@@ -4,7 +4,7 @@
  */
 const KEY = "conquerra.learned";
 /** How many tutorials there are (the fold's line says "3 of 7 done" without loading them; a test keeps it true). */
-export const LESSON_COUNT = 3;
+export const LESSON_COUNT = 7;
 
 export function learned(): string[] {
   try {

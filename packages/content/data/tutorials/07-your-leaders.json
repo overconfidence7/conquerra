@@ -1,0 +1,84 @@
+{
+  "id": "your-leaders",
+  "kind": "tutorial",
+  "order": 7,
+  "minutes": 5,
+  "words": {
+    "name": "Your leaders",
+    "blurb": "Commands and budgets: your Leader and Steward play turns for you.",
+    "opening": "You don't have to order every army yourself. Your Leader takes commands, your Steward builds, and each spends from a purse you fill with a budget. Fairmark lies empty next door.",
+    "goal": "Give your Leader a command and a budget, then let your leaders take all of Fairmark by turn 5.",
+    "met": "Your leaders took Fairmark",
+    "hints": [
+      "Open the Leaders panel, tap Command, pick Expand our empire in this direction, and tap Nettlemoor. It plans its own attacks.",
+      "Your council asks when something needs you: a purse that's empty is one. Answer it, or set a budget in the Leaders panel.",
+      "A budget is a share of your income paid into a leader's purse each turn. Leaders recruit and build only from their purse."
+    ],
+    "closing": "Leaders take the routine off your hands, so a deep turn can still be a quick one. That's the last lesson: the bots are waiting."
+  },
+  "recipe": {
+    "map": "embervale",
+    "seed": "lesson-your-leaders-1",
+    "bots": 1,
+    "botLevel": "captain",
+    "rules": {
+      "fog": true,
+      "fate": false,
+      "diplomacy": false
+    },
+    "place": {
+      "territories": {
+        "t22": {
+          "owner": "you",
+          "troops": 6
+        },
+        "t16": {
+          "owner": "you",
+          "troops": 10
+        },
+        "t11": {
+          "owner": "you",
+          "troops": 10
+        }
+      }
+    }
+  },
+  "goal": {
+    "turns": 4,
+    "all": [
+      {
+        "kind": "leader",
+        "leader": "leader",
+        "command": true,
+        "budget": true
+      },
+      {
+        "kind": "province",
+        "province": "p1"
+      }
+    ]
+  },
+  "solution": [
+    [
+      {
+        "kind": "instruct",
+        "general": "you",
+        "instruction": {
+          "kind": "expand",
+          "territory": "t01"
+        }
+      }
+    ],
+    [
+      {
+        "kind": "budget",
+        "general": "you",
+        "budget": {
+          "share": 0.2
+        }
+      }
+    ],
+    [],
+    []
+  ]
+}

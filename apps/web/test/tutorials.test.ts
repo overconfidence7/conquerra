@@ -6,7 +6,7 @@ import { FREE_MAPS, nextTutorial, TutorialDef, TUTORIALS, tutorialById } from "@
 import { stateFingerprint, viewFor } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { LocalGame } from "../src/host/localGame";
-import { buildTutorial, ordersOf } from "../src/tutorials/build";
+import { buildTutorial, playLessonTurn } from "../src/tutorials/build";
 import { goalLine, goalState } from "../src/tutorials/goal";
 
 /**
@@ -24,9 +24,12 @@ export function playSolution(def: TutorialDef) {
   const game = LocalGame.restore(map, save, () => 0);
   const start = game.turn;
   const states = [goalState(def, map, viewFor(game.ctx, game.fullState, "you"), start)];
+  // (Your leaders' standing orders go in each turn, as the page sends them.)
+  let standing = game.start().generalOrders ?? [];
   for (const [i, turn] of def.solution.entries()) {
     if (states.at(-1)!.kind !== "open") break;
-    const u = game.lockIn(ordersOf(turn, i + 1), game.turn);
+    const u = playLessonTurn(game, turn, i + 1, standing);
+    standing = u.generalOrders ?? [];
     states.push(goalState(def, map, u.view, start));
   }
   return { states, game, start, map };

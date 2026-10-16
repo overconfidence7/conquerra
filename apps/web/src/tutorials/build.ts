@@ -1,6 +1,7 @@
 import { defaultRules, type MapDef } from "@conquerra/content";
 import type { OrderSpec, TutorialDef } from "@conquerra/content/tutorials";
-import { updateIntel, updateWalls, type Order, type SaveFile, type SpoilsMark } from "@conquerra/engine";
+import { updateIntel, updateWalls, type Instruction, type Mission, type Offer, type Order, type SaveFile, type SpoilsMark } from "@conquerra/engine";
+import type { HostUpdate } from "../host/protocol";
 import { LocalGame } from "../host/localGame";
 import type { LobbySettings } from "../host/protocol";
 
@@ -58,6 +59,14 @@ function placed(def: TutorialDef, map: MapDef, save: SaveFile): SaveFile {
   const you = state.players.find((x) => x.id === "you")!;
   if (p.you?.gold !== undefined) you.gold = p.you.gold;
   if (p.you?.spoils) you.spoils = p.you.spoils as SpoilsMark[];
+  if (p.you?.missions) {
+    you.missions = structuredClone(p.you.missions) as unknown as Mission[];
+    state.nextMission = Math.max(state.nextMission, p.you.missions.length + 1);
+  }
+  for (const [kind, share] of Object.entries(p.you?.budgets ?? {}) as ["leader" | "steward", number][]) {
+    const l = you.leaders.find((x) => x.kind === kind && x.of === you.id);
+    if (l) l.budget = { share };
+  }
   updateWalls(ctx, state.territories);
   updateIntel(ctx, state);
   // (The game from its setup no longer replays to this state, so the history goes.)
@@ -74,8 +83,23 @@ export function buildTutorial(def: TutorialDef, map: MapDef, looks: TutorialLook
   let save = placed(def, map, fresh.snapshot());
   for (const [i, turn] of (def.recipe.turns ?? []).entries()) {
     const g = LocalGame.restore(map, save, now);
-    g.lockIn(ordersOf(turn, -(i + 1)), g.turn);
+    playLessonTurn(g, turn, -(i + 1));
     save = g.snapshot();
   }
   return save;
+}
+
+/**
+ * Play one turn of a lesson from a file's orders, as the page would send them (the solution test, and the recipe's
+ * scripted turns): an offer is put to the bot first (it answers at once, as on the page), a command or a budget
+ * replans your leaders' orders, and otherwise your leaders' standing orders for the turn go in too.
+ */
+export function playLessonTurn(game: LocalGame, specs: readonly OrderSpec[], turnNo: number, standing: readonly Order[] = []): HostUpdate {
+  const orders = ordersOf(specs, turnNo);
+  for (const o of orders) if (o.kind === "propose") game.propose(o.offer as Offer);
+  const instructions: Record<string, Instruction | null> = {};
+  for (const o of orders) if (o.kind === "instruct") instructions[`${o.role === "steward" ? "steward" : "leader"}:${o.general}`] = o.instruction;
+  const changed = orders.some((o) => o.kind === "instruct" || o.kind === "budget");
+  const leaders = changed ? game.leaderOrders(instructions).orders : standing;
+  return game.lockIn([...orders, ...leaders], game.turn);
 }

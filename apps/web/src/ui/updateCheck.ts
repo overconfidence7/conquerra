@@ -10,6 +10,8 @@ import { useUpdates } from "./UpdatePrompt";
 const WAIT_FOR_UPDATE_MS = 5000;
 /** ...and how long at most while it's still downloading (the first visit after a big update fetches every map). */
 const WAIT_WHILE_INSTALLING_MS = 30000;
+/** "Update now" with the update waiting: if the page hasn't switched by then, reload it (session 31). */
+export const UPDATE_FALLBACK_MS = 4000;
 
 const RUNNING = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
 
@@ -74,7 +76,12 @@ export async function checkForUpdate() {
  */
 export async function reloadFresh() {
   const { apply } = useUpdates.getState();
-  if (apply) return apply(true);
+  if (apply) {
+    await apply(true);
+    // Session 31: the switch waits until the old copy is idle, which a busy page can put off: a plain reload lets it go.
+    setTimeout(() => location.reload(), UPDATE_FALLBACK_MS);
+    return;
+  }
   try {
     const regs = await navigator.serviceWorker?.getRegistrations();
     await Promise.all((regs ?? []).map((r) => r.unregister()));

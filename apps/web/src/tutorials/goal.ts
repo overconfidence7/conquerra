@@ -29,6 +29,22 @@ export function conditionMet(map: MapDef, view: PlayerView, c: GoalCondition): b
       return where(map, c).some((id) => yours(view, id)?.building === c.building);
     case "gold":
       return view.me.gold >= c.atLeast;
+    case "walled":
+      return c.territories.every((id) => !!yours(view, id) && !!view.walls?.some((w) => w.owner === view.me.id && w.territories.includes(id)));
+    case "spoils":
+      return view.me.spoils.length >= c.atLeast;
+    case "missionDone":
+      return !view.me.missions.some((m) => m.id === c.mission);
+    case "deal": {
+      const mine = (d: { kind: string; a: string; b: string }) => d.kind === c.deal && ((d.a === view.me.id && d.b === c.with) || (d.b === view.me.id && d.a === c.with));
+      return view.deals.some((d) => mine(d) && view.turn - d.start >= c.kept) || view.record.some((r) => mine(r) && r.how === "kept" && r.end - r.start + 1 >= c.kept);
+    }
+    case "leader": {
+      const l = view.me.leaders.find((x) => x.kind === c.leader && x.of === view.me.id);
+      if (!l) return false;
+      const funded = "share" in l.budget ? l.budget.share > 0 : l.budget.gold > 0;
+      return (!c.command || !!l.command) && (!c.budget || funded);
+    }
   }
 }
 
@@ -40,7 +56,9 @@ export type GoalState = { kind: "done" } | { kind: "open"; turnsLeft: number } |
  */
 export function goalState(def: Pick<TutorialDef, "goal">, map: MapDef, view: PlayerView, startTurn: number): GoalState {
   const by = startTurn + def.goal.turns;
-  if (def.goal.all.every((c) => conditionMet(map, view, c))) return { kind: "done" };
+  const met = def.goal.all.every((c) => conditionMet(map, view, c));
+  // (A goal to hold to the end is met only at its last check.)
+  if (met && (!def.goal.hold || view.turn >= by)) return { kind: "done" };
   const out = view.me.eliminatedTurn !== null || view.winner !== null;
   if (out || view.turn >= by) return { kind: "missed" };
   return { kind: "open", turnsLeft: by - view.turn };

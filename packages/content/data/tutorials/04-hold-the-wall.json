@@ -1,0 +1,91 @@
+{
+  "id": "hold-the-wall",
+  "kind": "tutorial",
+  "order": 4,
+  "minutes": 5,
+  "words": {
+    "name": "Hold the wall",
+    "blurb": "Walls: culture 5 and a fort, and walled land that touches defends together.",
+    "opening": "Larkfell and Westermore each have a fort and culture 4, and a Captain's army waits in Thornton next door. One more level of culture on each, and the two become a wall.",
+    "goal": "Wall Larkfell and Westermore, and still hold both at the start of turn 4.",
+    "met": "Larkfell and Westermore are walled and still yours",
+    "hints": [
+      "Raise culture to 5 on Larkfell and on Westermore (10 gold each). With their forts, both are walled at the end of the turn.",
+      "Walled land that touches is one wall: attack one part, and every other part lends its spare troops to the defence.",
+      "Each other territory in a wall adds 10% to its defence. Troops behind a wall make it less worth attacking."
+    ],
+    "closing": "A wall's real work is the attacks it puts off, and the ones it survives. Next: the cards."
+  },
+  "recipe": {
+    "map": "embervale",
+    "seed": "lesson-hold-the-wall",
+    "bots": 1,
+    "botLevel": "captain",
+    "rules": {
+      "fog": true,
+      "fate": false,
+      "diplomacy": false
+    },
+    "place": {
+      "territories": {
+        "t22": {
+          "owner": "you",
+          "troops": 4
+        },
+        "t16": {
+          "owner": "you",
+          "troops": 8,
+          "culture": 4,
+          "building": "fort"
+        },
+        "t11": {
+          "owner": "you",
+          "troops": 8,
+          "culture": 4,
+          "building": "fort"
+        },
+        "t12": {
+          "owner": "bot1",
+          "troops": 16
+        },
+        "t04": {
+          "owner": "bot1",
+          "troops": 8
+        }
+      }
+    }
+  },
+  "goal": {
+    "turns": 3,
+    "hold": true,
+    "all": [
+      {
+        "kind": "walled",
+        "territories": [
+          "t16",
+          "t11"
+        ]
+      }
+    ]
+  },
+  "solution": [
+    [
+      {
+        "kind": "invest",
+        "territory": "t16"
+      },
+      {
+        "kind": "invest",
+        "territory": "t11"
+      }
+    ],
+    [
+      {
+        "kind": "recruit",
+        "territory": "t23",
+        "count": "all"
+      }
+    ],
+    []
+  ]
+}
