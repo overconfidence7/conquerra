@@ -1705,7 +1705,7 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
 - **Alone (you can try these now), most important first:**
   1. **A blackout game against Marshals on Embervale:** Rules → Fog of war → Blackout, 3 Marshals. Do the bots look like they're exploring (pushing to the cloud's edge early, Scouts in the first turns)? Do they still find you? (The online one I started is in Your online games.)
   2. **A blackout game on a random 120:** Change map → Random map → 120, Blackout. Is the cloud fun on a big map, or just slow?
-  3. **The Rules fold's words:** it still says "(the bots still know the lay of the land)", which is no longer true. Your call: "Blackout: the map is hidden until you explore it. The bots explore too." now, or leave it until the Turtle is fixed.
+  3. **The Rules fold's words** (your call, Oct 16): it keeps "(the bots still know the lay of the land)" until the Turtle under blackout is fixed.
   4. **"You hold 2 of ?":** under blackout, a province you can't see all of says "?" on its card and plaque.
   5. **Step 0's fixes:** lesson 2 (Raise an army): Recruit here, then tap Mistbury: it should select Mistbury, not move the recruit. The guided first game (Learn → The guided first game; it replaces your Continue game): the clock stands still while a card is up. On the phone: a lesson's hint isn't shown twice, and the guide's cards don't cover the panel's lines. Reroll on a random map a few times: you should never see "That seed didn't make a fair map".
   6. **What a bot knew** (curiosity): the preview's address with `?lab=known` on the end, then Play to that turn.

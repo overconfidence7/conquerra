@@ -525,3 +525,4 @@
 - 2026-10-16: **Session 32, the sims:** `s30-sims.ts` never passed `--fog` to its workers, so session 30's blackout runs were standard fog; fixed (the fog travels with each job). `pnpm sim`, the tournament and `s23-tables.ts` take `--fog blackout`; the parallel sim prints the comeback share and the explore pace.
 - 2026-10-16: **Session 32, a host fix:** a knocked-out person was sent last turn's leader notes; now none.
 - 2026-10-16: **Session 32, what a bot knew:** a dev-only page (`?lab=known`) plays a blackout game with Marshals to turn N in a worker and paints one seat's view, its cloud's edge and its orders. It must stay in its worker: a page that imports the engine's turn resolver directly pulls it into the start-up bundle (36 KB), since the lobby already imports the engine.
+- 2026-10-16: **Nate's call after 32:** the Rules fold keeps "(the bots still know the lay of the land)" until the Turtle under blackout is fixed (a later balance session).
