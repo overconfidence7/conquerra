@@ -16,7 +16,7 @@
 - Website (later): conquerra.overconfidenceonline.com
 
 ## Status right now
-**Phase: M5 (the public launch), session 31 done and reviewed (Oct 16): seven tutorials as content (Learn in the lobby, a goal card and one hint a turn, a test that plays every solution), the guided first game, the first scenario (The Siege of Highmouth), and Step 0's random-map start bonus (+4 on harder spots, band 4.0, as random map version 3) and bundle trim. All four parts done, nothing slipped to 31b. M4 still closes on Nate's solo play test (the "Alone" lists after 28 to 31). The plan is `docs/11-launch-plan.md`: 32 bots that explore under blackout, 33 scale and safety, 34 polish, 35 sign-in, 36 the purchase. Next: **session 32** (`docs/prompts/claude-code-session-32.md`). Orchestrator-11 is current; orchestrator-12 is due after session 32.**
+**Phase: M5 (the public launch), session 31 done and reviewed (Oct 16): seven tutorials as content (Learn in the lobby, a goal card and one hint a turn, a test that plays every solution), the guided first game, the first scenario (The Siege of Highmouth), and Step 0's random-map start bonus (+4 on harder spots, band 4.0, as random map version 3) and bundle trim. All four parts done, nothing slipped to 31b. M4 still closes on Nate's solo play test (the "Alone" lists after 28 to 31). The plan is `docs/11-launch-plan.md`: 32 bots that explore under blackout, **33 random-map balance (Nate, Oct 16)**, 34 scale and safety, 35 polish, 36 sign-in, 37 the purchase. Next: **session 32** (`docs/prompts/claude-code-session-32.md`). Orchestrator-11 is current; orchestrator-12 is due after session 32.**
 
 Claude Code sessions completed: **31** (a new orchestrator prompt is due after sessions 3, 6, 9, 12, 15, 18, ...)
 
@@ -1668,6 +1668,12 @@ Nate asked whether the orchestrator had tried the list itself. The mechanical it
 - **The random-map sim's reading stands:** the harder spots do better with +4, the safest spot is what breaks ±5 (up to twice its share at 8 players), the band at 3.0 fails most seeds. **The orchestrator's call: leave random maps here for now** (a note on the Random map panel is enough: "fairness within a few points, the safest spot a touch ahead"), and put a graded head start by exposure rank (every spot but the safest) into a later balance session with sims, after 1.0 if the numbers hold. Nate can pull it forward.
 - **Nits for 32's Step 0:** the recruit panel above; the guide pauses the clock while a card is up (single player already has pause); the hint notice skipped when the goal card is on screen (desktop) or the Goal tab is open (phone); the guide's cards anchored clear of the panel's text on the phone; the "Update now" fallback on the phone is on Nate's list.
 - **Numbers held:** 469.7 KB (the allowance 470.1 stays; the next room is Zod out of the start-up code, a bounded Step 0 item for 32); 1,292 tests; the twelve maps' digest `dc8962d4f8ba3bc6`.
+
+### Oct 16: Nate's calls after session 31 (recorded by the orchestrator)
+- **Random maps: pull the graded head start forward.** Every spot but the safest gets a head start by how exposed it is, with the 100-maps-a-size sim, as **session 33** (random-map balance). Scale and safety moves to 34, polish 35, sign-in 36, the purchase 37, battle royale 38. The launch plan's order is updated.
+- **A failed seed rerolls by itself:** Reroll keeps rolling until a seed makes a fair map and shows the words that worked; a typed seed still gets its tries and the line. 32's Step 0.
+- **Recruit here from the territory panel adds the order and returns to the panel** (the round Recruit button keeps the retargeting mode). 32's Step 0.
+- **The guided first game pauses the clock while a card is up.** 32's Step 0.
 
 ### Things to test after session 31 (Nate's next play test)
 *The preview is `a9c7ce7`. If it says "Update ready", tap Update now (it now reloads by itself if it doesn't switch). If every preview page says "can't be reached", sign in to Access again.*
