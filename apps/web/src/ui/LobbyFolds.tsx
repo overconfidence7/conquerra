@@ -137,7 +137,7 @@ export function RulesBlock() {
         {lobby.fate === false ? "No Fate cards: less luck." : "Fate: each turn everyone draws a card, an event somewhere or a mission for you."}{" "}
         {lobby.diplomacy === false ? "No deals: every House fights alone." : "Diplomacy: truces, trades, joint wars and right of passage."}{" "}
         {lobby.turnSeconds === null ? "Take as long as you like." : "When time runs out, your orders lock in as they are."}
-        {lobby.fog === "blackout" ? " Blackout: the map is hidden until you explore it." : ""}
+        {lobby.fog === "blackout" ? " Blackout: the map is hidden until you explore it (the bots still know the lay of the land)." : ""}
       </p>
     </>
   );

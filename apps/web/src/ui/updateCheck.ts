@@ -36,7 +36,8 @@ export async function checkFreshness() {
   const answer = await askServer();
   const st = useUpdates.getState();
   if (answer.kind === "signIn") return st.set({ notice: "signIn" });
-  if (answer.kind === "current") return st.set({ notice: null });
+  // Session 31: the newest build is the one running, so nothing is ready to switch to ("Update ready" hides too).
+  if (answer.kind === "current") return st.set({ notice: null, apply: null });
   if (answer.kind !== "newer" || st.apply || waiting) return;
   const started = Date.now();
   const wait = () => {

@@ -310,6 +310,8 @@ export interface GameHost {
   onTalks?(listener: (talks: PeopleOffer[]) => void): void;
   /** Session 30, single player's host: build a random map (the lobby's picture of it), or say why it can't be. */
   randomMap?(mapId: string): Promise<RandomPreview>;
+  /** Session 31: told how far a random map's build is (see `mapProgress`), single player only. */
+  onMapProgress?(f: (done: number) => void): void;
   /** What a bot of this game's level would order for you this turn (for testing; maybe an "auto-orders" button later). */
   suggest(): Promise<Order[]>;
   /** Save the game as it stands into one of your slots on this device. */
@@ -369,6 +371,8 @@ export type HostResponse =
   | { id: number; ok: true; random: RandomPreview }
   /** Not an answer: something for the player to know (id is 0). */
   | { id: 0; ok: true; notice: string; calm?: boolean }
+  /** Not an answer (session 31): how far a random map's build is (tries done plus this try's share; id is 0). */
+  | { id: 0; ok: true; mapProgress: number }
   | { id: number; ok: false; error: string };
 
 // ---------- Online (session 26): the same contract over a WebSocket to the game's room ----------

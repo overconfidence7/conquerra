@@ -97,17 +97,19 @@ describe("random maps (session 30)", () => {
   });
 
   it("the same id makes the same map (at this map maker version), staged, with the random recipe's knobs", () => {
-    const a = randomMap("random:40-island-quiet-heron", defaultRules);
-    const b = randomMap("40-island-quiet-heron", defaultRules);
+    // (Session 31: built at random map version 2, session 30's, which must never change: games pin it.)
+    const a = randomMap("random:40-island-quiet-heron", defaultRules, { version: 2 });
+    const b = randomMap("40-island-quiet-heron", defaultRules, { version: 2 });
     expect(mapFingerprint(a.map)).toBe(mapFingerprint(b.map));
     expect(a.map.id).toBe("random:40-island-quiet-heron");
     expect(a.map.name).toBe("Random, 40 territories");
-    expect(a.map.generator).toMatchObject({ version: MAPGEN_VERSION, seed: "quiet-heron" });
+    expect(a.map.generator).toMatchObject({ version: 2, seed: "quiet-heron" });
     expect(a.map.territories).toHaveLength(40);
     expect(a.map.minPlayers).toBe(randomPlayers(40, "island").min);
     expect(a.map.maxPlayers).toBe(randomPlayers(40, "island").max);
-    // Pinned: if this changes, the map maker's output changed, and MAPGEN_VERSION must go up (games pin it).
+    // Pinned: if this changes, the map maker's output changed, and the version must go up (games pin it).
     expect(mapFingerprint(a.map)).toBe(PINNED_40);
+    expect(mapFingerprint(randomMap("40-island-quiet-heron", defaultRules).map)).toBe(PINNED_40_V3);
     // A different seed, a different map.
     expect(mapFingerprint(randomMap("40-inland-jolly-lake", defaultRules).map)).not.toBe(mapFingerprint(a.map));
   }, 60_000);
@@ -127,7 +129,7 @@ describe("random maps (session 30)", () => {
   }, 60_000);
 
   it("the seat rule on a random map: its harder spots (the exposure check's) go to bots before a person", () => {
-    const { map } = randomMap("80-island-quiet-heron", defaultRules);
+    const { map } = randomMap("80-island-quiet-heron", defaultRules, { version: 2 });
     const layout = map.capitalLayouts!.find((l) => l.harder?.length)!;
     expect(layout).toBeDefined();
     expect(layout.bonus).toBeUndefined();
@@ -144,5 +146,6 @@ describe("random maps (session 30)", () => {
   }, 60_000);
 });
 
-/** The fingerprint of random map 40-island-quiet-heron at MAPGEN_VERSION 2. */
+/** The fingerprint of random map 40-island-quiet-heron at random map version 2 (session 30), and at 3 (session 31). */
 const PINNED_40 = "6b42b78a243e32b4";
+const PINNED_40_V3 = "69de27e979c27539";

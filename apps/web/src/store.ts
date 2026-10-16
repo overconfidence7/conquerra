@@ -44,6 +44,8 @@ interface GameStore {
   modeTouched: boolean;
   /** Session 30: the lobby's random map, as built (its picture), or why its seed made no map. */
   randomPreview: { mapId: string; preview: RandomPreview | null; problem: string | null } | null;
+  /** Session 31: how far the lobby's random map build is (tries done plus this try's share), or null. */
+  mapProgress: number | null;
   host: GameHost | null;
   ctx: GameContext | null;
   view: PlayerView | null;
@@ -279,10 +281,17 @@ export function prewarmHost() {
   warm ??= makeHost();
 }
 /** Session 30: build the lobby's random map in the host that will play it (so Start doesn't build it again). */
+const watched = new WeakSet<GameHost>();
 export function previewRandomMap(mapId: string): Promise<RandomPreview> {
   prewarmHost();
   if (!warm?.randomMap) return Promise.reject(new Error("Random maps aren't ready here."));
-  return warm.randomMap(mapId);
+  // Session 31: how far the build is, for the panel's "Making the map…" line.
+  if (!watched.has(warm)) {
+    watched.add(warm);
+    warm.onMapProgress?.((done) => useGame.setState({ mapProgress: done }));
+  }
+  useGame.setState({ mapProgress: 0 });
+  return warm.randomMap(mapId).finally(() => useGame.setState({ mapProgress: null }));
 }
 const takeHost = () => {
   const h = warm ?? makeHost();
@@ -331,10 +340,38 @@ function rememberedStyle(key: string, allowed: readonly string[]): LeaderStyle |
   }
 }
 
+/**
+ * The lobby's map, remembered on this device (session 31): an official map's id, or a random map's size and shape
+ * ("random:80-island"), which comes back with a fresh seed each visit (`rememberedRandom`, picked up by the lobby).
+ */
+const MAP_KEY = "conquerra.lobbyMap";
+function rememberMap(mapId: string) {
+  const r = listingOf(mapId)?.random;
+  try {
+    localStorage.setItem(MAP_KEY, r ? `random:${r.size}-${r.shape}` : mapId);
+  } catch {
+    // A private window: remembered for this visit only.
+  }
+}
+function rememberedMapChoice(): string | null {
+  try {
+    return localStorage.getItem(MAP_KEY);
+  } catch {
+    return null;
+  }
+}
+/** A random map's size and shape the lobby should come back to (with a fresh seed), or null. */
+export function rememberedRandom(): { size: number; shape: string } | null {
+  const m = /^random:(\d+)-([a-z]+)$/.exec(rememberedMapChoice() ?? "");
+  return m ? { size: Number(m[1]), shape: m[2]! } : null;
+}
+
 const defaultLobby = (): LobbySettings => {
-  const bots = 3;
+  const remembered = rememberedMapChoice();
+  const official = remembered && !remembered.startsWith("random:") ? listingOf(remembered) : null;
+  const bots = official ? Math.max(1, Math.min(official.recommendedPlayers.min - 1, official.maxPlayers - 1, BOT_NAMES.length)) : 3;
   // The Marshal is the default bot (session 17: it beats the Captain and gangs up on a runaway early).
-  return { mapId: "embervale", bots, botLevel: "marshal", luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER, fate: true, diplomacy: true, house: rememberedHouse(), leaderName: rememberedLeaderName(), leaderPersonality: rememberedStyle(LEADER_STYLE_KEY, LEADER_STYLES), stewardPersonality: rememberedStyle(STEWARD_STYLE_KEY, STEWARD_STYLES) };
+  return { mapId: official?.id ?? "embervale", bots, botLevel: "marshal", luck: defaultRules.combat.luck, fog: true, mode: suggestedMode(bots + 1), turnSeconds: DEFAULT_TIMER, fate: true, diplomacy: true, house: rememberedHouse(), leaderName: rememberedLeaderName(), leaderPersonality: rememberedStyle(LEADER_STYLE_KEY, LEADER_STYLES), stewardPersonality: rememberedStyle(STEWARD_STYLE_KEY, STEWARD_STYLES) };
 };
 
 export const useGame = create<GameStore>((set, get) => ({
@@ -342,6 +379,7 @@ export const useGame = create<GameStore>((set, get) => ({
   lobby: defaultLobby(),
   modeTouched: false,
   randomPreview: null,
+  mapProgress: null,
   host: null,
   ctx: null,
   view: null,
@@ -468,6 +506,7 @@ export const useGame = create<GameStore>((set, get) => ({
     const touched = modeTouched || patch.mode !== undefined;
     // Until the host picks a mode, follow the suggestion for the table size.
     if (!touched) next.mode = suggestedMode(next.bots + 1);
+    if (patch.mapId !== undefined && map) rememberMap(next.mapId);
     if (patch.house !== undefined)
       try {
         localStorage.setItem(HOUSE_KEY, String(patch.house));

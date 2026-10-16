@@ -18,6 +18,7 @@ export function createLocalHost(): GameHost {
   const pending = new Map<number, { resolve: (u: unknown) => void; reject: (e: Error) => void }>();
   const autoLock: ((u: HostUpdate) => void)[] = [];
   const notices: ((m: string) => void)[] = [];
+  const progress: ((done: number) => void)[] = [];
   worker.onmessage = (e: MessageEvent<HostResponse>) => {
     const res = e.data;
     if ("pushed" in res) {
@@ -26,6 +27,10 @@ export function createLocalHost(): GameHost {
     }
     if ("notice" in res) {
       for (const f of notices) f(res.notice);
+      return;
+    }
+    if ("mapProgress" in res) {
+      for (const f of progress) f(res.mapProgress);
       return;
     }
     const p = pending.get(res.id);
@@ -67,6 +72,7 @@ export function createLocalHost(): GameHost {
     propose: (offer) => send<Answer>({ type: "propose", offer }),
     planGenerals: (instructions, purses) => send<LeaderOrders>({ type: "planGenerals", instructions, ...(purses ? { purses } : {}) }),
     randomMap: (mapId) => send<RandomPreview>({ type: "randomMap", mapId }),
+    onMapProgress: (f) => void progress.push(f),
     dispose: () => worker.terminate(),
   };
 }

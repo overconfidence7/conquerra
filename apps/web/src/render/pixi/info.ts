@@ -341,6 +341,8 @@ export class InfoLayer {
         for (const hole of rings.slice(1)) ring(t, hole).cut();
       }
       for (const r of g.rivers) t.poly(r.path as number[], false).stroke({ width: 2.4, color: 0x4f9bd0, cap: "round", join: "round" });
+      // Session 31, blackout fog: no river runs through cloud (land never seen is painted over it in the sea's colour).
+      for (const [id] of this.status) if (isUnknown(view, id)) for (const r of this.rings.get(id)!.slice(0, 1)) ring(t, r).fill(0x24506e);
       for (const l of g.seaLanes) if (!isUnknown(view, l.a) || !isUnknown(view, l.b)) t.poly(l.path as number[], false).stroke({ width: 2, color: 0xf2f2f2, alpha: 0.8 });
       for (const p of g.passes) if (!isUnknown(view, p.a) || !isUnknown(view, p.b)) t.circle(p.x, p.y, 6).fill(0xe8d39a).stroke({ width: 1.5, color: INK });
       t.visible = true;

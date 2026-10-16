@@ -1,7 +1,7 @@
 import { defaultRules, mapCatalog, suggestedMode } from "@conquerra/content";
 import { BOT_NAMES } from "../host/names";
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
-import { prewarmHost, useGame } from "../store";
+import { prewarmHost, rememberedRandom, useGame } from "../store";
 import { LEADER_STYLES, STEWARD_STYLES, suggestLeaderName, type LeaderStyle } from "@conquerra/engine";
 import { styleLabel, styleNote } from "../logic/text";
 import type { BotChoice } from "../host/protocol";
@@ -9,9 +9,12 @@ import { MAP_SUITS, mapChoiceLabel } from "../logic/text";
 import { TIMER_CHOICES, timerLabel } from "../logic/timer";
 import { decodeRuns, THUMB_COLOURS, type MapThumb } from "../logic/mapThumb";
 import { listingOf, randomLine, type Listing } from "../logic/mapListing";
+import type { RandomShape, RandomSize } from "@conquerra/mapgen/randomId";
 
 /** Session 30: the map picker's last choice, a random map. */
 const RANDOM_CHOICE = "random";
+/** Session 31: the remembered random map comes back once a page load (not every time the lobby shows). */
+let cameBackToRandom = false;
 import { houseSummary, LUCK, rulesSummary } from "../logic/lobbyText";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
@@ -168,6 +171,16 @@ export function Lobby() {
     void import("../host/onlineActions").then((m) => m.refreshOnline());
     void online();
   }, [refreshSlots]);
+  // Session 31: last time it was a random map, so it's a random map again (the same size and shape, a fresh seed).
+  useEffect(() => {
+    const r = rememberedRandom();
+    if (!r || cameBackToRandom || useGame.getState().lobby.mapId.startsWith("random:")) return;
+    cameBackToRandom = true;
+    void randomPanel().then((m) => {
+      const id = m.freshRandomId(r.size as RandomSize, r.shape as RandomShape);
+      if (listingOf(id)) setLobby({ mapId: id });
+    });
+  }, [setLobby]);
   const auto = slots.find((s) => s.slot === "auto");
   const map: Listing = listingOf(lobby.mapId) ?? mapCatalog[0]!;
   const random = map.random;

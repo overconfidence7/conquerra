@@ -52,6 +52,8 @@ export function UpdatePrompt() {
           if (!live) return;
           useUpdates.getState().set({ apply: updateSW, notice: null });
           setHidden(null);
+          // Session 31: a waiting copy of the build that's already running isn't an update (it hides again).
+          void checkFreshness();
         },
         onRegisteredSW: (_url, reg) => {
           if (!live || !reg) return;

@@ -13,8 +13,10 @@ export function roomMapsWith(store: RoomStore, official: (id: string) => Promise
     const kept = (await store.get("randomMap")) as { id: string; map: unknown } | null;
     if (kept && kept.id === id) return MapDef.parse(kept.map);
     const gen = await import("@conquerra/mapgen");
-    if (version !== undefined && version !== null && version !== gen.MAPGEN_VERSION) throw new Error(gen.RANDOM_TEXT.oldVersion(version));
-    const { geometry: _drawing, ...slim } = gen.randomMap(id, defaultRules).map;
+    // Session 31: built at the version the game pinned (each version this build knows), else the newest.
+    const v = version ?? gen.RANDOM_VERSION;
+    if (!gen.isRandomVersion(v)) throw new Error(gen.RANDOM_TEXT.oldVersion(v));
+    const { geometry: _drawing, ...slim } = gen.randomMap(id, defaultRules, { version: v }).map;
     await store.put("randomMap", { id, map: slim });
     return MapDef.parse(slim);
   };

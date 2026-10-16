@@ -4,7 +4,7 @@ import { adjacency, allDistances, exposureOf } from "./checks";
 import { generateMap, type MapGenOptions } from "./index";
 import { recipeFor, type Recipe } from "./recipes";
 import { parseRandomId, randomPlayers, RANDOM_PREFIX, type RandomShape, type RandomSize } from "./randomId";
-import { randomMapId, RANDOM_EXPOSURE_BAND, RANDOM_SHAPES, RANDOM_TRIES } from "./seed";
+import { isRandomVersion, randomMapId, RANDOM_SHAPES, RANDOM_TRIES, RANDOM_VERSION, RANDOM_VERSIONS, type RandomVersion } from "./seed";
 import { RANDOM_TEXT } from "./randomText";
 
 export * from "./randomId";
@@ -24,7 +24,7 @@ export * from "./seed";
  * the choke points asked for. The seed nudges a few knobs (a lake or a river more or less, the coast's roughness) so
  * two maps of the same size and shape differ in more than their outline.
  */
-export function randomRecipe(size: RandomSize, shape: RandomShape, seed: string): Recipe {
+export function randomRecipe(size: RandomSize, shape: RandomShape, seed: string, version: RandomVersion = RANDOM_VERSION): Recipe {
   const T = size;
   const land = RANDOM_SHAPES[shape];
   const rng = new Rng(seedRng(`${seed}|recipe`));
@@ -50,14 +50,17 @@ export function randomRecipe(size: RandomSize, shape: RandomShape, seed: string)
     laneReach,
     streams: "staged",
     maxAttempts: RANDOM_TRIES,
+    // Session 31 (version 3): a fatter crescent (a smaller bay a little further off, one isle in it), longer sea lanes
+    // across the bay and fewer choke points asked for: about 5 in 6 seeds pass at the band of 4.0 instead of 1 in 3.
+    ...(version >= 3 && land === "crescent" ? { islands: 1, bite: 0.5, biteOffset: 0.5, laneReach: Math.round(laneReach * 1.6), minChokePoints: Math.max(4, Math.round(T / 18)) } : {}),
   };
 }
 
 /** The map's own fairness check at generation: every layout within the exposure band (a reason to reject, or null). */
-export function exposureProblem(map: MapDef): string | null {
+export function exposureProblem(map: MapDef, band: number = RANDOM_VERSIONS[RANDOM_VERSION].band): string | null {
   const d = allDistances(map), adj = adjacency(map);
   for (const l of map.capitalLayouts ?? []) {
-    const e = exposureOf(l.slots, d, adj, RANDOM_EXPOSURE_BAND);
+    const e = exposureOf(l.slots, d, adj, band);
     if (!e.fair) return `capitals for ${l.players} players too unevenly exposed (${(Math.max(...e.exposure) / Math.max(1e-9, Math.min(...e.exposure))).toFixed(1)}x)`;
   }
   return null;
@@ -65,11 +68,11 @@ export function exposureProblem(map: MapDef): string | null {
 
 /**
  * The harder spots of each layout (the seat rule deals them to bots first): the spots at least 1.5 times as exposed as
- * the layout's middle spot, the most exposed first, a third of the table at most. A random map has no start bonus
- * (that's sized by sims, map by map), so this is how its weaker spots are known.
+ * the layout's middle spot, the most exposed first, a third of the table at most. Session 31: each also gets `bonus`
+ * extra troops at the start (the layout's `bonus`, as the official maps' weak spots have; 0 for version 2's maps).
  */
 export const HARDER_THAN_MIDDLE = 1.5;
-export function markHarder(map: MapDef): MapDef {
+export function markHarder(map: MapDef, bonus = 0): MapDef {
   const d = allDistances(map), adj = adjacency(map);
   for (const l of map.capitalLayouts ?? []) {
     const e = exposureOf(l.slots, d, adj).exposure;
@@ -82,6 +85,7 @@ export function markHarder(map: MapDef): MapDef {
       .map((p) => p.s)
       .sort();
     if (harder.length) l.harder = harder;
+    if (harder.length && bonus > 0) l.bonus = Object.fromEntries(harder.map((s) => [s, bonus]));
   }
   return map;
 }
@@ -95,14 +99,22 @@ export class RandomMapFailed extends Error {
 /**
  * Make a random map from its id ("80-crescent-quiet-heron" or "random:80-..."). Throws `RandomMapFailed` (its
  * message is the player's line) if no try passed the checks, or an Error with `RANDOM_TEXT.badId` for a bad id.
+ * `version` (session 31): the random map version to build at (a game pins it); the current one if left out, and
+ * `RANDOM_TEXT.oldVersion` for one this build can't make. `band` overrides the version's band (the sim's experiments).
  */
-export function randomMap(id: string, rules: Rules, opts: Pick<MapGenOptions, "stageSeeds" | "log"> = {}): { map: MapDef; attempt: number } {
+export function randomMap(id: string, rules: Rules, opts: Pick<MapGenOptions, "stageSeeds" | "log" | "onProgress"> & { version?: number | null; band?: number } = {}): { map: MapDef; attempt: number } {
   const p = parseRandomId(id);
   if (!p) throw new Error(RANDOM_TEXT.badId);
-  const recipe: MapGenOptions = { ...randomRecipe(p.size, p.shape, p.seed), ...opts, accept: exposureProblem };
+  const { version: asked, band: bandOverride, ...gen } = opts;
+  const version: RandomVersion = asked == null ? RANDOM_VERSION : isRandomVersion(asked) ? asked : (() => { throw new Error(RANDOM_TEXT.oldVersion(asked)); })();
+  const v = RANDOM_VERSIONS[version];
+  const band = bandOverride ?? v.band;
+  const recipe: MapGenOptions = { ...randomRecipe(p.size, p.shape, p.seed, version), ...gen, accept: (m) => exposureProblem(m, band) };
   try {
     const r = generateMap(recipe, rules);
-    return { map: markHarder(r.map), attempt: r.attempt };
+    const map = markHarder(r.map, v.bonus);
+    map.generator = { ...map.generator!, version };
+    return { map, attempt: r.attempt };
   } catch (e) {
     if (e instanceof Error && e.message.startsWith("No map passed")) throw new RandomMapFailed(e.message.split("\n").slice(1));
     throw e;

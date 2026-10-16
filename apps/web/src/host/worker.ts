@@ -5,7 +5,10 @@ import { idbSaveStore } from "./saves";
 
 // The engine and bots run here, off the page. The page only ever receives HostUpdates (and short slot lists).
 const scope = self as unknown as { onmessage: ((e: MessageEvent<HostRequest>) => void) | null; postMessage(msg: HostResponse): void };
-const core = new HostCore(idbSaveStore(), loadGameMap, (notice) => scope.postMessage({ id: 0, ok: true, notice }));
+// (Session 31: a random map's build says how far it is, for the page's "Making the map…" line.)
+const mapProgress = (done: number) => scope.postMessage({ id: 0, ok: true, mapProgress: done });
+const loadMap = (id: string, version?: number | null) => loadGameMap(id, version, mapProgress);
+const core = new HostCore(idbSaveStore(), loadMap, (notice) => scope.postMessage({ id: 0, ok: true, notice }));
 let timer: ReturnType<typeof setTimeout> | null = null;
 
 /** The turn timer lives here, in the host: when it runs out, lock your saved orders in and tell the page. */
@@ -39,7 +42,7 @@ scope.onmessage = async (e) => {
         return;
       case "randomMap": {
         // Session 30: the lobby's picture of a random map (built here, off the page, and kept for the game).
-        const map = await loadGameMap(req.mapId);
+        const map = await loadMap(req.mapId);
         const { shrinkGround } = await import("../logic/mapThumb");
         scope.postMessage({ id: req.id, ok: true, random: { thumb: shrinkGround(map.geometry!.biome), attempt: map.generator?.attempt ?? 1 } });
         return;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { cleanSeed, newSeedWords, randomMapId, RANDOM_SHAPE_IDS, RANDOM_SHAPE_NAMES, RANDOM_TEXT } from "@conquerra/mapgen/seed";
+import { cleanSeed, newSeedWords, randomMapId, RANDOM_SHAPE_IDS, RANDOM_SHAPE_NAMES, RANDOM_TEXT, RANDOM_TRIES } from "@conquerra/mapgen/seed";
 import { parseRandomId, RANDOM_PREFIX, RANDOM_SIZES, type RandomShape, type RandomSize } from "@conquerra/mapgen/randomId";
 import { previewRandomMap, useGame } from "../store";
 import "./random-map.css";
@@ -17,10 +17,17 @@ export const RANDOM_UI = {
   reroll: "Reroll",
   typeSeed: "Type a seed",
   use: "Use",
-  building: "Drawing the map…",
+  building: "Making the map…",
   slow: "Big maps take a while to draw, longer on a phone.",
   suits: "A new map from its seed: the same seed always makes the same map, so you can share it with a friend.",
 } as const;
+
+/** Session 31: "40%", or "40%, try 2 of 6" once a try has been rejected. */
+export function progressLine(done: number): string {
+  const attempt = Math.floor(done) + 1;
+  const pct = Math.round(100 * (done - Math.floor(done)));
+  return attempt > 1 ? `${pct}%, try ${attempt} of ${RANDOM_TRIES}` : `${pct}%`;
+}
 
 /** A random map's id with a fresh seed (the page's dice; the map maker never draws one). */
 export function freshRandomId(size: RandomSize = 80, shape: RandomShape = "island"): string {
@@ -31,6 +38,7 @@ export default function RandomMapPanel() {
   const mapId = useGame((s) => s.lobby.mapId);
   const setLobby = useGame((s) => s.setLobby);
   const preview = useGame((s) => (s.randomPreview?.mapId === mapId ? s.randomPreview : null));
+  const progress = useGame((s) => s.mapProgress);
   const [typed, setTyped] = useState("");
   const [typo, setTypo] = useState(false);
   const r = parseRandomId(mapId);
@@ -108,8 +116,9 @@ export default function RandomMapPanel() {
       {preview?.problem ? (
         <p className="warn small">{preview.problem}</p>
       ) : !preview?.preview ? (
-        <p className="muted small">
+        <p className="muted small" role="status">
           {RANDOM_UI.building}
+          {progress !== null ? ` ${progressLine(progress)}` : ""}
           {r.size >= 120 ? ` ${RANDOM_UI.slow}` : ""}
         </p>
       ) : null}

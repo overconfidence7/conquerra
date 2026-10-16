@@ -117,6 +117,9 @@ export interface MapGenOptions {
   landBridge?: boolean;
   /** How much the coast noise bends a shape, 0–1 (default about 0.5). Not used by "continent". */
   roughness?: number;
+  /** Session 31, crescent: the bay's size (default 0.7) and offset (default 0.4), as `ShapeOptions`. */
+  bite?: number;
+  biteOffset?: number;
   /** Longest sea lane, in mesh cells (default 16; extra lanes up to 4 less). */
   laneReach?: number;
   /** Return the first map even if it fails the checks (for looking at problems). */
@@ -131,7 +134,15 @@ export interface MapGenOptions {
   accept?: (map: MapDef) => string | null;
   /** Session 30, staged streams only: a stage's own seed instead of "<seed>|<stage>" (to show stages don't touch each other). */
   stageSeeds?: Partial<Record<MapStage, string>>;
+  /**
+   * Session 31: told as each step of a try starts (`step` of `MAP_STEPS`, the try's number from 1), for a "Making the
+   * map…" line. Only watches: the map is the same with or without it.
+   */
+  onProgress?: (step: number, attempt: number) => void;
 }
+
+/** The map maker's numbered steps in one try (its "step" notes run 2 to 13), for progress. */
+export const MAP_STEPS = 13;
 
 export interface MapGenResult {
   map: MapDef;
@@ -150,8 +161,12 @@ export function generateMap(opts: MapGenOptions, rules: Rules): MapGenResult {
   for (let attempt = 1; attempt <= max; attempt++) {
     const seed = attempt === 1 ? opts.seed : `${opts.seed}#${attempt}`;
     let map: MapDef;
+    // (Session 31: the step notes double as progress.)
+    const watch = opts.onProgress;
+    const log = watch ? (...a: unknown[]) => (opts.log?.(...a), a[0] === "step" && watch(parseInt(String(a[1]), 10) || 0, attempt)) : opts.log;
     try {
-      map = buildOnce(opts, rules, seed, attempt);
+      watch?.(1, attempt);
+      map = buildOnce(log === opts.log ? opts : { ...opts, log }, rules, seed, attempt);
     } catch (e) {
       if (!(e instanceof Rejected)) throw e;
       rejected.push(`${seed}: ${e.message}`);
@@ -171,7 +186,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
   // A shape other than the original continent is drawn from its own random sequence, before anything else.
   const shape =
     o.shape && o.shape !== "continent"
-      ? makeShapeField({ shape: o.shape, territories: T, ...(o.mask ? { mask: o.mask } : {}), ...(o.islands !== undefined ? { islands: o.islands } : {}), ...(o.landBridge !== undefined ? { landBridge: o.landBridge } : {}) }, stream("shape"))
+      ? makeShapeField({ shape: o.shape, territories: T, ...(o.mask ? { mask: o.mask } : {}), ...(o.islands !== undefined ? { islands: o.islands } : {}), ...(o.landBridge !== undefined ? { landBridge: o.landBridge } : {}), ...(o.bite !== undefined ? { bite: o.bite } : {}), ...(o.biteOffset !== undefined ? { biteOffset: o.biteOffset } : {}) }, stream("shape"))
       : null;
   // A shape sets its own share of water (the sea around and between it) unless the recipe says otherwise.
   const waterShare = o.water ?? (shape ? clamp(1 - shape.insideShare, 0.25, 0.8) : 0.38);

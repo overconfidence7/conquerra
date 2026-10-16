@@ -44,11 +44,25 @@ export { RANDOM_TEXT } from "./randomText";
 export const RANDOM_TRIES = 6;
 
 /**
- * The fairness bar at generation, beyond the map maker's own (every capital about as far from its nearest rival, gold
- * within 30%): no capital spot more than this many times as exposed as the safest (`exposureOf`): no worse than the
- * worst of the twelve official maps' own layouts (5.54, Embervale 6; their median is 2.3, nine in ten within 4.0).
+ * Random maps' own version (session 31), the number a game pins as its map's `generator.version`. The map maker
+ * itself is unchanged (`MAPGEN_VERSION` 2, which the twelve keep); what a random map's version changes is the fairness
+ * band at generation (which seeds and rerolls pass) and the start bonus on its harder spots. Every version listed in
+ * `RANDOM_VERSIONS` can still be built, so a game made before a change rebuilds its own map exactly.
+ *  - 2 (session 30): the band 5.5, no start bonus.
+ *  - 3 (session 31, the orchestrator's call from the sim): the band 4.0, and +4 troops on each harder spot.
  */
-export const RANDOM_EXPOSURE_BAND = 5.5;
+export const RANDOM_VERSION = 3;
+export const RANDOM_VERSIONS = { 2: { band: 5.5, bonus: 0 }, 3: { band: 4.0, bonus: 4 } } as const satisfies Record<number, { band: number; bonus: number }>;
+export type RandomVersion = keyof typeof RANDOM_VERSIONS;
+export const isRandomVersion = (v: number | null | undefined): v is RandomVersion => v != null && v in RANDOM_VERSIONS;
+
+/**
+ * The fairness bar at generation, beyond the map maker's own (every capital about as far from its nearest rival, gold
+ * within 30%): no capital spot more than this many times as exposed as the safest (`exposureOf`). Session 30's 5.5 was
+ * the worst of the twelve official maps' own layouts (5.54, Embervale 6; their median is 2.3, nine in ten within 4.0);
+ * session 31 tightens it to 4.0.
+ */
+export const RANDOM_EXPOSURE_BAND: number = RANDOM_VERSIONS[RANDOM_VERSION].band;
 
 /** A seed as typed ("Quiet Heron", "quiet heron", "quiet-heron") → "quiet-heron", or null. */
 export function cleanSeed(typed: string): string | null {

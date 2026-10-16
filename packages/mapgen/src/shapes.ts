@@ -24,6 +24,9 @@ export interface ShapeOptions {
   islands?: number;
   /** Twin continents: a narrow land bridge between them. */
   landBridge?: boolean;
+  /** Session 31, crescent: the bay's size against the land's (default 0.7) and how far off centre it sits (default 0.4). */
+  bite?: number;
+  biteOffset?: number;
   territories: number;
 }
 
@@ -149,7 +152,8 @@ function insideTest(o: ShapeOptions, rng: Rng): { aspect: number; inside: (x: nu
       const aspect = 1.45;
       const outer = ellipse(aspect / 2, 0.5, aspect / 2 - M, 0.5 - M);
       const [dx, dy] = randomDirection(rng);
-      const bite = ellipse(outer.x + dx * outer.rx * 0.4, outer.y + dy * outer.ry * 0.4, outer.rx * 0.7, outer.ry * 0.7);
+      const off = o.biteOffset ?? 0.4, size = o.bite ?? 0.7;
+      const bite = ellipse(outer.x + dx * outer.rx * off, outer.y + dy * outer.ry * off, outer.rx * size, outer.ry * size);
       const isles: Ellipse[] = [];
       for (let i = 0; i < (o.islands ?? 2); i++) {
         const t = (i + 1) / ((o.islands ?? 2) + 1) - 0.5;

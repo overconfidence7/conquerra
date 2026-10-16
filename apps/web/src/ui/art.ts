@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArtBook } from "../art/book";
-import { tinted } from "../art/heraldry";
+import type { ArtBook } from "../art/book";
 import type { House } from "../map/houses";
 
 /**
@@ -9,7 +8,8 @@ import type { House } from "../map/houses";
  */
 let book: Promise<ArtBook> | null = null;
 const urls = new Map<string, Promise<string | null>>();
-export const artBook = () => (book ??= ArtBook.load().catch(() => ArtBook.placeholdersOnly()));
+// Session 31: the art book and its painted placeholders load after the lobby's first paint (not in the start-up bundle).
+export const artBook = () => (book ??= import("../art/book").then(({ ArtBook }) => ArtBook.load().catch(() => ArtBook.placeholdersOnly())));
 
 export function artUrl(name: string): Promise<string | null> {
   let p = urls.get(name);
@@ -52,7 +52,7 @@ export function useShield(house: House): string | null {
     let live = true;
     let p = urls.get(key);
     if (!p) {
-      p = artBook().then((b) => tinted(b.get("shield-base")!, house, true, { w: 64, h: 64 }).toDataURL());
+      p = Promise.all([artBook(), import("../art/heraldry")]).then(([b, { tinted }]) => tinted(b.get("shield-base")!, house, true, { w: 64, h: 64 }).toDataURL());
       urls.set(key, p);
     }
     void p.then((u) => live && setUrl(u));

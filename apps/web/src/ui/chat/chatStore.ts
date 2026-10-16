@@ -19,6 +19,8 @@ export const CHAT_UI = {
   local: "Only bots sit at this table, and they don't read free text. Online, you can talk to them by picking a line.",
   /** Session 30: under an offer's note, once the offer has ended with no answer. */
   ended: { lapsed: "(lapsed at lock-in)", withdrawn: "(withdrawn)" },
+  /** Session 31: a withdrawn offer says who withdrew it (only its sender can). */
+  withdrawnBy: (who: string, you: boolean) => (you ? "(you withdrew it)" : `(withdrawn by ${who})`),
 } as const;
 
 interface ChatState {

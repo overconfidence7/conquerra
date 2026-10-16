@@ -4,7 +4,8 @@
  *   npx tsx apps/sim/scripts/s30-sims.ts <map>:<players> <games> [--seed s30] [--fog on|off|blackout] [--json out.json]
  *     <map>: an official map's id (embervale), or a random map's id ("random:80-crescent-quiet-heron")
  *   npx tsx apps/sim/scripts/s30-sims.ts --random <size>:<shape>:<n> [--start 0] <players> ...
- *     n random maps of that size and shape in a row (the seed words from `--start`), one game each.
+ *     n random maps of that size and shape in a row (the seed words from `--start`), one game each. `--band 3.0`
+ *     builds them at another exposure band (session 31).
  *   npx tsx apps/sim/scripts/s30-sims.ts --digest <players> <games> [--fog ...]
  *     every official map at that table size (or its smallest suggested one): a fingerprint of every game's result, to
  *     show a change left the twelve maps' games exactly as they were.
@@ -31,10 +32,11 @@ const opt = (name: string, dflt: string) => {
 };
 
 /** A map by its id: official, or random (built by the map maker from its id, at this generator version). */
-async function mapOf(id: string): Promise<MapDef> {
+async function mapOf(id: string, band?: number): Promise<MapDef> {
   if (id.startsWith("random:")) {
     const { randomMap } = await import("@conquerra/mapgen");
-    return randomMap(id.slice("random:".length), defaultRules).map;
+    // (Session 31: `--band 3.0` builds at another exposure band, for the sim's experiments; the current version otherwise.)
+    return randomMap(id.slice("random:".length), defaultRules, band ? { band } : {}).map;
   }
   const m = maps[id];
   if (!m) throw new Error(`Unknown map ${id}`);
@@ -46,6 +48,8 @@ interface Job {
   players: number;
   game: number;
   seed: string;
+  /** Session 31: a random map's exposure band, if not its version's. */
+  band?: number;
 }
 interface Result {
   map: string;
@@ -73,7 +77,7 @@ const settingsOf = (): Partial<GameSettings> => ({ luck: defaultRules.combat.luc
 async function play(job: Job): Promise<Result> {
   const t0 = Date.now();
   try {
-    const map = await mapOf(job.map);
+    const map = await mapOf(job.map, job.band);
     const seats = Array.from({ length: job.players }, (_, i) => `s${i}`);
     const dealt = dealPersonalities(job.seed, seats);
     const bots = seats.map((s) => makeMarshalBot(dealt[s]!));
@@ -188,7 +192,8 @@ if (args[0] === "--digest") {
   const { seedWords, RANDOM_SHAPE_IDS } = await import("@conquerra/mapgen");
   // "all": the five shapes in turn.
   const shapeOf = (i: number) => (shape === "all" ? RANDOM_SHAPE_IDS[i % RANDOM_SHAPE_IDS.length]! : shape);
-  const jobs: Job[] = Array.from({ length: Number(n) }, (_, i) => ({ map: `random:${size}-${shapeOf(i)}-${seedWords(start + i)}`, players, game: i, seed: `${seedPrefix}-${size}-${shape}-${i}` }));
+  const band = opt("band", "");
+  const jobs: Job[] = Array.from({ length: Number(n) }, (_, i) => ({ map: `random:${size}-${shapeOf(i)}-${seedWords(start + i)}`, players, game: i, seed: `${seedPrefix}-${size}-${shape}-${i}`, ...(band ? { band: Number(band) } : {}) }));
   const rs = await runAll(jobs);
   const r = report(`${n} random maps, ${size} territories, ${shape}`, players, rs);
   if (shape === "all")
