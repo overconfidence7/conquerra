@@ -328,6 +328,7 @@ It matches "simple at first, deep later" and the 5-minute turn, and it plugs nea
   - Subjects: chaining attacks, recruiting, culture, buildings, cards, treaties, generals.
   - Built on saved games, once the rules have settled.
 - **Scenarios (M5 or later):** set-piece games (a fixed map, starting positions and goals), on the same saved-game format.
+- **BUILT (session 31):** seven tutorials as content (a JSON file each: the recipe that makes the saved game, a goal from a fixed set, one hint a turn, the words, and a solution a test plays against the engine), Learn in the lobby, the goal card and Done card, the guided first game (three prompts on turn 1), and the first scenario (The Siege of Highmouth) in the same format. Rules: `docs/rules-reference.md` §26.
 
 ## 11. Bot personalities and the Marshal (Nate, Oct 6 play test)
 Nate's notes: his test game on Wyrmland against 5 Captains lasted only 12 turns, the last 3 a mop-up. He ran away with it, and neither the bots nor the Fallen seemed to team up against him. "Bots should have different play styles and personalities… think through all the ways someone could win and make them distinct and random so a group of 5 feels different."
