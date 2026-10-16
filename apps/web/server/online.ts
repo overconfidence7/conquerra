@@ -1,5 +1,9 @@
-import { defaultRules, mapCatalog } from "@conquerra/content";
-import { LEADER_STYLES, STEWARD_STYLES, type LeaderStyle } from "@conquerra/engine";
+import type { MapListing } from "@conquerra/content";
+// Session 30: the raw files, not the content package's checked copies, so a cold request to the API doesn't build
+// every schema first (the room still checks everything it loads).
+import catalogJson from "@conquerra/content/data/maps/catalog.json";
+import rulesJson from "@conquerra/content/data/rules.json";
+import { LEADER_STYLES, STEWARD_STYLES, type LeaderStyle } from "@conquerra/engine/src/types";
 import { HOUSES } from "../src/map/houses";
 import type { BotChoice, LobbySettings, NewOnlineGame } from "../src/host/protocol";
 import { ONLINE_TIMER_CHOICES } from "../src/logic/timer";
@@ -8,6 +12,9 @@ import { ONLINE_TIMER_CHOICES } from "../src/logic/timer";
  * What the API accepts when someone makes an online game (session 26): the lobby's settings, checked and cleaned (a
  * page can send anything). No Cloudflare here, so it's tested in Node.
  */
+
+/** The official maps' listings (the API's copy; see above). */
+export const mapCatalog: MapListing[] = catalogJson;
 
 const LEVELS: readonly BotChoice[] = ["recruit", "captain", "marshal", "mixed"];
 
@@ -31,7 +38,7 @@ export function cleanNewGame(body: unknown): { settings: LobbySettings; leadersR
   if (!Number.isFinite(bots) || bots < 1 || bots > map.maxPlayers - 1) return { error: `${map.name} takes 1 to ${map.maxPlayers - 1} bots.` };
   if (!ONLINE_TIMER_CHOICES.includes(s.turnSeconds as number)) return { error: "Online games use a timer of 3, 5 or 10 minutes, or 1, 8 or 24 hours." };
   const level: BotChoice = LEVELS.includes(s.botLevel as BotChoice) ? (s.botLevel as BotChoice) : "marshal";
-  const luck = typeof s.luck === "number" && s.luck >= 0 && s.luck <= 1 ? s.luck : defaultRules.combat.luck;
+  const luck = typeof s.luck === "number" && s.luck >= 0 && s.luck <= 1 ? s.luck : rulesJson.combat.luck;
   const house = Number.isInteger(s.house) && s.house! >= 0 && s.house! < HOUSES.length ? s.house! : 0;
   const leaderName = str(s.leaderName, 40);
   const stewardName = str(s.stewardName, 40);

@@ -25,6 +25,23 @@ export function timeLeft(deadline: number | null, now: number): string {
 /** Finished: the game is over, or your seat left it (you resigned, or a Marshal took it after missed turns). */
 export const finished = (g: OnlineGameInfo) => g.status === "over" || !!g.left;
 
+/** Session 30: a finished game where you were the only person (bots in every other seat) leaves the list after a day. */
+export const SOLO_KEPT_MS = 24 * 3600_000;
+const CLEARED_KEY = "conquerra.finishedCleared";
+
+/** The finished games still shown: not cleared on this device, and not a day-old game you played alone with bots. */
+export function finishedShown(games: readonly OnlineGameInfo[], now: number, cleared: ReadonlySet<string>): OnlineGameInfo[] {
+  return games.filter((g) => finished(g) && !cleared.has(g.id) && !(g.players.every((p) => p.bot || p.you) && now - g.created > SOLO_KEPT_MS));
+}
+
+function readCleared(): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(CLEARED_KEY) ?? "[]") as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
 /** What a game in the list is waiting on: you, someone else, or nobody (it's over). */
 export function waitingLine(g: OnlineGameInfo, now: number): { text: string; yours: boolean } {
   if (g.status === "waiting") {
@@ -83,6 +100,7 @@ export default function OnlineBlock() {
   const { onlineLobby, onlineGames, onlineProblem, busy, error } = useGame();
   const [tried, setTried] = useState(false);
   const [showFinished, setShowFinished] = useState(false);
+  const [cleared, setCleared] = useState(readCleared);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     void refreshOnline();
@@ -92,6 +110,20 @@ export default function OnlineBlock() {
     return () => (clearInterval(tick), clearInterval(fresh));
   }, []);
   const off = onlineProblem?.includes("isn't switched on");
+  const done = onlineGames ? finishedShown(onlineGames, now, cleared) : [];
+  // "Clear finished": hides them on this device (they stay on the server for their week).
+  const clearFinished = () => {
+    const next = new Set([...cleared, ...done.map((g) => g.id)]);
+    // (Only ids still in the list are worth keeping.)
+    const kept = [...next].filter((id) => onlineGames?.some((g) => g.id === id));
+    try {
+      localStorage.setItem(CLEARED_KEY, JSON.stringify(kept));
+    } catch {
+      // Private mode: cleared until the page reloads.
+    }
+    setCleared(new Set(kept));
+    setShowFinished(false);
+  };
   return (
     <>
       <div className="online-new">
@@ -156,17 +188,22 @@ export default function OnlineBlock() {
             ))}
           </ul>
         )}
-        {!!onlineGames?.filter(finished).length && (
+        {!!done.length && (
           <div className="online-finished">
             <button className="link small" aria-expanded={showFinished} onClick={() => setShowFinished(!showFinished)}>
-              {showFinished ? "▾" : "▸"} Finished ({onlineGames.filter(finished).length}, kept for a week)
+              {showFinished ? "▾" : "▸"} Finished ({done.length}, kept for a week)
             </button>
             {showFinished && (
-              <ul className="online-games">
-                {onlineGames.filter(finished).map((g) => (
-                  <GameRow key={g.id} g={g} now={now} busy={busy} />
-                ))}
-              </ul>
+              <>
+                <ul className="online-games">
+                  {done.map((g) => (
+                    <GameRow key={g.id} g={g} now={now} busy={busy} />
+                  ))}
+                </ul>
+                <button className="link small" onClick={clearFinished}>
+                  Clear finished
+                </button>
+              </>
             )}
           </div>
         )}

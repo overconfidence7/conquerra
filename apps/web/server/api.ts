@@ -1,10 +1,9 @@
-import { mapCatalog } from "@conquerra/content";
 import type { NewOnlineGame, OnlineGameInfo } from "../src/host/protocol";
-import { newSeed } from "../src/host/roomCore";
+import { newSeed } from "../src/host/seed";
 import { AccessCache, accessKeys, verifyAccess, type SignedIn } from "./access";
 import { cleanSub } from "./webPush";
 import type { Env } from "./env";
-import { cleanName, cleanNewGame, nameFromEmail, newGameId, newInviteCode } from "./online";
+import { cleanName, cleanNewGame, mapCatalog, nameFromEmail, newGameId, newInviteCode } from "./online";
 
 /**
  * The Worker `conquerra`'s API (session 26): it serves the game's static files as before, and the online API under /api.

@@ -13,6 +13,7 @@
     "./maps": "./src/maps.ts",
     "./loadMap": "./src/loadMap.ts",
     "./lines": "./src/lines.ts",
-    "./data/maps/*": "./data/maps/*"
+    "./data/maps/*": "./data/maps/*",
+    "./data/rules.json": "./data/rules.json"
   }
 }

@@ -1,10 +1,9 @@
 import { DurableObject } from "cloudflare:workers";
-import { MapDef } from "@conquerra/content";
+import type { MapDef } from "@conquerra/content";
 import type { PlayerId } from "@conquerra/engine";
-import { RoomCore, type RoomInfo, type RoomSetup, type RoomStore, type TableSetup, type Who } from "../src/host/roomCore";
+import type { RoomCore, RoomInfo, RoomSetup, RoomStore, TableSetup, Who } from "../src/host/roomCore";
 import type { RoomMessage, RoomRequest, TableView } from "../src/host/protocol";
 import { EmailMessage } from "cloudflare:email";
-import slimMaps from "./maps.json";
 import { mirrorGame, mirrorTable } from "./mirror";
 import { FROM, notifyTurn } from "./notify";
 import type { Env } from "./env";
@@ -24,14 +23,14 @@ const CHUNK = 400_000;
 /** A page's message larger than this is ignored (a turn's orders are a few KB). */
 const MAX_MESSAGE = 256 * 1024;
 
-const maps = slimMaps as unknown as Record<string, unknown>;
-
-/** The maps the room plays on: the slim ones (no drawing data), checked as the page's are. */
-async function loadSlimMap(id: string): Promise<MapDef> {
-  const raw = maps[id];
-  if (!raw) throw new Error(`Unknown map ${id}`);
-  return MapDef.parse(raw);
-}
+/**
+ * The room's own code (the engine, the bots, the slim maps), loaded the first time a room wakes in this isolate
+ * (session 30). The Worker's API shares this script but never needs any of it, so a cold request to the API no
+ * longer parses 1 MB of the room's data first.
+ */
+let roomCode: Promise<{ RoomCore: typeof RoomCore; loadSlimMap: (id: string) => Promise<MapDef> }> | null = null;
+const loadRoomCode = () =>
+  (roomCode ??= Promise.all([import("../src/host/roomCore"), import("./slimMaps")]).then(([core, slim]) => ({ RoomCore: core.RoomCore, loadSlimMap: slim.loadSlimMap })));
 
 /** The room's storage: values as JSON text, a big one in pieces. */
 function storeOver(storage: DurableObjectStorage): RoomStore {
@@ -65,11 +64,18 @@ interface Attachment {
 }
 
 export class GameRoom extends DurableObject<Env> {
-  private core: RoomCore;
+  private made: Promise<RoomCore> | null = null;
+  /** Set once `room()` has resolved (the callbacks below only run after that). */
+  private core!: RoomCore;
 
-  constructor(ctx: DurableObjectState, env: Env) {
-    super(ctx, env);
-    this.core = new RoomCore(storeOver(ctx.storage), loadSlimMap, {
+  /** The game, made the first time this room is asked anything. */
+  private room(): Promise<RoomCore> {
+    return (this.made ??= loadRoomCode().then(({ RoomCore, loadSlimMap }) => (this.core = this.makeCore(RoomCore, loadSlimMap))));
+  }
+
+  private makeCore(Core: typeof RoomCore, loadSlimMap: (id: string) => Promise<MapDef>): RoomCore {
+    const { ctx, env } = this;
+    return new Core(storeOver(ctx.storage), loadSlimMap, {
       send: (seat, msg) => this.send(seat, msg),
       sendUser: (user, msg) => this.sendTo((a) => a.user === user, msg),
       users: () => [...new Set(this.sockets().flatMap(([, a]) => (a.user ? [a.user] : [])))],
@@ -134,20 +140,22 @@ export class GameRoom extends DurableObject<Env> {
 
   /** The lobby's "Leave this game" (session 27): this account resigns its seat. */
   async resignUser(user: string, seat: PlayerId | null): Promise<boolean> {
-    const done = await this.core.resignUser(user, seat);
-    await this.core.flush();
+    const core = await this.room();
+    const done = await core.resignUser(user, seat);
+    await core.flush();
     return done;
   }
 
   /** Make a table (the Worker calls this once, right after writing the game's row). Session 27. */
   async createTable(setup: TableSetup): Promise<TableView> {
-    return this.core.createTable(setup);
+    return (await this.room()).createTable(setup);
   }
 
   /** Session 26: make a game straight away (one person against bots). Kept for the tests' sake; the API makes tables now. */
   async create(setup: RoomSetup): Promise<{ info: RoomInfo; players: { id: string; name: string; house: number }[] }> {
-    const info = await this.core.create(setup);
-    const start = this.core.hello(setup.people[0]!.id);
+    const core = await this.room();
+    const info = await core.create(setup);
+    const start = core.hello(setup.people[0]!.id);
     return { info, players: start.view.players.map((p) => ({ id: p.id, name: p.name, house: p.house })) };
   }
 
@@ -190,15 +198,18 @@ export class GameRoom extends DurableObject<Env> {
     } catch {
       return;
     }
-    await this.core.receive(who, req);
-    await this.core.flush();
+    const core = await this.room();
+    await core.receive(who, req);
+    await core.flush();
     await this.drain();
   }
 
   async webSocketClose(ws: WebSocket) {
     const who = this.who(ws);
-    const seat = who ? (this.core.seatOf(who.user) ?? who.seat) : null;
-    if (seat) this.core.disconnected(seat);
+    if (!who) return;
+    const core = await this.room();
+    const seat = core.seatOf(who.user) ?? who.seat;
+    if (seat) core.disconnected(seat);
   }
 
   async webSocketError(ws: WebSocket) {
@@ -207,8 +218,9 @@ export class GameRoom extends DurableObject<Env> {
 
   /** The turn's clock ran out (whether anyone is connected or not). */
   async alarm() {
-    await this.core.alarm();
-    await this.core.flush();
+    const core = await this.room();
+    await core.alarm();
+    await core.flush();
     await this.drain();
   }
 }

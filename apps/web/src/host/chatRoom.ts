@@ -1,5 +1,5 @@
 import type { PlayerId } from "@conquerra/engine";
-import type { ChatAct, ChatLine, ChatPerson, ChatPropose, ChatSync, ChatView } from "./protocol";
+import type { ChatAct, ChatLine, ChatPerson, ChatPropose, ChatSync, ChatView, OfferEnd } from "./protocol";
 import type { RoomStore } from "./roomCore";
 
 /**
@@ -58,6 +58,9 @@ interface StoredLine {
   propose?: ChatPropose;
   /** Session 29: the turn a bot's line is about (the page holds it until that turn's replay has played). */
   turn?: number;
+  /** Session 30: an offer's note (`from:id`), and how the offer ended if nobody answered it. */
+  offer?: string;
+  ended?: OfferEnd;
 }
 
 interface ChatMeta {
@@ -194,6 +197,8 @@ export class ChatRoom {
       at: l.at,
       ...(l.propose ? { propose: l.propose } : {}),
       ...(l.turn !== undefined ? { turn: l.turn } : {}),
+      ...(l.offer ? { offer: l.offer } : {}),
+      ...(l.ended ? { ended: l.ended } : {}),
     };
   }
 
@@ -338,7 +343,7 @@ export class ChatRoom {
    * A line in a chat from a bot, or (`user`) a person's own multiple-choice line. `to`: only these accounts read it (a
    * bot's table line, written for one reader). Returns who to tell, each their own copy.
    */
-  write(chat: string, from: { bot: ChatBotSeat } | { user: string }, text: string, opts: { to?: string[]; propose?: ChatPropose; turn?: number } = {}): Map<string, ChatSync> {
+  write(chat: string, from: { bot: ChatBotSeat } | { user: string }, text: string, opts: { to?: string[]; propose?: ChatPropose; turn?: number; offer?: string } = {}): Map<string, ChatSync> {
     const c = this.m.chats.find((x) => x.id === chat);
     if (!c) return new Map();
     const t = this.now();
@@ -353,10 +358,37 @@ export class ChatRoom {
       by = from.user;
       who = { name: me.name, house: me.house, ...(me.seat ? { seat: me.seat } : {}) };
     }
-    const l: StoredLine = { id: this.m.last, chat, by, from: who, text: text.slice(0, CHAT_TEXT_MAX), at: t, ...(opts.to ? { to: opts.to } : {}), ...(opts.propose ? { propose: opts.propose } : {}), ...(opts.turn !== undefined ? { turn: opts.turn } : {}) };
+    const l: StoredLine = { id: this.m.last, chat, by, from: who, text: text.slice(0, CHAT_TEXT_MAX), at: t, ...(opts.to ? { to: opts.to } : {}), ...(opts.propose ? { propose: opts.propose } : {}), ...(opts.turn !== undefined ? { turn: opts.turn } : {}), ...(opts.offer ? { offer: opts.offer } : {}) };
     this.append(l);
     const users = (c.kind === "table" ? this.seats().map((s) => s.user) : c.members).filter((u) => this.mayRead(l, u));
     return new Map(users.map((u) => [u, { chats: [], lines: [this.line(l, u)], canWrite: !!this.seatOf(u) && !this.seatOf(u)!.left }]));
+  }
+
+  /**
+   * Session 30: offers that ended unanswered (`from:id`, lapsed or withdrawn): their notes in chat say so, kept with
+   * the line for a page that comes later, and told now to each reader who has the line. Returns who to tell.
+   */
+  endOffers(ended: ReadonlyMap<string, OfferEnd>): Map<string, ChatSync> {
+    const tell = new Map<string, ChatSync>();
+    if (!ended.size) return tell;
+    for (const [b, block] of this.blocks) {
+      let changed = false;
+      for (const l of block) {
+        const how = l.offer ? ended.get(l.offer) : undefined;
+        if (!how || l.ended) continue;
+        l.ended = how;
+        changed = true;
+        const c = this.m.chats.find((x) => x.id === l.chat);
+        const readers = (c ? (c.kind === "table" ? this.seats().map((s) => s.user) : c.members) : []).filter((u) => this.mayRead(l, u));
+        for (const u of readers) {
+          const s = tell.get(u) ?? { chats: [], lines: [], canWrite: !!this.seatOf(u) && !this.seatOf(u)!.left, ended: {} };
+          s.ended![l.offer!] = how;
+          tell.set(u, s);
+        }
+      }
+      if (changed) this.writing = this.writing.then(() => this.store.put(`chat:${b}`, block)).catch(() => undefined);
+    }
+    return tell;
   }
 
   /** The chats with bots in them, as this account sees them now (their lines to pick from change each turn). */

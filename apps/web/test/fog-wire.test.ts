@@ -48,10 +48,11 @@ const checkPause = (p: PauseView) => {
   for (const part of [p.vote, p.paused]) for (const k of Object.keys(part ?? {})) expect(PAUSE_PART.has(k), `unexpected pause part field ${k}`).toBe(true);
 };
 /** Session 28: chat, as a member is sent it. */
-const CHAT_SYNC = new Set(["chats", "lines", "canWrite", "after"]);
+const CHAT_SYNC = new Set(["chats", "lines", "canWrite", "after", "ended"]);
 const CHAT_VIEW = new Set(["id", "kind", "name", "members", "say", "free", "quiet"]);
 const CHAT_PERSON = new Set(["name", "house", "seat", "you", "bot"]);
-const CHAT_LINE = new Set(["id", "chat", "from", "text", "at", "propose", "turn"]);
+// (Session 30: `offer` and `ended` on an offer's note, in a chat between the offer's two sides.)
+const CHAT_LINE = new Set(["id", "chat", "from", "text", "at", "propose", "turn", "offer", "ended"]);
 const CHAT_PROPOSE = new Set(["to", "kind", "target", "for"]);
 const checkChat = (c: ChatSync) => {
   for (const k of Object.keys(c)) expect(CHAT_SYNC.has(k), `unexpected chat field ${k}`).toBe(true);
@@ -325,7 +326,8 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
     t.advance(2000);
     await t.askAs(KIT, { type: "chat", act: { do: "send", chat: groupId, text: "SECRET-CHAT: Wren's capital is thin" } });
     t.advance(2000);
-    await t.askAs(NATE, { type: "chat", act: { do: "pair", with: "p2" } });
+    const pair = (await t.askAs(NATE, { type: "chat", act: { do: "pair", with: "p2" } })) as Extract<RoomMessage, { chat: ChatSync }>;
+    const pairId = pair.chat.chats[0]!.id;
     await t.askAs(WREN, { type: "chat", act: { do: "send", chat: "table", text: "Good luck, everyone." } });
     // Wren asks for a pause: the whole table gets the vote (who asked, who has answered), and nothing else.
     await t.ask("p3", { type: "pause", act: "ask" });
@@ -335,7 +337,8 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
     const secretsOf = (seat: PlayerId) => [
       ...(seat === "p1" || seat === "p2" ? [] : ["SECRET-NATE", "SECRET-KIT", JSON.stringify(truce.id), JSON.stringify(trade.id), '"perTurn":3']),
       ...(seat === "p1" || seat === "p3" ? [] : ["SECRET-WREN", JSON.stringify(wrens.id)]),
-      ...(seat === "p1" || seat === "p2" ? [] : ["SECRET-GROUP", "SECRET-CHAT", JSON.stringify(groupId), '"kind":"group"', '"kind":"pair"']),
+      ...(seat === "p1" || seat === "p2" ? [] : ["SECRET-GROUP", "SECRET-CHAT", JSON.stringify(groupId), '"kind":"group"', JSON.stringify(pairId)]),
+      // (Session 30: Wren's own offer to Nate came with a note, so Wren has a one-to-one with Nate: that one is hers.)
     ];
     const check = (seat: PlayerId) => {
       const inbox = t.inbox(PAGE[seat]!);

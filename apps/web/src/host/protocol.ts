@@ -113,7 +113,13 @@ export interface ChatLine {
   propose?: ChatPropose;
   /** Session 29: the turn a bot's line is about (the page holds it until that turn's replay has played). */
   turn?: number;
+  /** Session 30: the line is an offer's note (the offer's sender and id), and what became of an offer nobody answered. */
+  offer?: string;
+  ended?: OfferEnd;
 }
+
+/** Session 30: an offer whose note is in a chat ended without an answer: it lapsed at lock-in, or its sender withdrew it. */
+export type OfferEnd = "lapsed" | "withdrawn";
 
 /**
  * Chat for one person: the chats they're in and messages they lack (after `after`, the last id their page had), or,
@@ -124,6 +130,8 @@ export interface ChatSync {
   lines: ChatLine[];
   canWrite: boolean;
   after?: number;
+  /** Session 30: offers (sender and id, as `ChatLine.offer`) that ended unanswered since the page's lines came. */
+  ended?: Record<string, OfferEnd>;
 }
 
 /** What a page does in chat: write, open a one-to-one, make a group, add people to one, rename one. */

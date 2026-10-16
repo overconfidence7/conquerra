@@ -68,6 +68,7 @@ function Lines({ chat }: { chat: string }) {
               </div>
             )}
             <div className="chat-text">{l.text}</div>
+            {l.ended && <div className="muted small chat-ended">{CHAT_UI.ended[l.ended]}</div>}
             {l.propose && l.propose.for === me && (
               <button className="link small chat-deal" onClick={() => openDeal(l.propose!)}>
                 {BOT_UI.send}

@@ -17,6 +17,8 @@ export const CHAT_UI = {
   noChats: "No chats yet.",
   /** Session 29: single player's table chat. */
   local: "Only bots sit at this table, and they don't read free text. Online, you can talk to them by picking a line.",
+  /** Session 30: under an offer's note, once the offer has ended with no answer. */
+  ended: { lapsed: "(lapsed at lock-in)", withdrawn: "(withdrawn)" },
 } as const;
 
 interface ChatState {
@@ -101,7 +103,14 @@ export function applyChat(sync: ChatSync) {
   }
   const have = new Set(s.lines.map((l) => l.id));
   const fresh = sync.lines.filter((l) => !have.has(l.id));
-  const lines = fresh.length ? [...s.lines, ...fresh].sort((a, b) => a.id - b.id) : s.lines;
+  let lines = fresh.length ? [...s.lines, ...fresh].sort((a, b) => a.id - b.id) : s.lines;
+  // (Session 30: an offer that ended with no answer: its note says so.)
+  const ended = sync.ended;
+  const mark = (l: ChatLine): ChatLine => (ended && l.offer && ended[l.offer] && !l.ended ? { ...l, ended: ended[l.offer] } : l);
+  if (ended) {
+    lines = lines.map(mark);
+    if (s.held.length) useChat.setState({ held: s.held.map(mark) });
+  }
   // (The first sync of a game is history, not news: no pop-up for it.)
   const news = s.lines.length || s.chats.length ? fresh.filter((l) => !l.from.you && !showing(s, l.chat)).at(-1) : undefined;
   useChat.setState({ chats, lines, canWrite: sync.canWrite, ...(news ? { popup: news } : {}) });

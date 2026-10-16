@@ -23,6 +23,7 @@
 .chat-line .chat-who { font-size: 0.82rem; margin-top: 4px; }
 .chat-text { white-space: pre-wrap; overflow-wrap: anywhere; font: 400 0.95rem var(--font-body); }
 .chat-line.you .chat-text { color: var(--gold-hi); }
+.chat-ended { font-style: italic; margin-top: 1px; }
 .chat-empty { margin: 12px 0; }
 .chat-compose-row { display: flex; gap: 6px; align-items: stretch; }
 .chat-compose-row textarea, .chat-compose-row input { flex: 1; min-width: 0; resize: none; font: 400 0.95rem var(--font-body); }

@@ -1,5 +1,5 @@
 import type { MapDef } from "@conquerra/content";
-import { readSave, type LeaderStyle, type Order, type PlayerId, type SaveFile } from "@conquerra/engine";
+import { readSave, type LeaderStyle, type Offer, type Order, type PlayerId, type SaveFile } from "@conquerra/engine";
 import { HOUSES } from "../map/houses";
 import { LocalGame, PAUSES_EACH, PEOPLE_DEAL_TEXT, type PauseNews, type PersonSeat, type SeatLeft } from "./localGame";
 import { cleanName } from "./names";
@@ -7,7 +7,7 @@ import { TABLE_TEXT } from "./roomText";
 import { CHAT_TEXT, ChatRoom, type ChatBotSeat, type ChatSeat } from "./chatRoom";
 import { ASK_TEXT, botReply, groupAnswer, offerAnswered, sayOptions, tableTalk, youAndBot } from "./botChat";
 import { lines } from "@conquerra/content/lines";
-import type { ChatAct, ChatSync, ChatView, HostUpdate, LobbySettings, PauseView, RoomMessage, RoomRequest, RoomStart, TableAct, TableView } from "./protocol";
+import type { ChatAct, ChatSync, ChatView, HostUpdate, OfferEnd, LobbySettings, PauseView, RoomMessage, RoomRequest, RoomStart, TableAct, TableView } from "./protocol";
 
 /**
  * Everything an online game's room does (session 26), in one place and with no Cloudflare in it: the game (the same
@@ -164,10 +164,10 @@ export async function sha256Hex(text: string): Promise<string> {
   return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** A fresh secret seed for the game's dice (the room makes it; the engine never makes randomness). */
-export function newSeed(): string {
-  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
-}
+export { newSeed } from "./seed";
+
+/** Session 30: an offer as a chat line knows it (`ChatLine.offer`): its sender and id. */
+export const offerKey = (o: Pick<Offer, "from" | "id">) => `${o.from}:${o.id}`;
 
 /** A page's orders, checked for shape (the engine ignores orders that can't be carried out; this keeps out junk). */
 function ordersOk(orders: unknown): orders is Order[] {
@@ -328,14 +328,22 @@ export class RoomCore {
     if (!g || !this.tableRec || !this.meta) return;
     await this.chat.load();
     const bots = g.chatBots();
+    // Session 30: a bot's offer you locked in without answering: its note in your chat says it lapsed.
+    const lapsed = new Map<string, OfferEnd>();
+    const isBot = new Set(bots.map((b) => b.id));
+    for (const seat of g.peopleIds)
+      for (const e of g.lastReplay(seat)?.report.events ?? [])
+        if (e.type === "offerLapsed" && e.why === "unanswered" && e.offer.to === seat && isBot.has(e.offer.from)) lapsed.set(offerKey(e.offer), "lapsed");
+    const ended = this.chat.endOffers(lapsed);
     for (const seat of g.peopleIds) {
       const user = this.userOf(seat);
       if (!user) continue;
       const out: ChatSync = { chats: [], lines: [], canWrite: true };
       const add = (m: Map<string, ChatSync>) => {
         const s = m.get(user);
-        if (s) (out.lines.push(...s.lines), out.chats.push(...s.chats));
+        if (s) (out.lines.push(...s.lines), out.chats.push(...s.chats), s.ended && (out.ended = { ...out.ended, ...s.ended }));
       };
+      add(ended);
       const playing = !g.isOut(seat) && !g.leftSeats[seat] && !g.over;
       const last = g.lastReplay(seat);
       if (playing && last) {
@@ -353,11 +361,11 @@ export class RoomCore {
           const made = this.chat.act(user, { do: "pair", with: o.from });
           const chat = made && "tell" in made ? made.tell.get(user)?.chats[0] : undefined;
           const b = this.chat.bot(o.from);
-          if (chat && b) add(this.chat.write(chat.id, { bot: b }, o.note ?? "", { to: [user], ...(last ? { turn: last.report.turn } : {}) }));
+          if (chat && b) add(this.chat.write(chat.id, { bot: b }, o.note ?? "", { to: [user], offer: offerKey(o), ...(last ? { turn: last.report.turn } : {}) }));
         }
       out.chats.push(...this.chat.botChats(user));
       out.canWrite = !this.chatSeats().find((s) => s.user === user)?.left;
-      if (out.lines.length || out.chats.length) this.io.sendUser(user, { id: 0, ok: true, chat: out, now: this.now() });
+      if (out.lines.length || out.chats.length || out.ended) this.io.sendUser(user, { id: 0, ok: true, chat: out, now: this.now() });
     }
     await this.chat.flush();
   }
@@ -858,6 +866,8 @@ export class RoomCore {
             if (why) throw new Error(why);
             this.reply(seat, { id: req.id, ok: true, answer: { accept: false, reason: "", waiting: true } });
             this.tellTalks();
+            // Session 30: a note with it goes in your one-to-one too, as a bot's does (and says so if it lapses).
+            await this.offerNote(seat, req.offer);
             return;
           }
           this.reply(seat, { id: req.id, ok: true, answer: g.propose(req.offer, seat) });
@@ -948,7 +958,41 @@ export class RoomCore {
    * seat that asked (`answered`) has its own copy in the answer.
    */
   private tellTalks(answered?: PlayerId) {
-    for (const seat of this.g.takeTalkChanges()) if (seat !== answered) this.reply(seat, { id: 0, ok: true, talks: this.g.peopleOffersFor(seat) });
+    const changed = this.g.takeTalkChanges();
+    for (const seat of changed) if (seat !== answered) this.reply(seat, { id: 0, ok: true, talks: this.g.peopleOffersFor(seat) });
+    // Session 30: an offer between people that lapsed or was withdrawn: its note in chat says so.
+    const ended = new Map<string, OfferEnd>();
+    for (const seat of changed)
+      for (const r of this.g.peopleOffersFor(seat)) {
+        if (r.state === "lapsed" || r.state === "withdrawn") ended.set(offerKey(r.offer), r.state);
+        if (r.counter && (r.counterState === "lapsed" || r.counterState === "withdrawn")) ended.set(offerKey(r.counter), r.counterState);
+      }
+    if (ended.size) this.chatEnded(ended);
+  }
+
+  /** Session 30: a person's offer with a note: the note goes in the two people's one-to-one, from its writer. */
+  private async offerNote(seat: PlayerId, offer: Offer) {
+    const note = typeof offer.note === "string" ? offer.note.trim() : "";
+    const from = this.userOf(seat), to = this.userOf(offer.to);
+    if (!note || !from || !to || !this.tableRec) return;
+    await this.chat.load();
+    const made = this.chat.act(from, { do: "pair", with: offer.to });
+    const chat = made && "tell" in made ? made.tell.get(from)?.chats[0] : undefined;
+    if (!chat) return;
+    if (made && "tell" in made) for (const [u, s] of made.tell) this.io.sendUser(u, { id: 0, ok: true, chat: s, now: this.now() });
+    for (const [u, s] of this.chat.write(chat.id, { user: from }, note, { offer: offerKey(offer) })) this.io.sendUser(u, { id: 0, ok: true, chat: s, now: this.now() });
+    await this.chat.flush();
+  }
+
+  private chatEnded(ended: ReadonlyMap<string, OfferEnd>) {
+    if (!this.tableRec) return;
+    this.writing = this.writing
+      .then(async () => {
+        await this.chat.load();
+        for (const [u, s] of this.chat.endOffers(ended)) this.io.sendUser(u, { id: 0, ok: true, chat: s, now: this.now() });
+        await this.chat.flush();
+      })
+      .catch((e) => this.io.log(`chat failed: ${e instanceof Error ? e.message : String(e)}`));
   }
 
   /** Session 28: the pause as one seat is told it (the same for everyone, but for their own pauses left). */
