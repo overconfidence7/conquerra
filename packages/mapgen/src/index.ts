@@ -27,6 +27,7 @@ export { applyRenames, type NameFile } from "./renames";
 export { LAND_SHAPES, SHAPE_NAMES, type LandShape } from "./shapes";
 export { allMasks, MASKS, IMAGE_MASKS, type MaskDef } from "./masks";
 export { recipeFor, SIZES, type Recipe } from "./recipes";
+export * from "./random";
 export { explainChecks, fairnessRows, sizeSpread, mapFingerprint, recipeToJson, recipeFromJson, type CheckRow, type FairnessRow, type SizeSpread } from "./report";
 
 /** Bump when a change to the map maker would change its output. */
@@ -39,6 +40,35 @@ export const MAPGEN_VERSION = 2;
 export const MIN_BORDER = 24;
 /** A pass is kept open at least this wide (map units; about 22 px at the start of Mid zoom), where its border allows. */
 export const MIN_PASS = 38;
+
+/**
+ * The map maker's stages (session 30), in the order they run. Territories are drawn before the ranges and the water
+ * that cut them (a range runs along territory borders), so they come second.
+ */
+export const MAP_STAGES = ["land", "territories", "ranges", "rivers", "provinces", "capitals", "places", "names"] as const;
+export type MapStage = (typeof MAP_STAGES)[number];
+
+/**
+ * Where each stage's random numbers come from (session 30).
+ *  - "staged": each stage has its own stream, made from the seed and the stage's name ("<seed>|rivers"), so changing
+ *    one stage (or its seed) never re-rolls another's. Random maps use this.
+ *  - "shared": one stream for the whole map, in the order the stages draw from it, as the map maker always worked
+ *    (the shape and the names had their own already). The twelve official maps were made this way and stay so.
+ */
+export type MapStreams = "staged" | "shared";
+
+/** The random stream for each stage: its own (staged), or the one shared stream. */
+function streamsFor(seed: string, mode: MapStreams, over: Partial<Record<MapStage | "shape", string>> = {}): (stage: MapStage | "shape") => Rng {
+  const shared = new Rng(seedRng(seed));
+  const own = new Map<string, Rng>();
+  return (stage) => {
+    // The shape and the names always had their own streams.
+    if (mode === "shared" && stage !== "shape" && stage !== "names") return shared;
+    let r = own.get(stage);
+    if (!r) own.set(stage, (r = new Rng(seedRng(over[stage] ?? `${seed}|${stage}`))));
+    return r;
+  };
+}
 
 export interface MapGenOptions {
   id: string;
@@ -95,6 +125,12 @@ export interface MapGenOptions {
   log?: (...args: unknown[]) => void;
   /** Seeds to try before giving up (default 40). */
   maxAttempts?: number;
+  /** Session 30: one random stream per stage ("staged", random maps) or one for the whole map ("shared", the default). */
+  streams?: MapStreams;
+  /** Session 30: a check of the map maker's caller's own, after `checkMap` passes: a reason to reject the try, or null. */
+  accept?: (map: MapDef) => string | null;
+  /** Session 30, staged streams only: a stage's own seed instead of "<seed>|<stage>" (to show stages don't touch each other). */
+  stageSeeds?: Partial<Record<MapStage, string>>;
 }
 
 export interface MapGenResult {
@@ -122,19 +158,20 @@ export function generateMap(opts: MapGenOptions, rules: Rules): MapGenResult {
       continue;
     }
     const check = checkMap(map, rules, { minChokePoints: opts.minChokePoints ?? 5, minSeaLanes: opts.minSeaLanes ?? 1 });
-    if (check.ok || opts.debug) return { map, attempt, check, rejected };
-    rejected.push(`${seed}: ${check.problems.slice(0, 3).join("; ")}`);
+    const own = check.ok && opts.accept ? opts.accept(map) : null;
+    if ((check.ok && !own) || opts.debug) return { map, attempt, check, rejected };
+    rejected.push(`${seed}: ${own ?? check.problems.slice(0, 3).join("; ")}`);
   }
   throw new Error(`No map passed the checks in ${max} tries:\n${rejected.join("\n")}`);
 }
 
 function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number): MapDef {
-  const rng = new Rng(seedRng(seed));
+  const stream = streamsFor(seed, o.streams ?? "shared", o.stageSeeds);
   const T = o.territories;
   // A shape other than the original continent is drawn from its own random sequence, before anything else.
   const shape =
     o.shape && o.shape !== "continent"
-      ? makeShapeField({ shape: o.shape, territories: T, ...(o.mask ? { mask: o.mask } : {}), ...(o.islands !== undefined ? { islands: o.islands } : {}), ...(o.landBridge !== undefined ? { landBridge: o.landBridge } : {}) }, new Rng(seedRng(`${seed}|shape`)))
+      ? makeShapeField({ shape: o.shape, territories: T, ...(o.mask ? { mask: o.mask } : {}), ...(o.islands !== undefined ? { islands: o.islands } : {}), ...(o.landBridge !== undefined ? { landBridge: o.landBridge } : {}) }, stream("shape"))
       : null;
   // A shape sets its own share of water (the sea around and between it) unless the recipe says otherwise.
   const waterShare = o.water ?? (shape ? clamp(1 - shape.insideShare, 0.25, 0.8) : 0.38);
@@ -143,11 +180,12 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
   const aspect = o.aspect ?? shape?.aspect ?? 1.45;
   const width = Math.round(Math.sqrt(cells * spacing * spacing * aspect));
   const height = Math.round((cells * spacing * spacing) / width);
-  const mesh = buildMesh(rng, width, height, spacing);
+  // Stage "land": the mesh, land and height.
+  const mesh = buildMesh(stream("land"), width, height, spacing);
   const N = mesh.cells;
 
   // 1. Land and water.
-  const land = makeLand(mesh, rng, {
+  const land = makeLand(mesh, stream("land"), {
     water: waterShare,
     seas: o.seas ?? 1,
     lakes: o.lakes ?? 2,
@@ -161,7 +199,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
   // 2. Territories.
   let owner: Int32Array;
   try {
-    owner = makeTerritories(mesh, rng, (c) => !water[c], T);
+    owner = makeTerritories(mesh, stream("territories"), (c) => !water[c], T);
   } catch (e) {
     throw new Rejected((e as Error).message);
   }
@@ -179,7 +217,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
   // Where ranges and capitals may go: the biggest landmass, or with a shape, every landmass of 3+ territories.
   const landmasses = components(mesh, (c) => owner[c]! >= 0);
   const mainCells = shape ? landmasses.filter((comp) => new Set(comp.map((c) => owner[c])).size >= 3).flat() : landmasses[0]!;
-  const barriers = planBarriers(mesh, rng, owner, T, land.elev, (c) => frameSea[c] === 1, {
+  const barriers = planBarriers(mesh, stream("ranges"), owner, T, land.elev, (c) => frameSea[c] === 1, {
     ranges: o.mountainRanges ?? 2,
     straits: o.straits ?? 0,
     length: 0.6,
@@ -269,7 +307,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
   }
   const rivers = makeRivers(
     mesh,
-    rng,
+    stream("rivers"),
     arcs,
     isJunction,
     T,
@@ -305,7 +343,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
     allAdj[b]!.push(a);
     if (type === "normal" || type === "river") innerAdj[a]!.push(b), innerAdj[b]!.push(a);
   }
-  const province = makeProvinces(rng, T, innerAdj, allAdj, o.provinces);
+  const province = makeProvinces(stream("provinces"), T, innerAdj, allAdj, o.provinces);
   if (province.some((x) => x < 0)) throw new Rejected("a territory was left with no border to join a province by");
   const provinceCount = Math.max(...province) + 1;
 
@@ -323,7 +361,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
   order.forEach((t, i) => (newIndex[t] = i));
   const tid = (t: number) => `t${String(newIndex[t]).padStart(T > 100 ? 3 : 2, "0")}`;
   // Names have their own random sequence, so a change to the shapes doesn't rename every place.
-  const namer = new Namer(new Rng(seedRng(`${seed}|names`)));
+  const namer = new Namer(stream("names"));
   const tName = order.map(() => namer.territory());
   const provOrder = Array.from({ length: provinceCount }, (_, p) => p).sort(
     (a, b) => Math.min(...order.map((t, i) => (province[t] === a ? i : 1e9))) - Math.min(...order.map((t, i) => (province[t] === b ? i : 1e9))),
@@ -368,7 +406,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
     for (let n = o.players.min; n <= o.players.max; n++) {
       const have = layouts.get(n);
       if (have && fairnessOf(have.map((id) => tbl.ids.indexOf(id)), tbl).fair) continue;
-      const found = findLayout(rng, n, candidates, tbl);
+      const found = findLayout(stream("capitals"), n, candidates, tbl);
       o.log?.("capitals", n, candidates.length, found?.fairness);
       if (!found || (!found.fairness.fair && !o.debug))
         throw new Rejected(`no fair capital layout for ${n} players${found ? ` (gaps ${found.fairness.nearest}, income ${found.fairness.income})` : ""}`);
@@ -416,7 +454,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
   });
   const decorations = placeDecorations({
     mesh,
-    rng,
+    rng: stream("places"),
     biomeAt,
     cellBiome: biome,
     elevRank: (c) => elevRanks[c]!,

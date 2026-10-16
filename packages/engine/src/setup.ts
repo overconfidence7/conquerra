@@ -27,7 +27,7 @@ export interface NewGameOptions {
   startBonus?: boolean;
   /**
    * The seat rule (session 25, Nate's call): "botsFirst" deals the harder capital spots (the layout's slots with a start
-   * bonus) to bots before people; "anyone" (or missing: a setup saved before it) deals every spot at random, as before.
+   * bonus, or on a random map those its layout marks `harder`) to bots before people; "anyone" (or missing: a setup saved before it) deals every spot at random, as before.
    */
   seatRule?: "botsFirst" | "anyone";
 }
@@ -115,10 +115,13 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   const rng = new Rng(seedRng(opts.seed));
   const shuffled = rng.shuffle(opts.players);
   const capitals = pickCapitals(map, n, rng);
-  const layoutBonus = map.capitalLayouts?.find((l) => l.players === n)?.bonus ?? {};
+  const layout = map.capitalLayouts?.find((l) => l.players === n);
+  const layoutBonus = layout?.bonus ?? {};
   const bonusAt = (opts.startBonus && layoutBonus) || {};
   // Harder spots go to bots first (session 25). Only a pinned layout marks them: capitals spread without one have none.
-  const seats = opts.seatRule === "botsFirst" ? dealSeats(shuffled, capitals, new Set(Object.keys(layoutBonus).filter((k) => (layoutBonus[k] ?? 0) > 0))) : shuffled;
+  // (Session 30: a random map marks its harder spots by the map maker's exposure check instead of a start bonus.)
+  const weak = new Set([...Object.keys(layoutBonus).filter((k) => (layoutBonus[k] ?? 0) > 0), ...(layout?.harder ?? [])]);
+  const seats = opts.seatRule === "botsFirst" ? dealSeats(shuffled, capitals, weak) : shuffled;
 
   const territories: Record<string, TerritoryState> = {};
   for (const t of map.territories)

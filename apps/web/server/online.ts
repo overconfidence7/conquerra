@@ -4,6 +4,7 @@ import type { MapListing } from "@conquerra/content";
 import catalogJson from "@conquerra/content/data/maps/catalog.json";
 import rulesJson from "@conquerra/content/data/rules.json";
 import { LEADER_STYLES, STEWARD_STYLES, type LeaderStyle } from "@conquerra/engine/src/types";
+import { parseRandomId, randomPlayers, RANDOM_PREFIX } from "@conquerra/mapgen/randomId";
 import { HOUSES } from "../src/map/houses";
 import type { BotChoice, LobbySettings, NewOnlineGame } from "../src/host/protocol";
 import { ONLINE_TIMER_CHOICES } from "../src/logic/timer";
@@ -15,6 +16,25 @@ import { ONLINE_TIMER_CHOICES } from "../src/logic/timer";
 
 /** The official maps' listings (the API's copy; see above). */
 export const mapCatalog: MapListing[] = catalogJson;
+
+/** Session 30: a game's map from its id, an official one or a random one ("random:80-crescent-quiet-heron"), or null. */
+export function mapListing(mapId: unknown): MapListing | null {
+  if (typeof mapId !== "string") return null;
+  if (mapId.startsWith(RANDOM_PREFIX)) {
+    const r = parseRandomId(mapId);
+    if (!r) return null;
+    const p = randomPlayers(r.size, r.shape);
+    // (The id as the map maker reads it: lower case, the seed's words joined by a hyphen.)
+    return { id: `${RANDOM_PREFIX}${r.size}-${r.shape}-${r.seed}`, name: `Random, ${r.size} territories`, territories: r.size, minPlayers: p.min, maxPlayers: p.max, recommendedPlayers: p.recommended };
+  }
+  return mapCatalog.find((m) => m.id === mapId) ?? null;
+}
+
+/** A game's map as the lists name it: "Embervale", or "Random, 80 territories (quiet-heron)". */
+export function mapNameOf(mapId: string): string {
+  const r = mapId.startsWith(RANDOM_PREFIX) ? parseRandomId(mapId) : null;
+  return r ? `Random, ${r.size} territories (${r.seed})` : (mapCatalog.find((m) => m.id === mapId)?.name ?? mapId);
+}
 
 const LEVELS: readonly BotChoice[] = ["recruit", "captain", "marshal", "mixed"];
 
@@ -32,7 +52,7 @@ const styleOf = (v: unknown, allowed: readonly string[]): LeaderStyle | null => 
 export function cleanNewGame(body: unknown): { settings: LobbySettings; leadersRun: boolean } | { error: string } {
   const b = (body && typeof body === "object" ? body : {}) as Partial<NewOnlineGame>;
   const s = (b.settings && typeof b.settings === "object" ? b.settings : {}) as Partial<LobbySettings>;
-  const map = mapCatalog.find((m) => m.id === s.mapId);
+  const map = mapListing(s.mapId);
   if (!map) return { error: "That map isn't one of the game's maps." };
   const bots = Math.floor(Number(s.bots));
   if (!Number.isFinite(bots) || bots < 1 || bots > map.maxPlayers - 1) return { error: `${map.name} takes 1 to ${map.maxPlayers - 1} bots.` };

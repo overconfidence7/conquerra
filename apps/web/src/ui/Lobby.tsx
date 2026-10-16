@@ -8,6 +8,10 @@ import type { BotChoice } from "../host/protocol";
 import { MAP_SUITS, mapChoiceLabel } from "../logic/text";
 import { TIMER_CHOICES, timerLabel } from "../logic/timer";
 import { decodeRuns, THUMB_COLOURS, type MapThumb } from "../logic/mapThumb";
+import { listingOf, randomLine, type Listing } from "../logic/mapListing";
+
+/** Session 30: the map picker's last choice, a random map. */
+const RANDOM_CHOICE = "random";
 import { houseSummary, LUCK, rulesSummary } from "../logic/lobbyText";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
@@ -24,6 +28,9 @@ const HouseBlock = lazy(() => folds().then((m) => ({ default: m.HouseBlock })));
 const RulesBlock = lazy(() => folds().then((m) => ({ default: m.RulesBlock })));
 /** The Online block's insides (session 26), with the online host: fetched after the lobby is on screen. */
 const online = () => import("./OnlineBlock");
+// Session 30: the random map's choices, loaded once a random map is picked.
+const randomPanel = () => import("./RandomMap");
+const RandomMapPanel = lazy(randomPanel);
 const OnlineBlock = lazy(online);
 
 const BOT_LEVELS: { value: BotChoice; label: string; note: string }[] = [
@@ -58,9 +65,13 @@ const loadThumbs = () =>
 /** The chosen map's picture: its land and sea, painted from its ground. Blank until it arrives (it's small). */
 function MapPicture({ id }: { id: string }) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  // (Session 30: a random map's picture comes from the game's worker, once it has built the map.)
+  const randomThumb = useGame((s) => (s.randomPreview?.mapId === id ? s.randomPreview.preview?.thumb : undefined));
   useEffect(() => {
     let live = true;
-    void loadThumbs().then((all) => {
+    const c0 = canvas.current;
+    if (id.startsWith("random:")) c0?.getContext("2d")?.clearRect(0, 0, c0.width, c0.height);
+    void (id.startsWith("random:") ? Promise.resolve(randomThumb ? { [id]: randomThumb } : NONE) : loadThumbs()).then((all) => {
       const t = all[id], c = canvas.current;
       if (!live || !t || !c) return;
       const cells = decodeRuns(t.data);
@@ -74,7 +85,7 @@ function MapPicture({ id }: { id: string }) {
       }
     });
     return () => void (live = false);
-  }, [id]);
+  }, [id, randomThumb]);
   return <canvas ref={canvas} className="map-picture" aria-hidden />;
 }
 
@@ -158,7 +169,8 @@ export function Lobby() {
     void online();
   }, [refreshSlots]);
   const auto = slots.find((s) => s.slot === "auto");
-  const map = mapCatalog.find((m) => m.id === lobby.mapId) ?? mapCatalog[0]!;
+  const map: Listing = listingOf(lobby.mapId) ?? mapCatalog[0]!;
+  const random = map.random;
   const players = lobby.bots + 1;
   // A mixed table: how many Marshals (half the bots, rounded up, until you choose).
   const marshals = Math.min(lobby.bots, lobby.marshals ?? Math.ceil(lobby.bots / 2));
@@ -208,20 +220,34 @@ export function Lobby() {
             <MapPicture id={map.id} />
             <span className="map-name">
               <b>{map.name}</b>
-              <span className="small muted block">
-                {map.territories} territories · suits {rec.min} to {rec.max} players
-              </span>
+              <span className="small muted block">{random ? randomLine(random) : `${map.territories} territories · suits ${rec.min} to ${rec.max} players`}</span>
               <span className="small change">Change map ▾</span>
             </span>
-            <select aria-label="Map" value={lobby.mapId} onChange={(e) => setLobby({ mapId: e.target.value })}>
+            <select
+              aria-label="Map"
+              value={lobby.mapId}
+              onChange={(e) => {
+                const id = e.target.value;
+                // Session 30: "Random map" gets a fresh seed (the dice load with the random map's choices).
+                if (id === RANDOM_CHOICE) void randomPanel().then((m) => setLobby({ mapId: m.freshRandomId() }));
+                else setLobby({ mapId: id });
+              }}
+            >
               {mapCatalog.map((m) => (
                 <option key={m.id} value={m.id}>
                   {mapChoiceLabel(m)}
                 </option>
               ))}
+              {random && <option value={lobby.mapId}>Random map · {randomLine(random)}</option>}
+              <option value={RANDOM_CHOICE}>{random ? "Another random map" : "Random map"}</option>
             </select>
           </label>
           {MAP_SUITS[map.id] && <span className="muted small">{MAP_SUITS[map.id]}</span>}
+          {random && (
+            <Suspense fallback={null}>
+              <RandomMapPanel />
+            </Suspense>
+          )}
         </div>
 
         <div className="field">

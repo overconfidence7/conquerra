@@ -1,4 +1,5 @@
 import { maps } from "@conquerra/content/maps";
+import { roomMapsWith } from "../src/host/roomMaps";
 import type { PlayerId } from "@conquerra/engine";
 import type { PersonSeat } from "../src/host/localGame";
 import type { LobbySettings, RoomBody, RoomMessage, RoomRequest, TableAct, TableView } from "../src/host/protocol";
@@ -49,7 +50,8 @@ export function testRoom(store = memoryRoomStore(), start = 1_000_000, opts: { n
   };
   const room: RoomCore = new RoomCore(
     store,
-    async (id) => maps[id]!,
+    // (Session 30: a random map as the real room makes and keeps it, in its own storage.)
+    roomMapsWith(store, async (id) => maps[id]!),
     {
       send: (seat, msg) => deliver(room.userOf(seat) ?? seat, msg),
       sendUser: (user, msg) => deliver(user, msg),

@@ -1,6 +1,6 @@
 import type { MapDef, Rules } from "@conquerra/content";
 import { createGame, viewFor, type GameContext, type PlayerView, type TerritoryId } from "@conquerra/engine";
-import { generateMap, landBridgeBorders, mapFingerprint, type Recipe } from "@conquerra/mapgen";
+import { exposureProblem, generateMap, landBridgeBorders, mapFingerprint, markHarder, RANDOM_PREFIX, type Recipe } from "@conquerra/mapgen";
 
 /**
  * The map lab's pure core: making a map from a recipe, and the view the preview shows. It runs in the lab's
@@ -25,7 +25,10 @@ declare const performance: { now(): number };
 export function makeLabMap(recipe: Recipe, rules: Rules): LabMade {
   const t0 = performance.now();
   try {
-    const r = generateMap(recipe, rules);
+    // (Session 30: a random map's recipe gets the random maps' own check and its harder spots, as in the game.)
+    const random = recipe.id.startsWith(RANDOM_PREFIX);
+    const r = generateMap(random ? { ...recipe, accept: exposureProblem } : recipe, rules);
+    if (random) markHarder(r.map);
     return { recipe, map: r.map, attempt: r.attempt, rejected: r.rejected, ms: performance.now() - t0, fingerprint: mapFingerprint(r.map), error: null };
   } catch (e) {
     const lines = (e as Error).message.split("\n");

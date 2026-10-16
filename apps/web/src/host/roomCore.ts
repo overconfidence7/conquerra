@@ -192,7 +192,11 @@ export class RoomCore {
 
   constructor(
     private readonly store: RoomStore,
-    private readonly loadMap: (id: string) => Promise<MapDef>,
+    /**
+     * A map by its id (session 30: and, for a game being loaded, the map maker version it was made at; a random map's
+     * room keeps its slim copy in its own storage, so a deploy with a newer map maker never changes a running game).
+     */
+    private readonly loadMap: (id: string, version?: number | null) => Promise<MapDef>,
     private readonly io: RoomIO,
     private readonly now: () => number = () => Date.now(),
     /** A clock for timing the work (Workers only move it on I/O; `wrangler tail` has the real CPU time). */
@@ -415,6 +419,8 @@ export class RoomCore {
   async createTable(setup: TableSetup): Promise<TableView> {
     if ((await this.store.get("table")) || (await this.store.get("meta"))) throw new Error("This game already exists");
     const size = Math.max(2, Math.floor(setup.settings.bots) + 1);
+    // Session 30: a random map is made now (the room keeps it), so a seed that makes no fair map says so before anyone sits.
+    if (setup.settings.mapId.startsWith("random:")) await this.loadMap(setup.settings.mapId);
     const table: TableRecord = { gameId: setup.gameId, code: setup.code, host: setup.host.user, settings: setup.settings, seed: setup.seed, status: "waiting", size, sitters: [setup.host], removed: [] };
     this.tableRec = table;
     this.saveTable();
@@ -640,7 +646,7 @@ export class RoomCore {
     if (!meta || !raw) throw new Error("This game doesn't exist");
     const read = readSave(raw);
     if (!read.ok) throw new Error(read.why);
-    const map = await this.loadMap(read.save.mapId);
+    const map = await this.loadMap(read.save.mapId, read.save.mapVersion);
     this.meta = meta;
     this.game = LocalGame.restore(map, read.save, this.now, this.autosave);
     // The clock again (session 27): if the alarm was lost (a restart between a turn and its alarm), a deadline that has

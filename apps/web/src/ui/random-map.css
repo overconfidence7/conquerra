@@ -1,0 +1,8 @@
+/* Session 30: the lobby's random map choices, under the map's card. */
+.random-map { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.random-map .pick-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
+.random-map .pick { flex: 1 1 140px; }
+.random-seed { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.seed-words { font: 600 1.05rem var(--font-body); color: var(--gold-hi); letter-spacing: 0.02em; }
+.random-type .name-input { flex: 1 1 160px; min-width: 0; }
+.random-map .pick select { flex: none; }

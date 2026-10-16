@@ -104,7 +104,7 @@ export function mapFingerprint(map: MapDef): string {
 }
 
 /** The order keys are written in, so a copied recipe reads like the ones in configs.ts. */
-const KEY_ORDER = ["id", "name", "seed", "shape", "mask", "territories", "provinces", "players", "capitals", "startBonus", "water", "seas", "lakes", "islandChains", "islands", "landBridge", "mountainRanges", "straits", "seaLanes", "minSeaLanes", "rivers", "minChokePoints", "aspect", "roughness", "laneReach", "maxAttempts"];
+const KEY_ORDER = ["id", "name", "seed", "shape", "mask", "territories", "provinces", "players", "capitals", "startBonus", "water", "seas", "lakes", "islandChains", "islands", "landBridge", "mountainRanges", "straits", "seaLanes", "minSeaLanes", "rivers", "minChokePoints", "aspect", "roughness", "laneReach", "maxAttempts", "streams"];
 
 /** A recipe as JSON, ready to paste into `MAP_CONFIGS` (configs.ts). */
 export function recipeToJson(r: Recipe): string {

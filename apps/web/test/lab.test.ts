@@ -68,7 +68,8 @@ describe("map lab", () => {
       const code = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
       for (const m of code.matchAll(/^\s*(?:import|export)\s+(?!type\b)[^'"]*?from\s+["']([^"']+)["']|^\s*import\s+["']([^"']+)["']/gm)) {
         const spec = m[1] ?? m[2]!;
-        if (spec.startsWith("@conquerra/mapgen") || spec.startsWith("@conquerra/simcore")) reached.push(`${file} -> ${spec}`);
+        // (Session 30: the lobby reads a random map's id at start-up: that one small module, which draws nothing.)
+        if ((spec.startsWith("@conquerra/mapgen") && spec !== "@conquerra/mapgen/randomId") || spec.startsWith("@conquerra/simcore")) reached.push(`${file} -> ${spec}`);
         if (!spec.startsWith(".")) continue;
         const base = resolve(dirname(file), spec);
         const hit = [base, `${base}.ts`, `${base}.tsx`, join(base, "index.ts")].find((p) => existsSync(p) && /\.(ts|tsx)$/.test(p));
@@ -78,6 +79,9 @@ describe("map lab", () => {
     visit(join(src, "main.tsx"));
     expect(reached.length).toBeGreaterThan(20); // it really walked the game
     expect(reached.filter((f) => /[\\/]lab[\\/]|mapgen|simcore/.test(f))).toEqual([]);
+    // The id module imports nothing that runs (a type only).
+    const ids = readFileSync(join(src, "../../../packages/mapgen/src/randomId.ts"), "utf8");
+    expect([...ids.matchAll(/^import (?!type\b).*$/gm)]).toEqual([]);
     // And the entry only reaches the labs through import(), behind the VITE_LABS switch.
     const main = readFileSync(join(src, "main.tsx"), "utf8");
     expect(main).toMatch(/LABS && lab === "maps"\) void import\("\.\/lab\/maps\/MapLab"\)/);

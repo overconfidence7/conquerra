@@ -1,4 +1,6 @@
 import { MapDef } from "@conquerra/content";
+import type { RoomStore } from "../src/host/roomCore";
+import { roomMapsWith } from "../src/host/roomMaps";
 import slimMaps from "./maps.json";
 
 const maps = slimMaps as unknown as Record<string, unknown>;
@@ -9,3 +11,6 @@ export async function loadSlimMap(id: string): Promise<MapDef> {
   if (!raw) throw new Error(`Unknown map ${id}`);
   return MapDef.parse(raw);
 }
+
+/** Session 30: the room's maps, a random one too (made once and kept in the room's storage: ../src/host/roomMaps.ts). */
+export const roomMaps = (store: RoomStore) => roomMapsWith(store, loadSlimMap);

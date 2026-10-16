@@ -105,10 +105,11 @@ const checkTable = (v: TableView) => {
 };
 
 describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room", () => {
-  it("three people, a friend who never sat, two Marshals, a dozen turns: every message to a seat is that seat's view and replay, and nothing of anyone else's", async () => {
+  /** The whole check, on a map (session 30: an official one, or a random one built from its id). */
+  const fogOnTheWire = (mapId: string) => async () => {
     const t = testRoom();
     // The table: Nate makes it, Kit and Wren sit down, Rook opens the link and never sits.
-    await t.room.createTable({ gameId: "fogwire", code: "f0gw1recde", settings: { ...settings, bots: 4 }, seed: "fog-on-the-wire", host: hostSeat(NATE, 0) });
+    await t.room.createTable({ gameId: "fogwire", code: "f0gw1recde", settings: { ...settings, mapId, bots: 4 }, seed: "fog-on-the-wire", host: hostSeat(NATE, 0) });
     await t.table(NATE);
     await t.table(ROOK);
     await t.act(KIT, { do: "sit", house: 3, leadersRun: true, leaderName: "Lady Sorrel" });
@@ -249,6 +250,9 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
       const startOf = async (s: PlayerId) => (await t.hello(s)) as RoomStart;
       const a = await startOf("p1");
       const b = await startOf("p2");
+      // Session 30: the start names the map and its map maker version; the drawing never travels (each page makes its own).
+      expect([a.mapId, a.mapVersion]).toEqual([mapId, game().ctx.map.generator?.version ?? null]);
+      for (const page of ACCOUNTS) for (const word of ['"geometry"', '"borderLines"', '"heightMap"', '"rings"']) expect(JSON.stringify(t.inbox(page)), `${page} was sent ${word}`).not.toContain(word);
       // (Checked against the board as it stands now, before the turn resolves.)
       for (const s of SEATS) checkInbox(s);
       t.clear();
@@ -298,7 +302,9 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
     expect(given.get("p3")?.size).toBeGreaterThan(0);
     // Kit's secret orders were really given (so "never sent to Nate" means something).
     expect([...given.get("p2")!].filter((id) => id.startsWith("kit-secret")).length).toBeGreaterThan(5);
-  }, 120_000);
+  };
+  it("three people, a friend who never sat, two Marshals, a dozen turns: every message to a seat is that seat's view and replay, and nothing of anyone else's", fogOnTheWire("embervale"), 120_000);
+  it("session 30: the same on a random map: the start carries only its id and version, never its drawing", fogOnTheWire("random:80-island-quiet-heron"), 180_000);
 
   it("session 28: three people all online and a watcher who never sat: an offer and its counter, a group chat, reach their members only; a pause vote and the deal's news reach the table", async () => {
     const t = testRoom();

@@ -3,7 +3,8 @@ import { newSeed } from "../src/host/seed";
 import { AccessCache, accessKeys, verifyAccess, type SignedIn } from "./access";
 import { cleanSub } from "./webPush";
 import type { Env } from "./env";
-import { cleanName, cleanNewGame, mapCatalog, nameFromEmail, newGameId, newInviteCode } from "./online";
+import { cleanName, cleanNewGame, mapNameOf, nameFromEmail, newGameId, newInviteCode } from "./online";
+import { RANDOM_TEXT } from "@conquerra/mapgen/randomText";
 
 /**
  * The Worker `conquerra`'s API (session 26): it serves the game's static files as before, and the online API under /api.
@@ -128,7 +129,7 @@ async function listGames(env: Env, user: UserRow): Promise<OnlineGameInfo[]> {
     return {
       id: g.id,
       mapId: g.map,
-      mapName: mapCatalog.find((m) => m.id === g.map)?.name ?? g.map,
+      mapName: mapNameOf(g.map),
       turn: g.turn,
       status: g.status === "cancelled" ? "over" : g.status,
       waitingOn: g.status === "playing" && g.state === "in" ? waiting : g.status === "playing" ? waiting.filter((w) => w !== "you") : [],
@@ -179,6 +180,8 @@ async function createGame(env: Env, user: UserRow, body: unknown): Promise<Respo
   } catch (e) {
     await env.DB.batch([env.DB.prepare("DELETE FROM seats WHERE game = ?").bind(id), env.DB.prepare("DELETE FROM games WHERE id = ?").bind(id)]);
     console.log(`making game ${id} failed: ${e instanceof Error ? e.message : String(e)}`);
+    // (Session 30: a random map's seed that made no fair map says so, as in single player.)
+    if (e instanceof Error && e.message.includes(RANDOM_TEXT.failed)) return problem(422, RANDOM_TEXT.failed);
     return problem(500, "The game couldn't be made. Try again in a moment.");
   }
   return json({ id, code });

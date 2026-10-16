@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { API_TEXT, worker } from "../server/api";
 import { mirrorGame, mirrorTable } from "../server/mirror";
-import { cleanNewGame, nameFromEmail, newInviteCode } from "../server/online";
+import { cleanNewGame, mapNameOf, nameFromEmail, newInviteCode } from "../server/online";
 import type { Env } from "../server/env";
 import type { OnlineGameInfo } from "../src/host/protocol";
 import { RoomCore, type TableSetup } from "../src/host/roomCore";
@@ -67,6 +67,12 @@ describe("the server's files (session 26)", () => {
     expect(cleanNewGame({ settings: { ...settings, bots: 12 } })).toEqual({ error: `Embervale takes 1 to ${maps.embervale!.maxPlayers - 1} bots.` });
     expect(cleanNewGame({ settings: { ...settings, turnSeconds: null } })).toMatchObject({ error: expect.stringContaining("timer") });
     expect(cleanNewGame({ settings: { ...settings, turnSeconds: 60 } })).toMatchObject({ error: expect.stringContaining("timer") });
+    // Session 30: a random map by its id (cleaned to the map maker's own spelling), with the players its size suits.
+    expect(cleanNewGame({ settings: { ...settings, mapId: "random:80-Crescent-Quiet-Heron", bots: 5 } })).toMatchObject({ settings: { mapId: "random:80-crescent-quiet-heron", bots: 5 } });
+    expect(cleanNewGame({ settings: { ...settings, mapId: "random:40-island-quiet-heron", bots: 6 } })).toEqual({ error: "Random, 40 territories takes 1 to 5 bots." });
+    for (const bad of ["random:81-island-quiet-heron", "random:80-dragon-quiet-heron", "random:80-island-quiet"]) expect(cleanNewGame({ settings: { ...settings, mapId: bad } })).toEqual({ error: "That map isn't one of the game's maps." });
+    expect(mapNameOf("random:80-crescent-quiet-heron")).toBe("Random, 80 territories (quiet-heron)");
+    expect(mapNameOf("embervale")).toBe("Embervale");
     const ok = cleanNewGame({ settings: { ...settings, turnSeconds: 86_400, house: 99, leaderName: "  Lord Ash  " }, leadersRun: false });
     expect(ok).toMatchObject({ settings: { mapId: "embervale", bots: 3, turnSeconds: 86_400, house: 0, leaderName: "Lord Ash" }, leadersRun: false });
   });

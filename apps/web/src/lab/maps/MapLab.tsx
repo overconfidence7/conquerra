@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { allMasks, LAND_SHAPES, MAP_CONFIGS, recipeFor, recipeFromJson, recipeToJson, SHAPE_NAMES, SIZES, type LandShape, type Recipe } from "@conquerra/mapgen";
+import { allMasks, LAND_SHAPES, MAP_CONFIGS, parseRandomId, randomRecipe, recipeFor, recipeFromJson, recipeToJson, SHAPE_NAMES, SIZES, type LandShape, type Recipe } from "@conquerra/mapgen";
 import type { SimReport } from "@conquerra/simcore";
 import type { TerritoryId } from "@conquerra/engine";
 import { LabClient } from "./client";
@@ -46,6 +46,9 @@ const PRESETS = MAP_CONFIGS.map((c) => ({ id: c.id, name: c.name, recipe: { ...c
 function readStart(): Recipe {
   const q = new URLSearchParams(location.search);
   // `preset=embervale`: a built-in map's own recipe.
+  // Session 30: `random=80-crescent-quiet-heron`: a random map's own recipe.
+  const rid = parseRandomId(q.get("random") ?? "");
+  if (rid) return randomRecipe(rid.size, rid.shape, rid.seed);
   const preset = PRESETS.find((p) => p.id === q.get("preset"));
   if (preset) return structuredClone(preset.recipe);
   // `recipe=<JSON>`: a whole recipe (the candidate links in docs/maps/candidates.md use this).

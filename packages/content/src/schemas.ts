@@ -119,7 +119,17 @@ export const MapDef = z
      * Fair capital spots for each table size (sessions 19 and 20b), and the start bonus (session 23): extra troops at
      * the capital for a spot that wins under half its fair share among equal bots (by slot; at most 6).
      */
-    capitalLayouts: z.array(z.object({ players: z.number().int().min(2), slots: z.array(z.string()), bonus: z.record(z.string(), z.number().int().min(1).max(6)).optional() })).optional(),
+    capitalLayouts: z
+      .array(
+        z.object({
+          players: z.number().int().min(2),
+          slots: z.array(z.string()),
+          bonus: z.record(z.string(), z.number().int().min(1).max(6)).optional(),
+          /** Session 30, random maps: the harder spots by the map maker's exposure check (no start bonus); the seat rule deals them to bots first. */
+          harder: z.array(z.string()).optional(),
+        }),
+      )
+      .optional(),
     /** How the map maker made this map, so it can be made again. */
     generator: z.object({ version: z.number().int(), seed: z.string(), attempt: z.number().int() }).optional(),
     /** Drawing data. Optional: tiny test maps have none. */
@@ -142,7 +152,7 @@ export const MapDef = z
     if (m.capitalSlots.length < m.maxPlayers)
       ctx.addIssue({ code: "custom", message: "not enough capital slots for maxPlayers" });
     for (const l of m.capitalLayouts ?? [])
-      if (l.slots.length !== l.players || new Set(l.slots).size !== l.players || l.slots.some((s) => !ids.has(s)) || Object.keys(l.bonus ?? {}).some((s) => !l.slots.includes(s)))
+      if (l.slots.length !== l.players || new Set(l.slots).size !== l.players || l.slots.some((s) => !ids.has(s)) || Object.keys(l.bonus ?? {}).some((s) => !l.slots.includes(s)) || (l.harder ?? []).some((s) => !l.slots.includes(s)))
         ctx.addIssue({ code: "custom", message: `bad capital layout for ${l.players} players` });
   });
 export type MapDef = z.infer<typeof MapDef>;

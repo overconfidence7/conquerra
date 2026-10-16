@@ -4,6 +4,7 @@ import type { LeaderNote, Answer } from "@conquerra/bots";
 import type { Budget, GameMode, Instruction, LeaderStyle, Offer, Order, PlayerId, PlayerView, ReplayEvent, SaveFile } from "@conquerra/engine";
 import type { TurnClock } from "../logic/timer";
 import type { SlotId, SlotInfo } from "./slots";
+import type { MapThumb } from "../logic/mapThumb";
 
 /**
  * The contract between the UI and whatever runs the game.
@@ -306,6 +307,8 @@ export interface GameHost {
   withdrawOffer?(offer: string): Promise<void>;
   /** Online (session 28): the offers between people you're a side of, as they change. */
   onTalks?(listener: (talks: PeopleOffer[]) => void): void;
+  /** Session 30, single player's host: build a random map (the lobby's picture of it), or say why it can't be. */
+  randomMap?(mapId: string): Promise<RandomPreview>;
   /** What a bot of this game's level would order for you this turn (for testing; maybe an "auto-orders" button later). */
   suggest(): Promise<Order[]>;
   /** Save the game as it stands into one of your slots on this device. */
@@ -337,7 +340,15 @@ export type HostRequest =
   | { id: number; type: "suggest" }
   | { id: number; type: "planGenerals"; instructions: Record<string, Instruction | null>; purses?: Record<string, number> }
   | { id: number; type: "exportSave"; notes?: Record<string, string> }
-  | { id: number; type: "propose"; offer: Offer };
+  | { id: number; type: "propose"; offer: Offer }
+  /** Session 30: build a random map (the lobby's picture of it; the game then starts on it at once). */
+  | { id: number; type: "randomMap"; mapId: string };
+
+/** Session 30: a random map, as the lobby shows it: its picture, and which try of its seed passed the checks. */
+export interface RandomPreview {
+  thumb: MapThumb;
+  attempt: number;
+}
 
 /** Your leaders' orders for the turn, and what each is up to (session 20). */
 export interface LeaderOrders {
@@ -354,6 +365,7 @@ export type HostResponse =
   | { id: number; ok: true; save: SaveFile }
   | { id: number; ok: true; slot: SlotInfo }
   | { id: number; ok: true; answer: ProposeAnswer }
+  | { id: number; ok: true; random: RandomPreview }
   /** Not an answer: something for the player to know (id is 0). */
   | { id: 0; ok: true; notice: string; calm?: boolean }
   | { id: number; ok: false; error: string };

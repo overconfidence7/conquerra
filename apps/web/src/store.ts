@@ -1,13 +1,14 @@
 import { forgetFinished, rememberFinished } from "./ui/saveText";
 import { keyIntent, type KeyLike } from "./logic/keys";
-import { defaultRules, mapCatalog, suggestedMode, type BuildingType } from "@conquerra/content";
+import { defaultRules, suggestedMode, type BuildingType } from "@conquerra/content";
 import { BOT_NAMES } from "./host/names";
 import { DEFAULT_HOUSE, HOUSES } from "./map/houses";
 import { findLeader, indexMap, isShare, LEADER_STYLES, STEWARD_STYLES, suggestLeaderName, type LeaderStyle, type Budget, type DealKind, type GameContext, type Instruction, type Offer, type Order, type PlayerId, type PlayerView, type RecruitAmount, type SpoilsSet, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
 import { arrangeQueue, asIfYouOrderFrom, instructOrders, refFromKey, takeControl, withGeneralOrders, type LeaderPlacement } from "./logic/generals";
 import { create } from "zustand";
 import { createLocalHost } from "./host/localHost";
-import type { GameHost, HostStart, HostUpdate, LoadSource, LobbySettings, OnlineGameInfo, PeopleOffer, TableView, SeatInfo, TurnReport } from "./host/protocol";
+import type { GameHost, HostStart, HostUpdate, LoadSource, LobbySettings, OnlineGameInfo, PeopleOffer, RandomPreview, TableView, SeatInfo, TurnReport } from "./host/protocol";
+import { listingOf } from "./logic/mapListing";
 import { listSlots, type SlotId, type SlotInfo } from "./host/saves";
 import { dueTurnIn, withTurnIn } from "./logic/spoils";
 import { namer } from "./logic/text";
@@ -41,6 +42,8 @@ interface GameStore {
   lobby: LobbySettings;
   /** The host decides the mode automatically until the player picks one. */
   modeTouched: boolean;
+  /** Session 30: the lobby's random map, as built (its picture), or why its seed made no map. */
+  randomPreview: { mapId: string; preview: RandomPreview | null; problem: string | null } | null;
   host: GameHost | null;
   ctx: GameContext | null;
   view: PlayerView | null;
@@ -275,6 +278,12 @@ let warm: GameHost | null = null;
 export function prewarmHost() {
   warm ??= makeHost();
 }
+/** Session 30: build the lobby's random map in the host that will play it (so Start doesn't build it again). */
+export function previewRandomMap(mapId: string): Promise<RandomPreview> {
+  prewarmHost();
+  if (!warm?.randomMap) return Promise.reject(new Error("Random maps aren't ready here."));
+  return warm.randomMap(mapId);
+}
 const takeHost = () => {
   const h = warm ?? makeHost();
   warm = null;
@@ -332,6 +341,7 @@ export const useGame = create<GameStore>((set, get) => ({
   screen: "lobby",
   lobby: defaultLobby(),
   modeTouched: false,
+  randomPreview: null,
   host: null,
   ctx: null,
   view: null,
@@ -451,7 +461,7 @@ export const useGame = create<GameStore>((set, get) => ({
   setLobby(patch) {
     const { lobby, modeTouched } = get();
     const next = { ...lobby, ...patch };
-    const map = mapCatalog.find((m) => m.id === next.mapId);
+    const map = listingOf(next.mapId);
     // A new map starts at the smallest table it suits; the bot count always fits the map.
     if (map && patch.mapId && patch.mapId !== lobby.mapId && patch.bots === undefined) next.bots = map.recommendedPlayers.min - 1;
     if (map) next.bots = Math.max(1, Math.min(next.bots, map.maxPlayers - 1, BOT_NAMES.length));

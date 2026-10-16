@@ -2,7 +2,7 @@ import type { MapGenOptions } from "./index";
 import type { LandShape } from "./shapes";
 
 /** A full recipe: everything `generateMap` needs. The lab copies one of these into `configs.ts`. */
-export type Recipe = Omit<MapGenOptions, "log" | "debug">;
+export type Recipe = Omit<MapGenOptions, "log" | "debug" | "accept">;
 
 /** Map sizes the lab offers (territories). Embervale (40) stays the quick map; new maps are 60–120. */
 export const SIZES = [40, 60, 80, 100, 120] as const;

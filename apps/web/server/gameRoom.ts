@@ -28,9 +28,9 @@ const MAX_MESSAGE = 256 * 1024;
  * (session 30). The Worker's API shares this script but never needs any of it, so a cold request to the API no
  * longer parses 1 MB of the room's data first.
  */
-let roomCode: Promise<{ RoomCore: typeof RoomCore; loadSlimMap: (id: string) => Promise<MapDef> }> | null = null;
+let roomCode: Promise<{ RoomCore: typeof RoomCore; roomMaps: (store: RoomStore) => (id: string, version?: number | null) => Promise<MapDef> }> | null = null;
 const loadRoomCode = () =>
-  (roomCode ??= Promise.all([import("../src/host/roomCore"), import("./slimMaps")]).then(([core, slim]) => ({ RoomCore: core.RoomCore, loadSlimMap: slim.loadSlimMap })));
+  (roomCode ??= Promise.all([import("../src/host/roomCore"), import("./slimMaps")]).then(([core, slim]) => ({ RoomCore: core.RoomCore, roomMaps: slim.roomMaps })));
 
 /** The room's storage: values as JSON text, a big one in pieces. */
 function storeOver(storage: DurableObjectStorage): RoomStore {
@@ -70,12 +70,13 @@ export class GameRoom extends DurableObject<Env> {
 
   /** The game, made the first time this room is asked anything. */
   private room(): Promise<RoomCore> {
-    return (this.made ??= loadRoomCode().then(({ RoomCore, loadSlimMap }) => (this.core = this.makeCore(RoomCore, loadSlimMap))));
+    return (this.made ??= loadRoomCode().then(({ RoomCore, roomMaps }) => (this.core = this.makeCore(RoomCore, roomMaps))));
   }
 
-  private makeCore(Core: typeof RoomCore, loadSlimMap: (id: string) => Promise<MapDef>): RoomCore {
+  private makeCore(Core: typeof RoomCore, roomMaps: (store: RoomStore) => (id: string, version?: number | null) => Promise<MapDef>): RoomCore {
     const { ctx, env } = this;
-    return new Core(storeOver(ctx.storage), loadSlimMap, {
+    const store = storeOver(ctx.storage);
+    return new Core(store, roomMaps(store), {
       send: (seat, msg) => this.send(seat, msg),
       sendUser: (user, msg) => this.sendTo((a) => a.user === user, msg),
       users: () => [...new Set(this.sockets().flatMap(([, a]) => (a.user ? [a.user] : [])))],

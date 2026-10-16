@@ -21,7 +21,8 @@ export class HostCore {
 
   constructor(
     private readonly store: SaveStore,
-    private readonly loadMap: (id: string) => Promise<MapDef>,
+    /** A map by its id (session 30: and, for a save, the map maker version it was made at). */
+    private readonly loadMap: (id: string, version?: number | null) => Promise<MapDef>,
     /** Tell the page something went wrong in the background (an autosave that couldn't be written). */
     private readonly notice: (message: string) => void = () => {},
     private readonly now: () => number = () => Date.now(),
@@ -85,8 +86,10 @@ export class HostCore {
     if (!read.ok) throw new Error(read.why);
     let map: MapDef | undefined;
     try {
-      map = await this.loadMap(read.save.mapId);
-    } catch {
+      map = await this.loadMap(read.save.mapId, read.save.mapVersion);
+    } catch (e) {
+      // (Session 30: a random map says plainly why it can't be rebuilt.)
+      if (read.save.mapId.startsWith("random:") && e instanceof Error) throw e;
       map = undefined;
     }
     if (!map) throw new Error("This save's map isn't in this version of the game, so it can't be loaded.");

@@ -20,7 +20,8 @@ import { defaultRules, type MapDef } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { runGame, type GameSummary } from "@conquerra/simcore";
 import { dealPersonalities, makeMarshalBot } from "@conquerra/bots";
-import type { GameSettings } from "@conquerra/engine";
+import { createGame, type GameSettings } from "@conquerra/engine";
+import { adjacency, allDistances, exposureOf } from "@conquerra/mapgen";
 
 const self = fileURLToPath(import.meta.url);
 const args = process.argv.slice(2);
@@ -56,6 +57,14 @@ interface Result {
   ms: number;
   /** For a random map: how many tries the map maker took, or why it gave up. */
   error?: string;
+  /**
+   * The winner's capital spot: its rank in the layout by the map maker's exposure check (0 the safest), and whether the
+   * layout marks it harder (the seat rule's mark on a random map, or a start bonus on an official one).
+   */
+  spotRank?: number;
+  harder?: boolean;
+  /** How many spots that layout marks harder. */
+  harderSpots?: number;
 }
 
 const fogArg = opt("fog", "on");
@@ -68,8 +77,20 @@ async function play(job: Job): Promise<Result> {
     const seats = Array.from({ length: job.players }, (_, i) => `s${i}`);
     const dealt = dealPersonalities(job.seed, seats);
     const bots = seats.map((s) => makeMarshalBot(dealt[s]!));
-    const g = runGame({ map, rules: defaultRules }, job.seed, job.players, settingsOf(), false, bots);
-    return { map: job.map, players: job.players, seed: job.seed, winnerSeat: g.winnerSeat, turns: g.turns, endReason: g.endReason, ms: Date.now() - t0 };
+    const ctx = { map, rules: defaultRules };
+    const g = runGame(ctx, job.seed, job.players, settingsOf(), false, bots);
+    // Where each seat started (the same deal runGame made), and the winner's spot by exposure.
+    const start = createGame(ctx, { gameId: `sim-${job.seed}`, seed: job.seed, players: seats.map((_, i) => ({ id: `p${i + 1}`, name: `Bot ${i + 1}` })), settings: settingsOf(), startBonus: true });
+    const layout = map.capitalLayouts?.find((l) => l.players === job.players);
+    let spot: Pick<Result, "spotRank" | "harder" | "harderSpots"> = {};
+    if (layout && g.winnerSeat !== null) {
+      const cap = start.players[g.winnerSeat]!.capital;
+      const e = exposureOf(layout.slots, allDistances(map), adjacency(map)).exposure;
+      const order = layout.slots.map((s, i) => ({ s, x: e[i]! })).sort((a, b) => a.x - b.x || (a.s < b.s ? -1 : 1));
+      const marked = new Set([...(layout.harder ?? []), ...Object.keys(layout.bonus ?? {})]);
+      spot = { spotRank: order.findIndex((o) => o.s === cap), harder: marked.has(cap), harderSpots: marked.size };
+    }
+    return { map: job.map, players: job.players, seed: job.seed, winnerSeat: g.winnerSeat, turns: g.turns, endReason: g.endReason, ms: Date.now() - t0, ...spot };
   } catch (e) {
     return { map: job.map, players: job.players, seed: job.seed, winnerSeat: null, turns: 0, endReason: null, ms: Date.now() - t0, error: e instanceof Error ? e.message.split("\n")[0]! : String(e) };
   }
@@ -127,6 +148,17 @@ function report(title: string, players: number, rs: Result[]) {
   console.log(`Win rate by seat (fair ${fair.toFixed(1)}%): ${wins.map((w) => `${pct(w).toFixed(1)}%`).join(" / ")}; furthest from fair ${worst.toFixed(1)} points`);
   console.log(`Turns: avg ${avg.toFixed(1)}, median ${turns[Math.floor(turns.length / 2)] ?? 0}, min ${turns[0] ?? 0}, max ${turns.at(-1) ?? 0}; within 40: ${pct(ok.filter((r) => r.turns <= 40).length).toFixed(0)}%; ended: ${[...new Set(ok.map((r) => r.endReason))].map((e) => `${e} ${pct(ok.filter((r) => r.endReason === e).length).toFixed(0)}%`).join(", ")}`);
   console.log(`Time: ${(ok.reduce((a, r) => a + r.ms, 0) / 1000 / Math.max(1, ok.length)).toFixed(1)} s a game`);
+  // The winner's spot by exposure rank (0 the safest): each rank's fair share is one in `players`.
+  const ranked = ok.filter((r) => r.spotRank !== undefined);
+  if (ranked.length) {
+    const byRank = Array.from({ length: players }, (_, i) => ranked.filter((r) => r.spotRank === i).length);
+    console.log(`Wins by the spot's exposure (safest first, fair ${fair.toFixed(1)}%): ${byRank.map((w) => `${((100 * w) / ranked.length).toFixed(1)}%`).join(" / ")}`);
+    // Spots marked harder: how often one won, against their share of the seats.
+    const withHarder = ranked.filter((r) => (r.harderSpots ?? 0) > 0);
+    const seatsHarder = withHarder.reduce((a, r) => a + r.harderSpots!, 0) / Math.max(1, withHarder.length);
+    if (withHarder.length)
+      console.log(`Harder spots: marked on ${withHarder.length} of ${ranked.length} maps (${seatsHarder.toFixed(1)} a map); they won ${((100 * withHarder.filter((r) => r.harder).length) / withHarder.length).toFixed(1)}% of those games against a fair ${((100 * seatsHarder) / players).toFixed(1)}%`);
+  }
   return { title, players, games: ok.length, failed: rs.length - ok.length, seats: wins.map(pct), worst, avgTurns: avg };
 }
 
@@ -153,10 +185,17 @@ if (args[0] === "--digest") {
   const [size, shape, n] = args[1]!.split(":") as [string, string, string];
   const players = Number(args[2]);
   const start = Number(opt("start", "0"));
-  const { seedWords } = await import("@conquerra/mapgen");
-  const jobs: Job[] = Array.from({ length: Number(n) }, (_, i) => ({ map: `random:${size}-${shape}-${seedWords(start + i)}`, players, game: i, seed: `${seedPrefix}-${size}-${shape}-${i}` }));
+  const { seedWords, RANDOM_SHAPE_IDS } = await import("@conquerra/mapgen");
+  // "all": the five shapes in turn.
+  const shapeOf = (i: number) => (shape === "all" ? RANDOM_SHAPE_IDS[i % RANDOM_SHAPE_IDS.length]! : shape);
+  const jobs: Job[] = Array.from({ length: Number(n) }, (_, i) => ({ map: `random:${size}-${shapeOf(i)}-${seedWords(start + i)}`, players, game: i, seed: `${seedPrefix}-${size}-${shape}-${i}` }));
   const rs = await runAll(jobs);
   const r = report(`${n} random maps, ${size} territories, ${shape}`, players, rs);
+  if (shape === "all")
+    for (const sh of RANDOM_SHAPE_IDS) {
+      const mine = rs.filter((x) => x.map.includes(`-${sh}-`) && !x.error);
+      console.log(`  ${sh}: ${mine.length} played, avg ${(mine.reduce((a, x) => a + x.turns, 0) / Math.max(1, mine.length)).toFixed(1)} turns`);
+    }
   if (json) writeFileSync(json, JSON.stringify({ summary: r, games: rs }, null, 1));
 } else {
   const [map, p] = args[0]!.split(":") as [string, string];

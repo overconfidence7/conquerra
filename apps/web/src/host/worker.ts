@@ -1,11 +1,11 @@
-import { loadMap } from "@conquerra/content/loadMap";
 import { HostCore } from "./hostCore";
+import { loadGameMap } from "./gameMaps";
 import type { HostRequest, HostResponse } from "./protocol";
 import { idbSaveStore } from "./saves";
 
 // The engine and bots run here, off the page. The page only ever receives HostUpdates (and short slot lists).
 const scope = self as unknown as { onmessage: ((e: MessageEvent<HostRequest>) => void) | null; postMessage(msg: HostResponse): void };
-const core = new HostCore(idbSaveStore(), loadMap, (notice) => scope.postMessage({ id: 0, ok: true, notice }));
+const core = new HostCore(idbSaveStore(), loadGameMap, (notice) => scope.postMessage({ id: 0, ok: true, notice }));
 let timer: ReturnType<typeof setTimeout> | null = null;
 
 /** The turn timer lives here, in the host: when it runs out, lock your saved orders in and tell the page. */
@@ -37,6 +37,13 @@ scope.onmessage = async (e) => {
       case "exportSave":
         scope.postMessage({ id: req.id, ok: true, save: core.exportSave(req.notes) });
         return;
+      case "randomMap": {
+        // Session 30: the lobby's picture of a random map (built here, off the page, and kept for the game).
+        const map = await loadGameMap(req.mapId);
+        const { shrinkGround } = await import("../logic/mapThumb");
+        scope.postMessage({ id: req.id, ok: true, random: { thumb: shrinkGround(map.geometry!.biome), attempt: map.generator?.attempt ?? 1 } });
+        return;
+      }
       case "propose":
         scope.postMessage({ id: req.id, ok: true, answer: core.propose(req.offer) });
         return;

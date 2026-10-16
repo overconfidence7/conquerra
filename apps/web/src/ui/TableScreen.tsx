@@ -1,4 +1,4 @@
-import { mapCatalog } from "@conquerra/content";
+import { mapNameOf } from "../logic/mapListing";
 import { useEffect, useState } from "react";
 import { closeTable, refreshMe, setMyName, setOnlineLobby, tableAct, tableLink } from "../host/onlineActions";
 import { TABLE_TEXT } from "../host/roomText";
@@ -89,7 +89,6 @@ export default function TableScreen() {
   const [pick, setPick] = useState<number | null>(null);
   const [working, setWorking] = useState(false);
   useEffect(() => void refreshMe(), []);
-  const map = t ? mapCatalog.find((m) => m.id === t.mapId) : null;
   const run = async (f: () => Promise<unknown>) => {
     setWorking(true);
     try {
@@ -130,7 +129,7 @@ export default function TableScreen() {
       <Frame>
         {header}
         <h2 className="table-title">
-          {map?.name ?? t.mapId} <span className="muted">· {t.seats.length} seats</span>
+          {mapNameOf(t.mapId)} <span className="muted">· {t.seats.length} seats</span>
         </h2>
         <p className="muted small">{tableRules(t)}.</p>
         {closed ? (
