@@ -314,6 +314,7 @@ It matches "simple at first, deep later" and the 5-minute turn, and it plugs nea
 - **Later, with the big game modes (M5):**
   - **Random maps** generated when the game starts.
   - **Blackout fog** (a lobby option, likely for massive games): anything not next to your land is completely hidden, including the map itself, until you explore it. Standard fog, which shows the geography but not who holds it, stays the default. (Look: standard fog is desaturated land with drifting mist; blackout fog is thick painted clouds. See `docs/06-art-direction.md`.)
+  - **BUILT (sessions 30 and 32):** blackout as a Rules option (30); in 32 the bots play from the known map (only land their seat has seen; its borders into the cloud as kinds, never what's across) and have a scout's drive (land opening into the cloud is worth more, early Scouts, idle spies toward the cloud). A province you can't see all of reads "you hold 2 of ?". Numbers: `docs/sim-results-m5-blackout.md`.
 
 ## 10. Pause, saved games, tutorials and scenarios (from Nate, Oct 6)
 - **Single player: pause and saved games (session 13).**

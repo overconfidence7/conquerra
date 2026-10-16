@@ -1,5 +1,7 @@
 # Sim results: the Marshal and its personalities (session 17, Oct 6)
 
+*Session 32: the Marshal under blackout fog (it plays from the land it has seen and explores), with each personality's numbers against standard fog: `docs/sim-results-m5-blackout.md`.*
+
 Everything on in every game: fog, the Fallen, both decks, diplomacy, spies. Luck 0.3, classic. 300 games per row unless it says otherwise; seats rotate each game so nobody keeps a lucky seat. "Fair" is one seat's share (25% at 4 players, 16.7% at 6, 12.5% at 8, 10% at 10). With 300 games a win rate is good to about ±2.5 points (one personality), and an average of six personalities to about ±1 point.
 
 ```
