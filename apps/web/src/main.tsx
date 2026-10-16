@@ -98,6 +98,7 @@ const LABS = import.meta.env.VITE_LABS !== "off";
 const lab = LABS ? new URLSearchParams(location.search).get("lab") : null;
 const root = document.getElementById("root")!;
 if (LABS && lab === "maps") void import("./lab/maps/MapLab").then((m) => m.runMapLab(root));
+else if (LABS && lab === "known") void import("./lab/maps/KnownMap").then((m) => m.runKnownMap(root));
 else if (LABS && (lab === "bench" || lab === "houses")) void import("./lab/bench/Bench").then((m) => m.runBench(root));
 else if (LABS && lab === "sound") void import("./lab/sound/SoundBench").then((m) => m.runSoundBench(root));
 else {

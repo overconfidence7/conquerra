@@ -33,7 +33,7 @@ for (const f of seen) {
   gz += g;
   rows.push(`  ${f.padEnd(44)} ${(buf.length / 1024).toFixed(1).padStart(7)} KB  (gzip ${(g / 1024).toFixed(1)} KB)`);
   const text = buf.toString("utf8");
-  for (const marker of ["Map lab", "Art test bench", "Sound bench", "generateMap", "Sim this map"]) if (text.includes(marker)) leaked.push(`${f} contains "${marker}"`);
+  for (const marker of ["Map lab", "Art test bench", "Sound bench", "generateMap", "Sim this map", "What a bot knew"]) if (text.includes(marker)) leaked.push(`${f} contains "${marker}"`);
 }
 console.log(`Start-up bundle (what loads before the lobby):\n${rows.join("\n")}\n  total ${(raw / 1024).toFixed(1)} KB, gzip ${(gz / 1024).toFixed(1)} KB`);
 // Session 32: the allowance is Step 0's size (396.2 KB, once Zod left the start-up code: the content data is used as it
