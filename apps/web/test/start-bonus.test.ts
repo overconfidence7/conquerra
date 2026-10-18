@@ -47,7 +47,7 @@ describe("the start bonus in the grouped report", () => {
 describe("everyone's head start on the first turn's report (session 33: a random map gives most spots one)", () => {
   it("names the others' head starts, most first; a view says how many, never where", async () => {
     const { groupReport } = await import("../src/logic/report");
-    const { headStartsLine } = await import("../src/logic/text");
+    const { headStartsLine } = await import("../src/logic/turnWords");
     expect(view.players.filter((p) => p.id !== "p1").map((p) => p.startBonus)).toEqual([4, 4, 4]);
     expect(headStartsLine(view)).toBe("Head starts for the exposed spots: P2 +4, P3 +4, P4 +4.");
     const g = groupReport(ctx, [{ type: "turnStart", step: 0, turn: 1, seats: ["p1", "p2"] }], namer(ctx, view));

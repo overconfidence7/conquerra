@@ -1,6 +1,7 @@
 import type { BorderType, FateEvent } from "@conquerra/content";
 import { indexMap, type GameContext, type Mission, type PlayerView, type ReplayEvent, type SpoilsMark, type SpoilsSet, type TerritoryId } from "@conquerra/engine";
-import { BUILDING_NAME, crossingWords, SPECIALIST_NAME, type Namer } from "./text";
+import { BUILDING_NAME, SPECIALIST_NAME, type Namer } from "./text";
+import { CLOUD } from "../map/status";
 
 /**
  * The words for the two card decks (session 13): Spoils (earned by conquest, turned in as sets) and Fate (one draw a
@@ -117,7 +118,11 @@ export function fateLine(ctx: GameContext, e: FateEv, n: Namer): string {
       return `${drew}${name} at ${where}: ${n2(-(e.troops ?? 0), "troop")} ${holder === "you" ? "of yours " : ""}died.`;
     case "closeBorder": {
       const [a, b] = e.border ?? [e.at, e.at];
-      return `${drew}${name}: ${crossingWords(n, CROSSING[def.border], a, b)} is closed all of turn ${e.until}.`;
+      // (Session 33, blackout: "the river crossing from Dawnrest into the cloud"; written here, since this file loads
+      // with the lobby: turnWords.ts has the same words for the game screen's other lines.)
+      const [pa, pb] = [n.place(a), n.place(b)].sort((x, y) => Number(x === CLOUD) - Number(y === CLOUD));
+      const across = pb !== CLOUD ? `the ${CROSSING[def.border]} between ${pa} and ${pb}` : pa !== CLOUD ? `the ${CROSSING[def.border]} from ${pa} into the cloud` : `a ${CROSSING[def.border]} in the cloud`;
+      return `${drew}${name}: ${across} is closed all of turn ${e.until}.`;
     }
     case "uprising":
       return e.flipped

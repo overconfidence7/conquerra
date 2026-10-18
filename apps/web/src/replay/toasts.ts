@@ -1,6 +1,6 @@
 import type { GameContext, PlayerView, ReplayEvent } from "@conquerra/engine";
 import { houseOf } from "../map/houses";
-import { placeName } from "../map/status";
+import { CLOUD, isUnknown } from "../map/status";
 import { fateName, fateStrikes, MARK_NAME, SET_NAME } from "../logic/cards";
 
 export interface Toast {
@@ -18,8 +18,8 @@ export interface Toast {
  * Small things (marches, recruits) don't get a toast; they're on the map and in the turn report.
  */
 export function toastFor(ctx: GameContext, view: Pick<PlayerView, "players" | "me"> & Partial<Pick<PlayerView, "territories" | "settings">>, e: ReplayEvent): Toast | null {
-  // (Session 33, blackout fog: land you've never seen is "the cloud".)
-  const place = (id: string) => placeName(ctx.map, view.territories && view.settings ? (view as PlayerView) : null, id);
+  // (Session 33, blackout fog: land you've never seen is "the cloud", never its name; the event keeps the id.)
+  const place = (id: string) => (view.settings?.fog === "blackout" && view.territories && isUnknown(view as PlayerView, id) ? CLOUD : (ctx.map.territories.find((t) => t.id === id)?.name ?? id));
   const me = (id: string | null) => id === view.me.id;
   const house = (id: string | null) => (id ? houseOf(view, id) : null);
   const name = (id: string | null) => (me(id) ? "You" : (house(id)?.name ?? "Neutral"));
