@@ -455,7 +455,7 @@ function TerritoryPanel({ ctx, view, plan, selected, spendOpen }: Props & { sele
           <b>{v.troops}</b> {v.troops === 1 ? "troop" : "troops"}
           {mine && plan.free.get(selected) !== undefined ? `, ${plan.free.get(selected)} can move` : ""}
           {/* The start bonus (session 23), on turn 1 at your capital. */}
-          {selected === view.me.capital && view.turn === 1 && view.me.startBonus ? ` (${view.me.startBonus} of them extra at the start: a harder spot)` : ""}
+          {selected === view.me.capital && view.turn === 1 && view.me.startBonus ? ` (${view.me.startBonus} of them extra at the start: an exposed spot)` : ""}
         </span>
       </li>
       {/* Walls (session 20b): who'd defend it, with the wall's garrison. */}

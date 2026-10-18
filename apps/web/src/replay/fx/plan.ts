@@ -51,9 +51,28 @@ export interface FxContext {
   territories: readonly string[];
   /** Where each territory's building stands (map units). */
   site: (id: string) => Pt | undefined;
+  /** Session 33, blackout fog: land this view has never seen (an army's way out of it starts at the cloud's edge). */
+  unknown: (id: string) => boolean;
 }
 
-export function fxContext(map: MapDef, gameId: string, turn: number, events: readonly ReplayEvent[], colour: FxContext["colour"], isCapital: FxContext["isCapital"], fortified: FxContext["fortified"], ownerOf: FxContext["ownerOf"] = () => null): FxContext {
+/**
+ * The stops of an army's way (map units): where it set out, the land it marched through, and where it's going. Session
+ * 33, blackout fog: the part of the way under the cloud is left out, so the way starts at the cloud's edge (the border
+ * where it first comes onto land this view has seen), never inside the cloud.
+ */
+export function marchStops(ctx: FxContext, from: string, through: readonly string[] | undefined, end: Pt, to?: string): Pt[] | null {
+  const ids = [from, ...(through ?? [])].filter((id) => ctx.spot(id));
+  if (!ids.length) return null;
+  const first = ids.findIndex((id) => !ctx.unknown(id));
+  if (first === 0) return [...ids.map((id) => ctx.spot(id)!), end];
+  // Out of the cloud: from the border between the last land under it and the first land seen (or, if the whole way
+  // so far is under it, the border with where it's going; a battle's march already ends on that border).
+  if (first < 0) return [(to && ctx.borderPoint(ids[ids.length - 1]!, to)) || end, end];
+  const edge = ctx.borderPoint(ids[first - 1]!, ids[first]!) ?? ctx.spot(ids[first]!)!;
+  return [edge, ...ids.slice(first).map((id) => ctx.spot(id)!), end];
+}
+
+export function fxContext(map: MapDef, gameId: string, turn: number, events: readonly ReplayEvent[], colour: FxContext["colour"], isCapital: FxContext["isCapital"], fortified: FxContext["fortified"], ownerOf: FxContext["ownerOf"] = () => null, unknown: FxContext["unknown"] = () => false): FxContext {
   const near = new Map<string, string[]>();
   for (const b of map.borders) {
     (near.get(b.a) ?? near.set(b.a, []).get(b.a)!).push(b.b);
@@ -81,6 +100,7 @@ export function fxContext(map: MapDef, gameId: string, turn: number, events: rea
     neighbours: (id) => near.get(id) ?? [],
     territories: map.territories.map((t) => t.id),
     site: (id) => sites.get(id),
+    unknown,
   };
 }
 
@@ -242,18 +262,20 @@ type Add = (index: number, part: string, recipe: RecipeName, at: Pt, age: number
 /** Dust behind a march (or a wake on a sea lane, mud flecks in a swamp, a splash at a ford). */
 function marchFx(ctx: FxContext, add: Add, idx: number, part: string, from: string, to: string | Pt, through: readonly string[] | undefined, player: string, troops: number, specialists: readonly string[], age: number, span: number, reach: number, live: boolean) {
   if (!live) return;
-  const a = ctx.spot(from);
   const end = typeof to === "string" ? ctx.spot(to) : to;
-  if (!a || !end) return;
-  const stops = [a, ...(through ?? []).map((id) => ctx.spot(id)!).filter(Boolean), end];
+  const stops = end ? marchStops(ctx, from, through, end, typeof to === "string" ? to : undefined) : null;
+  if (!end || !stops) return;
+  const a = stops[0]!;
   const toId = typeof to === "string" ? to : null;
   const last = through?.length ? through[through.length - 1]! : from;
   const sea = toId ? ctx.border(last, toId) === "sea" : false;
   const path = pathOf(stops, ctx.bendCap, 0, reach);
-  const tints = { ground: GROUND[ctx.terrain(from)] ?? GROUND.plains!, house: ctx.colour(player) };
+  // (Session 33, blackout fog: the dust takes no colour from land under the cloud, so it never tells its terrain.)
+  const ground = ctx.unknown(from) ? (toId ? ctx.terrain(toId) : "plains") : ctx.terrain(from);
+  const tints = { ground: GROUND[ground] ?? GROUND.plains!, house: ctx.colour(player) };
   if (sea) return add(idx, `${part}:wake`, "wake", a, age, span, { path, troops, tints });
   add(idx, `${part}:dust`, specialists.includes("cavalry") ? "cavalryDust" : "marchDust", a, age, span, { path, troops, tints });
-  if (ctx.terrain(from) === "swamp" || (toId && ctx.terrain(toId) === "swamp")) add(idx, `${part}:mud`, "mudFlecks", a, age, span, { path, troops, tints });
+  if (ground === "swamp" || (toId && ctx.terrain(toId) === "swamp")) add(idx, `${part}:mud`, "mudFlecks", a, age, span, { path, troops, tints });
   if (toId && ctx.border(last, toId) === "river") {
     const ford = ctx.borderPoint(last, toId);
     if (ford) add(idx, `${part}:ford`, "fordSplash", ford, age, span, { troops, tints });

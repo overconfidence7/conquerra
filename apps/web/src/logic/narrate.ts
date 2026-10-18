@@ -1,6 +1,6 @@
 import { dealLine, explainFizzle, explainHold, findLeader, fizzleIsQuiet, governLine, spyLine, type GameContext, type LeaderRef, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 import { fateLine, fateTone, MARK_NAME, missionLine, rebelWord, SET_NAME, troopWord } from "./cards";
-import { army, BUILDING_NAME, startBonusLine, dealNames, generalName, instructionDoing, KIND_NAME, leaderName, leaderShortName, leaderStatus, SPECIALIST_NAME, styledName, WORLD_EVENT_NAME, type LogLine, type Namer, type Tone } from "./text";
+import { army, BUILDING_NAME, crossingWords, fromWords, startBonusLine, wayWords, dealNames, generalName, instructionDoing, KIND_NAME, leaderName, leaderShortName, leaderStatus, SPECIALIST_NAME, styledName, WORLD_EVENT_NAME, type LogLine, type Namer, type Tone } from "./text";
 
 /**
  * The turn report's lines (split from text.ts in session 14): plain English for every replay event. Loaded with the
@@ -31,7 +31,7 @@ export function worldEventLine(e: Extract<ReplayEvent, { type: "worldEvent" }>, 
       return `The Fallen sent a plague on ${whose} land around ${n.place(e.target)}: ${lost} troop${lost === 1 ? "" : "s"} died.`;
     }
     case "storm":
-      return `The Fallen sent a storm: the border between ${n.place(e.border![0])} and ${n.place(e.border![1])} was closed this turn.`;
+      return `The Fallen sent a storm: ${crossingWords(n, "border", e.border![0], e.border![1])} was closed this turn.`;
     case "uprising":
       return e.flipped
         ? `The Fallen stirred an uprising in ${n.place(e.target)}: ${rebelWord(e.rebels ?? 0)} threw ${n.isMe(e.against) ? "you" : n.who(e.against)} out, and hold it now.`
@@ -174,14 +174,14 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       // Right of passage: "You marched 8 troops from Ashfell through Galeholt and Pinemark to Oakcrest." (Land on the
       // way that changed hands: it stopped short, and says where it meant to go.)
       if (e.through?.length || e.stopped) {
-        const way = e.through?.length ? ` through ${e.through.map(place).join(" and ")}` : "";
+        const way = e.through?.length ? ` through ${wayWords(n, e.through)}` : "";
         const short = e.stopped ? `, stopping there: land on the way to ${place(e.stopped)} had changed hands` : "";
-        return { text: `${who(e.player)} marched ${army(e.army)} from ${place(e.from)}${way} to ${place(e.to)}${short}.`, tone: e.stopped && isMe(e.player) ? "info" : "quiet" };
+        return { text: `${who(e.player)} marched ${army(e.army)} ${fromWords(n, e.from)}${way} to ${place(e.to)}${short}.`, tone: e.stopped && isMe(e.player) ? "info" : "quiet" };
       }
       if (e.general && isMe(e.player))
-        return { text: `${generalPhrase(n.view, n, e.general)} ${e.retreat ? "pulled back" : "moved"} ${army(e.army)} from ${place(e.from)} to ${place(e.to)}.`, tone: "info" };
+        return { text: `${generalPhrase(n.view, n, e.general)} ${e.retreat ? "pulled back" : "moved"} ${army(e.army)} ${fromWords(n, e.from)} to ${place(e.to)}.`, tone: "info" };
       return {
-        text: `${who(e.player)} ${e.retreat ? "retreated" : "moved"} ${army(e.army)} from ${place(e.from)} to ${place(e.to)}${e.withLeader ? " with the Leader" : ""}.`,
+        text: `${who(e.player)} ${e.retreat ? "retreated" : "moved"} ${army(e.army)} ${fromWords(n, e.from)} to ${place(e.to)}${e.withLeader ? " with the Leader" : ""}.`,
         tone: e.retreat && isMe(e.player) ? "info" : "quiet",
       };
     case "battle": {
@@ -189,7 +189,7 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
       const vsMe = isMe(e.defender);
       // Both armies and both sides' losses: "You attacked Ashfell (Gules, 8 troops) with 10 troops and took it: you lost 3, they lost 8."
       const defenders = `${vsMe ? "yours" : e.defender ? who(e.defender) : "neutral"}, ${army(e.defenders)}`;
-      const way = e.through?.length ? `, marching through ${e.through.map(place).join(" and ")}` : "";
+      const way = e.through?.length ? `, marching through ${wayWords(n, e.through)}` : "";
       const leader = e.withLeader ? (mine ? " and your Leader" : " and their Leader") : "";
       const head = `${who(e.player)} attacked ${place(e.to)} (${defenders}) with ${army(e.attackers)}${leader}${way}`;
       // Culture is lost when land changes hands (session 16).

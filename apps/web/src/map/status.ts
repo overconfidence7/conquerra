@@ -90,3 +90,15 @@ export function isUnknown(view: PlayerView, id: TerritoryId): boolean {
   const v = view.territories[id];
   return v?.detail === "fogged" && !!v.unknown;
 }
+
+/** Session 33, blackout fog: what a line a person reads calls land they've never seen. */
+export const CLOUD = "the cloud";
+
+/**
+ * A territory's name for a line a person reads (the report, the replay's toasts, the panels): under blackout, land
+ * they've never seen is "the cloud" (`CLOUD`), never its name. The event data may keep the id; the words don't.
+ */
+export function placeName(map: Pick<MapDef, "territories">, view: Pick<PlayerView, "territories" | "settings"> | null | undefined, id: TerritoryId): string {
+  if (view?.settings.fog === "blackout" && isUnknown(view as PlayerView, id)) return CLOUD;
+  return map.territories.find((t) => t.id === id)?.name ?? id;
+}

@@ -260,11 +260,13 @@ export class InfoLayer {
    */
   private setWalls(view: MapScene["view"]): boolean {
     const walls = wallFootprints(view, this.map.territories.map((t) => t.id));
-    const key = walls.map((w) => `${w.key}=${houseOf(view, w.owner).color}:${w.territories.join(",")}`).join("|");
+    // (Session 33, blackout fog: a wall's ring only round the land you've seen, stopping at the cloud's edge.)
+    const unknown = (id: string) => view.settings.fog === "blackout" && isUnknown(view, id);
+    const key = walls.map((w) => `${w.key}=${houseOf(view, w.owner).color}:${w.territories.map((t) => (unknown(t) ? `${t}?` : t)).join(",")}`).join("|");
     if (key === this.wallKey) return false;
     this.wallKey = key;
-    const groupOf = new Map(walls.flatMap((w) => w.territories.map((t) => [t, w.key] as const)));
-    const outlines = groupOf.size ? groupOutlines(this.map.geometry!, (id) => groupOf.get(id) ?? null) : new Map<string, Line[]>();
+    const groupOf = new Map(walls.flatMap((w) => w.territories.filter((t) => !unknown(t)).map((t) => [t, w.key] as const)));
+    const outlines = groupOf.size ? groupOutlines(this.map.geometry!, (id) => groupOf.get(id) ?? null, unknown) : new Map<string, Line[]>();
     this.wallRings = walls.map((w) => ({ color: w.remembered ? 0x8a8a8a : hexNum(houseOf(view, w.owner).color), remembered: w.remembered, outlines: outlines.get(w.key) ?? [] }));
     return true;
   }
@@ -595,11 +597,20 @@ export class InfoLayer {
   }
 
   private provinceOutlines: Map<string, Line[]> | null = null;
-  /** The outline of a whole province (its border with other provinces and its coast). */
+  private provinceOutlinesKey = "";
+  /**
+   * The outline of a whole province (its border with other provinces and its coast). Session 33, blackout fog: only
+   * round the land you've seen, stopping at the cloud's edge (redone as the cloud lifts).
+   */
   private provinceOutline(province: string): Line[] {
-    if (!this.provinceOutlines) {
+    const view = this.scene!.view;
+    const blackout = view.settings.fog === "blackout";
+    const key = blackout ? this.map.territories.map((t) => (isUnknown(view, t.id) ? "0" : "1")).join("") : "";
+    if (!this.provinceOutlines || key !== this.provinceOutlinesKey) {
       const of = new Map(this.map.territories.map((t) => [t.id, t.province]));
-      this.provinceOutlines = groupOutlines(this.map.geometry!, (id) => of.get(id) ?? null);
+      const unknown = (id: string) => blackout && isUnknown(view, id);
+      this.provinceOutlines = groupOutlines(this.map.geometry!, (id) => (unknown(id) ? null : (of.get(id) ?? null)), blackout ? unknown : undefined);
+      this.provinceOutlinesKey = key;
     }
     return this.provinceOutlines.get(province) ?? [];
   }

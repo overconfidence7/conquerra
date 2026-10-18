@@ -218,7 +218,15 @@ export class MarkerLayer {
       }
       // Just under the painted name: the middle of its curve, one letter-height down (labels.ts sizes the letters).
       const [x0, y0, cx, cy, x1, y1] = labelCurve(label.path);
-      const [mx, my] = quadPoint(x0, y0, cx, cy, x1, y1, 0.5);
+      let [mx, my] = quadPoint(x0, y0, cx, cy, x1, y1, 0.5);
+      // (Session 33, blackout fog: a plaque whose spot is over land you haven't seen moves onto the land you have, the
+      // middle of its known territories, so it never marks where the cloud's land lies.)
+      const at = new Map(this.map.geometry!.territories.map((t) => [t.id, t.label]));
+      const nearest = members.reduce((best, t) => (Math.hypot(at.get(t.id)!.x - mx, at.get(t.id)!.y - my) < Math.hypot(at.get(best.id)!.x - mx, at.get(best.id)!.y - my) ? t : best));
+      if (isUnknown(view, nearest.id)) {
+        const known = members.filter((t) => !isUnknown(view, t.id)).map((t) => at.get(t.id)!);
+        [mx, my] = [known.reduce((a, p) => a + p.x, 0) / known.length, known.reduce((a, p) => a + p.y, 0) / known.length];
+      }
       const size = Math.max(13, Math.min(30, (Math.hypot(x1 - x0, y1 - y0) / Math.max(6, prov.name.length)) * 1.05));
       // The name at Far: smaller, no plaque (it would cover the land), on the middle of the province's name line.
       const name = new Container();

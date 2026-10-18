@@ -1,6 +1,6 @@
 import type { BorderType, FateEvent } from "@conquerra/content";
 import { indexMap, type GameContext, type Mission, type PlayerView, type ReplayEvent, type SpoilsMark, type SpoilsSet, type TerritoryId } from "@conquerra/engine";
-import { BUILDING_NAME, SPECIALIST_NAME, type Namer } from "./text";
+import { BUILDING_NAME, crossingWords, SPECIALIST_NAME, type Namer } from "./text";
 
 /**
  * The words for the two card decks (session 13): Spoils (earned by conquest, turned in as sets) and Fate (one draw a
@@ -117,7 +117,7 @@ export function fateLine(ctx: GameContext, e: FateEv, n: Namer): string {
       return `${drew}${name} at ${where}: ${n2(-(e.troops ?? 0), "troop")} ${holder === "you" ? "of yours " : ""}died.`;
     case "closeBorder": {
       const [a, b] = e.border ?? [e.at, e.at];
-      return `${drew}${name}: the ${CROSSING[def.border]} between ${n.place(a)} and ${n.place(b)} is closed all of turn ${e.until}.`;
+      return `${drew}${name}: ${crossingWords(n, CROSSING[def.border], a, b)} is closed all of turn ${e.until}.`;
     }
     case "uprising":
       return e.flipped

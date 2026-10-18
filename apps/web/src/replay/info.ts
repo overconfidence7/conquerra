@@ -1,5 +1,5 @@
 import type { SpecialistType } from "@conquerra/content";
-import type { FxContext } from "./fx/plan";
+import { marchStops, type FxContext } from "./fx/plan";
 import { routePoint, type Pt } from "./route";
 import { MARCH_SHARE, RESULT_AT, type ClashAnim, type ReplayFrame } from "./timeline";
 
@@ -42,11 +42,12 @@ export function replayInfo(frame: ReplayFrame, ctx: FxContext, province: (id: st
   for (const m of frame.marches) {
     const a = ctx.spot(m.from), b = ctx.spot(m.to);
     if (!a || !b) continue;
-    const through = (m.through ?? []).map((id) => ctx.spot(id)).filter((p): p is Pt => !!p);
     const last = m.through?.length ? m.through[m.through.length - 1]! : m.from;
     // A battle's march goes as far as the border, where the fight is.
     const end = m.meet ? (ctx.borderPoint(last, m.to) ?? { x: a.x + (b.x - a.x) * 0.6, y: a.y + (b.y - a.y) * 0.6 }) : b;
-    const stops = [a, ...through, end];
+    // (Session 33, blackout fog: a way out of the cloud starts at its edge.)
+    const stops = marchStops(ctx, m.from, m.through, end, m.to);
+    if (!stops) continue;
     const [x, y, heading] = routePoint(stops, m.progress, ctx.bendCap);
     out.push({ kind: "army", x, y, heading, player: m.player, troops: m.troops, retreat: m.retreat, sea: ctx.border(last, m.to) === "sea", cavalry: (m.specialists ?? []).includes("cavalry" as SpecialistType), through: !!m.through?.length, progress: m.progress, stops });
   }

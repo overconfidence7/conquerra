@@ -15,8 +15,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 const src = (p: string) => readFileSync(join(here, "../src", p), "utf8");
 
 describe("random maps at version 3 in the app (session 31)", () => {
-  it("a new random map is version 3 with its start bonus; a game pinned at version 2 builds session 30's map; version 1 can't", async () => {
-    const v3 = await loadGameMap("random:40-island-quiet-heron");
+  it("a game pinned at version 3 builds its map with its start bonus; version 2 builds session 30's map; version 1 can't", async () => {
+    // (Session 33: a new random map is version 4; versions 2 and 3 still build.)
+    const v3 = await loadGameMap("random:40-island-quiet-heron", 3);
     expect(v3.generator?.version).toBe(3);
     const v2 = await loadGameMap("random:40-island-quiet-heron", 2);
     expect(v2.generator?.version).toBe(2);
@@ -77,8 +78,9 @@ describe("small fixes (session 31)", () => {
     expect(src("ui/chat/ChatPanel.tsx")).toContain("CHAT_UI.withdrawnBy(");
   });
 
-  it("the Rules fold's blackout line says the bots still know the lay of the land; Tactical paints cloud over rivers", () => {
-    expect(src("ui/LobbyFolds.tsx")).toContain("Blackout: the map is hidden until you explore it (the bots still know the lay of the land).");
+  it("the Rules fold's blackout line (session 33, Nate's call: nothing about the bots); Tactical paints cloud over rivers", () => {
+    expect(src("ui/LobbyFolds.tsx")).toContain('" Blackout: the map is hidden until you explore it."');
+    expect(src("ui/LobbyFolds.tsx")).not.toMatch(/lay of the land|the bots/);
     expect(src("render/pixi/info.ts")).toMatch(/no river runs through cloud/);
   });
 

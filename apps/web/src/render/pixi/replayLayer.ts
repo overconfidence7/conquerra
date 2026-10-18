@@ -3,6 +3,7 @@ import type { PlayerView, ReplayEvent } from "@conquerra/engine";
 import { Container, Graphics, Sprite, Text, type Texture } from "pixi.js";
 import { toScreen, type Camera } from "../../map/camera";
 import { hexNum, houseOf } from "../../map/houses";
+import { isUnknown } from "../../map/status";
 import { dashes } from "../../map/shapes";
 import { replaySpots } from "../../replay/camera";
 import { fxAt, fxContext, lastLandOf, meetingOf, SPY_MS, type FxContext } from "../../replay/fx/plan";
@@ -87,10 +88,21 @@ export class ReplayLayer {
       if (t.building === "fort") forts.add(id);
     }
     for (const w of before.walls ?? []) for (const id of w.territories) forts.add(id);
-    this.ctx = fxContext(this.map, before.gameId, before.turn, events, (p) => hexNum(houseOf(before, p).color), (id) => capitals.has(id), (id) => forts.has(id), (id) => {
-      const t = before.territories[id];
-      return t?.detail === "full" ? t.owner : null;
-    });
+    this.ctx = fxContext(
+      this.map,
+      before.gameId,
+      before.turn,
+      events,
+      (p) => hexNum(houseOf(before, p).color),
+      (id) => capitals.has(id),
+      (id) => forts.has(id),
+      (id) => {
+        const t = before.territories[id];
+        return t?.detail === "full" ? t.owner : null;
+      },
+      // (Session 33, blackout fog: land never seen as the turn began; a way out of it starts at the cloud's edge.)
+      (id) => before.settings.fog === "blackout" && isUnknown(before, id),
+    );
   }
 
   /** The particles, once their art has loaded: between the campaign lines and the figures. */

@@ -54,9 +54,10 @@ export interface PlayerView {
   me: PlayerState;
   /**
    * Public facts about every player (no gold, no capital location). `spoils`: how many Spoils cards they hold (never
-   * which). `oathbreaker`: the turn their Oathbreaker mark lasts through (0: none showing).
+   * which). `oathbreaker`: the turn their Oathbreaker mark lasts through (0: none showing). `startBonus` (session 33):
+   * the extra troops their capital started with, if any (a public rule of the map; never where).
    */
-  players: { id: PlayerId; name: string; eliminatedTurn: number | null; eliminatedBy: PlayerId | null; spoils: number; oathbreaker: number; house: number }[];
+  players: { id: PlayerId; name: string; eliminatedTurn: number | null; eliminatedBy: PlayerId | null; spoils: number; oathbreaker: number; house: number; startBonus?: number }[];
   territories: Record<TerritoryId, TerritoryView>;
   settings: GameSettings;
   seedCommitment: string;
@@ -233,6 +234,7 @@ export function viewFor(ctx: GameContext, state: GameState, player: PlayerId): P
       spoils: p.spoils.length,
       oathbreaker: (p.oathbreaker ?? 0) >= state.turn ? p.oathbreaker : 0,
       house: p.house,
+      ...(p.startBonus ? { startBonus: p.startBonus } : {}),
     })),
     territories,
     settings: { ...state.settings },

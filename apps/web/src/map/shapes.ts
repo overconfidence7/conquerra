@@ -72,8 +72,12 @@ function edgesOf(g: Pick<MapGeometry, "territories">): Map<string, Edge[]> {
   return m;
 }
 
-export function groupOutlines(g: Pick<MapGeometry, "territories">, groupOf: (territory: string) => string | null): Map<string, Line[]> {
+export function groupOutlines(g: Pick<MapGeometry, "territories">, groupOf: (territory: string) => string | null, cut?: (territory: string) => boolean): Map<string, Line[]> {
   const edges = edgesOf(g);
+  // Session 33, blackout fog: no line along a border with land under the cloud (`cut`), so an outline stops at the
+  // cloud's edge (the lines come out open there) and never traces land a person hasn't seen.
+  const hidden = new Set<string>();
+  if (cut) for (const t of g.territories) if (cut(t.id)) for (const e of edges.get(t.id)!) hidden.add(e.key);
   const segs = new Map<string, Map<string, { a: [number, number]; b: [number, number]; n: number }>>();
   for (const t of g.territories) {
     const grp = groupOf(t.id);
@@ -96,8 +100,8 @@ export function groupOutlines(g: Pick<MapGeometry, "territories">, groupOf: (ter
       if (l) l.push({ key, to });
       else adj.set(k, [{ key, to }]);
     };
-    for (const [key, s] of m) if (s.n === 1) add(s.a, s.b, key), add(s.b, s.a, key);
-    const used = new Set<string>();
+    for (const [key, s] of m) if (s.n === 1 && !hidden.has(key)) add(s.a, s.b, key), add(s.b, s.a, key);
+    const used = new Set<string>(hidden);
     const lines: Line[] = [];
     for (const [key, s] of m) {
       if (s.n !== 1 || used.has(key)) continue;

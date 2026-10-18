@@ -16,21 +16,21 @@ const capital = map.territories.find((t) => t.id === view.me.capital)!.name;
 
 describe("the start bonus, in words", () => {
   it("one line: the capital, the troops, why", () => {
-    expect(startBonusLine(view, namer(ctx, view).place)).toBe(`${capital} starts with 4 extra troops (a harder spot).`);
+    expect(startBonusLine(view, namer(ctx, view).place)).toBe(`${capital} starts with 4 extra troops (an exposed spot).`);
     const none = viewFor({ map: base, rules: defaultRules }, createGame({ map: base, rules: defaultRules }, { gameId: "g", seed: "words", players: [1, 2, 3, 4].map((i) => ({ id: `p${i}`, name: `P${i}` })) }), "p1");
     expect(startBonusLine(none, namer(ctx, none).place)).toBeNull();
   });
 
   it("the first turn's report opens with it; later reports don't", () => {
     const first = narrateTurn(ctx, [{ type: "turnStart", step: 0, turn: 1, seats: ["p1", "p2"] }], namer(ctx, view));
-    expect(first[0]!.text).toBe(`${capital} starts with 4 extra troops (a harder spot).`);
+    expect(first[0]!.text).toBe(`${capital} starts with 4 extra troops (an exposed spot).`);
     const later = narrateTurn(ctx, [{ type: "turnStart", step: 0, turn: 2, seats: ["p1", "p2"] }], namer(ctx, view));
     expect(later.some((l) => l.text.includes("extra troops"))).toBe(false);
   });
 
   it("the territory card says so on turn 1, at your capital", () => {
     const troops = territoryCard(ctx, view, view.me.capital).lines.find((l) => l.label === "Troops")!;
-    expect(troops.value).toBe("16 troops, 4 of them extra at the start (a harder spot)");
+    expect(troops.value).toBe("16 troops, 4 of them extra at the start (an exposed spot)");
     const turn2 = territoryCard(ctx, { ...view, turn: 2 }, view.me.capital).lines.find((l) => l.label === "Troops")!;
     expect(turn2.value).toBe("16 troops");
   });
@@ -40,6 +40,23 @@ describe("the start bonus in the grouped report", () => {
   it("the first turn's report opens your news with it", async () => {
     const { groupReport } = await import("../src/logic/report");
     const g = groupReport(ctx, [{ type: "turnStart", step: 0, turn: 1, seats: ["p1", "p2"] }], namer(ctx, view));
-    expect(g.yours[0]!.text).toBe(`${capital} starts with 4 extra troops (a harder spot).`);
+    expect(g.yours[0]!.text).toBe(`${capital} starts with 4 extra troops (an exposed spot).`);
+  });
+});
+
+describe("everyone's head start on the first turn's report (session 33: a random map gives most spots one)", () => {
+  it("names the others' head starts, most first; a view says how many, never where", async () => {
+    const { groupReport } = await import("../src/logic/report");
+    const { headStartsLine } = await import("../src/logic/text");
+    expect(view.players.filter((p) => p.id !== "p1").map((p) => p.startBonus)).toEqual([4, 4, 4]);
+    expect(headStartsLine(view)).toBe("Head starts for the exposed spots: P2 +4, P3 +4, P4 +4.");
+    const g = groupReport(ctx, [{ type: "turnStart", step: 0, turn: 1, seats: ["p1", "p2"] }], namer(ctx, view));
+    expect(g.yours.map((l) => l.text).slice(0, 2)).toEqual([`${capital} starts with 4 extra troops (an exposed spot).`, "Head starts for the exposed spots: P2 +4, P3 +4, P4 +4."]);
+    const graded = { ...view, players: view.players.map((p, i) => ({ ...p, startBonus: [0, 2, 0, 5][i] })) };
+    expect(headStartsLine(graded as typeof view)).toBe("Head starts for the exposed spots: P4 +5, P2 +2.");
+    // A map with none: no line.
+    const none = viewFor({ map: base, rules: defaultRules }, createGame({ map: base, rules: defaultRules }, { gameId: "g", seed: "words", players: [1, 2, 3, 4].map((i) => ({ id: `p${i}`, name: `P${i}` })) }), "p1");
+    expect(headStartsLine(none)).toBeNull();
+    expect(JSON.stringify(view.players)).not.toMatch(/capital|t\d+/);
   });
 });

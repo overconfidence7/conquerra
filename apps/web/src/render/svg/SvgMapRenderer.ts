@@ -2,7 +2,7 @@ import type { Line } from "@conquerra/content";
 import { landFrame, toMap, type Camera, type Insets } from "../../map/camera";
 import { houseOf } from "../../map/houses";
 import { groupOutlines, hitTester } from "../../map/shapes";
-import { territoryStatus } from "../../map/status";
+import { isUnknown, territoryStatus } from "../../map/status";
 import { typicalTerritorySize } from "../../map/zoom";
 import { attachInput, CameraController } from "../controls";
 import type { MapEvents, MapRenderer, MapScene, RendererOptions } from "../types";
@@ -87,7 +87,10 @@ class SvgMapRenderer implements MapRenderer {
     const g = this.opts.ctx.map.geometry!;
     this.dynamic.replaceChildren();
     const k = 1 / Math.max(0.3, this.cam.cam.scale);
+    // (Session 33, blackout fog: land never seen isn't drawn at all on the plain map, nor any outline through it.)
+    const unknown = (id: string) => view.settings.fog === "blackout" && isUnknown(view, id);
     for (const t of g.territories) {
+      if (unknown(t.id)) continue;
       const s = territoryStatus(view, t.id);
       const fill = s.kind === "seen" ? (s.owner ? houseOf(view, s.owner).color : "#d4c9aa") : "#7d8087";
       el("path", { d: path(t.rings), fill, "fill-rule": "evenodd", stroke: "#1b1206", "stroke-opacity": 0.45, "stroke-width": 1, opacity: s.kind === "seen" ? 1 : 0.9 }, this.dynamic);
@@ -98,12 +101,12 @@ class SvgMapRenderer implements MapRenderer {
     const area = new Set(scene.area ?? []);
     if (area.size)
       for (const t of this.opts.ctx.map.territories)
-        if (area.has(t.province)) el("path", { d: path(g.territories.find((x) => x.id === t.id)!.rings), fill: "none", stroke: "#e3c77e", "stroke-width": 2 * k, "stroke-dasharray": "5 3" }, this.dynamic);
+        if (area.has(t.province) && !unknown(t.id)) el("path", { d: path(g.territories.find((x) => x.id === t.id)!.rings), fill: "none", stroke: "#e3c77e", "stroke-width": 2 * k, "stroke-dasharray": "5 3" }, this.dynamic);
     // Walls (session 20b): a stone ring with a band of the House colour round each wall you can see part of.
     const walled = new Map<string, string>();
-    (view.walls ?? []).forEach((w, i) => w.territories.forEach((t) => walled.set(t, `w${i}`)));
+    (view.walls ?? []).forEach((w, i) => w.territories.forEach((t) => !unknown(t) && walled.set(t, `w${i}`)));
     if (walled.size)
-      for (const [grp, lines] of groupOutlines(g, (id) => walled.get(id) ?? null)) {
+      for (const [grp, lines] of groupOutlines(g, (id) => walled.get(id) ?? null, unknown)) {
         const owner = view.walls![Number(grp.slice(1))]!.owner;
         el("path", { d: path(lines, false), fill: "none", stroke: "#1b1206", "stroke-width": 7 * k, "stroke-dasharray": `${6 * k} ${3 * k}` }, this.dynamic);
         el("path", { d: path(lines, false), fill: "none", stroke: houseOf(view, owner).color, "stroke-width": 3 * k }, this.dynamic);

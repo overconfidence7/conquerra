@@ -249,7 +249,7 @@ export function territoryCard(ctx: GameContext, view: PlayerView, id: TerritoryI
     const lines: CardLine[] = [
       { label: "Owner", value: heldBy(v.owner), color: houseOf(view, v.owner).color },
       // The start bonus (session 23), on turn 1: your capital's head start.
-      { label: "Troops", icon: "icon-troops", value: id === view.me.capital && view.turn === 1 && view.me.startBonus ? `${troops(v.troops)}, ${view.me.startBonus} of them extra at the start (a harder spot)` : troops(v.troops) },
+      { label: "Troops", icon: "icon-troops", value: id === view.me.capital && view.turn === 1 && view.me.startBonus ? `${troops(v.troops)}, ${view.me.startBonus} of them extra at the start (an exposed spot)` : troops(v.troops) },
       // Walls (session 20b): who'd defend it, next to its own troops.
       ...wallRow(ctx, view, id),
       { label: "Building", value: building, ...(v.building || v.construction ? { icon: `icon-${v.building ?? v.construction!.building}` } : {}) },
