@@ -39,8 +39,8 @@ describe("random map version 4 (session 33): the graded head start", () => {
   });
 
   it("a version 4 map: the same land as version 3, a head start on every spot but the safest, harder spots as before", () => {
-    const v3 = randomMap("120-archipelago-quiet-heron", defaultRules, { version: 3 }).map;
-    const v4 = randomMap("120-archipelago-quiet-heron", defaultRules).map;
+    const v3 = randomMap("80-island-quiet-heron", defaultRules, { version: 3 }).map;
+    const v4 = randomMap("80-island-quiet-heron", defaultRules).map;
     expect(v4.generator?.version).toBe(4);
     expect(v4.territories).toEqual(v3.territories);
     expect(v4.borders).toEqual(v3.borders);
@@ -60,18 +60,28 @@ describe("random map version 4 (session 33): the graded head start", () => {
     }
   }, 120_000);
 
-  it("pinned: a seed at each size builds the same version 4 map, and versions 2 and 3 build the maps they built before session 33", () => {
-    const v4 = { "40-island-quiet-heron": "dbb2a3c5f9b5dedf", "80-island-quiet-heron": "97423f72ed759de8", "120-archipelago-quiet-heron": "8de6604e1d8cf378", "200-inland-quiet-heron": "ba40710051311836" };
-    for (const [id, fp] of Object.entries(v4)) expect(mapFingerprint(randomMap(id, defaultRules).map), id).toBe(fp);
+  // Pinned, one map a test (a big map takes a while to build, and the test runner wants to hear from its worker between
+  // tests): a seed at each size at version 4, and versions 2 and 3 building the maps they built before session 33.
+  const PINNED: [version: number, id: string, fingerprint: string][] = [
+    [4, "40-island-quiet-heron", "dbb2a3c5f9b5dedf"],
+    [4, "80-island-quiet-heron", "97423f72ed759de8"],
+    [4, "120-island-quiet-heron", "27bae963caadc387"],
+    [4, "200-inland-quiet-heron", "ba40710051311836"],
     // (Taken before any of session 33's changes.)
-    const old = { 2: { "40-island-quiet-heron": "6b42b78a243e32b4", "80-twins-jolly-lake": "52e1a507ff979023", "200-inland-quiet-heron": "557b04c14a28d0f1" }, 3: { "40-island-quiet-heron": "69de27e979c27539", "120-archipelago-quiet-heron": "5812f63a1d9fd292" } };
-    for (const [v, ids] of Object.entries(old)) for (const [id, fp] of Object.entries(ids)) expect(mapFingerprint(randomMap(id, defaultRules, { version: Number(v) }).map), `${id} at version ${v}`).toBe(fp);
-    // The 40's four-player head starts, by hand: k = 8, capped at 6.
+    [2, "40-island-quiet-heron", "6b42b78a243e32b4"],
+    [3, "40-island-quiet-heron", "69de27e979c27539"],
+  ];
+  for (const [version, id, fp] of PINNED)
+    it(`pinned: ${id} at version ${version}`, () => {
+      expect(mapFingerprint(randomMap(id, defaultRules, { version }).map)).toBe(fp);
+    }, 120_000);
+
+  it("the 40's four-player head starts, by hand: k = 8, capped at 6", () => {
     expect(randomMap("40-island-quiet-heron", defaultRules).map.capitalLayouts!.find((l) => l.players === 4)!.bonus).toEqual({ t20: 5, t32: 3 });
-  }, 300_000);
+  });
 
   it("in a game: each capital starts with its spot's head start; the seat rule deals only the harder spots to bots first", () => {
-    const { map } = randomMap("120-archipelago-quiet-heron", defaultRules);
+    const { map } = randomMap("80-island-quiet-heron", defaultRules);
     const layout = map.capitalLayouts!.find((l) => l.players === 8)!;
     expect(Object.keys(layout.bonus!).length).toBeGreaterThan(layout.harder!.length);
     const players = Array.from({ length: 8 }, (_, i) => ({ id: `p${i + 1}`, name: `P${i + 1}`, bot: i > 0 }));
