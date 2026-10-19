@@ -154,6 +154,9 @@ describe("the table screen on the page (session 27)", () => {
     // The host starts (from Nate's own page): Kit's page opens on turn 1, in Kit's seat.
     await h.room.receive(NATE, { id: 99, type: "table", act: { do: "start" } });
     const start = await opening;
+    // (Session 33b: the room says the table started before it sends the start, so while the page makes its map the table
+    // screen says "Building the map…", not the table as it was.)
+    expect(seen.at(-1)!.status).toBe("started");
     expect(start.playerId).toBe("p2");
     expect(start.view.turn).toBe(1);
     expect(start.map.geometry?.territories.length).toBe(40);

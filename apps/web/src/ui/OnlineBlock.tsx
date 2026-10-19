@@ -110,6 +110,9 @@ export default function OnlineBlock() {
     return () => (clearInterval(tick), clearInterval(fresh));
   }, []);
   const off = onlineProblem?.includes("isn't switched on");
+  // Session 33b: a random map's table waits for the lobby's picture, which says which of its tries passed: the room then
+  // makes that one try (a big map's six tries could take the room past its time limit).
+  const mapReady = useGame((s) => !s.lobby.mapId.startsWith("random:") || (s.randomPreview?.mapId === s.lobby.mapId && !!s.randomPreview.preview));
   const done = onlineGames ? finishedShown(onlineGames, now, cleared) : [];
   // "Clear finished": hides them on this device (they stay on the server for their week).
   const clearFinished = () => {
@@ -158,7 +161,7 @@ export default function OnlineBlock() {
         </span>
         <button
           className="wide"
-          disabled={busy || off}
+          disabled={busy || off || !mapReady}
           onClick={() => {
             setTried(true);
             void startOnline();

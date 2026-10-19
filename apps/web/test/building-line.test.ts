@@ -23,6 +23,9 @@ describe("the waits while a random map is built (session 33b)", () => {
   it("the lobby's button says so while the room builds, and the table page never loads blank", () => {
     const block = readFileSync(join(here, "../src/ui/OnlineBlock.tsx"), "utf8");
     expect(block).toContain('lobby.mapId.startsWith("random:") ? "Building the map…" : "Making the table…"');
+    // A random map's table waits for the lobby's picture (it says which try passed, so the room makes only that one).
+    expect(block).toContain("disabled={busy || off || !mapReady}");
+    expect(block).toContain("s.randomPreview?.mapId === s.lobby.mapId && !!s.randomPreview.preview");
     const main = readFileSync(join(here, "../src/main.tsx"), "utf8");
     expect(main).toContain('<Suspense fallback={<p className="muted loading-line">Opening the table…</p>}>');
   });
