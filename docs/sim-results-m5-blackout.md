@@ -116,3 +116,16 @@ Your leaders already had the scout's drive: their plans read the same board as t
 **Standard fog unchanged:** see `PROGRESS.md`, session 33 (the digest, the Captain fingerprint, the seeded sim at the commit before and after each part).
 
 **The orchestrator's re-run (Oct 18, its own seed `o12r`, 300 games each):** the Turtle on Embervale 4 reads 22.1% with standard fog and 16.4% under blackout (5.7 apart; the session's 900-game pair 22.8 and 18.5, 4.3 apart). One standard error at 300 games is about 2.5 points, so the bar is about one error wide and 300 games can't settle a personality: the session's 900 is the count to use. In the same run the dealt Blitzer read 36.2% under blackout against 29.6% (the session: 32.0 against 27.5, inside the bar): the one to keep an eye on when blackout's personalities come up again. The honesty test fails on a planted full-map cheat (17 of 19) and the fog-wire test on a planted fogged name in a bot's line (3 of 4). **Nate's call (Oct 18):** the Opportunist keeps vulture 0.5 under blackout.
+
+## Session 33b (Oct 19): the Blitzer, again
+
+*The orchestrator's 300-game re-run read the Blitzer at 36.2% under blackout against 29.6% with standard fog (6.6 apart); session 33's 900 games had 32.0 against 27.5 (4.5). Run again at 900 games with a new seed: `npx tsx apps/sim/src/tournament.ts --table embervale:4 --seats marshal-blitzer,marshal,marshal,marshal --games 900 --fog blackout|on --seed s33b` (`docs/sims/s33b-bo-blitzer-*.txt`).*
+
+| Fog | The Blitzer (fair 25%) | Turns (avg) | Within 40 |
+|---|---|---|---|
+| Blackout | **30.0%** | 21.9 | 96.2% |
+| Standard | **27.1%** | 23.4 | 95.8% |
+
+**2.9 points apart: inside the 5-point bar, so nothing changes** (no `blackout` block for the Blitzer). Across the three 900-or-300-game pairs (session 33: 4.5 apart, the orchestrator: 6.6, this: 2.9) the Blitzer gains about 4 points from blackout on average: it does well under blackout, as an all-in attacker should when nobody can see it coming, and it sits near the bar's edge; one standard error at 900 games is about 1.5 points.
+
+**Also seen, for the orchestrator (not this part's question):** in the same tables the *dealt* Turtle seats (the three ordinary Marshal seats when their dealt personality was the Turtle, about 450 seat-games a run) won 12.4% under blackout against 21.3% with standard fog. Session 33's bar was measured with the Turtle in the fixed seat (18.5% against 22.8%), so this is a different measure on fewer games, but it's the second reading that puts the Turtle's blackout gap near or past the bar (the orchestrator's 300-game re-run: 16.4 against 22.1).
