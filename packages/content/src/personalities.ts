@@ -9,7 +9,7 @@ import { z } from "zod";
 
 const Odds = z.number().min(0);
 
-export const Personality = z.object({
+const PersonalityBase = z.object({
   /** The six bots' personalities; "delegate" is the style your leaders plan with (session 18), never dealt to a bot. */
   id: z.enum(["conqueror", "blitzer", "turtle", "schemer", "opportunist", "merchant", "delegate"]),
   /** "the Turtle": what the game-over screen says after a bot's name. */
@@ -86,6 +86,18 @@ export const Personality = z.object({
     /** It offers joint wars against its own target, not only against a runaway. */
     offersWars: z.boolean(),
   }),
+});
+export const Personality = PersonalityBase.extend({
+  /**
+   * Session 33: under blackout fog only, these values instead of its own (the sims found blackout plays the Turtle and
+   * the Opportunist differently: the Turtle holds back and builds while the others race into the cloud; the Opportunist
+   * feeds on the fights it finds). Any of its attack, defend and build values. Read in one place, where the Marshal's
+   * plan takes its personality (`forFog` in the bots). Nothing with standard fog.
+   */
+  blackout: z
+    .object({ attack: PersonalityBase.shape.attack.partial().optional(), defend: PersonalityBase.shape.defend.partial().optional(), build: PersonalityBase.shape.build.partial().optional() })
+    .strict()
+    .optional(),
 });
 export type Personality = z.infer<typeof Personality>;
 export type PersonalityId = Personality["id"];
@@ -372,7 +384,19 @@ export type LeaderPlanning = z.infer<typeof LeaderPlanning>;
  *    with the army it recruits into, before any other specialist.
  * Idle spies (no rival to watch) head for the cloud too.
  */
-export const Explore = z.object({ weight: z.number().min(0), scoutTurn: z.number().int().min(0), scoutCloud: z.number().min(0).max(1) });
+export const Explore = z.object({
+  weight: z.number().min(0),
+  scoutTurn: z.number().int().min(0),
+  scoutCloud: z.number().min(0).max(1),
+  /**
+   * Session 33, your leaders under blackout (the delegating seat): their own drive, read where they plan. `weight`,
+   * `scoutTurn` and `scoutCloud` as above, for the Leader's commands (Run the military and the rest: the land it values,
+   * the Scouts it hires) and the generals'; `watchtowers`: up to this turn (`watchtowerTurn`), while at least
+   * `scoutCloud` of the map is cloud, the Steward running the realm keeps this many watchtowers standing or going up on
+   * its land at the cloud's edge (vision +1 there), before its other building. All zero with standard fog.
+   */
+  leaders: z.object({ weight: z.number().min(0), scoutTurn: z.number().int().min(0), scoutCloud: z.number().min(0).max(1), watchtowers: z.number().int().min(0), watchtowerTurn: z.number().int().min(0) }),
+});
 export type Explore = z.infer<typeof Explore>;
 
 export const MarshalData = z

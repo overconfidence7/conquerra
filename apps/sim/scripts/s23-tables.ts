@@ -9,7 +9,8 @@
  *   npx tsx apps/sim/scripts/s23-tables.ts recruit <games> <map:players,...> <seed>
  *     one Recruit against Captains (it should stay easy).
  *
- * A last argument, a JSON change to the Marshals' shared judgement ('{"lesson":true}'), plays the Marshal seats with it.
+ * A last argument, a JSON change to the Marshals' shared judgement ('{"lesson":true}'), plays the Marshal seats with it
+ * (session 33: or '{"personalities":{"turtle":{"blackout":{...}}}}', merged into those personalities).
  * Fog and diplomacy on; seats rotated each game. Uses every core but one. (The tables themselves: `src/tables.ts`.)
  */
 import { marshalTable, seatTable } from "../src/tables";
@@ -19,7 +20,9 @@ const argv = process.argv.slice(2);
 const fogAt = argv.indexOf("--fog");
 const fog = fogAt >= 0 ? (argv.splice(fogAt, 2)[1] === "blackout" ? ("blackout" as const) : true) : true;
 const [mode = "marshals", gamesArg = "300", tablesArg = "embervale:4", seed = "s23", tweakArg = ""] = argv;
-const tweak = tweakArg ? { tweak: { judgement: JSON.parse(tweakArg) as Record<string, unknown> } } : {};
+// (Session 33: or a whole tweak, '{"personalities":{"turtle":{...}}}', merged into named personalities as the tournament does.)
+const parsed = tweakArg ? (JSON.parse(tweakArg) as Record<string, Record<string, unknown>>) : null;
+const tweak = parsed ? { tweak: parsed.personalities || parsed.judgement ? parsed : { judgement: parsed } } : {};
 const games = Number(gamesArg);
 
 for (const t of tablesArg.split(",")) {

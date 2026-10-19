@@ -53,3 +53,64 @@ Session 30 reported 300 blackout games on Embervale 4 and Wyrmland 6 "game for g
 - **Orders never name land never seen** (the same file), and a spy is never sent to a province with no known land.
 - **The view itself:** a replay can name land at the cloud's edge without showing it (a rival army marching out of the cloud into sight, a Fate closure on a border into the cloud). The bots use those only as player ids and border pairs; the test renames them with everything else, so a bot that looked behind them would plan differently.
 - **Standard fog unchanged:** the 240-game digest `dc8962d4f8ba3bc6`, the Captain fingerprint `232617a30b1f8b47` (15,639 orders) and `pnpm sim --games 40 --players 6 --map wyrmland --bots marshal --seed o32` are identical at the commit before the session and after each part.
+
+## Session 33 (Oct 18): the personalities and your leaders
+
+*Embervale 4, one seat given the personality and three dealt Marshals, seats rotated, seed `s33`: `npx tsx apps/sim/src/tournament.ts --table embervale:4 --seats marshal-<p>,marshal,marshal,marshal --games 900 --fog blackout|on --seed s33`, a try's values with `--tweak '{"personalities":{"turtle":{"blackout":{...}}}}'`. The number is the win rate of every seat playing that personality (fair 25%); the bar is each within 0.2 x fair (5 points) of its standard number. The delegating seat: `npx tsx apps/sim/scripts/s23-tables.ts delegate 600 wyrmland:6 s33 --fog blackout|on`. The runner: `docs/sims/run-s33-blackout.sh`; every run's output is in `docs/sims/s33-bo-*.txt`.*
+
+**First, the noise.** At 300 games one standard error on a personality's number is about 2.5 points, and session 32's numbers moved a lot with the seed: with `s33` the Turtle under blackout read 20.9% at 300 games (session 32's `s32`: 14.7%) and 17.5% at 900. The delegating seat swings more: seed `s32` gives 1.54x fair with standard fog (exactly session 32's number, so its standard-fog games are unchanged), seed `s33` 1.22x. So the decisions below are on 900 games a personality (one standard error about 1.4 points) and 600 for the delegating seat.
+
+**What blackout does, before any change (900 games, s33):** the Turtle 22.8% → **17.5%** (5.3 down: misses), the Opportunist 25.8% → **31.0%** (5.2 up: misses). The other four, with standard fog: the Conqueror 25.6%, the Blitzer 27.5%, the Schemer 23.8%, the Merchant 25.0%.
+
+**Why the attack values do nothing for the Turtle.** Every Marshal attacks at least as hard as the shared judgement's floor (`attackFloor`: chain on at 1.0 times the odds, send everything, six hops), so a personality's own chain odds, send share and hops never bind; its front garrison is scaled to zero for everyone too (`garrisonScale` 0). What's left of the Turtle's own play is its calm (attacks on rivals held back until its strike turn: under blackout it rarely meets a rival that early anyway) and its building (it spends like the Steward on 1.5 times the usual share, markets and culture from turn 2, walls with up to 39 gold to go). Under blackout the others race into the cloud with the scout's drive while it builds.
+
+| The Turtle under blackout (900 games; standard 22.8%) | Win rate | Off its standard |
+|---|---|---|
+| before (session 32's values) | 17.5% | 5.3 |
+| attack: calm 1.6, strike turn 10 (the brief's first try) | 17.6% | 5.2 |
+| attack: as above, chains at 1.3, sends half | 17.7% | 5.1 |
+| attack: calm 1.2, strike turn 6, chains at 1.25, sends 0.6, four hops | 17.6% | 5.2 |
+| build: realm 0.75, walls from 18 | 17.4% | 5.4 |
+| **build: markets and culture from turn 6, realm 1 (shipped)** | **18.8%** | **4.0** |
+| build: as above, realm 0.5, walls from 10, one fort | 18.9% | 3.9 |
+
+| The Opportunist under blackout (900 games; standard 25.8%) | Win rate | Off its standard |
+|---|---|---|
+| before (vulture 2) | 31.0% | 5.2 |
+| vulture 1 (the brief's half) | 30.4% | 4.6 |
+| **vulture 0.5 (shipped)** | **29.5%** | **3.7** |
+| vulture 0 | 27.8% | 2.0 |
+
+Vulture 0 is closest, but it takes away what makes the Opportunist the Opportunist; 0.5 meets the bar and keeps it a vulture.
+
+**Shipped** (`packages/content/data/personalities.json`, each personality's `blackout` block, read in one place, `forFog` where the Marshal's plan takes its personality; a block can now hold attack, defend and build values): **the Turtle** builds markets and culture from turn 6 (not 2) and spends like the Steward on its usual share (realm 1, not 1.5) under blackout; **the Opportunist**'s vulture is 0.5 (not 2) under blackout. Nothing else changes, and nothing with standard fog.
+
+**Every personality with the shipped values (900 games each):**
+
+| Personality | Standard fog | Blackout | Off | Bar (5) |
+|---|---|---|---|---|
+| Turtle | 22.8% | 18.5% | 4.3 | met |
+| Opportunist | 25.8% | 29.5% | 3.7 | met |
+| Conqueror | 25.6% | 28.5% | 2.9 | met |
+| Blitzer | 27.5% | 32.0% | 4.5 | met |
+| Schemer | 23.8% | 24.8% | 1.0 | met |
+| Merchant | 25.0% | 25.4% | 0.4 | met |
+
+(The Turtle's 18.5% here and 18.8% in the try above are the same values with other seats' blackout values in place; within noise.) **Found:** the Blitzer gains most from blackout (32.7% with session 32's values, 32.0% now, against 27.5%): it never pauses a chain, and the cloud rewards whoever reaches it first. Inside the bar, so left alone.
+
+**The headline again (300 all-Marshal games, s33, shipped values):** Embervale 4 under blackout 20.0 / 28.3 / 28.3 / 23.3 (5.0 off fair; standard fog with the same seed 20.0 / 30.0 / 27.0 / 23.0, also 5.0), 21.5 turns (standard 22.7), 96% within 40, half the map seen by turn 4.9 (standard 6.2; session 32: 4.8); Wyrmland 6 under blackout 21.3 / 14.0 / 14.7 / 18.7 / 16.0 / 15.3 (4.7 off; standard 3.7), 44.1 turns (standard 41.6). **Met:** ±5 by seat, turns within 3, the explore pace where session 32 left it.
+
+**Your leaders under blackout (the delegating seat: your Leader runs the military on 80% of the income, your Steward the realm on 20%, against dealt Marshals, Wyrmland 6, 600 games, s33):**
+
+| Setting | Standard fog | Blackout | Down | Bar (0.2) |
+|---|---|---|---|---|
+| before (session 32's personalities; 300 games) | 1.22x fair | 1.20x | 0.02 | met |
+| the brief's first personality try (300 games) | | 1.06x | 0.16 | met, just |
+| **shipped personalities, your leaders with the Marshal's drive** | **1.34x** | **1.24x** | **0.10** | **met** |
+| the same, and your Steward keeps a watchtower near the cloud's edge to turn 6 | | 1.19x | 0.15 | met |
+
+Your leaders already had the scout's drive: their plans read the same board as the Marshal's, and its land values carry the explore term, and your Leader on Run the military hires Scouts early as the Marshal does (session 32). Session 33 gives them their own content values (`explore.leaders` in `personalities.json`: the drive's weight, the Scouts' turn and cloud share, and a Steward's watchtowers), set to the Marshal's, with the watchtowers off: the one new thing tried, a watchtower near the cloud's edge, didn't help (1.19x against 1.24x). The council's lines don't change. With standard fog none of it does anything (a test plays the delegating seat with every `explore.leaders` value changed: the same orders).
+
+**So every bar is met under blackout:** the six personalities within 5 points of their standard numbers, the delegating seat within 0.2, the headline within ±5 by seat with turns within 3. (The Rules fold's label came off in Step 0 by Nate's call.)
+
+**Standard fog unchanged:** see `PROGRESS.md`, session 33 (the digest, the Captain fingerprint, the seeded sim at the commit before and after each part).

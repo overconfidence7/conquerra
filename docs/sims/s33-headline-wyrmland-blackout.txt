@@ -1,0 +1,23 @@
+  25/300
+  50/300
+  75/300
+  100/300
+  125/300
+  150/300
+  175/300
+  200/300
+  225/300
+  250/300
+  275/300
+  300/300
+
+=== wyrmland: 6 players, all Marshals, fog blackout ===
+Games: 300 played, 0 not ()
+Win rate by seat (fair 16.7%): 21.3% / 14.0% / 14.7% / 18.7% / 16.0% / 15.3%; furthest from fair 4.7 points
+Turns: avg 44.1, median 43, min 25, max 60; within 40: 41%; ended: lastStanding 84%, turnCap 16%
+Time: 16.4 s a game
+Comebacks (the winner wasn't the leader after turn 10): 73% of games that went past turn 10
+Explore pace: a seat had seen half the map by turn 15.7 on average (72% of seats ever), all of it by turn 42.3 (8% of seats ever)
+Wins by the spot's exposure (safest first, fair 16.7%): 18.3% / 40.3% / 26.7% / 3.3% / 4.0% / 7.3%
+Harder spots: marked on 300 of 300 maps (2.0 a map); they won 7.3% of those games against a fair 33.3%
+Head start by the spot's exposure (safest first, average troops): 0.0 / 0.0 / 0.0 / 6.0 / 6.0 / 0.0

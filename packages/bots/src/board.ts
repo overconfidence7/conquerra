@@ -76,6 +76,8 @@ export function runawayLeader(estimates: readonly [PlayerId, number][], ownLand:
 export interface BoardOverrides {
   knownLand?: ReadonlyMap<PlayerId, number>;
   runaway?: PlayerId | null;
+  /** Session 33: the scout's drive for this board's land values, if not the Marshal's (`explore.leaders.weight` for your leaders). */
+  explore?: number;
 }
 
 /**
@@ -322,7 +324,7 @@ export function readBoard(ctx: GameContext, view: PlayerView, opts: CaptainOptio
     if (toFocusCapital && (toFocusCapital.get(t) ?? 99) <= 2) val += 4;
     // Session 32, blackout: land whose borders lead into the cloud shows what's beyond once it's ours (the scout's
     // drive), fading as the cloud lifts. Zero with standard fog (nothing is unknown) and for land we hold.
-    if (cloudShare > 0 && !owned(t)) val += marshalData.explore.weight * cloudBorders(ctx.map, t) * cloudShare;
+    if (cloudShare > 0 && !owned(t)) val += (overrides.explore ?? marshalData.explore.weight) * cloudBorders(ctx.map, t) * cloudShare;
     return val;
   };
   /**

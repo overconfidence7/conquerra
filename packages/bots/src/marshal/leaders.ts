@@ -244,7 +244,7 @@ export function planLeaders(req: LeadersRequest): LeadersPlan {
   const notes: Record<string, LeaderNote> = {};
   const list = commandsOf(view, req.commands).filter((x) => !!x.command && (!req.only || req.only.includes(leaderKey(x.l))));
   if (!list.length || view.me.eliminatedTurn !== null) return { orders: [], memory: thought.memory, written, notes };
-  const b = marshalBoard(ctx, view, thought.insight, lastTurn);
+  const b = marshalBoard(ctx, view, thought.insight, lastTurn, true);
   if (!b) return { orders: [], memory: thought.memory, written, notes };
   const claims = claimArmies(b, view, commandsOf(view, req.commands));
   const taken = new Set<TerritoryId>();
@@ -427,7 +427,7 @@ function planMilitary(
         }
       }
     }
-    const board = plannedView === view ? b : marshalBoard(ctx, plannedView, thought.insight, lastTurn);
+    const board = plannedView === view ? b : marshalBoard(ctx, plannedView, thought.insight, lastTurn, true);
     return { orders: [...pre, ...planGeneral(ctx, plannedView, l.of, instruction, lastTurn, { chainMargin: margin }, board)], note: null, forts: [] };
   }
 

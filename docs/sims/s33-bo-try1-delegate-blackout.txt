@@ -1,0 +1,1 @@
+delegate wyrmland:6       s33: delegate-80 won 17.7% = 1.06x fair (fair 16.7%) | buildings 93g culture 330g walls 7.86 | length avg 43.8 | 375s

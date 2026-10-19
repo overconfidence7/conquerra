@@ -1,0 +1,23 @@
+  25/300
+  50/300
+  75/300
+  100/300
+  125/300
+  150/300
+  175/300
+  200/300
+  225/300
+  250/300
+  275/300
+  300/300
+
+=== embervale: 4 players, all Marshals, fog blackout ===
+Games: 300 played, 0 not ()
+Win rate by seat (fair 25.0%): 20.0% / 28.3% / 28.3% / 23.3%; furthest from fair 5.0 points
+Turns: avg 21.5, median 20, min 8, max 60; within 40: 96%; ended: lastStanding 100%
+Time: 4.3 s a game
+Comebacks (the winner wasn't the leader after turn 10): 37% of games that went past turn 10
+Explore pace: a seat had seen half the map by turn 4.9 on average (91% of seats ever), all of it by turn 18.9 (31% of seats ever)
+Wins by the spot's exposure (safest first, fair 25.0%): 18.0% / 35.0% / 21.7% / 25.3%
+Harder spots: marked on 300 of 300 maps (1.0 a map); they won 35.0% of those games against a fair 25.0%
+Head start by the spot's exposure (safest first, average troops): 0.0 / 2.0 / 0.0 / 0.0

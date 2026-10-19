@@ -1,4 +1,5 @@
-import type { LeaderPlanning } from "@conquerra/content";
+import { marshalData, type LeaderPlanning } from "@conquerra/content";
+import { cloudBorders } from "../known";
 import { investCost, isRecruitSiteIn, wallRules, type LeaderStyle, type Order, type PlayerId, type StewardCommand, type TerritoryId } from "@conquerra/engine";
 import type { Board } from "../board";
 import { realmShape, type RealmShape } from "./realm";
@@ -33,7 +34,7 @@ import { realmShape, type RealmShape } from "./realm";
 
 /** Something the Steward could buy, best first. `urgent`: it saves up for this rather than buy lesser things. */
 interface Wish {
-  order: { kind: "build"; territory: TerritoryId; building: "fort" | "market" | "barracks" } | { kind: "invest"; territory: TerritoryId };
+  order: { kind: "build"; territory: TerritoryId; building: "fort" | "market" | "barracks" | "watchtower" } | { kind: "invest"; territory: TerritoryId };
   territory: TerritoryId;
   cost: number;
   urgent: boolean;
@@ -234,6 +235,25 @@ export function planSteward(
     return spot ? [{ order: { kind: "build", territory: spot, building: "barracks" }, territory: spot, cost: barracks, urgent: !sites.length }] : [];
   };
 
+  /**
+   * Session 33, blackout: your Steward running the realm (with a plan) keeps up to `watchtowers` watchtowers standing
+   * or going up near the cloud's edge, early on while much of the map is cloud (`explore.leaders`), on the land whose
+   * neighbours have the most borders into it (a watchtower sees one further) (off the plots kept for forts if it can, never the capital's). Nothing with standard fog (no
+   * cloud) or at 0.
+   */
+  const X = marshalData.explore.leaders;
+  const lookouts = (): Wish[] => {
+    if (!plan || X.watchtowers <= 0 || b.cloudShare <= 0 || b.cloudShare < X.scoutCloud || view.turn > X.watchtowerTurn) return [];
+    const standing = mine.filter((t) => seen(t)!.building === "watchtower" || seen(t)!.construction?.building === "watchtower").length;
+    return mine
+      // (Our own land never borders the cloud, we see next door: it's the land next to it that does.)
+      .map((t) => ({ t, edge: idx.neighbors.get(t)!.reduce((a, x) => a + (owned(x) ? 0 : cloudBorders(b.ctx.map, x)), 0) }))
+      .filter((x) => x.edge > 0 && !building(x.t) && !keepForFort(x.t) && x.t !== capital)
+      .sort((a, c) => Number(fortPlot(a.t)) - Number(fortPlot(c.t)) || c.edge - a.edge || (a.t < c.t ? -1 : 1))
+      .slice(0, Math.max(0, X.watchtowers - standing))
+      .map(({ t }): Wish => ({ order: { kind: "build", territory: t, building: "watchtower" }, territory: t, cost: rules.buildings.watchtower.cost, urgent: false }));
+  };
+
   /** The last piece of a wall (session 23): what's left to pay is one fort, or one level of culture. */
   const oneStep = (t: TerritoryId) => {
     const left = wallLeft(t);
@@ -286,6 +306,7 @@ export function planSteward(
       wishes = shape
         ? [
             ...pressing.filter((w) => w.territory === capital && !candidateSet.has(capital)),
+            ...lookouts(),
             ...rush,
             ...pressing.filter((w) => !candidateSet.has(w.territory) || !shape.threatened),
             ...(turtle ? steady : learn ? steady.filter((w) => oneStep(w.territory)) : []),

@@ -105,13 +105,24 @@ const RECRUIT_FALLBACKS = 4;
 const OFF_FRONT = 0.45;
 
 /**
+ * Session 33: a personality as it plays in this game. Under blackout fog its `blackout` values (content: attack, defend,
+ * build) take the place of its own; with standard fog (or none set) it's exactly itself, the same object.
+ */
+export function forFog(P: Personality, view: Pick<PlayerView, "settings">): Personality {
+  const B = view.settings.fog === "blackout" ? P.blackout : undefined;
+  return B ? { ...P, attack: { ...P.attack, ...B.attack }, defend: { ...P.defend, ...B.defend }, build: { ...P.build, ...B.build } } : P;
+}
+
+/**
  * The Marshal (session 17): the hard level. It reads the board like the Captain (`readBoard`), with its own estimate of
  * land it can't see and its own runaway rule (memory.ts, judge.ts), and plays the Captain's priorities in its
  * personality's style: how far it chains, what it keeps back, what it builds, when it strikes, whom it hits. Every
  * personality plays by the same rules and gold. It only ever reads its own view, its memory and what it watched.
  */
 export function planMarshal(req: MarshalRequest): MarshalPlan {
-  const { personality: P, judgement, lastTurn } = req;
+  const { judgement, lastTurn } = req;
+  // (Session 33: under blackout, the personality's blackout values; the one place they're read.)
+  const P = forFog(req.personality, req.view);
   const ctx = knownCtx(req.ctx, req.view);
   const { insight, memory } = req.insight ?? think(ctx, req.view, judgement, req.memory, lastTurn);
   const scope = req.scope ?? { kind: "realm" };
@@ -182,9 +193,10 @@ function inScope(scope: MarshalScope, src: Source | undefined, view: PlayerView,
  * giving land it can't see to its neighbours made them look bigger than they are and cost it games (Part 2's tests);
  * that estimate is only for spotting a runaway leader.
  */
-export function marshalBoard(ctx: GameContext, view: PlayerView, insight: Insight, lastTurn?: readonly ReplayEvent[]): Board | null {
+export function marshalBoard(ctx: GameContext, view: PlayerView, insight: Insight, lastTurn?: readonly ReplayEvent[], leaders = false): Board | null {
   ctx = knownCtx(ctx, view);
-  return readBoard(ctx, view, BASE, lastTurn, { knownLand: insight.known, runaway: insight.runaway });
+  // (Session 33: your leaders' boards take their own scout's drive, `explore.leaders`.)
+  return readBoard(ctx, view, BASE, lastTurn, { knownLand: insight.known, runaway: insight.runaway, ...(leaders ? { explore: marshalData.explore.leaders.weight } : {}) });
 }
 
 function planMoves(
@@ -203,7 +215,7 @@ function planMoves(
   placed: { v: boolean } = { v: false },
 ): Order[] {
   ctx = knownCtx(ctx, view);
-  const b = marshalBoard(ctx, view, insight, lastTurn);
+  const b = marshalBoard(ctx, view, insight, lastTurn, !!steer);
   if (!b) return [];
   const { rules, idx, me, garrison, seen, owned, rivalAt, troopsAt, specsAt, mine, crossing, isFrontier, frontier, enemyPressure, biggestEnemyNear } = b;
   const { endgame, raider, runaway, shieldsLeader, facesRival, facesRaider, holdNeed, chokeHolder, capital, capThreatened, needFor } = b;
@@ -465,8 +477,8 @@ function planMoves(
     let want: SpecialistType | null = null;
     // Session 32, blackout: early on, with most of the map still cloud, Scouts first (vision +1: the army sees further,
     // so its chains can go further), unless an army of ours has them already. Never with standard fog.
-    const X = marshalData.explore;
-    const scouting = b.cloudShare >= X.scoutCloud && view.turn <= X.scoutTurn && unlocked("scouts") && !mine.some((t) => seen(t)!.specialists.some((s) => s.type === "scouts"));
+    const X = steer ? marshalData.explore.leaders : marshalData.explore;
+    const scouting = b.cloudShare > 0 && b.cloudShare >= X.scoutCloud && view.turn <= X.scoutTurn && unlocked("scouts") && !mine.some((t) => seen(t)!.specialists.some((s) => s.type === "scouts"));
     if (scouting) want = "scouts";
     else if (fortAhead && !has("siege") && unlocked("siege")) want = "siege";
     else if (roughFront && !has("rangers") && unlocked("rangers") && here.troops >= 8) want = "rangers";

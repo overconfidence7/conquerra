@@ -27,6 +27,7 @@ export { cloudBorders, knownCtx, knownExtras, knownMap, mapSize, provinceOpen, t
 export {
   dealPersonalities,
   estimateLand,
+  forFog,
   freshMemory,
   makeMarshalBot,
   marshalBoard,

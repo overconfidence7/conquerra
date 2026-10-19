@@ -9,7 +9,7 @@ import { marshalBreaks, marshalJudge, marshalPropose } from "./talk";
 
 export { estimateLand, freshMemory, type MarshalMemory } from "./memory";
 export { readRunaway, think, type Insight, type RunawayWhy } from "./judge";
-export { marshalBoard, planMarshal, type MarshalPlan, type MarshalRequest, type MarshalScope, type Steer } from "./plan";
+export { forFog, marshalBoard, planMarshal, type MarshalPlan, type MarshalRequest, type MarshalScope, type Steer } from "./plan";
 export { claimArmies, expandCorridor, mergeLeaderOrders, planLeaders, type Claims, type LeaderNote, type LeadersPlan, type LeadersRequest } from "./leaders";
 export { planFinish, remnantRivals } from "./finish";
 export { planSteward } from "./steward";

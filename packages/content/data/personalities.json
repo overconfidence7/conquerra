@@ -1,5 +1,5 @@
 {
-  "explore": { "weight": 2, "scoutTurn": 4, "scoutCloud": 0.5 },
+  "explore": { "weight": 2, "scoutTurn": 4, "scoutCloud": 0.5, "leaders": { "weight": 2, "scoutTurn": 4, "scoutCloud": 0.5, "watchtowers": 0, "watchtowerTurn": 0 } },
   "judgement": {
     "runaway": {
       "share": 0.4,
@@ -155,6 +155,7 @@
         "oneFront": true,
         "vulture": 0
       },
+      "blackout": { "build": { "marketsFrom": 6, "cultureFrom": 6, "realm": 1 } },
       "defend": {
         "frontGarrison": 1.2,
         "retreatAt": 0
@@ -241,6 +242,7 @@
         "oneFront": false,
         "vulture": 2
       },
+      "blackout": { "attack": { "vulture": 0.5 } },
       "defend": {
         "frontGarrison": 0.5,
         "retreatAt": 2.5
