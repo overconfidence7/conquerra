@@ -18,6 +18,7 @@
     "./seedWords": "./src/seedWords.ts",
     "./data/maps/*": "./data/maps/*",
     "./data/rules.json": "./data/rules.json",
-    "./tutorials": "./src/tutorials.ts"
+    "./tutorials": "./src/tutorials.ts",
+    "./randomMaps": "./src/randomMaps.ts"
   }
 }

@@ -1,3 +1,5 @@
+import type { RandomGrade } from "@conquerra/content";
+import { randomMaps } from "@conquerra/content/randomMaps";
 import { SEED_WORDS } from "@conquerra/content/seedWords";
 import type { LandShape } from "./shapes";
 import { RANDOM_PREFIX, WORD, type RandomShape, type RandomSize } from "./randomId";
@@ -46,15 +48,29 @@ export const RANDOM_TRIES = 6;
 /**
  * Random maps' own version (session 31), the number a game pins as its map's `generator.version`. The map maker
  * itself is unchanged (`MAPGEN_VERSION` 2, which the twelve keep); what a random map's version changes is the fairness
- * band at generation (which seeds and rerolls pass) and the start bonus on its harder spots. Every version listed in
- * `RANDOM_VERSIONS` can still be built, so a game made before a change rebuilds its own map exactly.
+ * band at generation (which seeds and rerolls pass) and the start bonus on its spots. Every version listed in
+ * `RANDOM_VERSIONS` can still be built, so a game made before a change rebuilds its own map exactly. The values are
+ * content (`data/random-maps.json`, session 33), and a shipped version never changes: a new balance is a new version.
  *  - 2 (session 30): the band 5.5, no start bonus.
  *  - 3 (session 31, the orchestrator's call from the sim): the band 4.0, and +4 troops on each harder spot.
+ *  - 4 (session 33, Nate's call): the band 4.0, and a head start graded by exposure (`grade`): every spot more
+ *    exposed than the safest gets extra troops, the most exposed the most (up to 6).
  */
-export const RANDOM_VERSION = 3;
-export const RANDOM_VERSIONS = { 2: { band: 5.5, bonus: 0 }, 3: { band: 4.0, bonus: 4 } } as const satisfies Record<number, { band: number; bonus: number }>;
-export type RandomVersion = keyof typeof RANDOM_VERSIONS;
-export const isRandomVersion = (v: number | null | undefined): v is RandomVersion => v != null && v in RANDOM_VERSIONS;
+export interface RandomVersionDef {
+  band: number;
+  bonus: number;
+  grade?: RandomGrade;
+}
+export type RandomVersion = number;
+export const RANDOM_VERSIONS: Readonly<Record<RandomVersion, RandomVersionDef>> = Object.fromEntries(Object.entries(randomMaps.versions).map(([v, d]) => [Number(v), d as RandomVersionDef]));
+export const RANDOM_VERSION: RandomVersion = randomMaps.current;
+export const isRandomVersion = (v: number | null | undefined): v is RandomVersion => v != null && Object.prototype.hasOwnProperty.call(RANDOM_VERSIONS, v);
+/** A version's values (one this build can make: check with `isRandomVersion`). */
+export function randomVersionDef(v: RandomVersion): RandomVersionDef {
+  const d = RANDOM_VERSIONS[v];
+  if (!d) throw new Error(`No random map version ${v}`);
+  return d;
+}
 
 /**
  * The fairness bar at generation, beyond the map maker's own (every capital about as far from its nearest rival, gold
@@ -62,7 +78,7 @@ export const isRandomVersion = (v: number | null | undefined): v is RandomVersio
  * the worst of the twelve official maps' own layouts (5.54, Embervale 6; their median is 2.3, nine in ten within 4.0);
  * session 31 tightens it to 4.0.
  */
-export const RANDOM_EXPOSURE_BAND: number = RANDOM_VERSIONS[RANDOM_VERSION].band;
+export const RANDOM_EXPOSURE_BAND: number = randomVersionDef(RANDOM_VERSION).band;
 
 /** A seed as typed ("Quiet Heron", "quiet heron", "quiet-heron") → "quiet-heron", or null. */
 export function cleanSeed(typed: string): string | null {

@@ -1,0 +1,8 @@
+{
+  "current": 4,
+  "versions": {
+    "2": { "band": 5.5, "bonus": 0 },
+    "3": { "band": 4, "bonus": 4 },
+    "4": { "band": 4, "bonus": 0, "grade": { "k": 8, "least": 1, "cap": 6, "from": "safest" } }
+  }
+}

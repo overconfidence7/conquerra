@@ -9,17 +9,17 @@ import { exposureProblem, isRandomVersion, mapFingerprint, MAP_STEPS, randomMap,
  * before the change keeps its map; crescents are fatter at version 3.
  */
 describe("random map version 3 (session 31)", () => {
-  it("the versions: 3 is current, with the band 4.0 and +4 troops; 2 is kept; 1 can't be built", () => {
-    expect(RANDOM_VERSION).toBe(3);
+  it("the versions: 3 has the band 4.0 and +4 troops; 2 is kept; 1 can't be built (session 33: 4 is current)", () => {
+    expect(RANDOM_VERSION).toBe(4);
     expect(RANDOM_VERSIONS[3]).toEqual({ band: 4.0, bonus: 4 });
     expect(RANDOM_VERSIONS[2]).toEqual({ band: 5.5, bonus: 0 });
     expect(RANDOM_EXPOSURE_BAND).toBe(4.0);
-    expect([isRandomVersion(2), isRandomVersion(3), isRandomVersion(1), isRandomVersion(null)]).toEqual([true, true, false, false]);
+    expect([isRandomVersion(2), isRandomVersion(3), isRandomVersion(4), isRandomVersion(1), isRandomVersion(null)]).toEqual([true, true, true, false, false]);
     expect(() => randomMap("40-island-quiet-heron", defaultRules, { version: 1 })).toThrow(RANDOM_TEXT.oldVersion(1));
   });
 
   it("a harder spot starts with 4 more troops, and goes to a bot before a person", () => {
-    const { map } = randomMap("80-island-quiet-heron", defaultRules);
+    const { map } = randomMap("80-island-quiet-heron", defaultRules, { version: 3 });
     expect(map.generator?.version).toBe(3);
     const layout = map.capitalLayouts!.find((l) => l.harder?.length)!;
     expect(layout.bonus).toEqual(Object.fromEntries(layout.harder!.map((s) => [s, 4])));
@@ -39,7 +39,7 @@ describe("random map version 3 (session 31)", () => {
   }, 60_000);
 
   it("every layout of a version 3 map is within the band of 4.0 (version 2's was 5.5)", () => {
-    const { map } = randomMap("80-island-quiet-heron", defaultRules);
+    const { map } = randomMap("80-island-quiet-heron", defaultRules, { version: 3 });
     expect(exposureProblem(map, 4.0)).toBeNull();
   }, 60_000);
 

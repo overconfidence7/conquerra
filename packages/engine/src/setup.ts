@@ -120,7 +120,9 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   const bonusAt = (opts.startBonus && layoutBonus) || {};
   // Harder spots go to bots first (session 25). Only a pinned layout marks them: capitals spread without one have none.
   // (Session 30: a random map marks its harder spots by the map maker's exposure check instead of a start bonus.)
-  const weak = new Set([...Object.keys(layoutBonus).filter((k) => (layoutBonus[k] ?? 0) > 0), ...(layout?.harder ?? [])]);
+  // (Session 33: a random map's layout always lists them since version 4, an empty list too, and then the list alone
+  // says, since every spot but the safest has a head start. On every map made before, the two marks are the same spots.)
+  const weak = new Set(layout?.harder ?? Object.keys(layoutBonus).filter((k) => (layoutBonus[k] ?? 0) > 0));
   const seats = opts.seatRule === "botsFirst" ? dealSeats(shuffled, capitals, weak) : shuffled;
 
   const territories: Record<string, TerritoryState> = {};

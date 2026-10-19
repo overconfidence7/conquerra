@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { cleanSeed, newSeedWords, randomMapId, RANDOM_SHAPE_IDS, RANDOM_SHAPE_NAMES, RANDOM_TEXT, RANDOM_TRIES } from "@conquerra/mapgen/seed";
+import { cleanSeed, newSeedWords, randomMapId, randomVersionDef, RANDOM_SHAPE_IDS, RANDOM_SHAPE_NAMES, RANDOM_TEXT, RANDOM_TRIES, RANDOM_VERSION } from "@conquerra/mapgen/seed";
 import { parseRandomId, RANDOM_PREFIX, RANDOM_SIZES, type RandomShape, type RandomSize } from "@conquerra/mapgen/randomId";
 import { previewRandomMap, useGame } from "../store";
 import "./random-map.css";
@@ -20,7 +20,12 @@ export const RANDOM_UI = {
   building: "Making the map…",
   slow: "Big maps take a while to draw, longer on a phone.",
   suits: "A new map from its seed: the same seed always makes the same map, so you can share it with a friend.",
+  /** Session 33 (random map version 4): what the harder spots get, in one line. */
+  headStart: (cap: number) => `Exposed spots start with extra troops (up to ${cap}).`,
 } as const;
+
+/** The current version's graded head start, at most this many troops (`data/random-maps.json`). */
+const HEAD_START_CAP = randomVersionDef(RANDOM_VERSION).grade?.cap ?? 0;
 
 /** Session 31: "40%", or "40%, try 2 of 6" once a try has been rejected. */
 export function progressLine(done: number): string {
@@ -93,7 +98,10 @@ export default function RandomMapPanel() {
   };
   return (
     <div className="random-map">
-      <span className="muted small">{RANDOM_UI.suits}</span>
+      <span className="muted small">
+        {RANDOM_UI.suits}
+        {HEAD_START_CAP ? ` ${RANDOM_UI.headStart(HEAD_START_CAP)}` : ""}
+      </span>
       <div className="pick-row">
         <label className="pick">
           <span className="field-name">{RANDOM_UI.size}</span>

@@ -1,10 +1,10 @@
-import type { MapDef, Rules } from "@conquerra/content";
+import type { MapDef, RandomGrade, Rules } from "@conquerra/content";
 import { Rng, seedRng } from "@conquerra/engine";
 import { adjacency, allDistances, exposureOf } from "./checks";
 import { generateMap, type MapGenOptions } from "./index";
 import { recipeFor, type Recipe } from "./recipes";
 import { parseRandomId, randomPlayers, RANDOM_PREFIX, type RandomShape, type RandomSize } from "./randomId";
-import { isRandomVersion, randomMapId, RANDOM_SHAPES, RANDOM_TRIES, RANDOM_VERSION, RANDOM_VERSIONS, type RandomVersion } from "./seed";
+import { isRandomVersion, randomMapId, RANDOM_SHAPES, RANDOM_TRIES, RANDOM_VERSION, randomVersionDef, type RandomVersion } from "./seed";
 import { RANDOM_TEXT } from "./randomText";
 
 export * from "./randomId";
@@ -57,7 +57,7 @@ export function randomRecipe(size: RandomSize, shape: RandomShape, seed: string,
 }
 
 /** The map's own fairness check at generation: every layout within the exposure band (a reason to reject, or null). */
-export function exposureProblem(map: MapDef, band: number = RANDOM_VERSIONS[RANDOM_VERSION].band): string | null {
+export function exposureProblem(map: MapDef, band: number = randomVersionDef(RANDOM_VERSION).band): string | null {
   const d = allDistances(map), adj = adjacency(map);
   for (const l of map.capitalLayouts ?? []) {
     const e = exposureOf(l.slots, d, adj, band);
@@ -70,9 +70,12 @@ export function exposureProblem(map: MapDef, band: number = RANDOM_VERSIONS[RAND
  * The harder spots of each layout (the seat rule deals them to bots first): the spots at least 1.5 times as exposed as
  * the layout's middle spot, the most exposed first, a third of the table at most. Session 31: each also gets `bonus`
  * extra troops at the start (the layout's `bonus`, as the official maps' weak spots have; 0 for version 2's maps).
+ * Session 33 (version 4): with a `grade`, the head start is graded by exposure instead (`gradeBonus`), and the harder
+ * spots stay as they are for the seat rule (always written, an empty list too, so a spot with a head start isn't taken
+ * for a harder one).
  */
 export const HARDER_THAN_MIDDLE = 1.5;
-export function markHarder(map: MapDef, bonus = 0): MapDef {
+export function markHarder(map: MapDef, bonus = 0, grade?: RandomGrade): MapDef {
   const d = allDistances(map), adj = adjacency(map);
   for (const l of map.capitalLayouts ?? []) {
     const e = exposureOf(l.slots, d, adj).exposure;
@@ -84,10 +87,28 @@ export function markHarder(map: MapDef, bonus = 0): MapDef {
       .slice(0, Math.floor(l.players / 3))
       .map((p) => p.s)
       .sort();
+    if (grade) {
+      l.harder = harder;
+      const extra = gradeBonus(e, grade);
+      const given = l.slots.map((s, i) => [s, extra[i]!] as const).filter(([, n]) => n > 0);
+      if (given.length) l.bonus = Object.fromEntries(given);
+      continue;
+    }
     if (harder.length) l.harder = harder;
     if (harder.length && bonus > 0) l.bonus = Object.fromEntries(harder.map((s) => [s, bonus]));
   }
   return map;
+}
+
+/**
+ * Session 33, the graded head start (random map version 4): each spot's extra troops from its exposure (the map
+ * maker's check, `exposureOf`). The reference spot is the layout's safest (or, `from: "middle"`, its middle one); every
+ * spot more exposed than it gets `round(k × (e − e₀) / e₀)`, at least `least` and at most `cap`; the rest get none.
+ */
+export function gradeBonus(exposure: readonly number[], grade: RandomGrade): number[] {
+  const sorted = [...exposure].sort((a, b) => a - b);
+  const e0 = grade.from === "middle" ? sorted[Math.floor(sorted.length / 2)]! : sorted[0]!;
+  return exposure.map((e) => (e > e0 + 1e-9 ? Math.min(grade.cap, Math.max(grade.least, Math.round((grade.k * (e - e0)) / Math.max(1e-9, e0)))) : 0));
 }
 
 export class RandomMapFailed extends Error {
@@ -100,19 +121,20 @@ export class RandomMapFailed extends Error {
  * Make a random map from its id ("80-crescent-quiet-heron" or "random:80-..."). Throws `RandomMapFailed` (its
  * message is the player's line) if no try passed the checks, or an Error with `RANDOM_TEXT.badId` for a bad id.
  * `version` (session 31): the random map version to build at (a game pins it); the current one if left out, and
- * `RANDOM_TEXT.oldVersion` for one this build can't make. `band` overrides the version's band (the sim's experiments).
+ * `RANDOM_TEXT.oldVersion` for one this build can't make. `band` overrides the version's band, and `grade` its graded
+ * head start (session 33), both for the sim's experiments.
  */
-export function randomMap(id: string, rules: Rules, opts: Pick<MapGenOptions, "stageSeeds" | "log" | "onProgress"> & { version?: number | null; band?: number } = {}): { map: MapDef; attempt: number } {
+export function randomMap(id: string, rules: Rules, opts: Pick<MapGenOptions, "stageSeeds" | "log" | "onProgress"> & { version?: number | null; band?: number; grade?: RandomGrade } = {}): { map: MapDef; attempt: number } {
   const p = parseRandomId(id);
   if (!p) throw new Error(RANDOM_TEXT.badId);
-  const { version: asked, band: bandOverride, ...gen } = opts;
+  const { version: asked, band: bandOverride, grade: gradeOverride, ...gen } = opts;
   const version: RandomVersion = asked == null ? RANDOM_VERSION : isRandomVersion(asked) ? asked : (() => { throw new Error(RANDOM_TEXT.oldVersion(asked)); })();
-  const v = RANDOM_VERSIONS[version];
+  const v = randomVersionDef(version);
   const band = bandOverride ?? v.band;
   const recipe: MapGenOptions = { ...randomRecipe(p.size, p.shape, p.seed, version), ...gen, accept: (m) => exposureProblem(m, band) };
   try {
     const r = generateMap(recipe, rules);
-    const map = markHarder(r.map, v.bonus);
+    const map = markHarder(r.map, v.bonus, gradeOverride ?? v.grade);
     map.generator = { ...map.generator!, version };
     return { map, attempt: r.attempt };
   } catch (e) {

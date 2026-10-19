@@ -519,3 +519,27 @@ export const LeaderNames = z.object({
   stewards: z.array(z.string().min(1)).min(10),
 });
 export type LeaderNames = z.infer<typeof LeaderNames>;
+
+/**
+ * Random maps' versions (sessions 31 and 33), `data/random-maps.json`: what each version of a random map gets at
+ * generation (a game pins its map's version, and a shipped version never changes, so a new balance is a new version).
+ *  - `band`: no capital spot more than this many times as exposed as the safest (the map maker's exposure check).
+ *  - `bonus`: extra troops on each harder spot (version 3's flat +4).
+ *  - `grade` (version 4, session 33): a head start graded by exposure. Each spot more exposed than the reference spot
+ *    (`from`: the layout's safest, or its middle one) gets `round(k × (e − e₀) / e₀)` extra troops, at least `least`
+ *    and at most `cap` (e the spot's exposure, e₀ the reference's).
+ */
+export const RandomGrade = z.object({
+  k: z.number().min(0),
+  least: z.number().int().min(0).max(6),
+  cap: z.number().int().min(1).max(6),
+  from: z.enum(["safest", "middle"]),
+});
+export const RandomMaps = z
+  .object({
+    current: z.number().int().min(2),
+    versions: z.record(z.string().regex(/^\d+$/), z.object({ band: z.number().min(1), bonus: z.number().int().min(0).max(6), grade: RandomGrade.optional() })),
+  })
+  .refine((r) => String(r.current) in r.versions, "the current version must be listed");
+export type RandomGrade = z.infer<typeof RandomGrade>;
+export type RandomMaps = z.infer<typeof RandomMaps>;

@@ -4,7 +4,8 @@ import { maps } from "../src/maps";
 import rulesJson from "../data/rules.json";
 import personalitiesJson from "../data/personalities.json";
 import leaderNamesJson from "../data/leader-names.json";
-import { LeaderNames, Rules } from "../src/schemas";
+import randomMapsJson from "../data/random-maps.json";
+import { LeaderNames, RandomMaps, Rules } from "../src/schemas";
 import { MarshalData } from "../src/personalities";
 
 describe("content", () => {
@@ -15,6 +16,7 @@ describe("content", () => {
     expect(Rules.parse(rulesJson)).toStrictEqual(rulesJson);
     expect(MarshalData.parse(personalitiesJson)).toStrictEqual(personalitiesJson);
     expect(LeaderNames.parse(leaderNamesJson)).toStrictEqual(leaderNamesJson);
+    expect(RandomMaps.parse(randomMapsJson)).toStrictEqual(randomMapsJson);
     expect(defaultRules).toBe(rulesJson);
   });
   it("rules parse", () => {

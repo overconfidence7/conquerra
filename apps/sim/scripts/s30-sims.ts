@@ -5,7 +5,8 @@
  *     <map>: an official map's id (embervale), or a random map's id ("random:80-crescent-quiet-heron")
  *   npx tsx apps/sim/scripts/s30-sims.ts --random <size>:<shape>:<n> [--start 0] <players> ...
  *     n random maps of that size and shape in a row (the seed words from `--start`), one game each. `--band 3.0`
- *     builds them at another exposure band (session 31).
+ *     builds them at another exposure band (session 31); `--version 3` at another random map version, and
+ *     `--grade '{"k":2,"from":"middle"}'` with another graded head start (session 33).
  *   npx tsx apps/sim/scripts/s30-sims.ts --digest <players> <games> [--fog ...]
  *     every official map at that table size (or its smallest suggested one): a fingerprint of every game's result, to
  *     show a change left the twelve maps' games exactly as they were.
@@ -17,7 +18,7 @@ import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { fileURLToPath } from "node:url";
-import { defaultRules, marshalData, type MapDef } from "@conquerra/content";
+import { defaultRules, marshalData, type MapDef, type RandomGrade } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { runGame, type GameSummary } from "@conquerra/simcore";
 import { dealPersonalities, makeMarshalBot } from "@conquerra/bots";
@@ -32,11 +33,12 @@ const opt = (name: string, dflt: string) => {
 };
 
 /** A map by its id: official, or random (built by the map maker from its id, at this generator version). */
-async function mapOf(id: string, band?: number): Promise<MapDef> {
+async function mapOf(id: string, band?: number, version?: number, grade?: RandomGrade): Promise<MapDef> {
   if (id.startsWith("random:")) {
     const { randomMap } = await import("@conquerra/mapgen");
-    // (Session 31: `--band 3.0` builds at another exposure band, for the sim's experiments; the current version otherwise.)
-    return randomMap(id.slice("random:".length), defaultRules, band ? { band } : {}).map;
+    // (Session 31: `--band 3.0` builds at another exposure band, for the sim's experiments; the current version otherwise.
+    // Session 33: `--version 3` builds at another version, `--grade '{"k":2}'` tries another graded head start.)
+    return randomMap(id.slice("random:".length), defaultRules, { ...(band ? { band } : {}), ...(version ? { version } : {}), ...(grade ? { grade } : {}) }).map;
   }
   const m = maps[id];
   if (!m) throw new Error(`Unknown map ${id}`);
@@ -50,6 +52,9 @@ interface Job {
   seed: string;
   /** Session 31: a random map's exposure band, if not its version's. */
   band?: number;
+  /** Session 33: a random map's version, if not the current one, and a graded head start to try. */
+  version?: number;
+  grade?: RandomGrade;
   /**
    * Session 32: the fog, carried with each job. (Before, each worker read `--fog` from its own command line, which only
    * says `--worker`, so every run played standard fog: session 30's "blackout, game for game the same" was that.)
@@ -80,6 +85,8 @@ interface Result {
   harder?: boolean;
   /** How many spots that layout marks harder. */
   harderSpots?: number;
+  /** Session 33: each spot's head start, by exposure rank (safest first). */
+  extra?: number[];
 }
 
 const fogArg = opt("fog", "on");
@@ -90,7 +97,7 @@ async function play(job: Job): Promise<Result> {
   const t0 = Date.now();
   try {
     if (job.explore) Object.assign(marshalData.explore, job.explore);
-    const map = await mapOf(job.map, job.band);
+    const map = await mapOf(job.map, job.band, job.version, job.grade);
     const seats = Array.from({ length: job.players }, (_, i) => `s${i}`);
     const dealt = dealPersonalities(job.seed, seats);
     const bots = seats.map((s) => makeMarshalBot(dealt[s]!));
@@ -99,13 +106,14 @@ async function play(job: Job): Promise<Result> {
     // Where each seat started (the same deal runGame made), and the winner's spot by exposure.
     const start = createGame(ctx, { gameId: `sim-${job.seed}`, seed: job.seed, players: seats.map((_, i) => ({ id: `p${i + 1}`, name: `Bot ${i + 1}` })), settings: settingsOf(job.fog), startBonus: true });
     const layout = map.capitalLayouts?.find((l) => l.players === job.players);
-    let spot: Pick<Result, "spotRank" | "harder" | "harderSpots"> = {};
+    let spot: Pick<Result, "spotRank" | "harder" | "harderSpots" | "extra"> = {};
     if (layout && g.winnerSeat !== null) {
       const cap = start.players[g.winnerSeat]!.capital;
       const e = exposureOf(layout.slots, allDistances(map), adjacency(map)).exposure;
       const order = layout.slots.map((s, i) => ({ s, x: e[i]! })).sort((a, b) => a.x - b.x || (a.s < b.s ? -1 : 1));
-      const marked = new Set([...(layout.harder ?? []), ...Object.keys(layout.bonus ?? {})]);
-      spot = { spotRank: order.findIndex((o) => o.s === cap), harder: marked.has(cap), harderSpots: marked.size };
+      // (Session 33: a random map's list of harder spots alone, when it has one: since version 4 most spots have a head start.)
+      const marked = new Set(layout.harder ?? Object.keys(layout.bonus ?? {}));
+      spot = { spotRank: order.findIndex((o) => o.s === cap), harder: marked.has(cap), harderSpots: marked.size, extra: order.map((o) => layout.bonus?.[o.s] ?? 0) };
     }
     const comeback = g.winner !== "draw" && g.leaderTurn10 !== null ? g.leaderTurn10 !== g.winner : null;
     return { map: job.map, players: job.players, seed: job.seed, winnerSeat: g.winnerSeat, turns: g.turns, endReason: g.endReason, ms: Date.now() - t0, comeback, explore: g.explore, ...spot };
@@ -184,6 +192,9 @@ function report(title: string, players: number, rs: Result[]) {
     const seatsHarder = withHarder.reduce((a, r) => a + r.harderSpots!, 0) / Math.max(1, withHarder.length);
     if (withHarder.length)
       console.log(`Harder spots: marked on ${withHarder.length} of ${ranked.length} maps (${seatsHarder.toFixed(1)} a map); they won ${((100 * withHarder.filter((r) => r.harder).length) / withHarder.length).toFixed(1)}% of those games against a fair ${((100 * seatsHarder) / players).toFixed(1)}%`);
+    // Session 33: the head start each exposure rank got, on average.
+    const extras = ranked.filter((r) => r.extra);
+    if (extras.length) console.log(`Head start by the spot's exposure (safest first, average troops): ${Array.from({ length: players }, (_, i) => (extras.reduce((a, r) => a + (r.extra![i] ?? 0), 0) / extras.length).toFixed(1)).join(" / ")}`);
   }
   return { title, players, games: ok.length, failed: rs.length - ok.length, seats: wins.map(pct), worst, avgTurns: avg };
 }
@@ -215,7 +226,9 @@ if (args[0] === "--digest") {
   // "all": the five shapes in turn.
   const shapeOf = (i: number) => (shape === "all" ? RANDOM_SHAPE_IDS[i % RANDOM_SHAPE_IDS.length]! : shape);
   const band = opt("band", "");
-  const jobs: Job[] = Array.from({ length: Number(n) }, (_, i) => ({ map: `random:${size}-${shapeOf(i)}-${seedWords(start + i)}`, players, game: i, seed: `${seedPrefix}-${size}-${shape}-${i}`, fog: fogArg, ...exploreArg, ...(band ? { band: Number(band) } : {}) }));
+  const version = opt("version", ""), grade = opt("grade", "");
+  const tried = { ...(version ? { version: Number(version) } : {}), ...(grade ? { grade: { k: 3, least: 1, cap: 6, from: "safest", ...JSON.parse(grade) } as RandomGrade } : {}) };
+  const jobs: Job[] = Array.from({ length: Number(n) }, (_, i) => ({ map: `random:${size}-${shapeOf(i)}-${seedWords(start + i)}`, players, game: i, seed: `${seedPrefix}-${size}-${shape}-${i}`, fog: fogArg, ...exploreArg, ...(band ? { band: Number(band) } : {}), ...tried }));
   const rs = await runAll(jobs);
   const r = report(`${n} random maps, ${size} territories, ${shape}`, players, rs);
   if (shape === "all")

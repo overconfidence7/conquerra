@@ -82,3 +82,41 @@ The stage split leaves the twelve exactly as they were: the same committed files
 - **For the orchestrator:** the next lever is a graded head start by exposure rank (every spot but the safest gets something, the most exposed the most) rather than a tighter band. That's a balance session with its own sims.
 
 **Crescents (Step 0's small fix):** at version 3 a crescent's bay is smaller and a little further off centre (0.5 of the land's size instead of 0.7, offset 0.5 instead of 0.4), with one isle in it instead of two, sea lanes up to 1.6 times as long (to reach across the bay), and one choke point for every 18 territories asked for (at least 4) instead of one for every 12. Tried on 24 seeds a size with `scripts/try-random.ts`'s way: **80 of 96 pass** at the band of 4.0 (40: 20, 80: 20, 120: 21, 200: 19 of 24), about 6.7 seeds in 8, against 2.5 in 8 with session 30's crescent at the same band. The 100-seed run above agrees (65 of 80). Five other variants were tried first (no isles, a bay of 0.45 to 0.6, rougher and smoother coasts); the sea lanes and choke points were what failed most. Official crescents (The Moon Coast) are unchanged.
+
+## Session 33 (Oct 18): the graded head start
+
+*Nate's call (Oct 16): a head start graded by exposure rank, every spot but the safest gets something, the most exposed the most. **Random map version 4** (`packages/content/data/random-maps.json`): the band stays 4.0, so the same seeds pass and the land is the same as at version 3; only the troops differ. For each layout the spots are ranked by the map maker's exposure check; a spot more exposed than the safest (exposure e, the safest's e₀) gets `round(k × (e − e₀) / e₀)` extra troops, at least 1, at most 6 (the official maps' top bonus). The harder spots (the most exposed third, for the seat rule: bots take those first) are as before. All Marshals, one game a map, the five shapes in turn, maps `seedWords(0..299)`, seed `s33`: `docs/sims/run-s33-random.sh <tag> <start> <count> --grade '{"k":8}'` (or `--version 3`), put together with `npx tsx apps/sim/scripts/s33-combine.ts <tag>`; each run's games are in `docs/sims/s33-random-*.json`.*
+
+**First, the noise.** At 100 maps a size (about 70 to 90 games once the failing seeds are out) one standard error on a rank's win rate is about 4.5 points at 4 players, so the ±5 bar is about one standard error, and two settings can't be told apart. Worse, the maps themselves vary a lot: on maps 0 to 99 k = 5 and version 3 gave almost the same 40-territory table (27.7 / 33.7 / 20.5 / 18.1 against 28.9 / 33.7 / 19.3 / 18.1), and maps 100 to 299 favoured the safest spot much more for both. So every setting below is on **the same 300 maps a size** (200 to 270 games), and "on average" (the mean distance from fair over the ranks) is read beside "furthest", which one unlucky rank decides.
+
+**By exposure rank (safest first) against fair, 300 maps a size:**
+
+| Setting | 40, 4 players (fair 25) | 80, 4 players (25) | 120, 6 players (16.7) | 200, 8 players (12.5) |
+|---|---|---|---|---|
+| version 3 (+4 on the harder spots) | 36.7 / 28.2 / 18.1 / 16.9: **11.7** furthest, 7.5 on average | 40.6 / 21.7 / 23.7 / 14.0: **15.6**, 7.8 | 26.7 / 21.6 / 18.7 / 15.8 / 9.5 / 7.7: **10.1**, 5.7 | 23.8 / 17.5 / 12.1 / 10.8 / 15.2 / 8.5 / 4.9 / 7.2: **11.3**, 4.8 |
+| k = 5 | 37.1 / 31.0 / 15.3 / 16.5: **12.1**, 9.1 | 35.7 / 28.0 / 19.3 / 16.9: **10.7**, 6.9 | 22.7 / 20.5 / 16.1 / 17.9 / 12.1 / 10.6: **6.0**, 3.7 | 23.0 / 13.5 / 9.5 / 16.7 / 11.7 / 8.6 / 8.1 / 9.0: **10.5**, 3.9 |
+| **k = 8 (shipped)** | 29.4 / 29.0 / 23.0 / 18.5: **6.5**, 4.2 | 38.6 / 26.6 / 16.4 / 18.4: **13.6**, 7.6 | 23.8 / 23.1 / 15.8 / 12.8 / 13.2 / 11.4: **7.1**, 4.5 | 19.7 / 17.5 / 13.5 / 13.9 / 11.7 / 8.1 / 7.2 / 8.5: **7.2**, 3.6 |
+
+k = 3 (the brief's first setting) was run on maps 0 to 99 only: 8.7 / 13.6 / 6.8 / 6.9 furthest, between version 3 and k = 5 where the two can be told apart; its extension to 300 maps was stopped for time once k = 5 and k = 8 showed bigger was better.
+
+**The head start each rank got** (average troops, safest first): **k = 8:** 40: 0 / 2.5 / 4.3 / 5.4; 80: 0 / 2.4 / 3.7 / 5.0; 120: 0 / 2.2 / 3.5 / 4.3 / 5.1 / 5.6; 200: 0 / 2.1 / 3.2 / 4.0 / 4.7 / 5.3 / 5.7 / 5.9. **k = 5** (maps 100 to 299): 40: 0 / 1.8 / 3.3 / 4.6; 200: 0 / 1.5 / 2.2 / 2.7 / 3.4 / 4.1 / 4.9 / 5.5. **Version 3:** only a marked harder spot, +4 (on average 0.5 troops for the most exposed rank at 40, 1.5 at 200, since many maps mark none).
+
+| Setting | Harder spots' wins (fair) at 40 / 80 / 120 / 200 | Avg turns at 40 / 80 / 120 / 200 |
+|---|---|---|
+| version 3 | 7.7% (25) / 0.0% (25) / 8.2% (19) / 1.4% (16) | 21.7 / 26.1 / 36.0 / 44.6 |
+| k = 5 | 7.7% / 7.1% / 4.9% / 12.3% | 20.8 / 26.6 / 37.1 / 45.0 |
+| k = 8 | 10.3% / 14.3% / 9.8% / 8.2% | 20.7 / 26.6 / 37.4 / 46.1 |
+
+**Against the middle spot instead** (the brief's fallback, since with k = 8 the safest spot still leads at 200: 19.7% against 12.5%): only the spots above the middle get a start (on average 0 / 0 / 0 / 0 / 0 / 1.2 / 2.0 / 3.3 troops at 200), so the safest spot's nearest rivals get nothing. 200 territories, the same 300 maps: 20.6 / 10.8 / 15.7 / 12.1 / 15.7 / 9.4 / 9.0 / 6.7, **8.1** furthest, 3.6 on average, the harder spots 2.7% of their games (fair 15.6). Graded from the safest wins (7.2, 3.6, 8.2%), so that's what ships.
+
+**Shipped: version 4, k = 8, at least 1, at most 6, graded from the safest spot.** The lobby's random-map card says "Exposed spots start with extra troops (up to 6)."; the first turn's report says yours and everyone else's ("Head starts for the exposed spots: Kit +5, Lady Morwen +2."). Versions 2 and 3 still build exactly their maps (a test pins a seed of each, taken before the session), so running games and saves keep theirs.
+
+**What the numbers say:**
+- **No setting brings every size inside ±5.** k = 8 is the best overall (on average 4.2 / 7.6 / 4.5 / 3.6 points from fair, against version 3's 7.5 / 7.8 / 5.7 / 4.8) and the only one within about 7 at three sizes; the furthest rank is still 6.5, 13.6, 7.1 and 7.2.
+- **80 territories at 4 players is the stubborn one:** the safest spot wins 36 to 41% whatever the others get (version 3, k = 5, k = 8). Why: a spot is "safe" because it has the most room (land nearest to it, within four steps) and the fewest rivals close by. Room is income every turn for the whole game; a head start is troops once, on turn 1. Troops close the gap where the game is short and crowded (40 territories, 4 players: half the gap closed) and on big tables where one safe spot is one of eight; they can't buy back room on a roomy 4-player map.
+- **The harder spots win more with the grade** (k = 8: 8 to 14% of their games against version 3's 0 to 8%), still short of their share.
+- **Turns** are about the same (k = 8 within 1.5 turns of version 3 at every size: a turn shorter at 40, up to 1.5 longer at 120 and 200).
+- **Seeds:** the band is unchanged, so the same seeds pass as at version 3 (session 31: one in six to three in ten fail; the lobby rerolls by itself since session 32).
+- **The twelve official maps are unchanged:** the 240-game digest is still `dc8962d4f8ba3bc6` (below, the guardrails).
+
+**For the orchestrator:** the next lever for the roomy 4-player sizes isn't more troops. Options: a tighter band at 80 only (session 31's 3.0 cost most seeds), a fairer layout rule for 4 players (room within a band, not only exposure), or a lasting head start (a market or a level of culture at the exposed capitals, income instead of troops). Each is a new version and its own sim.
