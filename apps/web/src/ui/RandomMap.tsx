@@ -20,6 +20,8 @@ export const RANDOM_UI = {
   use: "Use",
   building: "Making the map…",
   slow: "Big maps take a while to draw, longer on a phone.",
+  /** Session 33b: the two big sizes (300 and 400), from the sim's game lengths. */
+  long: "A long game in Classic: plan on 50 turns or more.",
   suits: "A new map from its seed: the same seed always makes the same map, so you can share it with a friend.",
   /**
    * Session 33 (random map version 4): what the exposed spots get, in one line. Session 33b (version 5): and the
@@ -36,6 +38,8 @@ export const RANDOM_UI = {
 /** The current version's graded head start, at most this many troops, and its income head start (`data/random-maps.json`). */
 const HEAD_START_CAP = randomVersionDef(RANDOM_VERSION).grade?.cap ?? 0;
 const HEAD_START = randomVersionDef(RANDOM_VERSION).start;
+/** Session 33b: from this size the card says a Classic game runs long (the sim, all Marshals: median 46 turns at 300 with 8 players, 52 with 10, 58 at 400 with 10; Conquest, suggested from 8 players, ends at its turn limit). */
+export const LONG_FROM = 300;
 
 /** Session 31: "40%", or "40%, try 2 of 6" once a try has been rejected. */
 export function progressLine(done: number): string {
@@ -111,6 +115,7 @@ export default function RandomMapPanel() {
       <span className="muted small">
         {RANDOM_UI.suits}
         {HEAD_START_CAP ? ` ${RANDOM_UI.headStart(HEAD_START_CAP, HEAD_START)}` : ""}
+        {r.size >= LONG_FROM ? ` ${RANDOM_UI.long}` : ""}
       </span>
       <div className="pick-row">
         <label className="pick">

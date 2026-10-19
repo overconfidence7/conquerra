@@ -285,7 +285,7 @@ export function Lobby() {
           <span className="field-name">Opponents</span>
           <div className="pick-row">
             <select aria-label="How many opponents" value={lobby.bots} onChange={(e) => setLobby({ bots: Number(e.target.value) })}>
-              {Array.from({ length: Math.min(map.maxPlayers - 1, BOT_NAMES.length) }, (_, i) => i + 1).map((b) => (
+              {Array.from({ length: Math.min(map.maxPlayers - 1, BOT_NAMES.length) }, (_, i) => i + 1).filter((b) => b >= map.minPlayers - 1).map((b) => (
                 <option key={b} value={b}>
                   {b} {b === 1 ? "bot" : "bots"}
                 </option>

@@ -80,6 +80,19 @@ describe("random map version 5 (session 33b): the income head start", () => {
     expect(markets).toBeGreaterThan(0);
   });
 
+  it("made from the try that passed (the room and the online pages are told it): the same map, byte for byte; a hint that isn't one of the tries is ignored", () => {
+    const all = randomMap("40-island-quiet-heron", defaultRules);
+    expect(all.attempt).toBe(2);
+    const hinted = randomMap("40-island-quiet-heron", defaultRules, { attempt: 2 });
+    expect(hinted.attempt).toBe(2);
+    expect(mapFingerprint(hinted.map)).toBe(mapFingerprint(all.map));
+    expect(mapFingerprint(randomMap("40-island-quiet-heron", defaultRules, { attempt: 1 }).map)).toBe(mapFingerprint(all.map));
+    // A hint that isn't one of the six tries is ignored: every try is made, as without one.
+    const first = randomMap("80-island-quiet-heron", defaultRules);
+    expect(first.attempt).toBe(1);
+    expect(mapFingerprint(randomMap("80-island-quiet-heron", defaultRules, { attempt: 7 }).map)).toBe(mapFingerprint(first.map));
+  }, 60_000);
+
   // Pinned, one cheap map a size (seeds that pass on their first try). Taken when version 5 shipped.
   const PINNED: [id: string, fingerprint: string][] = [
     ["40-island-quiet-heron", "12520252d93ea256"],

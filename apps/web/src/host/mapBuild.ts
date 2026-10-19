@@ -10,8 +10,8 @@ let worker: Worker | null = null;
 let next = 1;
 const waiting = new Map<number, { ok: (m: MapDef) => void; fail: (e: Error) => void }>();
 
-export function loadOnlineMap(id: string, version?: number | null): Promise<MapDef> {
-  if (!id.startsWith("random:") || typeof Worker === "undefined") return loadGameMap(id, version);
+export function loadOnlineMap(id: string, version?: number | null, attempt?: number | null): Promise<MapDef> {
+  if (!id.startsWith("random:") || typeof Worker === "undefined") return loadGameMap(id, version, undefined, attempt);
   if (!worker) {
     worker = new Worker(new URL("./mapBuild.worker.ts", import.meta.url), { type: "module" });
     worker.onmessage = (e: MessageEvent<{ n: number; map?: MapDef; error?: string }>) => {
@@ -24,6 +24,6 @@ export function loadOnlineMap(id: string, version?: number | null): Promise<MapD
   const n = next++;
   return new Promise((ok, fail) => {
     waiting.set(n, { ok, fail });
-    worker!.postMessage({ n, id, version });
+    worker!.postMessage({ n, id, version, attempt });
   });
 }

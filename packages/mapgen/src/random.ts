@@ -42,7 +42,8 @@ export function randomRecipe(size: RandomSize, shape: RandomShape, seed: string,
     seed,
     provinces: Math.round(T / 4.5),
     lakes: land === "archipelago" ? 0 : nudge(Math.max(1, Math.round(T / 40)), 1),
-    mountainRanges: land === "archipelago" ? Math.max(1, Math.round(T / 60)) : nudge(Math.max(2, Math.round(T / 28)), 2),
+    // (Session 33b: at most 10 ranges on the big sizes: every range's passes are one more way for a try to fail.)
+    mountainRanges: land === "archipelago" ? Math.max(1, Math.round(T / 60)) : Math.min(T >= 300 ? 10 : Infinity, nudge(Math.max(2, Math.round(T / 28)), 2)),
     rivers: nudge(Math.max(3, Math.round(T / 20)), 2),
     ...(land === "continent" ? { water: 0.36 + rng.next() * 0.03 } : { roughness: 0.55 + rng.next() * 0.1 }),
     ...(islands !== undefined ? { islands, seaLanes: Math.round(islands * 0.5), minSeaLanes: islands - 1 } : {}),
@@ -50,6 +51,9 @@ export function randomRecipe(size: RandomSize, shape: RandomShape, seed: string,
     laneReach,
     streams: "staged",
     maxAttempts: RANDOM_TRIES,
+    // Session 33b: the big sizes (new in version 5) search harder for fair capital layouts: most of their rejected
+    // tries were a layout for 8 to 10 players not found in the usual 20 starts.
+    ...(T >= 300 ? { layoutStarts: 60 } : {}),
     // Session 31 (version 3): a fatter crescent (a smaller bay a little further off, one isle in it), longer sea lanes
     // across the bay and fewer choke points asked for: about 5 in 6 seeds pass at the band of 4.0 instead of 1 in 3.
     ...(version >= 3 && land === "crescent" ? { islands: 1, bite: 0.5, biteOffset: 0.5, laneReach: Math.round(laneReach * 1.6), minChokePoints: Math.max(4, Math.round(T / 18)) } : {}),
@@ -131,6 +135,16 @@ function startBuildings(l: NonNullable<MapDef["capitalLayouts"]>[number], exposu
   if (start.culture > 0 && cultured.length) l.culture = Object.fromEntries(cultured.map((s) => [s, start.culture]));
 }
 
+/** Session 33b: the one try a hint names, or null if it doesn't pass (then every try is made, as without a hint). */
+function tryAt(recipe: MapGenOptions, rules: Rules, attempt: number): ReturnType<typeof generateMap> | null {
+  try {
+    return generateMap({ ...recipe, firstAttempt: attempt, maxAttempts: attempt }, rules);
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith("No map passed")) return null;
+    throw e;
+  }
+}
+
 export class RandomMapFailed extends Error {
   constructor(readonly tries: string[]) {
     super(RANDOM_TEXT.failed);
@@ -142,18 +156,20 @@ export class RandomMapFailed extends Error {
  * message is the player's line) if no try passed the checks, or an Error with `RANDOM_TEXT.badId` for a bad id.
  * `version` (session 31): the random map version to build at (a game pins it); the current one if left out, and
  * `RANDOM_TEXT.oldVersion` for one this build can't make. `band` overrides the version's band, `grade` its graded
- * head start (session 33) and `start` its income head start (session 33b), all for the sim's experiments.
+ * head start (session 33) and `start` its income head start (session 33b), all for the sim's experiments. `attempt`
+ * (session 33b): the try that passed when the map was first made (the room and the online pages are told it), so it's
+ * made in one try instead of all of them; if that try doesn't pass, every try is made as usual.
  */
-export function randomMap(id: string, rules: Rules, opts: Pick<MapGenOptions, "stageSeeds" | "log" | "onProgress"> & { version?: number | null; band?: number; grade?: RandomGrade; start?: RandomStart } = {}): { map: MapDef; attempt: number } {
+export function randomMap(id: string, rules: Rules, opts: Pick<MapGenOptions, "stageSeeds" | "log" | "onProgress"> & { version?: number | null; band?: number; grade?: RandomGrade; start?: RandomStart; attempt?: number | null } = {}): { map: MapDef; attempt: number } {
   const p = parseRandomId(id);
   if (!p) throw new Error(RANDOM_TEXT.badId);
-  const { version: asked, band: bandOverride, grade: gradeOverride, start: startOverride, ...gen } = opts;
+  const { version: asked, band: bandOverride, grade: gradeOverride, start: startOverride, attempt: hint, ...gen } = opts;
   const version: RandomVersion = asked == null ? RANDOM_VERSION : isRandomVersion(asked) ? asked : (() => { throw new Error(RANDOM_TEXT.oldVersion(asked)); })();
   const v = randomVersionDef(version);
   const band = bandOverride ?? v.band;
   const recipe: MapGenOptions = { ...randomRecipe(p.size, p.shape, p.seed, version), ...gen, accept: (m) => exposureProblem(m, band) };
   try {
-    const r = generateMap(recipe, rules);
+    const r = (hint && hint > 1 && hint <= RANDOM_TRIES && tryAt(recipe, rules, hint)) || generateMap(recipe, rules);
     const map = markHarder(r.map, v.bonus, gradeOverride ?? v.grade, startOverride ?? v.start);
     map.generator = { ...map.generator!, version };
     return { map, attempt: r.attempt };

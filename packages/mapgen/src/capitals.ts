@@ -6,12 +6,13 @@ import { fairnessOf, type Fairness, type FairnessTable } from "./checks";
  * out greedily (the next capital as far as possible from the others), then improved by swapping one capital at
  * a time. The best-scoring fair layout wins.
  */
-export function findLayout(rng: Rng, n: number, candidateIds: readonly string[], tbl: FairnessTable): { slots: string[]; fairness: Fairness } | null {
+export function findLayout(rng: Rng, n: number, candidateIds: readonly string[], tbl: FairnessTable, starts = 20): { slots: string[]; fairness: Fairness } | null {
   const T = tbl.ids.length;
   const candidates = candidateIds.map((id) => tbl.ids.indexOf(id));
   if (candidates.length < n) return null;
   let best: { slots: number[]; fairness: Fairness } | null = null;
-  for (let start = 0; start < 20; start++) {
+  // (Session 33b: `starts`, more for the big random maps, where most rejections were a fair layout not found in 20.)
+  for (let start = 0; start < starts; start++) {
     const slots = [candidates[rng.int(candidates.length)]!];
     while (slots.length < n) {
       let pick = -1, far = -1;

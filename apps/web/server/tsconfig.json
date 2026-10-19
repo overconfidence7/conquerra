@@ -11,5 +11,5 @@
     "types": ["@cloudflare/workers-types", "node"]
   },
   // (and the server's own tests, which run in Node: test/access.test.ts, test/server.test.ts)
-  "include": ["./**/*.ts", "../test/access.test.ts", "../test/accessHelpers.ts", "../test/server.test.ts", "../test/push.test.ts", "../test/pushHelpers.ts", "../test/notify.test.ts"]
+  "include": ["./**/*.ts", "../test/access.test.ts", "../test/accessHelpers.ts", "../test/server.test.ts", "../test/push.test.ts", "../test/pushHelpers.ts", "../test/notify.test.ts", "../test/random-attempt.test.ts"]
 }

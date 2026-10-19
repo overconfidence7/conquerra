@@ -26,7 +26,7 @@ export interface RemoteHostOptions {
   /** Where the API is ("" for this site). */
   base?: string;
   /** The page's own maps (with drawing data); the room sends only the map's id. */
-  loadMap?: (id: string, version?: number | null) => Promise<MapDef>;
+  loadMap?: (id: string, version?: number | null, attempt?: number | null) => Promise<MapDef>;
   /** For tests. */
   WebSocketImpl?: typeof WebSocket;
   fetchImpl?: typeof fetch;
@@ -92,7 +92,7 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
   const fetchImpl = opts.fetchImpl ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
   const backoff = opts.backoff ?? [500, 1000, 2000, 4000, 8000, 15000];
   // (Session 30: a random map is built from its id, at the map maker version the room pinned.)
-  const loadMap = opts.loadMap ?? (async (id: string, version?: number | null) => (await import("./mapBuild")).loadOnlineMap(id, version));
+  const loadMap = opts.loadMap ?? (async (id: string, version?: number | null, attempt?: number | null) => (await import("./mapBuild")).loadOnlineMap(id, version, attempt));
   const storage = opts.storage !== undefined ? opts.storage : typeof localStorage !== "undefined" ? localStorage : null;
 
   let gameId: string | null = null;
@@ -150,9 +150,9 @@ export function createRemoteHost(opts: RemoteHostOptions = {}): RemoteHost {
   };
 
   async function startFrom(s: RoomStart, roomNow: number): Promise<HostStart> {
-    if (!map || map.id !== s.mapId) map = await loadMap(s.mapId, s.mapVersion);
+    if (!map || map.id !== s.mapId) map = await loadMap(s.mapId, s.mapVersion, s.mapAttempt);
     if ((map.generator?.version ?? null) !== s.mapVersion) throw new Error(ONLINE_TEXT.mapChanged);
-    const { gameId: _id, mapId: _m, mapVersion: _v, chronicleAfter: _a, ...rest } = s;
+    const { gameId: _id, mapId: _m, mapVersion: _v, mapAttempt: _t, chronicleAfter: _a, ...rest } = s;
     return onOurClock({ ...rest, chronicle: keepChronicle(s), map }, roomNow);
   }
 

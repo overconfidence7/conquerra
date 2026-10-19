@@ -39,7 +39,8 @@ const TABLE_YOU = new Set(["seat", "host", "removed"]);
 const UPDATE = new Set(["playerId", "view", "report", "fastForwarded", "clock", "generalOrders", "leaderNotes", "offers", "seats", "fair", "before", "autoLocked", "queued", "people", "leadersBack", "leftSeats", "talks"]);
 /** Session 28: an offer between people, as its two sides are sent it. */
 const TALK = new Set(["offer", "state", "counter", "counterState"]);
-const START = new Set([...UPDATE, "rules", "chronicle", "replay", "lockedIn", "gameId", "mapId", "mapVersion", "chronicleAfter", "ready", "chat", "pause"]);
+// (Session 33b: "mapAttempt", a random map's try that passed: as public as its id, which anyone can make it from.)
+const START = new Set([...UPDATE, "rules", "chronicle", "replay", "lockedIn", "gameId", "mapId", "mapVersion", "mapAttempt", "chronicleAfter", "ready", "chat", "pause"]);
 /** Session 28: a pause vote, as the whole table is told it. */
 const PAUSE = new Set(["vote", "paused", "left", "news"]);
 const PAUSE_PART = new Set(["by", "endsAt", "yes", "waiting", "ready"]);

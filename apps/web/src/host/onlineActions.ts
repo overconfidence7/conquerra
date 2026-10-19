@@ -165,8 +165,10 @@ function openWith(begin: (host: RemoteHost) => Promise<HostStart>): Promise<bool
 
 /** Make an online table with the lobby's map, bots and rules (and the Online block's timer), and open its table screen. */
 export function startOnline(): Promise<boolean> {
-  const { lobby, onlineLobby } = useGame.getState();
-  return openWith((host) => host.start({ ...lobby, turnSeconds: onlineLobby.turnSeconds, leadersRun: onlineLobby.leadersRun }));
+  const { lobby, onlineLobby, randomPreview } = useGame.getState();
+  // (Session 33b: a random map's try that passed here, so the room and the other pages make it in one try.)
+  const attempt = randomPreview?.mapId === lobby.mapId ? randomPreview.preview?.attempt : undefined;
+  return openWith((host) => host.start({ ...lobby, ...(attempt && attempt > 1 ? { mapAttempt: attempt } : {}), turnSeconds: onlineLobby.turnSeconds, leadersRun: onlineLobby.leadersRun }));
 }
 
 /** Open one of your online games (Continue, a waiting table, or a "?game=" address). */

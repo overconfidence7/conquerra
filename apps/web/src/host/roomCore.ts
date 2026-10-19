@@ -196,7 +196,7 @@ export class RoomCore {
      * A map by its id (session 30: and, for a game being loaded, the map maker version it was made at; a random map's
      * room keeps its slim copy in its own storage, so a deploy with a newer map maker never changes a running game).
      */
-    private readonly loadMap: (id: string, version?: number | null) => Promise<MapDef>,
+    private readonly loadMap: (id: string, version?: number | null, attempt?: number | null) => Promise<MapDef>,
     private readonly io: RoomIO,
     private readonly now: () => number = () => Date.now(),
     /** A clock for timing the work (Workers only move it on I/O; `wrangler tail` has the real CPU time). */
@@ -402,7 +402,7 @@ export class RoomCore {
   /** Make the game: the people in their seats, bots in the rest, the seed committed to. */
   async create(setup: RoomSetup): Promise<RoomInfo> {
     if (await this.store.get("meta")) throw new Error("This game already exists");
-    const map = await this.loadMap(setup.settings.mapId);
+    const map = await this.loadMap(setup.settings.mapId, null, setup.settings.mapAttempt);
     this.meta = { gameId: setup.gameId, seed: setup.seed, seedHash: await sha256Hex(setup.seed), seen: {} };
     await this.store.put("meta", this.meta);
     const t0 = this.timer();
@@ -420,7 +420,8 @@ export class RoomCore {
     if ((await this.store.get("table")) || (await this.store.get("meta"))) throw new Error("This game already exists");
     const size = Math.max(2, Math.floor(setup.settings.bots) + 1);
     // Session 30: a random map is made now (the room keeps it), so a seed that makes no fair map says so before anyone sits.
-    if (setup.settings.mapId.startsWith("random:")) await this.loadMap(setup.settings.mapId);
+    // (Session 33b: from the try the host's page says passed, so a big map's six tries aren't all made again here.)
+    if (setup.settings.mapId.startsWith("random:")) await this.loadMap(setup.settings.mapId, null, setup.settings.mapAttempt);
     const table: TableRecord = { gameId: setup.gameId, code: setup.code, host: setup.host.user, settings: setup.settings, seed: setup.seed, status: "waiting", size, sitters: [setup.host], removed: [] };
     this.tableRec = table;
     this.saveTable();
@@ -761,6 +762,7 @@ export class RoomCore {
       gameId: this.meta!.gameId,
       mapId: map.id,
       mapVersion: map.generator?.version ?? null,
+      ...(map.id.startsWith("random:") && map.generator ? { mapAttempt: map.generator.attempt } : {}),
       fair: this.fair(),
       people: g.playingIds,
       ...this.leftInfo(),

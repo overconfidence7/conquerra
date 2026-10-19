@@ -90,6 +90,8 @@ interface Result {
   harderSpots?: number;
   /** Session 33: each spot's head start, by exposure rank (safest first). */
   extra?: number[];
+  /** Session 33b: CPU per turn (the turn's resolution plus every bot's planning, ms): the game's average and its worst turn. */
+  cpu?: { avg: number; worst: number };
   /** Session 33b: whether each spot started with a market, and its culture, by exposure rank (safest first). */
   market?: number[];
   culture?: number[];
@@ -122,7 +124,9 @@ async function play(job: Job): Promise<Result> {
       spot = { spotRank: order.findIndex((o) => o.s === cap), harder: marked.has(cap), harderSpots: marked.size, extra: order.map((o) => layout.bonus?.[o.s] ?? 0), market: order.map((o) => (layout.buildings?.[o.s] ? 1 : 0)), culture: order.map((o) => layout.culture?.[o.s] ?? 0) };
     }
     const comeback = g.winner !== "draw" && g.leaderTurn10 !== null ? g.leaderTurn10 !== g.winner : null;
-    return { map: job.map, players: job.players, seed: job.seed, winnerSeat: g.winnerSeat, turns: g.turns, endReason: g.endReason, ms: Date.now() - t0, comeback, explore: g.explore, ...spot };
+    const perTurn = g.resolveMs.map((r, i) => r + (g.planMs[i] ?? 0));
+    const cpu = perTurn.length ? { avg: perTurn.reduce((a, b) => a + b, 0) / perTurn.length, worst: Math.max(...perTurn) } : undefined;
+    return { map: job.map, players: job.players, seed: job.seed, winnerSeat: g.winnerSeat, turns: g.turns, endReason: g.endReason, ms: Date.now() - t0, comeback, explore: g.explore, ...(cpu ? { cpu } : {}), ...spot };
   } catch (e) {
     return { map: job.map, players: job.players, seed: job.seed, winnerSeat: null, turns: 0, endReason: null, ms: Date.now() - t0, error: e instanceof Error ? e.message.split("\n")[0]! : String(e) };
   }
@@ -180,6 +184,10 @@ function report(title: string, players: number, rs: Result[]) {
   console.log(`Win rate by seat (fair ${fair.toFixed(1)}%): ${wins.map((w) => `${pct(w).toFixed(1)}%`).join(" / ")}; furthest from fair ${worst.toFixed(1)} points`);
   console.log(`Turns: avg ${avg.toFixed(1)}, median ${turns[Math.floor(turns.length / 2)] ?? 0}, min ${turns[0] ?? 0}, max ${turns.at(-1) ?? 0}; within 40: ${pct(ok.filter((r) => r.turns <= 40).length).toFixed(0)}%; ended: ${[...new Set(ok.map((r) => r.endReason))].map((e) => `${e} ${pct(ok.filter((r) => r.endReason === e).length).toFixed(0)}%`).join(", ")}`);
   console.log(`Time: ${(ok.reduce((a, r) => a + r.ms, 0) / 1000 / Math.max(1, ok.length)).toFixed(1)} s a game`);
+  // Session 33b: what a turn costs (one process, as the room is): resolving it and every bot's planning.
+  const cpus = ok.flatMap((r) => (r.cpu ? [r.cpu] : []));
+  if (cpus.length) console.log(`CPU per turn (resolve + all bots' planning, one process): avg ${(cpus.reduce((a, c) => a + c.avg, 0) / cpus.length).toFixed(0)} ms; the worst game's average ${Math.max(...cpus.map((c) => c.avg)).toFixed(0)} ms; the worst turn ${Math.max(...cpus.map((c) => c.worst)).toFixed(0)} ms`);
+  console.log(`Turns: within 60 (not at the cap) ${pct(ok.filter((r) => r.turns < 60).length).toFixed(0)}%`);
   // Session 32: comebacks, and how fast the seats explore (a seat counts once it's seen that much, before it's out).
   const long = ok.filter((r) => r.comeback !== null && r.comeback !== undefined);
   const paced = ok.flatMap((r) => (r.explore ? r.explore.half.map((h, i) => ({ half: h, all: r.explore!.all[i]! })) : []));

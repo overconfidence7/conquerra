@@ -10,7 +10,7 @@ import { RANDOM_PREFIX } from "@conquerra/mapgen/randomId";
  */
 const built = new Map<string, Promise<MapDef>>();
 
-export async function loadGameMap(id: string, version?: number | null, onProgress?: (done: number) => void): Promise<MapDef> {
+export async function loadGameMap(id: string, version?: number | null, onProgress?: (done: number) => void, attempt?: number | null): Promise<MapDef> {
   if (!id.startsWith(RANDOM_PREFIX)) return (await import("@conquerra/content/loadMap")).loadMap(id);
   const gen = await import("@conquerra/mapgen");
   // Session 31: a random map is built at the version its game pinned (each version this build knows), else the newest.
@@ -21,7 +21,8 @@ export async function loadGameMap(id: string, version?: number | null, onProgres
   if (!p) {
     // Session 31: progress for the "Making the map…" line (0 to 1 a try; a reroll starts again).
     const watch = onProgress ? (step: number, attempt: number) => onProgress(Math.min(1, step / gen.MAP_STEPS) + attempt - 1) : undefined;
-    p = Promise.resolve().then(() => gen.randomMap(id, defaultRules, { version: v, ...(watch ? { onProgress: watch } : {}) }).map);
+    // (Session 33b: `attempt`, the try the room says passed: one try instead of all of them; the same map either way.)
+    p = Promise.resolve().then(() => gen.randomMap(id, defaultRules, { version: v, attempt, ...(watch ? { onProgress: watch } : {}) }).map);
     built.set(key, p);
     // (A failed seed isn't kept: the next ask tries it again, and says the same plain line.)
     p.catch(() => built.delete(key));

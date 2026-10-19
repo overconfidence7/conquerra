@@ -49,13 +49,19 @@ export function startBonusLine(view: PlayerView, place: (id: string) => string):
 
 /**
  * Session 33: everyone else's head start, for the first turn's report: "Head starts for the exposed spots: Kit +5, Lady
- * Morwen +2." Session 33b: "Baron Krell +6 with a market and a level of culture, Queen Isolde +1."
+ * Morwen +2." Session 33b: the market and culture in a sentence of their own, so it's clear whose they are ("... Baron
+ * Krell +2, Queen Isolde +2. Queen Isolde also starts with a market and a level of culture.").
  */
 export function headStartsLine(view: PlayerView): string | null {
-  const others = view.players.filter((p) => p.id !== view.me.id && ((p.startBonus ?? 0) > 0 || startExtras(p).length)).sort((a, b) => (b.startBonus ?? 0) - (a.startBonus ?? 0) || (a.name < b.name ? -1 : 1));
-  const one = (p: (typeof others)[number]) => {
+  const others = view.players.filter((p) => p.id !== view.me.id).sort((a, b) => (b.startBonus ?? 0) - (a.startBonus ?? 0) || (a.name < b.name ? -1 : 1));
+  const troops = others.filter((p) => (p.startBonus ?? 0) > 0);
+  const lines = troops.length ? [`Head starts for the exposed spots: ${troops.map((p) => `${p.name} +${p.startBonus}`).join(", ")}.`] : [];
+  // Those with the same extras together (on one map they're all the same: the version's start block).
+  const byExtras = new Map<string, string[]>();
+  for (const p of others) {
     const extras = startExtras(p);
-    return `${p.name}${p.startBonus ? ` +${p.startBonus}` : ""}${extras.length ? ` with ${andList(extras)}` : ""}`;
-  };
-  return others.length ? `Head starts for the exposed spots: ${others.map(one).join(", ")}.` : null;
+    if (extras.length) byExtras.set(andList(extras), [...(byExtras.get(andList(extras)) ?? []), p.name]);
+  }
+  for (const [what, names] of byExtras) lines.push(`${andList(names)}${troops.length ? " also" : ""} start${names.length === 1 ? "s" : ""} with ${what}.`);
+  return lines.length ? lines.join(" ") : null;
 }

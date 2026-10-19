@@ -55,15 +55,20 @@ export function cleanNewGame(body: unknown): { settings: LobbySettings; leadersR
   const map = mapListing(s.mapId);
   if (!map) return { error: "That map isn't one of the game's maps." };
   const bots = Math.floor(Number(s.bots));
-  if (!Number.isFinite(bots) || bots < 1 || bots > map.maxPlayers - 1) return { error: `${map.name} takes 1 to ${map.maxPlayers - 1} bots.` };
+  // (Session 33b: and never fewer than the map's smallest table: a random 400 starts at 6 players.)
+  const fewest = Math.max(1, map.minPlayers - 1);
+  if (!Number.isFinite(bots) || bots < fewest || bots > map.maxPlayers - 1) return { error: `${map.name} takes ${fewest} to ${map.maxPlayers - 1} bots.` };
   if (!ONLINE_TIMER_CHOICES.includes(s.turnSeconds as number)) return { error: "Online games use a timer of 3, 5 or 10 minutes, or 1, 8 or 24 hours." };
   const level: BotChoice = LEVELS.includes(s.botLevel as BotChoice) ? (s.botLevel as BotChoice) : "marshal";
   const luck = typeof s.luck === "number" && s.luck >= 0 && s.luck <= 1 ? s.luck : rulesJson.combat.luck;
   const house = Number.isInteger(s.house) && s.house! >= 0 && s.house! < HOUSES.length ? s.house! : 0;
   const leaderName = str(s.leaderName, 40);
   const stewardName = str(s.stewardName, 40);
+  // Session 33b: a random map's try that passed on the host's page (one of the six), so the room makes it in one try.
+  const attempt = Math.floor(Number(s.mapAttempt));
   const settings: LobbySettings = {
     mapId: map.id,
+    ...(map.id.startsWith("random:") && attempt >= 2 && attempt <= 6 ? { mapAttempt: attempt } : {}),
     bots,
     botLevel: level,
     ...(level === "mixed" ? { marshals: Math.max(0, Math.min(bots, Math.floor(Number(s.marshals) || Math.ceil(bots / 2)))) } : {}),

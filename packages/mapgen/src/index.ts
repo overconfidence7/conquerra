@@ -140,6 +140,13 @@ export interface MapGenOptions {
    * map…" line. Only watches: the map is the same with or without it.
    */
   onProgress?: (step: number, attempt: number) => void;
+  /**
+   * Session 33b: the try to start at (1 unless said). Each try is made from its own seed ("seed#3"), so a map that
+   * passed on its third try is made again by starting there (the room and the online pages, told which try passed).
+   */
+  firstAttempt?: number;
+  /** Session 33b: how many random starts the capital layout search gets (20 unless said; the big random maps more). */
+  layoutStarts?: number;
 }
 
 /** The map maker's numbered steps in one try (its "step" notes run 2 to 13), for progress. */
@@ -159,7 +166,7 @@ class Rejected extends Error {}
 export function generateMap(opts: MapGenOptions, rules: Rules): MapGenResult {
   const rejected: string[] = [];
   const max = opts.maxAttempts ?? 40;
-  for (let attempt = 1; attempt <= max; attempt++) {
+  for (let attempt = opts.firstAttempt ?? 1; attempt <= max; attempt++) {
     const seed = attempt === 1 ? opts.seed : `${opts.seed}#${attempt}`;
     let map: MapDef;
     // (Session 31: the step notes double as progress.)
@@ -360,7 +367,10 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
     if (type === "normal" || type === "river") innerAdj[a]!.push(b), innerAdj[b]!.push(a);
   }
   const province = makeProvinces(stream("provinces"), T, innerAdj, allAdj, o.provinces);
-  if (province.some((x) => x < 0)) throw new Rejected("a territory was left with no border to join a province by");
+  if (province.some((x) => x < 0)) {
+    o.log?.("orphans", [...province.keys()].filter((t) => province[t]! < 0).map((t) => ({ t, land: landAdj[t]!.length, all: allAdj[t]!.length })));
+    throw new Rejected("a territory was left with no border to join a province by");
+  }
   const provinceCount = Math.max(...province) + 1;
 
   o.log?.("step", "9. Outlines, labe");
@@ -422,7 +432,7 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
     for (let n = o.players.min; n <= o.players.max; n++) {
       const have = layouts.get(n);
       if (have && fairnessOf(have.map((id) => tbl.ids.indexOf(id)), tbl).fair) continue;
-      const found = findLayout(stream("capitals"), n, candidates, tbl);
+      const found = findLayout(stream("capitals"), n, candidates, tbl, o.layoutStarts);
       o.log?.("capitals", n, candidates.length, found?.fairness);
       if (!found || (!found.fairness.fair && !o.debug))
         throw new Rejected(`no fair capital layout for ${n} players${found ? ` (gaps ${found.fairness.nearest}, income ${found.fairness.income})` : ""}`);

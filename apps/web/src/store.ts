@@ -507,7 +507,8 @@ export const useGame = create<GameStore>((set, get) => ({
     const map = listingOf(next.mapId);
     // A new map starts at the smallest table it suits; the bot count always fits the map.
     if (map && patch.mapId && patch.mapId !== lobby.mapId && patch.bots === undefined) next.bots = map.recommendedPlayers.min - 1;
-    if (map) next.bots = Math.max(1, Math.min(next.bots, map.maxPlayers - 1, BOT_NAMES.length));
+    // (Session 33b: and never fewer than the map's smallest table: a random 400 starts at 6 players.)
+    if (map) next.bots = Math.max(1, map.minPlayers - 1, Math.min(next.bots, map.maxPlayers - 1, BOT_NAMES.length));
     const touched = modeTouched || patch.mode !== undefined;
     // Until the host picks a mode, follow the suggestion for the table size.
     if (!touched) next.mode = suggestedMode(next.bots + 1);

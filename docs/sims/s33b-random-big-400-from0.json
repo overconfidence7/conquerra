@@ -1,0 +1,6544 @@
+{
+ "summary": {
+  "title": "100 random maps, 400 territories, all",
+  "players": 10,
+  "games": 80,
+  "failed": 20,
+  "seats": [
+   10,
+   5,
+   7.5,
+   10,
+   15,
+   13.75,
+   6.25,
+   13.75,
+   11.25,
+   7.5
+  ],
+  "worst": 5,
+  "avgTurns": 51.975
+ },
+ "games": [
+  {
+   "map": "random:400-island-quiet-heron",
+   "players": 10,
+   "seed": "s33b-400-all-0",
+   "winnerSeat": 9,
+   "turns": 37,
+   "endReason": "lastStanding",
+   "ms": 27316,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     26,
+     null,
+     null,
+     null,
+     null,
+     null,
+     25
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 286.27965135135145,
+    "worst": 537.7543000000005
+   },
+   "spotRank": 6,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    1,
+    1,
+    1,
+    2,
+    4,
+    4,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-cold-kestrel",
+   "players": 10,
+   "seed": "s33b-400-all-1",
+   "winnerSeat": 8,
+   "turns": 35,
+   "endReason": "lastStanding",
+   "ms": 41021,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     24,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 291.25198000000114,
+    "worst": 507.85429999999906
+   },
+   "spotRank": 4,
+   "harder": false,
+   "harderSpots": 3,
+   "extra": [
+    0,
+    3,
+    4,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-twins-elder-thistle",
+   "players": 10,
+   "seed": "s33b-400-all-2",
+   "winnerSeat": 1,
+   "turns": 38,
+   "endReason": "lastStanding",
+   "ms": 132385,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     31,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     25
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 305.25012894737074,
+    "worst": 706.2332000000024
+   },
+   "spotRank": 6,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-gilded-bear",
+   "players": 10,
+   "seed": "s33b-400-all-3",
+   "winnerSeat": 6,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 46583,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     39,
+     null,
+     36,
+     30,
+     null,
+     19,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 340.7727850000007,
+    "worst": 647.5375000000058
+   },
+   "spotRank": 7,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    1,
+    2,
+    2,
+    4,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-jolly-lake",
+   "players": 10,
+   "seed": "s33b-400-all-4",
+   "winnerSeat": 3,
+   "turns": 57,
+   "endReason": "lastStanding",
+   "ms": 132660,
+   "comeback": true,
+   "explore": {
+    "half": [
+     25,
+     null,
+     null,
+     33,
+     38,
+     30,
+     35,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 349.392236842106,
+    "worst": 670.5823999999993
+   },
+   "spotRank": 9,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    2,
+    2,
+    3,
+    4,
+    5,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-mellow-tide",
+   "players": 10,
+   "seed": "s33b-400-all-5",
+   "winnerSeat": 9,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 45652,
+   "comeback": true,
+   "explore": {
+    "half": [
+     20,
+     null,
+     20,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     27
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 349.5358333333334,
+    "worst": 669.6546000000017
+   },
+   "spotRank": 2,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    1,
+    2,
+    3,
+    5,
+    5,
+    5,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-patient-bramble",
+   "players": 10,
+   "seed": "s33b-400-all-6",
+   "winnerSeat": 4,
+   "turns": 60,
+   "endReason": "lastStanding",
+   "ms": 74024,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     47,
+     null,
+     null,
+     null,
+     28,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 277.6160666666675,
+    "worst": 642.9181000000026
+   },
+   "spotRank": 5,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    3,
+    4,
+    5,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-twins-scarlet-leaf",
+   "players": 10,
+   "seed": "s33b-400-all-7",
+   "winnerSeat": 4,
+   "turns": 44,
+   "endReason": "lastStanding",
+   "ms": 81883,
+   "comeback": true,
+   "explore": {
+    "half": [
+     22,
+     35,
+     null,
+     null,
+     36,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     44,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 418.2771022727282,
+    "worst": 1166.1747000000032
+   },
+   "spotRank": 1,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    1,
+    1,
+    1,
+    3,
+    4,
+    4,
+    5,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-south-torch",
+   "players": 10,
+   "seed": "s33b-400-all-8",
+   "winnerSeat": 5,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 52961,
+   "comeback": true,
+   "explore": {
+    "half": [
+     30,
+     null,
+     43,
+     43,
+     50,
+     47,
+     29,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 370.1601500000001,
+    "worst": 748.9068000000043
+   },
+   "spotRank": 7,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-tame-candle",
+   "players": 10,
+   "seed": "s33b-400-all-9",
+   "winnerSeat": 3,
+   "turns": 36,
+   "endReason": "lastStanding",
+   "ms": 31313,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     23,
+     19,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 319.43126666666626,
+    "worst": 657.3322999999946
+   },
+   "spotRank": 2,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    3,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-wide-lynx",
+   "players": 10,
+   "seed": "s33b-400-all-10",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 113518,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-archipelago-pebbled-vale",
+   "players": 10,
+   "seed": "s33b-400-all-11",
+   "winnerSeat": 5,
+   "turns": 46,
+   "endReason": "lastStanding",
+   "ms": 54507,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     30,
+     null,
+     25,
+     null,
+     33
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     46,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 326.9780782608699,
+    "worst": 554.0141000000003
+   },
+   "spotRank": 0,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    1,
+    1,
+    2,
+    2,
+    3,
+    3,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-twins-cloudy-cloud",
+   "players": 10,
+   "seed": "s33b-400-all-12",
+   "winnerSeat": 6,
+   "turns": 56,
+   "endReason": "lastStanding",
+   "ms": 38766,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     25,
+     null,
+     null,
+     33,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 305.5087785714286,
+    "worst": 725.4366000000009
+   },
+   "spotRank": 4,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    2,
+    3,
+    3,
+    4,
+    4,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-east-meadow",
+   "players": 10,
+   "seed": "s33b-400-all-13",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 128155,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-inland-giddy-walrus",
+   "players": 10,
+   "seed": "s33b-400-all-14",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 117729,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-island-iron-crow",
+   "players": 10,
+   "seed": "s33b-400-all-15",
+   "winnerSeat": 5,
+   "turns": 41,
+   "endReason": "lastStanding",
+   "ms": 144607,
+   "comeback": true,
+   "explore": {
+    "half": [
+     31,
+     null,
+     25,
+     null,
+     null,
+     29,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 354.373804878046,
+    "worst": 886.0271999999823
+   },
+   "spotRank": 5,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    2,
+    2,
+    3,
+    4,
+    4,
+    4,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-lucky-moon",
+   "players": 10,
+   "seed": "s33b-400-all-16",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 106319,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-twins-pale-whale",
+   "players": 10,
+   "seed": "s33b-400-all-17",
+   "winnerSeat": 0,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 74777,
+   "comeback": true,
+   "explore": {
+    "half": [
+     32,
+     null,
+     null,
+     null,
+     29,
+     28,
+     null,
+     57,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 333.5192216666659,
+    "worst": 1157.8142999999982
+   },
+   "spotRank": 8,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    3,
+    4,
+    4,
+    4,
+    4,
+    5,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-sandy-deer",
+   "players": 10,
+   "seed": "s33b-400-all-18",
+   "winnerSeat": 8,
+   "turns": 40,
+   "endReason": "lastStanding",
+   "ms": 81083,
+   "comeback": true,
+   "explore": {
+    "half": [
+     17,
+     null,
+     34,
+     null,
+     null,
+     null,
+     null,
+     null,
+     23,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     39,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 281.68547000000035,
+    "worst": 636.4208000000071
+   },
+   "spotRank": 3,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    1,
+    3,
+    4,
+    4,
+    4,
+    4,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-soft-mountain",
+   "players": 10,
+   "seed": "s33b-400-all-19",
+   "winnerSeat": 7,
+   "turns": 57,
+   "endReason": "lastStanding",
+   "ms": 67837,
+   "comeback": true,
+   "explore": {
+    "half": [
+     30,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     34,
+     null,
+     24
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     55,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 298.0748473684211,
+    "worst": 708.6116000000038
+   },
+   "spotRank": 3,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-tall-wolf",
+   "players": 10,
+   "seed": "s33b-400-all-20",
+   "winnerSeat": 0,
+   "turns": 59,
+   "endReason": "lastStanding",
+   "ms": 132405,
+   "comeback": false,
+   "explore": {
+    "half": [
+     19,
+     null,
+     null,
+     null,
+     null,
+     null,
+     31,
+     null,
+     29,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 326.95201186440744,
+    "worst": 939.0272000000114
+   },
+   "spotRank": 6,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    4,
+    4,
+    4,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-white-drum",
+   "players": 10,
+   "seed": "s33b-400-all-21",
+   "winnerSeat": 4,
+   "turns": 51,
+   "endReason": "lastStanding",
+   "ms": 40430,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     31,
+     35,
+     null,
+     null,
+     null,
+     44,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     51,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 306.29243137254656,
+    "worst": 844.7894999999844
+   },
+   "spotRank": 7,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    1,
+    2,
+    2,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-twins-lilac-owl",
+   "players": 10,
+   "seed": "s33b-400-all-22",
+   "winnerSeat": 2,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 55374,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     30,
+     31,
+     28,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 214.3022899999989,
+    "worst": 494.5194000000047
+   },
+   "spotRank": 3,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    4,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-clever-anchor",
+   "players": 10,
+   "seed": "s33b-400-all-23",
+   "winnerSeat": 8,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 64544,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     26,
+     31,
+     null,
+     32,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 266.03332666666586,
+    "worst": 559.7557999999844
+   },
+   "spotRank": 0,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-early-falcon",
+   "players": 10,
+   "seed": "s33b-400-all-24",
+   "winnerSeat": 8,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 62986,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     36,
+     null,
+     22,
+     null,
+     null,
+     null,
+     47,
+     37,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 276.74379499999924,
+    "worst": 546.9057999999932
+   },
+   "spotRank": 4,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    4,
+    4,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-gentle-pine",
+   "players": 10,
+   "seed": "s33b-400-all-25",
+   "winnerSeat": 0,
+   "turns": 31,
+   "endReason": "lastStanding",
+   "ms": 29977,
+   "comeback": false,
+   "explore": {
+    "half": [
+     20,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     30,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 222.26978387096813,
+    "worst": 547.7185000000027
+   },
+   "spotRank": 0,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    2,
+    4,
+    5,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-idle-banner",
+   "players": 10,
+   "seed": "s33b-400-all-26",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 112847,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-twins-loud-finch",
+   "players": 10,
+   "seed": "s33b-400-all-27",
+   "winnerSeat": 4,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 88075,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     42,
+     27,
+     null,
+     59,
+     null,
+     24,
+     null,
+     null,
+     37
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 345.2186733333343,
+    "worst": 699.9930000000022
+   },
+   "spotRank": 5,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    2,
+    2,
+    2,
+    3,
+    4,
+    5,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-olive-pony",
+   "players": 10,
+   "seed": "s33b-400-all-28",
+   "winnerSeat": 6,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 69541,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     29,
+     null,
+     32,
+     34,
+     23,
+     null,
+     31
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 323.0425816666655,
+    "worst": 685.4124000000011
+   },
+   "spotRank": 9,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    1,
+    1,
+    2,
+    2,
+    4,
+    4,
+    4,
+    4
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-rusty-blossom",
+   "players": 10,
+   "seed": "s33b-400-all-29",
+   "winnerSeat": 5,
+   "turns": 45,
+   "endReason": "lastStanding",
+   "ms": 45792,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     29,
+     22,
+     null,
+     null,
+     37,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     44,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 404.78290888888813,
+    "worst": 689.3387999999977
+   },
+   "spotRank": 0,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    1,
+    2,
+    3,
+    3,
+    3,
+    3,
+    5,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-snowy-frog",
+   "players": 10,
+   "seed": "s33b-400-all-30",
+   "winnerSeat": 1,
+   "turns": 51,
+   "endReason": "lastStanding",
+   "ms": 140820,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     26,
+     null,
+     null,
+     33,
+     null,
+     null,
+     null,
+     null,
+     23
+    ],
+    "all": [
+     null,
+     51,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 252.1164509803907,
+    "worst": 627.8098999999929
+   },
+   "spotRank": 6,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    2,
+    2,
+    3,
+    3,
+    5,
+    5,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-swift-reed",
+   "players": 10,
+   "seed": "s33b-400-all-31",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 113922,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-twins-whispering-bough",
+   "players": 10,
+   "seed": "s33b-400-all-32",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 85386,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-crescent-jade-goat",
+   "players": 10,
+   "seed": "s33b-400-all-33",
+   "winnerSeat": 5,
+   "turns": 42,
+   "endReason": "lastStanding",
+   "ms": 96614,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     23,
+     null,
+     null,
+     null,
+     27,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 303.9038785714282,
+    "worst": 630.7514000000083
+   },
+   "spotRank": 0,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    2,
+    3,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-calm-rook",
+   "players": 10,
+   "seed": "s33b-400-all-34",
+   "winnerSeat": 4,
+   "turns": 30,
+   "endReason": "lastStanding",
+   "ms": 81040,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     22,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 301.83610666666647,
+    "worst": 628.2396999999764
+   },
+   "spotRank": 7,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    4,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-eager-clover",
+   "players": 10,
+   "seed": "s33b-400-all-35",
+   "winnerSeat": 3,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 46296,
+   "comeback": true,
+   "explore": {
+    "half": [
+     21,
+     null,
+     null,
+     26,
+     null,
+     null,
+     null,
+     null,
+     29,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 344.3734249999999,
+    "worst": 659.0911000000197
+   },
+   "spotRank": 1,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    2,
+    3,
+    4,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-frosty-hare",
+   "players": 10,
+   "seed": "s33b-400-all-36",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 125642,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-twins-icy-shield",
+   "players": 10,
+   "seed": "s33b-400-all-37",
+   "winnerSeat": 5,
+   "turns": 38,
+   "endReason": "lastStanding",
+   "ms": 32472,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     31,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     37,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 243.7929526315776,
+    "worst": 489.87259999998787
+   },
+   "spotRank": 7,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    2,
+    4,
+    5,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-lost-dune",
+   "players": 10,
+   "seed": "s33b-400-all-38",
+   "winnerSeat": 9,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 81868,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     18,
+     null,
+     21,
+     null,
+     26
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 332.52817666666914,
+    "worst": 821.318499999994
+   },
+   "spotRank": 5,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    3,
+    3,
+    5,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-old-heath",
+   "players": 10,
+   "seed": "s33b-400-all-39",
+   "winnerSeat": 9,
+   "turns": 48,
+   "endReason": "lastStanding",
+   "ms": 55330,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     20,
+     null,
+     null,
+     30,
+     null,
+     29
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 298.2788895833316,
+    "worst": 740.2767999999924
+   },
+   "spotRank": 3,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    1,
+    1,
+    2,
+    4,
+    4,
+    4,
+    4,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-royal-spring",
+   "players": 10,
+   "seed": "s33b-400-all-40",
+   "winnerSeat": 4,
+   "turns": 52,
+   "endReason": "lastStanding",
+   "ms": 92101,
+   "comeback": true,
+   "explore": {
+    "half": [
+     23,
+     null,
+     null,
+     null,
+     30,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 289.2320153846175,
+    "worst": 809.4868000000133
+   },
+   "spotRank": 2,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    1,
+    1,
+    2,
+    3,
+    3,
+    4,
+    5,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-smoky-harbor",
+   "players": 10,
+   "seed": "s33b-400-all-41",
+   "winnerSeat": 0,
+   "turns": 48,
+   "endReason": "lastStanding",
+   "ms": 124665,
+   "comeback": true,
+   "explore": {
+    "half": [
+     25,
+     null,
+     null,
+     null,
+     25,
+     43,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     48,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 249.33516458333725,
+    "worst": 688.9807000000146
+   },
+   "spotRank": 9,
+   "harder": true,
+   "harderSpots": 2,
+   "extra": [
+    0,
+    3,
+    5,
+    5,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-twins-sunny-horn",
+   "players": 10,
+   "seed": "s33b-400-all-42",
+   "winnerSeat": 8,
+   "turns": 55,
+   "endReason": "lastStanding",
+   "ms": 105708,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     28,
+     null,
+     null,
+     null,
+     null,
+     37,
+     null,
+     19,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     55,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 225.99184545454443,
+    "worst": 519.8510999999708
+   },
+   "spotRank": 2,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    1,
+    1,
+    1,
+    2,
+    3,
+    4,
+    4,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-west-star",
+   "players": 10,
+   "seed": "s33b-400-all-43",
+   "winnerSeat": 9,
+   "turns": 58,
+   "endReason": "lastStanding",
+   "ms": 76199,
+   "comeback": true,
+   "explore": {
+    "half": [
+     28,
+     null,
+     null,
+     null,
+     null,
+     null,
+     19,
+     58,
+     null,
+     37
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     58
+    ]
+   },
+   "cpu": {
+    "avg": 319.2845965517245,
+    "worst": 766.4867000000086
+   },
+   "spotRank": 2,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    2,
+    4,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-hardy-kite",
+   "players": 10,
+   "seed": "s33b-400-all-44",
+   "winnerSeat": 8,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 57687,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     39,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     20,
+     25
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 294.97651500000063,
+    "worst": 683.0578000000096
+   },
+   "spotRank": 6,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    3,
+    5,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-bronze-ivy",
+   "players": 10,
+   "seed": "s33b-400-all-45",
+   "winnerSeat": 7,
+   "turns": 54,
+   "endReason": "lastStanding",
+   "ms": 111557,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     35,
+     null,
+     null,
+     null,
+     null,
+     25,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     54,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 161.18913888888804,
+    "worst": 367.04609999997774
+   },
+   "spotRank": 3,
+   "harder": false,
+   "harderSpots": 2,
+   "extra": [
+    0,
+    3,
+    3,
+    4,
+    4,
+    5,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-dusty-swan",
+   "players": 10,
+   "seed": "s33b-400-all-46",
+   "winnerSeat": 0,
+   "turns": 55,
+   "endReason": "lastStanding",
+   "ms": 82959,
+   "comeback": true,
+   "explore": {
+    "half": [
+     42,
+     39,
+     null,
+     null,
+     null,
+     null,
+     null,
+     34,
+     24,
+     null
+    ],
+    "all": [
+     55,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 310.77617454545793,
+    "worst": 934.1786999999895
+   },
+   "spotRank": 3,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    3,
+    3,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-twins-foggy-badger",
+   "players": 10,
+   "seed": "s33b-400-all-47",
+   "winnerSeat": 3,
+   "turns": 44,
+   "endReason": "lastStanding",
+   "ms": 114321,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     32,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 246.68131590908754,
+    "worst": 438.7929000000004
+   },
+   "spotRank": 4,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    1,
+    1,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-humble-kettle",
+   "players": 10,
+   "seed": "s33b-400-all-48",
+   "winnerSeat": 7,
+   "turns": 43,
+   "endReason": "lastStanding",
+   "ms": 120185,
+   "comeback": false,
+   "explore": {
+    "half": [
+     36,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     19,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     38,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 239.7828418604683,
+    "worst": 490.03169999999227
+   },
+   "spotRank": 2,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    0,
+    1,
+    2,
+    3,
+    3,
+    5,
+    5,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-long-thorn",
+   "players": 10,
+   "seed": "s33b-400-all-49",
+   "winnerSeat": 7,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 40603,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     29,
+     null,
+     25,
+     null,
+     null,
+     46,
+     28,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 271.6594566666652,
+    "worst": 627.5097999999998
+   },
+   "spotRank": 0,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-odd-birch",
+   "players": 10,
+   "seed": "s33b-400-all-50",
+   "winnerSeat": 7,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 39830,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     34,
+     24,
+     51,
+     null,
+     null,
+     32,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 277.1526849999985,
+    "worst": 716.2776000000013
+   },
+   "spotRank": 5,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2,
+    3,
+    4,
+    4
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-round-lantern",
+   "players": 10,
+   "seed": "s33b-400-all-51",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 87837,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-twins-small-tiger",
+   "players": 10,
+   "seed": "s33b-400-all-52",
+   "winnerSeat": 4,
+   "turns": 40,
+   "endReason": "lastStanding",
+   "ms": 94336,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     29,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 194.10325249999588,
+    "worst": 350.9908000000287
+   },
+   "spotRank": 0,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    2,
+    2,
+    3,
+    4,
+    4,
+    5,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-sudden-bridge",
+   "players": 10,
+   "seed": "s33b-400-all-53",
+   "winnerSeat": 5,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 40011,
+   "comeback": true,
+   "explore": {
+    "half": [
+     24,
+     null,
+     null,
+     null,
+     27,
+     34,
+     null,
+     null,
+     null,
+     19
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 282.84941166666687,
+    "worst": 1133.9863000000187
+   },
+   "spotRank": 0,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    2,
+    3,
+    3,
+    5,
+    5,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-wary-lily",
+   "players": 10,
+   "seed": "s33b-400-all-54",
+   "winnerSeat": 5,
+   "turns": 29,
+   "endReason": "lastStanding",
+   "ms": 38913,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     20,
+     null,
+     null,
+     27,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     29,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 334.517879310343,
+    "worst": 702.5969000000041
+   },
+   "spotRank": 5,
+   "harder": false,
+   "harderSpots": 2,
+   "extra": [
+    0,
+    5,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-dappled-tower",
+   "players": 10,
+   "seed": "s33b-400-all-55",
+   "winnerSeat": 2,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 52051,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     null,
+     20,
+     30,
+     null,
+     null,
+     null,
+     51,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 260.5575333333312,
+    "worst": 504.5168999999878
+   },
+   "spotRank": 4,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    2,
+    4,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-broad-cedar",
+   "players": 10,
+   "seed": "s33b-400-all-56",
+   "winnerSeat": 4,
+   "turns": 58,
+   "endReason": "lastStanding",
+   "ms": 78562,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     35,
+     34,
+     null,
+     null,
+     null,
+     26
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 332.7745086206901,
+    "worst": 879.2356000000145
+   },
+   "spotRank": 8,
+   "harder": true,
+   "harderSpots": 2,
+   "extra": [
+    0,
+    1,
+    2,
+    2,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-twins-dusky-maple",
+   "players": 10,
+   "seed": "s33b-400-all-57",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 102375,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-crescent-fond-viper",
+   "players": 10,
+   "seed": "s33b-400-all-58",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 97269,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-inland-honest-comet",
+   "players": 10,
+   "seed": "s33b-400-all-59",
+   "winnerSeat": 1,
+   "turns": 38,
+   "endReason": "lastStanding",
+   "ms": 30903,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     27,
+     null,
+     null,
+     null,
+     19,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 242.28325263158217,
+    "worst": 438.5334000000148
+   },
+   "spotRank": 1,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    1,
+    1,
+    2,
+    2,
+    5,
+    5,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-lone-mill",
+   "players": 10,
+   "seed": "s33b-400-all-60",
+   "winnerSeat": 0,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 39220,
+   "comeback": true,
+   "explore": {
+    "half": [
+     33,
+     42,
+     null,
+     null,
+     29,
+     null,
+     26,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 277.7937683333342,
+    "worst": 665.4012999999977
+   },
+   "spotRank": 1,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    2,
+    2,
+    2,
+    2,
+    2,
+    3,
+    3,
+    4
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-north-wasp",
+   "players": 10,
+   "seed": "s33b-400-all-61",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 72127,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-twins-rosy-crown",
+   "players": 10,
+   "seed": "s33b-400-all-62",
+   "winnerSeat": 4,
+   "turns": 42,
+   "endReason": "lastStanding",
+   "ms": 61461,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     30,
+     null,
+     null,
+     null,
+     21,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 263.78216190476155,
+    "worst": 478.7479999999923
+   },
+   "spotRank": 3,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2,
+    3,
+    3
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-slow-moor",
+   "players": 10,
+   "seed": "s33b-400-all-63",
+   "winnerSeat": 6,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 77915,
+   "comeback": true,
+   "explore": {
+    "half": [
+     22,
+     null,
+     null,
+     null,
+     17,
+     null,
+     37,
+     null,
+     null,
+     53
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 208.80750166666792,
+    "worst": 496.4228000000003
+   },
+   "spotRank": 4,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    1,
+    1,
+    1,
+    2,
+    2,
+    3,
+    3,
+    5,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-strong-willow",
+   "players": 10,
+   "seed": "s33b-400-all-64",
+   "winnerSeat": 7,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 41413,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     31,
+     31,
+     null,
+     null,
+     49,
+     27,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 169.7498099999997,
+    "worst": 307.7379999999539
+   },
+   "spotRank": 1,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    1,
+    4,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-warm-dove",
+   "players": 10,
+   "seed": "s33b-400-all-65",
+   "winnerSeat": 3,
+   "turns": 35,
+   "endReason": "lastStanding",
+   "ms": 105035,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     25,
+     null,
+     null,
+     31,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 199.54235142856902,
+    "worst": 365.2239999999874
+   },
+   "spotRank": 5,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2,
+    3,
+    3,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-brown-oak",
+   "players": 10,
+   "seed": "s33b-400-all-66",
+   "winnerSeat": 1,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 37705,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     33,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     24,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 203.06099666666657,
+    "worst": 436.5057000000088
+   },
+   "spotRank": 9,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    3,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-twins-brisk-yew",
+   "players": 10,
+   "seed": "s33b-400-all-67",
+   "winnerSeat": 7,
+   "turns": 59,
+   "endReason": "lastStanding",
+   "ms": 54019,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     21,
+     null,
+     null,
+     null,
+     33,
+     null,
+     41,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 252.01314067796872,
+    "worst": 497.757900000026
+   },
+   "spotRank": 0,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    2,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-distant-elk",
+   "players": 10,
+   "seed": "s33b-400-all-68",
+   "winnerSeat": 6,
+   "turns": 58,
+   "endReason": "lastStanding",
+   "ms": 113001,
+   "comeback": true,
+   "explore": {
+    "half": [
+     35,
+     null,
+     22,
+     null,
+     null,
+     30,
+     38,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 230.1234172413794,
+    "worst": 467.1787999999942
+   },
+   "spotRank": 6,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    3
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-first-pebble",
+   "players": 10,
+   "seed": "s33b-400-all-69",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 120333,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-island-hollow-apple",
+   "players": 10,
+   "seed": "s33b-400-all-70",
+   "winnerSeat": 0,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 31898,
+   "comeback": true,
+   "explore": {
+    "half": [
+     41,
+     null,
+     null,
+     null,
+     24,
+     25,
+     null,
+     38,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 234.5177266666656,
+    "worst": 395.96450000000186
+   },
+   "spotRank": 9,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-lively-fern",
+   "players": 10,
+   "seed": "s33b-400-all-71",
+   "winnerSeat": 0,
+   "turns": 47,
+   "endReason": "lastStanding",
+   "ms": 76360,
+   "comeback": true,
+   "explore": {
+    "half": [
+     25,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     35,
+     null
+    ],
+    "all": [
+     46,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 85.75552553190984,
+    "worst": 127.01439999998547
+   },
+   "spotRank": 9,
+   "harder": true,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    1,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-twins-noble-plover",
+   "players": 10,
+   "seed": "s33b-400-all-72",
+   "winnerSeat": 2,
+   "turns": 45,
+   "endReason": "lastStanding",
+   "ms": 66033,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     26,
+     null,
+     20,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 161.98416888889494,
+    "worst": 382.0791999999783
+   },
+   "spotRank": 1,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    2,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-rocky-barley",
+   "players": 10,
+   "seed": "s33b-400-all-73",
+   "winnerSeat": 4,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 97336,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     41,
+     37,
+     null,
+     28,
+     null,
+     null,
+     null,
+     37,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 266.1244183333348,
+    "worst": 569.304599999974
+   },
+   "spotRank": 5,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    2,
+    2,
+    3,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-sleepy-flame",
+   "players": 10,
+   "seed": "s33b-400-all-74",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 87319,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-island-stout-quail",
+   "players": 10,
+   "seed": "s33b-400-all-75",
+   "winnerSeat": 8,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 47692,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     42,
+     null,
+     36,
+     null,
+     null,
+     54,
+     28
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 283.354756666669,
+    "worst": 614.0755000000063
+   },
+   "spotRank": 5,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    4,
+    4,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-violet-bluebell",
+   "players": 10,
+   "seed": "s33b-400-all-76",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 86580,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-twins-zesty-gate",
+   "players": 10,
+   "seed": "s33b-400-all-77",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 57724,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-crescent-bright-river",
+   "players": 10,
+   "seed": "s33b-400-all-78",
+   "winnerSeat": 4,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 139721,
+   "comeback": true,
+   "explore": {
+    "half": [
+     29,
+     null,
+     17,
+     null,
+     33,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 44.311570000003364,
+    "worst": 69.4609000000055
+   },
+   "spotRank": 6,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    4,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-deep-buckle",
+   "players": 10,
+   "seed": "s33b-400-all-79",
+   "winnerSeat": 7,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 93469,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     52,
+     null,
+     null,
+     42,
+     32,
+     20
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 190.37721666666621,
+    "worst": 322.7827999999863
+   },
+   "spotRank": 5,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    2,
+    3,
+    3,
+    4,
+    5,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-fierce-griffin",
+   "players": 10,
+   "seed": "s33b-400-all-80",
+   "winnerSeat": 8,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 31021,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     27,
+     28,
+     null,
+     31,
+     37,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 72.5966816666701,
+    "worst": 108.81910000002244
+   },
+   "spotRank": 2,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    2,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-high-rose",
+   "players": 10,
+   "seed": "s33b-400-all-81",
+   "winnerSeat": 3,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 40195,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     null,
+     30,
+     24,
+     null,
+     null,
+     42,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 214.93754166666477,
+    "worst": 519.7399000000441
+   },
+   "spotRank": 2,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    2,
+    4,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-twins-little-cove",
+   "players": 10,
+   "seed": "s33b-400-all-82",
+   "winnerSeat": 5,
+   "turns": 49,
+   "endReason": "lastStanding",
+   "ms": 34705,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     29,
+     null,
+     null,
+     null,
+     29,
+     null,
+     null,
+     44,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     49,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 202.2167489795924,
+    "worst": 527.5734999999986
+   },
+   "spotRank": 1,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    3,
+    4,
+    5
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-narrow-harp",
+   "players": 10,
+   "seed": "s33b-400-all-83",
+   "winnerSeat": 2,
+   "turns": 29,
+   "endReason": "lastStanding",
+   "ms": 43080,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     21,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 79.91205172413551,
+    "worst": 209.3448999999673
+   },
+   "spotRank": 0,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    3,
+    3,
+    4,
+    4,
+    5,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-restless-shore",
+   "players": 10,
+   "seed": "s33b-400-all-84",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 73502,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-island-simple-feather",
+   "players": 10,
+   "seed": "s33b-400-all-85",
+   "winnerSeat": 8,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 42321,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     30,
+     null,
+     28,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 236.36064000000286,
+    "worst": 465.87449999997625
+   },
+   "spotRank": 6,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    1,
+    1,
+    4,
+    4,
+    4,
+    4,
+    5,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-stormy-hill",
+   "players": 10,
+   "seed": "s33b-400-all-86",
+   "winnerSeat": 4,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 64401,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     45,
+     null,
+     null,
+     25,
+     null,
+     null,
+     null,
+     30,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 83.17700833332783,
+    "worst": 142.68969999998808
+   },
+   "spotRank": 7,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    2,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-twins-velvet-spruce",
+   "players": 10,
+   "seed": "s33b-400-all-87",
+   "winnerSeat": 7,
+   "turns": 59,
+   "endReason": "lastStanding",
+   "ms": 30313,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     35,
+     null,
+     null,
+     44,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 92.34613898305136,
+    "worst": 161.66269999998622
+   },
+   "spotRank": 4,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    2,
+    5,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-young-hearth",
+   "players": 10,
+   "seed": "s33b-400-all-88",
+   "winnerSeat": 2,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 61080,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     37,
+     null,
+     null,
+     27,
+     null,
+     null,
+     null,
+     29
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 154.32314166667155,
+    "worst": 322.69530000002123
+   },
+   "spotRank": 3,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    2,
+    2,
+    2,
+    5,
+    5,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-brave-hound",
+   "players": 10,
+   "seed": "s33b-400-all-89",
+   "winnerSeat": 9,
+   "turns": 59,
+   "endReason": "lastStanding",
+   "ms": 27372,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     20,
+     null,
+     null,
+     null,
+     20,
+     null,
+     null,
+     36
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     59
+    ]
+   },
+   "cpu": {
+    "avg": 154.47817118644468,
+    "worst": 315.75969999999506
+   },
+   "spotRank": 6,
+   "harder": false,
+   "harderSpots": 2,
+   "extra": [
+    0,
+    3,
+    4,
+    5,
+    5,
+    5,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-dawn-stork",
+   "players": 10,
+   "seed": "s33b-400-all-90",
+   "winnerSeat": 7,
+   "turns": 38,
+   "endReason": "lastStanding",
+   "ms": 21548,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     19,
+     null,
+     null,
+     null,
+     26,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 76.09876578947909,
+    "worst": 129.01500000001397
+   },
+   "spotRank": 3,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    4,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-fast-lute",
+   "players": 10,
+   "seed": "s33b-400-all-91",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 62670,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-twins-hidden-jay",
+   "players": 10,
+   "seed": "s33b-400-all-92",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 74475,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-crescent-lean-sword",
+   "players": 10,
+   "seed": "s33b-400-all-93",
+   "winnerSeat": null,
+   "turns": 0,
+   "endReason": null,
+   "ms": 69619,
+   "error": "That seed didn't make a fair map. Try another."
+  },
+  {
+   "map": "random:400-inland-muddy-beacon",
+   "players": 10,
+   "seed": "s33b-400-all-94",
+   "winnerSeat": 5,
+   "turns": 35,
+   "endReason": "lastStanding",
+   "ms": 125897,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     22,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     34,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 191.617488571431,
+    "worst": 353.4279000000097
+   },
+   "spotRank": 3,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-island-red-knight",
+   "players": 10,
+   "seed": "s33b-400-all-95",
+   "winnerSeat": 7,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 32449,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     39,
+     27,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 77.66714500000235,
+    "worst": 139.57709999999497
+   },
+   "spotRank": 6,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    1,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-archipelago-silver-thrush",
+   "players": 10,
+   "seed": "s33b-400-all-96",
+   "winnerSeat": 2,
+   "turns": 49,
+   "endReason": "lastStanding",
+   "ms": 30730,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     null,
+     17,
+     null,
+     null,
+     null,
+     null,
+     29,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     48,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 46.88556326530655,
+    "worst": 97.90639999997802
+   },
+   "spotRank": 2,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    4,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-twins-stony-boar",
+   "players": 10,
+   "seed": "s33b-400-all-97",
+   "winnerSeat": 3,
+   "turns": 58,
+   "endReason": "lastStanding",
+   "ms": 16030,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     41,
+     null,
+     null,
+     32,
+     28,
+     20,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     55,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 43.19459310344898,
+    "worst": 82.82829999999376
+   },
+   "spotRank": 6,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    3,
+    5,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-crescent-true-lark",
+   "players": 10,
+   "seed": "s33b-400-all-98",
+   "winnerSeat": 5,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 47983,
+   "comeback": true,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     31,
+     20,
+     null,
+     null,
+     32
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 62.097466666666634,
+    "worst": 105.14949999999953
+   },
+   "spotRank": 2,
+   "harder": false,
+   "harderSpots": 0,
+   "extra": [
+    0,
+    3,
+    3,
+    4,
+    4,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "map": "random:400-inland-woolly-toad",
+   "players": 10,
+   "seed": "s33b-400-all-99",
+   "winnerSeat": 3,
+   "turns": 60,
+   "endReason": "turnCap",
+   "ms": 28120,
+   "comeback": false,
+   "explore": {
+    "half": [
+     null,
+     null,
+     null,
+     24,
+     36,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "all": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "cpu": {
+    "avg": 42.39198999999498,
+    "worst": 77.20519999996759
+   },
+   "spotRank": 2,
+   "harder": false,
+   "harderSpots": 1,
+   "extra": [
+    0,
+    1,
+    2,
+    2,
+    2,
+    2,
+    2,
+    3,
+    4,
+    6
+   ],
+   "market": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "culture": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  }
+ ]
+}

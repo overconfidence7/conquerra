@@ -149,7 +149,7 @@ k = 3 (the brief's first setting) was run on maps 0 to 99 only: 8.7 / 13.6 / 6.8
 
 **The head start each rank got** is the same troops in every row (40: 0 / 2.5 / 4.3 / 5.4; 80: 0 / 2.4 / 3.7 / 5.0; 120: 0 / 2.2 / 3.5 / 4.3 / 5.1 / 5.6; 200: 0 / 2.1 / 3.2 / 4.0 / 4.7 / 5.3 / 5.7 / 5.9), and the market (and culture) went to every spot of the ranks the setting names, on every map (100% of them; none elsewhere). A market is +2 gold a turn while the capital holds (a building the capital could have bought for 6 gold); culture 1 is +1 gold a turn and +6% defence there.
 
-**Shipped: version 5, setting 3.** The more exposed half of the table start with a market and a level of culture at their capital, on top of version 4's troops. It is the best or the joint best on "furthest from fair" at every size (3.2 / 9.8 / 6.1 / 7.6) and the best on average over the four sizes (3.5 points, against 3.7 for settings 1 and 4, 4.2 for 2, and 5.0 for session 33's troops alone). The lobby's card says "Exposed spots start with extra troops (up to 6), the most exposed with a market and a level of culture."; turn 1's report says yours ("Stoneshire starts with 6 extra troops, a market and a level of culture (an exposed spot).") and everyone else's ("Head starts for the exposed spots: Baron Krell +6 with a market and a level of culture, Queen Isolde +1."); the capital's card shows the market as any building.
+**Shipped: version 5, setting 3.** The more exposed half of the table start with a market and a level of culture at their capital, on top of version 4's troops. It is the best or the joint best on "furthest from fair" at every size (3.2 / 9.8 / 6.1 / 7.6) and the best on average over the four sizes (3.5 points, against 3.7 for settings 1 and 4, 4.2 for 2, and 5.0 for session 33's troops alone). The lobby's card says "Exposed spots start with extra troops (up to 6), the most exposed with a market and a level of culture."; turn 1's report says yours ("Stoneshire starts with 6 extra troops, a market and a level of culture (an exposed spot).") and everyone else's ("Head starts for the exposed spots: Baron Krell +2, Queen Isolde +2. Queen Isolde also starts with a market and a level of culture.", as seen live; the first version said "Queen Isolde +2 with a market...", which read as if both had one, and was changed in Part 2); the capital's card shows the market as any building.
 
 **What the numbers say:**
 - **40 territories is inside ±5 now** (3.2 at most, 1.6 on average; it was 6.5 and 4.2). **120 and 200 are closer** (6.1 and 7.6 at the furthest rank, 3.8 and 3.0 on average) but one rank still sits a little outside: the most exposed at 200 (4.9% against 12.5) and the 5th of 6 at 120.
@@ -157,3 +157,51 @@ k = 3 (the brief's first setting) was run on maps 0 to 99 only: 8.7 / 13.6 / 6.8
 - **The harder spots win more** at 40 and 80 (17.9% and 21.4% of their games, against 10.3% and 14.3% with troops alone), still short of 25%.
 - **Turns barely move** (within a turn of session 33's at every size).
 - **Noise:** one standard error on a rank's win rate is about 3 points at 4 players with 200 to 250 games. The rows share maps and game seeds, so they're closer than that to each other, but a single rank still moves a few points between settings; read "on average" beside "furthest".
+
+## Session 33b (Oct 19): 300 and 400
+
+*Nate's call (Oct 18): random maps of 300 and 400 territories, for session 34's 10-player tables and the battle royale later. New in version 5 (no game was made on one before, so their recipe can differ from the smaller sizes' without a new version): 300 suits 4 to 10 players (8 to 10 suggested), 400 suits 6 to 10 (10 suggested). All Marshals with version 5's head start, 100 maps a run (`seedWords(0..99)`, the five shapes in turn), one game each, seed `s33b`: `docs/sims/run-s33b-sizes.sh`, tabled with `s33-combine.ts --prefix s33b big bigbo`; every game in `docs/sims/s33b-random-big*-*.json`.*
+
+**How the seeds fare** (10 seeds of each shape a size, `scripts/try-random.ts 10 300,400`; six tries a seed, the band 4.0):
+
+| | 300 | 400 |
+|---|---|---|
+| As the smaller sizes are made (20 layout starts, a range per 28 territories) | 31 of 50 pass | 22 of 50 |
+| **60 layout starts and at most 10 ranges (shipped)** | **42 of 50** (island 9, archipelago 8, twins 6, crescent 9, inland 10) | **42 of 50** (island 10, archipelago 5, twins 9, crescent 9, inland 9) |
+| The sims' own 100 seeds (shipped) | 90 of 100 | 80 of 100 |
+
+Why tries were rejected, before: mostly **no fair capital layout for 8 to 10 players** (the layout search gave up in a local best after its 20 random starts, not for want of a fair layout), then **a territory with no border to join a province by** (a small island, or a cluster of islets linked only to each other, that no sea lane reaches) and **a pass too narrow** (14 ranges at 400, each with passes). After: narrow passes and unreached islets are most of what's left, and the **archipelago at 400** is the weak shape (5 of 10: the exposure band and too few choke points between its 14 big islands). Overall 16% of seeds fail at both sizes, under the three in ten the brief set; the band stays 4.0 at both. For the orchestrator: the 400 archipelago could ask for fewer choke points, or more islands; not done here.
+
+**By exposure rank (safest first) against fair, version 5's head start:**
+
+| Size, players | Games | By exposure | Furthest from fair | On average | Harder spots' wins (fair) |
+|---|---|---|---|---|---|
+| 300, 8 (fair 12.5) | 90 | 17.8 / 8.9 / 15.6 / 10.0 / 12.2 / 20.0 / 11.1 / 4.4 | 8.1 | 4.0 | 7.1% (16.1) |
+| 300, 10 (fair 10) | 90 | 12.2 / 13.3 / 7.8 / 11.1 / 10.0 / 13.3 / 8.9 / 11.1 / 5.6 / 6.7 | **4.4** | 2.2 | 6.5% (12.3) |
+| 400, 10 (fair 10) | 80 | 12.5 / 8.8 / 13.8 / 12.5 / 8.8 / 12.5 / 13.8 / 7.5 / 2.5 / 7.5 | 7.5 | 3.0 | 10.0% (12.3) |
+| 400, 10, blackout | 80 | 11.3 / 17.5 / 16.3 / 18.8 / 8.8 / 3.8 / 6.3 / 8.8 / 1.3 / 7.5 | 8.8 | 4.8 | 10.0% (12.3) |
+
+The head start by rank: 300 at 8, 0 / 1.7 / 2.6 / 3.4 / 3.9 / 4.8 / 5.4 / 5.7 troops; at 10 and 400 at 10, 0 to 5.9; the market and culture on the more exposed half (every map). **300 at 10 is inside ±5; 300 at 8 and 400 at 10 are inside on average (4.0 and 3.0 points) but one rank sits outside** (at 8, the 6th spot at 20% and the most exposed at 4.4%; at 400, the 9th at 2.5%). One standard error at 80 to 90 games is about 3.2 to 3.5 points at these shares, so one rank 7 or 8 points off is about two errors: worth watching, not yet a pattern (at 300 with 10 the same ranks are within 4.4).
+
+**Turns** (the sim's cap is 60; Classic, all Marshals):
+
+| Size, players | Avg | Median | Within 40 | Over before the cap |
+|---|---|---|---|---|
+| 300, 8 | 45.7 | 46 | 39% | 72% |
+| 300, 10 | 49.7 | 52 | 26% | 64% |
+| 400, 10 | 52.0 | 58 | 19% | 58% |
+| 400, 10, blackout | 55.9 | 60 | 5% | 43% |
+
+**A Classic 400 at 10 runs long:** 52 turns on average with 42% of games stopped by the 60-turn cap (under blackout 56, more than half at the cap), so its true average is past 60 under blackout and close to it with standard fog. Nate's rule is 30 to 40 turns. **The lever already in place: Conquest** (a turn limit, highest score wins), which the lobby suggests from 8 players, so a 300 or a 400 at its suggested table starts as Conquest with 20 turns. A Classic big game is the player's choice, and the card says so: "A long game in Classic: plan on 50 turns or more." Proposed for the orchestrator if big Classic games should end sooner: the Fallen's events scaled with the map (they knock out the leader's spare troops), or the economy's scale (more gold a turn on bigger maps, so armies grow with the room).
+
+**Blackout at 400:** a seat has seen half the map by **turn 34.9** on average (26% of seats ever get there; most are knocked out first), all of it by turn 50.6 (4%). With standard fog the same measure reads 30.6 (it counts land seen through fog).
+
+**CPU per turn** (one process, as the room is: the turn's resolution and every bot's planning): 300 at 8 avg **181 ms**, worst turn 1.29 s; 300 at 10 avg **185 ms**, worst 1.15 s; **400 at 10 avg 243 ms, worst 1.17 s** (the worst game's average 418 ms); blackout 236 ms, worst 1.33 s. The room's limit is 30 s: a turn on the biggest table uses under 5% of it at worst.
+
+**Building the map** (Nate's desktop):
+- **In Node** (one try): 400 in 4.0 s, 300 in 3.3 s, 200 in 1.5 s. Before this session's speed-ups a 400 try took 35 s with the sims running (the same try 7 s after them, on the same busy machine: the territories stage worked out every cell's distance to every seed, and the border noise again in each of 15 rounds), and a 200 5.5 s in the tests. The speed-ups make the same maps, byte for byte.
+- **In the page's worker** (the lobby's picture, the built-in Chromium): a one-try 400 in **3.7 s**, a one-try 300 in 2.7 s, a 400 whose sixth try passes in 21.7 s. (The Chrome tab the browser extension drives ran about four times slower, about 15 s a try: its debugger slows the page, so those aren't Nate's numbers.)
+- **On a phone** (estimate: a mid phone is 3 to 5 times slower than this desktop, session 16's profile is 4 times): a one-try 400 in about 11 to 19 s, a six-try seed in the lobby about 1 to 2 minutes (the lobby's line says big maps take a while, longer on a phone).
+- **The room** (`wrangler dev`, `apps/web/scripts/s33b-room-build.mjs`): a one-try 400 in 3.5 s; a 400 whose sixth try passes **22.6 s** when the room made all six tries, too close to its 30 s. So the room and the online pages are now **told which try passed** (the host's page knows it from the lobby's picture): the room makes that one try (**4.6 s** for the same map), sends it with the map's version, and each page makes one try too. The same map either way, byte for byte (a test); a hint that isn't one of the six tries is ignored.
+
+**The painting at 400** (`400-island-quiet-heron`, 3,540 × 2,441 map units): Mid detail 1.27 pixels a unit on a desktop and 0.96 on a phone (the budget is the same pixels whatever the size, so a bigger map paints a little softer), in 1,024-pixel tiles (20 of them); the Far image is capped at 2,048 pixels wide (2,048 × 1,413); the ground data 338 × 233; the ground atlas as on every map. No texture is over 2,048 pixels, under the 4,096 most Android phones allow, so a 400 paints smaller, never blank. The game started 4.6 s after Start (the map unrolled) on the desktop.

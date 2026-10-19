@@ -9,6 +9,6 @@
   },
   "include": ["src", "test", "src/**/*.json"],
   // The server's tests are checked with the server (apps/web/server/tsconfig.json: Cloudflare's types, not the browser's).
-  "exclude": ["test/access.test.ts", "test/accessHelpers.ts", "test/server.test.ts", "test/push.test.ts", "test/pushHelpers.ts", "test/notify.test.ts"],
+  "exclude": ["test/access.test.ts", "test/accessHelpers.ts", "test/server.test.ts", "test/push.test.ts", "test/pushHelpers.ts", "test/notify.test.ts", "test/random-attempt.test.ts"],
   "references": [{ "path": "../../packages/content" }, { "path": "../../packages/engine" }, { "path": "../../packages/bots" }, { "path": "../../packages/art" }, { "path": "../../packages/sound" }, { "path": "../../packages/mapgen" }, { "path": "../../packages/simcore" }]
 }

@@ -26,6 +26,8 @@ export interface SeatInfo {
 
 export interface LobbySettings {
   mapId: string;
+  /** Session 33b: a random map's try that passed on this page (the room makes its copy from it, in one try). */
+  mapAttempt?: number;
   bots: number;
   botLevel: BotChoice;
   /** A mixed table: how many of the bots are Marshals (the rest are Captains). */
@@ -461,6 +463,8 @@ export interface RoomStart extends Omit<HostStart, "map"> {
   pause?: PauseView;
   mapId: string;
   mapVersion: number | null;
+  /** Session 33b: a random map's try that passed, so the page makes the map in one try instead of all of them. */
+  mapAttempt?: number;
 }
 
 /** Everything the room sends: the local host's answers (or the start), each with the room's clock so the page's countdown matches it. */

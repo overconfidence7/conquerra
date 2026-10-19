@@ -4,8 +4,8 @@
  * "random:" in front. Nothing here draws a map or a random number.
  */
 
-/** The sizes the lobby offers (territories). */
-export const RANDOM_SIZES = [40, 80, 120, 200] as const;
+/** The sizes the lobby offers (territories). Session 33b: 300 and 400, for the big tables (session 34) and later the battle royale. */
+export const RANDOM_SIZES = [40, 80, 120, 200, 300, 400] as const;
 export type RandomSize = (typeof RANDOM_SIZES)[number];
 
 /** The shapes, as the id spells them (see `RANDOM_SHAPES` for the map maker's own). */
@@ -15,14 +15,23 @@ export type RandomShape = "island" | "archipelago" | "twins" | "crescent" | "inl
  * Who each size suits: every count from `min` to `max` gets a fair capital layout (the lobby's Opponents follow it).
  * Fewer than the official maps' ten at 120: each count is one more layout that must pass.
  */
+/**
+ * The most seats a random map has a layout for (session 33b: 10, the Houses' count; session 34 lifts the big sizes to
+ * 20 seats here, and only here).
+ */
+export const RANDOM_MAX_SEATS = 10;
 export const RANDOM_PLAYERS: Record<RandomSize, { min: number; max: number; recommended: { min: number; max: number } }> = {
   40: players(6, 3, 5),
   80: players(8, 4, 6),
   120: players(8, 5, 8),
   200: players(10, 7, 10),
+  // (Session 33b: the big sizes start at 4 and 6 players: a map maker's layout for every count from the smallest is one
+  // more way for a seed to fail, and two or three Houses on 400 territories isn't a game anyone asked for.)
+  300: players(RANDOM_MAX_SEATS, 8, 10, 4),
+  400: players(RANDOM_MAX_SEATS, 10, 10, 6),
 };
-function players(max: number, low: number, high: number) {
-  return { min: 2, max, recommended: { min: low, max: high } };
+function players(max: number, low: number, high: number, min = 2) {
+  return { min, max, recommended: { min: low, max: high } };
 }
 
 /** What each shape is called in a sentence ("80 territories, a crescent"). */

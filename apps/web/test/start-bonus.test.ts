@@ -83,7 +83,7 @@ describe("the income head start, in words (session 33b: random map version 5's m
     expect(old.players.some((p) => p.startBuilding)).toBe(false);
   });
 
-  it("turn 1's report: yours, then the others' \"with a market\"", async () => {
+  it("turn 1's report: yours, then the others' troops and, in a sentence of its own, whose market it is", async () => {
     const { groupReport } = await import("../src/logic/report");
     const { headStartsLine } = await import("../src/logic/turnWords");
     const v = viewFor(mctx, ms, withMarket.id);
@@ -91,15 +91,20 @@ describe("the income head start, in words (session 33b: random map version 5's m
     expect(startBonusLine(v, namer(mctx, v).place)).toBe(`${place} starts with 6 extra troops and a market (an exposed spot).`);
     const g = groupReport(mctx, [{ type: "turnStart", step: 0, turn: 1, seats: ["p1", "p2"] }], namer(mctx, v));
     expect(g.yours[0]!.text).toBe(`${place} starts with 6 extra troops and a market (an exposed spot).`);
-    const others = ms.players.filter((p) => p.id !== v.me.id && (p.startBonus || p.startBuilding));
-    const named = others.sort((x, y) => (y.startBonus ?? 0) - (x.startBonus ?? 0) || (x.name < y.name ? -1 : 1)).map((p) => `${p.name} +${p.startBonus}${p.startBuilding ? " with a market" : ""}`);
-    expect(headStartsLine(v)).toBe(`Head starts for the exposed spots: ${named.join(", ")}.`);
-    expect(headStartsLine(v)).toMatch(/\+6 with a market/);
+    const others = ms.players.filter((p) => p.id !== v.me.id).sort((x, y) => (y.startBonus ?? 0) - (x.startBonus ?? 0) || (x.name < y.name ? -1 : 1));
+    const troops = others.filter((p) => p.startBonus).map((p) => `${p.name} +${p.startBonus}`);
+    const markets = others.filter((p) => p.startBuilding).map((p) => p.name);
+    expect(markets.length).toBe(1);
+    expect(headStartsLine(v)).toBe(`Head starts for the exposed spots: ${troops.join(", ")}. ${markets[0]} also starts with a market.`);
     // By hand: a market alone, and culture (a setting the sim tried).
     const j = v.players.findIndex((p) => p.id !== v.me.id);
     const hand = { ...v, me: { ...v.me, startBonus: undefined, startBuilding: "market" as const }, players: v.players.map((p, i) => ({ ...p, startBonus: i === j ? 6 : 0, startBuilding: i === j ? ("market" as const) : undefined, startCulture: i === j ? 1 : undefined })) };
     expect(startBonusLine(hand, () => "Stoneshire")).toBe("Stoneshire starts with a market (an exposed spot).");
-    expect(headStartsLine(hand)).toBe(`Head starts for the exposed spots: ${v.players[j]!.name} +6 with a market and a level of culture.`);
+    expect(headStartsLine(hand)).toBe(`Head starts for the exposed spots: ${v.players[j]!.name} +6. ${v.players[j]!.name} also starts with a market and a level of culture.`);
+    // Two with a market: one sentence for both; none with troops: no "also".
+    const two = { ...hand, players: hand.players.map((p) => (p.id === v.me.id ? p : { ...p, startBonus: 0, startBuilding: "market" as const, startCulture: 1 })) };
+    const names = two.players.filter((p) => p.id !== v.me.id).map((p) => p.name).sort();
+    expect(headStartsLine(two)).toBe(`${names.slice(0, -1).join(", ")} and ${names.at(-1)} start with a market and a level of culture.`);
     // The view says what, never where.
     expect(JSON.stringify(v.players)).not.toMatch(/capital|t\d+/);
   });
