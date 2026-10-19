@@ -97,7 +97,7 @@ function GameRow({ g, now, busy }: { g: OnlineGameInfo; now: number; busy: boole
 }
 
 export default function OnlineBlock() {
-  const { onlineLobby, onlineGames, onlineProblem, busy, error } = useGame();
+  const { onlineLobby, onlineGames, onlineProblem, busy, error, lobby } = useGame();
   const [tried, setTried] = useState(false);
   const [showFinished, setShowFinished] = useState(false);
   const [cleared, setCleared] = useState(readCleared);
@@ -164,7 +164,7 @@ export default function OnlineBlock() {
             void startOnline();
           }}
         >
-          {busy && tried ? "Making the table…" : "Make a game link"}
+          {busy && tried ? (lobby.mapId.startsWith("random:") ? "Building the map…" : "Making the table…") : "Make a game link"}
         </button>
         {tried && error && <p className="warn small">{error}</p>}
       </div>

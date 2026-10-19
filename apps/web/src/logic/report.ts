@@ -1,6 +1,6 @@
 import type { GameContext, ReplayEvent, SeenTerritory, VisionEvent } from "@conquerra/engine";
-import { headStartsLine } from "./turnWords";
-import { BUILDING_NAME, startBonusLine, type LogLine, type Namer } from "./text";
+import { headStartsLine, startBonusLine } from "./turnWords";
+import { BUILDING_NAME, type LogLine, type Namer } from "./text";
 import { mergePurchases, turnNarrator } from "./narrate";
 
 /**

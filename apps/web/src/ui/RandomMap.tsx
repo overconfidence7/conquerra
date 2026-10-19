@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { cleanSeed, newSeedWords, randomMapId, randomVersionDef, RANDOM_SHAPE_IDS, RANDOM_SHAPE_NAMES, RANDOM_TEXT, RANDOM_TRIES, RANDOM_VERSION } from "@conquerra/mapgen/seed";
 import { parseRandomId, RANDOM_PREFIX, RANDOM_SIZES, type RandomShape, type RandomSize } from "@conquerra/mapgen/randomId";
 import { previewRandomMap, useGame } from "../store";
+import type { RandomStart } from "@conquerra/content";
 import "./random-map.css";
 
 /**
@@ -20,12 +21,21 @@ export const RANDOM_UI = {
   building: "Making the map…",
   slow: "Big maps take a while to draw, longer on a phone.",
   suits: "A new map from its seed: the same seed always makes the same map, so you can share it with a friend.",
-  /** Session 33 (random map version 4): what the harder spots get, in one line. */
-  headStart: (cap: number) => `Exposed spots start with extra troops (up to ${cap}).`,
+  /**
+   * Session 33 (random map version 4): what the exposed spots get, in one line. Session 33b (version 5): and the
+   * market ("Exposed spots start with extra troops (up to 6), the most exposed with a market.").
+   */
+  headStart: (cap: number, start?: RandomStart) => {
+    const extra = start?.market ? `a market${start.culture ? " and a level of culture" : ""}` : start?.culture ? "a level of culture" : "";
+    const troops = `Exposed spots start with extra troops (up to ${cap})`;
+    if (!extra) return `${troops}.`;
+    return start!.spots === "all" ? `${troops}${start!.market && start!.culture ? ", " : " and "}${extra}.` : `${troops}, the most exposed with ${extra}.`;
+  },
 } as const;
 
-/** The current version's graded head start, at most this many troops (`data/random-maps.json`). */
+/** The current version's graded head start, at most this many troops, and its income head start (`data/random-maps.json`). */
 const HEAD_START_CAP = randomVersionDef(RANDOM_VERSION).grade?.cap ?? 0;
+const HEAD_START = randomVersionDef(RANDOM_VERSION).start;
 
 /** Session 31: "40%", or "40%, try 2 of 6" once a try has been rejected. */
 export function progressLine(done: number): string {
@@ -100,7 +110,7 @@ export default function RandomMapPanel() {
     <div className="random-map">
       <span className="muted small">
         {RANDOM_UI.suits}
-        {HEAD_START_CAP ? ` ${RANDOM_UI.headStart(HEAD_START_CAP)}` : ""}
+        {HEAD_START_CAP ? ` ${RANDOM_UI.headStart(HEAD_START_CAP, HEAD_START)}` : ""}
       </span>
       <div className="pick-row">
         <label className="pick">

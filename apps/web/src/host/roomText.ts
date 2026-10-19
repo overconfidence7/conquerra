@@ -16,4 +16,8 @@ export const TABLE_TEXT = {
   noFriend: "Wait for a friend to sit down, or start with bots.",
   noSeat: "You don't have a seat in this game",
   notYet: "The game hasn't started yet.",
+  /** Session 33b: while a random map is being built (the room's copy when the table is made, then each page's). */
+  building: "Building the map…",
+  buildingBig: "Building the map… A big map takes a while, longer on a phone.",
+  starting: "Starting the game…",
 } as const;

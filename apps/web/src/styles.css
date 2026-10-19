@@ -709,3 +709,9 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 /* A part of the game that didn't load, twice (session 28: ui/loadFailure.ts). */
 #load-failed { position: fixed; left: 50%; top: 16px; transform: translateX(-50%); z-index: 9999; padding: 10px 16px; border-radius: 8px; background: #1b2430; color: #f3ead7; font: 600 15px var(--font-body); box-shadow: 0 4px 18px #0008; max-width: calc(100vw - 32px); text-align: center; }
 .ready-tick { display: block; font-size: 0.72rem; color: var(--gold-hi); }
+
+/* Session 33b: the line shown while a screen's code loads (the table page), instead of a blank page. */
+.loading-line {
+  text-align: center;
+  padding: 40vh 16px 0;
+}

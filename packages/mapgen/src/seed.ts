@@ -1,4 +1,4 @@
-import type { RandomGrade } from "@conquerra/content";
+import type { RandomGrade, RandomStart } from "@conquerra/content";
 import { randomMaps } from "@conquerra/content/randomMaps";
 import { SEED_WORDS } from "@conquerra/content/seedWords";
 import type { LandShape } from "./shapes";
@@ -55,11 +55,14 @@ export const RANDOM_TRIES = 6;
  *  - 3 (session 31, the orchestrator's call from the sim): the band 4.0, and +4 troops on each harder spot.
  *  - 4 (session 33, Nate's call): the band 4.0, and a head start graded by exposure (`grade`): every spot more
  *    exposed than the safest gets extra troops, the most exposed the most (up to 6).
+ *  - 5 (session 33b, Nate's call): version 4's grade, and an income head start (`start`): the more exposed spots
+ *    start with a market at their capital.
  */
 export interface RandomVersionDef {
   band: number;
   bonus: number;
   grade?: RandomGrade;
+  start?: RandomStart;
 }
 export type RandomVersion = number;
 export const RANDOM_VERSIONS: Readonly<Record<RandomVersion, RandomVersionDef>> = Object.fromEntries(Object.entries(randomMaps.versions).map(([v, d]) => [Number(v), d as RandomVersionDef]));

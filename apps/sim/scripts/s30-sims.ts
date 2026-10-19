@@ -6,7 +6,8 @@
  *   npx tsx apps/sim/scripts/s30-sims.ts --random <size>:<shape>:<n> [--start 0] <players> ...
  *     n random maps of that size and shape in a row (the seed words from `--start`), one game each. `--band 3.0`
  *     builds them at another exposure band (session 31); `--version 3` at another random map version, and
- *     `--grade '{"k":2,"from":"middle"}'` with another graded head start (session 33).
+ *     `--grade '{"k":2,"from":"middle"}'` with another graded head start (session 33), `--income
+ *     '{"spots":"all","market":true,"culture":1}'` with another income head start (session 33b).
  *   npx tsx apps/sim/scripts/s30-sims.ts --digest <players> <games> [--fog ...]
  *     every official map at that table size (or its smallest suggested one): a fingerprint of every game's result, to
  *     show a change left the twelve maps' games exactly as they were.
@@ -18,7 +19,7 @@ import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { fileURLToPath } from "node:url";
-import { defaultRules, marshalData, type MapDef, type RandomGrade } from "@conquerra/content";
+import { defaultRules, marshalData, type MapDef, type RandomGrade, type RandomStart } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
 import { runGame, type GameSummary } from "@conquerra/simcore";
 import { dealPersonalities, makeMarshalBot } from "@conquerra/bots";
@@ -33,12 +34,12 @@ const opt = (name: string, dflt: string) => {
 };
 
 /** A map by its id: official, or random (built by the map maker from its id, at this generator version). */
-async function mapOf(id: string, band?: number, version?: number, grade?: RandomGrade): Promise<MapDef> {
+async function mapOf(id: string, band?: number, version?: number, grade?: RandomGrade, start?: RandomStart): Promise<MapDef> {
   if (id.startsWith("random:")) {
     const { randomMap } = await import("@conquerra/mapgen");
     // (Session 31: `--band 3.0` builds at another exposure band, for the sim's experiments; the current version otherwise.
     // Session 33: `--version 3` builds at another version, `--grade '{"k":2}'` tries another graded head start.)
-    return randomMap(id.slice("random:".length), defaultRules, { ...(band ? { band } : {}), ...(version ? { version } : {}), ...(grade ? { grade } : {}) }).map;
+    return randomMap(id.slice("random:".length), defaultRules, { ...(band ? { band } : {}), ...(version ? { version } : {}), ...(grade ? { grade } : {}), ...(start ? { start } : {}) }).map;
   }
   const m = maps[id];
   if (!m) throw new Error(`Unknown map ${id}`);
@@ -55,6 +56,8 @@ interface Job {
   /** Session 33: a random map's version, if not the current one, and a graded head start to try. */
   version?: number;
   grade?: RandomGrade;
+  /** Session 33b: an income head start to try. */
+  start?: RandomStart;
   /**
    * Session 32: the fog, carried with each job. (Before, each worker read `--fog` from its own command line, which only
    * says `--worker`, so every run played standard fog: session 30's "blackout, game for game the same" was that.)
@@ -87,6 +90,9 @@ interface Result {
   harderSpots?: number;
   /** Session 33: each spot's head start, by exposure rank (safest first). */
   extra?: number[];
+  /** Session 33b: whether each spot started with a market, and its culture, by exposure rank (safest first). */
+  market?: number[];
+  culture?: number[];
 }
 
 const fogArg = opt("fog", "on");
@@ -97,7 +103,7 @@ async function play(job: Job): Promise<Result> {
   const t0 = Date.now();
   try {
     if (job.explore) Object.assign(marshalData.explore, job.explore);
-    const map = await mapOf(job.map, job.band, job.version, job.grade);
+    const map = await mapOf(job.map, job.band, job.version, job.grade, job.start);
     const seats = Array.from({ length: job.players }, (_, i) => `s${i}`);
     const dealt = dealPersonalities(job.seed, seats);
     const bots = seats.map((s) => makeMarshalBot(dealt[s]!));
@@ -106,14 +112,14 @@ async function play(job: Job): Promise<Result> {
     // Where each seat started (the same deal runGame made), and the winner's spot by exposure.
     const start = createGame(ctx, { gameId: `sim-${job.seed}`, seed: job.seed, players: seats.map((_, i) => ({ id: `p${i + 1}`, name: `Bot ${i + 1}` })), settings: settingsOf(job.fog), startBonus: true });
     const layout = map.capitalLayouts?.find((l) => l.players === job.players);
-    let spot: Pick<Result, "spotRank" | "harder" | "harderSpots" | "extra"> = {};
+    let spot: Pick<Result, "spotRank" | "harder" | "harderSpots" | "extra" | "market" | "culture"> = {};
     if (layout && g.winnerSeat !== null) {
       const cap = start.players[g.winnerSeat]!.capital;
       const e = exposureOf(layout.slots, allDistances(map), adjacency(map)).exposure;
       const order = layout.slots.map((s, i) => ({ s, x: e[i]! })).sort((a, b) => a.x - b.x || (a.s < b.s ? -1 : 1));
       // (Session 33: a random map's list of harder spots alone, when it has one: since version 4 most spots have a head start.)
       const marked = new Set(layout.harder ?? Object.keys(layout.bonus ?? {}));
-      spot = { spotRank: order.findIndex((o) => o.s === cap), harder: marked.has(cap), harderSpots: marked.size, extra: order.map((o) => layout.bonus?.[o.s] ?? 0) };
+      spot = { spotRank: order.findIndex((o) => o.s === cap), harder: marked.has(cap), harderSpots: marked.size, extra: order.map((o) => layout.bonus?.[o.s] ?? 0), market: order.map((o) => (layout.buildings?.[o.s] ? 1 : 0)), culture: order.map((o) => layout.culture?.[o.s] ?? 0) };
     }
     const comeback = g.winner !== "draw" && g.leaderTurn10 !== null ? g.leaderTurn10 !== g.winner : null;
     return { map: job.map, players: job.players, seed: job.seed, winnerSeat: g.winnerSeat, turns: g.turns, endReason: g.endReason, ms: Date.now() - t0, comeback, explore: g.explore, ...spot };
@@ -195,6 +201,9 @@ function report(title: string, players: number, rs: Result[]) {
     // Session 33: the head start each exposure rank got, on average.
     const extras = ranked.filter((r) => r.extra);
     if (extras.length) console.log(`Head start by the spot's exposure (safest first, average troops): ${Array.from({ length: players }, (_, i) => (extras.reduce((a, r) => a + (r.extra![i] ?? 0), 0) / extras.length).toFixed(1)).join(" / ")}`);
+    // Session 33b: the share of each rank's spots that started with a market, and its average culture.
+    const marts = ranked.filter((r) => r.market?.some((m) => m) || r.culture?.some((c) => c));
+    if (marts.length) console.log(`Income head start by the spot's exposure (safest first): a market on ${Array.from({ length: players }, (_, i) => `${((100 * ranked.reduce((a, r) => a + (r.market?.[i] ?? 0), 0)) / ranked.length).toFixed(0)}%`).join(" / ")}; culture ${Array.from({ length: players }, (_, i) => (ranked.reduce((a, r) => a + (r.culture?.[i] ?? 0), 0) / ranked.length).toFixed(1)).join(" / ")}`);
   }
   return { title, players, games: ok.length, failed: rs.length - ok.length, seats: wins.map(pct), worst, avgTurns: avg };
 }
@@ -226,8 +235,8 @@ if (args[0] === "--digest") {
   // "all": the five shapes in turn.
   const shapeOf = (i: number) => (shape === "all" ? RANDOM_SHAPE_IDS[i % RANDOM_SHAPE_IDS.length]! : shape);
   const band = opt("band", "");
-  const version = opt("version", ""), grade = opt("grade", "");
-  const tried = { ...(version ? { version: Number(version) } : {}), ...(grade ? { grade: { k: 3, least: 1, cap: 6, from: "safest", ...JSON.parse(grade) } as RandomGrade } : {}) };
+  const version = opt("version", ""), grade = opt("grade", ""), startArg = opt("income", "");
+  const tried = { ...(version ? { version: Number(version) } : {}), ...(grade ? { grade: { k: 3, least: 1, cap: 6, from: "safest", ...JSON.parse(grade) } as RandomGrade } : {}), ...(startArg ? { start: { spots: "aboveMiddle", market: true, culture: 0, ...JSON.parse(startArg) } as RandomStart } : {}) };
   const jobs: Job[] = Array.from({ length: Number(n) }, (_, i) => ({ map: `random:${size}-${shapeOf(i)}-${seedWords(start + i)}`, players, game: i, seed: `${seedPrefix}-${size}-${shape}-${i}`, fog: fogArg, ...exploreArg, ...(band ? { band: Number(band) } : {}), ...tried }));
   const rs = await runAll(jobs);
   const r = report(`${n} random maps, ${size} territories, ${shape}`, players, rs);

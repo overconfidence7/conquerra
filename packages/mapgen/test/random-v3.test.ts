@@ -9,12 +9,12 @@ import { exposureProblem, isRandomVersion, mapFingerprint, MAP_STEPS, randomMap,
  * before the change keeps its map; crescents are fatter at version 3.
  */
 describe("random map version 3 (session 31)", () => {
-  it("the versions: 3 has the band 4.0 and +4 troops; 2 is kept; 1 can't be built (session 33: 4 is current)", () => {
-    expect(RANDOM_VERSION).toBe(4);
+  it("the versions: 3 has the band 4.0 and +4 troops; 2 is kept; 1 can't be built (session 33b: 5 is current)", () => {
+    expect(RANDOM_VERSION).toBe(5);
     expect(RANDOM_VERSIONS[3]).toEqual({ band: 4.0, bonus: 4 });
     expect(RANDOM_VERSIONS[2]).toEqual({ band: 5.5, bonus: 0 });
     expect(RANDOM_EXPOSURE_BAND).toBe(4.0);
-    expect([isRandomVersion(2), isRandomVersion(3), isRandomVersion(4), isRandomVersion(1), isRandomVersion(null)]).toEqual([true, true, true, false, false]);
+    expect([isRandomVersion(2), isRandomVersion(3), isRandomVersion(4), isRandomVersion(5), isRandomVersion(1), isRandomVersion(null)]).toEqual([true, true, true, true, false, false]);
     expect(() => randomMap("40-island-quiet-heron", defaultRules, { version: 1 })).toThrow(RANDOM_TEXT.oldVersion(1));
   });
 

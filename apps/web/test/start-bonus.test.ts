@@ -4,7 +4,8 @@ import { createGame, viewFor, type GameContext } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import { territoryCard } from "../src/map/card";
 import { narrateTurn } from "../src/logic/narrate";
-import { namer, startBonusLine } from "../src/logic/text";
+import { namer } from "../src/logic/text";
+import { startBonusLine } from "../src/logic/turnWords";
 
 /** Session 23: the start bonus, readable: the first turn's report, the territory card on turn 1. */
 const base = maps.embervale!;
@@ -58,5 +59,48 @@ describe("everyone's head start on the first turn's report (session 33: a random
     const none = viewFor({ map: base, rules: defaultRules }, createGame({ map: base, rules: defaultRules }, { gameId: "g", seed: "words", players: [1, 2, 3, 4].map((i) => ({ id: `p${i}`, name: `P${i}` })) }), "p1");
     expect(headStartsLine(none)).toBeNull();
     expect(JSON.stringify(view.players)).not.toMatch(/capital|t\d+/);
+  });
+});
+
+describe("the income head start, in words (session 33b: random map version 5's market)", () => {
+  // Embervale's 4-player layout with version 5's kind of head start: troops on three spots, a market on two of them.
+  const l4 = base.capitalLayouts!.find((l) => l.players === 4)!;
+  const [a, b, c] = l4.slots;
+  const marketMap = { ...base, capitalLayouts: base.capitalLayouts!.map((l) => (l.players === 4 ? { ...l, bonus: { [a!]: 6, [b!]: 1, [c!]: 6 }, buildings: { [a!]: "market" as const, [c!]: "market" as const } } : l)) };
+  const mctx: GameContext = { map: marketMap, rules: defaultRules };
+  const ms = createGame(mctx, { gameId: "g", seed: "words", players: [1, 2, 3, 4].map((i) => ({ id: `p${i}`, name: `P${i}` })), startBonus: true });
+  const withMarket = ms.players.find((p) => p.startBuilding === "market")!;
+
+  it("the market stands on turn 1, finished, and the capital's card shows it as any building", () => {
+    const v = viewFor(mctx, ms, withMarket.id);
+    expect(ms.territories[withMarket.capital]).toMatchObject({ building: "market", construction: null });
+    expect(v.me.startBuilding).toBe("market");
+    const card = territoryCard(mctx, v, v.me.capital);
+    expect(JSON.stringify(card)).toMatch(/Market/);
+    // Without the start bonus (a setup saved before it), no market either.
+    const old = createGame(mctx, { gameId: "g", seed: "words", players: [1, 2, 3, 4].map((i) => ({ id: `p${i}`, name: `P${i}` })) });
+    expect(Object.values(old.territories).some((t) => t.building)).toBe(false);
+    expect(old.players.some((p) => p.startBuilding)).toBe(false);
+  });
+
+  it("turn 1's report: yours, then the others' \"with a market\"", async () => {
+    const { groupReport } = await import("../src/logic/report");
+    const { headStartsLine } = await import("../src/logic/turnWords");
+    const v = viewFor(mctx, ms, withMarket.id);
+    const place = mctx.map.territories.find((t) => t.id === v.me.capital)!.name;
+    expect(startBonusLine(v, namer(mctx, v).place)).toBe(`${place} starts with 6 extra troops and a market (an exposed spot).`);
+    const g = groupReport(mctx, [{ type: "turnStart", step: 0, turn: 1, seats: ["p1", "p2"] }], namer(mctx, v));
+    expect(g.yours[0]!.text).toBe(`${place} starts with 6 extra troops and a market (an exposed spot).`);
+    const others = ms.players.filter((p) => p.id !== v.me.id && (p.startBonus || p.startBuilding));
+    const named = others.sort((x, y) => (y.startBonus ?? 0) - (x.startBonus ?? 0) || (x.name < y.name ? -1 : 1)).map((p) => `${p.name} +${p.startBonus}${p.startBuilding ? " with a market" : ""}`);
+    expect(headStartsLine(v)).toBe(`Head starts for the exposed spots: ${named.join(", ")}.`);
+    expect(headStartsLine(v)).toMatch(/\+6 with a market/);
+    // By hand: a market alone, and culture (a setting the sim tried).
+    const j = v.players.findIndex((p) => p.id !== v.me.id);
+    const hand = { ...v, me: { ...v.me, startBonus: undefined, startBuilding: "market" as const }, players: v.players.map((p, i) => ({ ...p, startBonus: i === j ? 6 : 0, startBuilding: i === j ? ("market" as const) : undefined, startCulture: i === j ? 1 : undefined })) };
+    expect(startBonusLine(hand, () => "Stoneshire")).toBe("Stoneshire starts with a market (an exposed spot).");
+    expect(headStartsLine(hand)).toBe(`Head starts for the exposed spots: ${v.players[j]!.name} +6 with a market and a level of culture.`);
+    // The view says what, never where.
+    expect(JSON.stringify(v.players)).not.toMatch(/capital|t\d+/);
   });
 });

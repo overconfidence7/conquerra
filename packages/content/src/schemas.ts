@@ -114,6 +114,12 @@ export const MapDef = z
           bonus: z.record(z.string(), z.number().int().min(1).max(6)).optional(),
           /** Session 30, random maps: the harder spots by the map maker's exposure check (no start bonus); the seat rule deals them to bots first. */
           harder: z.array(z.string()).optional(),
+          /**
+           * Session 33b, random maps' income head start (version 5): a building each listed spot's capital starts with,
+           * finished on turn 1, and its culture level there. The seat rule doesn't read these.
+           */
+          buildings: z.record(z.string(), z.enum(["market"])).optional(),
+          culture: z.record(z.string(), z.number().int().min(1).max(3)).optional(),
         }),
       )
       .optional(),
@@ -139,7 +145,7 @@ export const MapDef = z
     if (m.capitalSlots.length < m.maxPlayers)
       ctx.addIssue({ code: "custom", message: "not enough capital slots for maxPlayers" });
     for (const l of m.capitalLayouts ?? [])
-      if (l.slots.length !== l.players || new Set(l.slots).size !== l.players || l.slots.some((s) => !ids.has(s)) || Object.keys(l.bonus ?? {}).some((s) => !l.slots.includes(s)) || (l.harder ?? []).some((s) => !l.slots.includes(s)))
+      if (l.slots.length !== l.players || new Set(l.slots).size !== l.players || l.slots.some((s) => !ids.has(s)) || Object.keys(l.bonus ?? {}).some((s) => !l.slots.includes(s)) || (l.harder ?? []).some((s) => !l.slots.includes(s)) || Object.keys({ ...l.buildings, ...l.culture }).some((s) => !l.slots.includes(s)))
         ctx.addIssue({ code: "custom", message: `bad capital layout for ${l.players} players` });
   });
 export type MapDef = z.infer<typeof MapDef>;
@@ -528,6 +534,9 @@ export type LeaderNames = z.infer<typeof LeaderNames>;
  *  - `grade` (version 4, session 33): a head start graded by exposure. Each spot more exposed than the reference spot
  *    (`from`: the layout's safest, or its middle one) gets `round(k × (e − e₀) / e₀)` extra troops, at least `least`
  *    and at most `cap` (e the spot's exposure, e₀ the reference's).
+ *  - `start` (version 5, session 33b): an income head start on top. The spots it names by exposure rank (`spots`:
+ *    "aboveMiddle" the more exposed half, "exposedThird" the most exposed third, "all" every spot but the safest)
+ *    start with a market at their capital (`market`) and `culture` levels of culture there.
  */
 export const RandomGrade = z.object({
   k: z.number().min(0),
@@ -535,11 +544,19 @@ export const RandomGrade = z.object({
   cap: z.number().int().min(1).max(6),
   from: z.enum(["safest", "middle"]),
 });
+export const RandomStart = z.object({
+  spots: z.enum(["aboveMiddle", "exposedThird", "all"]),
+  market: z.boolean(),
+  culture: z.number().int().min(0).max(1),
+  /** The spots that get the culture, if not `spots` (session 33b's fourth setting: a market wider, culture narrower). */
+  cultureSpots: z.enum(["aboveMiddle", "exposedThird", "all"]).optional(),
+});
 export const RandomMaps = z
   .object({
     current: z.number().int().min(2),
-    versions: z.record(z.string().regex(/^\d+$/), z.object({ band: z.number().min(1), bonus: z.number().int().min(0).max(6), grade: RandomGrade.optional() })),
+    versions: z.record(z.string().regex(/^\d+$/), z.object({ band: z.number().min(1), bonus: z.number().int().min(0).max(6), grade: RandomGrade.optional(), start: RandomStart.optional() })),
   })
   .refine((r) => String(r.current) in r.versions, "the current version must be listed");
 export type RandomGrade = z.infer<typeof RandomGrade>;
+export type RandomStart = z.infer<typeof RandomStart>;
 export type RandomMaps = z.infer<typeof RandomMaps>;

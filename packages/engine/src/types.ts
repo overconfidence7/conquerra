@@ -260,6 +260,12 @@ export interface PlayerState {
    * (the map's layout sets it per spot and table size). Missing: none.
    */
   startBonus?: number;
+  /**
+   * Session 33b, a random map's income head start (version 5): the building this player's capital started with
+   * (a market), and its culture level there. Missing: none.
+   */
+  startBuilding?: BuildingType;
+  startCulture?: number;
   leader: { alive: boolean; territory: TerritoryId | null };
   /** Turns remaining before each leader ability can be used again (0 = ready). */
   cooldowns: { seize: number; lie: number };

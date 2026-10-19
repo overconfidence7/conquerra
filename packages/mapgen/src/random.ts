@@ -1,4 +1,4 @@
-import type { MapDef, RandomGrade, Rules } from "@conquerra/content";
+import type { MapDef, RandomGrade, RandomStart, Rules } from "@conquerra/content";
 import { Rng, seedRng } from "@conquerra/engine";
 import { adjacency, allDistances, exposureOf } from "./checks";
 import { generateMap, type MapGenOptions } from "./index";
@@ -75,7 +75,7 @@ export function exposureProblem(map: MapDef, band: number = randomVersionDef(RAN
  * for a harder one).
  */
 export const HARDER_THAN_MIDDLE = 1.5;
-export function markHarder(map: MapDef, bonus = 0, grade?: RandomGrade): MapDef {
+export function markHarder(map: MapDef, bonus = 0, grade?: RandomGrade, start?: RandomStart): MapDef {
   const d = allDistances(map), adj = adjacency(map);
   for (const l of map.capitalLayouts ?? []) {
     const e = exposureOf(l.slots, d, adj).exposure;
@@ -92,6 +92,7 @@ export function markHarder(map: MapDef, bonus = 0, grade?: RandomGrade): MapDef 
       const extra = gradeBonus(e, grade);
       const given = l.slots.map((s, i) => [s, extra[i]!] as const).filter(([, n]) => n > 0);
       if (given.length) l.bonus = Object.fromEntries(given);
+      if (start) startBuildings(l, e, start);
       continue;
     }
     if (harder.length) l.harder = harder;
@@ -111,6 +112,25 @@ export function gradeBonus(exposure: readonly number[], grade: RandomGrade): num
   return exposure.map((e) => (e > e0 + 1e-9 ? Math.min(grade.cap, Math.max(grade.least, Math.round((grade.k * (e - e0)) / Math.max(1e-9, e0)))) : 0));
 }
 
+/**
+ * Session 33b, the income head start (random map version 5): the spots `start.spots` names by exposure rank start with
+ * a market at their capital (`start.market`) and `start.culture` levels of culture there. Ranks as `gradeBonus`'s: the
+ * safest is rank 0. "aboveMiddle": the more exposed half (ranks above (n - 1) / 2: 2 and 3 of 4, 3 to 5 of 6);
+ * "exposedThird": the most exposed third (at least one); "all": every spot but the safest. Ties keep the slot order.
+ */
+export function startSpots(exposure: readonly number[], spots: RandomStart["spots"]): number[] {
+  const n = exposure.length;
+  const order = exposure.map((x, i) => ({ x, i })).sort((a, b) => a.x - b.x || a.i - b.i).map((o) => o.i);
+  const from = spots === "all" ? 1 : spots === "exposedThird" ? n - Math.max(1, Math.floor(n / 3)) : Math.floor((n - 1) / 2) + 1;
+  return order.slice(from).sort((a, b) => a - b);
+}
+function startBuildings(l: NonNullable<MapDef["capitalLayouts"]>[number], exposure: readonly number[], start: RandomStart) {
+  const given = startSpots(exposure, start.spots).map((i) => l.slots[i]!);
+  const cultured = start.cultureSpots ? startSpots(exposure, start.cultureSpots).map((i) => l.slots[i]!) : given;
+  if (start.market && given.length) l.buildings = Object.fromEntries(given.map((s) => [s, "market" as const]));
+  if (start.culture > 0 && cultured.length) l.culture = Object.fromEntries(cultured.map((s) => [s, start.culture]));
+}
+
 export class RandomMapFailed extends Error {
   constructor(readonly tries: string[]) {
     super(RANDOM_TEXT.failed);
@@ -121,20 +141,20 @@ export class RandomMapFailed extends Error {
  * Make a random map from its id ("80-crescent-quiet-heron" or "random:80-..."). Throws `RandomMapFailed` (its
  * message is the player's line) if no try passed the checks, or an Error with `RANDOM_TEXT.badId` for a bad id.
  * `version` (session 31): the random map version to build at (a game pins it); the current one if left out, and
- * `RANDOM_TEXT.oldVersion` for one this build can't make. `band` overrides the version's band, and `grade` its graded
- * head start (session 33), both for the sim's experiments.
+ * `RANDOM_TEXT.oldVersion` for one this build can't make. `band` overrides the version's band, `grade` its graded
+ * head start (session 33) and `start` its income head start (session 33b), all for the sim's experiments.
  */
-export function randomMap(id: string, rules: Rules, opts: Pick<MapGenOptions, "stageSeeds" | "log" | "onProgress"> & { version?: number | null; band?: number; grade?: RandomGrade } = {}): { map: MapDef; attempt: number } {
+export function randomMap(id: string, rules: Rules, opts: Pick<MapGenOptions, "stageSeeds" | "log" | "onProgress"> & { version?: number | null; band?: number; grade?: RandomGrade; start?: RandomStart } = {}): { map: MapDef; attempt: number } {
   const p = parseRandomId(id);
   if (!p) throw new Error(RANDOM_TEXT.badId);
-  const { version: asked, band: bandOverride, grade: gradeOverride, ...gen } = opts;
+  const { version: asked, band: bandOverride, grade: gradeOverride, start: startOverride, ...gen } = opts;
   const version: RandomVersion = asked == null ? RANDOM_VERSION : isRandomVersion(asked) ? asked : (() => { throw new Error(RANDOM_TEXT.oldVersion(asked)); })();
   const v = randomVersionDef(version);
   const band = bandOverride ?? v.band;
   const recipe: MapGenOptions = { ...randomRecipe(p.size, p.shape, p.seed, version), ...gen, accept: (m) => exposureProblem(m, band) };
   try {
     const r = generateMap(recipe, rules);
-    const map = markHarder(r.map, v.bonus, gradeOverride ?? v.grade);
+    const map = markHarder(r.map, v.bonus, gradeOverride ?? v.grade, startOverride ?? v.start);
     map.generator = { ...map.generator!, version };
     return { map, attempt: r.attempt };
   } catch (e) {

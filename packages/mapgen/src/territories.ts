@@ -40,14 +40,30 @@ function growRegions(mesh: Mesh, rng: Rng, wobble: Noise, comp: number[], k: num
     const mx = (mesh.x[a]! + mesh.x[b]!) / 2, my = (mesh.y[a]! + mesh.y[b]!) / 2;
     return dist(mesh.x[a]!, mesh.y[a]!, mesh.x[b]!, mesh.y[b]!) * (0.35 + 1.3 * wobble.fbm(mx, my, sp * 6, 3));
   };
+  // Session 33b: each edge's cost worked out once (the same numbers every round), not in every one of the 15 rounds.
+  const edgeCost: (Float64Array | undefined)[] = new Array(mesh.cells);
+  const costsFrom = (c: number) => {
+    let e = edgeCost[c];
+    if (!e) {
+      const nb = mesh.neighbors[c]!;
+      e = new Float64Array(nb.length);
+      for (let i = 0; i < nb.length; i++) e[i] = inComp[nb[i]!] ? costTo(c, nb[i]!) : 0;
+      edgeCost[c] = e;
+    }
+    return e;
+  };
 
-  // Seeds: the first anywhere, then each new one as far as possible from the others.
+  // Seeds: the first anywhere, then each new one as far as possible from the others. (Session 33b: each cell's
+  // distance to its nearest seed kept up to date as seeds are added, the same numbers as working it out afresh.)
   const seeds = [comp[rng.int(comp.length)]!];
+  const nearest = new Float64Array(comp.length).fill(Infinity);
   while (seeds.length < k) {
+    const s = seeds[seeds.length - 1]!;
     let best = comp[0]!, bestD = -1;
-    for (const c of comp) {
-      let d = Infinity;
-      for (const s of seeds) d = Math.min(d, dist(mesh.x[c]!, mesh.y[c]!, mesh.x[s]!, mesh.y[s]!));
+    for (let i = 0; i < comp.length; i++) {
+      const c = comp[i]!;
+      const d = Math.min(nearest[i]!, dist(mesh.x[c]!, mesh.y[c]!, mesh.x[s]!, mesh.y[s]!));
+      nearest[i] = d;
       if (d > bestD) (bestD = d), (best = c);
     }
     seeds.push(best);
@@ -71,9 +87,11 @@ function growRegions(mesh: Mesh, rng: Rng, wobble: Noise, comp: number[], k: num
       if (local[c] !== -1) continue;
       local[c] = r;
       g[c] = key / weight[r]!;
-      for (const m of mesh.neighbors[c]!) {
+      const nb = mesh.neighbors[c]!, cost = costsFrom(c);
+      for (let i = 0; i < nb.length; i++) {
+        const m = nb[i]!;
         if (!inComp[m] || local[m] !== -1) continue;
-        const nk = (g[c]! + costTo(c, m)) * weight[r]!;
+        const nk = (g[c]! + cost[i]!) * weight[r]!;
         if (nk < best[m]!) {
           best[m] = nk;
           heap.push(nk, m * 4096 + r);

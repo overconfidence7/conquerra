@@ -135,7 +135,10 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   const players: PlayerState[] = seats.map((p, i) => {
     const cap = capitals[i]!;
     const bonus = bonusAt[cap] ?? 0;
-    territories[cap] = { owner: p.id, troops: rules.setup.startTroops + bonus, specialists: [], building: null, construction: null, culture: 0 };
+    // Session 33b, a random map's income head start (version 5): a market at the capital, finished, and a level of culture.
+    const building = (opts.startBonus && layout?.buildings?.[cap]) || null;
+    const culture = (opts.startBonus && layout?.culture?.[cap]) || 0;
+    territories[cap] = { owner: p.id, troops: rules.setup.startTroops + bonus, specialists: [], building, construction: null, culture };
     return {
       id: p.id,
       name: p.name,
@@ -144,6 +147,8 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
       eliminatedBy: null,
       capital: cap,
       ...(bonus ? { startBonus: bonus } : {}),
+      ...(building ? { startBuilding: building } : {}),
+      ...(culture ? { startCulture: culture } : {}),
       leader: { alive: true, territory: cap },
       cooldowns: { seize: 0, lie: 0 },
       captured: [],

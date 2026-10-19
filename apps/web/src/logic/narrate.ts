@@ -1,7 +1,7 @@
 import { dealLine, explainFizzle, explainHold, findLeader, fizzleIsQuiet, governLine, spyLine, type GameContext, type LeaderRef, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 import { fateLine, fateTone, MARK_NAME, missionLine, rebelWord, SET_NAME, troopWord } from "./cards";
-import { crossingWords, fromWords, wayWords } from "./turnWords";
-import { army, BUILDING_NAME, startBonusLine, dealNames, generalName, instructionDoing, KIND_NAME, leaderName, leaderShortName, leaderStatus, SPECIALIST_NAME, styledName, WORLD_EVENT_NAME, type LogLine, type Namer, type Tone } from "./text";
+import { crossingWords, fromWords, startBonusLine, wayWords } from "./turnWords";
+import { army, BUILDING_NAME, dealNames, generalName, instructionDoing, KIND_NAME, leaderName, leaderShortName, leaderStatus, SPECIALIST_NAME, styledName, WORLD_EVENT_NAME, type LogLine, type Namer, type Tone } from "./text";
 
 /**
  * The turn report's lines (split from text.ts in session 14): plain English for every replay event. Loaded with the

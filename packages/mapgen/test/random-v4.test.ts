@@ -14,9 +14,8 @@ import { adjacency, allDistances, exposureOf, gradeBonus, mapFingerprint, random
 const GRADE = RANDOM_VERSIONS[4]!.grade!;
 
 describe("random map version 4 (session 33): the graded head start", () => {
-  it("is the current version, its values the content's (data/random-maps.json), the band unchanged", () => {
-    expect(RANDOM_VERSION).toBe(4);
-    expect(randomMaps.current).toBe(4);
+  it("its values the content's (data/random-maps.json), the band unchanged (session 33b: version 5 is current now)", () => {
+    expect(RANDOM_VERSION).toBeGreaterThanOrEqual(4);
     expect(RANDOM_VERSIONS[4]).toEqual(randomMaps.versions["4"]);
     expect(RANDOM_VERSIONS[4]!.band).toBe(4);
     expect(RANDOM_EXPOSURE_BAND).toBe(4);
@@ -40,7 +39,7 @@ describe("random map version 4 (session 33): the graded head start", () => {
 
   it("a version 4 map: the same land as version 3, a head start on every spot but the safest, harder spots as before", () => {
     const v3 = randomMap("80-island-quiet-heron", defaultRules, { version: 3 }).map;
-    const v4 = randomMap("80-island-quiet-heron", defaultRules).map;
+    const v4 = randomMap("80-island-quiet-heron", defaultRules, { version: 4 }).map;
     expect(v4.generator?.version).toBe(4);
     expect(v4.territories).toEqual(v3.territories);
     expect(v4.borders).toEqual(v3.borders);
@@ -77,11 +76,11 @@ describe("random map version 4 (session 33): the graded head start", () => {
     }, 120_000);
 
   it("the 40's four-player head starts, by hand: k = 8, capped at 6", () => {
-    expect(randomMap("40-island-quiet-heron", defaultRules).map.capitalLayouts!.find((l) => l.players === 4)!.bonus).toEqual({ t20: 5, t32: 3 });
+    expect(randomMap("40-island-quiet-heron", defaultRules, { version: 4 }).map.capitalLayouts!.find((l) => l.players === 4)!.bonus).toEqual({ t20: 5, t32: 3 });
   });
 
   it("in a game: each capital starts with its spot's head start; the seat rule deals only the harder spots to bots first", () => {
-    const { map } = randomMap("80-island-quiet-heron", defaultRules);
+    const { map } = randomMap("80-island-quiet-heron", defaultRules, { version: 4 });
     const layout = map.capitalLayouts!.find((l) => l.players === 8)!;
     expect(Object.keys(layout.bonus!).length).toBeGreaterThan(layout.harder!.length);
     const players = Array.from({ length: 8 }, (_, i) => ({ id: `p${i + 1}`, name: `P${i + 1}`, bot: i > 0 }));

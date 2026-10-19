@@ -1,0 +1,29 @@
+  25/300
+  50/300
+  75/300
+  100/300
+  125/300
+  150/300
+  175/300
+  200/300
+  225/300
+  250/300
+  275/300
+  300/300
+
+=== 300 random maps, 40 territories, all: 4 players, all Marshals, fog on ===
+Games: 248 played, 52 not (That seed didn't make a fair map. Try another.)
+Win rate by seat (fair 25.0%): 25.4% / 24.6% / 25.0% / 25.0%; furthest from fair 0.4 points
+Turns: avg 20.8, median 19, min 9, max 60; within 40: 98%; ended: lastStanding 100%, turnCap 0%
+Time: 2.2 s a game
+Comebacks (the winner wasn't the leader after turn 10): 38% of games that went past turn 10
+Explore pace: a seat had seen half the map by turn 6.7 on average (84% of seats ever), all of it by turn 17.7 (26% of seats ever)
+Wins by the spot's exposure (safest first, fair 25.0%): 26.2% / 25.4% / 26.6% / 21.8%
+Harder spots: marked on 39 of 248 maps (1.0 a map); they won 17.9% of those games against a fair 25.0%
+Head start by the spot's exposure (safest first, average troops): 0.0 / 2.5 / 4.3 / 5.4
+Income head start by the spot's exposure (safest first): a market on 0% / 0% / 100% / 100%; culture 0.0 / 0.0 / 1.0 / 1.0
+  island: 40 played, avg 21.5 turns
+  archipelago: 56 played, avg 20.9 turns
+  twins: 45 played, avg 20.5 turns
+  crescent: 50 played, avg 20.6 turns
+  inland: 57 played, avg 20.5 turns

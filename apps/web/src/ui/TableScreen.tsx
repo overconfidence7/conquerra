@@ -26,6 +26,12 @@ export function tableRules(t: TableView): string {
   return `${LEVEL[t.botLevel]} in the empty seats, ${timerLabel(t.turnSeconds)} turns, ${luck}, ${t.fog === "blackout" ? "blackout fog" : `fog ${t.fog ? "on" : "off"}`}, Fate ${t.fate ? "on" : "off"}, diplomacy ${t.diplomacy ? "on" : "off"}, ${t.mode}`;
 }
 
+/** Session 33b: what the table page says while a game's map is built: a random map's words, by its size. */
+export function buildingLine(mapId: string): string {
+  const size = Number(/^random:(\d+)-/.exec(mapId)?.[1] ?? 0);
+  return !size ? TABLE_TEXT.starting : size >= 200 ? TABLE_TEXT.buildingBig : TABLE_TEXT.building;
+}
+
 /** The House colour someone sits down with: their usual one if it's free, else their lobby's, else the first free. */
 export function defaultHouse(t: TableView, usual: number | null, lobby: number): number {
   const taken = new Set(t.seats.flatMap((s) => (s && !s.you ? [s.house] : [])));
@@ -134,6 +140,11 @@ export default function TableScreen() {
         <p className="muted small">{tableRules(t)}.</p>
         {closed ? (
           <p className="warn">{closed}</p>
+        ) : t.status === "started" ? (
+          // Session 33b: started, and this page is building its map (a random one) before turn 1: say so.
+          <p className="muted" role="status">
+            {buildingLine(t.mapId)}
+          </p>
         ) : (
           <>
             {t.you.host && <LinkBlock code={t.code} />}

@@ -62,7 +62,8 @@ function Screen() {
     );
   if (screen === "table")
     return (
-      <Suspense fallback={null}>
+      // (Session 33b: a line while the table screen's code loads, not a blank page.)
+      <Suspense fallback={<p className="muted loading-line">Opening the table…</p>}>
         <TableScreen />
       </Suspense>
     );

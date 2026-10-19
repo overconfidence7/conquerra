@@ -122,3 +122,38 @@ k = 3 (the brief's first setting) was run on maps 0 to 99 only: 8.7 / 13.6 / 6.8
 **For the orchestrator:** the next lever for the roomy 4-player sizes isn't more troops. Options: a tighter band at 80 only (session 31's 3.0 cost most seeds), a fairer layout rule for 4 players (room within a band, not only exposure), or a lasting head start (a market or a level of culture at the exposed capitals, income instead of troops). Each is a new version and its own sim.
 
 **The orchestrator's re-run (Oct 18, its own seed `o12r`, 100 maps at 40 territories, 4 players, all Marshals, 83 played):** by exposure rank 22.9 / 30.1 / 21.7 / 25.3 (furthest 5.1, 2.9 on average), the head start 0 / 2.7 / 4.5 / 5.6 a rank, the harder spots 11.8% of their games, 22.3 turns. Within noise of the session's 300-map table (one standard error at 100 maps is about 4.5 points), and the head starts match. **Nate's calls (Oct 18):** version 4 stands; an income head start for the exposed spots is tried in session 33b against the same 300 maps, and random maps get sizes 300 and 400 in the same session.
+
+## Session 33b (Oct 19): the income head start
+
+*Nate's call (Oct 18): the most exposed capitals earn more, since their gap is room (income every turn), not troops on turn 1. **Random map version 5** (`packages/content/data/random-maps.json`): version 4's troops stay (k = 8, at least 1, at most 6), the band stays 4.0 (the same seeds pass, the same land), and a `start` block adds an income head start at the capital, finished on turn 1. All Marshals, one game a map, on **session 33's own 300 maps a size with its own game seeds** (`seedWords(0..299)`, seed `s33`), so each game pairs with session 33's k = 8 game on the same map: `docs/sims/run-s33b-random.sh <tag> --version 5 --income '<start block>'`, tabled with `npx tsx apps/sim/scripts/s33-combine.ts --prefix s33b <tag>`; every game is in `docs/sims/s33b-random-*.json`.*
+
+**By exposure rank (safest first) against fair, furthest from fair and on average** (the session 33 row is the same maps and game seeds without the income head start):
+
+| Setting | 40, 4 players (fair 25) | 80, 4 players (25) | 120, 6 players (16.7) | 200, 8 players (12.5) |
+|---|---|---|---|---|
+| session 33, k = 8 (troops only) | 29.4 / 29.0 / 23.0 / 18.5: **6.5**, 4.2 | 38.6 / 26.6 / 16.4 / 18.4: **13.6**, 7.6 | 23.8 / 23.1 / 15.8 / 12.8 / 13.2 / 11.4: **7.1**, 4.5 | 19.7 / 17.5 / 13.5 / 13.9 / 11.7 / 8.1 / 7.2 / 8.5: **7.2**, 3.6 |
+| 1: a market, the more exposed half | 23.4 / 29.4 / 24.6 / 22.6: **4.4**, 2.2 | 34.8 / 24.2 / 24.6 / 16.4: **9.8**, 4.9 | 25.6 / 21.6 / 13.2 / 14.3 / 12.1 / 13.2: **9.0**, 4.6 | 21.1 / 13.0 / 9.9 / 13.5 / 13.9 / 12.6 / 9.9 / 6.3: **8.6**, 2.9 |
+| 2: a market, every spot but the safest | 24.2 / 30.6 / 25.8 / 19.4: **5.6**, 3.2 | 31.9 / 30.9 / 16.9 / 20.3: **8.1**, 6.4 | 18.3 / 22.7 / 19.4 / 15.4 / 13.2 / 11.0: **6.0**, 3.5 | 19.7 / 14.8 / 10.8 / 15.2 / 14.3 / 12.1 / 7.6 / 5.4: **7.2**, 3.5 |
+| **3: a market and culture 1, the more exposed half (shipped)** | 26.2 / 25.4 / 26.6 / 21.8: **3.2**, 1.6 | 34.8 / 26.6 / 18.4 / 20.3: **9.8**, 5.7 | 22.8 / 22.1 / 15.4 / 16.2 / 10.7 / 12.9: **6.1**, 3.8 | 17.0 / 13.9 / 14.3 / 12.1 / 15.2 / 13.9 / 8.5 / 4.9: **7.6**, 3.0 |
+| 4: a market for every spot but the safest, culture 1 for the more exposed half | 26.6 / 26.6 / 23.4 / 23.4: **1.6**, 1.6 | 33.8 / 26.6 / 19.3 / 20.3: **8.8**, 5.2 | 21.2 / 26.7 / 16.1 / 13.2 / 12.8 / 9.9: **10.1**, 4.9 | 19.4 / 15.8 / 12.6 / 11.3 / 14.4 / 12.6 / 7.7 / 6.3: **6.9**, 3.1 |
+
+"The more exposed half" is the ranks above the middle (2 and 3 of 4, 3 to 5 of 6, 4 to 7 of 8). Games: 248 / 207 / 273 / 223 a size (the seeds that made a map), the same in every row.
+
+| Setting | Harder spots' wins (fair) at 40 / 80 / 120 / 200 | Avg turns at 40 / 80 / 120 / 200 | Over before the 60-turn cap |
+|---|---|---|---|
+| session 33, k = 8 | 10.3% (25) / 14.3% (25) / 9.8% (19) / 8.2% (16) | 20.7 / 26.6 / 37.4 / 46.1 | 99 / 99 / 91 / 76% |
+| 1 | 15.4% / 14.3% / 9.8% / 5.5% | 21.0 / 26.3 / 36.1 / 45.2 | 99 / 99 / 93 / 79% |
+| 2 | 15.4% / 14.3% / 9.8% / 1.4% | 22.1 / 26.8 / 36.1 / 44.9 | 98 / 98 / 94 / 78% |
+| **3 (shipped)** | 17.9% / 21.4% / 8.3% / 5.5% | 20.8 / 25.8 / 36.7 / 45.3 | 100 / 99 / 90 / 77% |
+| 4 | 20.5% / 7.1% / 13.1% / 4.1% | 21.1 / 25.7 / 35.4 / 44.2 | 100 / 99 / 95 / 76% |
+
+**The head start each rank got** is the same troops in every row (40: 0 / 2.5 / 4.3 / 5.4; 80: 0 / 2.4 / 3.7 / 5.0; 120: 0 / 2.2 / 3.5 / 4.3 / 5.1 / 5.6; 200: 0 / 2.1 / 3.2 / 4.0 / 4.7 / 5.3 / 5.7 / 5.9), and the market (and culture) went to every spot of the ranks the setting names, on every map (100% of them; none elsewhere). A market is +2 gold a turn while the capital holds (a building the capital could have bought for 6 gold); culture 1 is +1 gold a turn and +6% defence there.
+
+**Shipped: version 5, setting 3.** The more exposed half of the table start with a market and a level of culture at their capital, on top of version 4's troops. It is the best or the joint best on "furthest from fair" at every size (3.2 / 9.8 / 6.1 / 7.6) and the best on average over the four sizes (3.5 points, against 3.7 for settings 1 and 4, 4.2 for 2, and 5.0 for session 33's troops alone). The lobby's card says "Exposed spots start with extra troops (up to 6), the most exposed with a market and a level of culture."; turn 1's report says yours ("Stoneshire starts with 6 extra troops, a market and a level of culture (an exposed spot).") and everyone else's ("Head starts for the exposed spots: Baron Krell +6 with a market and a level of culture, Queen Isolde +1."); the capital's card shows the market as any building.
+
+**What the numbers say:**
+- **40 territories is inside ±5 now** (3.2 at most, 1.6 on average; it was 6.5 and 4.2). **120 and 200 are closer** (6.1 and 7.6 at the furthest rank, 3.8 and 3.0 on average) but one rank still sits a little outside: the most exposed at 200 (4.9% against 12.5) and the 5th of 6 at 120.
+- **80 territories at 4 players is still outside, and no setting brought it in.** The safest spot wins 32 to 35% under every setting (38.6% with troops alone): the income head start takes about 4 points off it, and a market for the second safest spot too (setting 2) only moves the lead to that spot (31.9 / 30.9). What the safest spot still has is room: on a roomy 4-player map it has the most land it can take without a fight, so it grows fastest for the whole game, and +3 gold a turn at two rivals' capitals is a few points of that. The next levers are the layout itself (a rule that the four spots' room is within a band, not only their exposure) or a size-specific band at 80; both are a new version and their own sims.
+- **The harder spots win more** at 40 and 80 (17.9% and 21.4% of their games, against 10.3% and 14.3% with troops alone), still short of 25%.
+- **Turns barely move** (within a turn of session 33's at every size).
+- **Noise:** one standard error on a rank's win rate is about 3 points at 4 players with 200 to 250 games. The rows share maps and game seeds, so they're closer than that to each other, but a single rank still moves a few points between settings; read "on average" beside "furthest".

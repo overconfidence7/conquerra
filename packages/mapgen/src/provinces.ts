@@ -69,6 +69,9 @@ function grow(rng: Rng, members: number[], k: number, first: number, adj: number
   }
   const size = new Array<number>(k).fill(1);
   seeds.forEach((s, i) => (prov[s] = first + i));
+  // (Session 33b: each province's own territories, so a grab looks only at them. The pick is the same: the nearest to
+  // the seed, then the lowest id, in whatever order they're looked at.)
+  const own = seeds.map((s) => [s]);
   let left = members.length - k;
   while (left > 0) {
     const order = Array.from({ length: k }, (_, i) => i).sort((a, b) => size[a]! - size[b]! || a - b);
@@ -76,8 +79,7 @@ function grow(rng: Rng, members: number[], k: number, first: number, adj: number
     for (const p of order) {
       // The unclaimed neighbour closest to this province's seed.
       let pick = -1, pd = Infinity;
-      for (const t of members) {
-        if (prov[t] !== first + p) continue;
+      for (const t of own[p]!) {
         for (const m of adj[t]!) {
           if (!inPiece.has(m) || prov[m]! >= 0) continue;
           const d = dists[p]!.get(m) ?? 99;
@@ -86,6 +88,7 @@ function grow(rng: Rng, members: number[], k: number, first: number, adj: number
       }
       if (pick >= 0) {
         prov[pick] = first + p;
+        own[p]!.push(pick);
         size[p]!++;
         left--;
         grabbed = true;

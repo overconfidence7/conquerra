@@ -110,7 +110,7 @@ describe("random maps (session 30)", () => {
     // Pinned: if this changes, the map maker's output changed, and the version must go up (games pin it).
     expect(mapFingerprint(a.map)).toBe(PINNED_40);
     expect(mapFingerprint(randomMap("40-island-quiet-heron", defaultRules, { version: 3 }).map)).toBe(PINNED_40_V3);
-    expect(mapFingerprint(randomMap("40-island-quiet-heron", defaultRules).map)).toBe(PINNED_40_V4);
+    expect(mapFingerprint(randomMap("40-island-quiet-heron", defaultRules, { version: 4 }).map)).toBe(PINNED_40_V4);
     // A different seed, a different map.
     expect(mapFingerprint(randomMap("40-inland-jolly-lake", defaultRules).map)).not.toBe(mapFingerprint(a.map));
   }, 60_000);
