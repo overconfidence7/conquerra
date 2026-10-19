@@ -1915,6 +1915,11 @@
         "Took back {place}. I was never out of it.",
         "{place} is home again. Write that down."
       ],
+      "cloudLifts": [
+        "Nothing but cloud past my border, until today. Now the plan has a map.",
+        "The cloud is lifting. Good. I like to see what I am taking.",
+        "More of the map out of the cloud. The plan just got bigger."
+      ],
       "replyCalm": [
         "Noted. I have a war to run.",
         "Talk is cheap. Armies aren't.",
@@ -1991,6 +1996,11 @@
         "{place} is mine again. Told you I'm quick.",
         "Back in {place}. Barely stopped.",
         "Took back {place}. Missed me?"
+      ],
+      "cloudLifts": [
+        "Nothing but cloud past my border, until today. Now I know which way to run.",
+        "The cloud lifted. More room to move.",
+        "Finally I can see past my own front. Faster now."
       ],
       "replyCalm": [
         "Busy. Talk while you march.",
@@ -2069,6 +2079,11 @@
         "Took back {place}. Slow and steady, as promised.",
         "Back in {place}. The old masons would be proud."
       ],
+      "cloudLifts": [
+        "Nothing but cloud past my walls, until today. I liked it better before.",
+        "The cloud lifted. There are more of you out there than I hoped.",
+        "I can see past my border now. Mostly trouble. Noted."
+      ],
       "replyCalm": [
         "Noted. I'll be behind my walls.",
         "Quiet suits me. Walls take time.",
@@ -2145,6 +2160,11 @@
         "{place} is mine again, friend. Did you miss me?",
         "Took back {place}. Everyone forgets about me. Everyone.",
         "Back in {place}, friend. Surprised?"
+      ],
+      "cloudLifts": [
+        "Nothing but cloud past my border, until today. Now I know who to talk to.",
+        "The cloud lifted. So many new friends to make.",
+        "I can see more of the table now. Interesting."
       ],
       "replyCalm": [
         "Always lovely to hear from you, friend.",
@@ -2223,6 +2243,11 @@
         "Took back {place}. Never count out a patient House.",
         "Back in {place}. Funny how things open up."
       ],
+      "cloudLifts": [
+        "Nothing but cloud past my border, until today. Now I can see who looks tired.",
+        "The cloud lifted. Somebody out there has been fighting.",
+        "More of the map in sight. More chances."
+      ],
       "replyCalm": [
         "Noted. I'm watching for whoever slips first.",
         "Sure. Let me know if anyone looks weak.",
@@ -2300,6 +2325,11 @@
         "Took back {place}. The market always comes back.",
         "{place}, back on the books."
       ],
+      "cloudLifts": [
+        "Nothing but cloud past my border, until today. Now I can see the trade roads.",
+        "The cloud lifted. New markets, at last.",
+        "I can see further now. A view is worth the price."
+      ],
       "replyCalm": [
         "Thanks for the message. Got anything to trade?",
         "Always happy to talk. Even happier to trade.",
@@ -2368,6 +2398,9 @@
       "comeback": [
         "{place} is mine again."
       ],
+      "cloudLifts": [
+        "Nothing but cloud past the border, until today."
+      ],
       "replyCalm": [
         "Noted.",
         "Message received."
@@ -2420,6 +2453,9 @@
       ],
       "comeback": [
         "I took back {place}."
+      ],
+      "cloudLifts": [
+        "The cloud has lifted past my border."
       ],
       "replyCalm": [
         "Message received.",

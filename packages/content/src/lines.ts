@@ -258,6 +258,11 @@ export const CHAT_SITUATIONS = {
   finished: ["rival"],
   /** It took back its own capital, in a fight you saw (back from the brink). */
   comeback: ["place"],
+  /**
+   * Session 33, blackout: its own map went from mostly cloud to mostly seen this turn (once a game). Names nothing: no
+   * place, no border, nothing about the land it found.
+   */
+  cloudLifts: [],
   /** Its answer to your "Say something": nothing much going on between you. */
   replyCalm: [],
   /** The same, after it took your land (`{place}`). */

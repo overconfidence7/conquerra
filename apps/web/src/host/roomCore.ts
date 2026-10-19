@@ -351,7 +351,7 @@ export class RoomCore {
       const playing = !g.isOut(seat) && !g.leftSeats[seat] && !g.over;
       const last = g.lastReplay(seat);
       if (playing && last) {
-        const said = tableTalk({ ctx: g.ctx, game: this.meta.gameId, reader: seat, before: last.before, after: g.viewOf(seat), events: last.report.events, bots, last: this.chat.botLast(user) });
+        const said = tableTalk({ ctx: g.ctx, game: this.meta.gameId, reader: seat, before: last.before, after: g.viewOf(seat), events: last.report.events, bots, last: this.chat.botLast(user), cloud: g.cloudLifted });
         for (const s of said) {
           const b = this.chat.bot(s.bot);
           if (!b) continue;

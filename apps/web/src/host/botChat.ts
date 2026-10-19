@@ -60,7 +60,7 @@ interface Candidate {
  * What the bots say to one reader in the table chat after a turn. `last`: when each bot last spoke to this reader (by
  * bot id, the turn). Returns at most `chatPerTurn` lines, one a bot, the big moments first.
  */
-export function tableTalk(input: { ctx: GameContext; game: string; reader: PlayerId; before: PlayerView; after: PlayerView; events: readonly ReplayEvent[]; bots: readonly ChatBot[]; last: Readonly<Record<PlayerId, number>> }): BotSaid[] {
+export function tableTalk(input: { ctx: GameContext; game: string; reader: PlayerId; before: PlayerView; after: PlayerView; events: readonly ReplayEvent[]; bots: readonly ChatBot[]; last: Readonly<Record<PlayerId, number>>; cloud?: readonly PlayerId[] }): BotSaid[] {
   const { ctx, game, reader, before, events, bots, last } = input;
   const turn = before.turn;
   const idx = indexMap(ctx.map);
@@ -110,6 +110,10 @@ export function tableTalk(input: { ctx: GameContext; game: string; reader: Playe
     if (fromIt) add(b.id, 5, "needle", say(b, "needle", { place: place(fromIt.to) }));
     // A rival it finished (public).
     for (const e of events) if (e.type === "eliminated" && e.by === b.id && e.player !== reader) add(b.id, 8, "finished", say(b, "finished", { rival: name(e.player) }));
+    // Session 33, blackout: its own map went from mostly cloud to mostly seen this turn (`cloud`, the host's list: once
+    // a game for each bot, since seen land stays seen). The one line here not from the reader's own replay, so it names
+    // nothing: no place, no border, nothing about what it found. The least of its lines (the Captain never says it).
+    if (input.cloud?.includes(b.id)) add(b.id, 2, "cloudLifts", say(b, "cloudLifts", {}));
   }
   // One line a bot (its biggest), the biggest first, within the limits.
   const best = new Map<PlayerId, Candidate>();

@@ -997,6 +997,10 @@ export class LocalGame {
     this.state = result.state;
     // What each seat watched in this turn's replay (only its own view), for its next plan.
     this.lastTurn = new Map(this.state.players.filter((p) => p.eliminatedTurn === null).map((p) => [p.id, replayFor(this.ctx, before, result, p.id)]));
+    // Session 33, blackout: the bots whose own map went from mostly cloud to mostly seen this turn (seen land stays
+    // seen, so once a game each), for their one line about it in the table chat. Only how much of it is cloud.
+    const cloudy = (s: GameState, id: PlayerId) => Object.values(viewFor(this.ctx, s, id).territories).filter((t) => t.detail === "fogged" && t.unknown).length * 2 >= this.ctx.map.territories.length;
+    this.cloudLifted = before.settings.fog === "blackout" ? this.chatBots().filter((b) => b.voice && cloudy(before, b.id) && !cloudy(this.state, b.id)).map((b) => b.id) : [];
     const reports = new Map<PlayerId, TurnReport>();
     let longest = 0;
     for (const p of this.people.values()) {
@@ -1020,7 +1024,7 @@ export class LocalGame {
       let table: TurnReport["table"];
       if (!this.online && !out && this.council) {
         const bots = this.chatBots();
-        const said = tableTalk({ ctx: this.ctx, game: this.state.gameId, reader: p.id, before: viewFor(this.ctx, before, p.id), after: viewFor(this.ctx, this.state, p.id), events, bots, last: p.voiceMemory.botLast ?? {} });
+        const said = tableTalk({ ctx: this.ctx, game: this.state.gameId, reader: p.id, before: viewFor(this.ctx, before, p.id), after: viewFor(this.ctx, this.state, p.id), events, bots, last: p.voiceMemory.botLast ?? {}, cloud: this.cloudLifted });
         if (said.length) {
           p.voiceMemory = { ...p.voiceMemory, botLast: { ...(p.voiceMemory.botLast ?? {}), ...Object.fromEntries(said.map((s) => [s.bot, before.turn])) } };
           table = said.map((s) => {
@@ -1321,6 +1325,9 @@ export class LocalGame {
         return { id: p.id, name: p.name, house: p.house, voice: chatVoiceOf(s?.level ?? "captain", s?.personality) };
       });
   }
+
+  /** Session 33, blackout: the bots whose own map went from mostly cloud to mostly seen in the last turn (see `play`). */
+  cloudLifted: PlayerId[] = [];
 
   /** Session 29: the bots' offers to this person this turn (the same ones their Deals panel shows). */
   botOffersTo(id: PlayerId): Offer[] {
