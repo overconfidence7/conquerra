@@ -3,11 +3,11 @@ import type { PlayerView } from "@conquerra/engine";
 import { Container, Sprite, Texture } from "pixi.js";
 import type { Camera, Viewport } from "../../map/camera";
 import { houseOf } from "../../map/houses";
-import { quadPoint } from "../../map/shapes";
 import { rand } from "../../replay/fx/random";
 import type { FxLevel, ParticleState } from "../../replay/fx/particles";
 import type { TextureBank } from "./bank";
 import type { FxLayer } from "./fxLayer";
+import { livingSites, shownOver } from "./livingLand";
 import type { Scenery } from "./scenery";
 import { windmillParts } from "./world";
 
@@ -28,16 +28,19 @@ interface Chimney {
   x: number;
   y: number;
   seed: number;
+  /** Session 33b: the land it stands on, and whether it shows (not under blackout's cloud). */
+  lands: string[];
+  shown: boolean;
 }
 
 export class LivingLayer {
   /** Clouds' shadows and the boats, sails and flags: over the painting. */
   readonly root = new Container();
   private clouds: { sprite: Sprite; shadow: Sprite; x: number; y: number; w: number; speed: number }[] = [];
-  private sails: { sprite: Sprite; speed: number }[] = [];
-  private boats: { sprite: Sprite; x: number; y: number; phase: number }[] = [];
-  private flags: { sprite: Sprite; territory: string; phase: number }[] = [];
-  private beams: { sprite: Sprite; phase: number }[] = [];
+  private sails: { sprite: Sprite; speed: number; lands: string[] }[] = [];
+  private boats: { sprite: Sprite; x: number; y: number; phase: number; lands: string[] }[] = [];
+  private flags: { sprite: Sprite; territory: string; phase: number; lands: string[] }[] = [];
+  private beams: { sprite: Sprite; phase: number; lands: string[] }[] = [];
   private birds: Sprite | null = null;
   private chimneys: Chimney[] = [];
   private smoke: FxLayer | null = null;
@@ -56,63 +59,54 @@ export class LivingLayer {
     this.root.label = "living";
     this.root.eventMode = "none";
     const seed = map.id.length * 7919 + g.width;
+    // Session 33b: each sprite knows the land it stands for, so blackout's cloud hides it (`setView`).
+    const sites = livingSites(map, scenery.landmarks);
     // Boats on the sea lanes (the painted map leaves them out when the living map is on).
     const ship = bank.get("ship");
-    for (const l of g.seaLanes) {
-      const [x0, y0, x1, y1] = l.path as [number, number, number, number];
-      const len = Math.hypot(x1 - x0, y1 - y0);
-      if (!ship || len <= 40) continue;
-      const bend = Math.min(30, len * 0.18);
-      const cx = (x0 + x1) / 2 + ((y1 - y0) / (len || 1)) * bend, cy = (y0 + y1) / 2 - ((x1 - x0) / (len || 1)) * bend;
-      const [x, y, ang] = quadPoint(x0, y0, cx, cy, x1, y1, 0.5);
-      const s = new Sprite(ship);
-      s.anchor.set(0.5, 0.75);
-      s.scale.set(18 / ship.width);
-      if (Math.cos(ang) < 0) s.scale.x *= -1;
-      this.boats.push({ sprite: s, x, y, phase: rand(seed, 1, this.boats.length) * 6.28 });
-      this.root.addChild(s);
-    }
+    if (ship)
+      for (const b of sites.boats) {
+        const s = new Sprite(ship);
+        s.anchor.set(0.5, 0.75);
+        s.scale.set(18 / ship.width);
+        if (Math.cos(b.angle) < 0) s.scale.x *= -1;
+        this.boats.push({ sprite: s, x: b.x, y: b.y, phase: rand(seed, 1, this.boats.length) * 6.28, lands: b.lands });
+        this.root.addChild(s);
+      }
     // Windmills' sails, on the hub of the body painted into the map.
     const sails = bank.get("landmark-windmill-sails");
     if (sails && bank.get("landmark-windmill-body"))
-      for (const l of scenery.landmarks) {
-        if (l.kind !== "windmill") continue;
+      for (const { landmark: l, lands } of sites.windmills) {
         const p = windmillParts(l);
         const s = new Sprite(sails);
         s.anchor.set(0.5);
         s.scale.set(p.sailsW / sails.width);
         s.position.set(p.hubX, p.hubY);
         s.rotation = p.angle;
-        this.sails.push({ sprite: s, speed: 0.5 + rand(seed, 2, this.sails.length) * 0.4 });
+        this.sails.push({ sprite: s, speed: 0.5 + rand(seed, 2, this.sails.length) * 0.4, lands });
         this.root.addChild(s);
       }
     // The lighthouse beam: a soft cone of light turning (seen at Mid).
     const beam = beamTexture();
-    for (const l of scenery.landmarks) {
-      if (l.kind !== "lighthouse") continue;
+    for (const { landmark: l, lands } of sites.lighthouses) {
       const s = new Sprite(beam);
       s.anchor.set(0, 0.5);
       s.blendMode = "add";
       s.scale.set(70 / 256, 22 / 64);
       s.position.set(l.x, l.y - l.w * 0.95);
-      this.beams.push({ sprite: s, phase: rand(seed, 3, this.beams.length) * 6.28 });
+      this.beams.push({ sprite: s, phase: rand(seed, 3, this.beams.length) * 6.28, lands });
       this.root.addChild(s);
     }
     // Flags on the capitals' castles (the owner's colour when you can see it).
-    for (const t of g.territories) {
-      if (!t.castle) continue;
+    for (const f of sites.flags) {
       const s = new Sprite(Texture.WHITE);
       s.anchor.set(0, 1);
-      s.position.set(t.castle.x + 6, t.castle.y - 30);
+      s.position.set(f.x, f.y);
       s.scale.set(7 / 16, 5 / 16);
-      this.flags.push({ sprite: s, territory: t.id, phase: rand(seed, 4, this.flags.length) * 6.28 });
+      this.flags.push({ sprite: s, territory: f.territory, phase: rand(seed, 4, this.flags.length) * 6.28, lands: f.lands });
       this.root.addChild(s);
     }
     // Chimneys: villages, towns and capitals.
-    g.decorations.forEach((d, i) => {
-      if (d.kind === "village" || d.kind === "town") this.chimneys.push({ x: d.x + (d.kind === "town" ? 3 : 1), y: d.y - (d.kind === "town" ? 20 : 14), seed: seed * 31 + i });
-    });
-    for (const t of g.territories) if (t.castle) this.chimneys.push({ x: t.castle.x - 8, y: t.castle.y - 30, seed: seed * 37 + t.id.length * 101 + Math.round(t.castle.x) });
+    this.chimneys = sites.chimneys.map((c) => ({ ...c, shown: true }));
     // Clouds, high over everything painted, and their shadows on the land below them.
     for (let i = 0; i < CLOUDS_PER_MAP; i++) {
       const tex = bank.get(`cloud-${(i % 3) + 1}`);
@@ -155,13 +149,18 @@ export class LivingLayer {
     this.level = level;
   }
 
-  /** Flags in the owners' colours, where you can see them. */
+  /**
+   * Flags in the owners' colours, where you can see them. Session 33b: under blackout a sprite shows only over land
+   * you know (a boat: both ends of its lane), so nothing on the cloud gives away a lane or a settlement.
+   */
   setView(view: PlayerView) {
     for (const f of this.flags) {
       const t = view.territories[f.territory];
       const owner = t?.detail === "full" ? t.owner : null;
       f.sprite.tint = parseInt(houseOf(view, owner).color.slice(1), 16);
     }
+    for (const x of [...this.boats, ...this.sails, ...this.beams, ...this.flags]) x.sprite.visible = shownOver(view, x.lands);
+    for (const c of this.chimneys) c.shown = shownOver(view, c.lands);
   }
 
   /**
@@ -219,7 +218,7 @@ export class LivingLayer {
     const particles: ParticleState[] = [];
     let n = 0;
     for (const c of this.chimneys) {
-      if (c.x < x0 || c.x > x1 || c.y < y0 || c.y > y1) continue;
+      if (!c.shown || c.x < x0 || c.x > x1 || c.y < y0 || c.y > y1) continue;
       if (++n > max) break;
       for (let k = 0; k < 3; k++) {
         const life = 3.2, phase = rand(c.seed, k) * life;
