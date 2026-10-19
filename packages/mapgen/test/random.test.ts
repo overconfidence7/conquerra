@@ -109,7 +109,8 @@ describe("random maps (session 30)", () => {
     expect(a.map.maxPlayers).toBe(randomPlayers(40, "island").max);
     // Pinned: if this changes, the map maker's output changed, and the version must go up (games pin it).
     expect(mapFingerprint(a.map)).toBe(PINNED_40);
-    expect(mapFingerprint(randomMap("40-island-quiet-heron", defaultRules).map)).toBe(PINNED_40_V3);
+    expect(mapFingerprint(randomMap("40-island-quiet-heron", defaultRules, { version: 3 }).map)).toBe(PINNED_40_V3);
+    expect(mapFingerprint(randomMap("40-island-quiet-heron", defaultRules).map)).toBe(PINNED_40_V4);
     // A different seed, a different map.
     expect(mapFingerprint(randomMap("40-inland-jolly-lake", defaultRules).map)).not.toBe(mapFingerprint(a.map));
   }, 60_000);
@@ -146,6 +147,7 @@ describe("random maps (session 30)", () => {
   }, 60_000);
 });
 
-/** The fingerprint of random map 40-island-quiet-heron at random map version 2 (session 30), and at 3 (session 31). */
+/** The fingerprint of random map 40-island-quiet-heron at random map version 2 (session 30), at 3 (session 31) and at 4 (session 33). */
 const PINNED_40 = "6b42b78a243e32b4";
 const PINNED_40_V3 = "69de27e979c27539";
+const PINNED_40_V4 = "dbb2a3c5f9b5dedf";
