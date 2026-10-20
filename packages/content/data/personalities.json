@@ -155,7 +155,7 @@
         "oneFront": true,
         "vulture": 0
       },
-      "blackout": { "attack": { "strikeTurn": 8, "calmMargin": 1.6 }, "build": { "marketsFrom": 6, "cultureFrom": 6, "realm": 1 } },
+      "blackout": { "attack": { "strikeTurn": 8, "calmMargin": 1.6 }, "build": { "marketsFrom": 6, "cultureFrom": 6, "realm": 1, "forts": 0, "walls": 0, "spies": 0 } },
       "defend": {
         "frontGarrison": 1.2,
         "retreatAt": 0
@@ -276,6 +276,7 @@
       "id": "merchant",
       "title": "the Merchant",
       "summary": "Trades, markets and peace early, then a rich late push.",
+      "blackout": { "build": { "forts": 0, "spies": 0 } },
       "attack": {
         "chainMargin": 1.3,
         "maxHops": 4,

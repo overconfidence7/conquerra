@@ -36,7 +36,7 @@ const without = (p: Personality): Personality => {
 };
 
 describe("session 33: the personalities and your leaders under blackout", () => {
-  it("the blackout values (content): the Turtle builds later and less, the Opportunist vultures less; the other four have none", () => {
+  it("the blackout values (content): the Turtle builds later and less, the Opportunist vultures less, the Merchant (34b) builds no forts or spies; the other three have none", () => {
     const blackout = { settings: { fog: "blackout" as const } }, std = { settings: { fog: true } } as const;
     for (const id of PERSONALITY_IDS) {
       const P = personality(id);
@@ -52,7 +52,8 @@ describe("session 33: the personalities and your leaders under blackout", () => 
       expect(B.build).toEqual({ ...P.build, ...P.blackout.build });
       expect({ ...B, attack: P.attack, defend: P.defend, build: P.build }).toEqual(P);
     }
-    expect(PERSONALITY_IDS.filter((id) => personality(id).blackout).sort()).toEqual(["opportunist", "turtle"]);
+    // (Session 34b: the Merchant too: no forts or spies under blackout, its gold on troops; the Turtle likewise, and no walls.)
+    expect(PERSONALITY_IDS.filter((id) => personality(id).blackout).sort()).toEqual(["merchant", "opportunist", "turtle"]);
     const t = forFog(personality("turtle"), blackout as never).build, o = forFog(personality("opportunist"), blackout as never).attack;
     const T = personality("turtle").build;
     expect(t.marketsFrom).toBeGreaterThan(T.marketsFrom);
@@ -60,10 +61,14 @@ describe("session 33: the personalities and your leaders under blackout", () => 
     expect(t.realm!).toBeLessThan(T.realm!);
     expect(o.vulture).toBeLessThan(personality("opportunist").attack.vulture);
     expect(o.vulture).toBeGreaterThan(0);
+    const m = forFog(personality("merchant"), blackout as never).build;
+    expect([m.forts, m.spies, t.forts, t.walls, t.spies]).toEqual([0, 0, 0, 0, 0]);
+    expect(personality("merchant").build.forts).toBeGreaterThan(0);
+    expect(T.walls).toBeGreaterThan(0);
   });
 
   it("with standard fog a Turtle's and an Opportunist's orders are the same with or without their blackout values; under blackout they differ", () => {
-    for (const id of ["turtle", "opportunist"] as const) {
+    for (const id of ["turtle", "opportunist", "merchant"] as const) {
       const P = personality(id);
       expect(play(makeMarshalBot(P), true, 16)).toEqual(play(makeMarshalBot(without(P)), true, 16));
     }

@@ -1,0 +1,7 @@
+=== Embervale, 4 players, seats marshal,marshal,marshal,marshal, fog blackout: 2700 games in 246s ===
+Win rate per seat by kind (fair 25.0%): marshal-blitzer 28.5%, marshal-conqueror 26.7%, marshal-merchant 25.6%, marshal-opportunist 25.4%, marshal-schemer 23.6%, marshal-turtle 20.2%
+All Marshal seats: 25.0% per seat
+Game length: avg 22.6, median 21; 96.0% within 40; draws 0.0%
+Runaways: half the map after turn 10 38.6%; the halfway leader won 60.1%; comebacks 42.1%
+Win rate by seat: 23.9% / 25.4% / 25.2% / 25.5%
+Planning per seat per turn: marshal-merchant avg 1.80 ms, worst 218.5 ms | marshal-conqueror avg 1.87 ms, worst 241.6 ms | marshal-blitzer avg 1.68 ms, worst 229.6 ms | marshal-schemer avg 1.77 ms, worst 296.3 ms | marshal-turtle avg 1.75 ms, worst 343.6 ms | marshal-opportunist avg 1.90 ms, worst 269.8 ms

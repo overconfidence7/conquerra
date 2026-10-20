@@ -146,3 +146,56 @@ Session 33b's runs read the *dealt* Turtle seats far lower under blackout than t
 **The Turtle was 7.5 apart, past the bar, so one more knob** in its `blackout` block. Tried (900 games each, blackout, the same seed): **strike from turn 8** instead of 14 (its calm: rivals left alone until then) 14.3%; **strike from turn 8 and a calm margin of 1.6** (2.2) **17.0%**; no walls and one fort 16.5%. **Shipped the second** (two settings, `attack.strikeTurn` 8 and `attack.calmMargin` 1.6, beside session 33's three build settings), inside the bar at 3.5 apart; nothing changes with standard fog (the same 20.5%, the digest and the Captain's fingerprint the same). Under blackout everyone else races into the cloud with the scout's drive while the Turtle waits for turn 14 to touch a rival; it now joins at turn 8.
 
 **Found, for the orchestrator:** the Turtle's change moves the others' blackout numbers on the same seeds: **the Merchant** 26.0% → 22.9% (7.7 apart from its standard 30.6%) and **the Blitzer** 32.1% → 34.6% (6.6 apart from 28.0%), both now past 5 in the dealt measure (before it, only the Turtle was). The total distance from standard over all six went from 25.5 to 23.1 points. The Blitzer's blackout edge has shown in every run since session 32 (it never pauses a chain, and the cloud rewards whoever reaches it first); the Merchant is new, and is the builder the Turtle now presses earlier. A Merchant (or Blitzer) `blackout` block is the next lever, measured the same way.
+
+## Session 34b: the Merchant and the Blitzer (Oct 20)
+
+*The brief: the Merchant (22.9% against 30.6%) and the Blitzer (34.6% against 28.0%) past the 5-point bar in the dealt measure since session 34's Turtle fix; one knob each in their `blackout` blocks, and the Turtle staying inside its 3.5. Embervale 4, every seat a Marshal with its personality dealt from the game's seed: `npx tsx apps/sim/src/tournament.ts --table embervale:4 --seats marshal,marshal,marshal,marshal --games N --fog blackout|on --seed s34b` (and `--tweak` for each try). Raw: `docs/sims/s34b-dealt-*`, `s34b-try-*`, `s34b-fresh-*`.*
+
+**First, the noise.** At the brief's 900 games a personality's dealt share has a standard error of about 1.8 points, and the gap between its two numbers (standard and blackout) about 2.5: the bar is two errors wide. Session 34's own seed and this one's disagree by that much, so every decision here is on **2,700 games a fog** (the gap's error about 1.5), and the shipped values were checked again on **a fresh seed (s34c)**.
+
+**Before (the shipped personalities at the start of the session):**
+
+| Dealt personality | 900 games: standard / blackout (apart) | 2,700 games: standard / blackout (apart) | Fresh seed s34c, 2,700: standard / blackout (apart) |
+|---|---|---|---|
+| Blitzer | 29.4 / 33.1 (3.7) | 28.4 / 34.5 (**6.1**) | 27.6 / 32.2 (4.6) |
+| Conqueror | 24.3 / 28.3 (4.0) | 25.4 / 25.7 (0.3) | 26.3 / 25.9 (0.4) |
+| Merchant | 25.3 / 20.1 (**5.2**) | 27.6 / 22.2 (**5.4**) | 27.8 / 24.4 (3.4) |
+| Opportunist | 22.8 / 30.1 (**7.3**) | 23.2 / 29.0 (**5.8**) | 23.8 / 29.1 (**5.3**) |
+| Schemer | 23.0 / 23.4 (0.4) | 23.8 / 25.5 (1.7) | 23.6 / 23.8 (0.2) |
+| **Turtle** | 25.2 / 15.1 (**10.1**) | 21.7 / 13.3 (**8.4**) | 21.2 / 14.7 (**6.5**) |
+
+**The Turtle was not inside its bar:** on 2,700 games, and again on the fresh seed, it wins about 14% under blackout against 21% with standard fog. Session 34's 17.0% (900 games, s34) was the lucky end of the noise. The Blitzer and the Opportunist sit above fair under blackout by about what the Turtle (and the Merchant) lose.
+
+**The tries (2,700 blackout games each, seed s34b; standard: the Blitzer 28.4, the Merchant 27.6, the Turtle 21.7):**
+
+| Try (in the `blackout` block) | Blitzer | Conq. | Merchant | Opp. | Schemer | Turtle |
+|---|---|---|---|---|---|---|
+| none (before) | 34.5 | 25.7 | 22.2 | 29.0 | 25.5 | 13.3 |
+| Merchant builds like the Turtle (markets and culture from turn 6, realm 1) | 34.2 | 26.5 | 20.4 | 27.8 | 26.3 | 14.8 |
+| Merchant strikes from turn 4 / 6 / 8 (not 10) | 32.5 / 33.7 / 33.9 | | 23.6 / 24.1 / 23.8 | | | 13.4 / 12.8 / 13.3 |
+| Blitzer pauses its chains | 33.0 | 26.2 | 22.0 | 29.2 | 26.5 | 13.1 |
+| Blitzer 3 hops (not 6) | 34.5 (no change: the shared attack floor) | | | | | |
+| Turtle strikes from turn 0, calm margin 1.3 | 33.3 | 27.5 | 21.8 | 28.3 | 26.1 | 13.1 |
+| Turtle builds from turn 10, realm 0.5 | 33.7 | 26.5 | 22.8 | 28.4 | 25.7 | 13.1 |
+| Turtle front garrison 0.6, not one front | 33.4 | 26.4 | 22.2 | 27.6 | 25.4 | 15.2 |
+| **Turtle: no forts, walls or spies** | 31.4 | 26.2 | 19.1 | 27.1 | 23.9 | **22.3** |
+| the Turtle's and the Merchant's strike from 6 | 31.6 | 25.7 | 21.3 | 26.1 | 23.3 | 21.9 |
+| the Turtle's, and the Merchant strikes from 6 with no forts or spies | 28.5 | 26.7 | 25.6 | 25.4 | 23.6 | 20.2 |
+| **shipped: the Turtle's, and the Merchant no forts or spies** | **28.1** | **25.5** | **24.6** | **26.7** | **23.3** | **21.7** |
+
+**What it was:** under blackout the Turtle and the Merchant spent their gold on forts, walls and spies (the Turtle up to 3 forts and walls with 39 gold left, the Merchant a fort and a spy) while everyone else bought troops and raced into the cloud; a fort guards land nobody has found yet. None of their attack values moved them (the shared attack floor overrides chains, sends and hops for every Marshal, as session 33 found), and building later didn't either. Gold on troops did. **The Blitzer needed no knob of its own:** its blackout edge was the gold the two builders sank into stone.
+
+**Shipped (content, `personalities.json`, read in `forFog`):** the Turtle's `blackout.build` gains `forts: 0, walls: 0, spies: 0` (beside sessions 33 and 34's values); the Merchant gets a `blackout` block of its own, `build: { forts: 0, spies: 0 }`. One knob for both, the same idea.
+
+**After:**
+
+| Dealt personality | s34b, 2,700: standard / blackout (apart) | Fresh seed s34c, 2,700: standard / blackout (apart) |
+|---|---|---|
+| Blitzer | 28.4 / 28.1 (0.3) | 27.6 / 29.3 (1.7) |
+| Conqueror | 25.4 / 25.5 (0.1) | 26.3 / 24.6 (1.7) |
+| Merchant | 27.6 / 24.6 (3.0) | 27.8 / 25.7 (2.1) |
+| Opportunist | 23.2 / 26.7 (3.5) | 23.8 / 26.3 (2.5) |
+| Schemer | 23.8 / 23.3 (0.5) | 23.6 / 23.4 (0.2) |
+| Turtle | 21.7 / 21.7 (0.0) | 21.2 / 20.8 (0.4) |
+
+**Every personality within 5 points of its standard number, the Turtle within 3.5, on both seeds.** The total distance from standard over the six went from 27.7 to 7.4 points (s34b) and from 20.4 to 8.6 (s34c). Standard fog is untouched (a blackout block is read only under blackout): the digest, the Captain's fingerprint and the seeded sim are in `PROGRESS.md`.
