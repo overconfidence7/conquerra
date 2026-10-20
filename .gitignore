@@ -16,3 +16,4 @@ sound/incoming/*
 
 # Local development secrets for wrangler dev (session 26: DEV_EMAIL).
 .dev.vars
+!apps/web/.env.labs

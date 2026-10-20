@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "pnpm --filter web dev",
     "build": "pnpm --filter web build",
+    "build:labs": "pnpm --filter web exec vite build --mode labs",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -b && tsc -p apps/web/server",

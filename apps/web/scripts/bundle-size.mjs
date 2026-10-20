@@ -4,7 +4,7 @@
  *
  *   pnpm build && node apps/web/scripts/bundle-size.mjs
  */
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
@@ -34,6 +34,14 @@ for (const f of seen) {
   rows.push(`  ${f.padEnd(44)} ${(buf.length / 1024).toFixed(1).padStart(7)} KB  (gzip ${(g / 1024).toFixed(1)} KB)`);
   const text = buf.toString("utf8");
   for (const marker of ["Map lab", "Art test bench", "Sound bench", "generateMap", "Sim this map", "What a bot knew"]) if (text.includes(marker)) leaked.push(`${f} contains "${marker}"`);
+}
+// Session 34: the deployed build has none of the check pages (the map lab, what a bot knew, the benches): built without
+// `--mode labs`, no file of the whole build mentions them.
+const labMarkers = ["Map lab", "Art test bench", "Sound bench", "Sim this map", "What a bot knew"];
+const labFiles = readdirSync(join(dist, "assets")).filter((f) => f.endsWith(".js") && labMarkers.some((m) => readFileSync(join(dist, "assets", f), "utf8").includes(m)));
+if (labFiles.length && !process.env.LABS_BUILD) {
+  console.error(`The build has the check pages in it (${labFiles.join(", ")}). Build it with \`pnpm build\`, not \`pnpm build:labs\`.`);
+  process.exit(1);
 }
 console.log(`Start-up bundle (what loads before the lobby):\n${rows.join("\n")}\n  total ${(raw / 1024).toFixed(1)} KB, gzip ${(gz / 1024).toFixed(1)} KB`);
 // Session 32: the allowance is Step 0's size (396.2 KB, once Zod left the start-up code: the content data is used as it

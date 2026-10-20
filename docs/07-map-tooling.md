@@ -56,7 +56,7 @@ Nate chose a player feature from the start. What that adds on top of the shared 
 
 ## Session 10 scope (planned Oct 4): the map lab, bigger maps, new shapes
 Moved from session 9 to 10, because Nate's play-test fixes come first. Nate's direction (Oct 4): maps should be **bigger** and **more imaginative**, not one big round landmass, with clear provinces.
-- **Map lab** at `?lab=maps` on the private preview, behind Access, loaded only when opened, never linked from the lobby.
+- **Map lab** at `?lab=maps`, loaded only when opened, never linked from the lobby. **Session 34: not on the preview any more** (see "How to open the lab now" below).
   - **Recipe panel:** seed plus every `MapGenOptions` knob.
   - **Generate in a worker:** shows its attempts and why each failed.
   - **Preview:** the real renderer, with name, choke-point and capital toggles.
@@ -81,7 +81,11 @@ Moved from session 9 to 10, because Nate's play-test fixes come first. Nate's di
 
 
 ## The map lab (built in session 10)
-**Where:** `conquerra.overconfidenceonline.com/?lab=maps`, behind the same Access sign-in as the rest of the preview. It's never linked from the lobby. Locally: `pnpm build`, `pnpm --filter web preview`, then `http://localhost:4173/?lab=maps`.
+**How to open the lab now (session 34):** the deployed build has none of the check pages (the map lab, what a bot knew, the art and sound benches), so `?lab=...` on the preview opens the lobby. On this computer:
+- `pnpm dev`, then `http://localhost:5173/?lab=maps` (or `?lab=known`, `?lab=bench`, `?lab=sound`). The quickest way.
+- With the online server too: `pnpm build:labs`, then `npx wrangler dev --config apps/web/wrangler.jsonc`, then `http://localhost:8787/?lab=maps`. (`pnpm build` makes the build without them again; `pnpm deploy:preview` always does, and refuses a build that has them.)
+
+**Where it was (sessions 19 to 33):** `conquerra.overconfidenceonline.com/?lab=maps`, behind the preview's Access sign-in.
 
 **In three lines:**
 1. On the left, pick a **shape**, a **size** and a **seed** (or 🎲), then **Make this map**. Every other knob is under "All settings", with a plain label.
@@ -101,7 +105,7 @@ Moved from session 9 to 10, because Nate's play-test fixes come first. Nate's di
 
 **Kept out of the game's start-up:** the lab is only loaded when `?lab=maps` is opened. The page the game loads first was 442.4 KB (136.9 KB compressed) before the lab and is 442.7 KB (137.1 KB) after: only the few lines that pick the page. The lab itself is a separate 44 KB file plus a 192 KB worker. A test follows every import from the game's entry and fails if any lab or map-maker code is reached; `pnpm bundle-size` (run by `pnpm deploy:preview`) checks the built files the same way.
 
-**Switching it off for the public launch:** build with `VITE_LABS=off` (for example `VITE_LABS=off pnpm build`, or set it in the launch deploy script). The switch in `apps/web/src/main.tsx` is then false when the game is built, so the map lab and the art test bench aren't in the build at all, and `?lab=...` just opens the lobby. Until then, the preview's Access sign-in keeps them private, and `pnpm check:preview` confirms `/?lab=maps` and `/?lab=bench` redirect to the sign-in.
+**Switched off (session 34):** the switch is now `import.meta.env.DEV || VITE_LABS === "on"` (on in `pnpm dev`, and in `pnpm build:labs`: `--mode labs` reads `apps/web/.env.labs`), and the deployed build swaps every import of `src/lab/` for an empty module (`noLabs` in `apps/web/vite.config.ts`), so not even the known-map worker is written out. The start-up bundle went from 399.9 to 396.7 KB. `bundle-size.mjs` stops a deploy whose build mentions a check page. *(Before: build with `VITE_LABS=off` (for example `VITE_LABS=off pnpm build`, or set it in the launch deploy script). The switch in `apps/web/src/main.tsx` is then false when the game is built, so the map lab and the art test bench aren't in the build at all, and `?lab=...` just opens the lobby. Until then, the preview's Access sign-in keeps them private, and `pnpm check:preview` confirms `/?lab=maps` and `/?lab=bench` redirect to the sign-in.)*
 
 ## The art test bench (built in session 10)
 **Where:** `?lab=bench` on the private preview (the old `?lab=houses` opens it too). Five parts, chosen at the top; Far / Mid / Near, ⤢ (fit), Tactical and Names work as in the lab.

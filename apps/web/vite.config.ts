@@ -1,5 +1,6 @@
 import { execSync } from "node:child_process";
 import react from "@vitejs/plugin-react";
+import { dirname, resolve } from "node:path";
 import { defineConfig } from "vite";
 
 /** "0.1.0 · Oct 4 · 8b6d540": shown in Settings, so we can tell which version a phone is running. */
@@ -44,8 +45,30 @@ function versionFile(): Plugin {
   };
 }
 
-export default defineConfig({
+/**
+ * Session 34: the check pages (`src/lab/`, `?lab=...`) are out of the deployed build. `main.tsx` already never opens
+ * them there, but Vite still read their code and wrote out the known-map worker it starts; so outside `pnpm dev` and
+ * `pnpm build:labs` (`--mode labs`), any import of `src/lab/` is an empty module.
+ */
+const NO_LABS = "\0conquerra-no-labs";
+function noLabs(on: boolean): Plugin {
+  return {
+    name: "conquerra-no-labs",
+    enforce: "pre",
+    resolveId(source, importer) {
+      if (on || !importer) return null;
+      const target = source.startsWith(".") ? resolve(dirname(importer), source) : source;
+      return /[\\/]src[\\/]lab[\\/]/.test(target) ? NO_LABS : null;
+    },
+    load(id) {
+      return id === NO_LABS ? "export {};" : null;
+    },
+  };
+}
+
+export default defineConfig(({ command, mode }) => ({
   plugins: [
+    noLabs(command === "serve" || mode === "labs"),
     react(),
     versionFile(),
     // The installable app: a manifest (name, colours, icons) and offline caching, so single player works with no
@@ -104,4 +127,4 @@ export default defineConfig({
   define: { __BUILD__: JSON.stringify(BUILD) },
   worker: { format: "es" },
   server: { open: true },
-});
+}));

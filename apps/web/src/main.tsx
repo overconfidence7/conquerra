@@ -91,11 +91,12 @@ function App() {
 (window as unknown as { __conquerraStore?: typeof useGame }).__conquerraStore = useGame;
 
 /**
- * Check pages for making maps and judging art (docs/07-map-tooling.md). They live on the private preview only,
- * load only when opened, and are never linked from the lobby. For the public launch, build with VITE_LABS=off:
- * this switch is then false when the game is built, and none of their code is in the build at all.
+ * Check pages for making maps and judging art (docs/07-map-tooling.md): the map lab, what a bot knew, the art test
+ * bench, the sound bench (`?lab=...`). Session 34: off in the deployed build (this switch is false when the game is
+ * built, so none of their code is in it and `?lab=...` opens the lobby); on under `pnpm dev`, and in the build
+ * `wrangler dev` serves when it's made with `pnpm build:labs` (`--mode labs`, `apps/web/.env.labs`).
  */
-const LABS = import.meta.env.VITE_LABS !== "off";
+const LABS = import.meta.env.DEV || import.meta.env.VITE_LABS === "on";
 const lab = LABS ? new URLSearchParams(location.search).get("lab") : null;
 const root = document.getElementById("root")!;
 if (LABS && lab === "maps") void import("./lab/maps/MapLab").then((m) => m.runMapLab(root));
