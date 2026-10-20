@@ -22,6 +22,7 @@ import {
   type MarshalMemory,
 } from "@conquerra/bots";
 import { defaultRules, marshalData, type MapDef, type PersonalityId } from "@conquerra/content";
+import { LAYOUT_VERSION } from "@conquerra/content/bigTables";
 import {
   createGame,
   LEADER_STYLES,
@@ -492,6 +493,8 @@ export class LocalGame {
         // always since 25b, no lobby row). The setup keeps the rule, so a save replays as it was played.
         startBonus: true,
         seatRule: "botsFirst",
+        // Session 34b: the capital layouts the game is dealt from (the 200s' simulator-chosen ones), kept with the game.
+        layouts: LAYOUT_VERSION,
       };
       this.state = createGame(this.ctx, setup);
       for (const [id, s] of Object.entries(levels)) this.seats.set(id, seatBot(s.level, s.personality));

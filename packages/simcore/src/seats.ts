@@ -1,4 +1,5 @@
 import { agreedIn, fallenBot, negotiate, withAgreed, type Bot } from "@conquerra/bots";
+import { LAYOUT_VERSION } from "@conquerra/content/bigTables";
 import { createGame, indexMap, replayFor, resolveTurn, viewFor, type GameContext, type GameSettings, type GameState, type OrdersByPlayer, type PlayerId, type PlayerView, type ReplayEvent, type StepEvent, type TerritoryId } from "@conquerra/engine";
 
 /** Timing only (never game logic): the same clock in Node and in a browser worker. */
@@ -127,7 +128,7 @@ const blank = (seat: number, player: PlayerId, bot: string): SeatStats => ({
 export function playTable(ctx: GameContext, seed: string, bots: readonly Bot[], opts: TableOptions = {}): TableResult {
   const idx = indexMap(ctx.map);
   const players = bots.map((_, i) => ({ id: `p${i + 1}`, name: `Bot ${i + 1}`, ...(opts.people ? { bot: !opts.people.includes(i) } : {}), ...(opts.styles?.[i]?.leader ? { leaderPersonality: opts.styles[i]!.leader } : {}), ...(opts.styles?.[i]?.steward ? { stewardPersonality: opts.styles[i]!.steward } : {}) }));
-  let s = opts.start ?? createGame(ctx, { gameId: `sim-${seed}`, seed, players, settings: opts.settings ?? {}, startBonus: true, ...(opts.seatRule ? { seatRule: opts.seatRule } : {}) });
+  let s = opts.start ?? createGame(ctx, { gameId: `sim-${seed}`, seed, players, settings: opts.settings ?? {}, startBonus: true, layouts: LAYOUT_VERSION, ...(opts.seatRule ? { seatRule: opts.seatRule } : {}) });
   const stats = bots.map((b, i) => ({ ...blank(i, players[i]!.id, b.id), capital: s.players.find((p) => p.id === players[i]!.id)!.capital }));
   const byId = new Map(stats.map((x) => [x.player, x]));
   const sighted = new Set(opts.sighted ?? []);

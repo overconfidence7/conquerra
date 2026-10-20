@@ -58,16 +58,20 @@ export const RANDOM_TRIES = 6;
  *  - 5 (session 33b, Nate's call): version 4's grade, and an income head start (`start`): the more exposed spots
  *    start with a market at their capital.
  *  - 6 (session 34): version 5, and the big sizes (300 and 400) seat up to 20 (`seats`; a layout for every count).
+ *  - 7 (session 34b, Nate's call): version 6, more seats on the big sizes (by size), and a looser exposure band for
+ *    the layouts above 12 players (`bandAbove`).
  */
 export interface RandomVersionDef {
   band: number;
   bonus: number;
-  /** Session 34: the most seats on the big sizes (10 when left out). */
-  seats?: number;
+  /** Session 34: the most seats on the big sizes (10 when left out); from version 7 by size (`versionSeats`). */
+  seats?: number | Partial<Record<"300" | "400", number>>;
   /** Session 34: above this many players a layout needs only the exposure band, not the paper check (every count when left out). */
   paperUpTo?: number;
   grade?: RandomGrade;
   start?: RandomStart;
+  /** Session 34b: above this many players a layout is judged by its own, looser band. */
+  bandAbove?: { players: number; band: number };
 }
 export type RandomVersion = number;
 export const RANDOM_VERSIONS: Readonly<Record<RandomVersion, RandomVersionDef>> = Object.fromEntries(Object.entries(randomMaps.versions).map(([v, d]) => [Number(v), d as RandomVersionDef]));

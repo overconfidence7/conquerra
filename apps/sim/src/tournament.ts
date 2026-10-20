@@ -17,7 +17,8 @@ import { MarshalJudgement, Personality } from "@conquerra/content/personalities"
 import { maps } from "@conquerra/content/maps";
 import { dealPersonalities, makeCaptainBot, makeDelegateSeat, makeLeaderPathSeat, makeMarshalBot, makeRecruitBot, makeStewardSeat, personality, PERSONALITY_IDS, type Bot } from "@conquerra/bots";
 import { playTable, type TableResult } from "@conquerra/simcore";
-import type { GameContext } from "@conquerra/engine";
+import { layoutFor, type GameContext } from "@conquerra/engine";
+import { LAYOUT_VERSION } from "@conquerra/content/bigTables";
 
 const args = process.argv.slice(2);
 const arg = (name: string, dflt: string) => {
@@ -191,10 +192,11 @@ export function seatsFor(spec: TournamentSpec, i: number, seed: string): string[
 
 export function playOne(spec: TournamentSpec, i: number): TableResult & { kinds: string[] } {
   const base = maps[spec.map]!;
-  const own = base.capitalLayouts?.find((l) => l.players === spec.players);
+  const own = layoutFor(base, spec.players, LAYOUT_VERSION);
+  // (Session 34b: a layout to try replaces the one new games get, whichever layout version it comes from.)
   const map =
     spec.layout || spec.bonus
-      ? { ...base, capitalLayouts: [...(base.capitalLayouts ?? []).filter((l) => l.players !== spec.players), { players: spec.players, slots: spec.layout ?? own!.slots, ...(spec.bonus ? { bonus: spec.bonus } : own?.bonus ? { bonus: own.bonus } : {}) }] }
+      ? { ...base, capitalLayouts: [...(base.capitalLayouts ?? []).filter((l) => l.players !== spec.players), { players: spec.players, slots: spec.layout ?? own!.slots, ...(spec.bonus ? { bonus: spec.bonus } : own?.bonus ? { bonus: own.bonus } : {}) }], layoutVersions: (base.layoutVersions ?? []).map((v) => ({ ...v, layouts: v.layouts.filter((l) => l.players !== spec.players) })) }
       : base;
   const ctx: GameContext = { map, rules: spec.rules ? merge(defaultRules, spec.rules) : defaultRules };
   const seed = `${spec.seed}-${spec.map}-${spec.players}p-${i}`;

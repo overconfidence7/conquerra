@@ -11,7 +11,7 @@ import sunderedCrownsJson from "../data/maps/sundered-crowns.json";
 import krakenmereJson from "../data/maps/krakenmere.json";
 import rootholmJson from "../data/maps/rootholm.json";
 import { MapDef } from "./schemas";
-import { bigTables, withBigTables } from "./bigTables";
+import { withBigTables } from "./bigTables";
 
 /**
  * Every built-in map in full, drawing data included (up to about 2 MB each). For Node only (tests, the simulator):
@@ -35,6 +35,7 @@ export const mapFiles: Record<string, MapDef> = {
 
 /**
  * The maps games are played on (session 34): the files above with their big tables joined (Krakenmere and Rootholm
- * seat up to 20; `bigTables.ts`). `mapFiles` is exactly what the map maker makes (its tests and fingerprints read it).
+ * seat up to 20; `bigTables.ts`), and (session 34b) their later layout versions. `mapFiles` is exactly what the map
+ * maker makes (its tests and fingerprints read it).
  */
-export const maps: Record<string, MapDef> = Object.fromEntries(Object.entries(mapFiles).map(([id, m]) => [id, bigTables[id] ? MapDef.parse(withBigTables(m)) : m]));
+export const maps: Record<string, MapDef> = Object.fromEntries(Object.entries(mapFiles).map(([id, m]) => [id, withBigTables(m) === m ? m : MapDef.parse(withBigTables(m))]));

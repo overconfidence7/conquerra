@@ -1,6 +1,6 @@
 import { defaultRules } from "@conquerra/content";
 import { describe, expect, it } from "vitest";
-import { exposureProblem, mapFingerprint, parseRandomId, randomMap, randomPlayers, randomRecipe, RANDOM_BIG_SEATS, RANDOM_MAX_SEATS, RANDOM_PLAYERS, RANDOM_SIZES } from "../src/index";
+import { exposureProblem, mapFingerprint, parseRandomId, randomMap, randomPlayers, randomRecipe, RANDOM_BIG_SEATS, RANDOM_MAX_SEATS, RANDOM_SIZES, versionSeats } from "../src/index";
 
 /**
  * Session 33b: random maps at 300 and 400 territories, for the big tables (session 34) and the battle royale later.
@@ -12,15 +12,16 @@ describe("random maps at 300 and 400 territories (session 33b)", () => {
   it("the sizes and who they suit: 300 from 4 to 10 players (8 to 10 suggested), 400 from 6 to 10 (10); session 34 (version 6): the 300 seats up to 12, the 400 up to 16", () => {
     expect(RANDOM_SIZES).toEqual([40, 80, 120, 200, 300, 400]);
     expect(RANDOM_MAX_SEATS).toBe(10);
-    expect(RANDOM_BIG_SEATS).toBe(16);
-    expect(RANDOM_PLAYERS[300]).toEqual({ min: 4, max: 12, recommended: { min: 8, max: 10 } });
-    expect(RANDOM_PLAYERS[400]).toEqual({ min: 6, max: 16, recommended: { min: 10, max: 10 } });
+    // (Session 34b: RANDOM_PLAYERS holds the most any version seats; version 6's own caps: the 300 at 12, the 400 at 16.)
+    expect(RANDOM_BIG_SEATS).toBe(20);
+    expect(randomPlayers(300, "island", versionSeats(16, 300))).toEqual({ min: 4, max: 12, recommended: { min: 8, max: 10 } });
+    expect(randomPlayers(400, "island", versionSeats(16, 400))).toEqual({ min: 6, max: 16, recommended: { min: 10, max: 10 } });
     // Version 5's (and every map made at it): 10 at most.
     expect(randomPlayers(300, "island", RANDOM_MAX_SEATS)).toEqual({ min: 4, max: 10, recommended: { min: 8, max: 10 } });
     for (const shape of ["island", "archipelago", "twins", "crescent", "inland"] as const) {
       // (A big archipelago stays at 10.)
-      const most = shape === "archipelago" ? RANDOM_MAX_SEATS : RANDOM_BIG_SEATS;
-      expect(randomPlayers(400, shape).max).toBe(most);
+      const most = shape === "archipelago" ? RANDOM_MAX_SEATS : 16;
+      expect(randomPlayers(400, shape, versionSeats(16, 400)).max).toBe(most);
       expect(randomRecipe(400, shape, "quiet-heron", 5).players.max).toBe(RANDOM_MAX_SEATS);
       expect(randomRecipe(400, shape, "quiet-heron", 6).players.max).toBe(most);
     }

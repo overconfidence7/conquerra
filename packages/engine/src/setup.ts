@@ -30,6 +30,25 @@ export interface NewGameOptions {
    * bonus, or on a random map those its layout marks `harder`) to bots before people; "anyone" (or missing: a setup saved before it) deals every spot at random, as before.
    */
   seatRule?: "botsFirst" | "anyone";
+  /**
+   * The layout version (session 34b): which of the map's capital layouts the game is dealt from (`layoutFor`). New
+   * games say the latest (`LAYOUT_VERSION` in "@conquerra/content/bigTables"); a setup without one (every game made
+   * before) is version 1, so a running game keeps its spots and its history replays as it was played.
+   */
+  layouts?: number;
+}
+
+/**
+ * The capital layout for `players` at a layout version (session 34b): the newest of the map's later versions, up to
+ * `version`, that has one for that count; else the map's own (version 1).
+ */
+export function layoutFor(map: MapDef, players: number, version = 1): NonNullable<MapDef["capitalLayouts"]>[number] | undefined {
+  const later = (map.layoutVersions ?? []).filter((v) => v.version <= version).sort((a, b) => b.version - a.version);
+  for (const v of later) {
+    const l = v.layouts.find((x) => x.players === players);
+    if (l) return l;
+  }
+  return map.capitalLayouts?.find((l) => l.players === players);
 }
 
 /**
@@ -54,8 +73,8 @@ export function dealSeats<T extends { bot?: boolean }>(seats: readonly T[], capi
  * Pick capitals. If the map has a fair layout for this many players, use it (seats are shuffled, so who gets
  * which slot is random). Otherwise spread capitals out as far as possible from each other.
  */
-function pickCapitals(map: MapDef, count: number, rng: Rng): string[] {
-  const layout = map.capitalLayouts?.find((l) => l.players === count);
+function pickCapitals(map: MapDef, count: number, rng: Rng, version?: number): string[] {
+  const layout = layoutFor(map, count, version);
   if (layout) return [...layout.slots];
   const idx = indexMap(map);
   const slots = [...map.capitalSlots];
@@ -114,8 +133,8 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
 
   const rng = new Rng(seedRng(opts.seed));
   const shuffled = rng.shuffle(opts.players);
-  const capitals = pickCapitals(map, n, rng);
-  const layout = map.capitalLayouts?.find((l) => l.players === n);
+  const capitals = pickCapitals(map, n, rng, opts.layouts);
+  const layout = layoutFor(map, n, opts.layouts);
   const layoutBonus = layout?.bonus ?? {};
   const bonusAt = (opts.startBonus && layoutBonus) || {};
   // Harder spots go to bots first (session 25). Only a pinned layout marks them: capitals spread without one have none.

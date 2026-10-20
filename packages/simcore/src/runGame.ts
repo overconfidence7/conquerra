@@ -1,4 +1,5 @@
 import { agreedIn, fallenBot, negotiate, recruitBot, withAgreed, type Bot, type Talk } from "@conquerra/bots";
+import { LAYOUT_VERSION } from "@conquerra/content/bigTables";
 import {
   createGame,
   indexMap,
@@ -133,7 +134,7 @@ export interface GameSummary {
 export function runGame(ctx: GameContext, seed: string, playerCount: number, settings: Partial<GameSettings>, keepLog = false, bot: Bot | Bot[] = recruitBot): GameSummary {
   const seatBot = (i: number) => (Array.isArray(bot) ? bot[i % bot.length]! : bot);
   const players = Array.from({ length: playerCount }, (_, i) => ({ id: `p${i + 1}`, name: `Bot ${i + 1}` }));
-  let s = createGame(ctx, { gameId: `sim-${seed}`, seed, players, settings, startBonus: true });
+  let s = createGame(ctx, { gameId: `sim-${seed}`, seed, players, settings, startBonus: true, layouts: LAYOUT_VERSION });
   const idx = indexMap(ctx.map);
   const sum: GameSummary = {
     seed, winner: "draw", winnerSeat: null, endReason: null, turns: 0, battles: 0, captures: 0, lopsided: 0, lopsidedFailed: 0, byBorder: {}, orders: 0, fizzles: 0, hops: 0, hopCaptures: 0,

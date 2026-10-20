@@ -3,8 +3,8 @@ import { Rng, seedRng } from "@conquerra/engine";
 import { adjacency, allDistances, exposureOf } from "./checks";
 import { generateMap, type MapGenOptions } from "./index";
 import { recipeFor, type Recipe } from "./recipes";
-import { parseRandomId, randomPlayers, RANDOM_MAX_SEATS, RANDOM_PREFIX, type RandomShape, type RandomSize } from "./randomId";
-import { isRandomVersion, randomMapId, RANDOM_SHAPES, RANDOM_TRIES, RANDOM_VERSION, randomVersionDef, type RandomVersion } from "./seed";
+import { parseRandomId, randomPlayers, RANDOM_PREFIX, versionSeats, type RandomShape, type RandomSize } from "./randomId";
+import { isRandomVersion, randomMapId, RANDOM_SHAPES, RANDOM_TRIES, RANDOM_VERSION, randomVersionDef, type RandomVersion, type RandomVersionDef } from "./seed";
 import { RANDOM_TEXT } from "./randomText";
 
 export * from "./randomId";
@@ -47,8 +47,8 @@ export function randomRecipe(size: RandomSize, shape: RandomShape, seed: string,
     rivers: nudge(Math.max(3, Math.round(T / 20)), 2),
     ...(land === "continent" ? { water: 0.36 + rng.next() * 0.03 } : { roughness: 0.55 + rng.next() * 0.1 }),
     ...(islands !== undefined ? { islands, seaLanes: Math.round(islands * 0.5), minSeaLanes: islands - 1 } : {}),
-    // (Session 34: version 6 seats up to 20 on the big sizes; versions before it 10.)
-    players: randomPlayers(size, shape, seats ?? randomVersionDef(version).seats ?? RANDOM_MAX_SEATS),
+    // (Session 34: version 6 seats up to 16 on the big sizes; versions before it 10. Session 34b: by size from 7.)
+    players: randomPlayers(size, shape, seats ?? versionSeats(randomVersionDef(version).seats, size)),
     laneReach,
     streams: "staged",
     maxAttempts: RANDOM_TRIES,
@@ -64,11 +64,14 @@ export function randomRecipe(size: RandomSize, shape: RandomShape, seed: string,
   };
 }
 
-/** The map's own fairness check at generation: every layout within the exposure band (a reason to reject, or null). */
-export function exposureProblem(map: MapDef, band: number = randomVersionDef(RANDOM_VERSION).band): string | null {
+/**
+ * The map's own fairness check at generation: every layout within the exposure band (a reason to reject, or null).
+ * Session 34b: `above`, a looser band for the layouts above that many players (version 7).
+ */
+export function exposureProblem(map: MapDef, band: number = randomVersionDef(RANDOM_VERSION).band, above?: RandomVersionDef["bandAbove"]): string | null {
   const d = allDistances(map), adj = adjacency(map);
   for (const l of map.capitalLayouts ?? []) {
-    const e = exposureOf(l.slots, d, adj, band);
+    const e = exposureOf(l.slots, d, adj, above && l.players > above.players ? above.band : band);
     if (!e.fair) return `capitals for ${l.players} players too unevenly exposed (${(Math.max(...e.exposure) / Math.max(1e-9, Math.min(...e.exposure))).toFixed(1)}x)`;
   }
   return null;
@@ -164,14 +167,16 @@ export class RandomMapFailed extends Error {
  * (session 33b): the try that passed when the map was first made (the room and the online pages are told it), so it's
  * made in one try instead of all of them; if that try doesn't pass, every try is made as usual.
  */
-export function randomMap(id: string, rules: Rules, opts: Pick<MapGenOptions, "stageSeeds" | "log" | "onProgress"> & { version?: number | null; band?: number; grade?: RandomGrade; start?: RandomStart; attempt?: number | null; seats?: number; paperUpTo?: number } = {}): { map: MapDef; attempt: number } {
+export function randomMap(id: string, rules: Rules, opts: Pick<MapGenOptions, "stageSeeds" | "log" | "onProgress"> & { version?: number | null; band?: number; bandAbove?: RandomVersionDef["bandAbove"] | null; grade?: RandomGrade; start?: RandomStart; attempt?: number | null; seats?: number; paperUpTo?: number } = {}): { map: MapDef; attempt: number } {
   const p = parseRandomId(id);
   if (!p) throw new Error(RANDOM_TEXT.badId);
-  const { version: asked, band: bandOverride, grade: gradeOverride, start: startOverride, attempt: hint, seats, paperUpTo, ...gen } = opts;
+  const { version: asked, band: bandOverride, bandAbove: aboveOverride, grade: gradeOverride, start: startOverride, attempt: hint, seats, paperUpTo, ...gen } = opts;
   const version: RandomVersion = asked == null ? RANDOM_VERSION : isRandomVersion(asked) ? asked : (() => { throw new Error(RANDOM_TEXT.oldVersion(asked)); })();
   const v = randomVersionDef(version);
   const band = bandOverride ?? v.band;
-  const recipe: MapGenOptions = { ...randomRecipe(p.size, p.shape, p.seed, version, seats), ...(paperUpTo !== undefined ? { paperUpTo } : {}), ...gen, accept: (m) => exposureProblem(m, band) };
+  // (Session 34b: `bandAbove: null` tries one band for every count.)
+  const above = aboveOverride === null ? undefined : (aboveOverride ?? v.bandAbove);
+  const recipe: MapGenOptions = { ...randomRecipe(p.size, p.shape, p.seed, version, seats), ...(paperUpTo !== undefined ? { paperUpTo } : {}), ...gen, accept: (m) => exposureProblem(m, band, above) };
   try {
     const r = (hint && hint > 1 && hint <= RANDOM_TRIES && tryAt(recipe, rules, hint)) || generateMap(recipe, rules);
     const map = markHarder(r.map, v.bonus, gradeOverride ?? v.grade, startOverride ?? v.start);

@@ -3,6 +3,7 @@
  * "80-crescent-quiet-heron" is 80 territories, a crescent and the seed "quiet-heron"; a game's map id puts
  * "random:" in front. Nothing here draws a map or a random number.
  */
+import { randomMaps } from "@conquerra/content/randomMaps";
 
 /** The sizes the lobby offers (territories). Session 33b: 300 and 400, for the big tables (session 34) and later the battle royale. */
 export const RANDOM_SIZES = [40, 80, 120, 200, 300, 400] as const;
@@ -21,9 +22,11 @@ export type RandomShape = "island" | "archipelago" | "twins" | "crescent" | "inl
  * pinned to it, is made exactly as before): the 400 up to 16 and the 300 up to 12, where about 7 seeds in 10 still
  * make a fair map (`scripts/try-random.ts --seats N --paper 10`: 400 at 16 passes 35 of 50, at 20 25 of 50; 300 at 12
  * 36 of 50, at 16 24 of 50, at 20 9 of 50).
+ * Session 34b: `RANDOM_PLAYERS` holds the most any version seats (20 on the big sizes); each version's `seats` caps
+ * it (`versionSeats`), and the lobby reads the current version's.
  */
 export const RANDOM_MAX_SEATS = 10;
-export const RANDOM_BIG_SEATS = 16;
+export const RANDOM_BIG_SEATS = 20;
 export const RANDOM_PLAYERS: Record<RandomSize, { min: number; max: number; recommended: { min: number; max: number } }> = {
   40: players(6, 3, 5),
   80: players(8, 4, 6),
@@ -31,7 +34,7 @@ export const RANDOM_PLAYERS: Record<RandomSize, { min: number; max: number; reco
   200: players(10, 7, 10),
   // (Session 33b: the big sizes start at 4 and 6 players: a map maker's layout for every count from the smallest is one
   // more way for a seed to fail, and two or three Houses on 400 territories isn't a game anyone asked for.)
-  300: players(12, 8, 10, 4),
+  300: players(RANDOM_BIG_SEATS, 8, 10, 4),
   400: players(RANDOM_BIG_SEATS, 10, 10, 6),
 };
 function players(max: number, low: number, high: number, min = 2) {
@@ -42,15 +45,25 @@ function players(max: number, low: number, high: number, min = 2) {
 export const RANDOM_SHAPE_A: Record<RandomShape, string> = { island: "one island", archipelago: "an archipelago", twins: "twin continents", crescent: "a crescent", inland: "an inland sea" };
 
 /**
- * The players a random map suits, by size and shape (a small archipelago has room for five Houses at most). `seats`
- * (session 34): the most a random map version seats (10 up to version 5); left out, the newest version's.
+ * The most seats a random map version gives a size (session 34b): a version's `seats` is one number for both big sizes
+ * up to version 6 (and version 6's 300 stopped at 12, its ceiling then), or the most by size from version 7; 10 when
+ * left out.
  */
-export function randomPlayers(size: RandomSize, shape: RandomShape, seats?: number): (typeof RANDOM_PLAYERS)[RandomSize] {
+export function versionSeats(seats: number | Partial<Record<"300" | "400", number>> | undefined, size: RandomSize): number {
+  if (seats && typeof seats === "object") return seats[String(size) as "300" | "400"] ?? RANDOM_MAX_SEATS;
+  return Math.min(seats ?? RANDOM_MAX_SEATS, size === 300 ? 12 : Infinity);
+}
+
+/**
+ * The players a random map suits, by size and shape (a small archipelago has room for five Houses at most). `seats`
+ * (session 34): the most a random map version seats (10 up to version 5); left out, the current version's.
+ */
+export function randomPlayers(size: RandomSize, shape: RandomShape, seats: number = versionSeats(randomMaps.versions[String(randomMaps.current)]!.seats, size)): (typeof RANDOM_PLAYERS)[RandomSize] {
   const p = RANDOM_PLAYERS[size];
   if (size === 40 && shape === "archipelago") return players(5, 3, 5);
   // (Session 34: a big archipelago stays at 10: at 16 seats no seed of ten made a fair one, and a map carries a layout
   // for every count it seats, so it would fail a 10-player game too.)
-  const most = Math.min(p.max, seats ?? p.max, shape === "archipelago" ? RANDOM_MAX_SEATS : p.max);
+  const most = Math.min(p.max, seats, shape === "archipelago" ? RANDOM_MAX_SEATS : p.max);
   return most < p.max ? { ...p, max: most } : p;
 }
 

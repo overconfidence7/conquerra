@@ -1,4 +1,5 @@
 import type { MapDef, Rules } from "@conquerra/content";
+import { LAYOUT_VERSION } from "@conquerra/content/bigTables";
 import { createGame, viewFor, type GameContext, type PlayerView, type TerritoryId } from "@conquerra/engine";
 import { exposureProblem, generateMap, landBridgeBorders, mapFingerprint, markHarder, RANDOM_PREFIX, type Recipe } from "@conquerra/mapgen";
 
@@ -51,6 +52,7 @@ export function labView(map: MapDef, rules: Rules, players: number, capitals: bo
     seed: "lab",
     players: Array.from({ length: n }, (_, i) => ({ id: `p${i + 1}`, name: SEATS[i] ?? `Seat ${i + 1}` })),
     settings: { fog: false },
+    layouts: LAYOUT_VERSION,
   });
   const view = viewFor(ctx, state, "p1");
   if (capitals) return { ctx, view };

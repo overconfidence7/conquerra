@@ -21,9 +21,10 @@ import { availableParallelism } from "node:os";
 import { fileURLToPath } from "node:url";
 import { defaultRules, marshalData, type MapDef, type RandomGrade, type RandomStart } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
+import { LAYOUT_VERSION } from "@conquerra/content/bigTables";
 import { runGame, type GameSummary } from "@conquerra/simcore";
 import { dealPersonalities, makeMarshalBot } from "@conquerra/bots";
-import { createGame, type GameSettings } from "@conquerra/engine";
+import { createGame, layoutFor, type GameSettings } from "@conquerra/engine";
 import { adjacency, allDistances, exposureOf } from "@conquerra/mapgen";
 
 const self = fileURLToPath(import.meta.url);
@@ -115,8 +116,8 @@ async function play(job: Job): Promise<Result> {
     const ctx = { map, rules: defaultRules };
     const g = runGame(ctx, job.seed, job.players, settingsOf(job.fog), false, bots);
     // Where each seat started (the same deal runGame made), and the winner's spot by exposure.
-    const start = createGame(ctx, { gameId: `sim-${job.seed}`, seed: job.seed, players: seats.map((_, i) => ({ id: `p${i + 1}`, name: `Bot ${i + 1}` })), settings: settingsOf(job.fog), startBonus: true });
-    const layout = map.capitalLayouts?.find((l) => l.players === job.players);
+    const start = createGame(ctx, { gameId: `sim-${job.seed}`, seed: job.seed, players: seats.map((_, i) => ({ id: `p${i + 1}`, name: `Bot ${i + 1}` })), settings: settingsOf(job.fog), startBonus: true, layouts: LAYOUT_VERSION });
+    const layout = layoutFor(map, job.players, LAYOUT_VERSION);
     let spot: Pick<Result, "spotRank" | "harder" | "harderSpots" | "extra" | "market" | "culture"> = {};
     if (layout && g.winnerSeat !== null) {
       const cap = start.players[g.winnerSeat]!.capital;

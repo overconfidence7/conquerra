@@ -86,6 +86,21 @@ export const MapGeometry = z.object({
 });
 export type MapGeometry = z.infer<typeof MapGeometry>;
 
+/** One table size's capital layout (see `capitalLayouts` below). */
+const CapitalLayout = z.object({
+  players: z.number().int().min(2),
+  slots: z.array(z.string()),
+  bonus: z.record(z.string(), z.number().int().min(1).max(6)).optional(),
+  /** Session 30, random maps: the harder spots by the map maker's exposure check (no start bonus); the seat rule deals them to bots first. */
+  harder: z.array(z.string()).optional(),
+  /**
+   * Session 33b, random maps' income head start (version 5): a building each listed spot's capital starts with,
+   * finished on turn 1, and its culture level there. The seat rule doesn't read these.
+   */
+  buildings: z.record(z.string(), z.enum(["market"])).optional(),
+  culture: z.record(z.string(), z.number().int().min(1).max(3)).optional(),
+});
+
 export const MapDef = z
   .object({
     id: z.string(),
@@ -101,28 +116,16 @@ export const MapDef = z
     /**
      * Fair capital layouts, one per player count. When there's a layout for the table size the game uses it;
      * otherwise it spreads capitals out over capitalSlots.
-     */
-    /**
      * Fair capital spots for each table size (sessions 19 and 20b), and the start bonus (session 23): extra troops at
      * the capital for a spot that wins under half its fair share among equal bots (by slot; at most 6).
      */
-    capitalLayouts: z
-      .array(
-        z.object({
-          players: z.number().int().min(2),
-          slots: z.array(z.string()),
-          bonus: z.record(z.string(), z.number().int().min(1).max(6)).optional(),
-          /** Session 30, random maps: the harder spots by the map maker's exposure check (no start bonus); the seat rule deals them to bots first. */
-          harder: z.array(z.string()).optional(),
-          /**
-           * Session 33b, random maps' income head start (version 5): a building each listed spot's capital starts with,
-           * finished on turn 1, and its culture level there. The seat rule doesn't read these.
-           */
-          buildings: z.record(z.string(), z.enum(["market"])).optional(),
-          culture: z.record(z.string(), z.number().int().min(1).max(3)).optional(),
-        }),
-      )
-      .optional(),
+    capitalLayouts: z.array(CapitalLayout).optional(),
+    /**
+     * Session 34b: later layout versions (joined beside the map file, like the big tables): each replaces or adds some
+     * table sizes' layouts. A game's setup says which version it was dealt from (`layouts`); the engine's `layoutFor`
+     * reads them.
+     */
+    layoutVersions: z.array(z.object({ version: z.number().int().min(2), layouts: z.array(CapitalLayout) })).optional(),
     /** How the map maker made this map, so it can be made again. */
     generator: z.object({ version: z.number().int(), seed: z.string(), attempt: z.number().int() }).optional(),
     /** Drawing data. Optional: tiny test maps have none. */
@@ -144,7 +147,7 @@ export const MapDef = z
       ctx.addIssue({ code: "custom", message: "recommendedPlayers must sit inside minPlayers..maxPlayers" });
     if (m.capitalSlots.length < m.maxPlayers)
       ctx.addIssue({ code: "custom", message: "not enough capital slots for maxPlayers" });
-    for (const l of m.capitalLayouts ?? [])
+    for (const l of [...(m.capitalLayouts ?? []), ...(m.layoutVersions ?? []).flatMap((v) => v.layouts)])
       if (l.slots.length !== l.players || new Set(l.slots).size !== l.players || l.slots.some((s) => !ids.has(s)) || Object.keys(l.bonus ?? {}).some((s) => !l.slots.includes(s)) || (l.harder ?? []).some((s) => !l.slots.includes(s)) || Object.keys({ ...l.buildings, ...l.culture }).some((s) => !l.slots.includes(s)))
         ctx.addIssue({ code: "custom", message: `bad capital layout for ${l.players} players` });
   });
@@ -554,7 +557,7 @@ export const RandomStart = z.object({
 export const RandomMaps = z
   .object({
     current: z.number().int().min(2),
-    versions: z.record(z.string().regex(/^\d+$/), z.object({ band: z.number().min(1), bonus: z.number().int().min(0).max(6), grade: RandomGrade.optional(), start: RandomStart.optional(), seats: z.number().int().min(2).max(20).optional(), paperUpTo: z.number().int().min(2).optional() })),
+    versions: z.record(z.string().regex(/^\d+$/), z.object({ band: z.number().min(1), bonus: z.number().int().min(0).max(6), grade: RandomGrade.optional(), start: RandomStart.optional(), seats: z.union([z.number().int().min(2).max(20), z.record(z.enum(["300", "400"]), z.number().int().min(2).max(20))]).optional(), paperUpTo: z.number().int().min(2).optional(), bandAbove: z.object({ players: z.number().int().min(2), band: z.number().min(1) }).optional() })),
   })
   .refine((r) => String(r.current) in r.versions, "the current version must be listed");
 export type RandomGrade = z.infer<typeof RandomGrade>;

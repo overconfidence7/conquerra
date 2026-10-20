@@ -18,6 +18,8 @@ export function slimMaps() {
   const catalog = JSON.parse(readFileSync(join(dir, "catalog.json"), "utf8"));
   // Session 34: with each map's big tables joined, as `withBigTables` (packages/content/src/bigTables.ts) does.
   const big = JSON.parse(readFileSync(join(dir, "big-tables.json"), "utf8"));
+  // Session 34b: and their later layout versions (`layoutVersions`, oldest first).
+  const versions = JSON.parse(readFileSync(join(dir, "layout-versions.json"), "utf8"));
   const out = {};
   for (const { id } of catalog) {
     const { geometry: _drawing, ...map } = JSON.parse(readFileSync(join(dir, `${id}.json`), "utf8"));
@@ -26,6 +28,11 @@ export function slimMaps() {
       const own = map.capitalLayouts ?? [];
       Object.assign(map, { maxPlayers: Math.max(map.maxPlayers, b.maxPlayers), capitalLayouts: [...own, ...b.layouts.filter((l) => !own.some((o) => o.players === l.players))] });
     }
+    const later = Object.entries(versions)
+      .filter(([, maps]) => maps[id])
+      .map(([v, maps]) => ({ version: Number(v), ...maps[id] }))
+      .sort((x, y) => x.version - y.version);
+    if (later.length) Object.assign(map, { maxPlayers: Math.max(map.maxPlayers, ...later.map((l) => l.maxPlayers)), layoutVersions: later.map((l) => ({ version: l.version, layouts: l.layouts })) });
     out[id] = map;
   }
   return `${JSON.stringify(out)}\n`;

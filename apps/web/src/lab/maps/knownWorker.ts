@@ -1,5 +1,6 @@
 import { defaultRules, type MapDef } from "@conquerra/content";
 import { loadMap } from "@conquerra/content/loadMap";
+import { LAYOUT_VERSION } from "@conquerra/content/bigTables";
 import { createGame, readSave, replayFor, resolveTurn, viewFor, type GameContext, type GameState, type Order, type OrdersByPlayer, type PlayerView, type ReplayEvent } from "@conquerra/engine";
 import { cloudBorders, dealPersonalities, knownMap, makeMarshalBot, type MarshalBot } from "@conquerra/bots";
 
@@ -27,7 +28,7 @@ async function play(r: Extract<KnownRequest, { type: "play" }>): Promise<KnownRe
   const ids = Array.from({ length: r.players }, (_, i) => `p${i + 1}`);
   const deal = dealPersonalities(r.seed, ids);
   const bots = new Map<string, MarshalBot>(ids.map((p) => [p, makeMarshalBot(deal[p]!)]));
-  let s: GameState = createGame(ctx, { gameId: `known-${r.seed}`, seed: r.seed, players: ids.map((id, i) => ({ id, name: `Seat ${i + 1}` })), settings: { fog: "blackout", luck: defaultRules.combat.luck }, startBonus: true });
+  let s: GameState = createGame(ctx, { gameId: `known-${r.seed}`, seed: r.seed, players: ids.map((id, i) => ({ id, name: `Seat ${i + 1}` })), settings: { fog: "blackout", luck: defaultRules.combat.luck }, startBonus: true, layouts: LAYOUT_VERSION });
   let last = new Map<string, ReplayEvent[]>();
   const me = ids[r.seat]!;
   for (;;) {

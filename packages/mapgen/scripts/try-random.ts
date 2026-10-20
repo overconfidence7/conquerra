@@ -3,6 +3,9 @@
  * none did) and how long it took. In parallel, one process per size and shape.
  *
  *   pnpm --filter @conquerra/mapgen exec tsx scripts/try-random.ts [n=10] [sizes=40,80,120,200] [shapes=all] [--start 0]
+ *     [--seats N] [--paper N] [--band-above 12:5.5 | none]
+ * Session 34b: `--band-above 12:5.5` judges the layouts above 12 players by the band 5.5 (version 7's rule), `none` one
+ * band for every count (passed to the workers as BAND_ABOVE).
  */
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -16,7 +19,9 @@ if (args[0] === "--one") {
     const id = randomMapId(Number(size) as RandomSize, shape as RandomShape, seedWords(Number(start) + i));
     const t0 = performance.now();
     try {
-      const r = randomMap(id, defaultRules, { ...(seats && seats !== "-" ? { seats: Number(seats) } : {}), ...(paper ? { paperUpTo: Number(paper) } : {}) });
+      const above = process.env.BAND_ABOVE;
+      const bandAbove = above === "none" ? null : above ? { players: Number(above.split(":")[0]), band: Number(above.split(":")[1]) } : undefined;
+      const r = randomMap(id, defaultRules, { ...(seats && seats !== "-" ? { seats: Number(seats) } : {}), ...(paper ? { paperUpTo: Number(paper) } : {}), ...(bandAbove !== undefined ? { bandAbove } : {}) });
       console.log(JSON.stringify({ id, ok: true, attempt: r.attempt, ms: Math.round(performance.now() - t0) }));
     } catch (e) {
       console.log(JSON.stringify({ id, ok: false, ms: Math.round(performance.now() - t0), why: e instanceof RandomMapFailed ? e.tries.map((t) => t.split(": ").slice(1).join(": ")) : String(e) }));
@@ -36,6 +41,8 @@ const seatsArg = ti >= 0 ? args[ti + 1] : undefined;
 // `--paper 10`: above this many players a layout needs only the exposure band (version 6's rule), for comparing.
 const pi = args.indexOf("--paper");
 const paperArg = pi >= 0 ? args[pi + 1] : undefined;
+const bi = args.indexOf("--band-above");
+if (bi >= 0) process.env.BAND_ABOVE = args[bi + 1];
 const self = fileURLToPath(import.meta.url);
 const jobs = sizes.flatMap((size) => shapes.map((shape) => ({ size, shape })));
 const results = await Promise.all(
