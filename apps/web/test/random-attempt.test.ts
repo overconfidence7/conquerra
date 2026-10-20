@@ -24,7 +24,7 @@ describe("the try that passed, told to the room (session 33b)", () => {
     expect(attemptOf({ mapId: "random:40-island-quiet-heron", bots: 3, mapAttempt: 2 })).toBe(2);
     for (const bad of [1, 7, "x", -3, null]) expect(attemptOf({ mapId: "random:40-island-quiet-heron", bots: 3, mapAttempt: bad })).toBeUndefined();
     expect(attemptOf({ mapId: "embervale", bots: 3, mapAttempt: 3 })).toBeUndefined();
-    expect(made({ mapId: "random:400-island-quiet-heron", bots: 3 })).toEqual({ error: "Random, 400 territories takes 5 to 9 bots." });
+    expect(made({ mapId: "random:400-island-quiet-heron", bots: 3 })).toEqual({ error: "Random, 400 territories takes 5 to 15 bots." });
     expect(made({ mapId: "random:400-island-quiet-heron", bots: 5 })).toMatchObject({ settings: { bots: 5 } });
   });
 
