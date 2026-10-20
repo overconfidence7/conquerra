@@ -155,7 +155,7 @@
         "oneFront": true,
         "vulture": 0
       },
-      "blackout": { "build": { "marketsFrom": 6, "cultureFrom": 6, "realm": 1 } },
+      "blackout": { "attack": { "strikeTurn": 8, "calmMargin": 1.6 }, "build": { "marketsFrom": 6, "cultureFrom": 6, "realm": 1 } },
       "defend": {
         "frontGarrison": 1.2,
         "retreatAt": 0

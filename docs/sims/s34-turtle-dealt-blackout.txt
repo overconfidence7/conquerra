@@ -1,0 +1,11 @@
+
+> conquerra@0.1.0 tournament C:\Users\nkurt\Claude\Projects\Strategy Game
+> tsx apps/sim/src/tournament.ts "--table" "embervale:4" "--seats" "marshal,marshal,marshal,marshal" "--games" "900" "--fog" "blackout" "--seed" "s34"
+
+=== Embervale, 4 players, seats marshal,marshal,marshal,marshal, fog blackout: 900 games in 42s ===
+Win rate per seat by kind (fair 25.0%): marshal-blitzer 32.1%, marshal-conqueror 27.0%, marshal-merchant 26.0%, marshal-opportunist 27.2%, marshal-schemer 24.7%, marshal-turtle 13.0%
+All Marshal seats: 25.0% per seat
+Game length: avg 22.3, median 21; 96.1% within 40; draws 0.0%
+Runaways: half the map after turn 10 40.3%; the halfway leader won 59.2%; comebacks 40.9%
+Win rate by seat: 24.2% / 24.9% / 25.6% / 25.3%
+Planning per seat per turn: marshal-schemer avg 3.40 ms, worst 381.5 ms | marshal-merchant avg 3.29 ms, worst 429.0 ms | marshal-conqueror avg 3.53 ms, worst 392.4 ms | marshal-turtle avg 2.96 ms, worst 308.4 ms | marshal-opportunist avg 3.39 ms, worst 262.8 ms | marshal-blitzer avg 3.17 ms, worst 275.2 ms

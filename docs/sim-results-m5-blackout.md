@@ -129,3 +129,20 @@ Your leaders already had the scout's drive: their plans read the same board as t
 **2.9 points apart: inside the 5-point bar, so nothing changes** (no `blackout` block for the Blitzer). Across the three 900-or-300-game pairs (session 33: 4.5 apart, the orchestrator: 6.6, this: 2.9) the Blitzer gains about 4 points from blackout on average: it does well under blackout, as an all-in attacker should when nobody can see it coming, and it sits near the bar's edge; one standard error at 900 games is about 1.5 points.
 
 **Also seen, for the orchestrator (not this part's question):** in the same tables the *dealt* Turtle seats (the three ordinary Marshal seats when their dealt personality was the Turtle, about 450 seat-games a run) won 12.4% under blackout against 21.3% with standard fog. Session 33's bar was measured with the Turtle in the fixed seat (18.5% against 22.8%), so this is a different measure on fewer games, but it's the second reading that puts the Turtle's blackout gap near or past the bar (the orchestrator's 300-game re-run: 16.4 against 22.1).
+
+## Session 34: the Turtle under blackout, as a dealt seat (Oct 20)
+
+Session 33b's runs read the *dealt* Turtle seats far lower under blackout than the fixed Turtle seat session 33 measured. Here on purpose: Embervale 4, every seat a Marshal with its personality dealt from the game's seed, 900 games each way, seed s34 (`pnpm tournament --table embervale:4 --seats marshal,marshal,marshal,marshal --games 900 --fog blackout|on --seed s34`; `docs/sims/s34-turtle-*`). One standard error for a personality's dealt share is about 1.6 points.
+
+| Dealt personality | Standard fog | Blackout, before | Apart | Blackout, shipped | Apart |
+|---|---|---|---|---|---|
+| Blitzer | 28.0% | 32.1% | 4.1 | 34.6% | **6.6** |
+| Conqueror | 22.3% | 27.0% | 4.7 | 25.3% | 3.0 |
+| Merchant | 30.6% | 26.0% | 4.6 | 22.9% | **7.7** |
+| Opportunist | 23.1% | 27.2% | 4.1 | 25.2% | 2.1 |
+| Schemer | 25.2% | 24.7% | 0.5 | 25.0% | 0.2 |
+| **Turtle** | 20.5% | **13.0%** | **7.5** | **17.0%** | 3.5 |
+
+**The Turtle was 7.5 apart, past the bar, so one more knob** in its `blackout` block. Tried (900 games each, blackout, the same seed): **strike from turn 8** instead of 14 (its calm: rivals left alone until then) 14.3%; **strike from turn 8 and a calm margin of 1.6** (2.2) **17.0%**; no walls and one fort 16.5%. **Shipped the second** (two settings, `attack.strikeTurn` 8 and `attack.calmMargin` 1.6, beside session 33's three build settings), inside the bar at 3.5 apart; nothing changes with standard fog (the same 20.5%, the digest and the Captain's fingerprint the same). Under blackout everyone else races into the cloud with the scout's drive while the Turtle waits for turn 14 to touch a rival; it now joins at turn 8.
+
+**Found, for the orchestrator:** the Turtle's change moves the others' blackout numbers on the same seeds: **the Merchant** 26.0% → 22.9% (7.7 apart from its standard 30.6%) and **the Blitzer** 32.1% → 34.6% (6.6 apart from 28.0%), both now past 5 in the dealt measure (before it, only the Turtle was). The total distance from standard over all six went from 25.5 to 23.1 points. The Blitzer's blackout edge has shown in every run since session 32 (it never pauses a chain, and the cloud rewards whoever reaches it first); the Merchant is new, and is the builder the Turtle now presses earlier. A Merchant (or Blitzer) `blackout` block is the next lever, measured the same way.

@@ -1,0 +1,6 @@
+== A {"personalities":{"turtle":{"blackout":{"attack":{"strikeTurn":8}}}}}
+Win rate per seat by kind (fair 25.0%): marshal-blitzer 32.3%, marshal-conqueror 27.0%, marshal-merchant 25.2%, marshal-opportunist 27.5%, marshal-schemer 23.7%, marshal-turtle 14.3%
+== B {"personalities":{"turtle":{"blackout":{"attack":{"strikeTurn":8,"calmMargin":1.6}}}}}
+Win rate per seat by kind (fair 25.0%): marshal-blitzer 34.6%, marshal-conqueror 25.3%, marshal-merchant 22.9%, marshal-opportunist 25.2%, marshal-schemer 25.0%, marshal-turtle 17.0%
+== C {"personalities":{"turtle":{"blackout":{"build":{"walls":0,"forts":1}}}}}
+Win rate per seat by kind (fair 25.0%): marshal-blitzer 33.4%, marshal-conqueror 25.8%, marshal-merchant 24.0%, marshal-opportunist 26.7%, marshal-schemer 23.5%, marshal-turtle 16.5%
