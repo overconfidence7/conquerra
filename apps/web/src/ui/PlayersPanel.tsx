@@ -10,6 +10,7 @@ import { colorOf } from "./colors";
 import { myOfferState, PEOPLE_DEAL_SHORT, PEOPLE_DEAL_STATUS, withdrawOffer } from "../logic/peopleDeals";
 import { chatWith, useChat } from "./chat/chatStore";
 import { Frame } from "./Frame";
+import { BlockButton } from "./chat/Safety";
 
 const portraitOf = (seat: number) => `leader-${String((seat % 10) + 1).padStart(2, "0")}`;
 
@@ -132,6 +133,8 @@ function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: s
               Propose a deal
             </button>
           )}
+          {/* Session 34: block a person (their messages stop reaching you; their deals still come). */}
+          {person && <BlockButton seat={id} name={p.name} />}
         </div>
       )}
     </li>

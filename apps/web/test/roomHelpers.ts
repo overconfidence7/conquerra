@@ -3,7 +3,7 @@ import { roomMapsWith } from "../src/host/roomMaps";
 import type { PlayerId } from "@conquerra/engine";
 import type { PersonSeat } from "../src/host/localGame";
 import type { LobbySettings, RoomBody, RoomMessage, RoomRequest, TableAct, TableView } from "../src/host/protocol";
-import { RoomCore, type RoomInfo, type RoomStore, type Sitter, type TableMirror, type Who } from "../src/host/roomCore";
+import { RoomCore, type RoomInfo, type RoomIO, type RoomStore, type Sitter, type TableMirror, type Who } from "../src/host/roomCore";
 
 /** The room's storage, in memory (stored as JSON text, as the Durable Object's is). */
 export function memoryRoomStore(): RoomStore & { data: Map<string, string> } {
@@ -30,7 +30,7 @@ export const hostSeat = (who: Who, house = 0): Sitter => ({ user: who.user, name
  * (session 27) that records every message it gets (one in `offline` gets nothing, as when its tab is closed). As in the
  * real room, a message to a seat goes to the page of the account sitting there.
  */
-export function testRoom(store = memoryRoomStore(), start = 1_000_000, opts: { notify?: boolean } = {}) {
+export function testRoom(store = memoryRoomStore(), start = 1_000_000, opts: { notify?: boolean; safety?: RoomIO["safety"] } = {}) {
   let now = start;
   /** Session 29: "your turn" notices the room asked its shell to send (only with `notify`). */
   const notices: { gameId: string; turn: number; map: string; users: string[]; turnSeconds: number }[] = [];
@@ -61,6 +61,8 @@ export function testRoom(store = memoryRoomStore(), start = 1_000_000, opts: { n
       listed: (info) => void (listed = info),
       log: (line) => void logs.push(line),
       ...(opts.notify ? { notify: (n) => void notices.push(JSON.parse(JSON.stringify(n)) as (typeof notices)[number]) } : {}),
+      // Session 34: reports and blocks (a test passes its own, often the real one over SQLite).
+      ...(opts.safety ? { safety: opts.safety } : {}),
     },
     () => now,
   );

@@ -7,10 +7,11 @@ export const MAX_PEOPLE = 10;
 import { LocalGame, PAUSES_EACH, PEOPLE_DEAL_TEXT, type PauseNews, type PersonSeat, type SeatLeft } from "./localGame";
 import { cleanName } from "./names";
 import { TABLE_TEXT } from "./roomText";
+import { SAFETY_LIMITS, SAFETY_TEXT } from "./safetyText";
 import { CHAT_TEXT, ChatRoom, type ChatBotSeat, type ChatSeat } from "./chatRoom";
 import { ASK_TEXT, botReply, groupAnswer, offerAnswered, sayOptions, tableTalk, youAndBot } from "./botChat";
 import { lines } from "@conquerra/content/lines";
-import type { ChatAct, ChatSync, ChatView, HostUpdate, OfferEnd, LobbySettings, PauseView, RoomMessage, RoomRequest, RoomStart, TableAct, TableView } from "./protocol";
+import { REPORT_REASONS, type ChatAct, type ChatSync, type ChatView, type HostUpdate, type OfferEnd, type LobbySettings, type PauseView, type ReportReason, type RoomMessage, type RoomRequest, type RoomStart, type TableAct, type TableView } from "./protocol";
 
 /**
  * Everything an online game's room does (session 26), in one place and with no Cloudflare in it: the game (the same
@@ -61,7 +62,36 @@ export interface RoomIO {
    * an email if they asked. The room's shell sends it in the background (never holding up a turn).
    */
   notify?(n: { gameId: string; turn: number; map: string; users: string[]; turnSeconds: number }): void;
+  /**
+   * Session 34: abuse limits, kept in the database by the room's shell. `blocksOf`: the accounts this account blocked
+   * (read on hello). `block`: add one. `report`: keep a reported line and send it to Nate; the sentence why not (the
+   * day's three, a line already reported), else null.
+   */
+  safety?: {
+    blocksOf(user: string): Promise<string[]>;
+    block(user: string, blocked: string, name: string): Promise<void>;
+    report(r: LineReport): Promise<string | null>;
+  };
 }
+
+/** Session 34: a reported line, as the room hands it to its shell: the line and who, nothing else of the game. */
+export interface LineReport {
+  gameId: string;
+  map: string;
+  line: number;
+  chat: "table" | "pair" | "group";
+  text: string;
+  writtenAt: number;
+  author: string;
+  authorName: string;
+  reporter: string;
+  reporterName: string;
+  reason: ReportReason;
+  words?: string;
+  at: number;
+}
+
+const NO_BLOCKS: ReadonlySet<string> = new Set();
 
 /** A new online game, as the API makes it. */
 export interface RoomSetup {
@@ -211,7 +241,35 @@ export class RoomCore {
       now,
       () => this.chatBotSeats(),
       (c, user) => this.botChatExtra(c, user),
+      // Session 34: a reader's block list (from the database, on hello): those people's lines never leave the room for them.
+      (reader) => this.blocks.get(reader) ?? NO_BLOCKS,
     );
+  }
+
+  /**
+   * Session 34: whom each account at the table blocked (accounts): read from the database when its page says hello, and
+   * kept in the room's own storage (`blocks`), since a room that sleeps between messages forgets its memory and a page
+   * says hello only when it connects.
+   */
+  private readonly blocks = new Map<string, Set<string>>();
+  private blocksRead = false;
+  private async ensureBlocks() {
+    if (this.blocksRead) return;
+    this.blocksRead = true;
+    const kept = (await this.store.get("blocks")) as Record<string, string[]> | null;
+    for (const [u, list] of Object.entries(kept ?? {})) if (!this.blocks.has(u)) this.blocks.set(u, new Set(list));
+  }
+  private saveBlocks() {
+    const out = Object.fromEntries([...this.blocks].filter(([, set]) => set.size).map(([u, set]) => [u, [...set]]));
+    this.writing = this.writing.then(() => this.store.put("blocks", out)).catch(() => undefined);
+  }
+  /** Session 34: each page's messages in the current window (a page sending far too many has the rest refused). */
+  private readonly rate = new Map<string, { from: number; n: number }>();
+
+  /** Session 34: does the person in seat `reader` block the person in seat `from`? (An offer's note is left off.) */
+  private blockedSeat(reader: PlayerId, from: PlayerId): boolean {
+    const r = this.userOf(reader), f = this.userOf(from);
+    return !!r && !!f && !!this.blocks.get(r)?.has(f);
   }
 
   /**
@@ -385,9 +443,77 @@ export class RoomCore {
     return t.sitters.map((x) => ({ user: x.user, name: x.name, house: x.house, ...(x.seat ? { seat: x.seat } : {}), ...(x.seat && left[x.seat] ? { left: true } : {}) }));
   }
 
+  /** Session 34: is this page still inside its window's allowance? (Counts the message.) */
+  private allowed(key: string): boolean {
+    const t = this.now();
+    const r = this.rate.get(key);
+    if (!r || t - r.from >= SAFETY_LIMITS.windowMs) {
+      this.rate.set(key, { from: t, n: 1 });
+      return true;
+    }
+    r.n++;
+    return r.n <= SAFETY_LIMITS.messagesPerWindow;
+  }
+
+  /**
+   * Session 34: report a line, or block a person. A report carries the line as the room has it (never the page's copy)
+   * and nothing else of the game; a block is kept by account and outlives the game. The blocked person is never told.
+   */
+  private async safetyAct(who: Who, a: Extract<ChatAct, { do: "report" | "block" }>): Promise<{ answer: ChatSync } | { error: string }> {
+    const me = this.chatSeats().find((s) => s.user === who.user);
+    if (!me) return { error: CHAT_TEXT.notMember };
+    const base: ChatSync = { chats: [], lines: [], canWrite: !me.left };
+    if (a.do === "block") {
+      // By a line (any chat, the table screen too: seats aren't dealt until the start), or by a seat (the Houses panel).
+      const line = a.line !== undefined ? this.chat.lineFor(who.user, a.line) : undefined;
+      const other = line ? (line.by.startsWith("bot:") ? undefined : { user: line.by, name: line.name }) : a.seat !== undefined ? this.chat.personAt(a.seat) : undefined;
+      if (!other) return { error: a.line !== undefined && !line ? SAFETY_TEXT.notALine : SAFETY_TEXT.peopleOnly };
+      if (other.user === who.user) return { error: SAFETY_TEXT.blockYourself };
+      const dropped = this.chat.linesBy(who.user, other.user);
+      const mine = this.blocks.get(who.user) ?? new Set<string>();
+      mine.add(other.user);
+      this.blocks.set(who.user, mine);
+      this.saveBlocks();
+      await this.io.safety?.block(who.user, other.user, other.name);
+      return { answer: { ...base, dropped } };
+    }
+    if (!REPORT_REASONS.includes(a.reason)) return { error: SAFETY_TEXT.pickReason };
+    const line = this.chat.lineFor(who.user, a.line);
+    if (!line) return { error: SAFETY_TEXT.notALine };
+    if (line.by === who.user) return { error: SAFETY_TEXT.ownLine };
+    if (line.by.startsWith("bot:")) return { error: SAFETY_TEXT.peopleOnly };
+    const words = typeof a.words === "string" ? a.words.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, SAFETY_LIMITS.reportWords) : "";
+    const t = this.tableRec;
+    const why =
+      (await this.io.safety?.report({
+        gameId: t?.gameId ?? this.meta?.gameId ?? "",
+        map: t?.settings.mapId ?? "",
+        line: a.line,
+        chat: line.chat,
+        text: line.text,
+        writtenAt: line.at,
+        author: line.by,
+        authorName: line.name,
+        reporter: who.user,
+        reporterName: me.name,
+        reason: a.reason,
+        ...(words ? { words } : {}),
+        at: this.now(),
+      })) ?? null;
+    if (why) return { error: why };
+    this.io.log(`game ${t?.gameId ?? "?"}: a line was reported (${a.reason})`);
+    return { answer: { ...base, reported: true } };
+  }
+
   /** Session 28: something done in chat. The page that did it gets the answer; everyone else concerned, a push. */
   private async chatMessage(who: Who, req: Extract<RoomRequest, { type: "chat" }>) {
     await this.chat.load();
+    if (req.act && typeof req.act === "object" && (req.act.do === "report" || req.act.do === "block")) {
+      const done = await this.safetyAct(who, req.act);
+      if ("error" in done) this.io.sendUser(who.user, { id: req.id, ok: false, error: done.error, now: this.now() });
+      else this.io.sendUser(who.user, { id: req.id, ok: true, chat: done.answer, now: this.now() });
+      return;
+    }
     // Session 29: once the game has started, chat knows its bots (a room that woke from hibernation loads it first).
     const a = req.act;
     if (this.tableRec?.status === "started") await this.ensureLoaded();
@@ -410,6 +536,7 @@ export class RoomCore {
     await this.store.put("meta", this.meta);
     const t0 = this.timer();
     this.game = new LocalGame(map, setup.settings, setup.seed, this.now, { table: { gameId: setup.gameId, people: setup.people }, autosave: this.autosave });
+    this.game.blocks = (reader, from) => this.blockedSeat(reader, from);
     this.io.log(`game ${setup.gameId}: made on ${map.id} with ${setup.people.length} people, opening plans in ${(this.timer() - t0).toFixed(1)} ms`);
     await this.flush();
     this.afterChange();
@@ -507,6 +634,20 @@ export class RoomCore {
    */
   async receive(who: Who, req: RoomRequest): Promise<void> {
     if (!req || typeof req !== "object" || typeof req.id !== "number") return;
+    // Session 34: 30 messages in 10 s at most a page (a page in normal use sends a few). The rest are refused: a
+    // request waiting for its answer gets the sentence why, a queue save (no answer) is dropped quietly.
+    if (!this.allowed(who.user || who.seat || "")) {
+      if (req.type !== "saveOrders") this.io.sendUser(who.user, { id: req.id, ok: false, error: SAFETY_TEXT.tooFast, now: this.now() });
+      return;
+    }
+    // Session 34: whom this person blocked, fresh with every hello (a block from another game, an unblock in Settings).
+    await this.ensureBlocks();
+    if (req.type === "hello" && who.user && this.io.safety) {
+      const fresh = new Set(await this.io.safety.blocksOf(who.user).catch(() => [...(this.blocks.get(who.user) ?? [])]));
+      const had = this.blocks.get(who.user);
+      this.blocks.set(who.user, fresh);
+      if (!had || had.size !== fresh.size || [...fresh].some((u) => !had.has(u))) this.saveBlocks();
+    }
     const table = await this.loadTable();
     // Session 28: chat, at the table screen and in the game alike.
     if (table && req.type === "chat") return this.chatMessage(who, req);
@@ -654,6 +795,7 @@ export class RoomCore {
     const map = await this.loadMap(read.save.mapId, read.save.mapVersion);
     this.meta = meta;
     this.game = LocalGame.restore(map, read.save, this.now, this.autosave);
+    this.game.blocks = (reader, from) => this.blockedSeat(reader, from);
     // The clock again (session 27): if the alarm was lost (a restart between a turn and its alarm), a deadline that has
     // passed fires at once and the turn resolves as it would have.
     this.io.wakeAt(this.game.over ? null : this.game.alarmAt);
@@ -910,6 +1052,8 @@ export class RoomCore {
   /** The alarm: if the clock has run out, the turn resolves with everyone's orders as they stand. */
   async alarm(): Promise<void> {
     const g = await this.ensureLoaded();
+    // (Session 34: a turn's offer notes and their endings go through the readers' blocks too.)
+    await this.ensureBlocks();
     // (Session 29: a room the alarm woke knows who sits where before it tells anyone it's their turn.)
     await this.loadTable();
     // Session 28: a vote's 60 s, or a pause's 15 minutes, may be what woke the room.

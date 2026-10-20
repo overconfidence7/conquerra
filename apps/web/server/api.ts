@@ -5,6 +5,7 @@ import { cleanSub } from "./webPush";
 import type { Env } from "./env";
 import { cleanName, cleanNewGame, mapNameOf, nameFromEmail, newGameId, newInviteCode } from "./online";
 import { RANDOM_TEXT } from "@conquerra/mapgen/randomText";
+import { blockList, joinGate, tableCap, unblock } from "./safety";
 
 /**
  * The Worker `conquerra`'s API (session 26): it serves the game's static files as before, and the online API under /api.
@@ -19,6 +20,8 @@ import { RANDOM_TEXT } from "@conquerra/mapgen/randomText";
  *   GET   /api/join/:code         the table a link is for → { id } (or why you can't join it)
  *   POST  /api/games/:id/resign   leave a game for good: a Marshal plays your seat (session 27)
  *   GET   /api/games/:id/ws       open a game (a WebSocket to its room): your seat, or with ?code= the table's screen
+ *   GET   /api/blocks             the people you blocked (session 34), by the name they had
+ *   DELETE /api/blocks/:id        unblock one
  *
  * Sign-in is Access and nothing else: someone whose email isn't in the Access policy never reaches any of this. The
  * invite code grants a seat at one table, never a sign-in.
@@ -149,9 +152,12 @@ async function createGame(env: Env, user: UserRow, body: unknown): Promise<Respo
   const clean = cleanNewGame(body);
   if ("error" in clean) return problem(400, clean.error);
   const { settings, leadersRun } = clean;
+  const now = Date.now();
+  // Session 34: 20 tables a day at most (the 21st: "You've made 20 tables today. Tomorrow.").
+  const capped = await tableCap(env.DB, user.id, now);
+  if (capped) return problem(429, capped);
   const id = newGameId();
   const code = newInviteCode();
-  const now = Date.now();
   const house = settings.house ?? 0;
   const size = settings.bots + 1;
   // The game's row first (the room keeps it up to date from here on).
@@ -187,8 +193,14 @@ async function createGame(env: Env, user: UserRow, body: unknown): Promise<Respo
   return json({ id, code });
 }
 
+/** Session 34: who's asking, by address (Cloudflare's own header; `wrangler dev` has none). */
+const addressOf = (request: Request) => request.headers.get("CF-Connecting-IP") ?? "local";
+
 /** The table a link is for. A game that has started is only for the people sitting at it. */
-async function join(env: Env, user: UserRow, code: string): Promise<Response> {
+async function join(env: Env, user: UserRow, code: string, request: Request): Promise<Response> {
+  // Session 34: 10 joins by invite code a minute from one address.
+  const gated = await joinGate(env.DB, addressOf(request), Date.now());
+  if (gated) return problem(429, gated);
   const game = await env.DB.prepare("SELECT id, status FROM games WHERE invite = ?").bind(code).first<{ id: string; status: string }>();
   if (!game) return problem(404, API_TEXT.noGame);
   if (game.status === "cancelled") return problem(410, API_TEXT.cancelled);
@@ -206,7 +218,11 @@ async function openGame(env: Env, user: UserRow, id: string, request: Request): 
     // No seat yet: only with the table's code, and only while it's waiting for players.
     const code = new URL(request.url).searchParams.get("code") ?? "";
     const game = code ? await env.DB.prepare("SELECT status FROM games WHERE id = ? AND invite = ?").bind(id, code).first<{ status: string }>() : null;
-    if (!game) return problem(404, API_TEXT.noSeat);
+    if (!game) {
+      // (Session 34: a wrong code here is a guess, and counts against the address's 10 a minute, as a link looked up does.)
+      const gated = code ? await joinGate(env.DB, addressOf(request), Date.now()) : null;
+      return problem(gated ? 429 : 404, gated ?? API_TEXT.noSeat);
+    }
     if (game.status !== "waiting") return problem(409, game.status === "cancelled" ? API_TEXT.cancelled : API_TEXT.started);
   }
   const room = env.GAME_ROOM.getByName(id);
@@ -318,7 +334,11 @@ export const worker = {
       return createGame(env, user, b);
     }
     const code = /^\/api\/join\/([a-z0-9]{6,24})$/.exec(path);
-    if (code && request.method === "GET") return join(env, user, code[1]!);
+    if (code && request.method === "GET") return join(env, user, code[1]!, request);
+    // Session 34: Settings' Blocked players.
+    if (path === "/api/blocks" && request.method === "GET") return json({ blocks: await blockList(env.DB, user.id) });
+    const unblocked = /^\/api\/blocks\/(\d{1,12})$/.exec(path);
+    if (unblocked && request.method === "DELETE") return (await unblock(env.DB, user.id, Number(unblocked[1])), json({ ok: true }));
     const quit = /^\/api\/games\/([a-z0-9]{6,24})\/resign$/.exec(path);
     if (quit && request.method === "POST") return resign(env, user, quit[1]!);
     const ws = /^\/api\/games\/([a-z0-9]{6,24})\/ws$/.exec(path);

@@ -90,6 +90,13 @@ const showing = (s: ChatState, chat: string) => s.open && s.selected === chat;
 
 /** What the room sent: chats replaced by id, messages added in order; a message for a chat not on screen pops up. */
 export function applyChat(sync: ChatSync) {
+  // Session 34: you blocked someone: their lines leave this page at once (the room sends none from now on).
+  if (sync.dropped?.length) {
+    const ids = new Set(sync.dropped);
+    const gone = (l: ChatLine) => ids.has(l.id);
+    const b = useChat.getState();
+    useChat.setState({ lines: b.lines.filter((l) => !gone(l)), held: b.held.filter((l) => !gone(l)), ...(b.popup && gone(b.popup) ? { popup: null } : {}) });
+  }
   // (A bot's line about a turn waits while the replay plays.)
   const now = useChat.getState();
   if (now.hold && sync.lines.some((l) => l.from.bot && l.turn !== undefined)) {

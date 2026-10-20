@@ -114,6 +114,8 @@ export function cleanText(raw: unknown): string | null {
   return text ? text : null;
 }
 
+const NONE: ReadonlySet<string> = new Set();
+
 export class ChatRoom {
   private meta: ChatMeta | null = null;
   private blocks = new Map<number, StoredLine[]>();
@@ -129,6 +131,11 @@ export class ChatRoom {
     private readonly bots: () => ChatBotSeat[] = () => [],
     /** Session 29: what a chat with bots in it adds for one person (their lines to pick from, messages left). */
     private readonly extra: (c: { id: string; kind: string; bots: PlayerId[] }, user: string) => Partial<ChatView> = () => ({}),
+    /**
+     * Session 34: the accounts this reader blocked. Their lines never reach the reader (not in a push, not in a sync):
+     * the filter is here, on the way out, so nothing of theirs travels to the reader's page.
+     */
+    private readonly blockedBy: (reader: string) => ReadonlySet<string> = () => NONE,
   ) {}
 
   /** Load what's stored (the first time the room needs chat after waking). */
@@ -261,7 +268,10 @@ export class ChatRoom {
         this.m.last = Math.max(this.m.last + 1, t);
         const l: StoredLine = { id: this.m.last, chat: c.id, by: user, from: { name: me.name, house: me.house, ...(me.seat ? { seat: me.seat } : {}) }, text, at: t };
         this.append(l);
-        return { tell: this.tellMembers(c, (u) => ({ chats: [], lines: [this.line(l, u)], canWrite: true })) };
+        // (Session 34: a reader who blocked the writer is told nothing at all, not even that a line was written.)
+        const tell = this.tellMembers(c, (u) => ({ chats: [], lines: [this.line(l, u)], canWrite: true }));
+        for (const u of tell.keys()) if (!this.mayRead(l, u)) tell.delete(u);
+        return { tell };
       }
       case "pair": {
         const [other] = people([a.with]) ?? [];
@@ -321,9 +331,35 @@ export class ChatRoom {
     return { chats: [this.view(c, user)], lines: this.allLines().filter((l) => l.chat === c.id && this.mayRead(l, user)).map((l) => this.line(l, user)), canWrite: true };
   }
 
-  /** May this account read this line? (A line written for some readers only reaches them.) */
+  /**
+   * May this account read this line? (A line written for some readers only reaches them; session 34: and never one
+   * by someone this reader blocked.)
+   */
   private mayRead(l: StoredLine, user: string): boolean {
-    return !l.to || l.to.includes(user);
+    return (!l.to || l.to.includes(user)) && !this.blockedBy(user).has(l.by);
+  }
+
+  // ---------- Session 34: report and block ----------
+
+  /** A line this account may read, as stored (who wrote it, in which kind of chat), for a report; else undefined. */
+  lineFor(user: string, id: unknown): { by: string; name: string; chat: "table" | "pair" | "group"; text: string; at: number } | undefined {
+    if (typeof id !== "number") return undefined;
+    const l = this.allLines().find((x) => x.id === id);
+    const c = l && this.m.chats.find((x) => x.id === l.chat && this.isMember(x, user));
+    if (!l || !c || !this.mayRead(l, user)) return undefined;
+    return { by: l.by, name: l.from.name, chat: c.kind, text: l.text, at: l.at };
+  }
+
+  /** The ids of every line by `author` this reader has now (they leave the reader's page when the reader blocks them). */
+  linesBy(reader: string, author: string): number[] {
+    const mine = new Set(this.chatsOf(reader).map((c) => c.id));
+    return this.allLines().filter((l) => l.by === author && mine.has(l.chat) && this.mayRead(l, reader)).map((l) => l.id);
+  }
+
+  /** The person (an account, never a bot) sitting in this seat, with their name; else undefined. */
+  personAt(seat: unknown): { user: string; name: string } | undefined {
+    const s = this.seats().find((x) => x.seat !== undefined && x.seat === seat);
+    return s ? { user: s.user, name: s.name } : undefined;
   }
 
   // ---------- Session 29: the bots in the chat ----------
@@ -360,6 +396,7 @@ export class ChatRoom {
     }
     const l: StoredLine = { id: this.m.last, chat, by, from: who, text: text.slice(0, CHAT_TEXT_MAX), at: t, ...(opts.to ? { to: opts.to } : {}), ...(opts.propose ? { propose: opts.propose } : {}), ...(opts.turn !== undefined ? { turn: opts.turn } : {}), ...(opts.offer ? { offer: opts.offer } : {}) };
     this.append(l);
+    // (Session 34: and not to anyone who blocked its writer.)
     const users = (c.kind === "table" ? this.seats().map((s) => s.user) : c.members).filter((u) => this.mayRead(l, u));
     return new Map(users.map((u) => [u, { chats: [], lines: [this.line(l, u)], canWrite: !!this.seatOf(u) && !this.seatOf(u)!.left }]));
   }

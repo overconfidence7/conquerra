@@ -8,6 +8,7 @@ import { applyChat, botsIn, CHAT_UI, chatDo, chatName, closeChat, markRead, open
 import { COUNCIL_CHAT, CouncilChat } from "./Council";
 import { useCouncilUnread } from "./ChatBits";
 import { COUNCIL_ID } from "./councilStore";
+import { formsOpen, LineActions } from "./Safety";
 import "./chat.css";
 
 /** Session 29: what the chat with bots says itself (the voice guide applies). */
@@ -53,7 +54,8 @@ function Lines({ chat }: { chat: string }) {
   const mine = lines.filter((l) => l.chat === chat);
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    end.current?.scrollIntoView({ block: "end" });
+    // (Session 34: not while a report or block form is open: it would move away under the reader's finger.)
+    if (!formsOpen.n) end.current?.scrollIntoView({ block: "end" });
   }, [mine.length]);
   if (!mine.length) return <p className="muted small chat-empty">{CHAT_UI.empty}</p>;
   return (
@@ -67,7 +69,10 @@ function Lines({ chat }: { chat: string }) {
                 <b style={{ color: colour(l.from.house) }}>{l.from.you ? "You" : l.from.name}</b> <span className="muted">{time(l.at)}</span>
               </div>
             )}
-            <div className="chat-text">{l.text}</div>
+            {/* Session 34: a person's line has Report and Block (hover on a desktop, a long press on a phone). */}
+            <LineActions line={l}>
+              <div className="chat-text">{l.text}</div>
+            </LineActions>
             {l.ended && <div className="muted small chat-ended">{l.ended === "withdrawn" ? CHAT_UI.withdrawnBy(l.from.name, !!l.from.you) : CHAT_UI.ended[l.ended]}</div>}
             {l.propose && l.propose.for === me && (
               <button className="link small chat-deal" onClick={() => openDeal(l.propose!)}>

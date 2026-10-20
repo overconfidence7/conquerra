@@ -6,6 +6,7 @@ import type { RoomMessage, RoomRequest, TableView } from "../src/host/protocol";
 import { EmailMessage } from "cloudflare:email";
 import { mirrorGame, mirrorTable } from "./mirror";
 import { FROM, notifyTurn } from "./notify";
+import { roomSafety } from "./safety";
 import type { Env } from "./env";
 
 /**
@@ -97,6 +98,13 @@ export class GameRoom extends DurableObject<Env> {
         now: Date.now(),
         log: (line) => console.log(line),
       }).then((r) => console.log(`"your turn": ${r.pushed} pushed, ${r.removed} gone, ${r.emailed} emailed`))),
+      // Session 34: reports and blocks (./safety.ts).
+      safety: roomSafety({
+        db: env.DB,
+        mail: env.EMAIL ? async (to, raw) => void (await env.EMAIL!.send(new EmailMessage(FROM, to, raw))) : null,
+        reportsTo: env.REPORTS_TO,
+        log: (line) => console.log(line),
+      }),
     });
   }
 

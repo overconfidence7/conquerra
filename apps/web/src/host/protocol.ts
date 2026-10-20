@@ -133,6 +133,9 @@ export interface ChatSync {
   chats: ChatView[];
   lines: ChatLine[];
   canWrite: boolean;
+  /** Session 34, an answer only: your report went through, or the lines of the person you just blocked (they leave your page). */
+  reported?: true;
+  dropped?: number[];
   after?: number;
   /** Session 30: offers (sender and id, as `ChatLine.offer`) that ended unanswered since the page's lines came. */
   ended?: Record<string, OfferEnd>;
@@ -150,7 +153,17 @@ export type ChatAct =
   /** Session 29, a group with bots: "Join us against {rival}?" or "Peace among us?"; each bot answers. */
   | { do: "ask"; chat: string; ask: "war" | "peace"; target?: PlayerId }
   /** Session 29: you accepted or declined a bot's offer in your chat with it; it answers in a line. */
-  | { do: "answered"; chat: string; offer: string; accept: boolean };
+  | { do: "answered"; chat: string; offer: string; accept: boolean }
+  /**
+   * Session 34: report another person's line (it goes to Nate: the line, who wrote it, the reason and your words; nothing
+   * else of the game), or block the person in a seat (their lines never reach you again; deals still do).
+   */
+  | { do: "report"; line: number; reason: ReportReason; words?: string }
+  | { do: "block"; seat?: PlayerId; line?: number };
+
+/** Session 34: why a line is reported. */
+export type ReportReason = "abuse" | "spam" | "cheating" | "other";
+export const REPORT_REASONS: readonly ReportReason[] = ["abuse", "spam", "cheating", "other"];
 
 /**
  * Session 28: pause by vote, as everyone at the table is told it: who asked, who has agreed (or is ready), when the vote

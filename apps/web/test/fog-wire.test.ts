@@ -49,7 +49,8 @@ const checkPause = (p: PauseView) => {
   for (const part of [p.vote, p.paused]) for (const k of Object.keys(part ?? {})) expect(PAUSE_PART.has(k), `unexpected pause part field ${k}`).toBe(true);
 };
 /** Session 28: chat, as a member is sent it. */
-const CHAT_SYNC = new Set(["chats", "lines", "canWrite", "after", "ended"]);
+// (Session 34: an answer to a report or a block: `reported`, and `dropped`, the ids of the blocked person's lines you had.)
+const CHAT_SYNC = new Set(["chats", "lines", "canWrite", "after", "ended", "reported", "dropped"]);
 const CHAT_VIEW = new Set(["id", "kind", "name", "members", "say", "free", "quiet"]);
 const CHAT_PERSON = new Set(["name", "house", "seat", "you", "bot"]);
 // (Session 30: `offer` and `ended` on an offer's note, in a chat between the offer's two sides.)
@@ -404,4 +405,55 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
     expect(started("p1")[0]).toMatchObject({ deal: { terms: { get: { gold: 7, perTurn: 3 } } } });
     expect(JSON.stringify(t.inbox(ROOK.user))).toBe("[]");
   }, 60_000);
+  it("session 34: a report and a block carry nothing of anyone else's view; the blocked person is told nothing; a 20-seat table's hello is one seat's view", async () => {
+    const t = testRoom(undefined, 1_000_000, { safety: { blocksOf: async () => [], block: async () => {}, report: async () => null } });
+    await t.room.createTable({ gameId: "fog34", code: "f0g34abcde", settings: { ...settings, bots: 3 }, seed: "fog-on-the-wire-34", host: hostSeat(NATE, 0) });
+    await t.table(ROOK);
+    await t.act(KIT, { do: "sit", house: 3, leadersRun: true });
+    await t.act(WREN, { do: "sit", house: 5, leadersRun: true });
+    await t.act(NATE, { do: "start" });
+    for (const s of SEATS) await t.hello(s);
+    t.advance(2000);
+    const kitLine = (await t.askAs(KIT, { type: "chat", act: { do: "send", chat: "table", text: "SECRET34-KIT" } })) as Extract<RoomMessage, { chat: ChatSync }>;
+    t.advance(2000);
+    await t.askAs(WREN, { type: "chat", act: { do: "send", chat: "table", text: "WREN34" } });
+    t.clear();
+    const reported = (await t.askAs(NATE, { type: "chat", act: { do: "report", line: kitLine.chat.lines[0]!.id, reason: "spam", words: "SECRET34-WORDS" } })) as Extract<RoomMessage, { chat: ChatSync }>;
+    const blocked = (await t.askAs(NATE, { type: "chat", act: { do: "block", seat: "p2" } })) as Extract<RoomMessage, { chat: ChatSync }>;
+    expect(reported.chat).toEqual({ chats: [], lines: [], canWrite: true, reported: true });
+    expect(blocked.chat).toEqual({ chats: [], lines: [], canWrite: true, dropped: [kitLine.chat.lines[0]!.id] });
+    for (const m of t.inbox(NATE.user)) {
+      for (const k of Object.keys(m)) expect(ENVELOPE.has(k), `unexpected envelope field ${k}`).toBe(true);
+      if ("chat" in m) checkChat(m.chat);
+    }
+    // Kit, Wren and the watcher hear nothing of either: not the words, not that it happened.
+    for (const who of [KIT, WREN, ROOK]) expect(JSON.stringify(t.inbox(who.user))).toBe("[]");
+    // After the block, Kit's next line reaches Wren and never Nate; Nate's own hello has none of Kit's lines.
+    t.advance(2000);
+    await t.askAs(KIT, { type: "chat", act: { do: "send", chat: "table", text: "SECRET34-AFTER" } });
+    const back = await t.hello("p1");
+    expect(JSON.stringify(t.inbox(NATE.user))).not.toContain("SECRET34");
+    expect(JSON.stringify(back)).not.toContain("SECRET34");
+    expect(JSON.stringify(t.inbox(WREN.user))).toContain("SECRET34-AFTER");
+
+    // A 20-seat Rootholm table with three people: each hello is that seat's own (the same field list, its own seat), and
+    // no account ids travel.
+    const big = testRoom();
+    await big.room.createTable({ gameId: "fog34big", code: "f0g34bigtb", settings: { ...settings, mapId: "rootholm", bots: 19 }, seed: "fog-on-the-wire-34-big", host: hostSeat(NATE, 0) });
+    await big.table(NATE);
+    await big.act(KIT, { do: "sit", house: 3, leadersRun: true });
+    await big.act(WREN, { do: "sit", house: 5, leadersRun: true });
+    await big.act(NATE, { do: "start" });
+    for (const s of SEATS) {
+      const start = await big.hello(s);
+      for (const k of Object.keys(start)) expect(START.has(k), `unexpected field ${k}`).toBe(true);
+      expect(start.view.me.id).toBe(s);
+      expect(start.view.players).toHaveLength(20);
+      const text = JSON.stringify(start);
+      for (const who of [NATE, KIT, WREN, ROOK]) expect(text.includes(who.user), `${s} was sent ${who.user}`).toBe(false);
+      // Rivals' land is fogged unless seen: every other seat's capital not in sight shows no owner.
+      const seen = Object.values(start.view.territories).filter((x) => (x as { detail: string }).detail !== "fogged").length;
+      expect(seen).toBeLessThan(Object.keys(start.view.territories).length / 4);
+    }
+  }, 120_000);
 });

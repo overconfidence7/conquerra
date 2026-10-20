@@ -667,7 +667,8 @@ export class LocalGame {
 
   /** Session 28: offers (and counters) from other people still waiting on this person's answer. */
   private openTo(id: PlayerId): Offer[] {
-    return this.between.flatMap((r) => [...(r.offer.to === id && r.state === "open" ? [r.offer] : []), ...(r.counter && r.counter.to === id && r.counterState === "open" ? [r.counter] : [])]);
+    // (Session 34: without its note if this reader blocks its sender.)
+    return this.between.flatMap((r) => [...(r.offer.to === id && r.state === "open" ? [this.quiet(id, r.offer)] : []), ...(r.counter && r.counter.to === id && r.counterState === "open" ? [this.quiet(id, r.counter)] : [])]);
   }
 
   /** Online: the orders that give this person their own commands and budgets back, if a missed turn changed them. */
@@ -789,9 +790,21 @@ export class LocalGame {
     return out;
   }
 
+  /**
+   * Session 34: does this reader block that seat's person? (The room sets it.) A deal from them still reaches the
+   * reader, as the game's own business, but without its note: their words are chat, and a block stops their words.
+   */
+  blocks: (reader: PlayerId, from: PlayerId) => boolean = () => false;
+
   /** The offers between people this seat is a side of (never anyone else's). */
   peopleOffersFor(id: PlayerId): PeopleOffer[] {
-    return this.between.filter((r) => r.offer.from === id || r.offer.to === id);
+    const mine = this.between.filter((r) => r.offer.from === id || r.offer.to === id);
+    return mine.map((r) => ({ ...r, offer: this.quiet(id, r.offer), ...(r.counter ? { counter: this.quiet(id, r.counter) } : {}) }));
+  }
+
+  /** Session 34: an offer as this reader gets it (without its note if they block its sender). */
+  private quiet(id: PlayerId, o: Offer): Offer {
+    return o.from !== id && o.note !== undefined && this.blocks(id, o.from) ? (({ note: _n, ...rest }) => rest)(o) : o;
   }
 
   private nameOf(id: PlayerId): string {

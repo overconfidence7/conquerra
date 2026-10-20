@@ -19,4 +19,6 @@ export interface Env {
   VAPID_PRIVATE?: string;
   /** Session 29: email for long turns, from conquerra@overconfidenceonline.com (Email Routing: verified addresses only). */
   EMAIL?: SendEmail;
+  /** Session 34: where a reported chat line goes (Nate's address: a secret, `wrangler secret put REPORTS_TO`). */
+  REPORTS_TO?: string;
 }

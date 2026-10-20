@@ -66,6 +66,8 @@ const CardsSheet = lazy(() => import("./Cards"));
 const NameField = lazy(() => import("./NameField").then((m) => ({ default: m.NameField })));
 /** Settings → "Tell me when it's my turn" (session 29, online only). */
 const TurnAlerts = lazy(() => import("./TurnAlerts").then((m) => ({ default: m.TurnAlerts })));
+// Session 34: Settings online, Blocked players (with the game, never the lobby).
+const BlockedPlayers = lazy(() => import("./chat/Safety").then((m) => ({ default: m.BlockedPlayers })));
 /** Settings → Credits (session 24): loaded the first time it's opened. */
 const SoundCredits = lazy(() => import("./SoundCredits"));
 /** The Chronicle (session 16): loaded the first time it's opened. */
@@ -183,6 +185,7 @@ function Settings({ phone, online, tactical, onTactical, onFit, onReport, onSave
         <Suspense fallback={null}>
           <NameField />
           <TurnAlerts />
+          <BlockedPlayers />
         </Suspense>
       )}
       {/* Online (session 28): pause by vote. */}
