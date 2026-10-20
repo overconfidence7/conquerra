@@ -39,7 +39,7 @@ describe("random maps at 300 and 400 territories (session 33b)", () => {
     }
   });
 
-  it("pinned (session 34): version 6, the 400 with layouts for 6 to 16 players and the 300 for 4 to 12, each within the band", () => {
+  it("pinned (session 34): version 6's 400 with layouts for 6 to 16 players, within the band", () => {
     const big = randomMap("400-island-quiet-heron", defaultRules, { version: 6 });
     expect(big.attempt).toBe(1);
     expect(mapFingerprint(big.map)).toBe("045ba6f02ac72662");
@@ -48,6 +48,9 @@ describe("random maps at 300 and 400 territories (session 33b)", () => {
     // Its layouts for 6 to 10 come from the same search as version 5's (the head start too); 11 and up are new.
     const sixteen = big.map.capitalLayouts!.find((l) => l.players === 16)!;
     expect(Object.keys(sixteen.buildings ?? {})).toHaveLength(8);
+  }, 180_000);
+
+  it("pinned (session 34): version 6's 300 with layouts for 4 to 12", () => {
     const mid = randomMap("300-inland-quiet-heron", defaultRules, { version: 6 });
     expect(mid.attempt).toBe(1);
     expect(mapFingerprint(mid.map)).toBe("8330a41fcd5f02ad");
