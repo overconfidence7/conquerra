@@ -25,7 +25,7 @@ export class HostCore {
   constructor(
     private readonly store: SaveStore,
     /** A map by its id (session 30: and, for a save, the map maker version it was made at). */
-    private readonly loadMap: (id: string, version?: number | null) => Promise<MapDef>,
+    private readonly loadMap: (id: string, version?: number | null, attempt?: number | null) => Promise<MapDef>,
     /** Tell the page something went wrong in the background (an autosave that couldn't be written). */
     private readonly notice: (message: string) => void = () => {},
     private readonly now: () => number = () => Date.now(),
@@ -64,7 +64,8 @@ export class HostCore {
   async start(settings: LobbySettings, seed: string): Promise<HostStart> {
     // Only this map's data is fetched, when the game starts.
     this.lesson = false;
-    this.game = new LocalGame(await this.loadMap(settings.mapId), settings, seed, this.now, { autosave: this.autosave });
+    // (Session 34: a random map's try that passed in the lobby, so a kept map that wasn't built this visit takes one try.)
+    this.game = new LocalGame(await this.loadMap(settings.mapId, null, settings.mapAttempt), settings, seed, this.now, { autosave: this.autosave });
     return this.game.start();
   }
 

@@ -189,14 +189,25 @@ export function Lobby() {
     void import("../host/onlineActions").then((m) => m.refreshOnline());
     void online();
   }, [refreshSlots]);
-  // Session 31: last time it was a random map, so it's a random map again (the same size and shape, a fresh seed).
+  // Session 31: last time it was a random map, so it's a random map again (the same size and shape). Session 34: the
+  // same map, kept with its picture (nothing to build), unless a game was started on it; then a fresh seed.
   useEffect(() => {
+    const now = useGame.getState().lobby.mapId;
+    if (now.startsWith("random:")) {
+      void randomPanel().then((m) => {
+        const r = listingOf(now)?.random;
+        if (r && m.playedRandom(now) && useGame.getState().lobby.mapId === now) setLobby({ mapId: m.freshRandomId(r.size as RandomSize, r.shape as RandomShape) });
+      });
+      return;
+    }
     const r = rememberedRandom();
-    if (!r || cameBackToRandom || useGame.getState().lobby.mapId.startsWith("random:")) return;
+    if (!r || cameBackToRandom) return;
     cameBackToRandom = true;
     void randomPanel().then((m) => {
-      const id = m.freshRandomId(r.size as RandomSize, r.shape as RandomShape);
-      if (listingOf(id)) setLobby({ mapId: id });
+      const { mapId, preview } = m.keptOrFresh(r.size as RandomSize, r.shape as RandomShape);
+      if (!listingOf(mapId)) return;
+      if (preview) useGame.setState({ randomPreview: { mapId, preview, problem: null } });
+      setLobby({ mapId });
     });
   }, [setLobby]);
   const auto = slots.find((s) => s.slot === "auto");

@@ -1,4 +1,4 @@
-import { applyOnlineUpdate, enterGame, useGame } from "../store";
+import { applyOnlineUpdate, enterGame, randomAttempt, randomStarted, useGame } from "../store";
 import { ONLINE_TIMER_CHOICES, DEFAULT_TIMER } from "../logic/timer";
 import { api, createRemoteHost, type RemoteHost } from "./remoteHost";
 import type { HostStart, OnlineGameInfo, TableAct, TableView } from "./protocol";
@@ -165,10 +165,12 @@ function openWith(begin: (host: RemoteHost) => Promise<HostStart>): Promise<bool
 
 /** Make an online table with the lobby's map, bots and rules (and the Online block's timer), and open its table screen. */
 export function startOnline(): Promise<boolean> {
-  const { lobby, onlineLobby, randomPreview } = useGame.getState();
+  const { lobby, onlineLobby } = useGame.getState();
   // (Session 33b: a random map's try that passed here, so the room and the other pages make it in one try.)
-  const attempt = randomPreview?.mapId === lobby.mapId ? randomPreview.preview?.attempt : undefined;
-  return openWith((host) => host.start({ ...lobby, ...(attempt && attempt > 1 ? { mapAttempt: attempt } : {}), turnSeconds: onlineLobby.turnSeconds, leadersRun: onlineLobby.leadersRun }));
+  const attempt = randomAttempt();
+  // (Session 34: and the lobby's next visit rolls a fresh seed.)
+  randomStarted(lobby.mapId);
+  return openWith((host) => host.start({ ...lobby, ...attempt, turnSeconds: onlineLobby.turnSeconds, leadersRun: onlineLobby.leadersRun }));
 }
 
 /** Open one of your online games (Continue, a waiting table, or a "?game=" address). */

@@ -28,7 +28,7 @@ describe("random maps in single player (session 30)", () => {
 
   it("a game on a random map saves its id and version, and Continue rebuilds the same map", async () => {
     const store = memorySaveStore();
-    const core = new HostCore(store, loadGameMap);
+    const core = new HostCore(store, (id, v, t) => loadGameMap(id, v, undefined, t));
     const start = await core.start(settings, "random-save");
     expect(start.map.id).toBe(ID);
     expect(start.map.territories).toHaveLength(40);
@@ -38,7 +38,7 @@ describe("random maps in single player (session 30)", () => {
     expect(auto.ok && auto.save.mapVersion).toBe(start.map.generator!.version);
     // The save holds no geometry: only the id.
     expect(JSON.stringify(await store.get("auto"))).not.toContain("borderLines");
-    const again = new HostCore(store, loadGameMap);
+    const again = new HostCore(store, (id, v, t) => loadGameMap(id, v, undefined, t));
     const back = await again.load({ slot: "auto" });
     expect(back.view).toEqual(start.view);
     expect(JSON.stringify(back.map)).toBe(JSON.stringify(start.map));
@@ -46,11 +46,11 @@ describe("random maps in single player (session 30)", () => {
 
   it("a save made by another map maker version says so, in plain words", async () => {
     const store = memorySaveStore();
-    const core = new HostCore(store, loadGameMap);
+    const core = new HostCore(store, (id, v, t) => loadGameMap(id, v, undefined, t));
     await core.start(settings, "random-old");
     const file = JSON.parse(JSON.stringify(core.exportSave()));
     file.mapVersion = 1;
-    await expect(new HostCore(memorySaveStore(), loadGameMap).load({ file: JSON.stringify(file) })).rejects.toThrow(RANDOM_TEXT.oldVersion(1));
+    await expect(new HostCore(memorySaveStore(), (id, v, t) => loadGameMap(id, v, undefined, t)).load({ file: JSON.stringify(file) })).rejects.toThrow(RANDOM_TEXT.oldVersion(1));
   }, 60_000);
 });
 

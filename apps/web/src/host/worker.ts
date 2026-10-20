@@ -7,7 +7,7 @@ import { idbSaveStore } from "./saves";
 const scope = self as unknown as { onmessage: ((e: MessageEvent<HostRequest>) => void) | null; postMessage(msg: HostResponse): void };
 // (Session 31: a random map's build says how far it is, for the page's "Making the map…" line.)
 const mapProgress = (done: number) => scope.postMessage({ id: 0, ok: true, mapProgress: done });
-const loadMap = (id: string, version?: number | null) => loadGameMap(id, version, mapProgress);
+const loadMap = (id: string, version?: number | null, attempt?: number | null) => loadGameMap(id, version, mapProgress, attempt);
 const core = new HostCore(idbSaveStore(), loadMap, (notice) => scope.postMessage({ id: 0, ok: true, notice }));
 let timer: ReturnType<typeof setTimeout> | null = null;
 

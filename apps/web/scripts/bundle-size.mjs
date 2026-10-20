@@ -38,7 +38,9 @@ for (const f of seen) {
 console.log(`Start-up bundle (what loads before the lobby):\n${rows.join("\n")}\n  total ${(raw / 1024).toFixed(1)} KB, gzip ${(gz / 1024).toFixed(1)} KB`);
 // Session 32: the allowance is Step 0's size (396.2 KB, once Zod left the start-up code: the content data is used as it
 // stands, checked by a test) plus 2 KB. (Session 31: 468.1 plus 2.) A deploy stops above it.
-const ALLOWANCE_KB = 399.0;
+// Session 34: 400.0 for this session (the opponents to 19 and the twenty Houses add a little; the report and block
+// panels load with the game or the table).
+const ALLOWANCE_KB = 400.0;
 if (raw / 1024 > ALLOWANCE_KB) {
   console.log(`
 The start-up bundle is over its allowance of ${ALLOWANCE_KB} KB. Move something out of the lobby's first paint.`);

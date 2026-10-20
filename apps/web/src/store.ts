@@ -371,6 +371,26 @@ export function rememberedRandom(): { size: number; shape: string } | null {
   return m ? { size: Number(m[1]), shape: m[2]! } : null;
 }
 
+/**
+ * Session 34: a game started on the lobby's kept random map (alone, or a table made), so the next visit rolls a fresh
+ * seed (`KEPT_RANDOM_KEY` in `ui/RandomMap.tsx`, written there once the map is built; a typed seed stays typed).
+ */
+export function randomStarted(mapId: string) {
+  if (!mapId.startsWith("random:")) return;
+  try {
+    const kept = JSON.parse(localStorage.getItem("conquerra.lobbyRandom") ?? "null") as { id?: string } | null;
+    if (kept?.id === mapId) localStorage.setItem("conquerra.lobbyRandom", JSON.stringify({ ...kept, used: true }));
+  } catch {
+    // A private window: nothing was kept.
+  }
+}
+/** Session 34: a random map's try that passed on this page, for the game's own build (one try, the same map). */
+export function randomAttempt(): { mapAttempt?: number } {
+  const { lobby, randomPreview } = useGame.getState();
+  const attempt = randomPreview?.mapId === lobby.mapId ? randomPreview.preview?.attempt : undefined;
+  return attempt && attempt > 1 ? { mapAttempt: attempt } : {};
+}
+
 const defaultLobby = (): LobbySettings => {
   const remembered = rememberedMapChoice();
   const official = remembered && !remembered.startsWith("random:") ? listingOf(remembered) : null;
@@ -539,7 +559,9 @@ export const useGame = create<GameStore>((set, get) => ({
     const { lobby } = get();
     // A new game: the lobby stops saying the last one finished.
     forgetFinished();
-    await enterGame((host) => host.start(lobby));
+    const settings = { ...lobby, ...randomAttempt() };
+    randomStarted(lobby.mapId);
+    await enterGame((host) => host.start(settings));
   },
 
   async load(source) {

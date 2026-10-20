@@ -3,6 +3,7 @@ import { cleanSeed, newSeedWords, randomMapId, randomVersionDef, RANDOM_SHAPE_ID
 import { parseRandomId, RANDOM_PREFIX, RANDOM_SIZES, type RandomShape, type RandomSize } from "@conquerra/mapgen/randomId";
 import { previewRandomMap, useGame } from "../store";
 import type { RandomStart } from "@conquerra/content";
+import type { RandomPreview } from "../host/protocol";
 import "./random-map.css";
 
 /**
@@ -73,6 +74,55 @@ export function rollOn(mapId: string): string | null {
   return freshRandomId(r.size, r.shape, left - 1);
 }
 
+/**
+ * Session 34 (Nate's call, Oct 19): the lobby keeps the last random map. Its seed, picture and the try that passed are
+ * kept on this device once it's built, so opening the lobby again shows the same map and builds nothing (a 400 cost a
+ * phone 10 to 20 s of work on every visit). A new seed comes only from Reroll, or once a game was started with the
+ * kept one (`randomStarted` in the store marks it used); a typed seed stays typed, game or no game.
+ */
+export const KEPT_RANDOM_KEY = "conquerra.lobbyRandom";
+interface KeptRandom {
+  id: string;
+  version: number;
+  attempt: number;
+  thumb: RandomPreview["thumb"];
+  typed: boolean;
+  used?: boolean;
+}
+export function keepRandom(id: string, p: RandomPreview) {
+  try {
+    localStorage.setItem(KEPT_RANDOM_KEY, JSON.stringify({ id, version: RANDOM_VERSION, attempt: p.attempt, thumb: p.thumb, typed: !rolled.has(id) } satisfies KeptRandom));
+  } catch {
+    // A private window (or a full store): a fresh seed next visit, as before.
+  }
+}
+/**
+ * The map the lobby should come back to, at this size and shape: the kept map (its picture with it, so nothing is
+ * built), or a fresh seed when nothing is kept or the kept one was played.
+ */
+export function keptOrFresh(size: RandomSize, shape: RandomShape): { mapId: string; preview: RandomPreview | null } {
+  let kept: KeptRandom | null = null;
+  try {
+    kept = JSON.parse(localStorage.getItem(KEPT_RANDOM_KEY) ?? "null") as KeptRandom | null;
+  } catch {
+    kept = null;
+  }
+  const r = kept ? parseRandomId(kept.id) : null;
+  if (!kept || !r || r.size !== size || r.shape !== shape || kept.version !== RANDOM_VERSION || (kept.used && !kept.typed) || !kept.thumb) return { mapId: freshRandomId(size, shape), preview: null };
+  // A rolled seed that comes back still rolls on at another size or shape, as it did when it was rolled.
+  if (!kept.typed) rolled.set(kept.id, ROLL_SEEDS - 1);
+  return { mapId: kept.id, preview: { thumb: kept.thumb, attempt: kept.attempt } };
+}
+/** The lobby is shown again after a game on its random map: a fresh seed if that one was played (a typed one stays). */
+export function playedRandom(mapId: string): boolean {
+  try {
+    const kept = JSON.parse(localStorage.getItem(KEPT_RANDOM_KEY) ?? "null") as KeptRandom | null;
+    return !!kept && kept.id === mapId && !!kept.used && !kept.typed;
+  } catch {
+    return false;
+  }
+}
+
 export default function RandomMapPanel() {
   const mapId = useGame((s) => s.lobby.mapId);
   const setLobby = useGame((s) => s.setLobby);
@@ -88,7 +138,9 @@ export default function RandomMapPanel() {
     useGame.setState({ randomPreview: { mapId, preview: null, problem: null } });
     previewRandomMap(mapId).then(
       (p) => {
-        if (useGame.getState().lobby.mapId === mapId) useGame.setState({ randomPreview: { mapId, preview: p, problem: null } });
+        if (useGame.getState().lobby.mapId !== mapId) return;
+        useGame.setState({ randomPreview: { mapId, preview: p, problem: null } });
+        keepRandom(mapId, p);
       },
       (e: unknown) => {
         if (useGame.getState().lobby.mapId !== mapId) return;
