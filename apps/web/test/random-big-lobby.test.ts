@@ -10,8 +10,8 @@ import { useGame } from "../src/store";
  */
 describe("the lobby's big random maps (session 33b)", () => {
   it("who a 300 and a 400 suit, as the official maps' line says it", () => {
-    expect(listingOf("random:300-island-quiet-heron")).toMatchObject({ territories: 300, minPlayers: 4, maxPlayers: 10, recommendedPlayers: { min: 8, max: 10 } });
-    expect(listingOf("random:400-crescent-quiet-heron")).toMatchObject({ territories: 400, minPlayers: 6, maxPlayers: 10, recommendedPlayers: { min: 10, max: 10 } });
+    expect(listingOf("random:300-island-quiet-heron")).toMatchObject({ territories: 300, minPlayers: 4, maxPlayers: 12, recommendedPlayers: { min: 8, max: 10 } });
+    expect(listingOf("random:400-crescent-quiet-heron")).toMatchObject({ territories: 400, minPlayers: 6, maxPlayers: 16, recommendedPlayers: { min: 10, max: 10 } });
   });
 
   it("the card's line for the big sizes, in the voice", () => {

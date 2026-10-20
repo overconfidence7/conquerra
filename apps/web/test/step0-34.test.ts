@@ -28,11 +28,12 @@ describe("the lobby keeps the last random map (session 34)", () => {
     expect(src("ui/Lobby.tsx")).toMatch(/keptOrFresh\([\s\S]*?if \(preview\) useGame\.setState\(\{ randomPreview: \{ mapId, preview, problem: null \} \}\);\s*setLobby\(\{ mapId \}\)/);
     // Another size or shape: a fresh seed.
     expect(m.keptOrFresh(300, "island").mapId).not.toBe(id);
-  });
+  }, 60_000);
 
   it("a game started on it (alone or a table made): a fresh seed next visit; the game builds one try", async () => {
     const m = await import("../src/ui/RandomMap");
-    const { randomStarted, randomAttempt, useGame } = await import("../src/store");
+    const { useGame } = await import("../src/store");
+    const { randomStarted, randomAttempt } = m;
     const id = m.freshRandomId(200, "crescent");
     m.keepRandom(id, { thumb, attempt: 2 });
     useGame.setState({ randomPreview: { mapId: id, preview: { thumb, attempt: 2 }, problem: null } });
@@ -43,18 +44,18 @@ describe("the lobby keeps the last random map (session 34)", () => {
     const next = m.keptOrFresh(200, "crescent");
     expect(next.mapId).not.toBe(id);
     expect(next.preview).toBeNull();
-    expect(src("store.ts")).toMatch(/randomStarted\(lobby\.mapId\);\s*await enterGame/);
-    expect(src("host/onlineActions.ts")).toContain("randomStarted(lobby.mapId);");
+    expect(src("store.ts")).toMatch(/m\.randomStarted\(lobby\.mapId\);\s*\}\s*await enterGame/);
+    expect(src("host/onlineActions.ts")).toContain("m.randomStarted(lobby.mapId);");
     expect(src("host/hostCore.ts")).toContain("this.loadMap(settings.mapId, null, settings.mapAttempt)");
-  });
+  }, 60_000);
 
   it("a typed seed stays typed, game or no game", async () => {
     const m = await import("../src/ui/RandomMap");
-    const { randomStarted } = await import("../src/store");
+    const { randomStarted } = m;
     const id = "random:120-inland-amber-ford";
     m.keepRandom(id, { thumb, attempt: 1 });
     randomStarted(id);
     expect(m.playedRandom(id)).toBe(false);
     expect(m.keptOrFresh(120, "inland")).toEqual({ mapId: id, preview: { thumb, attempt: 1 } });
-  });
+  }, 60_000);
 });

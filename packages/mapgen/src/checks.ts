@@ -219,6 +219,8 @@ export interface CheckLimits {
   minChokePoints: number;
   /** At least this many sea lanes (default 0). */
   minSeaLanes?: number;
+  /** Session 34: above this many players a layout needs only the exposure band (the map's `accept`), not the paper check. */
+  paperUpTo?: number;
 }
 
 export interface CheckResult {
@@ -271,6 +273,8 @@ export function checkMap(map: MapDef, rules: Rules, limits: CheckLimits): CheckR
       if (map.capitalLayouts) problems.push(`no capital layout for ${n} players`);
       continue;
     }
+    // (Session 34: above `paperUpTo` players the exposure band alone judges a layout, the map's own `accept`.)
+    if (limits.paperUpTo !== undefined && n > limits.paperUpTo) continue;
     if (!fairness(layout.slots, dists, income).fair) problems.push(`capitals for ${n} players aren't fair`);
   }
 

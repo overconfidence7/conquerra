@@ -41,8 +41,11 @@ async function mapOf(id: string, band?: number, version?: number, grade?: Random
     // Session 33: `--version 3` builds at another version, `--grade '{"k":2}'` tries another graded head start.)
     return randomMap(id.slice("random:".length), defaultRules, { ...(band ? { band } : {}), ...(version ? { version } : {}), ...(grade ? { grade } : {}), ...(start ? { start } : {}) }).map;
   }
-  const m = maps[id];
+  // Session 34: "rootholm+plain": the big tables' layouts (11 and up) with no head start (no troops, market or culture).
+  const [base, variant] = id.split("+");
+  const m = maps[base!];
   if (!m) throw new Error(`Unknown map ${id}`);
+  if (variant === "plain") return { ...m, capitalLayouts: (m.capitalLayouts ?? []).map((l) => (l.players > 10 ? { players: l.players, slots: l.slots, harder: [] } : l)) };
   return m;
 }
 

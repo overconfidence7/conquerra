@@ -1,0 +1,21 @@
+  25/50
+  50/50
+
+=== 50 random maps, 400 territories, all: 16 players, all Marshals, fog on ===
+Games: 33 played, 17 not (Map random:400-archipelago-cold-kestrel supports 6-10 players, got 16; That seed didn't make a fair map. Try another.; Map random:400-archipelago-patient-bramble supports 6-10 players, got 16)
+Win rate by seat (fair 6.3%): 3.0% / 9.1% / 0.0% / 6.1% / 6.1% / 3.0% / 3.0% / 9.1% / 0.0% / 3.0% / 15.2% / 9.1% / 0.0% / 9.1% / 12.1% / 12.1%; furthest from fair 8.9 points
+Turns: avg 50.3, median 50, min 36, max 60; within 40: 18%; ended: lastStanding 70%, turnCap 30%
+Time: 119.7 s a game
+CPU per turn (resolve + all bots' planning, one process): avg 453 ms; the worst game's average 1524 ms; the worst turn 4420 ms
+Turns: within 60 (not at the cap) 70%
+Comebacks (the winner wasn't the leader after turn 10): 82% of games that went past turn 10
+Explore pace: a seat had seen half the map by turn 32.7 on average (18% of seats ever), all of it by turn 47.9 (3% of seats ever)
+Wins by the spot's exposure (safest first, fair 6.3%): 12.1% / 6.1% / 15.2% / 15.2% / 3.0% / 6.1% / 9.1% / 9.1% / 9.1% / 0.0% / 3.0% / 0.0% / 3.0% / 3.0% / 0.0% / 6.1%
+Harder spots: marked on 17 of 33 maps (1.6 a map); they won 5.9% of those games against a fair 10.3%
+Head start by the spot's exposure (safest first, average troops): 0.0 / 1.5 / 2.1 / 2.7 / 3.2 / 3.6 / 4.2 / 4.7 / 5.0 / 5.2 / 5.5 / 5.7 / 5.8 / 6.0 / 6.0 / 6.0
+Income head start by the spot's exposure (safest first): a market on 0% / 0% / 0% / 0% / 0% / 0% / 0% / 0% / 100% / 100% / 100% / 100% / 100% / 100% / 100% / 100%; culture 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 1.0 / 1.0 / 1.0 / 1.0 / 1.0 / 1.0 / 1.0 / 1.0
+  island: 8 played, avg 50.0 turns
+  archipelago: 0 played, avg 0.0 turns
+  twins: 7 played, avg 47.9 turns
+  crescent: 9 played, avg 51.1 turns
+  inland: 9 played, avg 51.7 turns

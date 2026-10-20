@@ -104,9 +104,9 @@ const ts = Date.now();
 const started = await host.ask({ type: "table", act: { do: "start" } });
 if (!started.ok) throw new Error(started.error);
 let views = await Promise.all(pages.map((p) => p.next((m) => m.start).then((m) => m.start)));
-console.log(`started in ${Date.now() - ts} ms: ${views[0].view.players.length} seats, ${views[0].people.length} people, turn ${views[0].view.turn}, deadline in ${Math.round((views[0].clock?.deadline - views[0].now) / 1000)} s`);
+console.log(`started in ${Date.now() - ts} ms: ${views[0].view.players.length} seats, ${views[0].people.length} people, turn ${views[0].view.turn}, deadline in ${Math.round((views[0].clock?.endsAt - Date.now()) / 1000)} s (the room's clock)`);
 check(new Set(views.map((v) => v.playerId)).size === PEOPLE, "each page is its own seat");
-check(views.every((v) => v.clock?.deadline === views[0].clock?.deadline), "every page counts down to the same deadline");
+check(views.every((v) => v.clock?.endsAt === views[0].clock?.endsAt), "every page counts down to the same deadline");
 // The games list: each person's row for this table.
 const rows = await Promise.all(emails.slice(0, PEOPLE).map((e) => api(e, "/api/games")));
 const mine = rows.map((r) => (r.games ?? r).find?.((g) => g.id === id));
@@ -126,7 +126,7 @@ for (let i = 0; i < TURNS && !views[0].view.winner; i++) {
   if (ups.some((u) => !u.ok)) throw new Error(ups.find((u) => !u.ok).error);
   views = ups.map((u) => u.update);
   check(views.every((v) => v.view.turn === turn + 1), `turn ${turn}: all ${PEOPLE} pages moved to turn ${turn + 1} together`);
-  check(views.every((v) => Array.isArray(v.report?.events) && v.before?.turn === turn), "each page has its own replay of the turn (its report and its view before it)");
+  check(views.every((v) => Array.isArray(v.report?.events) && v.report.turn === turn), "each page has its own replay of the turn (its own report of it)");
   console.log(`turn ${turn}: ${ms} ms from the last lock-in to all ${PEOPLE} updates (wall, wrangler dev), ${((pages.reduce((a, p) => a + p.bytes(), 0) - before) / 1024).toFixed(1)} KB to the pages; the last page saw ${readyPush?.ready?.length ?? "?"} locked in before it`);
 }
 const hello = await host.ask({ type: "hello", have: views[0].view.turn - 1 });

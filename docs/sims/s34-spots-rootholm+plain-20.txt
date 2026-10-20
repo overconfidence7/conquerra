@@ -1,0 +1,16 @@
+  25/100
+  50/100
+  75/100
+  100/100
+
+=== rootholm+plain: 20 players, all Marshals, fog on ===
+Games: 100 played, 0 not ()
+Win rate by seat (fair 5.0%): 8.0% / 4.0% / 8.0% / 5.0% / 6.0% / 8.0% / 2.0% / 6.0% / 4.0% / 3.0% / 4.0% / 7.0% / 3.0% / 6.0% / 5.0% / 9.0% / 1.0% / 3.0% / 4.0% / 4.0%; furthest from fair 4.0 points
+Turns: avg 55.2, median 60, min 33, max 60; within 40: 6%; ended: turnCap 46%, lastStanding 54%
+Time: 14.6 s a game
+CPU per turn (resolve + all bots' planning, one process): avg 196 ms; the worst game's average 345 ms; the worst turn 1454 ms
+Turns: within 60 (not at the cap) 50%
+Comebacks (the winner wasn't the leader after turn 10): 88% of games that went past turn 10
+Explore pace: a seat had seen half the map by turn 32.9 on average (19% of seats ever), all of it by turn 50.5 (2% of seats ever)
+Wins by the spot's exposure (safest first, fair 5.0%): 4.0% / 12.0% / 0.0% / 17.0% / 1.0% / 7.0% / 4.0% / 11.0% / 5.0% / 2.0% / 0.0% / 15.0% / 0.0% / 3.0% / 5.0% / 1.0% / 7.0% / 0.0% / 6.0% / 0.0%
+Head start by the spot's exposure (safest first, average troops): 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0

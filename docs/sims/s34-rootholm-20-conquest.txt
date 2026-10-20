@@ -1,0 +1,32 @@
+
+> conquerra@0.1.0 sim C:\Users\nkurt\Claude\Projects\Strategy Game
+> tsx apps/sim/src/cli.ts "--games" "100" "--players" "20" "--map" "rootholm" "--bots" "marshal" "--seed" "s34" "--mode" "conquest"
+
+
+=== 20 players — Rootholm, mixed table (marshal), luck 0.3, conquest, fog on, the Fallen on, Spoils on, Fate on, diplomacy on, spies on ===
+Games: 100 finished, 0 crashed, in 284.0s
+Win rate by seat (fair ≈ 5.0% each): 4.0% / 5.0% / 4.0% / 9.0% / 6.0% / 4.0% / 2.0% / 6.0% / 7.0% / 3.0% / 7.0% / 2.0% / 8.0% / 4.0% / 6.0% / 3.0% / 5.0% / 7.0% / 2.0% / 4.0%   draws 2.0%
+Win rate by bot: marshal 98.0% (fair 100%)
+Marshal wins by personality: conqueror 19.0%, blitzer 15.0%, turtle 14.0%, schemer 17.0%, opportunist 10.0%, merchant 23.0%
+Planning time per bot per turn: marshal-conqueror avg 1.51 ms, p95 3.92 ms, worst 49.43 ms | marshal-merchant avg 1.43 ms, p95 3.83 ms, worst 52.97 ms | marshal-turtle avg 1.42 ms, p95 3.89 ms, worst 76.86 ms | marshal-opportunist avg 1.47 ms, p95 3.88 ms, worst 53.19 ms | marshal-schemer avg 1.42 ms, p95 3.77 ms, worst 52.67 ms | marshal-blitzer avg 1.31 ms, p95 3.59 ms, worst 38.98 ms
+How games ended: turnLimit 100.0%
+Game length (turns): avg 20.0, median 20, min 20, max 20; 100.0% within 40, 0.0% in 30–40
+Real time, roughly: single player about 40 minutes (1.5 min a turn + 0.5 min replay); live online with the 5-minute timer up to about 1.8 hours
+Per game: 951.6 battles, 898.7 captures, 13.9 specialists hired, 73.2 culture raises, 39.2 leaders killed
+Specialists hired per game: cavalry 0.00 (0.0% of games), scouts 0.00 (0.0% of games), siege 8.68 (100.0% of games), engineers 0.00 (0.0% of games), healers 3.86 (98.0% of games), rangers 0.89 (57.0% of games), standardBearer 0.45 (32.0% of games)
+Culture: bought in 100.0% of games; raises went to the capital 23%, choke points 13%, other frontier 15%, interior 49%
+Recruits by site (troops): capital 24%, barracks 41%, fully held province 35%
+Lopsided attacks (8 times the defenders or more): 456.4 per game, 0.00% failed (0 of 45641)
+Battles by border (per game, % that captured): normal 830.6 (94%), river 24.5 (97%), pass 69.3 (95%), sea 27.2 (95%)
+Orders per game: 3827 (37% with a preset), fizzled: 17.3%
+Predictability (lower = more exciting): winner locked in the lead at 88% of the game; 7.7 lead changes per game
+Chained hops per game: 1237.9 (46% captured)
+Runaway check: one player held more than half the map after turn 10 in 0.0% of games (0.0% were already over by then)
+Runaway, two clearer measures: the leader at the halfway point went on to win 15% of games; comebacks (the winner was not the leader after turn 10) 85% of games that went past turn 10
+The Fallen: 7.7 world events per game (3.1 pledges came to nothing); events in 100.0% of games; the eventual winner was the player hit hardest in 41% of games with events
+Spoils: 63.4 sets turned in per game (0.5 by the game at the hand limit); the winner took the lead for good on a turn it turned in a set in 29% of games (by chance: 23%)
+Fate: 197.1 events per game (97.7 good and 92.6 bad on players' land, 25.4 strong), 83.1 missions drawn, 38.7 done
+Fate and the winner: the winner got 12% of the good events, against 12% of the land they could land on (its fair share); its luck beyond its land: 1.63 events a game; it was the luckiest player in 22% of games (by chance 5%); missions done: the winner 3.3, the others 1.9 each
+Spies: 17.1 hired per game (100.0% of games); attempts per game 19.3: infiltrated 15.11, blocked 3.96, killed 0.27, fooled 0.00; spy gold per game (hire + upkeep) 332.5
+Diplomacy: 263.4 offers between bots per game, 37% accepted, 3% countered; 94.3 deals made per game (truce 36.8, trade 3.2, war 37.5, passage 16.8; 2.1 binding), 9.37 broken; joint wars against the player then holding the most land: 7.65 per game; marches through a partner's land: 4.04 per game
+CPU per turn (this machine): resolve avg 37.50 ms, p95 75.61 ms, worst 664.67 ms | bots planning (all seats) avg 61.57 ms, worst 231.89 ms | total avg 99.07 ms, worst 726.63 ms

@@ -138,7 +138,7 @@ describe("twenty Houses (session 34)", () => {
   it("each its own pattern (colour never carries a House alone), its own name and its plain word; people pick from the first ten", () => {
     expect(new Set(HOUSES.map((h) => h.pattern)).size).toBe(20);
     expect(new Set(HOUSES.map((h) => h.name)).size).toBe(20);
-    expect(HOUSES.slice(10).map((h) => h.name)).toEqual(["Rose", "Sinople", "Celeste", "Olive", "Chartreuse", "Cendrée", "Brunâtre", "Indigo", "Carnation", "Sanguine"]);
+    expect(HOUSES.slice(10).map((h) => h.name)).toEqual(["Rose", "Sinople", "Verdigris", "Olive", "Chartreuse", "Cendrée", "Brunâtre", "Indigo", "Carnation", "Sanguine"]);
     expect(HOUSE_PLAIN).toHaveLength(20);
     expect(new Set(HOUSE_PLAIN).size).toBe(20);
     // In the voice: a tincture is one capitalised word, its plain word lower case.

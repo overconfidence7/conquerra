@@ -57,7 +57,7 @@ export function randomRecipe(size: RandomSize, shape: RandomShape, seed: string,
     ...(T >= 300 ? { layoutStarts: 60 } : {}),
     // Session 34 (version 6): above 10 seats the exposure band alone judges a layout (the paper check's even gaps
     // can't hold for 12 to 20 capitals often enough: about 6 in 10 seeds passed at 12).
-    ...(randomVersionDef(version).paperUpTo !== undefined ? { paperUpTo: randomVersionDef(version).paperUpTo } : {}),
+    ...(T >= 300 && randomVersionDef(version).paperUpTo !== undefined ? { paperUpTo: randomVersionDef(version).paperUpTo } : {}),
     // Session 31 (version 3): a fatter crescent (a smaller bay a little further off, one isle in it), longer sea lanes
     // across the bay and fewer choke points asked for: about 5 in 6 seeds pass at the band of 4.0 instead of 1 in 3.
     ...(version >= 3 && land === "crescent" ? { islands: 1, bite: 0.5, biteOffset: 0.5, laneReach: Math.round(laneReach * 1.6), minChokePoints: Math.max(4, Math.round(T / 18)) } : {}),

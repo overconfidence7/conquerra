@@ -78,7 +78,7 @@ export function rollOn(mapId: string): string | null {
  * Session 34 (Nate's call, Oct 19): the lobby keeps the last random map. Its seed, picture and the try that passed are
  * kept on this device once it's built, so opening the lobby again shows the same map and builds nothing (a 400 cost a
  * phone 10 to 20 s of work on every visit). A new seed comes only from Reroll, or once a game was started with the
- * kept one (`randomStarted` in the store marks it used); a typed seed stays typed, game or no game.
+ * kept one (`randomStarted` marks it used); a typed seed stays typed, game or no game.
  */
 export const KEPT_RANDOM_KEY = "conquerra.lobbyRandom";
 interface KeptRandom {
@@ -121,6 +121,26 @@ export function playedRandom(mapId: string): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * A game started on the lobby's kept random map (alone, or a table made), so the next visit rolls a fresh seed (a
+ * typed seed stays typed).
+ */
+export function randomStarted(mapId: string) {
+  if (!mapId.startsWith("random:")) return;
+  try {
+    const kept = JSON.parse(localStorage.getItem(KEPT_RANDOM_KEY) ?? "null") as KeptRandom | null;
+    if (kept?.id === mapId) localStorage.setItem(KEPT_RANDOM_KEY, JSON.stringify({ ...kept, used: true }));
+  } catch {
+    // A private window: nothing was kept.
+  }
+}
+/** The try of the lobby's random map that passed on this page, for the game's own build (one try, the same map). */
+export function randomAttempt(): { mapAttempt?: number } {
+  const { lobby, randomPreview } = useGame.getState();
+  const attempt = randomPreview?.mapId === lobby.mapId ? randomPreview.preview?.attempt : undefined;
+  return attempt && attempt > 1 ? { mapAttempt: attempt } : {};
 }
 
 export default function RandomMapPanel() {

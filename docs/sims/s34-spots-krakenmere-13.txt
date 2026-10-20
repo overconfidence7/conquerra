@@ -1,0 +1,18 @@
+  25/100
+  50/100
+  75/100
+  100/100
+
+=== krakenmere: 13 players, all Marshals, fog on ===
+Games: 100 played, 0 not ()
+Win rate by seat (fair 7.7%): 7.0% / 9.0% / 6.0% / 7.0% / 5.0% / 8.0% / 9.0% / 6.0% / 9.0% / 9.0% / 8.0% / 9.0% / 8.0%; furthest from fair 2.7 points
+Turns: avg 47.0, median 46, min 26, max 60; within 40: 26%; ended: lastStanding 81%, turnCap 19%
+Time: 13.8 s a game
+CPU per turn (resolve + all bots' planning, one process): avg 230 ms; the worst game's average 446 ms; the worst turn 1127 ms
+Turns: within 60 (not at the cap) 80%
+Comebacks (the winner wasn't the leader after turn 10): 82% of games that went past turn 10
+Explore pace: a seat had seen half the map by turn 26.9 on average (25% of seats ever), all of it by turn 43.5 (3% of seats ever)
+Wins by the spot's exposure (safest first, fair 7.7%): 15.0% / 2.0% / 2.0% / 0.0% / 0.0% / 26.0% / 2.0% / 2.0% / 5.0% / 26.0% / 6.0% / 14.0% / 0.0%
+Harder spots: marked on 100 of 100 maps (1.0 a map); they won 0.0% of those games against a fair 7.7%
+Head start by the spot's exposure (safest first, average troops): 0.0 / 1.0 / 1.0 / 2.0 / 4.0 / 4.0 / 6.0 / 6.0 / 6.0 / 6.0 / 6.0 / 6.0 / 6.0
+Income head start by the spot's exposure (safest first): a market on 0% / 0% / 0% / 0% / 0% / 0% / 0% / 100% / 100% / 100% / 100% / 100% / 100%; culture 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 1.0 / 1.0 / 1.0 / 1.0 / 1.0 / 1.0

@@ -155,6 +155,9 @@ export interface MapGenOptions {
   paperUpTo?: number;
 }
 
+/** Session 34: the capital layout search's starts for a table above `paperUpTo` (the exposure band judges those). */
+export const BIG_STARTS = 6;
+
 /** The map maker's numbered steps in one try (its "step" notes run 2 to 13), for progress. */
 export const MAP_STEPS = 13;
 
@@ -186,7 +189,7 @@ export function generateMap(opts: MapGenOptions, rules: Rules): MapGenResult {
       rejected.push(`${seed}: ${e.message}`);
       continue;
     }
-    const check = checkMap(map, rules, { minChokePoints: opts.minChokePoints ?? 5, minSeaLanes: opts.minSeaLanes ?? 1 });
+    const check = checkMap(map, rules, { minChokePoints: opts.minChokePoints ?? 5, minSeaLanes: opts.minSeaLanes ?? 1, ...(opts.paperUpTo !== undefined ? { paperUpTo: opts.paperUpTo } : {}) });
     const own = check.ok && opts.accept ? opts.accept(map) : null;
     if ((check.ok && !own) || opts.debug) return { map, attempt, check, rejected };
     rejected.push(`${seed}: ${own ?? check.problems.slice(0, 3).join("; ")}`);
@@ -439,7 +442,8 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
       const have = layouts.get(n);
       const paper = o.paperUpTo === undefined || n <= o.paperUpTo;
       if (have && (!paper || fairnessOf(have.map((id) => tbl.ids.indexOf(id)), tbl).fair)) continue;
-      const found = findLayout(stream("capitals"), n, candidates, tbl, o.layoutStarts);
+      // (Session 34: above `paperUpTo` the paper check doesn't decide, so the search takes fewer starts: BIG_STARTS.)
+      const found = findLayout(stream("capitals"), n, candidates, tbl, paper ? o.layoutStarts : Math.min(o.layoutStarts ?? 20, BIG_STARTS));
       o.log?.("capitals", n, candidates.length, found?.fairness);
       if (!found || (!found.fairness.fair && !o.debug && paper))
         throw new Rejected(`no fair capital layout for ${n} players${found ? ` (gaps ${found.fairness.nearest}, income ${found.fairness.income})` : ""}`);

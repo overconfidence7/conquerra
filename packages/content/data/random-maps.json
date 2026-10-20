@@ -5,6 +5,6 @@
     "3": { "band": 4, "bonus": 4 },
     "4": { "band": 4, "bonus": 0, "grade": { "k": 8, "least": 1, "cap": 6, "from": "safest" } },
     "5": { "band": 4, "bonus": 0, "grade": { "k": 8, "least": 1, "cap": 6, "from": "safest" }, "start": { "spots": "aboveMiddle", "market": true, "culture": 1 } },
-    "6": { "band": 4, "bonus": 0, "grade": { "k": 8, "least": 1, "cap": 6, "from": "safest" }, "start": { "spots": "aboveMiddle", "market": true, "culture": 1 }, "seats": 20, "paperUpTo": 99 }
+    "6": { "band": 4, "bonus": 0, "grade": { "k": 8, "least": 1, "cap": 6, "from": "safest" }, "start": { "spots": "aboveMiddle", "market": true, "culture": 1 }, "seats": 16, "paperUpTo": 10 }
   }
 }

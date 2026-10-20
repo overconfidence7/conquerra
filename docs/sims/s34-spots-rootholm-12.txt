@@ -1,0 +1,17 @@
+  25/100
+  50/100
+  75/100
+  100/100
+
+=== rootholm: 12 players, all Marshals, fog on ===
+Games: 100 played, 0 not ()
+Win rate by seat (fair 8.3%): 10.0% / 12.0% / 12.0% / 6.0% / 5.0% / 12.0% / 8.0% / 7.0% / 5.0% / 8.0% / 8.0% / 7.0%; furthest from fair 3.7 points
+Turns: avg 47.4, median 47, min 25, max 60; within 40: 30%; ended: lastStanding 76%, turnCap 24%
+Time: 11.5 s a game
+CPU per turn (resolve + all bots' planning, one process): avg 189 ms; the worst game's average 418 ms; the worst turn 1356 ms
+Turns: within 60 (not at the cap) 75%
+Comebacks (the winner wasn't the leader after turn 10): 74% of games that went past turn 10
+Explore pace: a seat had seen half the map by turn 27.6 on average (21% of seats ever), all of it by turn 44.9 (1% of seats ever)
+Wins by the spot's exposure (safest first, fair 8.3%): 3.0% / 2.0% / 2.0% / 2.0% / 19.0% / 9.0% / 3.0% / 29.0% / 1.0% / 27.0% / 2.0% / 1.0%
+Head start by the spot's exposure (safest first, average troops): 0.0 / 1.0 / 1.0 / 1.0 / 1.0 / 1.0 / 1.0 / 3.0 / 3.0 / 3.0 / 3.0 / 4.0
+Income head start by the spot's exposure (safest first): a market on 0% / 0% / 0% / 0% / 0% / 0% / 100% / 100% / 100% / 100% / 100% / 100%; culture 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 0.0 / 1.0 / 1.0 / 1.0 / 1.0 / 1.0 / 1.0

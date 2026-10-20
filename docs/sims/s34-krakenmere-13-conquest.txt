@@ -1,0 +1,32 @@
+
+> conquerra@0.1.0 sim C:\Users\nkurt\Claude\Projects\Strategy Game
+> tsx apps/sim/src/cli.ts "--games" "100" "--players" "13" "--map" "krakenmere" "--bots" "marshal" "--seed" "s34" "--mode" "conquest"
+
+
+=== 13 players — Krakenmere, mixed table (marshal), luck 0.3, conquest, fog on, the Fallen on, Spoils on, Fate on, diplomacy on, spies on ===
+Games: 100 finished, 0 crashed, in 116.7s
+Win rate by seat (fair ≈ 7.7% each): 2.0% / 6.0% / 4.0% / 3.0% / 7.0% / 6.0% / 12.0% / 14.0% / 11.0% / 6.0% / 8.0% / 11.0% / 8.0%   draws 2.0%
+Win rate by bot: marshal 98.0% (fair 100%)
+Marshal wins by personality: conqueror 19.0%, blitzer 21.0%, turtle 13.0%, schemer 8.0%, opportunist 21.0%, merchant 16.0%
+Planning time per bot per turn: marshal-merchant avg 1.09 ms, p95 2.83 ms, worst 42.74 ms | marshal-opportunist avg 1.20 ms, p95 2.95 ms, worst 27.29 ms | marshal-turtle avg 1.00 ms, p95 2.70 ms, worst 20.43 ms | marshal-conqueror avg 1.22 ms, p95 2.96 ms, worst 22.99 ms | marshal-blitzer avg 1.18 ms, p95 3.11 ms, worst 30.47 ms | marshal-schemer avg 1.11 ms, p95 2.81 ms, worst 15.51 ms
+How games ended: turnLimit 100.0%
+Game length (turns): avg 20.0, median 20, min 20, max 20; 100.0% within 40, 0.0% in 30–40
+Real time, roughly: single player about 40 minutes (1.5 min a turn + 0.5 min replay); live online with the 5-minute timer up to about 1.8 hours
+Per game: 758.0 battles, 715.3 captures, 8.3 specialists hired, 98.0 culture raises, 25.1 leaders killed
+Specialists hired per game: cavalry 0.00 (0.0% of games), scouts 0.00 (0.0% of games), siege 5.50 (95.0% of games), engineers 0.00 (0.0% of games), healers 2.11 (85.0% of games), rangers 0.41 (30.0% of games), standardBearer 0.25 (17.0% of games)
+Culture: bought in 100.0% of games; raises went to the capital 11%, choke points 10%, other frontier 15%, interior 64%
+Recruits by site (troops): capital 18%, barracks 32%, fully held province 51%
+Lopsided attacks (8 times the defenders or more): 387.3 per game, 0.00% failed (0 of 38732)
+Battles by border (per game, % that captured): normal 668.7 (94%), river 24.2 (97%), pass 54.3 (95%), sea 10.8 (97%)
+Orders per game: 3034 (36% with a preset), fizzled: 15.7%
+Predictability (lower = more exciting): winner locked in the lead at 72% of the game; 4.5 lead changes per game
+Chained hops per game: 1070.6 (44% captured)
+Runaway check: one player held more than half the map after turn 10 in 0.0% of games (0.0% were already over by then)
+Runaway, two clearer measures: the leader at the halfway point went on to win 42% of games; comebacks (the winner was not the leader after turn 10) 58% of games that went past turn 10
+The Fallen: 5.5 world events per game (2.1 pledges came to nothing); events in 100.0% of games; the eventual winner was the player hit hardest in 56% of games with events
+Spoils: 44.3 sets turned in per game (0.4 by the game at the hand limit); the winner took the lead for good on a turn it turned in a set in 20% of games (by chance: 25%)
+Fate: 135.0 events per game (66.4 good and 61.1 bad on players' land, 16.8 strong), 55.7 missions drawn, 27.0 done
+Fate and the winner: the winner got 18% of the good events, against 19% of the land they could land on (its fair share); its luck beyond its land: 0.62 events a game; it was the luckiest player in 17% of games (by chance 8%); missions done: the winner 3.0, the others 2.0 each
+Spies: 12.1 hired per game (100.0% of games); attempts per game 19.9: infiltrated 16.68, blocked 2.97, killed 0.26, fooled 0.00; spy gold per game (hire + upkeep) 241.8
+Diplomacy: 162.9 offers between bots per game, 34% accepted, 3% countered; 52.3 deals made per game (truce 20.8, trade 3.4, war 22.4, passage 5.7; 1.8 binding), 6.55 broken; joint wars against the player then holding the most land: 7.15 per game; marches through a partner's land: 1.60 per game
+CPU per turn (this machine): resolve avg 17.16 ms, p95 31.51 ms, worst 64.43 ms | bots planning (all seats) avg 25.48 ms, worst 129.88 ms | total avg 42.65 ms, worst 178.01 ms

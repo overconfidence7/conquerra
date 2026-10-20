@@ -63,7 +63,8 @@ export const HOUSES: readonly House[] = [
   // Session 34: the second ten (heraldry's stains and the colours of later rolls), for tables of 11 to 20.
   { name: "Rose", color: "#f49ac2", glow: "#ffc2df", land: "#f49ac2", ink: "#4a1830", pattern: "perPale" },
   { name: "Sinople", color: "#1d5c37", glow: "#3fae6a", land: "#26704a", ink: "#e8f2ea", pattern: "perFess" },
-  { name: "Celeste", color: "#4ab8ff", glow: "#8fd6ff", land: "#4ab8ff", ink: "#0d2a40", pattern: "perBend" },
+  // (Not Celeste, a light blue: it was dropped on Oct 2 for looking like Azure at Far. Verdigris, the copper green.)
+  { name: "Verdigris", color: "#5ce6b8", glow: "#9dffd9", land: "#5ce6b8", ink: "#0f3a2c", pattern: "perBend" },
   { name: "Olive", color: "#77761a", glow: "#b8b63a", land: "#77761a", ink: "#f4f1d8", pattern: "chequy" },
   { name: "Chartreuse", color: "#b5d630", glow: "#dcff5a", land: "#b5d630", ink: "#26300a", pattern: "barry" },
   { name: "Cendrée", color: "#8a909c", glow: "#c4cad6", land: "#8a909c", ink: "#1f232b", pattern: "paly" },
@@ -80,7 +81,7 @@ export const PEOPLE_HOUSES = 10;
 export const DEFAULT_HOUSE = 1;
 
 /** Each tincture in plain words, for the lobby's House choice. */
-export const HOUSE_PLAIN: readonly string[] = ["blue", "red", "gold", "green", "purple", "orange", "teal", "mulberry", "silver", "black", "pink", "dark green", "sky blue", "olive", "lime", "ash grey", "brown", "indigo", "coral", "blood red"];
+export const HOUSE_PLAIN: readonly string[] = ["blue", "red", "gold", "green", "purple", "orange", "teal", "mulberry", "silver", "black", "pink", "dark green", "sea green", "olive", "lime", "ash grey", "brown", "indigo", "coral", "blood red"];
 
 /** Unowned land. */
 export const NEUTRAL_HOUSE: House = { name: "Neutral", color: "#d8cdb0", glow: "#f3ead2", land: "#d8cdb0", ink: "#2b2418", pattern: "plain" };
