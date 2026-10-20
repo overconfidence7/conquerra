@@ -11,12 +11,12 @@ import { randomMap, RandomMapFailed, randomMapId, RANDOM_SHAPE_IDS, seedWords, t
 
 const args = process.argv.slice(2);
 if (args[0] === "--one") {
-  const [, size, shape, n, start] = args;
+  const [, size, shape, n, start, seats, paper] = args;
   for (let i = 0; i < Number(n); i++) {
     const id = randomMapId(Number(size) as RandomSize, shape as RandomShape, seedWords(Number(start) + i));
     const t0 = performance.now();
     try {
-      const r = randomMap(id, defaultRules);
+      const r = randomMap(id, defaultRules, { ...(seats && seats !== "-" ? { seats: Number(seats) } : {}), ...(paper ? { paperUpTo: Number(paper) } : {}) });
       console.log(JSON.stringify({ id, ok: true, attempt: r.attempt, ms: Math.round(performance.now() - t0) }));
     } catch (e) {
       console.log(JSON.stringify({ id, ok: false, ms: Math.round(performance.now() - t0), why: e instanceof RandomMapFailed ? e.tries.map((t) => t.split(": ").slice(1).join(": ")) : String(e) }));
@@ -30,13 +30,19 @@ const sizes = (pos[1] ?? "40,80,120,200").split(",").map(Number);
 const shapes = pos[2] && pos[2] !== "all" ? pos[2].split(",") : RANDOM_SHAPE_IDS;
 const si = args.indexOf("--start");
 const start = si >= 0 ? Number(args[si + 1]) : 0;
+// Session 34: `--seats 12`: the most seats on the big sizes (a layout for every count up to it), else the version's.
+const ti = args.indexOf("--seats");
+const seatsArg = ti >= 0 ? args[ti + 1] : undefined;
+// `--paper 10`: above this many players a layout needs only the exposure band (version 6's rule), for comparing.
+const pi = args.indexOf("--paper");
+const paperArg = pi >= 0 ? args[pi + 1] : undefined;
 const self = fileURLToPath(import.meta.url);
 const jobs = sizes.flatMap((size) => shapes.map((shape) => ({ size, shape })));
 const results = await Promise.all(
   jobs.map(
     (j) =>
       new Promise<{ size: number; shape: string; rows: { id: string; ok: boolean; attempt?: number; ms: number; why?: string[] }[] }>((resolve) => {
-        const child = spawn(process.execPath, ["--import", "tsx", self, "--one", String(j.size), j.shape, String(n), String(start)], { stdio: ["ignore", "pipe", "inherit"] });
+        const child = spawn(process.execPath, ["--import", "tsx", self, "--one", String(j.size), j.shape, String(n), String(start), ...(seatsArg || paperArg ? [seatsArg ?? "-"] : []), ...(paperArg ? [paperArg] : [])], { stdio: ["ignore", "pipe", "inherit"] });
         let out = "";
         child.stdout.on("data", (d: Buffer) => (out += d.toString()));
         child.on("exit", () => resolve({ ...j, rows: out.trim().split("\n").filter(Boolean).map((l) => JSON.parse(l)) }));

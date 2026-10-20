@@ -57,6 +57,55 @@ export function drawPattern(ctx: Ctx, p: Pattern, w: number, h: number, ink: str
       ctx.fillRect(0, 0, w / 2, h / 2);
       ctx.fillRect(w / 2, h / 2, w / 2, h / 2);
       break;
+    // Session 34: the second ten Houses' two-tone fields.
+    case "perPale":
+      ctx.fillRect(w / 2, 0, w / 2, h);
+      break;
+    case "perFess":
+      ctx.fillRect(0, h / 2, w, h / 2);
+      break;
+    case "perBend":
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, h);
+      ctx.lineTo(w, h);
+      ctx.fill();
+      break;
+    case "chequy":
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if ((r + c) % 2) ctx.fillRect((c * w) / 4, (r * h) / 4, w / 4, h / 4);
+      break;
+    case "barry":
+      for (let r = 1; r < 6; r += 2) ctx.fillRect(0, (r * h) / 6, w, h / 6);
+      break;
+    case "paly":
+      for (let c = 1; c < 6; c += 2) ctx.fillRect((c * w) / 6, 0, w / 6, h);
+      break;
+    case "lozenge":
+      ctx.moveTo(w / 2, h * 0.15);
+      ctx.lineTo(w * 0.8, h / 2);
+      ctx.lineTo(w / 2, h * 0.85);
+      ctx.lineTo(w * 0.2, h / 2);
+      ctx.fill();
+      break;
+    case "pile":
+      ctx.moveTo(w * 0.2, 0);
+      ctx.lineTo(w * 0.8, 0);
+      ctx.lineTo(w / 2, h * 0.8);
+      ctx.fill();
+      break;
+    case "gyronny":
+      for (let k = 0; k < 8; k += 2) {
+        const a = (k * Math.PI) / 4, b = ((k + 1) * Math.PI) / 4, R = Math.max(w, h);
+        ctx.moveTo(w / 2, h / 2);
+        ctx.lineTo(w / 2 + R * Math.cos(a), h / 2 + R * Math.sin(a));
+        ctx.lineTo(w / 2 + R * Math.cos(b), h / 2 + R * Math.sin(b));
+        ctx.closePath();
+      }
+      ctx.fill();
+      break;
+    case "orle":
+      ctx.lineWidth = t * 0.6;
+      ctx.strokeRect(w * 0.2, h * 0.2, w * 0.6, h * 0.6);
+      break;
   }
   ctx.restore();
 }

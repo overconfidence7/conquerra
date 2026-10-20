@@ -1,4 +1,5 @@
 import { MapDef } from "./schemas";
+import { withBigTables } from "./bigTables";
 
 /**
  * Each built-in map's data as its own file, fetched only when a game on that map starts (so the game's start-up
@@ -24,5 +25,6 @@ export const loadableMaps = Object.keys(LOADERS);
 export async function loadMap(id: string): Promise<MapDef> {
   const load = LOADERS[id];
   if (!load) throw new Error(`Unknown map ${id}`);
-  return MapDef.parse((await load()).default);
+  // (Session 34: with its big tables joined: Krakenmere and Rootholm seat up to 20.)
+  return MapDef.parse(withBigTables((await load()).default as MapDef));
 }

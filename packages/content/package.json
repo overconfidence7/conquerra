@@ -14,6 +14,7 @@
     "./personalities": "./src/personalities.ts",
     "./maps": "./src/maps.ts",
     "./loadMap": "./src/loadMap.ts",
+    "./bigTables": "./src/bigTables.ts",
     "./lines": "./src/lines.ts",
     "./seedWords": "./src/seedWords.ts",
     "./data/maps/*": "./data/maps/*",

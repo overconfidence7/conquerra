@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { closeTable, refreshMe, setMyName, setOnlineLobby, tableAct, tableLink } from "../host/onlineActions";
 import { TABLE_TEXT } from "../host/roomText";
 import type { BotChoice, TableView } from "../host/protocol";
-import { DEFAULT_HOUSE, HOUSE_PLAIN, HOUSES } from "../map/houses";
+import { DEFAULT_HOUSE, HOUSE_PLAIN, HOUSES, PEOPLE_HOUSES } from "../map/houses";
 import { timerLabel } from "../logic/timer";
 import { useGame } from "../store";
 import { useArtUrl } from "./art";
@@ -35,15 +35,16 @@ export function buildingLine(mapId: string): string {
 /** The House colour someone sits down with: their usual one if it's free, else their lobby's, else the first free. */
 export function defaultHouse(t: TableView, usual: number | null, lobby: number): number {
   const taken = new Set(t.seats.flatMap((s) => (s && !s.you ? [s.house] : [])));
-  for (const h of [usual, lobby]) if (h !== null && h >= 0 && h < HOUSES.length && !taken.has(h)) return h;
-  return HOUSES.findIndex((_, i) => !taken.has(i));
+  for (const h of [usual, lobby]) if (h !== null && h >= 0 && h < PEOPLE_HOUSES && !taken.has(h)) return h;
+  // (Session 34: people sit in the first ten Houses; the second ten are the bots' at a big table.)
+  return HOUSES.slice(0, PEOPLE_HOUSES).findIndex((_, i) => !taken.has(i));
 }
 
 function Swatches({ t, chosen, onPick }: { t: TableView; chosen: number; onPick: (h: number) => void }) {
   const taken = new Map(t.seats.flatMap((s) => (s && !s.you ? [[s.house, s.name] as const] : [])));
   return (
     <span className="houses" role="radiogroup" aria-label="Your House colour">
-      {HOUSES.map((h, i) => (
+      {HOUSES.slice(0, PEOPLE_HOUSES).map((h, i) => (
         <button
           key={h.name}
           role="radio"
@@ -148,7 +149,7 @@ export default function TableScreen() {
         ) : (
           <>
             {t.you.host && <LinkBlock code={t.code} />}
-            <ol className="table-seats" aria-label="The seats">
+            <ol className={`table-seats ${t.seats.length > 10 ? "many" : ""}`} aria-label="The seats">
               {t.seats.map((s, i) => (
                 <li key={i} className={`table-seat ${s?.you ? "yours" : ""} ${s ? "" : "empty"}`}>
                   <span className="seat-swatch" style={s ? { background: HOUSES[s.house]!.color } : undefined} aria-hidden />

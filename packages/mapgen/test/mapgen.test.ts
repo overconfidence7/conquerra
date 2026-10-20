@@ -1,5 +1,6 @@
 import { BIOME_CODES, defaultRules, type Biome, type MapDef } from "@conquerra/content";
-import { maps } from "@conquerra/content/maps";
+// (Session 34: the map files exactly as the map maker makes them; games join the big tables to them.)
+import { mapFiles as maps } from "@conquerra/content/maps";
 import { indexMap } from "@conquerra/engine";
 import { beforeEach, describe, expect, it } from "vitest";
 

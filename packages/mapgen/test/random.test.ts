@@ -1,5 +1,6 @@
 import { defaultRules } from "@conquerra/content";
-import { maps } from "@conquerra/content/maps";
+// (Session 34: the map files exactly as the map maker makes them; games join the big tables to them.)
+import { mapFiles as maps } from "@conquerra/content/maps";
 import { createGame } from "@conquerra/engine";
 import { describe, expect, it } from "vitest";
 import {

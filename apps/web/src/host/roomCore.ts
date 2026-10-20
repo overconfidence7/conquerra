@@ -1,6 +1,9 @@
 import type { MapDef } from "@conquerra/content";
 import { readSave, type LeaderStyle, type Offer, type Order, type PlayerId, type SaveFile } from "@conquerra/engine";
-import { HOUSES } from "../map/houses";
+import { PEOPLE_HOUSES } from "../map/houses";
+
+/** Session 34: the most people at one table (up to 20 seats; the rest are bots). */
+export const MAX_PEOPLE = 10;
 import { LocalGame, PAUSES_EACH, PEOPLE_DEAL_TEXT, type PauseNews, type PersonSeat, type SeatLeft } from "./localGame";
 import { cleanName } from "./names";
 import { TABLE_TEXT } from "./roomText";
@@ -555,7 +558,7 @@ export class RoomCore {
   private act(who: Who, t: TableRecord, a: TableAct): string | null {
     const host = who.user === t.host;
     const mine = t.sitters.findIndex((x) => x.user === who.user);
-    const free = (h: unknown, except = -1) => Number.isInteger(h) && (h as number) >= 0 && (h as number) < HOUSES.length && !t.sitters.some((x, i) => i !== except && x.house === h);
+    const free = (h: unknown, except = -1) => Number.isInteger(h) && (h as number) >= 0 && (h as number) < PEOPLE_HOUSES && !t.sitters.some((x, i) => i !== except && x.house === h);
     const style = (v: unknown) => (typeof v === "string" ? (v as LeaderStyle) : null);
     const text = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim().slice(0, 40) : undefined);
     switch (a.do) {
@@ -563,6 +566,7 @@ export class RoomCore {
         if (t.removed.includes(who.user)) return TABLE_TEXT.removed;
         if (mine >= 0) return this.act(who, t, { do: "colour", house: a.house });
         if (t.sitters.length >= t.size) return TABLE_TEXT.full;
+        if (t.sitters.length >= MAX_PEOPLE) return TABLE_TEXT.peopleFull;
         if (!free(a.house)) return TABLE_TEXT.colourTaken;
         const leaderName = text(a.leaderName);
         const stewardName = text(a.stewardName);

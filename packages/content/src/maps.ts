@@ -11,13 +11,14 @@ import sunderedCrownsJson from "../data/maps/sundered-crowns.json";
 import krakenmereJson from "../data/maps/krakenmere.json";
 import rootholmJson from "../data/maps/rootholm.json";
 import { MapDef } from "./schemas";
+import { bigTables, withBigTables } from "./bigTables";
 
 /**
  * Every built-in map in full, drawing data included (up to about 2 MB each). For Node only (tests, the simulator):
  * the game itself loads one map at a time with `loadMap` from "@conquerra/content/loadMap", and the lobby uses the
  * small `mapCatalog`.
  */
-export const maps: Record<string, MapDef> = {
+export const mapFiles: Record<string, MapDef> = {
   embervale: MapDef.parse(embervaleJson),
   greatmarch: MapDef.parse(greatmarchJson),
   "shattered-isles": MapDef.parse(shatteredIslesJson),
@@ -31,3 +32,9 @@ export const maps: Record<string, MapDef> = {
   krakenmere: MapDef.parse(krakenmereJson),
   rootholm: MapDef.parse(rootholmJson),
 };
+
+/**
+ * The maps games are played on (session 34): the files above with their big tables joined (Krakenmere and Rootholm
+ * seat up to 20; `bigTables.ts`). `mapFiles` is exactly what the map maker makes (its tests and fingerprints read it).
+ */
+export const maps: Record<string, MapDef> = Object.fromEntries(Object.entries(mapFiles).map(([id, m]) => [id, bigTables[id] ? MapDef.parse(withBigTables(m)) : m]));

@@ -147,6 +147,12 @@ export interface MapGenOptions {
   firstAttempt?: number;
   /** Session 33b: how many random starts the capital layout search gets (20 unless said; the big random maps more). */
   layoutStarts?: number;
+  /**
+   * Session 34: the most players a layout must pass the paper check for (every capital about as far from its nearest
+   * rival, gold within 30%). Above it, the search's best layout stands and the map's own `accept` judges it (a random
+   * map's exposure band), as the official 200s' layouts for 11 and up are judged. Every count when left out.
+   */
+  paperUpTo?: number;
 }
 
 /** The map maker's numbered steps in one try (its "step" notes run 2 to 13), for progress. */
@@ -431,10 +437,11 @@ function buildOnce(o: MapGenOptions, rules: Rules, seed: string, attempt: number
     let changed = false;
     for (let n = o.players.min; n <= o.players.max; n++) {
       const have = layouts.get(n);
-      if (have && fairnessOf(have.map((id) => tbl.ids.indexOf(id)), tbl).fair) continue;
+      const paper = o.paperUpTo === undefined || n <= o.paperUpTo;
+      if (have && (!paper || fairnessOf(have.map((id) => tbl.ids.indexOf(id)), tbl).fair)) continue;
       const found = findLayout(stream("capitals"), n, candidates, tbl, o.layoutStarts);
       o.log?.("capitals", n, candidates.length, found?.fairness);
-      if (!found || (!found.fairness.fair && !o.debug))
+      if (!found || (!found.fairness.fair && !o.debug && paper))
         throw new Rejected(`no fair capital layout for ${n} players${found ? ` (gaps ${found.fairness.nearest}, income ${found.fairness.income})` : ""}`);
       layouts.set(n, found.slots);
       changed = true;

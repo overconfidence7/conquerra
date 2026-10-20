@@ -13,9 +13,12 @@ import { adjacency, allDistances, exposureOf, gradeBonus, mapFingerprint, random
 const V5 = RANDOM_VERSIONS[5]!;
 
 describe("random map version 5 (session 33b): the income head start", () => {
-  it("is the current version, its values the content's (data/random-maps.json): version 4's grade and band, and a start block", () => {
-    expect(RANDOM_VERSION).toBe(5);
-    expect(randomMaps.current).toBe(5);
+  it("its values the content's (data/random-maps.json): version 4's grade and band, and a start block (session 34: version 6 is current, version 5 with 20 seats on the big sizes)", () => {
+    expect(RANDOM_VERSION).toBe(6);
+    expect(randomMaps.current).toBe(6);
+    const { seats, ...v6 } = RANDOM_VERSIONS[6]!;
+    expect(v6).toEqual(V5);
+    expect(seats).toBe(20);
     expect(V5).toEqual(randomMaps.versions["5"]);
     expect(V5.band).toBe(RANDOM_VERSIONS[4]!.band);
     expect(V5.grade).toEqual(RANDOM_VERSIONS[4]!.grade);
@@ -36,7 +39,7 @@ describe("random map version 5 (session 33b): the income head start", () => {
 
   it("a version 5 map: version 4's land and troops, and a market on the spots its start block names", () => {
     const v4 = randomMap("40-island-quiet-heron", defaultRules, { version: 4 }).map;
-    const v5 = randomMap("40-island-quiet-heron", defaultRules).map;
+    const v5 = randomMap("40-island-quiet-heron", defaultRules, { version: 5 }).map;
     expect(v5.generator?.version).toBe(5);
     expect(v5.territories).toEqual(v4.territories);
     expect(v5.borders).toEqual(v4.borders);

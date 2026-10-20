@@ -1,7 +1,28 @@
 import type { PlayerView } from "@conquerra/engine";
 
 /** A heraldic pattern on a House's banner and shield, so Houses differ by more than colour. */
-export type Pattern = "plain" | "chevron" | "pale" | "bend" | "fess" | "saltire" | "cross" | "chief" | "bordure" | "quarterly";
+export type Pattern =
+  | "plain"
+  | "chevron"
+  | "pale"
+  | "bend"
+  | "fess"
+  | "saltire"
+  | "cross"
+  | "chief"
+  | "bordure"
+  | "quarterly"
+  // Session 34: the second ten's, each a two-tone field (the shield split or chequered in its ink).
+  | "perPale"
+  | "perFess"
+  | "perBend"
+  | "chequy"
+  | "barry"
+  | "paly"
+  | "lozenge"
+  | "pile"
+  | "gyronny"
+  | "orle";
 
 export interface House {
   /** The tincture's name. */
@@ -21,9 +42,11 @@ export interface House {
 }
 
 /**
- * The ten House tinctures (docs/06-art-direction.md). You choose yours in the lobby (Gules, red, by default since
- * session 16); the bots take the rest in this order.
- * Each also has its own pattern, so colourblind players can tell them apart.
+ * The twenty House tinctures (docs/06-art-direction.md). You choose yours from the first ten in the lobby (Gules, red,
+ * by default since session 16); the bots take the rest in this order. Each also has its own pattern, so colourblind
+ * players can tell them apart. Session 34: a second ten for tables of up to 20, chosen so every pair of the twenty is
+ * at least 17 apart by CIEDE2000 (the first ten's closest pair, Gules and Tenné, is 20.9; a test checks), each with a
+ * two-tone field in its ink.
  */
 export const HOUSES: readonly House[] = [
   { name: "Azure", color: "#2f6fe0", glow: "#5b9bff", land: "#2f6fe0", ink: "#ffffff", pattern: "plain" },
@@ -37,13 +60,27 @@ export const HOUSES: readonly House[] = [
   { name: "Murrey", color: "#a3325f", glow: "#e0558d", land: "#a3325f", ink: "#ffffff", pattern: "chief" },
   { name: "Argent", color: "#e4e6ec", glow: "#ffffff", land: "#e4e6ec", ink: "#1d2430", pattern: "bordure" },
   { name: "Sable", color: "#2a2b33", glow: "#9aa0b4", land: "#3d404c", ink: "#f2f2f2", pattern: "quarterly" },
+  // Session 34: the second ten (heraldry's stains and the colours of later rolls), for tables of 11 to 20.
+  { name: "Rose", color: "#f49ac2", glow: "#ffc2df", land: "#f49ac2", ink: "#4a1830", pattern: "perPale" },
+  { name: "Sinople", color: "#1d5c37", glow: "#3fae6a", land: "#26704a", ink: "#e8f2ea", pattern: "perFess" },
+  { name: "Celeste", color: "#4ab8ff", glow: "#8fd6ff", land: "#4ab8ff", ink: "#0d2a40", pattern: "perBend" },
+  { name: "Olive", color: "#77761a", glow: "#b8b63a", land: "#77761a", ink: "#f4f1d8", pattern: "chequy" },
+  { name: "Chartreuse", color: "#b5d630", glow: "#dcff5a", land: "#b5d630", ink: "#26300a", pattern: "barry" },
+  { name: "Cendrée", color: "#8a909c", glow: "#c4cad6", land: "#8a909c", ink: "#1f232b", pattern: "paly" },
+  { name: "Brunâtre", color: "#7a4b2a", glow: "#c08050", land: "#87573a", ink: "#f3e6d8", pattern: "lozenge" },
+  { name: "Indigo", color: "#2c2a8c", glow: "#6f6cf0", land: "#3a38a0", ink: "#e6e6ff", pattern: "pile" },
+  { name: "Carnation", color: "#ff7f6a", glow: "#ffad9e", land: "#ff7f6a", ink: "#40140c", pattern: "gyronny" },
+  { name: "Sanguine", color: "#7a1a1f", glow: "#d0454c", land: "#8c2429", ink: "#f6dcdc", pattern: "orle" },
 ];
+
+/** Session 34: people choose from the first ten Houses (the lobby, the table screen); the second ten are the bots' at a big table. */
+export const PEOPLE_HOUSES = 10;
 
 /** Your House unless you choose another in the lobby: Gules, red (session 16, Nate). */
 export const DEFAULT_HOUSE = 1;
 
 /** Each tincture in plain words, for the lobby's House choice. */
-export const HOUSE_PLAIN: readonly string[] = ["blue", "red", "gold", "green", "purple", "orange", "teal", "mulberry", "silver", "black"];
+export const HOUSE_PLAIN: readonly string[] = ["blue", "red", "gold", "green", "purple", "orange", "teal", "mulberry", "silver", "black", "pink", "dark green", "sky blue", "olive", "lime", "ash grey", "brown", "indigo", "coral", "blood red"];
 
 /** Unowned land. */
 export const NEUTRAL_HOUSE: House = { name: "Neutral", color: "#d8cdb0", glow: "#f3ead2", land: "#d8cdb0", ink: "#2b2418", pattern: "plain" };

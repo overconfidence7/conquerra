@@ -7,6 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Resvg } from "@resvg/resvg-js";
 import { defaultRules } from "@conquerra/content";
+import { withBigTables } from "@conquerra/content/bigTables";
 import { applyRenames, generateMap, MAP_CONFIGS, mapPreviewSvg, type NameFile } from "../src/index";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -22,7 +23,8 @@ for (const opts of MAP_CONFIGS) {
   const names: NameFile = existsSync(namesFile) ? JSON.parse(readFileSync(namesFile, "utf8")) : { renames: {} };
   const { map, unknown } = applyRenames(made.map, names.renames);
   for (const u of unknown) console.log(`  ! names/${opts.id}.json: there's no place called "${u}" on ${opts.name} (check the spelling)`);
-  catalog.push({ id: map.id, name: map.name, territories: map.territories.length, minPlayers: map.minPlayers, maxPlayers: map.maxPlayers, recommendedPlayers: map.recommendedPlayers });
+  // (Session 34: the lobby lists a map with its big tables: Krakenmere and Rootholm seat more than their files say.)
+  catalog.push({ id: map.id, name: map.name, territories: map.territories.length, minPlayers: map.minPlayers, maxPlayers: withBigTables(map).maxPlayers, recommendedPlayers: map.recommendedPlayers });
   writeFileSync(join(root, "packages/content/data/maps", `${map.id}.json`), JSON.stringify(map) + "\n");
   mkdirSync(join(root, "docs/maps"), { recursive: true });
   const png = new Resvg(mapPreviewSvg(map), { fitTo: { mode: "width", value: 1600 }, font: { loadSystemFonts: true } }).render().asPng();

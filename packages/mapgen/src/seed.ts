@@ -57,10 +57,15 @@ export const RANDOM_TRIES = 6;
  *    exposed than the safest gets extra troops, the most exposed the most (up to 6).
  *  - 5 (session 33b, Nate's call): version 4's grade, and an income head start (`start`): the more exposed spots
  *    start with a market at their capital.
+ *  - 6 (session 34): version 5, and the big sizes (300 and 400) seat up to 20 (`seats`; a layout for every count).
  */
 export interface RandomVersionDef {
   band: number;
   bonus: number;
+  /** Session 34: the most seats on the big sizes (10 when left out). */
+  seats?: number;
+  /** Session 34: above this many players a layout needs only the exposure band, not the paper check (every count when left out). */
+  paperUpTo?: number;
   grade?: RandomGrade;
   start?: RandomStart;
 }

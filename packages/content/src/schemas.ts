@@ -554,7 +554,7 @@ export const RandomStart = z.object({
 export const RandomMaps = z
   .object({
     current: z.number().int().min(2),
-    versions: z.record(z.string().regex(/^\d+$/), z.object({ band: z.number().min(1), bonus: z.number().int().min(0).max(6), grade: RandomGrade.optional(), start: RandomStart.optional() })),
+    versions: z.record(z.string().regex(/^\d+$/), z.object({ band: z.number().min(1), bonus: z.number().int().min(0).max(6), grade: RandomGrade.optional(), start: RandomStart.optional(), seats: z.number().int().min(2).max(20).optional(), paperUpTo: z.number().int().min(2).optional() })),
   })
   .refine((r) => String(r.current) in r.versions, "the current version must be listed");
 export type RandomGrade = z.infer<typeof RandomGrade>;

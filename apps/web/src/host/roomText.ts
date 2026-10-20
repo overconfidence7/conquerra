@@ -9,6 +9,8 @@ export const TABLE_TEXT = {
   cancelled: "The host cancelled this table.",
   removed: "The host took you off this table.",
   full: "Every seat is taken.",
+  /** Session 34: a table seats up to 20, people up to 10 (`MAX_PEOPLE`); the rest are bots. */
+  peopleFull: "Ten people are already sitting here. The other seats go to bots.",
   colourTaken: "Someone just took that colour. Pick another.",
   notHost: "Only the host can do that.",
   hostLeaves: "You're the host. Cancel the table instead.",

@@ -5,7 +5,7 @@ import catalogJson from "@conquerra/content/data/maps/catalog.json";
 import rulesJson from "@conquerra/content/data/rules.json";
 import { LEADER_STYLES, STEWARD_STYLES, type LeaderStyle } from "@conquerra/engine/src/types";
 import { parseRandomId, randomPlayers, RANDOM_PREFIX } from "@conquerra/mapgen/randomId";
-import { HOUSES } from "../src/map/houses";
+import { PEOPLE_HOUSES } from "../src/map/houses";
 import type { BotChoice, LobbySettings, NewOnlineGame } from "../src/host/protocol";
 import { ONLINE_TIMER_CHOICES } from "../src/logic/timer";
 
@@ -61,7 +61,7 @@ export function cleanNewGame(body: unknown): { settings: LobbySettings; leadersR
   if (!ONLINE_TIMER_CHOICES.includes(s.turnSeconds as number)) return { error: "Online games use a timer of 3, 5 or 10 minutes, or 1, 8 or 24 hours." };
   const level: BotChoice = LEVELS.includes(s.botLevel as BotChoice) ? (s.botLevel as BotChoice) : "marshal";
   const luck = typeof s.luck === "number" && s.luck >= 0 && s.luck <= 1 ? s.luck : rulesJson.combat.luck;
-  const house = Number.isInteger(s.house) && s.house! >= 0 && s.house! < HOUSES.length ? s.house! : 0;
+  const house = Number.isInteger(s.house) && s.house! >= 0 && s.house! < PEOPLE_HOUSES ? s.house! : 0;
   const leaderName = str(s.leaderName, 40);
   const stewardName = str(s.stewardName, 40);
   // Session 33b: a random map's try that passed on the host's page (one of the six), so the room makes it in one try.

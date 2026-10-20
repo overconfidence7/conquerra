@@ -13,5 +13,8 @@ export function cleanName(v: unknown): string | null {
   return /\p{L}/u.test(name) ? name : null;
 }
 
-/** The bots' names, in seat order. Also caps how many bots a local game can have. */
-export const BOT_NAMES = ["Lady Morwen", "Baron Krell", "Queen Isolde", "Warlord Rusk", "Duke Varric", "Countess Ylva", "Lord Abern", "the Grey Margrave", "Thane Oskar"];
+/**
+ * The bots' names, in seat order. Also caps how many bots a local game can have. Session 34: ten more, for tables of
+ * up to 20 (19 bots and you).
+ */
+export const BOT_NAMES = ["Lady Morwen", "Baron Krell", "Queen Isolde", "Warlord Rusk", "Duke Varric", "Countess Ylva", "Lord Abern", "the Grey Margrave", "Thane Oskar", "Count Edrin", "Lady Seren", "Jarl Haakon", "the Old Prior", "Duchess Halla", "Lord Tevin", "Baroness Ilse", "the Iron Reeve", "Prince Corvin", "Earl Brannoch"];

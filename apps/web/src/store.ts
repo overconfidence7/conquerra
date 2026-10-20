@@ -2,7 +2,7 @@ import { forgetFinished, rememberFinished } from "./ui/saveText";
 import { keyIntent, type KeyLike } from "./logic/keys";
 import { defaultRules, suggestedMode, type BuildingType } from "@conquerra/content";
 import { BOT_NAMES } from "./host/names";
-import { DEFAULT_HOUSE, HOUSES } from "./map/houses";
+import { DEFAULT_HOUSE, PEOPLE_HOUSES } from "./map/houses";
 import { findLeader, indexMap, isShare, LEADER_STYLES, STEWARD_STYLES, suggestLeaderName, type LeaderStyle, type Budget, type DealKind, type GameContext, type Instruction, type Offer, type Order, type PlayerId, type PlayerView, type RecruitAmount, type SpoilsSet, type TerritoryId, type WorldEventKind } from "@conquerra/engine";
 import { arrangeQueue, asIfYouOrderFrom, instructOrders, refFromKey, takeControl, withGeneralOrders, type LeaderPlacement } from "./logic/generals";
 import { create } from "zustand";
@@ -315,7 +315,7 @@ const HOUSE_KEY = "conquerra.house";
 function rememberedHouse(): number {
   try {
     const n = Number(localStorage.getItem(HOUSE_KEY));
-    return localStorage.getItem(HOUSE_KEY) !== null && Number.isInteger(n) && n >= 0 && n < HOUSES.length ? n : DEFAULT_HOUSE;
+    return localStorage.getItem(HOUSE_KEY) !== null && Number.isInteger(n) && n >= 0 && n < PEOPLE_HOUSES ? n : DEFAULT_HOUSE;
   } catch {
     return DEFAULT_HOUSE;
   }

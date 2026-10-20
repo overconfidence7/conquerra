@@ -4,7 +4,7 @@ import { useGame } from "../store";
 import { LUCK } from "../logic/lobbyText";
 import { styleLabel, styleNote } from "../logic/text";
 import { TIMER_CHOICES, timerLabel } from "../logic/timer";
-import { DEFAULT_HOUSE, HOUSE_PLAIN, HOUSES } from "../map/houses";
+import { DEFAULT_HOUSE, HOUSE_PLAIN, HOUSES, PEOPLE_HOUSES } from "../map/houses";
 import "./lobby-folds.css";
 
 /**
@@ -45,7 +45,7 @@ export function HouseBlock({ stewardSuggestion }: { stewardSuggestion: string })
     <>
       <div className="field">
         <span className="houses" role="radiogroup" aria-label="Your House colour">
-          {HOUSES.map((h, i) => (
+          {HOUSES.slice(0, PEOPLE_HOUSES).map((h, i) => (
             <button
               key={h.name}
               role="radio"

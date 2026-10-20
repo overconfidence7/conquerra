@@ -114,7 +114,7 @@
     "name": "Krakenmere",
     "territories": 200,
     "minPlayers": 2,
-    "maxPlayers": 10,
+    "maxPlayers": 13,
     "recommendedPlayers": {
       "min": 8,
       "max": 10
@@ -125,7 +125,7 @@
     "name": "Rootholm",
     "territories": 200,
     "minPlayers": 2,
-    "maxPlayers": 10,
+    "maxPlayers": 20,
     "recommendedPlayers": {
       "min": 8,
       "max": 10

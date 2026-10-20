@@ -3,7 +3,7 @@ import { Rng, seedRng } from "@conquerra/engine";
 import { adjacency, allDistances, exposureOf } from "./checks";
 import { generateMap, type MapGenOptions } from "./index";
 import { recipeFor, type Recipe } from "./recipes";
-import { parseRandomId, randomPlayers, RANDOM_PREFIX, type RandomShape, type RandomSize } from "./randomId";
+import { parseRandomId, randomPlayers, RANDOM_MAX_SEATS, RANDOM_PREFIX, type RandomShape, type RandomSize } from "./randomId";
 import { isRandomVersion, randomMapId, RANDOM_SHAPES, RANDOM_TRIES, RANDOM_VERSION, randomVersionDef, type RandomVersion } from "./seed";
 import { RANDOM_TEXT } from "./randomText";
 
@@ -24,7 +24,7 @@ export * from "./seed";
  * the choke points asked for. The seed nudges a few knobs (a lake or a river more or less, the coast's roughness) so
  * two maps of the same size and shape differ in more than their outline.
  */
-export function randomRecipe(size: RandomSize, shape: RandomShape, seed: string, version: RandomVersion = RANDOM_VERSION): Recipe {
+export function randomRecipe(size: RandomSize, shape: RandomShape, seed: string, version: RandomVersion = RANDOM_VERSION, seats?: number): Recipe {
   const T = size;
   const land = RANDOM_SHAPES[shape];
   const rng = new Rng(seedRng(`${seed}|recipe`));
@@ -47,13 +47,17 @@ export function randomRecipe(size: RandomSize, shape: RandomShape, seed: string,
     rivers: nudge(Math.max(3, Math.round(T / 20)), 2),
     ...(land === "continent" ? { water: 0.36 + rng.next() * 0.03 } : { roughness: 0.55 + rng.next() * 0.1 }),
     ...(islands !== undefined ? { islands, seaLanes: Math.round(islands * 0.5), minSeaLanes: islands - 1 } : {}),
-    players: randomPlayers(size, shape),
+    // (Session 34: version 6 seats up to 20 on the big sizes; versions before it 10.)
+    players: randomPlayers(size, shape, seats ?? randomVersionDef(version).seats ?? RANDOM_MAX_SEATS),
     laneReach,
     streams: "staged",
     maxAttempts: RANDOM_TRIES,
     // Session 33b: the big sizes (new in version 5) search harder for fair capital layouts: most of their rejected
     // tries were a layout for 8 to 10 players not found in the usual 20 starts.
     ...(T >= 300 ? { layoutStarts: 60 } : {}),
+    // Session 34 (version 6): above 10 seats the exposure band alone judges a layout (the paper check's even gaps
+    // can't hold for 12 to 20 capitals often enough: about 6 in 10 seeds passed at 12).
+    ...(randomVersionDef(version).paperUpTo !== undefined ? { paperUpTo: randomVersionDef(version).paperUpTo } : {}),
     // Session 31 (version 3): a fatter crescent (a smaller bay a little further off, one isle in it), longer sea lanes
     // across the bay and fewer choke points asked for: about 5 in 6 seeds pass at the band of 4.0 instead of 1 in 3.
     ...(version >= 3 && land === "crescent" ? { islands: 1, bite: 0.5, biteOffset: 0.5, laneReach: Math.round(laneReach * 1.6), minChokePoints: Math.max(4, Math.round(T / 18)) } : {}),
@@ -160,14 +164,14 @@ export class RandomMapFailed extends Error {
  * (session 33b): the try that passed when the map was first made (the room and the online pages are told it), so it's
  * made in one try instead of all of them; if that try doesn't pass, every try is made as usual.
  */
-export function randomMap(id: string, rules: Rules, opts: Pick<MapGenOptions, "stageSeeds" | "log" | "onProgress"> & { version?: number | null; band?: number; grade?: RandomGrade; start?: RandomStart; attempt?: number | null } = {}): { map: MapDef; attempt: number } {
+export function randomMap(id: string, rules: Rules, opts: Pick<MapGenOptions, "stageSeeds" | "log" | "onProgress"> & { version?: number | null; band?: number; grade?: RandomGrade; start?: RandomStart; attempt?: number | null; seats?: number; paperUpTo?: number } = {}): { map: MapDef; attempt: number } {
   const p = parseRandomId(id);
   if (!p) throw new Error(RANDOM_TEXT.badId);
-  const { version: asked, band: bandOverride, grade: gradeOverride, start: startOverride, attempt: hint, ...gen } = opts;
+  const { version: asked, band: bandOverride, grade: gradeOverride, start: startOverride, attempt: hint, seats, paperUpTo, ...gen } = opts;
   const version: RandomVersion = asked == null ? RANDOM_VERSION : isRandomVersion(asked) ? asked : (() => { throw new Error(RANDOM_TEXT.oldVersion(asked)); })();
   const v = randomVersionDef(version);
   const band = bandOverride ?? v.band;
-  const recipe: MapGenOptions = { ...randomRecipe(p.size, p.shape, p.seed, version), ...gen, accept: (m) => exposureProblem(m, band) };
+  const recipe: MapGenOptions = { ...randomRecipe(p.size, p.shape, p.seed, version, seats), ...(paperUpTo !== undefined ? { paperUpTo } : {}), ...gen, accept: (m) => exposureProblem(m, band) };
   try {
     const r = (hint && hint > 1 && hint <= RANDOM_TRIES && tryAt(recipe, rules, hint)) || generateMap(recipe, rules);
     const map = markHarder(r.map, v.bonus, gradeOverride ?? v.grade, startOverride ?? v.start);

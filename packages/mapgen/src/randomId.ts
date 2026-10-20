@@ -16,10 +16,12 @@ export type RandomShape = "island" | "archipelago" | "twins" | "crescent" | "inl
  * Fewer than the official maps' ten at 120: each count is one more layout that must pass.
  */
 /**
- * The most seats a random map has a layout for (session 33b: 10, the Houses' count; session 34 lifts the big sizes to
- * 20 seats here, and only here).
+ * The most seats a random map has a layout for (session 33b: 10, the Houses' count), up to random map version 5.
+ * Session 34 (version 6): the big sizes seat up to `RANDOM_BIG_SEATS` (each version's `seats`, so a version 5 map,
+ * and a game pinned to it, is made exactly as before).
  */
 export const RANDOM_MAX_SEATS = 10;
+export const RANDOM_BIG_SEATS = 20;
 export const RANDOM_PLAYERS: Record<RandomSize, { min: number; max: number; recommended: { min: number; max: number } }> = {
   40: players(6, 3, 5),
   80: players(8, 4, 6),
@@ -27,8 +29,8 @@ export const RANDOM_PLAYERS: Record<RandomSize, { min: number; max: number; reco
   200: players(10, 7, 10),
   // (Session 33b: the big sizes start at 4 and 6 players: a map maker's layout for every count from the smallest is one
   // more way for a seed to fail, and two or three Houses on 400 territories isn't a game anyone asked for.)
-  300: players(RANDOM_MAX_SEATS, 8, 10, 4),
-  400: players(RANDOM_MAX_SEATS, 10, 10, 6),
+  300: players(RANDOM_BIG_SEATS, 8, 10, 4),
+  400: players(RANDOM_BIG_SEATS, 10, 10, 6),
 };
 function players(max: number, low: number, high: number, min = 2) {
   return { min, max, recommended: { min: low, max: high } };
@@ -37,10 +39,14 @@ function players(max: number, low: number, high: number, min = 2) {
 /** What each shape is called in a sentence ("80 territories, a crescent"). */
 export const RANDOM_SHAPE_A: Record<RandomShape, string> = { island: "one island", archipelago: "an archipelago", twins: "twin continents", crescent: "a crescent", inland: "an inland sea" };
 
-/** The players a random map suits, by size and shape (a small archipelago has room for five Houses at most). */
-export function randomPlayers(size: RandomSize, shape: RandomShape): (typeof RANDOM_PLAYERS)[RandomSize] {
+/**
+ * The players a random map suits, by size and shape (a small archipelago has room for five Houses at most). `seats`
+ * (session 34): the most a random map version seats (10 up to version 5); left out, the newest version's.
+ */
+export function randomPlayers(size: RandomSize, shape: RandomShape, seats?: number): (typeof RANDOM_PLAYERS)[RandomSize] {
   const p = RANDOM_PLAYERS[size];
-  return size === 40 && shape === "archipelago" ? players(5, 3, 5) : p;
+  if (size === 40 && shape === "archipelago") return players(5, 3, 5);
+  return seats !== undefined && p.max > seats ? { ...p, max: seats } : p;
 }
 
 

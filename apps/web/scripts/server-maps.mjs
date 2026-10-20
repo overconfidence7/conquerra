@@ -16,9 +16,16 @@ const dir = join(root, "packages/content/data/maps");
 
 export function slimMaps() {
   const catalog = JSON.parse(readFileSync(join(dir, "catalog.json"), "utf8"));
+  // Session 34: with each map's big tables joined, as `withBigTables` (packages/content/src/bigTables.ts) does.
+  const big = JSON.parse(readFileSync(join(dir, "big-tables.json"), "utf8"));
   const out = {};
   for (const { id } of catalog) {
     const { geometry: _drawing, ...map } = JSON.parse(readFileSync(join(dir, `${id}.json`), "utf8"));
+    const b = big[id];
+    if (b) {
+      const own = map.capitalLayouts ?? [];
+      Object.assign(map, { maxPlayers: Math.max(map.maxPlayers, b.maxPlayers), capitalLayouts: [...own, ...b.layouts.filter((l) => !own.some((o) => o.players === l.players))] });
+    }
     out[id] = map;
   }
   return `${JSON.stringify(out)}\n`;

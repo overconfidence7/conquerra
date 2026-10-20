@@ -1,0 +1,32 @@
+
+> conquerra@0.1.0 sim C:\Users\nkurt\Claude\Projects\Strategy Game
+> tsx apps/sim/src/cli.ts "--games" "100" "--players" "20" "--map" "rootholm" "--bots" "marshal" "--seed" "s34"
+
+
+=== 20 players — Rootholm, mixed table (marshal), luck 0.3, classic, fog on, the Fallen on, Spoils on, Fate on, diplomacy on, spies on ===
+Games: 100 finished, 0 crashed, in 526.0s
+Win rate by seat (fair ≈ 5.0% each): 5.0% / 4.0% / 3.0% / 6.0% / 4.0% / 6.0% / 2.0% / 5.0% / 8.0% / 5.0% / 2.0% / 7.0% / 6.0% / 6.0% / 10.0% / 1.0% / 4.0% / 9.0% / 4.0% / 3.0%   draws 0.0%
+Win rate by bot: marshal 100.0% (fair 100%)
+Marshal wins by personality: conqueror 15.0%, blitzer 12.0%, turtle 19.0%, schemer 13.0%, opportunist 6.0%, merchant 35.0%
+Planning time per bot per turn: marshal-conqueror avg 1.91 ms, p95 4.76 ms, worst 165.14 ms | marshal-merchant avg 2.02 ms, p95 5.56 ms, worst 126.23 ms | marshal-turtle avg 1.81 ms, p95 4.86 ms, worst 100.79 ms | marshal-opportunist avg 1.75 ms, p95 4.25 ms, worst 97.16 ms | marshal-schemer avg 1.84 ms, p95 4.58 ms, worst 96.98 ms | marshal-blitzer avg 1.81 ms, p95 4.35 ms, worst 207.33 ms
+How games ended: lastStanding 50.0%, turnCap 50.0%
+Game length (turns): avg 53.3, median 60, min 30, max 60; 14.0% within 40, 14.0% in 30–40
+Real time, roughly: single player about 107 minutes (1.5 min a turn + 0.5 min replay); live online with the 5-minute timer up to about 4.9 hours
+Per game: 1921.6 battles, 1807.5 captures, 20.6 specialists hired, 126.2 culture raises, 70.5 leaders killed
+Specialists hired per game: cavalry 0.00 (0.0% of games), scouts 0.00 (0.0% of games), siege 13.59 (100.0% of games), engineers 0.00 (0.0% of games), healers 5.09 (99.0% of games), rangers 1.13 (65.0% of games), standardBearer 0.77 (47.0% of games)
+Culture: bought in 100.0% of games; raises went to the capital 15%, choke points 14%, other frontier 12%, interior 59%
+Recruits by site (troops): capital 12%, barracks 50%, fully held province 37%
+Lopsided attacks (8 times the defenders or more): 1053.8 per game, 0.00% failed (0 of 105379)
+Battles by border (per game, % that captured): normal 1655.5 (94%), river 55.7 (96%), pass 155.3 (94%), sea 55.1 (94%)
+Orders per game: 8988 (36% with a preset), fizzled: 14.6%
+Predictability (lower = more exciting): winner locked in the lead at 73% of the game; 11.7 lead changes per game
+Chained hops per game: 4118.8 (30% captured)
+Runaway check: one player held more than half the map after turn 10 in 0.0% of games (0.0% were already over by then)
+Runaway, two clearer measures: the leader at the halfway point went on to win 29% of games; comebacks (the winner was not the leader after turn 10) 82% of games that went past turn 10
+The Fallen: 32.8 world events per game (14.3 pledges came to nothing); events in 100.0% of games; the eventual winner was the player hit hardest in 66% of games with events
+Spoils: 106.7 sets turned in per game (0.8 by the game at the hand limit); the winner took the lead for good on a turn it turned in a set in 31% of games (by chance: 27%)
+Fate: 326.7 events per game (163.1 good and 154.7 bad on players' land, 43.5 strong), 136.7 missions drawn, 67.7 done
+Fate and the winner: the winner got 19% of the good events, against 29% of the land they could land on (its fair share); its luck beyond its land: 2.51 events a game; it was the luckiest player in 26% of games (by chance 5%); missions done: the winner 9.3, the others 3.1 each
+Spies: 17.4 hired per game (100.0% of games); attempts per game 54.9: infiltrated 46.19, blocked 8.31, killed 0.42, fooled 0.00; spy gold per game (hire + upkeep) 538.7
+Diplomacy: 404.6 offers between bots per game, 39% accepted, 4% countered; 146.5 deals made per game (truce 55.6, trade 7.3, war 62.7, passage 20.9; 6.7 binding), 15.30 broken; joint wars against the player then holding the most land: 20.74 per game; marches through a partner's land: 5.18 per game
+CPU per turn (this machine): resolve avg 31.00 ms, p95 74.55 ms, worst 278.77 ms | bots planning (all seats) avg 42.20 ms, worst 364.67 ms | total avg 73.20 ms, worst 433.17 ms

@@ -1,0 +1,4 @@
+
+> conquerra@0.1.0 sim C:\Users\nkurt\Claude\Projects\Strategy Game
+> tsx apps/sim/src/cli.ts "--games" "100" "--players" "12" "--map" "krakenmere" "--bots" "marshal" "--seed" "s34"
+

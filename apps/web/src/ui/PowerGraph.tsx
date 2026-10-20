@@ -21,6 +21,17 @@ const DASH: Record<Pattern, string> = {
   chief: "12 3 3 3",
   bordure: "4 2",
   quarterly: "8 2 2 2 2 2",
+  // Session 34: the second ten.
+  perPale: "14 2 2 2",
+  perFess: "3 6",
+  perBend: "20 3",
+  chequy: "5 5",
+  barry: "2 2",
+  paly: "6 2 6 6",
+  lozenge: "12 2 2 2 2 2 2 2",
+  pile: "1 6",
+  gyronny: "9 3 1 3",
+  orle: "4 4 12 4",
 };
 
 /** A halo behind a line: light behind dark Houses (Sable, Murrey), dark behind the rest. */

@@ -2,7 +2,8 @@ import type { PlayerView } from "@conquerra/engine";
 import type { SeatInfo } from "../host/protocol";
 import { useState } from "react";
 import { canProposeTo, dealMarks, isOathbreaker, markText, type DealMark } from "../logic/deals";
-import { HOUSES, houseOf } from "../map/houses";
+import { houseOf } from "../map/houses";
+import { useLayout } from "./useLayout";
 import { useGame } from "../store";
 import { useArtUrl, useShield } from "./art";
 import { colorOf } from "./colors";
@@ -137,23 +138,51 @@ function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: s
   );
 }
 
+/** Session 34: a phone shows this many Houses at a big table before "and 12 more". */
+export const PHONE_ROWS = 8;
+export const PANEL_TEXT = { more: (n: number) => `and ${n} more`, fewer: "Show fewer" } as const;
+
+/**
+ * Session 34, a big table on a phone: who shows first. You, the other people at the table, then the bots you have a
+ * deal with, then everyone else in seat order (the knocked out last). Nothing here is a standing: no land, no score.
+ */
+export function phoneOrder(view: PlayerView, people: readonly string[] | null | undefined, dealt: ReadonlySet<string>): string[] {
+  const rank = (p: PlayerView["players"][number]) => (p.id === view.me.id ? 0 : people?.includes(p.id) ? 1 : p.eliminatedTurn !== null ? 4 : dealt.has(p.id) ? 2 : 3);
+  return view.players.map((p, i) => ({ id: p.id, r: rank(p), i })).sort((a, b) => a.r - b.r || a.i - b.i).map((x) => x.id);
+}
+
 /**
  * Every House: shield (colour and pattern), name, Leader portrait, and whether they're still in. No territory counts
  * (decided). Diplomacy (session 14): a small mark for each deal (a seal on a binding one) with turns left, the
- * Oathbreaker mark, and tap a rival for Propose.
+ * Oathbreaker mark, and tap a rival for Propose. Session 34: up to 20 rows; on a phone at a big table, the first
+ * PHONE_ROWS (`phoneOrder`) and "and 12 more", which opens the rest.
  */
 export function PlayersPanel({ view }: { view: PlayerView }) {
   const [open, setOpen] = useState<string | null>(null);
-  const { online, people, leftSeats } = useGame();
+  const [all, setAll] = useState(false);
+  const { online, people, leftSeats, pageDeals } = useGame();
+  const phone = useLayout().layout === "phone";
+  const seatOf = new Map(view.players.map((p, i) => [p.id, i]));
+  const order = phone && view.players.length > 10 ? phoneOrder(view, people, new Set(view.players.filter((p) => dealMarks(view, pageDeals(), p.id).some((m) => m.with === view.me.id)).map((p) => p.id))) : view.players.map((p) => p.id);
+  const shown = phone && !all && order.length > PHONE_ROWS + 1 ? order.slice(0, PHONE_ROWS) : order;
   // Online (session 28): a group chat with any people at the table.
   const canGroup = !!online && (people ?? []).some((id) => id !== view.me.id && !leftSeats?.[id]) && !leftSeats?.[view.me.id];
   return (
     <Frame title="Houses" className="slim">
       <ul className="players">
-        {view.players.slice(0, HOUSES.length).map((p, i) => (
-          <PlayerRow key={p.id} view={view} id={p.id} seat={i} open={open === p.id} onToggle={() => setOpen((o) => (o === p.id ? null : p.id))} />
+        {shown.map((id) => (
+          <PlayerRow key={id} view={view} id={id} seat={seatOf.get(id)!} open={open === id} onToggle={() => setOpen((o) => (o === id ? null : id))} />
         ))}
       </ul>
+      {shown.length < order.length ? (
+        <button className="link small players-more" onClick={() => setAll(true)}>
+          {PANEL_TEXT.more(order.length - shown.length)}
+        </button>
+      ) : all && phone ? (
+        <button className="link small players-more" onClick={() => setAll(false)}>
+          {PANEL_TEXT.fewer}
+        </button>
+      ) : null}
       {canGroup && (
         <button className="link small players-group" onClick={() => useChat.setState({ open: true, grouping: true, selected: null, popup: null })}>
           Group…
