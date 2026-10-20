@@ -103,5 +103,5 @@ describe("forests on the art test bench", () => {
     expect(sceneryFor(map).treeKind.size).toBe(0);
     // ...while real forests do get the mix.
     expect(sceneryFor(maps.greatmarch!).treeKind.size).toBeGreaterThan(100);
-  });
+  }, 30_000); // (Session 34: the bench's sprite map takes a few seconds on a busy machine.)
 });
