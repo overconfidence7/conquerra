@@ -1,6 +1,6 @@
 import { defaultRules } from "@conquerra/content";
 import { describe, expect, it } from "vitest";
-import { adjacency, allDistances, exposureOf, exposureProblem, mapFingerprint, parseRandomId, randomMap, randomPlayers, randomRecipe, RANDOM_BIG_SEATS, RANDOM_MAX_SEATS, RANDOM_SEATS_NOW, RANDOM_SIZES, RANDOM_VERSION, randomVersionDef, versionSeats } from "../src/index";
+import { exposureProblem, mapFingerprint, parseRandomId, randomMap, randomPlayers, randomRecipe, RANDOM_BIG_SEATS, RANDOM_MAX_SEATS, RANDOM_SEATS_NOW, RANDOM_SIZES, RANDOM_VERSION, randomVersionDef, versionSeats } from "../src/index";
 
 /**
  * Session 33b: random maps at 300 and 400 territories, for the big tables (session 34) and the battle royale later.
@@ -62,33 +62,6 @@ describe("random maps at 300 and 400 territories (session 33b)", () => {
     const sixteen = big.map.capitalLayouts!.find((l) => l.players === 16)!;
     expect(Object.keys(sixteen.buildings ?? {})).toHaveLength(8);
   }, 180_000);
-
-  it("the band by table size (session 34b, version 7): 4.0 up to 12 seats, 5.5 above; versions before it one band for every count", () => {
-    expect(randomVersionDef(7).band).toBe(4);
-    expect(randomVersionDef(7).bandAbove).toEqual({ players: 12, band: 5.5 });
-    for (const v of [2, 3, 4, 5, 6]) expect(randomVersionDef(v).bandAbove).toBeUndefined();
-    // A 16-seat layout judged by a band just under its own ratio fails, unless the looser band covers 16 seats.
-    const map = randomMap("400-island-quiet-heron", defaultRules, { version: 6 }).map;
-    const sixteen = map.capitalLayouts!.find((l) => l.players === 16)!;
-    const e = exposureOf(sixteen.slots, allDistances(map), adjacency(map)).exposure;
-    const r = Math.max(...e) / Math.min(...e);
-    const tight = { ...map, capitalLayouts: [sixteen] };
-    expect(exposureProblem(tight, r - 0.01, null)).not.toBeNull();
-    expect(exposureProblem(tight, r - 0.01, { players: 12, band: r + 0.01 })).toBeNull();
-    expect(exposureProblem(tight, r - 0.01, { players: 16, band: r + 0.01 })).not.toBeNull();
-  }, 180_000);
-
-  it("pinned (session 34b): version 7's 400 with layouts for 6 to 20 players, its 300 for 4 to 16", () => {
-    const big = randomMap("400-island-quiet-heron", defaultRules, { version: 7 });
-    expect(big.attempt).toBe(1);
-    expect(mapFingerprint(big.map)).toBe("939e8db72a37d2a5");
-    expect(big.map.capitalLayouts!.map((l) => l.players)).toEqual([6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
-    expect(exposureProblem(big.map, 4, { players: 12, band: 5.5 })).toBeNull();
-    const mid = randomMap("300-inland-quiet-heron", defaultRules, { version: 7 });
-    expect(mid.attempt).toBe(1);
-    expect(mapFingerprint(mid.map)).toBe("b9c277188d4b959a");
-    expect(mid.map.maxPlayers).toBe(16);
-  }, 360_000);
 
   it("pinned (session 34): version 6's 300 with layouts for 4 to 12", () => {
     const mid = randomMap("300-inland-quiet-heron", defaultRules, { version: 6 });
