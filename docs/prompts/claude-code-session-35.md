@@ -1,6 +1,6 @@
 # Claude Code: Session 35 (M5 part eight: launch polish: the big-table screens, the install flow, a last voice pass, the open-graph tags, the load test)
 
-**Run this session locally, in Claude Code on Nate's Windows computer, in the project folder** (`C:\Users\nkurt\Claude\Projects\Strategy Game`). It needs Wrangler (logged in there), `wrangler dev` with the table harness, his browser, his phone (for the install flow: Nate does those steps, you prepare them) and deploys. Note: **GitHub Actions is not running on push right now** (a billing notice on Nate's account; his step). Until it is, the full `pnpm test` twice before the last push is the only check there is: don't skip it.
+**Run this session locally, in Claude Code on Nate's Windows computer, in the project folder** (`C:\Users\nkurt\Claude\Projects\Strategy Game`). It needs Wrangler (logged in there), `wrangler dev` with the table harness, his browser, his phone (for the install flow: Nate does those steps, you prepare them) and deploys. (GitHub Actions stopped for a day on Oct 20 over a billing notice and is running again; the full `pnpm test` twice before the last push stays the rule either way.)
 
 You are the lead developer on **Conquerra**, a fantasy, military-first strategy game. Players set queued orders in a 5-minute window, then everyone watches a shared replay of what they can see. The owner is Nate, who directs the project but isn't a full-time developer. Explain choices in plain language and keep setup steps copy-paste simple.
 
@@ -66,7 +66,7 @@ You are the lead developer on **Conquerra**, a fantasy, military-first strategy 
 - Sign-in in the Worker, Workers Paid, accounts in D1, Access retired, the open-graph preview seen in a chat app (36); the purchase, the front page, terms and privacy (37); battle royale (38); new castle spots on the 200s (a map session, if Nate asks); the random 80's layout rule (after the friends' play test).
 
 ## Exit criteria
-- `pnpm test`, `pnpm typecheck` and the web build pass; everything is committed and pushed to `main`. **Run the full `pnpm test` before every push and twice before your last push** (GitHub's checks aren't running: this is the check).
+- `pnpm test`, `pnpm typecheck` and the web build pass; everything is committed and pushed to `main`. **Run the full `pnpm test` before every push and twice before your last push** and ask Nate to check the repo's Actions page for your last commit.
 - Standard fog unchanged after each part: the digest `dc8962d4f8ba3bc6`, the Captain fingerprint `232617a30b1f8b47`, the seeded sim identical before and after. The honesty and fog-wire tests pass.
 - The start-up bundle within the allowance (400.0 KB); the lock check passes on every deploy; running games survive each deploy.
 - Screenshots in `docs/art/screens/s35-*`: a 20-House desktop game with the Leaders panel in view; the phone's Houses panel when knocked out; a 400 at Far before and after; the lobby's Install line in its Android and iPhone forms; a 20-table load test's numbers in the write-up.
