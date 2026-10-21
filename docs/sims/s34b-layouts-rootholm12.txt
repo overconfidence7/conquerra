@@ -1,0 +1,31 @@
+status rootholm:12: 12 spots, paper check fails, exposure 1.52x (band 4), nearest rival 3; moves allowed within 4.00x
+search start spread 29.7
+search   strong t150 -> t164: spread 47.7
+search   strong t043 -> t051: spread 35.7
+search   strong t043 -> t057: spread 33.0
+search   strong t043 -> t010: spread 33.3
+search   strong t043 -> t099: spread 33.0
+search   weak t036 -> t044: spread 33.3
+search   weak t036 -> t133: spread 26.3 (better)
+search   strong t150 -> t164: spread 38.0
+search   strong t043 -> t051: spread 32.0
+search   strong t043 -> t057: spread 28.7
+search   strong t043 -> t099: spread 28.7
+start rootholm:12: Wolfhold (t005) 1.3%, Greyfield (t014) 3.0%, Mistwell (t018) 8.0%, Hallowby (t027) 3.0%, Yewmouth (t036) 0.7%, Yewhurst (t043) 23.7%, Westerford (t067) 9.0%, Nettlehold (t097) 1.7%, Larkfield (t106) 1.0%, Kingshelm (t114) 3.7%, Deepton (t150) 30.3%, Brightfield (t190) 14.7% | best 30.3%, worst 0.7%, spread 29.7 pts, fair 8.3% | bars: best OVER 2x fair, worst UNDER half
+best rootholm:12: Wolfhold (t005) 1.3%, Greyfield (t014) 5.3%, Mistwell (t018) 7.7%, Hallowby (t027) 3.0%, Ravendale (t133) 3.7%, Yewhurst (t043) 19.0%, Westerford (t067) 10.0%, Nettlehold (t097) 2.7%, Larkfield (t106) 1.3%, Kingshelm (t114) 0.7%, Deepton (t150) 27.0%, Brightfield (t190) 18.3% | best 27.0%, worst 0.7%, spread 26.3 pts, fair 8.3% | bars: best OVER 2x fair, worst UNDER half (12 layouts measured, 163 min)
+check rootholm:12 before: Wolfhold (t005) 0.3%, Greyfield (t014) 4.7%, Mistwell (t018) 8.0%, Hallowby (t027) 1.7%, Yewmouth (t036) 2.3%, Yewhurst (t043) 21.3%, Westerford (t067) 8.3%, Nettlehold (t097) 1.7%, Larkfield (t106) 0.7%, Kingshelm (t114) 3.7%, Deepton (t150) 28.0%, Brightfield (t190) 19.3% | best 28.0%, worst 0.3%, spread 27.7 pts, fair 8.3% | bars: best OVER 2x fair, worst UNDER half | turns 47.2, CPU a turn 65 ms avg / 0.36 s worst
+check rootholm:12 after: Wolfhold (t005) 1.7%, Greyfield (t014) 9.3%, Mistwell (t018) 9.7%, Hallowby (t027) 2.3%, Ravendale (t133) 2.0%, Yewhurst (t043) 16.7%, Westerford (t067) 6.3%, Nettlehold (t097) 1.3%, Larkfield (t106) 0.7%, Kingshelm (t114) 1.3%, Deepton (t150) 31.7%, Brightfield (t190) 16.7% | best 31.7%, worst 0.7%, spread 31.0 pts, fair 8.3% | bars: best OVER 2x fair, worst UNDER half | turns 50.0, CPU a turn 80 ms avg / 0.45 s worst
+keep rootholm:12: ["t005","t014","t018","t027","t036","t043","t067","t097","t106","t114","t150","t190"] (fresh games: spread 27.7 -> 31.0 pts)
+try rootholm:12 +2: Wolfhold (t005 +2) 3.0%, Greyfield (t014) 3.0%, Mistwell (t018) 5.3%, Hallowby (t027 +2) 3.3%, Yewmouth (t036 +2) 1.3%, Yewhurst (t043) 24.7%, Westerford (t067) 5.3%, Nettlehold (t097 +2) 3.0%, Larkfield (t106 +2) 0.3%, Kingshelm (t114 +2) 2.7%, Deepton (t150) 28.7%, Brightfield (t190) 19.3% | best 28.7%, worst 0.3%, spread 28.3 pts, fair 8.3% | bars: best OVER 2x fair, worst UNDER half
+try rootholm:12 +4: Wolfhold (t005 +4) 3.0%, Greyfield (t014) 4.0%, Mistwell (t018) 6.3%, Hallowby (t027 +4) 5.0%, Yewmouth (t036 +4) 1.0%, Yewhurst (t043) 22.3%, Westerford (t067) 5.7%, Nettlehold (t097 +4) 2.0%, Larkfield (t106 +4) 0.3%, Kingshelm (t114 +4) 1.3%, Deepton (t150) 33.0%, Brightfield (t190) 16.0% | best 33.0%, worst 0.3%, spread 32.7 pts, fair 8.3% | bars: best OVER 2x fair, worst UNDER half
+try rootholm:12 +6: Wolfhold (t005 +6) 2.0%, Greyfield (t014) 4.7%, Mistwell (t018) 5.7%, Hallowby (t027 +6) 4.3%, Yewmouth (t036 +6) 0.7%, Yewhurst (t043) 18.0%, Westerford (t067) 6.7%, Nettlehold (t097 +6) 2.0%, Larkfield (t106 +6) 1.0%, Kingshelm (t114 +6) 3.3%, Deepton (t150) 33.0%, Brightfield (t190) 18.7% | best 33.0%, worst 0.7%, spread 32.3 pts, fair 8.3% | bars: best OVER 2x fair, worst UNDER half
+choose rootholm:12 Wolfhold (t005): bare 0.3%, +6 -> 2.0% (+6 isn't enough)
+choose rootholm:12 Hallowby (t027): bare 1.7%, +4 -> 5.0%
+choose rootholm:12 Yewmouth (t036): bare 2.3%, +6 -> 0.7% (+6 isn't enough)
+choose rootholm:12 Nettlehold (t097): bare 1.7%, +6 -> 2.0% (+6 isn't enough)
+choose rootholm:12 Larkfield (t106): bare 0.7%, +6 -> 1.0% (+6 isn't enough)
+choose rootholm:12 Kingshelm (t114): bare 3.7%, +6 -> 3.3% (+6 isn't enough)
+bonus rootholm:12: {"t005":6,"t027":4,"t036":6,"t097":6,"t106":6,"t114":6}
+proof rootholm:12 today: Wolfhold (t005 +1) 0.7%, Greyfield (t014) 1.3%, Mistwell (t018 +1) 6.3%, Hallowby (t027 +3) 3.0%, Yewmouth (t036 +4) 0.0%, Yewhurst (t043 +3) 23.3%, Westerford (t067 +1) 6.7%, Nettlehold (t097 +1) 2.0%, Larkfield (t106 +3) 0.3%, Kingshelm (t114 +1) 5.3%, Deepton (t150 +1) 18.7%, Brightfield (t190 +3) 32.3% | best 32.3%, worst 0.0%, spread 32.3 pts, fair 8.3% | bars: best OVER 2x fair, worst UNDER half (and a market and culture at 6) | turns 48.3, CPU a turn 58 ms avg / 0.33 s worst
+proof rootholm:12 new: Wolfhold (t005 +6) 2.0%, Greyfield (t014) 6.0%, Mistwell (t018) 5.7%, Hallowby (t027 +4) 6.0%, Yewmouth (t036 +6) 0.3%, Yewhurst (t043) 23.3%, Westerford (t067) 7.3%, Nettlehold (t097 +6) 1.3%, Larkfield (t106 +6) 0.7%, Kingshelm (t114 +6) 4.3%, Deepton (t150) 32.3%, Brightfield (t190) 10.3% | best 32.3%, worst 0.3%, spread 32.0 pts, fair 8.3% | bars: best OVER 2x fair, worst UNDER half | turns 47.5, CPU a turn 59 ms avg / 0.30 s worst
+done rootholm:12 in 236 min

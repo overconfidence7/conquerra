@@ -144,7 +144,8 @@ if (args[0] === "--worker") {
 }
 
 async function runAll(jobs: Job[]): Promise<Result[]> {
-  const n = Math.max(1, Math.min(jobs.length, availableParallelism() - 1));
+  // (Session 34b: `--workers N`, fewer processes while other sims share the machine.)
+  const n = Math.max(1, Math.min(jobs.length, Number(opt("workers", "0")) || availableParallelism() - 1));
   const shards: Job[][] = Array.from({ length: n }, () => []);
   jobs.forEach((j, i) => shards[i % n]!.push(j));
   const out: Result[] = [];

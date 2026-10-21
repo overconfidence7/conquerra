@@ -28,7 +28,9 @@ describe("the big tables' capital layouts (session 34)", () => {
       // The map's own layouts first, exactly as they were; then one for every count up to its new most.
       expect(m.capitalLayouts!.slice(0, mapFiles[id]!.capitalLayouts!.length)).toEqual(mapFiles[id]!.capitalLayouts);
       for (let n = m.minPlayers; n <= m.maxPlayers; n++) expect(m.capitalLayouts!.filter((l) => l.players === n)).toHaveLength(1);
-      expect({ ...m, maxPlayers: 10, capitalLayouts: mapFiles[id]!.capitalLayouts }).toEqual(mapFiles[id]);
+      // (Session 34b: and the later layout versions beside them, `layouts-v2.test.ts`.)
+      const { layoutVersions: _later, ...rest } = m;
+      expect({ ...rest, maxPlayers: 10, capitalLayouts: mapFiles[id]!.capitalLayouts }).toEqual(mapFiles[id]);
     }
     // Every other map as it is.
     for (const id of Object.keys(maps)) if (!bigTables[id]) expect(maps[id]).toBe(mapFiles[id]);

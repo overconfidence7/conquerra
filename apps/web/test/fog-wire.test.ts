@@ -177,7 +177,8 @@ describe("the fog on the wire (sessions 26 and 27): only viewFor leaves the room
           councilAsks++;
           expect(report.ask.leader.endsWith(`:${seat}`), `${seat} was asked by ${report.ask.leader}`).toBe(true);
           const known = new Set<string>();
-          for (const v of [viewFor(ctx, last!.before, seat), viewFor(ctx, game().fullState, seat)]) for (const [id, x] of Object.entries(v.territories)) if (x.detail === "full") known.add(id);
+          // (Session 34b: and land it remembers: a fogged territory with what it last saw, e.g. "Nate took Stormgate" seen on turn 8.)
+          for (const v of [viewFor(ctx, last!.before, seat), viewFor(ctx, game().fullState, seat)]) for (const [id, x] of Object.entries(v.territories)) if (x.detail === "full" || (x.detail === "fogged" && (x as { lastSeen?: unknown }).lastSeen)) known.add(id);
           for (const t of ctx.map.territories) if (new RegExp(`\\b${t.name}\\b`).test(report.ask.text)) expect(known.has(t.id), `${seat} was asked about ${t.name}`).toBe(true);
           expect(/\d/.test(report.ask.text)).toBe(false);
         }

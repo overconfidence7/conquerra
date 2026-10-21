@@ -1,0 +1,29 @@
+status rootholm:10: 10 spots, paper check passes, exposure 4.86x (band 4), nearest rival 6; moves allowed within 4.86x and the paper check
+search start spread 23.7
+search   weak t138 -> t133: spread 26.0
+search   strong t114 -> t082: spread 23.3 (better)
+search   strong t005 -> t007: spread 25.3
+search   weak t138 -> t133: spread 24.0
+search   weak t138 -> t132: spread 25.0
+search   weak t010 -> t016: spread 23.0 (better)
+search   weak t138 -> t133: spread 23.3
+search   weak t138 -> t132: spread 24.0
+search   strong t005 -> t007: spread 20.7 (better)
+search   weak t138 -> t133: spread 21.7
+search   weak t138 -> t132: spread 24.0
+start rootholm:10: Wolfhold (t005) 24.0%, Emberwick (t010) 5.3%, Hallowmarch (t044) 1.7%, Mistmark (t071) 10.0%, Nettlehold (t097) 2.0%, Kingshelm (t114) 18.0%, Silverfield (t138) 0.3%, Deepton (t150) 24.0%, Kingsmarch (t191) 11.0%, Fenbury (t197) 3.7% | best 24.0%, worst 0.3%, spread 23.7 pts, fair 10.0% | bars: best OVER 2x fair, worst UNDER half
+best rootholm:10: Yewcrest (t007) 20.3%, Glenleigh (t016) 3.0%, Hallowmarch (t044) 1.3%, Mistmark (t071) 20.7%, Nettlehold (t097) 1.3%, Frosthaven (t082) 18.3%, Silverfield (t138) 0.0%, Deepton (t150) 18.7%, Kingsmarch (t191) 13.0%, Fenbury (t197) 3.0% | best 20.7%, worst 0.0%, spread 20.7 pts, fair 10.0% | bars: best OVER 2x fair, worst UNDER half (12 layouts measured, 161 min)
+check rootholm:10 before: Wolfhold (t005) 19.3%, Emberwick (t010) 4.3%, Hallowmarch (t044) 2.3%, Mistmark (t071) 13.7%, Nettlehold (t097) 1.0%, Kingshelm (t114) 17.7%, Silverfield (t138) 0.0%, Deepton (t150) 27.3%, Kingsmarch (t191) 9.3%, Fenbury (t197) 5.0% | best 27.3%, worst 0.0%, spread 27.3 pts, fair 10.0% | bars: best OVER 2x fair, worst UNDER half | turns 48.4, CPU a turn 66 ms avg / 0.39 s worst
+check rootholm:10 after: Yewcrest (t007) 22.0%, Glenleigh (t016) 4.7%, Hallowmarch (t044) 2.0%, Mistmark (t071) 16.7%, Nettlehold (t097) 3.0%, Frosthaven (t082) 18.0%, Silverfield (t138) 0.0%, Deepton (t150) 20.0%, Kingsmarch (t191) 8.7%, Fenbury (t197) 5.0% | best 22.0%, worst 0.0%, spread 22.0 pts, fair 10.0% | bars: best OVER 2x fair, worst UNDER half | turns 48.2, CPU a turn 83 ms avg / 0.48 s worst
+pin rootholm:10: ["t007","t016","t044","t071","t082","t097","t138","t150","t191","t197"] (fresh games: spread 27.3 -> 22.0 pts)
+try rootholm:10 +2: Yewcrest (t007) 23.7%, Glenleigh (t016 +2) 5.0%, Hallowmarch (t044 +2) 2.0%, Mistmark (t071) 14.7%, Nettlehold (t097 +2) 2.3%, Frosthaven (t082) 16.7%, Silverfield (t138 +2) 0.0%, Deepton (t150) 19.0%, Kingsmarch (t191) 12.7%, Fenbury (t197) 4.0% | best 23.7%, worst 0.0%, spread 23.7 pts, fair 10.0% | bars: best OVER 2x fair, worst UNDER half
+try rootholm:10 +4: Yewcrest (t007) 20.0%, Glenleigh (t016 +4) 4.7%, Hallowmarch (t044 +4) 2.0%, Mistmark (t071) 11.7%, Nettlehold (t097 +4) 2.0%, Frosthaven (t082) 17.0%, Silverfield (t138 +4) 0.7%, Deepton (t150) 24.3%, Kingsmarch (t191) 11.7%, Fenbury (t197) 6.0% | best 24.3%, worst 0.7%, spread 23.7 pts, fair 10.0% | bars: best OVER 2x fair, worst UNDER half
+try rootholm:10 +6: Yewcrest (t007) 21.3%, Glenleigh (t016 +6) 5.7%, Hallowmarch (t044 +6) 1.0%, Mistmark (t071) 14.0%, Nettlehold (t097 +6) 3.7%, Frosthaven (t082) 13.0%, Silverfield (t138 +6) 0.0%, Deepton (t150) 25.0%, Kingsmarch (t191) 13.0%, Fenbury (t197) 3.0% | best 25.0%, worst 0.0%, spread 25.0 pts, fair 10.0% | bars: best OVER 2x fair, worst UNDER half
+choose rootholm:10 Glenleigh (t016): bare 4.7%, +2 -> 5.0%
+choose rootholm:10 Hallowmarch (t044): bare 2.0%, +6 -> 1.0% (+6 isn't enough)
+choose rootholm:10 Nettlehold (t097): bare 3.0%, +6 -> 3.7% (+6 isn't enough)
+choose rootholm:10 Silverfield (t138): bare 0.0%, +6 -> 0.0% (+6 isn't enough)
+bonus rootholm:10: {"t016":2,"t044":6,"t097":6,"t138":6}
+proof rootholm:10 today: Wolfhold (t005) 24.0%, Emberwick (t010) 7.3%, Hallowmarch (t044 +6) 1.3%, Mistmark (t071) 9.7%, Nettlehold (t097 +6) 3.0%, Kingshelm (t114) 10.7%, Silverfield (t138 +6) 0.7%, Deepton (t150) 25.0%, Kingsmarch (t191) 11.7%, Fenbury (t197) 6.7% | best 25.0%, worst 0.7%, spread 24.3 pts, fair 10.0% | bars: best OVER 2x fair, worst UNDER half | turns 48.7, CPU a turn 60 ms avg / 0.31 s worst
+proof rootholm:10 new: Yewcrest (t007) 24.0%, Glenleigh (t016 +2) 3.7%, Hallowmarch (t044 +6) 2.3%, Mistmark (t071) 16.3%, Nettlehold (t097 +6) 2.0%, Frosthaven (t082) 11.7%, Silverfield (t138 +6) 0.3%, Deepton (t150) 24.3%, Kingsmarch (t191) 11.3%, Fenbury (t197) 4.0% | best 24.3%, worst 0.3%, spread 24.0 pts, fair 10.0% | bars: best OVER 2x fair, worst UNDER half | turns 47.8, CPU a turn 60 ms avg / 0.28 s worst
+done rootholm:10 in 235 min

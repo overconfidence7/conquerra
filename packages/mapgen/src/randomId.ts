@@ -3,7 +3,6 @@
  * "80-crescent-quiet-heron" is 80 territories, a crescent and the seed "quiet-heron"; a game's map id puts
  * "random:" in front. Nothing here draws a map or a random number.
  */
-import { randomMaps } from "@conquerra/content/randomMaps";
 
 /** The sizes the lobby offers (territories). Session 33b: 300 and 400, for the big tables (session 34) and later the battle royale. */
 export const RANDOM_SIZES = [40, 80, 120, 200, 300, 400] as const;
@@ -58,7 +57,13 @@ export function versionSeats(seats: number | Partial<Record<"300" | "400", numbe
  * The players a random map suits, by size and shape (a small archipelago has room for five Houses at most). `seats`
  * (session 34): the most a random map version seats (10 up to version 5); left out, the current version's.
  */
-export function randomPlayers(size: RandomSize, shape: RandomShape, seats: number = versionSeats(randomMaps.versions[String(randomMaps.current)]!.seats, size)): (typeof RANDOM_PLAYERS)[RandomSize] {
+/**
+ * The current random map version's most seats by size, as `versionSeats` reads its `seats` (a test checks they agree).
+ * Written out here so the lobby reads it at start-up without loading the versions' file.
+ */
+export const RANDOM_SEATS_NOW: Partial<Record<RandomSize, number>> = { 300: 12, 400: 16 };
+
+export function randomPlayers(size: RandomSize, shape: RandomShape, seats: number = RANDOM_SEATS_NOW[size] ?? RANDOM_MAX_SEATS): (typeof RANDOM_PLAYERS)[RandomSize] {
   const p = RANDOM_PLAYERS[size];
   if (size === 40 && shape === "archipelago") return players(5, 3, 5);
   // (Session 34: a big archipelago stays at 10: at 16 seats no seed of ten made a fair one, and a map carries a layout

@@ -1,6 +1,6 @@
 import { defaultRules } from "@conquerra/content";
 import { describe, expect, it } from "vitest";
-import { exposureProblem, mapFingerprint, parseRandomId, randomMap, randomPlayers, randomRecipe, RANDOM_BIG_SEATS, RANDOM_MAX_SEATS, RANDOM_SIZES, versionSeats } from "../src/index";
+import { exposureProblem, mapFingerprint, parseRandomId, randomMap, randomPlayers, randomRecipe, RANDOM_BIG_SEATS, RANDOM_MAX_SEATS, RANDOM_SEATS_NOW, RANDOM_SIZES, RANDOM_VERSION, randomVersionDef, versionSeats } from "../src/index";
 
 /**
  * Session 33b: random maps at 300 and 400 territories, for the big tables (session 34) and the battle royale later.
@@ -14,6 +14,9 @@ describe("random maps at 300 and 400 territories (session 33b)", () => {
     expect(RANDOM_MAX_SEATS).toBe(10);
     // (Session 34b: RANDOM_PLAYERS holds the most any version seats; version 6's own caps: the 300 at 12, the 400 at 16.)
     expect(RANDOM_BIG_SEATS).toBe(20);
+    // The lobby's seat counts (written out for the start-up bundle) are the current version's.
+    for (const size of RANDOM_SIZES) for (const shape of ["island", "archipelago"] as const) expect(randomPlayers(size, shape)).toEqual(randomPlayers(size, shape, versionSeats(randomVersionDef(RANDOM_VERSION).seats, size)));
+    expect(Object.keys(RANDOM_SEATS_NOW).sort()).toEqual(["300", "400"]);
     expect(randomPlayers(300, "island", versionSeats(16, 300))).toEqual({ min: 4, max: 12, recommended: { min: 8, max: 10 } });
     expect(randomPlayers(400, "island", versionSeats(16, 400))).toEqual({ min: 6, max: 16, recommended: { min: 10, max: 10 } });
     // Version 5's (and every map made at it): 10 at most.

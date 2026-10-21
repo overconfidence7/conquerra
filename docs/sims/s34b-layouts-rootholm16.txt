@@ -1,0 +1,31 @@
+status rootholm:16: 16 spots, paper check fails, exposure 2.00x (band 4), nearest rival 2; moves allowed within 4.00x
+search start spread 33.7
+search   strong t197 -> t195: spread 30.0 (better)
+search   strong t195 -> t196: spread 24.7 (better)
+search   strong t150 -> t164: spread 31.7
+search   strong t196 -> t153: spread 25.0
+search   strong t196 -> t106: spread 32.3
+search   strong t196 -> t057: spread 36.3
+search   weak t118 -> t106: spread 24.7
+search   weak t118 -> t153: spread 16.0 (better)
+search   strong t150 -> t164: spread 24.0
+search   strong t196 -> t191: spread 18.7
+search   strong t196 -> t194: spread 18.7
+start rootholm:16: Wolfhold (t005) 2.7%, Emberwick (t010) 10.7%, Greyfield (t014) 1.7%, Mistwell (t018) 8.3%, Yewmouth (t036) 3.7%, Mistmark (t071) 2.0%, Frosthaven (t082) 6.3%, Nettlehold (t097) 3.3%, Coldreach (t099) 4.3%, Kingshelm (t114) 1.3%, Brighthaven (t118) 0.0%, Roseton (t132) 0.3%, Silverfield (t138) 5.0%, Deepton (t150) 1.0%, Brightfield (t190) 15.7%, Fenbury (t197) 33.7% | best 33.7%, worst 0.0%, spread 33.7 pts, fair 6.3% | bars: best OVER 2x fair, worst UNDER half
+best rootholm:16: Wolfhold (t005) 1.7%, Emberwick (t010) 10.7%, Greyfield (t014) 1.3%, Mistwell (t018) 12.0%, Yewmouth (t036) 2.7%, Mistmark (t071) 2.0%, Frosthaven (t082) 7.3%, Nettlehold (t097) 3.3%, Coldreach (t099) 5.7%, Kingshelm (t114) 0.3%, Coldwick (t153) 7.7%, Roseton (t132) 1.3%, Silverfield (t138) 0.3%, Deepton (t150) 16.3%, Brightfield (t190) 11.7%, Nettlehelm (t196) 15.7% | best 16.3%, worst 0.3%, spread 16.0 pts, fair 6.3% | bars: best OVER 2x fair, worst UNDER half (12 layouts measured, 164 min)
+check rootholm:16 before: Wolfhold (t005) 2.0%, Emberwick (t010) 9.7%, Greyfield (t014) 1.0%, Mistwell (t018) 10.0%, Yewmouth (t036) 2.3%, Mistmark (t071) 2.7%, Frosthaven (t082) 7.0%, Nettlehold (t097) 1.0%, Coldreach (t099) 6.3%, Kingshelm (t114) 2.3%, Brighthaven (t118) 0.3%, Roseton (t132) 0.3%, Silverfield (t138) 4.7%, Deepton (t150) 1.0%, Brightfield (t190) 22.7%, Fenbury (t197) 26.7% | best 26.7%, worst 0.3%, spread 26.3 pts, fair 6.3% | bars: best OVER 2x fair, worst UNDER half | turns 49.6, CPU a turn 124 ms avg / 0.84 s worst
+check rootholm:16 after: Wolfhold (t005) 4.7%, Emberwick (t010) 10.7%, Greyfield (t014) 0.0%, Mistwell (t018) 12.7%, Yewmouth (t036) 1.0%, Mistmark (t071) 2.0%, Frosthaven (t082) 9.0%, Nettlehold (t097) 6.0%, Coldreach (t099) 4.3%, Kingshelm (t114) 0.3%, Coldwick (t153) 6.0%, Roseton (t132) 0.0%, Silverfield (t138) 0.7%, Deepton (t150) 11.3%, Brightfield (t190) 12.0%, Nettlehelm (t196) 19.0% | best 19.0%, worst 0.0%, spread 19.0 pts, fair 6.3% | bars: best OVER 2x fair, worst UNDER half | turns 51.4, CPU a turn 104 ms avg / 0.56 s worst
+pin rootholm:16: ["t005","t010","t014","t018","t036","t071","t082","t097","t099","t114","t132","t138","t150","t153","t190","t196"] (fresh games: spread 26.3 -> 19.0 pts)
+try rootholm:16 +2: Wolfhold (t005) 3.3%, Emberwick (t010) 9.3%, Greyfield (t014 +2) 1.0%, Mistwell (t018) 11.0%, Yewmouth (t036 +2) 4.0%, Mistmark (t071 +2) 2.0%, Frosthaven (t082) 8.0%, Nettlehold (t097) 5.7%, Coldreach (t099) 5.7%, Kingshelm (t114 +2) 1.7%, Coldwick (t153) 7.0%, Roseton (t132 +2) 0.3%, Silverfield (t138 +2) 0.0%, Deepton (t150) 16.3%, Brightfield (t190) 11.7%, Nettlehelm (t196) 12.7% | best 16.3%, worst 0.0%, spread 16.3 pts, fair 6.3% | bars: best OVER 2x fair, worst UNDER half
+try rootholm:16 +4: Wolfhold (t005) 3.0%, Emberwick (t010) 6.7%, Greyfield (t014 +4) 1.0%, Mistwell (t018) 12.3%, Yewmouth (t036 +4) 2.3%, Mistmark (t071 +4) 1.0%, Frosthaven (t082) 8.7%, Nettlehold (t097) 2.7%, Coldreach (t099) 7.0%, Kingshelm (t114 +4) 2.7%, Coldwick (t153) 4.7%, Roseton (t132 +4) 1.0%, Silverfield (t138 +4) 0.3%, Deepton (t150) 17.0%, Brightfield (t190) 12.3%, Nettlehelm (t196) 17.3% | best 17.3%, worst 0.3%, spread 17.0 pts, fair 6.3% | bars: best OVER 2x fair, worst UNDER half
+try rootholm:16 +6: Wolfhold (t005) 2.3%, Emberwick (t010) 5.7%, Greyfield (t014 +6) 0.3%, Mistwell (t018) 12.0%, Yewmouth (t036 +6) 2.3%, Mistmark (t071 +6) 2.3%, Frosthaven (t082) 3.0%, Nettlehold (t097) 4.3%, Coldreach (t099) 9.7%, Kingshelm (t114 +6) 2.7%, Coldwick (t153) 7.3%, Roseton (t132 +6) 1.3%, Silverfield (t138 +6) 1.3%, Deepton (t150) 16.3%, Brightfield (t190) 13.7%, Nettlehelm (t196) 15.0% | best 16.3%, worst 0.3%, spread 16.0 pts, fair 6.3% | bars: best OVER 2x fair, worst UNDER half
+choose rootholm:16 Greyfield (t014): bare 0.0%, +6 -> 0.3% (+6 isn't enough)
+choose rootholm:16 Yewmouth (t036): bare 1.0%, +2 -> 4.0%
+choose rootholm:16 Mistmark (t071): bare 2.0%, +6 -> 2.3% (+6 isn't enough)
+choose rootholm:16 Kingshelm (t114): bare 0.3%, +6 -> 2.7% (+6 isn't enough)
+choose rootholm:16 Roseton (t132): bare 0.0%, +6 -> 1.3% (+6 isn't enough)
+choose rootholm:16 Silverfield (t138): bare 0.7%, +6 -> 1.3% (+6 isn't enough)
+bonus rootholm:16: {"t014":6,"t036":2,"t071":6,"t114":6,"t132":6,"t138":6}
+proof rootholm:16 today: Wolfhold (t005 +1) 1.3%, Emberwick (t010 +6) 9.7%, Greyfield (t014 +6) 1.7%, Mistwell (t018 +2) 10.7%, Yewmouth (t036 +1) 1.3%, Mistmark (t071 +1) 0.7%, Frosthaven (t082 +1) 3.3%, Nettlehold (t097 +1) 1.3%, Coldreach (t099 +6) 7.7%, Kingshelm (t114 +6) 9.0%, Brighthaven (t118 +6) 0.0%, Roseton (t132 +3) 1.7%, Silverfield (t138) 3.0%, Deepton (t150 +2) 2.3%, Brightfield (t190 +4) 17.3%, Fenbury (t197 +1) 28.7% | best 28.7%, worst 0.0%, spread 28.7 pts, fair 6.3% | bars: best OVER 2x fair, worst UNDER half (and a market and culture at 8) | turns 48.9, CPU a turn 79 ms avg / 0.32 s worst
+proof rootholm:16 new: Wolfhold (t005) 1.3%, Emberwick (t010) 6.0%, Greyfield (t014 +6) 1.3%, Mistwell (t018) 14.3%, Yewmouth (t036 +2) 3.0%, Mistmark (t071 +6) 2.0%, Frosthaven (t082) 3.3%, Nettlehold (t097) 3.0%, Coldreach (t099) 10.7%, Kingshelm (t114 +6) 6.3%, Coldwick (t153) 4.3%, Roseton (t132 +6) 0.3%, Silverfield (t138 +6) 0.3%, Deepton (t150) 16.0%, Brightfield (t190) 9.7%, Nettlehelm (t196) 18.0% | best 18.0%, worst 0.3%, spread 17.7 pts, fair 6.3% | bars: best OVER 2x fair, worst UNDER half | turns 52.5, CPU a turn 80 ms avg / 0.41 s worst
+done rootholm:16 in 237 min

@@ -1,0 +1,27 @@
+status krakenmere:8: 8 spots, paper check passes, exposure 3.86x (band 4), nearest rival 7; moves allowed within 4.00x and the paper check
+search start spread 45.0
+search   strong t188 -> t194: spread 49.0
+search   weak t104 -> t113: spread 45.7
+search   weak t013 -> t015: spread 49.3
+search   weak t013 -> t004: spread 47.0
+search   weak t195 -> t183: spread 50.0
+search   weak t195 -> t009: spread 53.7
+search   weak t195 -> t004: spread 52.7
+search   weak t173 -> t189: spread 45.3
+search   weak t173 -> t009: spread 42.7 (better)
+search   strong t188 -> t194: spread 48.0
+search   strong t188 -> t190: spread 42.3 (better)
+start krakenmere:8: Moonford (t013) 1.3%, Willowfall (t018) 13.3%, Rookstone (t104) 0.3%, Oldfell (t120) 6.0%, Briarleigh (t146) 13.3%, Glenby (t173) 10.7%, Coldwick (t195) 9.7%, Amberhaven (t188) 45.3% | best 45.3%, worst 0.3%, spread 45.0 pts, fair 12.5% | bars: best OVER 2x fair, worst UNDER half
+best krakenmere:8: Moonford (t013) 0.7%, Willowfall (t018) 16.0%, Rookstone (t104) 0.7%, Oldfell (t120) 4.3%, Briarleigh (t146) 26.7%, Winterhold (t009) 1.0%, Coldwick (t195) 7.7%, Hallowmark (t190) 43.0% | best 43.0%, worst 0.7%, spread 42.3 pts, fair 12.5% | bars: best OVER 2x fair, worst UNDER half (12 layouts measured, 165 min)
+check krakenmere:8 before: Moonford (t013) 1.0%, Willowfall (t018) 11.7%, Rookstone (t104) 0.0%, Oldfell (t120) 7.3%, Briarleigh (t146) 11.7%, Glenby (t173) 12.0%, Coldwick (t195) 7.7%, Amberhaven (t188) 48.7% | best 48.7%, worst 0.0%, spread 48.7 pts, fair 12.5% | bars: best OVER 2x fair, worst UNDER half | turns 46.9, CPU a turn 84 ms avg / 0.64 s worst
+check krakenmere:8 after: Moonford (t013) 0.3%, Willowfall (t018) 14.0%, Rookstone (t104) 0.3%, Oldfell (t120) 3.3%, Briarleigh (t146) 25.0%, Winterhold (t009) 0.7%, Coldwick (t195) 3.7%, Hallowmark (t190) 52.7% | best 52.7%, worst 0.3%, spread 52.3 pts, fair 12.5% | bars: best OVER 2x fair, worst UNDER half | turns 44.5, CPU a turn 65 ms avg / 0.38 s worst
+keep krakenmere:8: ["t013","t018","t104","t120","t146","t173","t188","t195"] (fresh games: spread 48.7 -> 52.3 pts)
+try krakenmere:8 +2: Moonford (t013 +2) 1.0%, Willowfall (t018) 12.0%, Rookstone (t104 +2) 0.3%, Oldfell (t120) 7.0%, Briarleigh (t146) 10.7%, Glenby (t173) 10.7%, Coldwick (t195) 6.7%, Amberhaven (t188) 51.7% | best 51.7%, worst 0.3%, spread 51.3 pts, fair 12.5% | bars: best OVER 2x fair, worst UNDER half
+try krakenmere:8 +4: Moonford (t013 +4) 0.7%, Willowfall (t018) 9.0%, Rookstone (t104 +4) 0.7%, Oldfell (t120) 7.7%, Briarleigh (t146) 15.7%, Glenby (t173) 7.0%, Coldwick (t195) 7.3%, Amberhaven (t188) 52.0% | best 52.0%, worst 0.7%, spread 51.3 pts, fair 12.5% | bars: best OVER 2x fair, worst UNDER half
+try krakenmere:8 +6: Moonford (t013 +6) 0.7%, Willowfall (t018) 9.3%, Rookstone (t104 +6) 0.0%, Oldfell (t120) 7.7%, Briarleigh (t146) 11.3%, Glenby (t173) 8.7%, Coldwick (t195) 10.3%, Amberhaven (t188) 51.3% | best 51.3%, worst 0.0%, spread 51.3 pts, fair 12.5% | bars: best OVER 2x fair, worst UNDER half
+choose krakenmere:8 Moonford (t013): bare 1.0%, +6 -> 0.7% (+6 isn't enough)
+choose krakenmere:8 Rookstone (t104): bare 0.0%, +6 -> 0.0% (+6 isn't enough)
+bonus krakenmere:8: {"t013":6,"t104":6}
+proof krakenmere:8 today: Moonford (t013 +6) 2.0%, Willowfall (t018) 11.0%, Rookstone (t104 +6) 0.0%, Oldfell (t120) 6.0%, Briarleigh (t146) 12.3%, Glenby (t173) 9.0%, Coldwick (t195) 6.0%, Amberhaven (t188) 53.0% | best 53.0%, worst 0.0%, spread 53.0 pts, fair 12.5% | bars: best OVER 2x fair, worst UNDER half | turns 46.3, CPU a turn 54 ms avg / 0.32 s worst
+proof krakenmere:8 new: Moonford (t013 +6) 2.0%, Willowfall (t018) 11.0%, Rookstone (t104 +6) 0.0%, Oldfell (t120) 6.0%, Briarleigh (t146) 12.3%, Glenby (t173) 9.0%, Coldwick (t195) 6.0%, Amberhaven (t188) 53.0% | best 53.0%, worst 0.0%, spread 53.0 pts, fair 12.5% | bars: best OVER 2x fair, worst UNDER half | turns 46.3, CPU a turn 54 ms avg / 0.28 s worst
+done krakenmere:8 in 238 min
