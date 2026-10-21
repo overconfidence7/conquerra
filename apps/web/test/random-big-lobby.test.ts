@@ -10,8 +10,10 @@ import { useGame } from "../src/store";
  */
 describe("the lobby's big random maps (session 33b)", () => {
   it("who a 300 and a 400 suit, as the official maps' line says it", () => {
-    expect(listingOf("random:300-island-quiet-heron")).toMatchObject({ territories: 300, minPlayers: 4, maxPlayers: 12, recommendedPlayers: { min: 8, max: 10 } });
-    expect(listingOf("random:400-crescent-quiet-heron")).toMatchObject({ territories: 400, minPlayers: 6, maxPlayers: 16, recommendedPlayers: { min: 10, max: 10 } });
+    // (Session 34b, random map version 7: the 300 seats up to 16, the 400 up to 20; an archipelago 10.)
+    expect(listingOf("random:300-island-quiet-heron")).toMatchObject({ territories: 300, minPlayers: 4, maxPlayers: 16, recommendedPlayers: { min: 8, max: 10 } });
+    expect(listingOf("random:400-crescent-quiet-heron")).toMatchObject({ territories: 400, minPlayers: 6, maxPlayers: 20, recommendedPlayers: { min: 10, max: 10 } });
+    expect(listingOf("random:400-archipelago-quiet-heron")).toMatchObject({ maxPlayers: 10 });
   });
 
   it("the card's line for the big sizes, in the voice", () => {
@@ -27,6 +29,11 @@ describe("the lobby's big random maps (session 33b)", () => {
     expect(useGame.getState().lobby.bots).toBe(5);
     setLobby({ mapId: "random:300-island-quiet-heron", bots: 1 });
     expect(useGame.getState().lobby.bots).toBe(3);
+    // Up to 19 bots on a 400 (a 20-seat table), 15 on a 300.
+    setLobby({ mapId: "random:400-island-quiet-heron", bots: 25 });
+    expect(useGame.getState().lobby.bots).toBe(19);
+    setLobby({ mapId: "random:300-island-quiet-heron", bots: 25 });
+    expect(useGame.getState().lobby.bots).toBe(15);
     setLobby({ mapId: "embervale", bots: 3 });
     expect(useGame.getState().lobby.bots).toBe(3);
   });

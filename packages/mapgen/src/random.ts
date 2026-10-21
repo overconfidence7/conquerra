@@ -68,7 +68,7 @@ export function randomRecipe(size: RandomSize, shape: RandomShape, seed: string,
  * The map's own fairness check at generation: every layout within the exposure band (a reason to reject, or null).
  * Session 34b: `above`, a looser band for the layouts above that many players (version 7).
  */
-export function exposureProblem(map: MapDef, band: number = randomVersionDef(RANDOM_VERSION).band, above?: RandomVersionDef["bandAbove"]): string | null {
+export function exposureProblem(map: MapDef, band: number = randomVersionDef(RANDOM_VERSION).band, above: RandomVersionDef["bandAbove"] | null = randomVersionDef(RANDOM_VERSION).bandAbove ?? null): string | null {
   const d = allDistances(map), adj = adjacency(map);
   for (const l of map.capitalLayouts ?? []) {
     const e = exposureOf(l.slots, d, adj, above && l.players > above.players ? above.band : band);
@@ -175,7 +175,7 @@ export function randomMap(id: string, rules: Rules, opts: Pick<MapGenOptions, "s
   const v = randomVersionDef(version);
   const band = bandOverride ?? v.band;
   // (Session 34b: `bandAbove: null` tries one band for every count.)
-  const above = aboveOverride === null ? undefined : (aboveOverride ?? v.bandAbove);
+  const above = aboveOverride === null ? null : (aboveOverride ?? v.bandAbove ?? null);
   const recipe: MapGenOptions = { ...randomRecipe(p.size, p.shape, p.seed, version, seats), ...(paperUpTo !== undefined ? { paperUpTo } : {}), ...gen, accept: (m) => exposureProblem(m, band, above) };
   try {
     const r = (hint && hint > 1 && hint <= RANDOM_TRIES && tryAt(recipe, rules, hint)) || generateMap(recipe, rules);

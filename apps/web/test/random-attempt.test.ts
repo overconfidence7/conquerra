@@ -24,7 +24,11 @@ describe("the try that passed, told to the room (session 33b)", () => {
     expect(attemptOf({ mapId: "random:40-island-quiet-heron", bots: 3, mapAttempt: 2 })).toBe(2);
     for (const bad of [1, 7, "x", -3, null]) expect(attemptOf({ mapId: "random:40-island-quiet-heron", bots: 3, mapAttempt: bad })).toBeUndefined();
     expect(attemptOf({ mapId: "embervale", bots: 3, mapAttempt: 3 })).toBeUndefined();
-    expect(made({ mapId: "random:400-island-quiet-heron", bots: 3 })).toEqual({ error: "Random, 400 territories takes 5 to 15 bots." });
+    // (Session 34b: a 400 seats up to 20, so 5 to 19 bots; the Worker's line follows the current random map version.)
+    expect(made({ mapId: "random:400-island-quiet-heron", bots: 3 })).toEqual({ error: "Random, 400 territories takes 5 to 19 bots." });
+    expect(made({ mapId: "random:400-island-quiet-heron", bots: 19 })).toMatchObject({ settings: { bots: 19 } });
+    expect(made({ mapId: "random:400-island-quiet-heron", bots: 20 })).toEqual({ error: "Random, 400 territories takes 5 to 19 bots." });
+    expect(made({ mapId: "random:300-island-quiet-heron", bots: 16 })).toEqual({ error: "Random, 300 territories takes 3 to 15 bots." });
     expect(made({ mapId: "random:400-island-quiet-heron", bots: 5 })).toMatchObject({ settings: { bots: 5 } });
   });
 

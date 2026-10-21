@@ -22,7 +22,9 @@ export type RandomShape = "island" | "archipelago" | "twins" | "crescent" | "inl
  * make a fair map (`scripts/try-random.ts --seats N --paper 10`: 400 at 16 passes 35 of 50, at 20 25 of 50; 300 at 12
  * 36 of 50, at 16 24 of 50, at 20 9 of 50).
  * Session 34b: `RANDOM_PLAYERS` holds the most any version seats (20 on the big sizes); each version's `seats` caps
- * it (`versionSeats`), and the lobby reads the current version's.
+ * it (`versionSeats`), and the lobby reads the current version's. Version 7 seats the 400 up to 20 and the 300 up to 16,
+ * judging the layouts above 12 by the band 5.5 (`try-random.ts --band-above 12:5.5`: the 400 at 20 passes 40 of 50
+ * seeds, the 300 at 16 40 of 50, at 20 32 of 50; archipelagos stay at 10).
  */
 export const RANDOM_MAX_SEATS = 10;
 export const RANDOM_BIG_SEATS = 20;
@@ -61,7 +63,7 @@ export function versionSeats(seats: number | Partial<Record<"300" | "400", numbe
  * The current random map version's most seats by size, as `versionSeats` reads its `seats` (a test checks they agree).
  * Written out here so the lobby reads it at start-up without loading the versions' file.
  */
-export const RANDOM_SEATS_NOW: Partial<Record<RandomSize, number>> = { 300: 12, 400: 16 };
+export const RANDOM_SEATS_NOW: Partial<Record<RandomSize, number>> = { 300: 16, 400: 20 };
 
 export function randomPlayers(size: RandomSize, shape: RandomShape, seats: number = RANDOM_SEATS_NOW[size] ?? RANDOM_MAX_SEATS): (typeof RANDOM_PLAYERS)[RandomSize] {
   const p = RANDOM_PLAYERS[size];

@@ -130,3 +130,33 @@ Ten accounts at a 20-seat Rootholm table (Conquest): the table made in 74 ms, ni
 - **Turns and CPU didn't move:** the proofs' tables ran 46.5 to 54.6 turns against today's 47.2 to 54.2 (Rootholm 16: 52.5 against 48.9, a fairer table running a little longer), CPU per turn 53 to 107 ms on average against 54 to 112 ms, the worst turn under 0.9 s (one process of 19).
 
 **Where they live, and how a running game keeps its spots:** version 2 sits beside the map files in `packages/content/data/maps/layout-versions.json` (as `big-tables.json` does); `withBigTables` attaches it to the map as `layoutVersions`, and the engine's `layoutFor(map, players, version)` picks the layout. A new game's setup records `layouts: 2`; a setup with none (every game made before this session, and its history) is dealt from version 1's layouts and head start, so a game already running on the server keeps its spots across the deploy, and its turns replay exactly.
+
+## Session 34b: 20 seats (Oct 20)
+
+*Nate's call (Oct 20): the big tables to 20 seats, the random 400s (and 300s where the seeds allow) and Krakenmere as far as its castles allow, with a looser fairness band above 12 seats; the less fair spots still go to bots first, said nowhere in the game. Raw: `docs/sims/s34b-random*`.*
+
+**The band, by the seeds** (`pnpm --filter @conquerra/mapgen exec tsx scripts/try-random.ts 10 300,400 all --seats N --band-above 12:B`; 50 seeds a size, ten of each shape, the paper check to 10 seats as in version 6; archipelagos stay at 10 seats whatever the band, so theirs is their own number):
+
+| Seats | Band above 12 | 300 | 400 | (non-archipelago) |
+|---|---|---|---|---|
+| 16 | 4.0 (session 34) | 24 | 35 | |
+| 16 | **5.5** | **40** | **41** | 32 of 40, 36 of 40 |
+| 20 | 4.0 (session 34) | 9 | 25 | |
+| 20 | **5.5** | 32 | **40** | 24 of 40, 35 of 40 |
+| 20 | 6.0 | 35 | | 27 of 40 |
+
+**Shipped, random map version 7:** the band **4.0 up to 12 seats and 5.5 above** (content: `bandAbove` in `data/random-maps.json`), **the 400 up to 20 seats** (40 of 50 seeds pass, the bar was seven in ten) and **the 300 up to 16** (40 of 50; at 20 it's 32 of 50 at 5.5 and 35 at 6.0, so 20 on a 300 waits for a looser band, Nate's call). The archipelagos stay at 10. The grade and the income head start are version 6's (troops by exposure up to 6, a market and culture on the more exposed half). Versions 2 to 6 build exactly their maps (their pins pass); version 7's 400 and 300 are pinned on one cheap seed each. **Building one try** (the room and the pages are told the try that passed): a 400 in 6.7 s at version 7 against 5.0 s at version 6 on this laptop, a 300 in 4.4 s against 3.4 s (the four or five more layouts).
+
+**Krakenmere stays at 13.** Its most even layout at each count from its 28 castles (`packages/mapgen/scripts/krakenmere-max.ts`, 300 starts): 13 seats 2.73 times as exposed (most to least), **14 seats 5.71** (just outside 5.5), 15 seats 9.3, 16 seats 29 (a spot with 2 territories of room), 17 seats 52, and from 18 two capitals touch. So 5.5 stops it at 13; a band of 6.0 would let it seat 14 (and the 300 reach 20): a question for Nate, not shipped.
+
+**The sims** (`npx tsx apps/sim/scripts/s30-sims.ts --random 400:all:50 20 --seed s34b --version 7`, one game a map, all Marshals; 34 maps played: the ten archipelagos seat 10 and six seeds didn't make a fair map):
+
+| Table | Turns: avg, within 40, before the 60 cap | By exposure, safest first (fair 5.0%) | Furthest rank | The seat rule's harder spots | CPU per turn, avg / worst turn |
+|---|---|---|---|---|---|
+| 400, 20 players | 54.4, 9%, 44% | 5.9 / 8.8 / 5.9 / 0 / 0 / 8.8 / 11.8 / 5.9 / 5.9 / 8.8 / 2.9 / 5.9 / 11.8 / 2.9 / 0 / 0 / 2.9 / 5.9 / 2.9 / 2.9 | 11.8% (**2.4 × fair**) | 1.6 a map; won 5.0% (fair 8.0%) | 407 ms / **2.36 s** |
+| 400, 20, blackout | 59.0, 0%, 18% | 8.8 / 8.8 / 11.8 / 8.8 / 14.7 / 0 / 5.9 / 5.9 / 0 / 2.9 / 5.9 / 5.9 / 2.9 / 0 / 0 / 0 / 5.9 / 5.9 / 0 / 5.9 | 14.7% (2.9 ×) | won 15.0% (fair 8.0%) | 358 ms / 1.40 s |
+| 300, 16 players | 51.3, 21%, 56% | 11.8 / 5.9 / 5.9 / 8.8 / 14.7 / 14.7 / 0 / 8.8 / 5.9 / 8.8 / 0 / 2.9 / 2.9 / 2.9 / 5.9 / 0 (fair 6.3%) | 14.7% (2.3 ×) | 1.5 a map; won 10.5% (fair 9.5%) | 223 ms / 0.72 s |
+
+With 34 games a rank's share carries about 3.7 points of noise (one win is 2.9 points), so these rows say little beyond "no rank runs away": the furthest rank is two to three times fair, as at 16 seats in session 34 (2.4 ×). **CPU: the worst turn with 20 Marshals on a 400 was 2.36 s in one process** (the machine running other sims beside it), under the 5 s bar and far under the room's 30 s; session 34's 16 seats had 4.42 s at the worst on a busier machine. **Under blackout** a seat had seen half the map by turn 38.7 on average (17% of seats ever did; at 400 territories and 20 seats most seats are out first), all of it by 55.1 (1%); four in five blackout games reach the 60-turn cap in Classic (Conquest, 20 turns, is suggested from 8 players).
+
+**Nothing said about it in the game:** the lobby's seat count follows (a 400 now offers up to 19 bots, a 300 up to 15); the random-map card keeps its one line on the head start; the seat rule is unsaid.

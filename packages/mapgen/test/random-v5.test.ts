@@ -14,12 +14,17 @@ const V5 = RANDOM_VERSIONS[5]!;
 
 describe("random map version 5 (session 33b): the income head start", () => {
   it("its values the content's (data/random-maps.json): version 4's grade and band, and a start block (session 34: version 6 is current, version 5 with 20 seats on the big sizes)", () => {
-    expect(RANDOM_VERSION).toBe(6);
-    expect(randomMaps.current).toBe(6);
+    expect(RANDOM_VERSION).toBe(7); // (session 34b)
+    expect(randomMaps.current).toBe(7);
     const { seats, paperUpTo, ...v6 } = RANDOM_VERSIONS[6]!;
     expect(v6).toEqual(V5);
     expect(seats).toBe(16);
     expect(paperUpTo).toBe(10);
+    // Session 34b: version 7 is version 6 with seats by size (the 400 to 20, the 300 to 16) and a looser band above 12.
+    const { seats: seats7, bandAbove, ...v7 } = RANDOM_VERSIONS[7]!;
+    expect(v7).toEqual({ ...V5, paperUpTo: 10 });
+    expect(seats7).toEqual({ 300: 16, 400: 20 });
+    expect(bandAbove).toEqual({ players: 12, band: 5.5 });
     expect(V5).toEqual(randomMaps.versions["5"]);
     expect(V5.band).toBe(RANDOM_VERSIONS[4]!.band);
     expect(V5.grade).toEqual(RANDOM_VERSIONS[4]!.grade);
