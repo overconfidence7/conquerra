@@ -222,7 +222,7 @@ describe("the game room (session 26)", () => {
     const t = testRoom();
     await t.room.create({ gameId: "g10", settings, people: [nate], seed: "s10" });
     const stranger = await t.ask("p9", { type: "hello" });
-    expect(stranger).toMatchObject({ ok: false, error: "You don't have a seat in this game" });
+    expect(stranger).toMatchObject({ ok: false, error: "You don't have a seat in this game." });
     const junk = await t.ask("p1", { type: "lockIn", orders: [{ nope: 1 }] as unknown as Order[], turn: 1 });
     expect(junk).toMatchObject({ ok: false });
     const pause = await t.ask("p1", { type: "pause" } as unknown as RoomBody);

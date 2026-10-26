@@ -11,10 +11,10 @@ import { useGame } from "../store";
 export const ALERTS_TEXT = {
   push: "Tell me when it's my turn",
   pushHelp: "A notification on this device when a new turn opens and the game isn't open here.",
-  install: "To get a notification when it's your turn, install the app: in Chrome, the menu, then Install Conquerra. On an iPhone, Share, then Add to Home Screen.",
+  install: "To get a notification when it's your turn, install the game first. In Chrome, open the menu and tap Install Conquerra. On an iPhone, tap Share, then Add to Home Screen.",
   blocked: "Notifications are blocked for this site. You can allow them in the browser's site settings, then try again.",
   email: "Email me when it's my turn in a long game",
-  emailHelp: (to: string) => `For games with 1 hour turns or longer, to ${to}. For now this reaches only addresses set up in the game's account.`,
+  emailHelp: (to: string) => `For games with turns of an hour or more, to ${to}. For now it reaches only the addresses Nate has set up for the game's email.`,
 } as const;
 
 export function TurnAlerts() {

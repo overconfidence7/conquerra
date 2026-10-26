@@ -939,7 +939,7 @@ export class RoomCore {
     if (!req || typeof req !== "object" || typeof req.id !== "number") return;
     try {
       const g = await this.ensureLoaded();
-      if (!g.peopleIds.includes(seat)) throw new Error("You don't have a seat in this game");
+      if (!g.peopleIds.includes(seat)) throw new Error("You don't have a seat in this game.");
       switch (req.type) {
         case "hello": {
           await this.loadTable();

@@ -15,7 +15,7 @@ export const SAFETY_TEXT = {
   cancel: "Cancel",
   reported: "Reported. Nate reads these.",
   reportedAlready: "You've reported that line already.",
-  reportsToday: "You've sent three reports today. Tomorrow.",
+  reportsToday: "You've sent three reports today, the most a day. You can send more tomorrow.",
   pickReason: "Pick a reason first.",
   notALine: "That line isn't in one of your chats.",
   ownLine: "That's your own line.",
@@ -30,7 +30,7 @@ export const SAFETY_TEXT = {
   noneBlocked: "No one. Block someone from their chat line or the Houses panel.",
   unblock: "Unblock",
   // The caps.
-  tablesToday: "You've made 20 tables today. Tomorrow.",
+  tablesToday: "You've made 20 tables today, the most a day. You can make more tomorrow.",
   tooFast: "That's a lot at once. Wait a moment, then try again.",
   joinsTooFast: "That's a lot of links at once. Wait a minute, then try again.",
 } as const;

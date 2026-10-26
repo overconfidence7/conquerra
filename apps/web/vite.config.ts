@@ -87,6 +87,10 @@ export default defineConfig(({ command, mode }) => ({
         background_color: "#0f1620",
         display: "standalone",
         orientation: "any",
+        // (Session 35: the installed app opens on the lobby; its id is the one Chrome already gave it, so a copy installed
+        // before stays the same app.)
+        id: "/",
+        scope: "/",
         start_url: "/",
         icons: [
           { src: "icons/icon-192.png", sizes: "192x192", type: "image/png" },

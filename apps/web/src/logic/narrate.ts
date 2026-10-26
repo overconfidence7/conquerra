@@ -285,7 +285,7 @@ export function narrate(ctx: GameContext, e: ReplayEvent, n: Namer): LogLine | n
     case "income":
       return incomeLine(e, null, n);
     case "gameOver":
-      return { text: e.winner === "draw" ? "The game ends in a draw." : `${who(e.winner)} ${verb(e.winner, "win", "wins")} the game!`, tone: isMe(e.winner) ? "good" : "info" };
+      return { text: e.winner === "draw" ? "The game ends in a draw." : `${who(e.winner)} ${verb(e.winner, "win", "wins")} the game${isMe(e.winner) ? "!" : "."}`, tone: isMe(e.winner) ? "good" : "info" };
     // Diplomacy (session 14): the engine's own wording.
     case "dealStarted":
       return { text: dealLine(e, dealNames(n))!, tone: isMe(e.deal.a) || isMe(e.deal.b) ? "good" : "info" };

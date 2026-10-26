@@ -15,10 +15,11 @@ import type { RandomShape, RandomSize } from "@conquerra/mapgen/randomId";
 const RANDOM_CHOICE = "random";
 /** Session 31: the remembered random map comes back once a page load (not every time the lobby shows). */
 let cameBackToRandom = false;
-import { houseSummary, LUCK, rulesSummary } from "../logic/lobbyText";
+import { aPlayerGame, houseSummary, LUCK, rulesSummary } from "../logic/lobbyText";
 import { useArtUrl } from "./art";
 import { Frame } from "./Frame";
 import { VersionLine } from "./VersionLine";
+import { InstallLine } from "./InstallLine";
 import { savedWhen, slotLine } from "./saveText";
 import { DEFAULT_HOUSE, HOUSE_PLAIN, HOUSES } from "../map/houses";
 import { unlockedAudio } from "../sound/unlock";
@@ -240,6 +241,8 @@ export function Lobby() {
         </div>
         <p className="muted tagline">Set your orders, lock in, and watch everyone's plans collide.</p>
         <VersionLine />
+        {/* Session 35: on a phone that hasn't installed the game, one line to install it (gone once dismissed). */}
+        <InstallLine />
         {auto && (
           <button className="primary wide big continue" onClick={() => void load({ slot: "auto" })} disabled={busy}>
             Continue
@@ -350,7 +353,7 @@ export function Lobby() {
         {/* Session 31: someone who has never played gets one line: Learn is open below, or jump straight in. */}
         {shouldGuide(slots.length) && (
           <p className="muted small jump-in">
-            Or jump in: a {players}-player game on {random ? "a random map" : map.name}
+            Or jump in: {aPlayerGame(players)} on {random ? "a random map" : map.name}
           </p>
         )}
         {/* Learn (session 31): the lessons, under Start. */}

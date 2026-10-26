@@ -153,7 +153,7 @@ async function createGame(env: Env, user: UserRow, body: unknown): Promise<Respo
   if ("error" in clean) return problem(400, clean.error);
   const { settings, leadersRun } = clean;
   const now = Date.now();
-  // Session 34: 20 tables a day at most (the 21st: "You've made 20 tables today. Tomorrow.").
+  // Session 34: 20 tables a day at most (the 21st is told so: `SAFETY_TEXT.tablesToday`).
   const capped = await tableCap(env.DB, user.id, now);
   if (capped) return problem(429, capped);
   const id = newGameId();

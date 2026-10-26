@@ -1911,7 +1911,7 @@
         "Finished {rival}. I don't leave a job half done."
       ],
       "comeback": [
-        "{place} is mine again. Did anyone think I was done?",
+        "{place} is mine again. Anyone who thought I was done can update their notes.",
         "Took back {place}. I was never out of it.",
         "{place} is home again. Write that down."
       ],
@@ -1927,7 +1927,7 @@
       ],
       "replyTheyTook": [
         "{place} was on the plan. Nothing personal.",
-        "You want {place} back? Come and get it.",
+        "If you want {place} back, come and get it.",
         "{place} is mine now. Take it up with my army."
       ],
       "replyYouTook": [
@@ -1968,7 +1968,7 @@
         "Took {places}. Didn't even slow down."
       ],
       "bragCapital": [
-        "Took {capital}. Fast, right?",
+        "Took {capital}. Fast, as promised.",
         "{capital} is mine. Already moving.",
         "{capital}. Done. Next."
       ],
@@ -1995,7 +1995,7 @@
       "comeback": [
         "{place} is mine again. Told you I'm quick.",
         "Back in {place}. Barely stopped.",
-        "Took back {place}. Missed me?"
+        "Took back {place}. Quick, even for me."
       ],
       "cloudLifts": [
         "Nothing but cloud past my border, until today. Now I know which way to run.",
@@ -2028,17 +2028,17 @@
         "{deal} on. Back to it."
       ],
       "offerRefused": [
-        "No? Fine. No time anyway.",
+        "Refused. Fine. No time anyway.",
         "Your call. Already moving.",
         "Okay. Next."
       ],
       "groupWar": [
-        "{rival}? Now? Send the joint war and I'm there.",
+        "{rival}, now. Send the joint war and I'm there.",
         "In. Put {rival} in a deal. Quick.",
         "Make it a deal against {rival}. I'll get there first."
       ],
       "groupPeace": [
-        "Truce? Fine. Send it. Fast.",
+        "A truce. Fine. Send it. Fast.",
         "Send a truce. I'll sign it on the way past.",
         "Paper first. Then peace. Quick."
       ]
@@ -2157,9 +2157,9 @@
         "{rival} is out, friend. Don't look at me like that."
       ],
       "comeback": [
-        "{place} is mine again, friend. Did you miss me?",
+        "{place} is mine again, friend. I hope you missed me.",
         "Took back {place}. Everyone forgets about me. Everyone.",
-        "Back in {place}, friend. Surprised?"
+        "Back in {place}, friend. Try to look surprised."
       ],
       "cloudLifts": [
         "Nothing but cloud past my border, until today. Now I know who to talk to.",
@@ -2184,7 +2184,7 @@
       "replyAllies": [
         "Our {deal} holds, friend. I'd never dream otherwise.",
         "We have a {deal}, friend. I read the terms very carefully.",
-        "Of course our {deal} stands, friend. Why wouldn't it?"
+        "Of course our {deal} stands, friend. I'd be hurt you asked."
       ],
       "offerTaken": [
         "Wonderful, friend. The {deal} starts this turn.",
@@ -2194,7 +2194,7 @@
       "offerRefused": [
         "No {deal}? Pity, friend. I'll remember.",
         "Of course, friend. Another time.",
-        "Not now, friend? I understand. I'm writing it down."
+        "Not now, friend. I understand. I'm writing it down."
       ],
       "groupWar": [
         "Against {rival}? Make it a deal, friend, and I'm right behind you.",
@@ -2653,7 +2653,7 @@
         "I took that as a no. Diplomatic of you."
       ],
       "needle": [
-        "Still not going after {rival}, friend? Fine. I can wait.",
+        "Still not going after {rival}, friend. Fine. I can wait.",
         "{rival} is doing very well. Too well, friend.",
         "I've been very nice to {rival}. For now."
       ],

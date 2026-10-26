@@ -201,7 +201,7 @@ describe("the caps (session 34)", () => {
     for (let i = 1; i <= 19; i++) add(i, now - i * 60_000);
     expect(await tableCap(D, "u1", now)).toBeNull();
     add(20, now - 1000);
-    expect(await tableCap(D, "u1", now)).toBe("You've made 20 tables today. Tomorrow.");
+    expect(await tableCap(D, "u1", now)).toBe("You've made 20 tables today, the most a day. You can make more tomorrow.");
     expect(SAFETY_LIMITS.tablesPerDay).toBe(20);
     // The Worker asks before it makes the table (and before the room does any work).
     const api = readFileSync(join(web, "server/api.ts"), "utf8");

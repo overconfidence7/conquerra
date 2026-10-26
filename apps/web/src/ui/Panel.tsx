@@ -395,7 +395,7 @@ function DraftPanel({ ctx, view, plan, queue, draft }: Props & { draft: MoveDraf
         </button>
       )}
       <button className="link small" onClick={() => startPath(draft.from)} title="Tap a place further away: the shortest way there, or sweep up everything in between">
-        Further? Path…
+        Further away: Path…
       </button>
     </div>
   );

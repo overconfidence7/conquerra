@@ -541,7 +541,7 @@ export class LocalGame {
 
   private person(id: PlayerId): Person {
     const p = this.people.get(id);
-    if (!p) throw new Error("You don't have a seat in this game");
+    if (!p) throw new Error("You don't have a seat in this game.");
     return p;
   }
 

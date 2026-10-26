@@ -646,5 +646,9 @@ An online game is played on the server, so you can close the tab and come back o
 - **Scenarios:** set pieces in the same format with no hints, listed under Learn: **The Siege of Highmouth** (take Highmouth and all of Rush March from a Captain in 10 turns). **Load a file** reads a scenario file the same way it reads a saved game.
 - **Someone who has never played** sees Learn open and one line under Start: "Or jump in: a 4-player game on Embervale" (the lobby's own table).
 
+## 27. Install (session 35)
+- **Install puts the game on your home screen, and it opens like an app** (no browser bar; the lobby first). On an Android phone the lobby shows "Install Conquerra: it opens like an app." under the version label: tap it, then Install. On an iPhone, Safari has no button for it, so the lobby says how: tap Share, then Add to Home Screen. **Not now** hides the line on that device for good; it never shows once the game is installed, or on a computer.
+- The installed game is the same game: the same saves, the same online games, and "your turn" notifications arrive in it (on an iPhone, notifications only work in the installed game).
+
 ## Not in yet (later milestones)
 Steward portraits (a later art batch. Until then the House shield with a quill), the leaders' full voices (session 22's language pass: today one line when they take land), a painted wall piece (the wall is drawn in code until an art batch), a start bonus for weaker capital spots (listed, not built: `docs/sim-results-m3-balance.md`), the polish pass with replay effects and art batch 4 (session 21), the language pass (session 22), sound (its own session after). Catch-up rules for a runaway (options listed in `docs/sim-results-m3-balance.md`, not built). Factions, tutorials and scenarios (M5). Bots that chat about anything beyond their lines, and leaders' temperaments: later. Not planned: shared vision between partners, and spies that sabotage or affect combat.

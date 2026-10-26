@@ -25,3 +25,6 @@ export function houseSummary(l: LobbySettings, stewardSuggestion: string): strin
   return `${HOUSES[h]!.name} (${HOUSE_PLAIN[h]}), Leader ${leader} (${styleLabel(l.leaderPersonality ?? null)}), Steward ${steward} (${styleLabel(l.stewardPersonality ?? null)})`;
 }
 
+
+/** Session 35: "an 8-player game", "a 4-player game" (an eight, an eleven, an eighteen). */
+export const aPlayerGame = (players: number) => `${[8, 11, 18].includes(players) ? "an" : "a"} ${players}-player game`;

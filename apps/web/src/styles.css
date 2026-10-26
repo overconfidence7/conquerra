@@ -730,3 +730,6 @@ button.player-btn { background: none; border: 1px solid transparent; border-radi
 .players.compact img.portrait { width: 32px; height: 32px; }
 .players.compact img.shield { width: 24px; height: 24px; }
 .game.phone .out-stack .popover + .fallen-panel { max-height: 45%; }
+/* Session 35: the lobby's Install line, under the version label (a phone that hasn't installed the game). */
+.install-line { display: flex; align-items: baseline; justify-content: center; gap: 12px; flex-wrap: wrap; text-align: center; margin: 0 0 6px; }
+.install-line .link { padding: 0; min-height: 0; }
