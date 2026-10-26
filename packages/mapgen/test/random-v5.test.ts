@@ -14,7 +14,7 @@ const V5 = RANDOM_VERSIONS[5]!;
 
 describe("random map version 5 (session 33b): the income head start", () => {
   it("its values the content's (data/random-maps.json): version 4's grade and band, and a start block (session 34: version 6 is current, version 5 with 20 seats on the big sizes)", () => {
-    expect(RANDOM_VERSION).toBe(7); // (session 34b)
+    expect(RANDOM_VERSION).toBe(8); // (session 34b: 7; session 35: 8)
     expect(randomMaps.current).toBe(8);
     const { seats, paperUpTo, ...v6 } = RANDOM_VERSIONS[6]!;
     expect(v6).toEqual(V5);
