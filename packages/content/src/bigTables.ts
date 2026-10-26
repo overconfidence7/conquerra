@@ -10,7 +10,7 @@ import versionsJson from "../data/maps/layout-versions.json";
  */
 export interface BigTable {
   maxPlayers: number;
-  layouts: { players: number; slots: string[]; bonus?: Record<string, number>; harder?: string[]; buildings?: Record<string, "market">; culture?: Record<string, number> }[];
+  layouts: { players: number; slots: string[]; bonus?: Record<string, number>; harder?: string[]; strong?: string[]; buildings?: Record<string, "market">; culture?: Record<string, number> }[];
 }
 export const bigTables: Readonly<Record<string, BigTable>> = bigJson as unknown as Record<string, BigTable>;
 

@@ -3,7 +3,9 @@
  * start bonus, for Krakenmere and Rootholm at 8 to 20 seats). Every table runs at once on one shared set of workers.
  *
  *   npx tsx apps/sim/scripts/s34b-layouts.ts rootholm:8,krakenmere:10,... [--games 300] [--budget 10] [--workers 19]
- *     [--band 4] [--out docs/sims]
+ *     [--band 4] [--out docs/sims] [--tag s34b] [--from 1]
+ * Session 35: `--tag s35` names the files and the games' seeds (s35F, s35C, s35P), and `--from 3` starts the search from
+ * a layout version's layout for the table (Krakenmere 14, which version 1 doesn't seat); left out, 34b's run exactly.
  *
  * For each table (its own file, docs/sims/s34b-layouts-<map><n>.txt):
  *  1. "status": the map's current layout (its own for 2 to 10, session 34's beside the map for 11 and up): the paper
@@ -23,6 +25,7 @@ import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { defaultRules } from "@conquerra/content";
 import { maps } from "@conquerra/content/maps";
+import { layoutFor } from "@conquerra/engine";
 import { adjacency, allDistances, exposureOf, fairnessOf, fairnessTable, territoryIncome } from "@conquerra/mapgen";
 import { searchFairSeats } from "../src/fairSeats";
 import { GamePool, type LiteResult } from "../src/pool";
@@ -38,6 +41,8 @@ const GAMES = Number(opt("games", "300"));
 const BUDGET = Number(opt("budget", "10"));
 const BAND = Number(opt("band", "4"));
 const OUT = opt("out", "docs/sims");
+const TAG = opt("tag", "s34b");
+const FROM = Number(opt("from", "1"));
 const pool = new GamePool(Number(opt("workers", "19")));
 mkdirSync(OUT, { recursive: true });
 
@@ -47,7 +52,7 @@ async function one(table: string) {
   const [id, n] = table.split(":") as [string, string];
   const players = Number(n);
   const map = maps[id]!;
-  const file = join(OUT, `s34b-layouts-${id}${players}.txt`);
+  const file = join(OUT, `${TAG}-layouts-${id}${players}.txt`);
   writeFileSync(file, "");
   const log = (line: string) => {
     appendFileSync(file, `${line}\n`);
@@ -57,7 +62,7 @@ async function one(table: string) {
   const dists = allDistances(map), adj = adjacency(map);
   const tbl = fairnessTable(dists, territoryIncome(map, defaultRules));
   const fair = 1 / players;
-  const current = map.capitalLayouts!.find((l) => l.players === players)!;
+  const current = FROM > 1 ? layoutFor(map, players, FROM)! : map.capitalLayouts!.find((l) => l.players === players)!;
   const ratio = (l: readonly string[]) => {
     const e = exposureOf(l, dists, adj, BAND).exposure;
     return Math.max(...e) / Math.max(1e-9, Math.min(...e));
@@ -98,7 +103,7 @@ async function one(table: string) {
   const res = await searchFairSeats({
     start: current.slots,
     slots: map.capitalSlots,
-    measure: async (l) => rates(l, await pool.run(spec("s34bF", l))),
+    measure: async (l) => rates(l, await pool.run(spec(`${TAG}F`, l))),
     paperFair: (l) => (players > 10 || paper(l)) && ratio(l) <= band + 1e-9 && gap(l) >= 2,
     dist: (a, b) => dists.get(a)!.get(b) ?? 99,
     exposure: (l, s) => exposureOf(l, dists, adj).exposure[l.indexOf(s)]!,
@@ -109,9 +114,9 @@ async function one(table: string) {
   log(`best ${table}: ${show(res.best.layout, res.best.rates)} (${res.tried.length} layouts measured, ${((Date.now() - t0) / 60000).toFixed(0)} min)`);
 
   // 3. Fresh games for both.
-  const cStartRs = await pool.run(spec("s34bC", res.start.layout));
+  const cStartRs = await pool.run(spec(`${TAG}C`, res.start.layout));
   const cStart = rates(res.start.layout, cStartRs);
-  const cBestRs = res.best === res.start ? cStartRs : await pool.run(spec("s34bC", res.best.layout));
+  const cBestRs = res.best === res.start ? cStartRs : await pool.run(spec(`${TAG}C`, res.best.layout));
   const cBest = rates(res.best.layout, cBestRs);
   log(`check ${table} before: ${show(res.start.layout, cStart)} | ${extra(cStartRs)}`);
   log(`check ${table} after: ${show(res.best.layout, cBest)} | ${extra(cBestRs)}`);
@@ -128,7 +133,7 @@ async function one(table: string) {
     const tries = new Map<number, number[]>();
     for (const b of [2, 4, 6]) {
       const bonus = Object.fromEntries(weak.map((t) => [t, b]));
-      const r = rates(ships, await pool.run(spec("s34bC", ships, bonus)));
+      const r = rates(ships, await pool.run(spec(`${TAG}C`, ships, bonus)));
       tries.set(b, r);
       log(`try ${table} +${b}: ${show(ships, r, bonus)}`);
     }
@@ -143,8 +148,8 @@ async function one(table: string) {
   log(`bonus ${table}: ${JSON.stringify(chosen)}`);
 
   // 5. The proof on fresh games: as it ships today (its own head start) against the new layout with its bonus.
-  const todayRs = await pool.run(spec("s34bP"));
-  const newRs = await pool.run(spec("s34bP", ships, chosen));
+  const todayRs = await pool.run(spec(`${TAG}P`));
+  const newRs = await pool.run(spec(`${TAG}P`, ships, chosen));
   const todayBonus = current.bonus ?? {};
   log(`proof ${table} today: ${show(current.slots, rates(current.slots, todayRs), todayBonus)}${current.buildings ? ` (and a market and culture at ${Object.keys(current.buildings).length})` : ""} | ${extra(todayRs)}`);
   log(`proof ${table} new: ${show(ships, rates(ships, newRs), chosen)} | ${extra(newRs)}`);

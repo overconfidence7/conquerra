@@ -30,10 +30,13 @@ describe("random maps at 300 and 400 territories (session 33b)", () => {
     }
     expect(randomPlayers(300, "archipelago").max).toBe(RANDOM_MAX_SEATS);
     expect(randomRecipe(200, "island", "quiet-heron", 6).players).toEqual(randomRecipe(200, "island", "quiet-heron", 5).players);
-    // Session 34b (version 7, current): the 400 up to 20, the 300 up to 16; archipelagos 10; the smaller sizes as before.
-    expect(RANDOM_VERSION).toBe(7);
+    // Session 34b (version 7): the 400 up to 20, the 300 up to 16; archipelagos 10; the smaller sizes as before.
+    // Session 35 (version 8, current): the 300 up to 20 too.
+    expect(RANDOM_VERSION).toBe(8);
     expect(randomPlayers(400, "island")).toEqual({ min: 6, max: 20, recommended: { min: 10, max: 10 } });
-    expect(randomPlayers(300, "crescent")).toEqual({ min: 4, max: 16, recommended: { min: 8, max: 10 } });
+    expect(randomPlayers(300, "crescent")).toEqual({ min: 4, max: 20, recommended: { min: 8, max: 10 } });
+    expect(randomPlayers(300, "crescent", versionSeats(randomVersionDef(7).seats, 300))).toEqual({ min: 4, max: 16, recommended: { min: 8, max: 10 } });
+    expect(randomRecipe(300, "twins", "quiet-heron", 8).players.max).toBe(20);
     expect(randomPlayers(400, "archipelago").max).toBe(RANDOM_MAX_SEATS);
     expect(randomRecipe(400, "twins", "quiet-heron", 7).players.max).toBe(20);
     expect(randomRecipe(300, "twins", "quiet-heron", 7).players.max).toBe(16);

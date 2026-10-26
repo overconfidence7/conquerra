@@ -57,12 +57,22 @@ export function layoutFor(map: MapDef, players: number, version = 1): NonNullabl
  * (then the people left over keep theirs, with its head start, as before). Everything else keeps the shuffle's order,
  * and a table of bots only (or of people only) is dealt exactly as before. No dice are used, so the game's own dice
  * are the same either way.
+ * Session 35 (Nate's call, Oct 20): the strong spots (`strong`, those the simulator says win more than twice their
+ * share) go to bots first too, before the weak ones: a person dealt a strong spot swaps with the first bot not on one,
+ * then the weak spots are dealt as before among the rest (a bot on a strong spot stays there). With no strong spots
+ * marked the deal is exactly session 25's.
  */
-export function dealSeats<T extends { bot?: boolean }>(seats: readonly T[], capitals: readonly string[], weak: ReadonlySet<string>): T[] {
+export function dealSeats<T extends { bot?: boolean }>(seats: readonly T[], capitals: readonly string[], weak: ReadonlySet<string>, strong: ReadonlySet<string> = new Set()): T[] {
   const out = [...seats];
   for (let i = 0; i < out.length; i++) {
+    if (!strong.has(capitals[i]!) || out[i]!.bot) continue;
+    const j = out.findIndex((p, k) => p.bot && !strong.has(capitals[k]!));
+    if (j < 0) break;
+    [out[i], out[j]] = [out[j]!, out[i]!];
+  }
+  for (let i = 0; i < out.length; i++) {
     if (!weak.has(capitals[i]!) || out[i]!.bot) continue;
-    const j = out.findIndex((p, k) => p.bot && !weak.has(capitals[k]!));
+    const j = out.findIndex((p, k) => p.bot && !weak.has(capitals[k]!) && !strong.has(capitals[k]!));
     if (j < 0) break;
     [out[i], out[j]] = [out[j]!, out[i]!];
   }
@@ -142,7 +152,8 @@ export function createGame(ctx: GameContext, opts: NewGameOptions): GameState {
   // (Session 33: a random map's layout always lists them since version 4, an empty list too, and then the list alone
   // says, since every spot but the safest has a head start. On every map made before, the two marks are the same spots.)
   const weak = new Set(layout?.harder ?? Object.keys(layoutBonus).filter((k) => (layoutBonus[k] ?? 0) > 0));
-  const seats = opts.seatRule === "botsFirst" ? dealSeats(shuffled, capitals, weak) : shuffled;
+  // (Session 35: and the strong spots, a layout's `strong`, before them.)
+  const seats = opts.seatRule === "botsFirst" ? dealSeats(shuffled, capitals, weak, new Set(layout?.strong ?? [])) : shuffled;
 
   const territories: Record<string, TerritoryState> = {};
   for (const t of map.territories)

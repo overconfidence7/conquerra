@@ -13,8 +13,8 @@ import { LocalGame } from "../src/host/localGame";
 const v2 = layoutVersions["2"]!;
 
 describe("layout version 2: the 200s' layouts chosen by the simulator (session 34b)", () => {
-  it("is the newest version, beside the map files (the files, and every other map, untouched)", () => {
-    expect(LAYOUT_VERSION).toBe(2);
+  it("sits beside the map files (the files, and every other map, untouched); session 35's version 3 is newer", () => {
+    expect(LAYOUT_VERSION).toBe(3);
     expect(Object.keys(v2).every((id) => ["krakenmere", "rootholm"].includes(id))).toBe(true);
     for (const id of Object.keys(maps)) if (!bigTables[id] && !v2[id]) expect(maps[id]).toBe(mapFiles[id]);
     expect(mapFiles.rootholm!.layoutVersions).toBeUndefined();
@@ -78,7 +78,8 @@ describe("layout version 2: the 200s' layouts chosen by the simulator (session 3
         const people = Math.min(10, l.players - harder.size);
         for (const seed of ["a", "b", "c"]) {
           const players = Array.from({ length: l.players }, (_, i) => ({ id: `p${i + 1}`, name: `P${i + 1}`, ...(i >= people ? { bot: true } : {}) }));
-          const s = createGame({ map: maps[id]!, rules: defaultRules }, { gameId: "seat", seed: `${seed}-${id}-${l.players}`, players, startBonus: true, seatRule: "botsFirst", layouts: LAYOUT_VERSION });
+          // (Version 2's own deal: session 35's version 3 adds the strong spots, `layouts-v3.test.ts`.)
+          const s = createGame({ map: maps[id]!, rules: defaultRules }, { gameId: "seat", seed: `${seed}-${id}-${l.players}`, players, startBonus: true, seatRule: "botsFirst", layouts: 2 });
           expect(s.players.filter((p) => Number(p.id.slice(1)) <= people && harder.has(p.capital))).toHaveLength(0);
         }
       }

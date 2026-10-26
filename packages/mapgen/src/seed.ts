@@ -60,6 +60,8 @@ export const RANDOM_TRIES = 6;
  *  - 6 (session 34): version 5, and the big sizes (300 and 400) seat up to 20 (`seats`; a layout for every count).
  *  - 7 (session 34b, Nate's call): version 6, more seats on the big sizes (by size), and a looser exposure band for
  *    the layouts above 12 players (`bandAbove`).
+ *  - 8 (session 35, Nate's call): version 7 with the band above 12 players at 6.0 (not 5.5), so the 300 seats up
+ *    to 20 as the 400 does.
  */
 export interface RandomVersionDef {
   band: number;

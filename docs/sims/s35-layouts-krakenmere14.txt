@@ -1,0 +1,33 @@
+status krakenmere:14: 14 spots, paper check fails, exposure 5.71x (band 6), nearest rival 3; moves allowed within 6.00x
+search start spread 26.7
+search   strong t188 -> t194: spread 28.7
+search   strong t188 -> t198: spread 21.7 (better)
+search   strong t196 -> t185: spread 21.7
+search   strong t198 -> t190: spread 27.3
+search   weak t104 -> t113: spread 25.3
+search   weak t015 -> t013: spread 21.7
+search   weak t004 -> t009: spread 31.0
+search   strong t018 -> t019: spread 25.7
+search   t196 -> t185 and t198 -> t188: spread 29.0
+search   t196 -> t185 and t198 -> t194: spread 26.7
+search   t196 -> t185 and t198 -> t190: spread 27.7
+start krakenmere:14: Dundale (t004) 1.7%, Blackmoor (t015) 0.3%, Willowfall (t018) 12.3%, Ashmark (t055) 26.7%, Rookstone (t104) 0.7%, Stagwood (t133) 0.3%, Harrowhurst (t156) 7.3%, Northshire (t159) 0.7%, Goldrest (t163) 0.0%, Glenby (t173) 4.0%, Rushdale (t183) 4.0%, Amberhaven (t188) 22.0%, Deepdale (t189) 1.0%, Emberfall (t196) 19.0% | best 26.7%, worst 0.0%, spread 26.7 pts, fair 7.1% | bars: best OVER 2x fair, worst UNDER half
+best krakenmere:14: Dundale (t004) 2.0%, Blackmoor (t015) 0.3%, Willowfall (t018) 10.0%, Ashmark (t055) 21.3%, Rookstone (t104) 0.0%, Stagwood (t133) 0.7%, Harrowhurst (t156) 20.3%, Northshire (t159) 0.3%, Goldrest (t163) 0.7%, Glenby (t173) 2.0%, Rushdale (t183) 3.3%, Amberhelm (t198) 15.7%, Deepdale (t189) 1.3%, Emberfall (t196) 21.7% | best 21.7%, worst 0.0%, spread 21.7 pts, fair 7.1% | bars: best OVER 2x fair, worst UNDER half (12 layouts measured, 32 min)
+check krakenmere:14 before: Dundale (t004) 3.3%, Blackmoor (t015) 0.7%, Willowfall (t018) 11.7%, Ashmark (t055) 28.3%, Rookstone (t104) 0.0%, Stagwood (t133) 0.3%, Harrowhurst (t156) 7.0%, Northshire (t159) 1.3%, Goldrest (t163) 2.0%, Glenby (t173) 2.3%, Rushdale (t183) 3.7%, Amberhaven (t188) 17.0%, Deepdale (t189) 1.7%, Emberfall (t196) 20.3% | best 28.3%, worst 0.0%, spread 28.3 pts, fair 7.1% | bars: best OVER 2x fair, worst UNDER half | turns 50.1, CPU a turn 149 ms avg / 2.59 s worst
+check krakenmere:14 after: Dundale (t004) 1.7%, Blackmoor (t015) 0.3%, Willowfall (t018) 17.0%, Ashmark (t055) 21.0%, Rookstone (t104) 0.3%, Stagwood (t133) 0.7%, Harrowhurst (t156) 19.7%, Northshire (t159) 0.0%, Goldrest (t163) 1.0%, Glenby (t173) 1.7%, Rushdale (t183) 5.0%, Amberhelm (t198) 12.7%, Deepdale (t189) 2.0%, Emberfall (t196) 16.7% | best 21.0%, worst 0.0%, spread 21.0 pts, fair 7.1% | bars: best OVER 2x fair, worst UNDER half | turns 49.9, CPU a turn 171 ms avg / 1.05 s worst
+pin krakenmere:14: ["t004","t015","t018","t055","t104","t133","t156","t159","t163","t173","t183","t189","t196","t198"] (fresh games: spread 28.3 -> 21.0 pts)
+try krakenmere:14 +2: Dundale (t004 +2) 4.3%, Blackmoor (t015 +2) 1.0%, Willowfall (t018) 12.0%, Ashmark (t055) 23.7%, Rookstone (t104 +2) 1.0%, Stagwood (t133 +2) 0.3%, Harrowhurst (t156) 24.3%, Northshire (t159 +2) 0.0%, Goldrest (t163 +2) 0.3%, Glenby (t173 +2) 1.3%, Rushdale (t183) 5.0%, Amberhelm (t198) 11.3%, Deepdale (t189 +2) 0.7%, Emberfall (t196) 14.7% | best 24.3%, worst 0.0%, spread 24.3 pts, fair 7.1% | bars: best OVER 2x fair, worst UNDER half
+try krakenmere:14 +4: Dundale (t004 +4) 0.7%, Blackmoor (t015 +4) 0.7%, Willowfall (t018) 13.3%, Ashmark (t055) 31.7%, Rookstone (t104 +4) 0.7%, Stagwood (t133 +4) 0.0%, Harrowhurst (t156) 18.0%, Northshire (t159 +4) 0.3%, Goldrest (t163 +4) 0.3%, Glenby (t173 +4) 1.3%, Rushdale (t183) 2.7%, Amberhelm (t198) 8.0%, Deepdale (t189 +4) 2.7%, Emberfall (t196) 19.7% | best 31.7%, worst 0.0%, spread 31.7 pts, fair 7.1% | bars: best OVER 2x fair, worst UNDER half
+try krakenmere:14 +6: Dundale (t004 +6) 1.0%, Blackmoor (t015 +6) 0.3%, Willowfall (t018) 9.3%, Ashmark (t055) 23.3%, Rookstone (t104 +6) 1.3%, Stagwood (t133 +6) 0.0%, Harrowhurst (t156) 24.3%, Northshire (t159 +6) 0.7%, Goldrest (t163 +6) 0.7%, Glenby (t173 +6) 5.7%, Rushdale (t183) 2.3%, Amberhelm (t198) 11.3%, Deepdale (t189 +6) 1.7%, Emberfall (t196) 18.0% | best 24.3%, worst 0.0%, spread 24.3 pts, fair 7.1% | bars: best OVER 2x fair, worst UNDER half
+choose krakenmere:14 Dundale (t004): bare 1.7%, +2 -> 4.3%
+choose krakenmere:14 Blackmoor (t015): bare 0.3%, +6 -> 0.3% (+6 isn't enough)
+choose krakenmere:14 Rookstone (t104): bare 0.3%, +6 -> 1.3% (+6 isn't enough)
+choose krakenmere:14 Stagwood (t133): bare 0.7%, +6 -> 0.0% (+6 isn't enough)
+choose krakenmere:14 Northshire (t159): bare 0.0%, +6 -> 0.7% (+6 isn't enough)
+choose krakenmere:14 Goldrest (t163): bare 1.0%, +6 -> 0.7% (+6 isn't enough)
+choose krakenmere:14 Glenby (t173): bare 1.7%, +6 -> 5.7%
+choose krakenmere:14 Deepdale (t189): bare 2.0%, +6 -> 1.7% (+6 isn't enough)
+bonus krakenmere:14: {"t004":2,"t015":6,"t104":6,"t133":6,"t159":6,"t163":6,"t173":6,"t189":6}
+proof krakenmere:14 today: Dundale (t004) 3.0%, Blackmoor (t015) 0.3%, Willowfall (t018) 9.7%, Ashmark (t055) 29.7%, Rookstone (t104) 0.0%, Stagwood (t133) 0.0%, Harrowhurst (t156) 8.3%, Northshire (t159) 0.7%, Goldrest (t163) 0.3%, Glenby (t173) 2.3%, Rushdale (t183) 5.0%, Amberhaven (t188) 20.7%, Deepdale (t189) 1.0%, Emberfall (t196) 19.0% | best 29.7%, worst 0.0%, spread 29.7 pts, fair 7.1% | bars: best OVER 2x fair, worst UNDER half | turns 50.4, CPU a turn 113 ms avg / 0.68 s worst
+proof krakenmere:14 new: Dundale (t004 +2) 3.7%, Blackmoor (t015 +6) 1.0%, Willowfall (t018) 11.0%, Ashmark (t055) 25.7%, Rookstone (t104 +6) 0.0%, Stagwood (t133 +6) 0.7%, Harrowhurst (t156) 17.7%, Northshire (t159 +6) 0.3%, Goldrest (t163 +6) 0.7%, Glenby (t173 +6) 4.0%, Rushdale (t183) 3.3%, Amberhelm (t198) 11.7%, Deepdale (t189 +6) 0.7%, Emberfall (t196) 19.3% | best 25.7%, worst 0.0%, spread 25.7 pts, fair 7.1% | bars: best OVER 2x fair, worst UNDER half | turns 49.3, CPU a turn 91 ms avg / 0.33 s worst
+done krakenmere:14 in 51 min

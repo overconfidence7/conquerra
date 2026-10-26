@@ -94,6 +94,11 @@ const CapitalLayout = z.object({
   /** Session 30, random maps: the harder spots by the map maker's exposure check (no start bonus); the seat rule deals them to bots first. */
   harder: z.array(z.string()).optional(),
   /**
+   * Session 35 (Nate's call, Oct 20): the strong spots, those the simulator says win more than twice their fair share;
+   * the seat rule deals them to bots first, before the harder ones. Said nowhere in the game.
+   */
+  strong: z.array(z.string()).optional(),
+  /**
    * Session 33b, random maps' income head start (version 5): a building each listed spot's capital starts with,
    * finished on turn 1, and its culture level there. The seat rule doesn't read these.
    */
@@ -148,7 +153,7 @@ export const MapDef = z
     if (m.capitalSlots.length < m.maxPlayers)
       ctx.addIssue({ code: "custom", message: "not enough capital slots for maxPlayers" });
     for (const l of [...(m.capitalLayouts ?? []), ...(m.layoutVersions ?? []).flatMap((v) => v.layouts)])
-      if (l.slots.length !== l.players || new Set(l.slots).size !== l.players || l.slots.some((s) => !ids.has(s)) || Object.keys(l.bonus ?? {}).some((s) => !l.slots.includes(s)) || (l.harder ?? []).some((s) => !l.slots.includes(s)) || Object.keys({ ...l.buildings, ...l.culture }).some((s) => !l.slots.includes(s)))
+      if (l.slots.length !== l.players || new Set(l.slots).size !== l.players || l.slots.some((s) => !ids.has(s)) || Object.keys(l.bonus ?? {}).some((s) => !l.slots.includes(s)) || (l.harder ?? []).some((s) => !l.slots.includes(s)) || (l.strong ?? []).some((s) => !l.slots.includes(s)) || Object.keys({ ...l.buildings, ...l.culture }).some((s) => !l.slots.includes(s)))
         ctx.addIssue({ code: "custom", message: `bad capital layout for ${l.players} players` });
   });
 export type MapDef = z.infer<typeof MapDef>;

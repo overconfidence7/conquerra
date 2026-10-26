@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { defaultRules, type MapDef } from "@conquerra/content";
+import { MapDef as MapSchema } from "@conquerra/content/schemas";
 import { maps } from "@conquerra/content/maps";
 import { createGame, dealSeats, makeSave, readSave, replaySavedGame, resolveTurn, stateFingerprint, type GameContext, type NewGameOptions } from "../src";
 
@@ -101,5 +102,60 @@ describe("the seat rule: harder spots go to bots first (session 25)", () => {
     expect(replaySavedGame(two, back.save.history!, stateFingerprint(s)).matches).toBe(true);
     // Replayed without the rule, the person may sit elsewhere: the choice is what makes it replay exactly.
     expect(capitalOf(createGame(two, back.save.history!.setup), "p1")).toBe(capitalOf(s, "p1"));
+  });
+});
+
+describe("the seat rule: the strong spots go to bots first too (session 35, Nate's call)", () => {
+  // Embervale at 4: s1 and s3 harder (a bonus), s0 strong (the simulator says it wins over twice its share).
+  const marked = (strong: string[]): GameContext => ({ map: { ...base, capitalLayouts: base.capitalLayouts!.map((l) => (l.players === 4 ? { ...l, bonus: { [s1]: 4, [s3]: 6 }, strong } : l)) } as MapDef, rules: defaultRules });
+  const strong = new Set([s0]);
+  type Seat = { id: string; bot?: boolean };
+  const P: Seat = { id: "you" }, Q: Seat = { id: "two" }, A: Seat = { id: "a", bot: true }, B: Seat = { id: "b", bot: true }, C: Seat = { id: "c", bot: true };
+
+  it("dealSeats: a person on a strong spot swaps with the first bot not on one, then the weak spots as before", () => {
+    const caps = [s0, s1, s2, s3];
+    // You were dealt s0 (strong): you swap with A (the first bot off a strong spot, on s1, weak); then you're on a weak
+    // spot, and swap with the first bot on an unmarked one (B, on s2).
+    expect(dealSeats([P, A, B, C], caps, weak, strong).map((p) => p.id)).toEqual(["a", "b", "you", "c"]);
+    // A bot on the strong spot stays there, even when a person is on a weak spot (a bot on s2 takes the weak one).
+    expect(dealSeats([A, P, B, C], caps, weak, strong).map((p) => p.id)).toEqual(["a", "b", "you", "c"]);
+    // One bot: it takes the strong spot first; the two people left on weak spots keep theirs.
+    expect(dealSeats([P, Q, A, { id: "three" }], caps, weak, strong).map((p) => p.id)).toEqual(["a", "two", "you", "three"]);
+    // No strong spots marked: exactly session 25's deal.
+    for (const order of [[P, A, B, C], [A, P, B, C], [A, P, B, Q], [Q, A, P, B]])
+      expect(dealSeats(order, caps, weak, new Set())).toEqual(dealSeats(order, caps, weak));
+  });
+
+  it("a person never starts at a marked spot (strong or weak) while a bot holds an unmarked one; with fewer bots, the strong spots go to bots before the weak", () => {
+    const c = marked([s0]);
+    for (const seed of SEEDS) {
+      for (const who of [0, 1, 2, 3]) {
+        const s = start(c, seats([0, 1, 2, 3].map((i) => i !== who)), seed, "botsFirst");
+        expect(capitalOf(s, `p${who + 1}`)).toBe(s2);
+      }
+      // Two people, two bots: the bots hold the strong spot and one weak one; the people the unmarked spot and a weak one.
+      const s = start(c, seats([false, true, false, true]), seed, "botsFirst");
+      expect(strong.has(capitalOf(s, "p1")) || strong.has(capitalOf(s, "p3"))).toBe(false);
+      expect([capitalOf(s, "p1"), capitalOf(s, "p3")]).toContain(s2);
+      // Three people, one bot: the bot holds the strong spot.
+      expect(capitalOf(start(c, seats([false, false, true, false]), seed, "botsFirst"), "p3")).toBe(s0);
+    }
+  });
+
+  it("no bots at the table, or no strong marks: dealt exactly as before", () => {
+    for (const seed of SEEDS.slice(0, 10)) {
+      const people = seats([false, false, false, false]);
+      expect(stateFingerprint(start(marked([s0]), people, seed, "botsFirst"))).toBe(stateFingerprint(start(two, people, seed, "botsFirst")));
+      const bots = seats([true, true, true, true]);
+      expect(stateFingerprint(start(marked([s0]), bots, seed, "botsFirst"))).toBe(stateFingerprint(start(two, bots, seed)));
+      const one = seats([false, true, true, true]);
+      expect(stateFingerprint(start(marked([]), one, seed, "botsFirst"))).toBe(stateFingerprint(start(two, one, seed, "botsFirst")));
+    }
+  });
+
+  it("the schema checks a strong mark is one of the layout's own spots", () => {
+    const bad = { ...base, capitalLayouts: base.capitalLayouts!.map((l) => (l.players === 4 ? { ...l, strong: ["nowhere"] } : l)) };
+    expect(() => MapSchema.parse(bad)).toThrow();
+    expect(() => MapSchema.parse({ ...base, capitalLayouts: base.capitalLayouts!.map((l) => (l.players === 4 ? { ...l, strong: [s0] } : l)) })).not.toThrow();
   });
 });

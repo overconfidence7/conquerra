@@ -22,12 +22,14 @@ describe("the big tables' capital layouts (session 34)", () => {
     expect(mapFiles.rootholm!.maxPlayers).toBe(10);
     expect(mapFiles.krakenmere!.maxPlayers).toBe(10);
     expect(maps.rootholm!.maxPlayers).toBe(20);
-    expect(maps.krakenmere!.maxPlayers).toBe(13);
+    // (Session 35: Krakenmere 14 comes with layout version 3, beside the others; version 1's big tables stop at 13.)
+    expect(maps.krakenmere!.maxPlayers).toBe(14);
+    expect(bigTables.krakenmere!.maxPlayers).toBe(13);
     for (const id of ["rootholm", "krakenmere"]) {
       const m = maps[id]!;
       // The map's own layouts first, exactly as they were; then one for every count up to its new most.
       expect(m.capitalLayouts!.slice(0, mapFiles[id]!.capitalLayouts!.length)).toEqual(mapFiles[id]!.capitalLayouts);
-      for (let n = m.minPlayers; n <= m.maxPlayers; n++) expect(m.capitalLayouts!.filter((l) => l.players === n)).toHaveLength(1);
+      for (let n = m.minPlayers; n <= bigTables[id]!.maxPlayers; n++) expect(m.capitalLayouts!.filter((l) => l.players === n)).toHaveLength(1);
       // (Session 34b: and the later layout versions beside them, `layouts-v2.test.ts`.)
       const { layoutVersions: _later, ...rest } = m;
       expect({ ...rest, maxPlayers: 10, capitalLayouts: mapFiles[id]!.capitalLayouts }).toEqual(mapFiles[id]);

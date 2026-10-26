@@ -213,3 +213,17 @@ The head start by rank: 300 at 8, 0 / 1.7 / 2.6 / 3.4 / 3.9 / 4.8 / 5.4 / 5.7 tr
 ## Session 34b: version 7 (Oct 20)
 
 **Random map version 7:** version 6 with **the 400 seating up to 20 and the 300 up to 16** (archipelagos 10), and **a looser exposure band above 12 seats** (4.0 up to 12, 5.5 above; content: `seats` by size and `bandAbove` in `data/random-maps.json`). At 5.5 the 400 at 20 seats passes 40 of 50 seeds (25 at 4.0), the 300 at 16 40 of 50 (24); the 300 at 20 only 32 (35 at 6.0), so it stays at 16. The grade and the income head start as versions 5 and 6. Versions 2 to 6 build exactly their maps. The seeds, the sims at 20 seats and the CPU: `docs/sim-results-m5-scale.md`, "Session 34b: 20 seats".
+
+## Session 35: version 8 (Oct 25)
+
+**Random map version 8 (Nate's call, Oct 20):** version 7 with **the band above 12 seats at 6.0** (4.0 up to 12, as before), so **the 300 seats up to 20** as the 400 does (archipelagos stay at 10). Versions 2 to 7 build exactly theirs (every pin passes); version 8 is pinned on `400-island-quiet-heron` and `300-inland-quiet-heron` (the 300's 18-seat layout is 5.9 times as exposed, most to least: version 7 would have refused that seed). The lobby's and the Worker's seat counts follow (`RANDOM_SEATS_NOW`, tested against the content).
+
+**The seeds at 20 on a 300** (`pnpm --filter @conquerra/mapgen exec tsx scripts/try-random.ts 10 300 all --seats 20 --list`, raw: `docs/sims/s35-try-random300-20.txt`): **35 of 50 pass**, the same count session 34b measured at 6.0: island 7 (cold-kestrel, elder-thistle, gilded-bear, patient-bramble, scarlet-leaf, south-torch, tame-candle), twins 6 (quiet-heron, elder-thistle, gilded-bear, jolly-lake, patient-bramble, scarlet-leaf), crescent 7 (quiet-heron, cold-kestrel, elder-thistle, gilded-bear, jolly-lake, patient-bramble, tame-candle), inland 7 (quiet-heron, elder-thistle, gilded-bear, mellow-tide, patient-bramble, scarlet-leaf, south-torch); the archipelagos 8 of 10 at their 10 seats. A failed seed rerolls by itself (session 32), so the lobby still makes a map; it just takes another try.
+
+**The sims, 20 Marshals on a 300** (`npx tsx apps/sim/scripts/s30-sims.ts --random 300:all:50 20 --seed s35`, one game a map; 26 played: the ten archipelagos seat 10 and 14 seeds of this run made no fair map in six tries; raw: `docs/sims/s35-random300-20-on.txt`):
+
+| Table | Turns: avg, within 40, before the 60 cap | By exposure, safest first (fair 5.0%) | Furthest rank | The seat rule's harder spots | CPU per turn, avg / worst turn |
+|---|---|---|---|---|---|
+| 300, 20 players | 53.2, 12%, 50% | 15.4 / 3.8 / 15.4 / 3.8 / 3.8 / 3.8 / 0 / 7.7 / 0 / 7.7 / 7.7 / 0 / 0 / 7.7 / 11.5 / 0 / 7.7 / 0 / 0 / 3.8 | 15.4% (3.1 × fair) | 3.2 a map; won 8.0% (fair 15.8%) | 424 ms / **3.08 s** |
+
+At 26 games one win is 3.8 points, so a rank's share says little: the two 15.4% ranks are four wins each. As on the 400 at 20 (34b: 2.4 times fair at the furthest rank, 34 games), no rank runs away beyond what 26 games can show. The worst turn, 3.08 s in one process on a busy laptop, is under the 5 s bar.

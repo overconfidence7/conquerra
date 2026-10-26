@@ -10,7 +10,7 @@ import { exposureProblem, isRandomVersion, mapFingerprint, MAP_STEPS, randomMap,
  */
 describe("random map version 3 (session 31)", () => {
   it("the versions: 3 has the band 4.0 and +4 troops; 2 is kept; 1 can't be built (session 33b: 5 is current)", () => {
-    expect(RANDOM_VERSION).toBe(7); // (session 34: version 6, the big sizes seat 20; session 34b: version 7, 20 on the 400)
+    expect(RANDOM_VERSION).toBe(8); // (session 34: version 6, the big sizes seat 20; session 34b: version 7, 20 on the 400; session 35: version 8, 20 on the 300)
     expect(RANDOM_VERSIONS[3]).toEqual({ band: 4.0, bonus: 4 });
     expect(RANDOM_VERSIONS[2]).toEqual({ band: 5.5, bonus: 0 });
     expect(RANDOM_EXPOSURE_BAND).toBe(4.0);

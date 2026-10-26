@@ -6,6 +6,7 @@
  *     [--seats N] [--paper N] [--band-above 12:5.5 | none]
  * Session 34b: `--band-above 12:5.5` judges the layouts above 12 players by the band 5.5 (version 7's rule), `none` one
  * band for every count (passed to the workers as BAND_ABOVE).
+ * Session 35: `--list` names the seeds that passed (and the try), under each size and shape's line.
  */
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -64,5 +65,7 @@ for (const r of results) {
     const k = w.replace(/[0-9.]+/g, "#");
     why.set(k, (why.get(k) ?? 0) + 1);
   }
-  console.log(`${String(r.size).padStart(3)} ${r.shape.padEnd(11)} passed ${ok.length}/${r.rows.length}, tries ${ok.map((x) => x.attempt).join(",")}; time median ${ms[Math.floor(ms.length / 2)]} ms, worst ${ms.at(-1)} ms${why.size ? `; rejected for: ${[...why].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => `${k} (${v})`).join("; ")}` : ""}`);
+  const line = `${String(r.size).padStart(3)} ${r.shape.padEnd(11)} passed ${ok.length}/${r.rows.length}, tries ${ok.map((x) => x.attempt).join(",")}; time median ${ms[Math.floor(ms.length / 2)]} ms, worst ${ms.at(-1)} ms${why.size ? `; rejected for: ${[...why].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => `${k} (${v})`).join("; ")}` : ""}`;
+  console.log(line);
+  if (args.includes("--list")) console.log(`    passed: ${ok.map((x) => `${x.id}${x.attempt! > 1 ? ` (try ${x.attempt})` : ""}`).join(", ")}`);
 }
