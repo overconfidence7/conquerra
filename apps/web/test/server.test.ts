@@ -50,7 +50,8 @@ describe("the server's files (session 26)", () => {
     const cfg = JSON.parse(raw.replace(/^\s*\/\/.*$/gm, "")) as Record<string, unknown> & { assets: { run_worker_first: string[] }; migrations: { new_sqlite_classes: string[] }[]; vars: Record<string, string> };
     expect(cfg.workers_dev).toBe(false);
     expect(cfg.preview_urls).toBe(false);
-    expect(cfg.assets.run_worker_first).toEqual(["/api/*", "/assets/*"]);
+    // (Session 35: and the page itself, for the crawlers' preview tags.)
+    expect(cfg.assets.run_worker_first).toEqual(["/", "/api/*", "/assets/*"]);
     expect(cfg.migrations[0]!.new_sqlite_classes).toEqual(["GameRoom"]);
     expect(cfg.vars.ACCESS_TEAM).toBe("keel-nkurtz.cloudflareaccess.com");
     expect(raw).not.toContain("DEV_EMAIL");

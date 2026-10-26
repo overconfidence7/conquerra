@@ -6,6 +6,7 @@ import type { Env } from "./env";
 import { cleanName, cleanNewGame, mapNameOf, nameFromEmail, newGameId, newInviteCode } from "./online";
 import { RANDOM_TEXT } from "@conquerra/mapgen/randomText";
 import { blockList, joinGate, tableCap, unblock } from "./safety";
+import { isCrawler, openGraph } from "./openGraph";
 
 /**
  * The Worker `conquerra`'s API (session 26): it serves the game's static files as before, and the online API under /api.
@@ -318,6 +319,9 @@ export const worker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/assets/")) return serveAsset(request, env, url.pathname);
+    // Session 35: a chat app's crawler fetching the game's page (an invite link, say) gets the table's words in the
+    // preview tags; a person gets the page as it is.
+    if (url.pathname === "/" && isCrawler(request.headers.get("user-agent"))) return openGraph(request, env);
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
     if (!env.ACCESS_AUD && !env.DEV_EMAIL) return problem(503, "Online play isn't switched on yet.");
     const who = await signedIn(request, env);
