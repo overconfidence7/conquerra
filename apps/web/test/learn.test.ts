@@ -116,7 +116,8 @@ describe("Learn (session 31)", () => {
 
   it("Part 4: the lobby for someone who has never played: Learn open on a first visit, and one line under Start", () => {
     const lobby = src("ui/Lobby.tsx");
-    expect(lobby).toMatch(/Or jump in: a \{players\}-player game on \{random \? "a random map" : map\.name\}/);
+    // (Session 35: "an 8-player game" where the number calls for it.)
+    expect(lobby).toMatch(/Or jump in: \{aPlayerGame\(players\)\} on \{random \? "a random map" : map\.name\}/);
     expect(lobby).toMatch(/\{shouldGuide\(slots\.length\) && \(\s*<p className="muted small jump-in">/);
     expect(lobby.indexOf("jump-in")).toBeLessThan(lobby.indexOf('name="learn"'));
   });

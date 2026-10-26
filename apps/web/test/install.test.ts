@@ -33,3 +33,10 @@ describe("the Install line (session 35)", () => {
     for (const text of Object.values(INSTALL_TEXT)) expect(problems({ file: "install.ts", text, speaker: false })).toEqual([]);
   });
 });
+
+describe("the lobby's jump-in line (session 35, the voice pass)", () => {
+  it("an 8-player game, a 4-player game", async () => {
+    const { aPlayerGame } = await import("../src/logic/lobbyText");
+    expect([4, 8, 11, 18, 20].map(aPlayerGame)).toEqual(["a 4-player game", "an 8-player game", "an 11-player game", "an 18-player game", "a 20-player game"]);
+  });
+});

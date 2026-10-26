@@ -647,7 +647,7 @@ An online game is played on the server, so you can close the tab and come back o
 - **Someone who has never played** sees Learn open and one line under Start: "Or jump in: a 4-player game on Embervale" (the lobby's own table).
 
 ## 27. Install (session 35)
-- **Install puts the game on your home screen, and it opens like an app** (no browser bar; the lobby first). On an Android phone the lobby shows "Install Conquerra: it opens like an app." under the version label: tap it, then Install. On an iPhone, Safari has no button for it, so the lobby says how: tap Share, then Add to Home Screen. **Not now** hides the line on that device for good; it never shows once the game is installed, or on a computer.
+- **Install puts the game on your home screen, and it opens like an app** (no browser bar, and the lobby first). On an Android phone the lobby shows "Install Conquerra: it opens like an app." under the version label: tap it, then Install. On an iPhone, Safari has no button for it, so the lobby says how: tap Share, then Add to Home Screen. **Not now** hides the line on that device for good, and it never shows once the game is installed, or on a computer.
 - The installed game is the same game: the same saves, the same online games, and "your turn" notifications arrive in it (on an iPhone, notifications only work in the installed game).
 
 ## Not in yet (later milestones)
