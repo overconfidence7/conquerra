@@ -22,11 +22,15 @@ describe("random map version 8 (session 35)", () => {
     expect(randomPlayers(300, "archipelago").max).toBe(10);
   });
 
-  it("pinned: version 8's 400 with layouts for 6 to 20 players, its 300 for 4 to 20 (one of them only inside the looser band)", () => {
+  // (One map a test: a 400 takes about 20 s to build, and two in one test held a worker past vitest's minute.)
+  it("pinned: version 8's 400 with layouts for 6 to 20 players", () => {
     const big = randomMap("400-island-quiet-heron", defaultRules, { version: 8 });
     expect(big.attempt).toBe(1);
     expect(mapFingerprint(big.map)).toBe("c2c33606cb9bfd1e");
     expect(big.map.capitalLayouts!.map((l) => l.players)).toEqual([6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+  }, 360_000);
+
+  it("pinned: version 8's 300 with layouts for 4 to 20, one of them only inside the looser band", () => {
     const mid = randomMap("300-inland-quiet-heron", defaultRules, { version: 8 });
     expect(mid.attempt).toBe(1);
     expect(mapFingerprint(mid.map)).toBe("75fc219a57fbdcc6");
