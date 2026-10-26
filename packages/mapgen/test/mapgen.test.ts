@@ -30,10 +30,15 @@ describe("map maker", () => {
     expect(built("greatmarch", greatmarchNames)).toBe(JSON.stringify(maps.greatmarch));
   }, 60_000);
 
-  it("every official map's committed file is exactly what its recipe makes, and the lobby lists them all", () => {
+  it("the lobby lists every official map", () => {
     expect(MAP_CONFIGS.map((c) => c.id)).toEqual(["embervale", "greatmarch", "shattered-isles", "twin-realms", "moon-coast", "ringsea", "crownlands", "wyrmland", "ashwing", "sundered-crowns", "krakenmere", "rootholm"]);
     expect(Object.keys(maps).sort()).toEqual(MAP_CONFIGS.map((c) => c.id).sort());
-    for (const c of MAP_CONFIGS.slice(2)) expect(JSON.stringify(generateMap(c, defaultRules).map), c.id).toBe(JSON.stringify(maps[c.id]));
+  });
+
+  // (Session 35: one map a test. The twelve in one test ran 50 to 70 s on a busy machine, and a test that computes
+  // past a minute without a break trips vitest's own timeout between the worker and the runner.)
+  it.each(MAP_CONFIGS.slice(2).map((c) => [c.id, c] as const))("%s's committed file is exactly what its recipe makes", (_id, c) => {
+    expect(JSON.stringify(generateMap(c, defaultRules).map), c.id).toBe(JSON.stringify(maps[c.id]));
   }, 180_000);
 
   it("renames places from the names file, and flags names that aren't on the map", () => {
