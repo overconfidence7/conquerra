@@ -101,6 +101,12 @@
 - Upgrade to Workers Paid if not already done (see below).
 - Stripe for the one-time purchase.
 
+### Session 35: the preview tags' route, and the load test
+- **The Worker now runs for the page itself** (`run_worker_first` gains `/` beside `/api/*` and `/assets/*`). A request for `/` from a chat app's crawler (its user agent: Slack, Facebook and Messenger, iMessage, WhatsApp, Discord, Telegram, X, LinkedIn and the like, `server/openGraph.ts`) gets the lobby's HTML with an invite's own title and description when the link is `/?join=<code>` of a table still waiting for players ("Nate invites you to a game of Conquerra on Rootholm, 8 seats."): one D1 lookup and a few string replacements, counted against the address's 10 invite lookups a minute. Any other request for `/` (a person, or a crawler without a live invite) gets the page as before. The lobby's own tags and the 1200 by 630 painting (`/og/conquerra.jpg`, 114 KB) are static.
+- **Cloudflare Access answers a crawler first** (a 302 to its sign-in page), so no chat app shows the preview until session 36 retires Access. Tested in `wrangler dev`: `curl -A "Slackbot-LinkExpanding 1.0" "http://127.0.0.1:8787/?join=<code>"` gives the table's tags; a browser's user agent gives the page unchanged.
+- **Every visit to `/` is now a Worker request** (a few hundred a day at this size, against 100,000), taking well under a millisecond of CPU.
+- **The load test's method:** `apps/web/scripts/load-test-page.js` in a signed-in tab of the preview, `npx wrangler tail conquerra --format json` beside it; see `docs/10-online-plan.md` §9 for the numbers (20 tables, every turn under 0.33 s, the Worker's handlers at most 10 ms, no 1102 or 1027).
+
 ## The one cost decision: Workers Paid ($5/month). Not needed for M4 (corrected Oct 13)
 - The Free plan's real limit is **10 ms of CPU per request on the Worker itself**. Resolving a turn with the bots planning takes 15 to 40 ms, so the Oct 2 note assumed the upgrade at the start of M4.
 - **Checked Oct 13 against Cloudflare's limits pages:** a **Durable Object gets 30 seconds of CPU per request on the Free plan too** (an HTTP request, a WebSocket message or an alarm each reset it). The game room is a Durable Object, and all the heavy work (the engine, the bots) happens inside it. The Worker's own handlers (checking the Access sign-in, opening the room) take well under a millisecond.
