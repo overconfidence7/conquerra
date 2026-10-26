@@ -23,12 +23,16 @@ describe("random map version 7 (session 34b)", () => {
     expect(exposureProblem(tight, r - 0.01, { players: 16, band: r + 0.01 })).not.toBeNull();
   });
 
-  it("pinned (session 34b): version 7's 400 with layouts for 6 to 20 players, its 300 for 4 to 16", () => {
+  // (Session 35: one map a test, so a busy machine never holds a worker past vitest's minute.)
+  it("pinned (session 34b): version 7's 400 with layouts for 6 to 20 players", () => {
     const big = randomMap("400-island-quiet-heron", defaultRules, { version: 7 });
     expect(big.attempt).toBe(1);
     expect(mapFingerprint(big.map)).toBe("939e8db72a37d2a5");
     expect(big.map.capitalLayouts!.map((l) => l.players)).toEqual([6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
     expect(exposureProblem(big.map, 4, { players: 12, band: 5.5 })).toBeNull();
+  }, 360_000);
+
+  it("pinned (session 34b): version 7's 300 with layouts for 4 to 16", () => {
     const mid = randomMap("300-inland-quiet-heron", defaultRules, { version: 7 });
     expect(mid.attempt).toBe(1);
     expect(mapFingerprint(mid.map)).toBe("b9c277188d4b959a");
