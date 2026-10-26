@@ -41,9 +41,9 @@ const OnlineBlock = lazy(online);
 const LearnBlock = lazy(() => import("./Learn"));
 
 const BOT_LEVELS: { value: BotChoice; label: string; note: string }[] = [
-  { value: "marshal", label: "Marshal (hard)", note: "Attacks hard, each with its own personality (you learn which by how it plays), and spots a runaway early." },
-  { value: "captain", label: "Captain (medium)", note: "Holds passes, gathers before breaking through, and finishes off the weak." },
-  { value: "recruit", label: "Recruit (easy)", note: "Grabs what it can and rarely plans ahead." },
+  { value: "marshal", label: "Marshal (hard)", note: "Marshals attack hard, each with its own personality (you learn which by how it plays), and spot a runaway early." },
+  { value: "captain", label: "Captain (medium)", note: "Captains hold passes, gather before breaking through, and finish off the weak." },
+  { value: "recruit", label: "Recruit (easy)", note: "Recruits grab what they can and rarely plan ahead." },
   { value: "mixed", label: "Mixed", note: "Some Marshals, the rest Captains, seated at random." },
 ];
 

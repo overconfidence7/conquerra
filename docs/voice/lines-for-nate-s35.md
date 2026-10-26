@@ -21,16 +21,16 @@
    - Or: "A real game against the bots. Three pointers on turn 1, then you're on your own."
 
 5. **The Marshal, in the Bots choice**
-   - Today: "Attacks hard, each with its own personality (you learn which by how it plays), and spots a runaway early."
-   - Or: "Attacks hard and notices when someone runs away with the map. Each one has a personality, and you learn which by how it plays."
+   - Today: "Marshals attack hard, each with its own personality (you learn which by how it plays), and spot a runaway early." (Part 4 gave it a subject: it sits right after "4 players, a good fit for this map.")
+   - Or: "Marshals attack hard and notice when someone runs away with the map. Each one has a personality, and you learn which by how it plays."
 
 6. **The Captain**
-   - Today: "Holds passes, gathers before breaking through, and finishes off the weak."
-   - Or: "Holds the passes, gathers before it breaks through, and never leaves a weak neighbour alone for long."
+   - Today: "Captains hold passes, gather before breaking through, and finish off the weak."
+   - Or: "Captains hold the passes, gather before they break through, and never leave a weak neighbour alone for long."
 
 7. **The Recruit**
-   - Today: "Grabs what it can and rarely plans ahead."
-   - Or: "Grabs what it can. Planning is for other people."
+   - Today: "Recruits grab what they can and rarely plan ahead."
+   - Or: "Recruits grab what they can. Planning is for other people."
 
 8. **The Install line** (new this session, on a phone that hasn't installed the game)
    - Today: "Install Conquerra: it opens like an app."

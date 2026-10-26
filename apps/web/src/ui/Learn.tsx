@@ -16,7 +16,7 @@ export const LEARN_UI = {
   starting: "Starting…",
   guided: "The guided first game",
   scenarios: "Scenarios",
-  scenarioLine: "A set piece with a goal and no hints. Load a file takes a scenario file too.",
+  scenarioLine: "A set piece with a goal and no hints. A scenario file opens from Load a saved game, then Load a file.",
   guidedLine: "A game against the bots, with three pointers on turn 1.",
 } as const;
 

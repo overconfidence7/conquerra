@@ -9,7 +9,7 @@ import { join } from "node:path";
 describe("the lobby's folded blocks show their choices in one line", () => {
   it("Rules: luck, fog, Fate, diplomacy, victory and the timer", () => {
     const l = useGame.getState().lobby;
-    expect(rulesSummary({ ...l, luck: 0.3, fog: true, fate: true, diplomacy: true, mode: "classic", turnSeconds: 300 })).toBe("normal luck, fog on, Fate on, diplomacy on, classic, 5 min");
+    expect(rulesSummary({ ...l, luck: 0.3, fog: true, fate: true, diplomacy: true, mode: "classic", turnSeconds: 300 })).toBe("normal luck, fog on, Fate on, diplomacy on, classic, 5 min a turn");
     expect(rulesSummary({ ...l, luck: 0, fog: false, fate: false, diplomacy: false, mode: "conquest", turnSeconds: null })).toBe("no luck, fog off, Fate off, diplomacy off, conquest, no timer");
   });
 
