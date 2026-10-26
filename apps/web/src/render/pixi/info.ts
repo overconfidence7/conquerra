@@ -8,6 +8,7 @@ import { groupOutlines, quadPoint } from "../../map/shapes";
 import { isUnknown, territoryStatus, type TerritoryStatus } from "../../map/status";
 import { wallFootprints } from "../../map/walls";
 import type { DetailMix } from "../../map/zoom";
+import { farPills, thinsAtFar } from "../../map/farPills";
 import type { MapScene } from "../types";
 import type { TextureBank } from "./bank";
 import { buildLabels, type MapLabels } from "./labels";
@@ -124,6 +125,8 @@ export class InfoLayer {
   private wallKey = "";
   /** Battlements show from Mid zoom in (the share of Mid/Near detail, 0 at Far). */
   private battlements = 0;
+  /** Session 35: at Far on a big map, only the gates at a pill's land show (`farPills`); Mid and Near show them all. */
+  private gatesFar = false;
   readonly sites = new Container();
   readonly figures = new Container();
   readonly arrows = new Graphics();
@@ -451,6 +454,8 @@ export class InfoLayer {
     // Walls' battlements show from Mid in (where the icons do).
     const merlons = Math.round(mix.icons * 4) / 4;
     if (merlons !== this.battlements) (this.battlements = merlons), (this.drawnScale = 0);
+    const gatesFar = !this.isTactical && mix.icons <= 0.5 && thinsAtFar(this.map);
+    if (gatesFar !== this.gatesFar) (this.gatesFar = gatesFar), (this.drawnScale = 0);
     if (this.scene && (this.drawnScale === 0 || Math.abs(Math.log(scale / this.drawnScale)) > 0.08)) {
       this.drawnScale = scale;
       this.drawLines(scale);
@@ -461,6 +466,8 @@ export class InfoLayer {
       // A scene change at the same zoom: only what changed, at the zoom the rest was drawn for.
       const px = 1 / this.drawnScale;
       if (this.dirty.realms && !this.isTactical) this.realmLayer.draw(px);
+      // (Session 35: who holds what decides which gates show at Far on a big map.)
+      if (this.dirty.realms && this.gatesFar) this.drawGates(px);
       if (this.dirty.walls) this.drawWalls(px);
       if (this.dirty.glow) this.drawGlow(px);
       if (this.dirty.arrows) this.drawArrows(this.drawnScale);
@@ -514,16 +521,28 @@ export class InfoLayer {
         }
       }
     }
-    // Passes: a small stone gate across the road, sized to read at Mid zoom.
-    this.gates.clear();
-    for (const p of g.passes) {
-      if (isUnknown(this.scene!.view, p.a) && isUnknown(this.scene!.view, p.b)) continue;
-      const a = this.labelOf.get(p.a)!, b = this.labelOf.get(p.b)!;
-      drawGate(this.gates, p.x, p.y, Math.atan2(b.y - a.y, b.x - a.x), Math.min(Math.max(16, 24 * px), 32 * px), px);
-    }
+    this.drawGates(px);
     if (!this.isTactical) this.realmLayer.draw(px);
     this.drawWalls(px);
     this.drawGlow(px);
+  }
+
+  /**
+   * Passes: a small stone gate across the road, sized to read at Mid zoom. Session 35: at Far on a map of more than 200
+   * territories a gate shows only where one of its two lands keeps its pill there (capitals, your Leader, the borders
+   * between Houses and your own edge): a 400's hundred gates were most of its "wall of pills".
+   */
+  private drawGates(px: number) {
+    const g = this.map.geometry!;
+    const view = this.scene!.view;
+    const keep = this.gatesFar ? farPills(this.map, view) : null;
+    this.gates.clear();
+    for (const p of g.passes) {
+      if (isUnknown(view, p.a) && isUnknown(view, p.b)) continue;
+      if (keep && !keep.has(p.a) && !keep.has(p.b)) continue;
+      const a = this.labelOf.get(p.a)!, b = this.labelOf.get(p.b)!;
+      drawGate(this.gates, p.x, p.y, Math.atan2(b.y - a.y, b.x - a.x), Math.min(Math.max(16, 24 * px), 32 * px), px);
+    }
   }
 
   /** Everything over the borders that changes with the scene: truces, the selection's glows, the lit province, spies. */

@@ -143,22 +143,56 @@ function PlayerRow({ view, id, seat, open, onToggle }: { view: PlayerView; id: s
 
 /** Session 34: a phone shows this many Houses at a big table before "and 12 more". */
 export const PHONE_ROWS = 8;
+/** Session 35: a desktop shows this many before "and 10 more", so the Leaders panel keeps its place under it. */
+export const DESKTOP_ROWS = 10;
 export const PANEL_TEXT = { more: (n: number) => `and ${n} more`, fewer: "Show fewer" } as const;
 
 /**
  * Session 34, a big table on a phone: who shows first. You, the other people at the table, then the bots you have a
  * deal with, then everyone else in seat order (the knocked out last). Nothing here is a standing: no land, no score.
+ * Session 35 (`land`, the desktop's and the lists' order): the other bots by how much land you see them hold, most
+ * first, so the Houses that matter to you are on top. The panel never shows the count itself.
  */
-export function phoneOrder(view: PlayerView, people: readonly string[] | null | undefined, dealt: ReadonlySet<string>): string[] {
+export function phoneOrder(view: PlayerView, people: readonly string[] | null | undefined, dealt: ReadonlySet<string>, land?: ReadonlyMap<string, number>): string[] {
   const rank = (p: PlayerView["players"][number]) => (p.id === view.me.id ? 0 : people?.includes(p.id) ? 1 : p.eliminatedTurn !== null ? 4 : dealt.has(p.id) ? 2 : 3);
-  return view.players.map((p, i) => ({ id: p.id, r: rank(p), i })).sort((a, b) => a.r - b.r || a.i - b.i).map((x) => x.id);
+  const held = (id: string) => land?.get(id) ?? 0;
+  return view.players.map((p, i) => ({ id: p.id, r: rank(p), i })).sort((a, b) => a.r - b.r || (a.r === 3 ? held(b.id) - held(a.id) : 0) || a.i - b.i).map((x) => x.id);
+}
+
+/** Session 35: the land each House holds on your map (in sight, or as last seen), for the order above. */
+export function landSeen(view: PlayerView): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const v of Object.values(view.territories)) {
+    const who = v.detail === "full" ? v.owner : (v.lastSeen?.owner ?? null);
+    if (who) out.set(who, (out.get(who) ?? 0) + 1);
+  }
+  return out;
+}
+
+/** Session 35: the first `rows` of a long list, unless it's opened ("and 10 more"); a list one longer shows whole. */
+export const foldRows = <T,>(items: readonly T[], rows: number, all: boolean): readonly T[] => (!all && items.length > rows + 1 ? items.slice(0, rows) : items);
+
+/** The "and 10 more" / "Show fewer" link under a folded list. */
+export function FoldLink({ total, shown, all, onAll }: { total: number; shown: number; all: boolean; onAll(all: boolean): void }) {
+  if (shown < total)
+    return (
+      <button className="link small players-more" onClick={() => onAll(true)}>
+        {PANEL_TEXT.more(total - shown)}
+      </button>
+    );
+  return all ? (
+    <button className="link small players-more" onClick={() => onAll(false)}>
+      {PANEL_TEXT.fewer}
+    </button>
+  ) : null;
 }
 
 /**
  * Every House: shield (colour and pattern), name, Leader portrait, and whether they're still in. No territory counts
  * (decided). Diplomacy (session 14): a small mark for each deal (a seal on a binding one) with turns left, the
  * Oathbreaker mark, and tap a rival for Propose. Session 34: up to 20 rows; on a phone at a big table, the first
- * PHONE_ROWS (`phoneOrder`) and "and 12 more", which opens the rest.
+ * PHONE_ROWS (`phoneOrder`) and "and 12 more", which opens the rest. Session 35: on a desktop past ten Houses, the
+ * first DESKTOP_ROWS (the other bots by land you see) and "and 10 more".
  */
 export function PlayersPanel({ view }: { view: PlayerView }) {
   const [open, setOpen] = useState<string | null>(null);
@@ -166,26 +200,20 @@ export function PlayersPanel({ view }: { view: PlayerView }) {
   const { online, people, leftSeats, pageDeals } = useGame();
   const phone = useLayout().layout === "phone";
   const seatOf = new Map(view.players.map((p, i) => [p.id, i]));
-  const order = phone && view.players.length > 10 ? phoneOrder(view, people, new Set(view.players.filter((p) => dealMarks(view, pageDeals(), p.id).some((m) => m.with === view.me.id)).map((p) => p.id))) : view.players.map((p) => p.id);
-  const shown = phone && !all && order.length > PHONE_ROWS + 1 ? order.slice(0, PHONE_ROWS) : order;
+  const big = view.players.length > DESKTOP_ROWS;
+  const dealt = () => new Set(view.players.filter((p) => dealMarks(view, pageDeals(), p.id).some((m) => m.with === view.me.id)).map((p) => p.id));
+  const order = big ? phoneOrder(view, people, dealt(), phone ? undefined : landSeen(view)) : view.players.map((p) => p.id);
+  const shown = big ? foldRows(order, phone ? PHONE_ROWS : DESKTOP_ROWS, all) : order;
   // Online (session 28): a group chat with any people at the table.
   const canGroup = !!online && (people ?? []).some((id) => id !== view.me.id && !leftSeats?.[id]) && !leftSeats?.[view.me.id];
   return (
     <Frame title="Houses" className="slim">
-      <ul className="players">
+      <ul className={`players ${big && !phone ? "compact" : ""}`}>
         {shown.map((id) => (
           <PlayerRow key={id} view={view} id={id} seat={seatOf.get(id)!} open={open === id} onToggle={() => setOpen((o) => (o === id ? null : id))} />
         ))}
       </ul>
-      {shown.length < order.length ? (
-        <button className="link small players-more" onClick={() => setAll(true)}>
-          {PANEL_TEXT.more(order.length - shown.length)}
-        </button>
-      ) : all && phone ? (
-        <button className="link small players-more" onClick={() => setAll(false)}>
-          {PANEL_TEXT.fewer}
-        </button>
-      ) : null}
+      {big && <FoldLink total={order.length} shown={shown.length} all={all} onAll={setAll} />}
       {canGroup && (
         <button className="link small players-group" onClick={() => useChat.setState({ open: true, grouping: true, selected: null, popup: null })}>
           Group…

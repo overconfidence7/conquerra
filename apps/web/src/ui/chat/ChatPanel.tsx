@@ -9,6 +9,7 @@ import { COUNCIL_CHAT, CouncilChat } from "./Council";
 import { useCouncilUnread } from "./ChatBits";
 import { COUNCIL_ID } from "./councilStore";
 import { formsOpen, LineActions } from "./Safety";
+import { DESKTOP_ROWS, FoldLink, foldRows, landSeen, phoneOrder } from "../PlayersPanel";
 import "./chat.css";
 
 /** Session 29: what the chat with bots says itself (the voice guide applies). */
@@ -187,11 +188,16 @@ function BotChoices({ chat }: { chat: ChatView }) {
 /** Session 29: a group with bots in it: two prompts the bots answer (people read and write as before). */
 function GroupAsk({ chat }: { chat: ChatView }) {
   const view = useGame((s) => s.view);
+  const people = useGame((s) => s.people);
   const [picking, setPicking] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [all, setAll] = useState(false);
   if (!view) return null;
   const inChat = new Set((chat.members ?? []).flatMap((p) => (p.seat ? [p.seat] : [])));
-  const rivals = view.players.filter((p) => p.eliminatedTurn === null && p.id !== view.me.id && !inChat.has(p.id));
+  // (Session 35: at a big table, the people and then the bots by land you see, folded past ten like the Houses panel.)
+  const rank = phoneOrder(view, people, new Set(), landSeen(view));
+  const rivals = view.players.filter((p) => p.eliminatedTurn === null && p.id !== view.me.id && !inChat.has(p.id)).sort((a, b) => rank.indexOf(a.id) - rank.indexOf(b.id));
+  const shownRivals = foldRows(rivals, DESKTOP_ROWS, all);
   const ask = async (a: { ask: "war" | "peace"; target?: string }) => {
     setPicking(false);
     setProblem(await chatDo({ do: "ask", chat: chat.id, ...a }));
@@ -202,11 +208,12 @@ function GroupAsk({ chat }: { chat: ChatView }) {
       {problem && <p className="warn small">{problem}</p>}
       {picking ? (
         <div className="chat-choices" role="group" aria-label={BOT_UI.pickRival}>
-          {rivals.map((p) => (
+          {shownRivals.map((p) => (
             <button key={p.id} className="chat-choice" onClick={() => void ask({ ask: "war", target: p.id })}>
               <span style={{ color: colour(p.house) }}>{p.name}</span>
             </button>
           ))}
+          <FoldLink total={rivals.length} shown={shownRivals.length} all={all} onAll={setAll} />
         </div>
       ) : (
         <div className="chat-choice-row">
@@ -224,21 +231,25 @@ function PickPeople({ exclude, done, label }: { exclude: readonly string[]; done
   const [picked, setPicked] = useState<string[]>([]);
   const [name, setName] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
+  const [all, setAll] = useState(false);
   if (!view) return null;
-  // (Bots too, session 29: they answer a group's prompts in their own voices.)
-  const bots = view.players.filter((p) => p.eliminatedTurn === null && !people?.includes(p.id) && p.id !== view.me.id).map((p) => p.id);
+  // (Bots too, session 29: they answer a group's prompts in their own voices. Session 35: by land you see, folded past ten.)
+  const rank = phoneOrder(view, people, new Set(), landSeen(view));
+  const bots = view.players.filter((p) => p.eliminatedTurn === null && !people?.includes(p.id) && p.id !== view.me.id).map((p) => p.id).sort((a, b) => rank.indexOf(a) - rank.indexOf(b));
   const others = [...(people ?? []), ...bots].filter((id) => id !== view.me.id && !exclude.includes(id) && !leftSeats?.[id]);
+  const shown = foldRows(others, DESKTOP_ROWS, all);
   const nameOf = (id: string) => view.players.find((p) => p.id === id)?.name ?? id;
   return (
     <div className="chat-pick">
       <p className="muted small">{CHAT_UI.groupHelp}</p>
       {others.length === 0 && <p className="small">Nobody else at the table can join it.</p>}
-      {others.map((id) => (
+      {shown.map((id) => (
         <label key={id} className="chat-tick">
           <input type="checkbox" checked={picked.includes(id)} onChange={(e) => setPicked((p) => (e.target.checked ? [...p, id] : p.filter((x) => x !== id)))} />
           <span style={{ color: colour(view.players.find((p) => p.id === id)?.house ?? 0) }}>{nameOf(id)}</span>
         </label>
       ))}
+      <FoldLink total={others.length} shown={shown.length} all={all} onAll={setAll} />
       {label === CHAT_UI.newGroup && (
         <label className="chat-name-field">
           <span className="muted small">A name (optional)</span>

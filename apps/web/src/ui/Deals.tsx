@@ -1,11 +1,12 @@
 import { DEAL_KINDS, describeTerms, indexMap, type DealKind, type DealTerms, type GameContext, type Offer, type PlayerId, type PlayerView, type TradeSide } from "@conquerra/engine";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { bindingPrice, breakPrice, changedTerms, finishWarning, newOffer, ownerFrom } from "../logic/deals";
 import { dealNames, namer } from "../logic/text";
 import { myOfferState, PEOPLE_DEAL_STATUS, withdrawOffer } from "../logic/peopleDeals";
 import { NOTE_MAX } from "../host/protocol";
 import { useGame } from "../store";
 import { Frame } from "./Frame";
+import { DESKTOP_ROWS, FoldLink, foldRows, landSeen, phoneOrder } from "./PlayersPanel";
 import "./people.css";
 
 /** "1 turn", "5 turns". */
@@ -104,6 +105,11 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
   const answer = answers[offer.id];
   const set = (terms: DealTerms) => editDeal({ ...offer, terms });
   const living = view.players.filter((p) => p.eliminatedTurn === null && p.id !== view.me.id && p.id !== them);
+  // (Session 35: a joint war's targets at a big table: the people, then the bots by land you see, folded past ten.)
+  const [allTargets, setAllTargets] = useState(false);
+  const rank = phoneOrder(view, people, new Set(), landSeen(view));
+  const targets = [...living].sort((a, b) => rank.indexOf(a.id) - rank.indexOf(b.id));
+  const shownTargets = foldRows(targets, DESKTOP_ROWS, allTargets || targets.slice(DESKTOP_ROWS).some((p) => p.id === (t.kind === "war" ? t.target : null)));
   const idx = indexMap(ctx.map);
   const owner = ownerFrom(view);
   // Provinces where your land meets theirs (as far as you can see): the ones a province truce can name.
@@ -181,11 +187,12 @@ function Propose({ ctx, view, offer }: { ctx: GameContext; view: PlayerView; off
           <div className="row">
             <span>Target</span>
             <span className="chips">
-              {living.map((p) => (
+              {shownTargets.map((p) => (
                 <button key={p.id} className={`chip ${t.target === p.id ? "on" : ""}`} onClick={() => set({ ...t, target: p.id })}>
                   {p.name}
                 </button>
               ))}
+              <FoldLink total={targets.length} shown={shownTargets.length} all={allTargets} onAll={setAllTargets} />
             </span>
           </div>
           <div className="row">

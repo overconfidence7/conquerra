@@ -903,7 +903,7 @@ export function GameScreen() {
           )}
         </div>
         {minimapOn && <Frame className="mini-float slim">{minimap}</Frame>}
-        {playersOn && (
+        {playersOn && !(out && watching) && (
           <div className="popover">
             <PlayersPanel view={view} />
           </div>
@@ -913,10 +913,19 @@ export function GameScreen() {
         {replayBar}
         {titleCard}
         {turnSweep}
+        {/* Session 35: knocked out, the Houses panel and the watcher's box share one column, the panel above and
+            scrolling in what room is left, so it never covers the box or its buttons. */}
         {out && watching && (
-          <Suspense fallback={null}>
-            <OutPanel ctx={ctx} view={view} replaying={replaying} />
-          </Suspense>
+          <div className="out-stack">
+            {playersOn && (
+              <div className="popover">
+                <PlayersPanel view={view} />
+              </div>
+            )}
+            <Suspense fallback={null}>
+              <OutPanel ctx={ctx} view={view} replaying={replaying} />
+            </Suspense>
+          </div>
         )}
         {!out && (
           <BottomSheet size={replaying ? "closed" : sheet} onSize={setSheet} bottom={76} tabs={tabs} tab={tab} onTab={setTab}>

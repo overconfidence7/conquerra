@@ -7,6 +7,7 @@ import { hexNum, houseOf } from "../../map/houses";
 import { CULTURE_PIP_DROP, layoutMarkers, markerMetrics, type MarkerBox, pillHeight, type MarkerContent, type MarkerMetrics } from "../../map/layout";
 import { isUnknown, markerContent, provinceSize, markerPriority, territoryStatus, type TerritoryStatus } from "../../map/status";
 import type { DetailMix, ZoomDetail } from "../../map/zoom";
+import { farPills } from "../../map/farPills";
 import type { MapScene } from "../types";
 import type { TextureBank } from "./bank";
 
@@ -136,9 +137,11 @@ export class MarkerLayer {
       this.plaqueKey = null;
     }
     const refZoom = { territoryPx: (REF - 15) / 0.05 };
+    // Session 35: at Far on a big map (over 200 territories), only capitals, your Leader and the borders keep a pill.
+    const keep = mix.icons <= 0.5 && !tactical ? farPills(this.map, scene.view) : null;
     for (const t of this.map.territories) {
       const s = territoryStatus(scene.view, t.id);
-      const content = markerContent(this.map, scene.view, s);
+      const content = keep && !keep.has(t.id) ? null : markerContent(this.map, scene.view, s);
       const was = this.markers.get(t.id);
       const builtFrom = content ? JSON.stringify([content, s, houseOf(scene.view, s.owner).name]) : "";
       if (was && this.built.get(t.id) === builtFrom) {
